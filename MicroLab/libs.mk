@@ -10,6 +10,9 @@ OBJS += $(OWLWARE)/Source/sysex.o
 OBJS += $(OWLWARE)/Source/sramalloc.o
 
 OBJS += $(OWLWARE)/Source/cs4272.o
+OBJS += $(OWLWARE)/Source/sdram.o
+OBJS += $(OWLWARE)/Source/usbd_midi.o
+OBJS += $(OWLWARE)/Source/usbd_midi_if.o
 
 OBJS += $(OWLWARE)/Source/ApplicationSettings.o
 OBJS += $(OWLWARE)/Source/MidiHandler.o
