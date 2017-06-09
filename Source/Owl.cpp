@@ -9,8 +9,11 @@
 #include "ApplicationSettings.h"
 #include "cmsis_os.h"
 #include "BitState.hpp"
-#include "rainbow.h"
 #include "errorhandlers.h"
+
+#ifdef OWL_TESSERACT
+#include "rainbow.h"
+#endif /* OWL_TESSERACT */
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -46,12 +49,58 @@ void setAnalogValue(uint8_t ch, uint16_t value){
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
+#ifdef PUSHBUTTON_Pin
   case PUSHBUTTON_Pin:
     setButtonValue(PUSHBUTTON, !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin));
+    break;
+#endif
+#ifdef TRIG1_Pin
+  case TRIG1_Pin:
+    setButtonValue(PUSHBUTTON, !(TRIG1_GPIO_Port->IDR & TRIG1_Pin));
+    break;
+#endif
+  }
+}
+
+#ifdef OWL_MICROLAB
+void setLed(uint8_t ch, uint16_t brightness){
+  // brightness should be a 10 bit value
+  brightness = 1023 - (brightness&0x3ff);
+  switch(ch){
+  case LED1:
+    TIM2->CCR1 = brightness;
+    break;
+  case LED2:
+    TIM3->CCR4 = brightness;
+    break;
+  case LED3:
+    TIM4->CCR3 = brightness;
+    break;
+  case LED4:
+    TIM5->CCR2 = brightness;
     break;
   }
 }
 
+void initLed(){
+  // Initialise RGB LED PWM timers
+  extern TIM_HandleTypeDef htim2;
+  extern TIM_HandleTypeDef htim3;
+  extern TIM_HandleTypeDef htim4;
+  extern TIM_HandleTypeDef htim5;
+  HAL_TIM_Base_Start(&htim2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+  HAL_TIM_Base_Start(&htim4);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+  HAL_TIM_Base_Start(&htim5);
+  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
+}
+
+#endif /* OWL_MICROLAB */
+
+#ifdef OWL_TESSERACT
 void setLed(uint32_t rgb){
   // rgb should be a 3x 10 bit value
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
@@ -94,6 +143,7 @@ void initLed(){
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
   // HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
 }
+#endif /* OWL_TESSERACT */
 
 void setup(){
   settings.init();
@@ -102,8 +152,18 @@ void setup(){
 
   program.startManager();
 
+#ifdef OWL_TESSERACT
   initLed();
   setLed(1000, 1000, 1000);
+#endif /* OWL_TESSERACT */
+
+#ifdef OWL_MICROLAB
+  initLed();
+  setLed(LED1, 512);
+  setLed(LED2, 512);
+  setLed(LED3, 512);
+  setLed(LED4, 512);
+#endif /* OWL_MICROLAB */
 
   extern ADC_HandleTypeDef hadc3;
   // extern DMA_HandleTypeDef hdma_adc3;
@@ -120,8 +180,16 @@ void setup(){
 void loop(void){
   taskYIELD();
   midi.push();
+#ifdef OWL_TESSERACT
   setLed(rainbow[(4095-adc_values[3])>>2]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
+#endif /* OWL_TESSERACT */
+#ifdef OWL_MICROLAB
+  setLed(LED1, adc_values[0]>>2);
+  setLed(LED2, adc_values[1]>>2);
+  setLed(LED3, adc_values[2]>>2);
+  setLed(LED4, adc_values[3]>>2);
+#endif /* OWL_MICROLAB */
 }
 
 extern "C"{

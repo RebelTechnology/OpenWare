@@ -1,14 +1,31 @@
 #include "main.h"
+#include "stm32f4xx_hal.h"
 
-#define OWL_TESSERACT
+#define OWL_MICROLAB
+
+/* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */
 /* #define OWL_MODULAR */
 /* #define OWL_PEDAL */
 
-#define USE_CS4271
+#define LED1 1
+#define LED2 2
+#define LED3 3
+#define LED4 4
+
+#ifdef OWL_MICROLAB
+#define TRIG1_Pin GP8_Pin
+#define TRIG1_GPIO_Port GP8_GPIO_Port
+
+#define TRIG2_Pin GP7_Pin
+#define TRIG2_GPIO_Port GP7_GPIO_Port
+#endif
+
+#ifdef OWL_TESSERACT
 #define PUSHBUTTON_Pin GP7_Pin
 #define PUSHBUTTON_GPIO_Port GP7_GPIO_Port
+#endif
 
 #if defined OWL_MODULAR || defined OWL_PEDAL
 #define OWL1
@@ -16,12 +33,18 @@
 #define OWL2
 #endif
 
+#ifdef OWL1
+#define USE_WM8731
+#endif
+
+#ifdef OWL2
+#define USE_CS4271
+#endif
+
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
 #define EEPROM_PAGE_SIZE             (128*1024)
 #define EEPROM_PAGE_END              ((uint32_t)0x08100000)
 #define STORAGE_MAX_BLOCKS           64
-
-#include "stm32f4xx_hal.h"
 
 #define USE_CODEC
 #define DEBUG_DWT
