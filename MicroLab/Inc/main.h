@@ -111,6 +111,7 @@
 #define PWM4_GPIO_Port GPIOB
 #define GP8_Pin GPIO_PIN_9
 #define GP8_GPIO_Port GPIOB
+#define GP8_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 

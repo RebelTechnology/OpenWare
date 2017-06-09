@@ -196,6 +196,7 @@ NVIC.DMA2_Stream1_IRQn=true\:5\:0\:true\:false\:true\:true
 NVIC.DMA2_Stream4_IRQn=true\:5\:0\:true\:false\:true\:true
 NVIC.DebugMonitor_IRQn=true\:0\:0\:false\:false\:false\:false
 NVIC.EXTI2_IRQn=true\:10\:0\:true\:false\:true\:true
+NVIC.EXTI9_5_IRQn=true\:10\:0\:true\:false\:true\:true
 NVIC.HardFault_IRQn=true\:0\:0\:false\:false\:false\:false
 NVIC.MemoryManagement_IRQn=true\:0\:0\:false\:false\:false\:false
 NVIC.NonMaskableInt_IRQn=true\:0\:0\:false\:false\:false\:false

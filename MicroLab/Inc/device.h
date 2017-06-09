@@ -2,24 +2,25 @@
 #include "stm32f4xx_hal.h"
 
 #define OWL_MICROLAB
-
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */
 /* #define OWL_MODULAR */
 /* #define OWL_PEDAL */
 
+#ifdef OWL_MICROLAB
+#define TRIG1_Pin GP7_Pin
+#define TRIG1_GPIO_Port GP7_GPIO_Port
+#define TRIG2_Pin GP8_Pin
+#define TRIG2_GPIO_Port GP8_GPIO_Port
+#define ADC_A 1
+#define ADC_B 2
+#define ADC_C 3
+#define ADC_D 0
 #define LED1 1
 #define LED2 2
 #define LED3 3
 #define LED4 4
-
-#ifdef OWL_MICROLAB
-#define TRIG1_Pin GP8_Pin
-#define TRIG1_GPIO_Port GP8_GPIO_Port
-
-#define TRIG2_Pin GP7_Pin
-#define TRIG2_GPIO_Port GP7_GPIO_Port
 #endif
 
 #ifdef OWL_TESSERACT
