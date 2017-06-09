@@ -124,10 +124,18 @@ void setButtonValue(uint8_t ch, uint8_t value){
 
 void updateParameters(){
   // IIR exponential filter with lambda 0.75
-  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[0])>>2;
-  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[1])>>2;
-  parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[2])>>2;
-  parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[3])>>2;
+#if defined OWL_MODULAR || defined OWL_TESSERACT /* inverting ADCs */
+  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
+  parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
+#else
+  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
+  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
+#endif
+
   // parameter_values[0] = 4095-adc_values[0];
   // parameter_values[1] = 4095-adc_values[1];
   // parameter_values[2] = 4095-adc_values[2];

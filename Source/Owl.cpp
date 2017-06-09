@@ -54,9 +54,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     setButtonValue(PUSHBUTTON, !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin));
     break;
 #endif
-#ifdef TRIG1_Pin
+#ifdef OWL_MICROLAB
   case TRIG1_Pin:
     setButtonValue(PUSHBUTTON, !(TRIG1_GPIO_Port->IDR & TRIG1_Pin));
+    break;
+  case TRIG2_Pin:
+    setParameterValue(PARAMETER_E, (TRIG2_GPIO_Port->IDR & TRIG2_Pin) == 0 ? 4095 : 0);
     break;
 #endif
   }
@@ -65,19 +68,23 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #ifdef OWL_MICROLAB
 void setLed(uint8_t ch, uint16_t brightness){
   // brightness should be a 10 bit value
-  brightness = 1023 - (brightness&0x3ff);
+  brightness = brightness&0x3ff;
   switch(ch){
   case LED1:
-    TIM2->CCR1 = brightness;
+    // bottom
+    TIM5->CCR2 = brightness;
     break;
   case LED2:
-    TIM3->CCR4 = brightness;
+    // left
+    TIM2->CCR1 = brightness;
     break;
   case LED3:
+    // top
     TIM4->CCR3 = brightness;
     break;
   case LED4:
-    TIM5->CCR2 = brightness;
+    // right
+    TIM3->CCR4 = brightness;
     break;
   }
 }
@@ -185,10 +192,10 @@ void loop(void){
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
 #endif /* OWL_TESSERACT */
 #ifdef OWL_MICROLAB
-  setLed(LED1, adc_values[0]>>2);
-  setLed(LED2, adc_values[1]>>2);
-  setLed(LED3, adc_values[2]>>2);
-  setLed(LED4, adc_values[3]>>2);
+  setLed(LED1, adc_values[ADC_A]>>2);
+  setLed(LED2, adc_values[ADC_B]>>2);
+  setLed(LED3, adc_values[ADC_C]>>2);
+  setLed(LED4, adc_values[ADC_D]>>2);
 #endif /* OWL_MICROLAB */
 }
 
