@@ -1,8 +1,8 @@
 #MicroXplorer Configuration settings - do not modify
-ADC3.Channel-31\#ChannelRegularConversion=ADC_CHANNEL_12
-ADC3.Channel-32\#ChannelRegularConversion=ADC_CHANNEL_8
+ADC3.Channel-31\#ChannelRegularConversion=ADC_CHANNEL_13
+ADC3.Channel-32\#ChannelRegularConversion=ADC_CHANNEL_12
 ADC3.Channel-33\#ChannelRegularConversion=ADC_CHANNEL_11
-ADC3.Channel-34\#ChannelRegularConversion=ADC_CHANNEL_13
+ADC3.Channel-34\#ChannelRegularConversion=ADC_CHANNEL_8
 ADC3.ClockPrescaler=ADC_CLOCK_SYNC_PCLK_DIV8
 ADC3.ContinuousConvMode=ENABLE
 ADC3.DMAContinuousRequests=ENABLE
@@ -627,7 +627,12 @@ TIM5.Pulse-PWM\ Generation2\ CH2=512
 USART2.IPParameters=VirtualMode
 USART2.VirtualMode=VM_ASYNC
 USB_DEVICE.CLASS_NAME_HS=AUDIO
-USB_DEVICE.IPParameters=CLASS_NAME_HS,VirtualModeHS
+USB_DEVICE.IPParameters=CLASS_NAME_HS,VirtualModeHS,SERIALNUMBER_STRING_AUDIO_HS,PRODUCT_STRING_AUDIO_HS,PID_AUDIO_HS,MANUFACTURER_STRING-AUDIO_HS,VID-AUDIO_HS
+USB_DEVICE.MANUFACTURER_STRING-AUDIO_HS=Rebel Technology
+USB_DEVICE.PID_AUDIO_HS=0xDADA
+USB_DEVICE.PRODUCT_STRING_AUDIO_HS=OWL-MIDI
+USB_DEVICE.SERIALNUMBER_STRING_AUDIO_HS=00000000010D
+USB_DEVICE.VID-AUDIO_HS=0x1209
 USB_DEVICE.VirtualModeHS=Audio_HS
 USB_OTG_HS.IPParameters=VirtualMode-Device_Only_FS
 USB_OTG_HS.VirtualMode-Device_Only_FS=Device_Only_FS
