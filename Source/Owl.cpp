@@ -71,20 +71,20 @@ void setLed(uint8_t ch, uint16_t brightness){
   brightness = brightness&0x3ff;
   switch(ch){
   case LED1:
-    // bottom
-    TIM5->CCR2 = brightness;
-    break;
-  case LED2:
     // left
     TIM2->CCR1 = brightness;
     break;
-  case LED3:
+  case LED2:
     // top
     TIM4->CCR3 = brightness;
     break;
-  case LED4:
+  case LED3:
     // right
     TIM3->CCR4 = brightness;
+    break;
+  case LED4:
+    // bottom
+    TIM5->CCR2 = brightness;
     break;
   }
 }
