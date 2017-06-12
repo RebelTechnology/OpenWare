@@ -1,6 +1,5 @@
+PROJECT = MicroLab
 BUILDROOT = .
-PROJECT = Tesseract
-
 OPENWARE ?= $(BUILDROOT)/..
 
 ifndef CONFIG
@@ -43,6 +42,7 @@ CPP_SRC = $(notdir $(wildcard Src/*.cpp)) # $(notdir $(wildcard ../Source/*.cpp)
 include $(OPENWARE)/sources.mk
 
 OBJS = $(C_SRC:%.c=Build/%.o) $(CPP_SRC:%.cpp=Build/%.o)
+
 # OBJS += $(BUILD)/startup_stm32f439xx.o
 OBJS += Src/startup_stm32f439xx.o
 

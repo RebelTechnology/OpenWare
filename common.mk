@@ -21,7 +21,6 @@ SIZE=$(TOOLROOT)/arm-none-eabi-size
 vpath %.s $(BUILDROOT)/Src
 vpath %.c $(BUILDROOT)/Src
 vpath %.cpp $(BUILDROOT)/Src
-
 vpath %.c $(OPENWARE)/Source
 vpath %.cpp $(OPENWARE)/Source
 vpath %.c $(OPENWARE)/LibSource
