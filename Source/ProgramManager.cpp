@@ -482,14 +482,14 @@ extern "C" {
   //   *ppxIdleTaskStackBuffer = &xIdleStack[0];
   //   *pulIdleTaskStackSize = IDLE_TASK_STACK_SIZE;
   // }
-  // void vApplicationMallocFailedHook(void) {
-  //   // taskDISABLE_INTERRUPTS();
-  //   program.exitProgram(false);
-  //   error(PROGRAM_ERROR, "malloc failed");
-  //   for(;;);
-  // }
-  // void vApplicationIdleHook(void) {
-  // }
+  void vApplicationMallocFailedHook(void) {
+    // taskDISABLE_INTERRUPTS();
+    program.exitProgram(false);
+    error(PROGRAM_ERROR, "malloc failed");
+    for(;;);
+  }
+  void vApplicationIdleHook(void) {
+  }
   void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName) {
     (void) pcTaskName;
     (void) pxTask;

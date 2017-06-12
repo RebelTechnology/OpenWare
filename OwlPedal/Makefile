@@ -1,8 +1,9 @@
 PROJECT = OwlPedal
-
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
+# Debug / Release
+CONFIG ?= Debug
 ifeq ($(CONFIG),Debug)
   CPPFLAGS = -g -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g
@@ -32,15 +33,13 @@ ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32F407xx -DARM_MATH_CM4
 DEF_FLAGS += -D__FPU_PRESENT=1U
 
-C_SRC = $(notdir $(wildcard Src/*.c)) $(notdir $(wildcard Source/*.c))
-CPP_SRC = $(notdir $(wildcard Src/*.cpp)) $(notdir $(wildcard Source/*.cpp))
+C_SRC = $(notdir $(wildcard Src/*.c))
+CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += wm8731.c
-
 
 include $(OPENWARE)/sources.mk
 
 OBJS = $(C_SRC:%.c=Build/%.o) $(CPP_SRC:%.cpp=Build/%.o)
-# OBJS += $(BUILD)/startup_stm32f439xx.o
 OBJS += $(BUILD)/startup_stm32f407xx.o
 
 include $(OPENWARE)/libs.mk

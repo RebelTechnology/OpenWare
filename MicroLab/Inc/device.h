@@ -13,10 +13,10 @@
 #define TRIG1_GPIO_Port GP7_GPIO_Port
 #define TRIG2_Pin GP8_Pin
 #define TRIG2_GPIO_Port GP8_GPIO_Port
-#define ADC_A 1
-#define ADC_B 2
-#define ADC_C 3
-#define ADC_D 0
+#define ADC_A 2
+#define ADC_B 3
+#define ADC_C 0
+#define ADC_D 1
 #define LED1 1
 #define LED2 2
 #define LED3 3
