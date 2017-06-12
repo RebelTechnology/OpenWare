@@ -1,6 +1,6 @@
 # name of executable
-ELF=$(BUILD)/OWL2.elf                    
-BIN=$(BUILD)/OWL2.bin
+ELF=$(BUILD)/$(PROJECT).elf
+BIN=$(BUILD)/$(PROJECT).bin
 
 # Tool path
 TOOLROOT ?= ~/devel/OwlWare/Tools/gcc-arm-none-eabi-5_2-2015q4/bin
@@ -18,11 +18,14 @@ OBJDUMP=$(TOOLROOT)/arm-none-eabi-objdump
 SIZE=$(TOOLROOT)/arm-none-eabi-size
 
 # Set up search path
-vpath %.c $(TEMPLATEROOT)/Src
-vpath %.cpp $(TEMPLATEROOT)/Src
-vpath %.cpp $(TEMPLATEROOT)/Source
-vpath %.c $(TEMPLATEROOT)/Source
-vpath %.s $(TEMPLATEROOT)/Source
+vpath %.s $(BUILDROOT)/Src
+vpath %.c $(BUILDROOT)/Src
+vpath %.cpp $(BUILDROOT)/Src
+
+vpath %.c $(OPENWARE)/Source
+vpath %.cpp $(OPENWARE)/Source
+vpath %.c $(OPENWARE)/LibSource
+vpath %.cpp $(OPENWARE)/LibSource
 
 all: bin
 

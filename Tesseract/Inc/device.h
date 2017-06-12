@@ -6,9 +6,15 @@
 /* #define OWL_MODULAR */
 /* #define OWL_PEDAL */
 
+#ifdef OWL_TESSERACT
+#define ADC_A 1
+#define ADC_B 3
+#define ADC_C 2
+#define ADC_D 0
 #define USE_CS4271
 #define PUSHBUTTON_Pin GP7_Pin
 #define PUSHBUTTON_GPIO_Port GP7_GPIO_Port
+#endif
 
 #if defined OWL_MODULAR || defined OWL_PEDAL
 #define OWL1

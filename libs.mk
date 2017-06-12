@@ -1,41 +1,78 @@
 # object files
-OBJS += $(PERIPH) 
+# OBJS += $(PERIPH) 
 
-OBJS += $(OWLWARE)/Source/crc32.o
-OBJS += $(OWLWARE)/Source/eepromcontrol.o
-OBJS += $(OWLWARE)/Source/errorhandlers.o
-# OBJS += $(OWLWARE)/Source/font.o
-# OBJS += $(OWLWARE)/Source/gpio.o
-OBJS += $(OWLWARE)/Source/sysex.o
-OBJS += $(OWLWARE)/Source/sramalloc.o
+C_SRC += crc32.c
+C_SRC += eepromcontrol.c
+C_SRC += errorhandlers.c
+C_SRC += sysex.c
+C_SRC += sramalloc.c
+C_SRC += cs4272.c
+C_SRC += sdram.c
+C_SRC += usbd_midi.c
+C_SRC += usbd_midi_if.c
 
-OBJS += $(OWLWARE)/Source/cs4272.o
-OBJS += $(OWLWARE)/Source/sdram.o
-OBJS += $(OWLWARE)/Source/usbd_midi.o
-OBJS += $(OWLWARE)/Source/usbd_midi_if.o
+CPP_SRC += ApplicationSettings.cpp
+CPP_SRC += MidiHandler.cpp
+CPP_SRC += Codec.cpp
+CPP_SRC += MidiReader.cpp
+CPP_SRC += DigitalBusHandler.cpp       
+CPP_SRC += operators.cpp
+CPP_SRC += DigitalBusReader.cpp	      
+CPP_SRC += Owl.cpp
+CPP_SRC += DigitalBusStreamReader.cpp  
+CPP_SRC += PatchRegistry.cpp
+CPP_SRC += FactoryPatches.cpp	      
+CPP_SRC += ProgramManager.cpp
+CPP_SRC += FlashStorage.cpp	      
+CPP_SRC += ServiceCall.cpp
+CPP_SRC += message.cpp		      
+CPP_SRC += StorageBlock.cpp
+CPP_SRC += MidiController.cpp
 
-OBJS += $(OWLWARE)/Source/ApplicationSettings.o
-OBJS += $(OWLWARE)/Source/MidiHandler.o
-OBJS += $(OWLWARE)/Source/Codec.o
-OBJS += $(OWLWARE)/Source/MidiReader.o
-OBJS += $(OWLWARE)/Source/DigitalBusHandler.o       
-OBJS += $(OWLWARE)/Source/operators.o
-OBJS += $(OWLWARE)/Source/DigitalBusReader.o	      
-OBJS += $(OWLWARE)/Source/Owl.o
-OBJS += $(OWLWARE)/Source/DigitalBusStreamReader.o  
-OBJS += $(OWLWARE)/Source/PatchRegistry.o
-OBJS += $(OWLWARE)/Source/FactoryPatches.o	      
-OBJS += $(OWLWARE)/Source/ProgramManager.o
-OBJS += $(OWLWARE)/Source/FlashStorage.o	      
-OBJS += $(OWLWARE)/Source/ServiceCall.o
-OBJS += $(OWLWARE)/Source/message.o		      
-OBJS += $(OWLWARE)/Source/StorageBlock.o
-OBJS += $(OWLWARE)/Source/MidiController.o
+CPP_SRC += PatchProcessor.cpp
+CPP_SRC += FloatArray.cpp
+CPP_SRC += StompBox.cpp
+C_SRC += basicmaths.c
 
-OBJS += $(OWLWARE)/LibSource/PatchProcessor.o
-OBJS += $(OWLWARE)/LibSource/FloatArray.o
-OBJS += $(OWLWARE)/LibSource/StompBox.o
-OBJS += $(OWLWARE)/LibSource/basicmaths.o
+# C_SRC += font.c
+# C_SRC += gpio.c
+
+# # OBJS += $(OPENWARE)/Source/font.o
+# # OBJS += $(OPENWARE)/Source/gpio.o
+# OBJS += $(OPENWARE)/Source/crc32.o
+# OBJS += $(OPENWARE)/Source/eepromcontrol.o
+# OBJS += $(OPENWARE)/Source/errorhandlers.o
+# # OBJS += $(OPENWARE)/Source/font.o
+# # OBJS += $(OPENWARE)/Source/gpio.o
+# OBJS += $(OPENWARE)/Source/sysex.o
+# OBJS += $(OPENWARE)/Source/sramalloc.o
+# OBJS += $(OPENWARE)/Source/cs4272.o
+# OBJS += $(OPENWARE)/Source/sdram.o
+# OBJS += $(OPENWARE)/Source/usbd_midi.o
+# OBJS += $(OPENWARE)/Source/usbd_midi_if.o
+
+# OBJS += $(OPENWARE)/Source/ApplicationSettings.o
+# OBJS += $(OPENWARE)/Source/MidiHandler.o
+# OBJS += $(OPENWARE)/Source/Codec.o
+# OBJS += $(OPENWARE)/Source/MidiReader.o
+# OBJS += $(OPENWARE)/Source/DigitalBusHandler.o       
+# OBJS += $(OPENWARE)/Source/operators.o
+# OBJS += $(OPENWARE)/Source/DigitalBusReader.o	      
+# OBJS += $(OPENWARE)/Source/Owl.o
+# OBJS += $(OPENWARE)/Source/DigitalBusStreamReader.o  
+# OBJS += $(OPENWARE)/Source/PatchRegistry.o
+# OBJS += $(OPENWARE)/Source/FactoryPatches.o	      
+# OBJS += $(OPENWARE)/Source/ProgramManager.o
+# OBJS += $(OPENWARE)/Source/FlashStorage.o	      
+# OBJS += $(OPENWARE)/Source/ServiceCall.o
+# OBJS += $(OPENWARE)/Source/message.o		      
+# OBJS += $(OPENWARE)/Source/StorageBlock.o
+# OBJS += $(OPENWARE)/Source/MidiController.o
+
+# OBJS += $(OPENWARE)/LibSource/PatchProcessor.o
+# OBJS += $(OPENWARE)/LibSource/FloatArray.o
+# OBJS += $(OPENWARE)/LibSource/StompBox.o
+# OBJS += $(OPENWARE)/LibSource/basicmaths.o
 
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_rcc.o
@@ -79,8 +116,8 @@ OBJS += $(USB_DEVICE_FILE)/Class/AUDIO/Src/usbd_audio.o
 # OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
 # OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
 
-# OBJS += $(OWLWARE)/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f439xx.o
-OBJS += $(OWLWARE)/Libraries/syscalls/libnosys_gnu.o
+# OBJS += $(OPENWARE)/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f439xx.o
+OBJS += $(OPENWARE)/Libraries/syscalls/libnosys_gnu.o
 
 ########
 
