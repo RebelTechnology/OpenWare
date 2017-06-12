@@ -2,25 +2,21 @@
 #include "errorhandlers.h"
 #include "device.h"
 
+#ifdef __cplusplus
  extern "C" {
+#endif
    void codec_init(SPI_HandleTypeDef*);
    void codec_write(uint8_t reg, uint8_t data);
    void codec_bypass(int bypass);
    void codec_set_volume(int8_t volume);
- }
+#ifdef __cplusplus
+}
+#endif
 
 #define CODEC_BUFFER_HALFSIZE (CODEC_BUFFER_SIZE/2)
 #define CODEC_BUFFER_QUARTSIZE (CODEC_BUFFER_SIZE/4)
 static int32_t txbuf[CODEC_BUFFER_SIZE];
 static int32_t rxbuf[CODEC_BUFFER_SIZE];
-
-extern "C" {
-SAI_HandleTypeDef hsai_BlockA1;
-SAI_HandleTypeDef hsai_BlockB1;
-DMA_HandleTypeDef hdma_sai1_a;
-DMA_HandleTypeDef hdma_sai1_b;
-SPI_HandleTypeDef hspi4;
-}
 
 void Codec::ramp(uint32_t max){
   uint32_t incr = max/CODEC_BUFFER_SIZE;
@@ -28,29 +24,8 @@ void Codec::ramp(uint32_t max){
     txbuf[i] = i*incr;
 }
 
-void Codec::reset(){
-  // HAL_SAI_MspInit() is called from HAL_SAI_Init() in MX_SAI1_Init()
-  // MX_SAI1_Init();
-  // MX_SPI4_Init();
-
-  __HAL_SAI_ENABLE(&hsai_BlockA1);
-  __HAL_SAI_ENABLE(&hsai_BlockB1);
-  codec_init(&hspi4);
-
-  // configure i2s mode for DAC and ADC, hp filters off
-  codec_write(0x01, (1<<3) | (1<<5) | 1);
-  codec_write(0x06, (1<<4) | (1<<1) | 1) ;
-  // codec_write(0x01, (1<<3) | (1<<5));
-  // codec_write(0x06, (1<<4));
-}
-
 void Codec::clear(){
   set(0);
-}
-
-void Codec::txrx(){
-  HAL_SAI_DMAStop(&hsai_BlockA1);
-  HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)rxbuf, CODEC_BUFFER_SIZE);
 }
 
 int32_t Codec::getMin(){
@@ -92,6 +67,86 @@ void Codec::mute(bool doMute){
   //   codec_set_volume(128);
   // todo!
   // codec_bypass(doBypass);
+}
+
+#ifdef USE_WM8731
+
+extern "C" {
+  extern I2S_HandleTypeDef hi2s2;
+  extern SPI_HandleTypeDef hspi1;
+  extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
+}
+
+void Codec::reset(){
+  __HAL_I2S_ENABLE(&hi2s2);
+  codec_init(&hspi1);
+  // configure i2s mode for DAC and ADC, hp filters off
+  codec_write(0x01, (1<<3) | (1<<5) | 1);
+  codec_write(0x06, (1<<4) | (1<<1) | 1) ;
+}
+
+void Codec::stop(){
+  HAL_I2S_DMAStop(&hi2s2);
+}
+
+void Codec::start(){
+  HAL_StatusTypeDef ret;
+  // when a 24-bit data frame or a 32-bit data frame is selected
+  // the Size parameter means the number of 16-bit data length
+  ret = HAL_I2S_Receive_DMA(&hi2s2, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE*2);
+  ASSERT(ret == HAL_OK, "Failed to start SAI RX DMA");
+  ret = HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)txbuf, CODEC_BUFFER_SIZE*2);
+  ASSERT(ret == HAL_OK, "Failed to start SAI TX DMA");
+}
+
+void Codec::pause(){
+  HAL_I2S_DMAPause(&hi2s2);
+}
+
+void Codec::resume(){
+  HAL_I2S_DMAResume(&hi2s2);
+}
+
+extern "C"{
+  void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
+    audioCallback(rxbuf, txbuf, CODEC_BUFFER_QUARTSIZE);
+  }
+  void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s){
+    audioCallback(rxbuf+CODEC_BUFFER_HALFSIZE, txbuf+CODEC_BUFFER_HALFSIZE, CODEC_BUFFER_QUARTSIZE);
+  }
+
+  void HAL_I2S_ErrorCallback(I2S_HandleTypeDef *hi2s){
+    error(CONFIG_ERROR, "SAI DMA Error");
+  }
+}
+#endif /* OWL_MODULAR */
+
+#ifdef USE_CS4271
+extern "C" {
+SAI_HandleTypeDef hsai_BlockA1;
+SAI_HandleTypeDef hsai_BlockB1;
+SPI_HandleTypeDef hspi4;
+}
+
+void Codec::reset(){
+  // HAL_SAI_MspInit() is called from HAL_SAI_Init() in MX_SAI1_Init()
+  // MX_SAI1_Init();
+  // MX_SPI4_Init();
+
+  __HAL_SAI_ENABLE(&hsai_BlockA1);
+  __HAL_SAI_ENABLE(&hsai_BlockB1);
+  codec_init(&hspi4);
+
+  // configure i2s mode for DAC and ADC, hp filters off
+  codec_write(0x01, (1<<3) | (1<<5) | 1);
+  codec_write(0x06, (1<<4) | (1<<1) | 1) ;
+  // codec_write(0x01, (1<<3) | (1<<5));
+  // codec_write(0x06, (1<<4));
+}
+
+void Codec::txrx(){
+  HAL_SAI_DMAStop(&hsai_BlockA1);
+  HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)rxbuf, CODEC_BUFFER_SIZE);
 }
 
 void Codec::stop(){
@@ -137,3 +192,4 @@ void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
 }
 
 }
+#endif /* OWL_TESSERACT */

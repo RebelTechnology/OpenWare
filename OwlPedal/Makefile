@@ -1,4 +1,4 @@
-PROJECT = Tesseract
+PROJECT = OwlPedal
 
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
@@ -17,7 +17,7 @@ endif
 LDFLAGS += -Wl,--gc-sections
 # LDSCRIPT = Source/STM32F439ZG_FLASH.ld
 # LDSCRIPT = Source/flash.ld
-LDSCRIPT = Src/flash.ld
+LDSCRIPT = Src/flash2.ld
 
 CPPFLAGS += --specs=nano.specs
 CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
@@ -30,16 +30,14 @@ CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=c++11
 CFLAGS  += -std=gnu99
 
-C_SRC = $(notdir $(wildcard Src/*.c)) # $(notdir $(wildcard ../Source/*.c))
-CPP_SRC = $(notdir $(wildcard Src/*.cpp)) # $(notdir $(wildcard ../Source/*.cpp))
-C_SRC += sdram.c
-C_SRC += cs4272.c
+C_SRC = $(notdir $(wildcard Src/*.c)) $(notdir $(wildcard Source/*.c))
+CPP_SRC = $(notdir $(wildcard Src/*.cpp)) $(notdir $(wildcard Source/*.cpp))
 
 include $(OPENWARE)/sources.mk
 
 OBJS = $(C_SRC:%.c=Build/%.o) $(CPP_SRC:%.cpp=Build/%.o)
 # OBJS += $(BUILD)/startup_stm32f439xx.o
-OBJS += $(BUILD)/startup_stm32f439xx.o
+OBJS += $(BUILD)/startup_stm32f407xx.o
 
 include $(OPENWARE)/libs.mk
 include $(OPENWARE)/f4.mk

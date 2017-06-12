@@ -1,6 +1,9 @@
-# name of executable
+# Name of executables
 ELF=$(BUILD)/$(PROJECT).elf
 BIN=$(BUILD)/$(PROJECT).bin
+
+# Flags
+CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
 
 # Tool path
 TOOLROOT ?= ~/devel/OwlWare/Tools/gcc-arm-none-eabi-5_2-2015q4/bin

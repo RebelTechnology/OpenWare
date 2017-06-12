@@ -1,45 +1,6 @@
 # object files
-# OBJS += $(PERIPH) 
 
-# C_SRC += font.c
-# C_SRC += gpio.c
-
-# # OBJS += $(OPENWARE)/Source/font.o
-# # OBJS += $(OPENWARE)/Source/gpio.o
-# OBJS += $(OPENWARE)/Source/crc32.o
-# OBJS += $(OPENWARE)/Source/eepromcontrol.o
-# OBJS += $(OPENWARE)/Source/errorhandlers.o
-# # OBJS += $(OPENWARE)/Source/font.o
-# # OBJS += $(OPENWARE)/Source/gpio.o
-# OBJS += $(OPENWARE)/Source/sysex.o
-# OBJS += $(OPENWARE)/Source/sramalloc.o
-# OBJS += $(OPENWARE)/Source/cs4272.o
-# OBJS += $(OPENWARE)/Source/sdram.o
-# OBJS += $(OPENWARE)/Source/usbd_midi.o
-# OBJS += $(OPENWARE)/Source/usbd_midi_if.o
-
-# OBJS += $(OPENWARE)/Source/ApplicationSettings.o
-# OBJS += $(OPENWARE)/Source/MidiHandler.o
-# OBJS += $(OPENWARE)/Source/Codec.o
-# OBJS += $(OPENWARE)/Source/MidiReader.o
-# OBJS += $(OPENWARE)/Source/DigitalBusHandler.o       
-# OBJS += $(OPENWARE)/Source/operators.o
-# OBJS += $(OPENWARE)/Source/DigitalBusReader.o	      
-# OBJS += $(OPENWARE)/Source/Owl.o
-# OBJS += $(OPENWARE)/Source/DigitalBusStreamReader.o  
-# OBJS += $(OPENWARE)/Source/PatchRegistry.o
-# OBJS += $(OPENWARE)/Source/FactoryPatches.o	      
-# OBJS += $(OPENWARE)/Source/ProgramManager.o
-# OBJS += $(OPENWARE)/Source/FlashStorage.o	      
-# OBJS += $(OPENWARE)/Source/ServiceCall.o
-# OBJS += $(OPENWARE)/Source/message.o		      
-# OBJS += $(OPENWARE)/Source/StorageBlock.o
-# OBJS += $(OPENWARE)/Source/MidiController.o
-
-# OBJS += $(OPENWARE)/LibSource/PatchProcessor.o
-# OBJS += $(OPENWARE)/LibSource/FloatArray.o
-# OBJS += $(OPENWARE)/LibSource/StompBox.o
-# OBJS += $(OPENWARE)/LibSource/basicmaths.o
+OBJS += $(OPENWARE)/Libraries/syscalls/libnosys_gnu.o
 
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_rcc.o
@@ -72,21 +33,20 @@ OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sdram.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fmc.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_ll_usb.o
 
+### USB Device Library ###
 OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_core.o
 OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_ioreq.o
 OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_ctlreq.o
 OBJS += $(USB_DEVICE_FILE)/Class/AUDIO/Src/usbd_audio.o
 
+### USB Host Library ###
 # OBJS += $(USB_HOST_FILE)/Core/Src/usbh_core.o
 # OBJS += $(USB_HOST_FILE)/Core/Src/usbh_pipes.o
 # OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
 # OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
 # OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
 
-# OBJS += $(OPENWARE)/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f439xx.o
-OBJS += $(OPENWARE)/Libraries/syscalls/libnosys_gnu.o
-
-########
+### CMSIS DSP Library ####
 
 # OBJS += $(USB_DEVICE) $(USB_OTG)
 OBJS += $(DSPLIB)/FastMathFunctions/arm_sin_f32.o

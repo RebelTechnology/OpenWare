@@ -2,10 +2,6 @@ PROJECT = MicroLab
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-ifndef CONFIG
-  CONFIG = Debug
-endif
-
 ifeq ($(CONFIG),Debug)
   CPPFLAGS = -g -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g
@@ -23,8 +19,6 @@ LDFLAGS += -Wl,--gc-sections
 # LDSCRIPT = Source/flash.ld
 LDSCRIPT = Src/flash.ld
 
-CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
-
 CPPFLAGS += --specs=nano.specs
 CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
@@ -38,6 +32,8 @@ CFLAGS  += -std=gnu99
 
 C_SRC = $(notdir $(wildcard Src/*.c)) # $(notdir $(wildcard ../Source/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp)) # $(notdir $(wildcard ../Source/*.cpp))
+C_SRC += sdram.c
+C_SRC += cs4272.c
 
 include $(OPENWARE)/sources.mk
 

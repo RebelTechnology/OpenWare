@@ -1,18 +1,27 @@
 OPENWARE = $(CURDIR)
 
-export OPENWARE
+# Debug / Release
+ifndef CONFIG
+  CONFIG = Debug
+endif
 
-all: tesseract microlab
+export OPENWARE CONFIG
+
+all: tesseract microlab owlpedal
 
 tesseract:
-	$(MAKE) -C Tesseract all
+	@$(MAKE) -C Tesseract all
 
 
 microlab:
-	$(MAKE) -C MicroLab all
+	@$(MAKE) -C MicroLab all
+
+owlpedal:
+	@$(MAKE) -C OwlPedal all
 
 clean:
-	$(MAKE) -C Tesseract clean
-	$(MAKE) -C MicroLab clean
+	@$(MAKE) -C Tesseract clean
+	@$(MAKE) -C MicroLab clean
+	@$(MAKE) -C OwlPedal clean
 
 

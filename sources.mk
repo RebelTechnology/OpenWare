@@ -4,8 +4,6 @@ C_SRC += eepromcontrol.c
 C_SRC += errorhandlers.c
 C_SRC += sysex.c
 C_SRC += sramalloc.c
-C_SRC += cs4272.c
-C_SRC += sdram.c
 C_SRC += usbd_midi.c
 C_SRC += usbd_midi_if.c
 CPP_SRC += ApplicationSettings.cpp
@@ -31,3 +29,6 @@ CPP_SRC += PatchProcessor.cpp
 CPP_SRC += FloatArray.cpp
 CPP_SRC += StompBox.cpp
 C_SRC += basicmaths.c
+
+# C_SRC += font.c
+# C_SRC += gpio.c
