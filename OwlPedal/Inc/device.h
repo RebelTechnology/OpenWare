@@ -14,6 +14,7 @@
 #define ADC_C 2
 #define ADC_D 3
 #define USE_WM8731
+#define USE_USBD_FS
 #endif
 
 #ifdef OWL_MODULAR
@@ -23,6 +24,8 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
+#define USE_WM8731
+#define USE_USBD_FS
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)

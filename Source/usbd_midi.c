@@ -1,7 +1,4 @@
-/* simple USB Midi IN device driver */
-/* inspired from mbed implementation */
-/* TODO: sysex support */
-
+#include "device.h"
 #include "usbd_midi.h"
 #include "usbd_desc.h"
 #include "usbd_ctlreq.h"
@@ -388,22 +385,40 @@ uint8_t  *USBD_Midi_DeviceQualifierDescriptor (uint16_t *length)
   return USBD_Midi_DeviceQualifierDesc;
 }
 
-extern USBD_HandleTypeDef hUsbDeviceHS;
 static volatile int midi_tx_lock = 0;
+
+#ifdef USE_USBD_HS
 void midi_tx_usb_buffer(uint8_t* buf, uint32_t len) {
+  extern USBD_HandleTypeDef hUsbDeviceHS;
   if(hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED){
     while(midi_tx_lock);
     midi_tx_lock = 1;
     USBD_LL_Transmit(&hUsbDeviceHS, MIDI_IN_EP, buf, len);
   }
 }
+uint8_t midi_device_connected(void){
+  extern USBD_HandleTypeDef hUsbDeviceHS;
+  return hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED;
+}
+#endif /* USE_USBD_HS */
+
+#ifdef USE_USBD_FS
+void midi_tx_usb_buffer(uint8_t* buf, uint32_t len) {
+  extern USBD_HandleTypeDef hUsbDeviceFS;
+  if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED){
+    while(midi_tx_lock);
+    midi_tx_lock = 1;
+    USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, buf, len);
+  }
+}
+uint8_t midi_device_connected(void){
+  extern USBD_HandleTypeDef hUsbDeviceFS;
+  return hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED;
+}
+#endif /* USE_USBD_FS */
 
 uint8_t midi_device_ready(void){
   return midi_tx_lock == 0;
-}
-
-uint8_t midi_device_connected(void){
-  return hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED;
 }
 
 

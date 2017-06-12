@@ -5,8 +5,6 @@ OBJS += $(OPENWARE)/Libraries/syscalls/libnosys_gnu.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_rcc.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_dac.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c_ex.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_dma.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_adc.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_gpio.o
@@ -32,6 +30,13 @@ OBJS += $(DRIVERS)/Src/stm32f4xx_hal_pcd_ex.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sdram.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fmc.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_ll_usb.o
+
+OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sram.o
+OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fsmc.o
+OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2s.o
+OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2s_ex.o
+OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c.o
+OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c_ex.o
 
 ### USB Device Library ###
 OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_core.o

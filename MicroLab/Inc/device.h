@@ -21,25 +21,8 @@
 #define LED2 2
 #define LED3 3
 #define LED4 4
-#endif
-
-#ifdef OWL_TESSERACT
-#define PUSHBUTTON_Pin GP7_Pin
-#define PUSHBUTTON_GPIO_Port GP7_GPIO_Port
-#endif
-
-#if defined OWL_MODULAR || defined OWL_PEDAL
-#define OWL1
-#else
-#define OWL2
-#endif
-
-#ifdef OWL1
-#define USE_WM8731
-#endif
-
-#ifdef OWL2
 #define USE_CS4271
+#define USE_USBD_HS
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)

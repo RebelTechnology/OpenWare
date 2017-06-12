@@ -52,6 +52,9 @@
 
 /* USER CODE BEGIN Includes */
 
+/* missing include */
+#include "stm32f4xx_ll_fsmc.h"
+
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/

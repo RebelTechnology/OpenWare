@@ -11,9 +11,10 @@
 #define ADC_B 3
 #define ADC_C 2
 #define ADC_D 0
-#define USE_CS4271
 #define PUSHBUTTON_Pin GP7_Pin
 #define PUSHBUTTON_GPIO_Port GP7_GPIO_Port
+#define USE_CS4271
+#define USE_USBD_HS
 #endif
 
 #if defined OWL_MODULAR || defined OWL_PEDAL

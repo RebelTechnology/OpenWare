@@ -14,11 +14,9 @@ ifeq ($(CONFIG),Release)
   CFLAGS   = -O2
 endif
 
+# Compilation Flags
 LDFLAGS += -Wl,--gc-sections
-# LDSCRIPT = Source/STM32F439ZG_FLASH.ld
-# LDSCRIPT = Source/flash.ld
 LDSCRIPT = Src/flash2.ld
-
 CPPFLAGS += --specs=nano.specs
 CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
@@ -29,9 +27,15 @@ CPPFLAGS += -ffunction-sections
 CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=c++11
 CFLAGS  += -std=gnu99
+ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+ARCH_FLAGS += -fsingle-precision-constant
+DEF_FLAGS = -DSTM32F407xx -DARM_MATH_CM4
+DEF_FLAGS += -D__FPU_PRESENT=1U
 
 C_SRC = $(notdir $(wildcard Src/*.c)) $(notdir $(wildcard Source/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp)) $(notdir $(wildcard Source/*.cpp))
+C_SRC += wm8731.c
+
 
 include $(OPENWARE)/sources.mk
 

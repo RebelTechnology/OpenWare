@@ -14,12 +14,6 @@ USB_HOST_FILE=$(BUILDROOT)/Middlewares/ST/STM32_USB_Host_Library
 USB_OTG_FILE=$(LIBROOT)/STM32_USB_OTG_Driver
 FREERTOS_DIR=$(BUILDROOT)/Middlewares/Third_Party/FreeRTOS/Source
 
-# Compilation Flags
-ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
-ARCH_FLAGS += -fsingle-precision-constant
-DEF_FLAGS = -DSTM32F439xx -DARM_MATH_CM4
-DEF_FLAGS += -D__FPU_PRESENT=1U
-
 INC_FLAGS = -I$(CMSIS_CORE) -I$(CMSIS_DEVICE)/Include -I$(DRIVERS)/Inc 
 INC_FLAGS += -I$(BUILDROOT)/Source -I$(BUILDROOT)/Inc
 INC_FLAGS += -I$(USB_HOST_FILE)/Core/Inc
