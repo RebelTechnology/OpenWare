@@ -19,12 +19,15 @@ const char* getErrorMessage(){
 }
 
 void setErrorStatus(int8_t err){
-  errorcode = err;
+  if(errorcode == NO_ERROR || err == NO_ERROR)
+    errorcode = err;
 }
 
 void setErrorMessage(int8_t err, const char* msg){
-  errorcode = err;
-  errormsg = msg;
+  if(errorcode == NO_ERROR || err == NO_ERROR){
+    errorcode = err;
+    errormsg = msg;
+  }
 }
 
 /* exception handlers - so we know what's failing */
