@@ -1,7 +1,5 @@
 # object files
 
-OBJS += $(OPENWARE)/Libraries/syscalls/libnosys_gnu.o
-
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_rcc.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_dac.o

@@ -28,6 +28,7 @@ vpath %.c $(OPENWARE)/Source
 vpath %.cpp $(OPENWARE)/Source
 vpath %.c $(OPENWARE)/LibSource
 vpath %.cpp $(OPENWARE)/LibSource
+vpath %.c $(OPENWARE)/Libraries/syscalls
 
 all: bin
 
