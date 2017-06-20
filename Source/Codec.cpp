@@ -80,9 +80,6 @@ extern "C" {
 void Codec::reset(){
   __HAL_I2S_ENABLE(&hi2s2);
   codec_init(&hspi1);
-  // configure i2s mode for DAC and ADC, hp filters off
-  codec_write(0x01, (1<<3) | (1<<5) | 1);
-  codec_write(0x06, (1<<4) | (1<<1) | 1) ;
 }
 
 void Codec::stop(){
@@ -137,9 +134,12 @@ void Codec::reset(){
   __HAL_SAI_ENABLE(&hsai_BlockB1);
   codec_init(&hspi4);
 
-  // configure i2s mode for DAC and ADC, hp filters off
-  codec_write(0x01, (1<<3) | (1<<5) | 1);
-  codec_write(0x06, (1<<4) | (1<<1) | 1) ;
+  codec_write(0x01, (1<<3) | (1<<5) | 1); // i2s mode for DAC and ADC
+#ifdef OWL_TESSERACT
+  codec_write(0x06, 0x10 | 0x03 ); // hp filters off
+#else
+  codec_write(0x06, 0x10); // hp filters on
+#endif
   // codec_write(0x01, (1<<3) | (1<<5));
   // codec_write(0x06, (1<<4));
 }

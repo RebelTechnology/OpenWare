@@ -5,8 +5,9 @@ volatile int8_t errorcode = 0;
 const char* errormsg = 0;
 
 void error(int8_t code, const char* reason){
-  errorcode = code;
-  errormsg = reason;
+  setErrorMessage(code, reason);
+  /* errorcode = code; */
+  /* errormsg = reason; */
   /* assert_param(0); */
 }
 

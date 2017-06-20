@@ -27,10 +27,10 @@
 #define CODEC_DAC_CONTROL_REG						(uint8_t)0x02
 #define CODEC_DAC_CTRL_AUTO_MUTE					(uint8_t)0x80
 #define CODEC_DAC_CTRL_FILTER_SEL					(uint8_t)0x40
-#define CODEC_DAC_CTRL_DE_EMPHASIS					(uint8_t)(((x) & 0x03) << 4)
+#define CODEC_DAC_CTRL_DE_EMPHASIS(x)					(uint8_t)(((x) & 0x03) << 4)
 #define CODEC_DAC_CTRL_VOL_RAMP_UP					(uint8_t)0x08
 #define CODEC_DAC_CTRL_VOL_RAMP_DN					(uint8_t)0x04
-#define CODEC_DAC_CTRL_INV_POL						(uint8_t)(((x) & 0x03) << 0)
+#define CODEC_DAC_CTRL_INV_POL(x)					(uint8_t)(((x) & 0x03) << 0)
 
 // Section 8.3 DAC Volume and Mixing
 #define CODEC_DAC_VOL_REG						(uint8_t)0x03
@@ -55,8 +55,8 @@
 #define CODEC_ADC_CTRL							(uint8_t)0x06
 #define CODEC_ADC_CTRL_DITHER						(uint8_t)0x20
 #define CODEC_ADC_CTRL_SER_FORMAT					(uint8_t)0x10
-#define CODEC_ADC_CTRL_MUTE						(uint8_t)(((x) & 0x03) << 2)
-#define CODEC_ADC_CTRL_HPF						(uint8_t)(((x) & 0x03) << 0)
+#define CODEC_ADC_CTRL_MUTE(x)						(uint8_t)(((x) & 0x03) << 2)
+#define CODEC_ADC_CTRL_HPF(x)						(uint8_t)(((x) & 0x03) << 0)
 
 // Section 8.7 Mode Control 2
 #define CODEC_MODE_CTRL2_REG						(uint8_t)0x07
@@ -68,7 +68,7 @@
 
 // Section 8.8 Chip ID
 #define CODEC_CHIP_ID_REG						(uint8_t)0x08
-#define CODEC_CHIP_ID_PART						(uint8_t)(((x) & 0x0F) << 4)
-#define CODEC_CHIP_ID_REV						(uint8_t)(((x) & 0x0F) << 0)
+#define CODEC_CHIP_ID_PART(x)						(uint8_t)(((x) & 0x0F) << 4)
+#define CODEC_CHIP_ID_REV(x)						(uint8_t)(((x) & 0x0F) << 0)
 
 #endif
