@@ -475,7 +475,7 @@ uint8_t ProgramManager::getProgramIndex(){
 }
 
 extern "C" {
-#ifdef OWL_PLAYERF7
+#if 0 // defined in Project/Src/freertos.c
   static StaticTask_t xIdleTaskTCBBuffer;// CCM;
   static StackType_t xIdleStack[IDLE_TASK_STACK_SIZE];// CCM;
   void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize) {
