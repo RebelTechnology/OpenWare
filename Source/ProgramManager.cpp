@@ -144,8 +144,8 @@ void updateParameters(){
 
 /* called by the program when a block has been processed */
 void onProgramReady(){
-#ifdef DEBUG_DWT
   ProgramVector* pv = getProgramVector();
+#ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
   uint32_t ulNotifiedValue = ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
@@ -475,13 +475,15 @@ uint8_t ProgramManager::getProgramIndex(){
 }
 
 extern "C" {
-  // static StaticTask_t xIdleTaskTCBBuffer;// CCM;
-  // static StackType_t xIdleStack[IDLE_TASK_STACK_SIZE];// CCM;
-  // void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize) {
-  //   *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
-  //   *ppxIdleTaskStackBuffer = &xIdleStack[0];
-  //   *pulIdleTaskStackSize = IDLE_TASK_STACK_SIZE;
-  // }
+#ifdef OWL_PLAYERF7
+  static StaticTask_t xIdleTaskTCBBuffer;// CCM;
+  static StackType_t xIdleStack[IDLE_TASK_STACK_SIZE];// CCM;
+  void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize) {
+    *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+    *ppxIdleTaskStackBuffer = &xIdleStack[0];
+    *pulIdleTaskStackSize = IDLE_TASK_STACK_SIZE;
+  }
+#endif
   void vApplicationMallocFailedHook(void) {
     // taskDISABLE_INTERRUPTS();
     program.exitProgram(false);

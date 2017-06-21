@@ -211,6 +211,7 @@ static void HAL_FMC_MspInit(void){
   /* USER CODE END FMC_MspInit 1 */
 }
 
+#ifndef OWL_PLAYERF7
 void HAL_SDRAM_MspInit(SDRAM_HandleTypeDef* hsdram){
   /* USER CODE BEGIN SDRAM_MspInit 0 */
 
@@ -220,6 +221,7 @@ void HAL_SDRAM_MspInit(SDRAM_HandleTypeDef* hsdram){
 
   /* USER CODE END SDRAM_MspInit 1 */
 }
+#endif
 
 static uint32_t FMC_DeInitialized = 0;
 
@@ -297,6 +299,7 @@ static void HAL_FMC_MspDeInit(void){
   /* USER CODE END FMC_MspDeInit 1 */
 }
 
+#ifndef OWL_PLAYERF7
 void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
   /* USER CODE BEGIN SDRAM_MspDeInit 0 */
 
@@ -306,3 +309,4 @@ void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
 
   /* USER CODE END SDRAM_MspDeInit 1 */
 }
+#endif

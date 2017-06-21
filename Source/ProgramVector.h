@@ -7,7 +7,7 @@
 #include "ProgramVectorV13.h"
 #endif
 
-#if defined OWL_PLAYER
+#if defined OWL_PLAYERF7 || defined  OWL_PLAYERF4
 #include "ProgramVectorV14.h"
 #endif
 

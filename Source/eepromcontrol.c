@@ -1,8 +1,6 @@
 #include "eepromcontrol.h"
 #include <string.h> /* for memcpy */
 #include "device.h"
-#include "stm32f4xx_hal_flash.h"
-#include "stm32f4xx_hal_flash_ex.h"
 
 #define EEPROM_SECTOR_MASK               ((uint32_t)0xFFFFFF07)
 
@@ -29,7 +27,9 @@ int eeprom_wait(){
 int eeprom_erase_sector(uint32_t sector) {
   FLASH_EraseInitTypeDef cfg;
   cfg.TypeErase = FLASH_TYPEERASE_SECTORS;
+#ifndef OWL_PLAYERF7
   cfg.Banks = FLASH_BANK_1;
+#endif
   cfg.Sector = sector;
   cfg.NbSectors = 1;
   cfg.VoltageRange = FLASH_VOLTAGE_RANGE_3;
@@ -103,6 +103,7 @@ int eeprom_erase(uint32_t address){
     ret = eeprom_erase_sector(FLASH_SECTOR_6);
   else if(address < ADDR_FLASH_SECTOR_8)
     ret = eeprom_erase_sector(FLASH_SECTOR_7);
+#ifndef OWL_PLAYERF7
   else if(address < ADDR_FLASH_SECTOR_9)
     ret = eeprom_erase_sector(FLASH_SECTOR_8);
   else if(address < ADDR_FLASH_SECTOR_10)
@@ -111,6 +112,7 @@ int eeprom_erase(uint32_t address){
     ret = eeprom_erase_sector(FLASH_SECTOR_10);
   else if(address < 0x08100000)
     ret = eeprom_erase_sector(FLASH_SECTOR_11);
+#endif
   else
     ret = -1;
   return ret;
