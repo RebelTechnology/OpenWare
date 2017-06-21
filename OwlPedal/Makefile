@@ -42,5 +42,4 @@ include $(OPENWARE)/sources.mk
 OBJS = $(C_SRC:%.c=Build/%.o) $(CPP_SRC:%.cpp=Build/%.o)
 OBJS += $(BUILD)/startup_stm32f407xx.o
 
-include $(OPENWARE)/libs.mk
 include $(OPENWARE)/f4.mk

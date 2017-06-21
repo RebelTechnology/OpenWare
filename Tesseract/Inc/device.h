@@ -1,4 +1,6 @@
 #include "main.h"
+#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_flash_ex.h"
 
 #define OWL_TESSERACT
 /* #define OWL_QUADFM */
@@ -15,11 +17,6 @@
 #define PUSHBUTTON_GPIO_Port GP7_GPIO_Port
 #define USE_CS4271
 #define USE_USBD_HS
-#endif
-
-#if defined OWL_MODULAR || defined OWL_PEDAL
-#define OWL1
-#else
 #define OWL2
 #endif
 
@@ -27,8 +24,6 @@
 #define EEPROM_PAGE_SIZE             (128*1024)
 #define EEPROM_PAGE_END              ((uint32_t)0x08100000)
 #define STORAGE_MAX_BLOCKS           64
-
-#include "stm32f4xx_hal.h"
 
 #define USE_CODEC
 #define DEBUG_DWT

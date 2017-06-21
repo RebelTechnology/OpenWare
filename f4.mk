@@ -30,4 +30,5 @@ CFLAGS += $(ARCH_FLAGS) $(INC_FLAGS) $(DEF_FLAGS)
 CXXFLAGS += $(ARCH_FLAGS) $(INC_FLAGS) $(DEF_FLAGS)
 LDFLAGS += -T$(LDSCRIPT) $(ARCH_FLAGS)
 
+include $(OPENWARE)/f4-libs.mk
 include $(OPENWARE)/common.mk
