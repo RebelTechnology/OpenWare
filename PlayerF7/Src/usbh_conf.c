@@ -4,6 +4,11 @@
   * @version         : v1.0_Cube
   * @brief           : This file implements the board support package for the USB host library
   ******************************************************************************
+  * This notice applies to any and all portions of this file
+  * that are not between comment pairs USER CODE BEGIN and
+  * USER CODE END. Other portions of this file, whether 
+  * inserted by the user or by software development tools
+  * are owned by their respective copyright owners.
   *
   * Copyright (c) 2017 STMicroelectronics International N.V. 
   * All rights reserved.
@@ -45,7 +50,7 @@
 #include "usbh_core.h"
 
 HCD_HandleTypeDef hhcd_USB_OTG_FS;
-void Error_Handler(void);
+void _Error_Handler(char * file, int line);
 
 /*******************************************************************************
                        LL Driver Callbacks (HCD -> USB Host Library)
@@ -183,7 +188,7 @@ USBH_StatusTypeDef  USBH_LL_Init (USBH_HandleTypeDef *phost)
   hhcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
   if (HAL_HCD_Init(&hhcd_USB_OTG_FS) != HAL_OK)
   {
-    Error_Handler();
+    _Error_Handler(__FILE__, __LINE__);
   }
 
   USBH_LL_SetTimer (phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG_FS));

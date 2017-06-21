@@ -3,6 +3,11 @@
   * File Name          : main.h
   * Description        : This file contains the common defines of the application
   ******************************************************************************
+  * This notice applies to any and all portions of this file
+  * that are not between comment pairs USER CODE BEGIN and
+  * USER CODE END. Other portions of this file, whether 
+  * inserted by the user or by software development tools
+  * are owned by their respective copyright owners.
   *
   * Copyright (c) 2017 STMicroelectronics International N.V. 
   * All rights reserved.
@@ -93,8 +98,10 @@
 #define ENC1_CH1_GPIO_Port GPIOA
 #define TR_IN_B_Pin GPIO_PIN_10
 #define TR_IN_B_GPIO_Port GPIOC
+#define TR_IN_B_EXTI_IRQn EXTI15_10_IRQn
 #define TR_IN_A_Pin GPIO_PIN_11
 #define TR_IN_A_GPIO_Port GPIOC
+#define TR_IN_A_EXTI_IRQn EXTI15_10_IRQn
 #define TR_OUT_A_Pin GPIO_PIN_12
 #define TR_OUT_A_GPIO_Port GPIOC
 #define TR_OUT_B_Pin GPIO_PIN_2
@@ -105,16 +112,23 @@
 #define CS_RST_GPIO_Port GPIOG
 #define ENC1_SW_Pin GPIO_PIN_14
 #define ENC1_SW_GPIO_Port GPIOG
+#define ENC1_SW_EXTI_IRQn EXTI15_10_IRQn
 #define ENC1_CH2_Pin GPIO_PIN_3
 #define ENC1_CH2_GPIO_Port GPIOB
 #define ENC2_SW_Pin GPIO_PIN_4
 #define ENC2_SW_GPIO_Port GPIOB
+#define ENC2_SW_EXTI_IRQn EXTI4_IRQn
+
 /* USER CODE BEGIN Private defines */
 
 #define USB_DM_Pin GPIO_PIN_14
 #define USB_DP_Pin GPIO_PIN_15
 
 /* USER CODE END Private defines */
+
+void _Error_Handler(char *, int);
+
+#define Error_Handler() _Error_Handler(__FILE__, __LINE__)
 
 /**
   * @}

@@ -51,6 +51,7 @@
 #define HAL_MODULE_ENABLED  
 
 #define HAL_ADC_MODULE_ENABLED
+/* #define HAL_CRYP_MODULE_ENABLED   */
 /* #define HAL_CAN_MODULE_ENABLED   */
 /* #define HAL_CEC_MODULE_ENABLED   */
 /* #define HAL_CRC_MODULE_ENABLED   */
@@ -422,10 +423,6 @@
 #ifdef HAL_SMBUS_MODULE_ENABLED
  #include "stm32f7xx_hal_smbus.h"
 #endif /* HAL_SMBUS_MODULE_ENABLED */
-
-#ifdef HAL_MMC_MODULE_ENABLED
- #include "stm32f7xx_hal_mmc.h"
-#endif /* HAL_MMC_MODULE_ENABLED */
 
 /* Exported macro ------------------------------------------------------------*/
 #ifdef  USE_FULL_ASSERT
