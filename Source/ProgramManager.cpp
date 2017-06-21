@@ -13,6 +13,18 @@
 #include "FlashStorage.h"
 #include "BitState.hpp"
 
+#ifdef USE_SCREEN
+#include "Graphics.h"
+#include "ScreenBuffer.h"
+#include "ParameterController.hpp"
+#define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
+#define SCREEN_TASK_PRIORITY 3
+static TaskHandle_t screenTask = NULL;
+#define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT/8)
+uint8_t pixelbuffer[OLED_DATA_LENGTH];
+ParameterController params;
+#endif
+
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
@@ -247,6 +259,31 @@ void eraseFlashTask(void* p){
   vTaskDelete(NULL);
 }
 
+#ifdef USE_SCREEN
+void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
+  static ScreenBuffer screen(width, height);
+  screen.setBuffer(pixels);
+  screen.clear();
+  screen.setTextSize(1);
+  screen.print(20, 0, "Rebel Technology");
+}
+
+void runScreenTask(void* p){
+  const TickType_t delay = 20 / portTICK_PERIOD_MS;
+  for(;;){
+    ProgramVector* pv = getProgramVector();
+    if(pv->drawCallback != NULL){
+      pv->drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
+    }else{
+      defaultDrawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
+    }
+    params.draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
+    graphics.display(pixelbuffer, OLED_WIDTH*OLED_HEIGHT);
+    vTaskDelay(delay); // allow a minimum amount of time for pixel data to be transferred
+  }
+}
+#endif
+
 void runAudioTask(void* p){
     PatchDefinition* def = getPatchDefinition();
     ProgramVector* pv = def == NULL ? NULL : def->getProgramVector();
@@ -360,6 +397,9 @@ void ProgramManager::startManager(){
   codec.start();
   // codec.pause();
   updateProgramVector(getProgramVector());
+#ifdef USE_SCREEN
+  xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
+#endif
   // xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
   // xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
   xTaskCreate(runManagerTask, "Manager", MANAGER_TASK_STACK_SIZE, NULL, MANAGER_TASK_PRIORITY, &managerTask);

@@ -15,6 +15,11 @@
 #include "rainbow.h"
 #endif /* OWL_TESSERACT */
 
+#ifdef USE_SCREEN
+#include "Graphics.h"
+Graphics graphics;
+#endif /* USE_SCREEN */
+
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -172,6 +177,20 @@ void setup(){
   setLed(LED4, 512);
 #endif /* OWL_MICROLAB */
 
+#ifdef OWL_PLAYERF7
+  extern TIM_HandleTypeDef htim2;
+  extern TIM_HandleTypeDef htim3;
+  __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
+  __HAL_TIM_SET_COUNTER(&htim3, INT16_MAX/2);
+  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
+#endif /* OWL_PLAYERF7 */
+
+#ifdef USE_SCREEN
+  extern SPI_HandleTypeDef hspi2;
+  graphics.begin(&hspi2);
+#endif /* USE_SCREEN */
+
   extern ADC_HandleTypeDef hadc3;
   // extern DMA_HandleTypeDef hdma_adc3;
   HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc_values, NOF_ADC_VALUES);
@@ -206,4 +225,24 @@ extern "C"{
       midireader.readMidiFrame(buffer+i);
   }
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
+
+#ifdef OWL_PLAYERF7
+  void encoderReset(uint8_t encoder, int32_t value){
+  extern TIM_HandleTypeDef htim2;
+  extern TIM_HandleTypeDef htim3;
+    if(encoder == 0)
+      __HAL_TIM_SetCounter(&htim2, value);
+    else if(encoder == 1)
+      __HAL_TIM_SetCounter(&htim3, value);
+  }
+
+  void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
+  extern TIM_HandleTypeDef htim2;
+  extern TIM_HandleTypeDef htim3;
+    if(htim == &htim2)
+      encoderChanged(0, __HAL_TIM_GET_COUNTER(&htim2));
+    else if(htim == &htim3)
+      encoderChanged(1, __HAL_TIM_GET_COUNTER(&htim3));
+  }
+#endif /* OWL_PLAYERF7 */
 }

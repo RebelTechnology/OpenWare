@@ -110,8 +110,11 @@ void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+
 void setup(void);
 void loop(void);
+void MX_USB_HOST_Process(void);
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */

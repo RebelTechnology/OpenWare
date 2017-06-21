@@ -36,7 +36,8 @@ DEF_FLAGS += -D__FPU_PRESENT=1
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += sdram.c
-C_SRC += cs4272.c
+C_SRC += cs4272.c HAL_OLED.c
+CPP_SRC += ScreenBuffer.cpp Graphics.cpp
 
 include $(OPENWARE)/sources.mk
 

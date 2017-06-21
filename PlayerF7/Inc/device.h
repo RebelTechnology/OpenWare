@@ -21,6 +21,12 @@
 #define USE_USBD_HS
 #define OWL2
 #define USE_USBHOST
+#define USE_SCREEN
+#define SSD1309
+#define OLED_DMA
+/* #define OLED_IT */
+/* #define OLED_BITBANG */
+#define OLED_SOFT_CS
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
@@ -32,12 +38,6 @@
 #define DEBUG_DWT
 #define DEBUG_STACK
 #define DEBUG_STORAGE
-
-#define SSD1309
-#define OLED_DMA
-/* #define OLED_IT */
-/* #define OLED_BITBANG */
-#define OLED_SOFT_CS
 
 #ifdef SSD1331
 #define OLED_WIDTH			96

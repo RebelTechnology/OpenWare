@@ -21,4 +21,3 @@ void OLED_clearPixel(uint8_t x, uint8_t y);
 void OLED_togglePixel(uint8_t x, uint8_t y);
 void OLED_ClearScreen(void);
 void OLED_Config(SPI_HandleTypeDef* spi, uint8_t* pixel);
-void NopDelay(uint32_t nops);

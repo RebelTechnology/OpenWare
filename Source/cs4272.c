@@ -2,13 +2,11 @@
 #include "gpio.h"
 #include "device.h"
 
-extern void NopDelay(uint32_t usec);
-#define delay(x) NopDelay(x*1000)
-
-void NopDelay(uint32_t nops){
+static void NopDelay(uint32_t nops){
   while (nops--)	
     __asm("NOP");
 }
+#define delay(x) NopDelay(x*1000)
 
 #define CS_TIMEOUT       1000
 
