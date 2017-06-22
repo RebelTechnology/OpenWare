@@ -116,7 +116,7 @@ extern "C"{
     error(CONFIG_ERROR, "SAI DMA Error");
   }
 }
-#endif /* OWL_MODULAR */
+#endif /* USE_WM8731 */
 
 #ifdef USE_CS4271
 extern "C" {
@@ -135,7 +135,7 @@ void Codec::reset(){
   codec_init(&hspi4);
 
   codec_write(0x01, (1<<3) | (1<<5) | 1); // i2s mode for DAC and ADC
-#ifdef OWL_TESSERACT
+#if defined OWL_TESSERACT || defined OWL_PLAYERF7
   codec_write(0x06, 0x10 | 0x03 ); // hp filters off
 #else
   codec_write(0x06, 0x10); // hp filters on
@@ -192,4 +192,4 @@ void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
 }
 
 }
-#endif /* OWL_TESSERACT */
+#endif /* USE_CS4271 */

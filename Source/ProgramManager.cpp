@@ -75,7 +75,9 @@ void encoderChanged(uint8_t encoder, int32_t value){
   int32_t delta = value - encoders[encoder];
   encoders[encoder] = value;
   deltas[encoder] = delta;
-  // params.encoderChanged(encoder, delta);
+#ifdef USE_SCREEN
+  params.encoderChanged(encoder, delta);
+#endif
   // todo: save changes and pass at programReady()
   // if(getProgramVector()->encoderChangedCallback != NULL)
   //   getProgramVector()->encoderChangedCallback(encoder, delta, 0);
@@ -192,6 +194,9 @@ void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
 
 // called from program
 void onRegisterPatchParameter(uint8_t id, const char* name){
+#ifdef USE_SCREEN 
+  params.setName(id, name);
+#endif /* USE_SCREEN */
 }
 
 // called from program
@@ -285,6 +290,9 @@ void runScreenTask(void* p){
 #endif
 
 void runAudioTask(void* p){
+#ifdef USE_SCREEN
+    params.reset();
+#endif
     PatchDefinition* def = getPatchDefinition();
     ProgramVector* pv = def == NULL ? NULL : def->getProgramVector();
     if(pv != NULL && def->verify()){

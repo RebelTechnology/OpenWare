@@ -7,9 +7,17 @@ class ParameterController {
 public:
   const uint8_t parameters_size = 8;
   int16_t parameters[8];
-  const char* names[8] = { "Parameter A",  "Parameter B",  "Parameter C",  "Parameter D", 
-			   "Parameter E",  "Parameter F",  "Parameter G",  "Parameter H" };
+  char names[8][12];
   int8_t selected = 0;
+  ParameterController(){
+    reset();
+  }
+  void reset(){
+    for(int i=0; i<8; ++i){
+      strcpy(names[i], "Parameter  ");
+      names[i][10] = 'A'+i;
+    }
+  }
   void draw(uint8_t* pixels, uint16_t width, uint16_t height){
     static ScreenBuffer screen(width, height);
     screen.setBuffer(pixels);
@@ -61,6 +69,10 @@ public:
 	parameters[selected] = min(4095, max(0, parameters[selected]));
       }
     } // todo: change patch with enc1/sw1
+  }
+  void setName(uint8_t pid, const char* name){
+    if(pid < parameters_size)
+      strncpy(names[pid], name, 11);
   }
 private:
   bool tr1(){

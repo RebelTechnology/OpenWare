@@ -61,12 +61,13 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
 }
 
 void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
+  extern char _EXTRAM;
   if(size > storage.getFreeSize() + storage.getDeletedSize())
     return error(FLASH_ERROR, "Insufficient flash available");
   if(size < 4)
     return error(FLASH_ERROR, "Invalid resource size");
   if(size > storage.getFreeSize())
-    storage.defrag((uint8_t*)EXTRAM, 1024*1024);
+    storage.defrag((uint8_t*)&_EXTRAM, 1024*1024);
   uint32_t* magic = (uint32_t*)data;
   if(*magic == 0xDADAC0DE && index > 0 && index <= MAX_NUMBER_OF_PATCHES){
     // if it is a patch, set the program id

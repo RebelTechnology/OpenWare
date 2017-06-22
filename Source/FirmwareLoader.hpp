@@ -71,6 +71,7 @@ public:
     offset += 5;
     if(idx == 0){
       clear();
+      setErrorStatus(NO_ERROR);
       // first package
       if(length < 3+5+5)
 	return setError("Invalid SysEx package");
@@ -89,7 +90,8 @@ public:
       static uint8_t static_buffer[1024*8]; // todo remove!
       buffer = static_buffer; 
 #else
-      buffer = (uint8_t*)EXTRAM+1024*1024;
+      extern char _EXTRAM; // defined in link script
+      buffer = (uint8_t*)&_EXTRAM+1024*1024;
 #endif
       return 0;
     }

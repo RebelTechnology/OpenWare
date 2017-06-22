@@ -32,8 +32,6 @@
 /* Entry Point */
 ENTRY(Reset_Handler)
 
-/* Highest address of the user mode stack */
-_estack = 0x20040000;    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0x200;      /* required amount of heap  */
 _Min_Stack_Size = 0x460; /* required amount of stack */
@@ -42,9 +40,12 @@ _Min_Stack_Size = 0x460; /* required amount of stack */
 MEMORY
 {
 /* RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 320K */
-RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 256K
-PATCHRAM (xrw)  : ORIGIN = 0x20040000, LENGTH = 64K
+/* RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 256K */
+/* PATCHRAM (xrw)  : ORIGIN = 0x20040000, LENGTH = 64K */
+RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 192K
+PATCHRAM (xrw)  : ORIGIN = 0x20030000, LENGTH = 128K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 1024K
+EXTRAM (rw)     : ORIGIN = 0xD0000000, LENGTH = 8M
 }
 
 /* Define output sections */
@@ -138,7 +139,6 @@ SECTIONS
     *(.bss)
     *(.bss*)
     *(COMMON)
-
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
@@ -154,8 +154,22 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM
+  _estack = ORIGIN(RAM) + LENGTH(RAM);
 
-  
+  /* External memory, vars must be located here explicitly */
+  /* Example: int foo __attribute__ ((section (".extdata"))); */
+  .extdata (NOLOAD) :
+  {
+    *(.extdata)
+    . = ALIGN(8);
+    PROVIDE ( _EXTRAM = . );
+  } >EXTRAM
+
+  .patchram (NOLOAD) :
+  {
+    PROVIDE (_PATCHRAM = .);
+    PROVIDE (_CCMRAM = .);
+  } >PATCHRAM
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

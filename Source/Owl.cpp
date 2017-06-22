@@ -67,6 +67,24 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     setParameterValue(PARAMETER_E, (TRIG2_GPIO_Port->IDR & TRIG2_Pin) == 0 ? 4095 : 0);
     break;
 #endif
+#ifdef OWL_PLAYERF7
+  // sw1() pg14
+  // sw2() pb4
+  // tr1() pc11
+  // tr2() pc10
+  case ENC1_SW_Pin: // GPIO_PIN_14:
+    setButtonValue(PUSHBUTTON, (ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+    break;
+  case ENC2_SW_Pin: // GPIO_PIN_4:
+    setButtonValue(PUSHBUTTON, (ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
+    break;
+  case TR_IN_A_Pin: // GPIO_PIN_11:
+    setButtonValue(BYPASS_BUTTON, !(TR_IN_A_GPIO_Port->IDR & TR_IN_A_Pin));
+    break;
+  case TR_IN_B_Pin: // GPIO_PIN_10:
+    setButtonValue(BYPASS_BUTTON, !(TR_IN_B_GPIO_Port->IDR & TR_IN_B_Pin));
+    break;
+#endif
   }
 }
 
@@ -226,16 +244,18 @@ extern "C"{
   }
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
 
-#ifdef OWL_PLAYERF7
   void encoderReset(uint8_t encoder, int32_t value){
+#ifdef OWL_PLAYERF7
   extern TIM_HandleTypeDef htim2;
   extern TIM_HandleTypeDef htim3;
     if(encoder == 0)
       __HAL_TIM_SetCounter(&htim2, value);
     else if(encoder == 1)
       __HAL_TIM_SetCounter(&htim3, value);
+#endif /* OWL_PLAYERF7 */
   }
 
+#ifdef OWL_PLAYERF7
   void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
   extern TIM_HandleTypeDef htim2;
   extern TIM_HandleTypeDef htim3;

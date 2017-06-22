@@ -13,6 +13,8 @@ extern "C" {
 
   uint16_t getAnalogValue(uint8_t index);
   void setAnalogValue(uint8_t ch, uint16_t value);
+
+  void encoderReset(uint8_t encoder, int32_t value);
   void encoderChanged(uint8_t encoder, int32_t value);
 
   int16_t getParameterValue(uint8_t index);

@@ -12,10 +12,10 @@ _Min_Stack_Size = 0x600; /* required amount of stack */
 MEMORY
 {
 RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
-/* RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 192K */
+PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 64K    /* total RAM is 112kb */
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 16K    /* Closely Coupled Memory */
-/* CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K */
-FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 512K
+EXTRAM (rwx)     : ORIGIN = 0x68000000, LENGTH = 1M
+FLASH (rx)       : ORIGIN = 0x8000000, LENGTH = 512K
 }
 
 /* Define output sections */
@@ -145,6 +145,29 @@ SECTIONS
     . = ALIGN(4);
   } >RAM
 
+  /* CCM section, vars must be located here explicitly */
+  /* Example: int foo __attribute__ ((section (".ccmdata"))); */
+  .ccmdata (NOLOAD) :
+  {
+    . = ALIGN(8);
+    *(.ccmdata)
+    . = ALIGN(8);
+    PROVIDE (_CCMRAM = .);
+  } >CCMRAM
+
+  /* External memory, vars must be located here explicitly */
+  /* Example: int foo __attribute__ ((section (".extdata"))); */
+  .extdata (NOLOAD) :
+  {
+    *(.extdata)
+    . = ALIGN(8);
+    PROVIDE ( _EXTRAM = . );
+  } >EXTRAM
+
+  .patchram (NOLOAD) :
+  {
+    PROVIDE (_PATCHRAM = .);
+  } >PATCHRAM
   
 
   /* Remove information from the standard libraries */

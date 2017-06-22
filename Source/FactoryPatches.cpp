@@ -42,7 +42,8 @@ bool FactoryPatchDefinition::verify(){
 }
 
 void FactoryPatchDefinition::run(){
-  sram_init((char*)EXTRAM, 1024*1024);
+  extern char _EXTRAM;
+  sram_init((char*)&_EXTRAM, 1024*1024);
   Patch* patch = create();
   ASSERT(patch != NULL, "Memory allocation failed");
 

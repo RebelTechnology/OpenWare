@@ -6,8 +6,6 @@ const char* errormsg = 0;
 
 void error(int8_t code, const char* reason){
   setErrorMessage(code, reason);
-  /* errorcode = code; */
-  /* errormsg = reason; */
   /* assert_param(0); */
 }
 
