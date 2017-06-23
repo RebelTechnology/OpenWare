@@ -77,10 +77,11 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   //   break;
   // }
   case PATCH_BUTTON:
-    if(value == 127){
+    setButtonValue(value == 127 ? 4095 : 0);
+    // if(value == 127){
       // togglePushButton();
       // midi.sendCc(LED, getLed() == GREEN ? 42 : 84);
-    }
+    // }
     break;
   case REQUEST_SETTINGS:
     switch(value){

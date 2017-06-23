@@ -3,17 +3,19 @@
 
 #include "basicmaths.h"
 
+template<uint8_t SIZE>
 class ParameterController {
 public:
-  const uint8_t parameters_size = 8;
-  int16_t parameters[8];
-  char names[8][12];
+  int16_t parameters[SIZE];
+  char names[SIZE][12];
   int8_t selected = 0;
   ParameterController(){
     reset();
+    for(int i=0; i<SIZE; ++i)
+      parameters[i] = 0;
   }
   void reset(){
-    for(int i=0; i<8; ++i){
+    for(int i=0; i<SIZE; ++i){
       strcpy(names[i], "Parameter  ");
       names[i][10] = 'A'+i;
     }
@@ -61,7 +63,7 @@ public:
     if(encoder == 0){
       if(sw2()){
 	if(delta > 1)
-	  selected = min(parameters_size-1, selected+1);
+	  selected = min(SIZE-1, selected+1);
 	else if(delta < 1)
 	  selected = max(0, selected-1);
       }else{
@@ -71,8 +73,11 @@ public:
     } // todo: change patch with enc1/sw1
   }
   void setName(uint8_t pid, const char* name){
-    if(pid < parameters_size)
+    if(pid < SIZE)
       strncpy(names[pid], name, 11);
+  }
+  uint8_t getSize(){
+    return SIZE;
   }
 private:
   bool tr1(){
