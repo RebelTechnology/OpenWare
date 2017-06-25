@@ -1,3 +1,10 @@
+#ifndef __FLASH_S25FL_H
+#define __FLASH_S25FL_H
+
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
@@ -18,8 +25,6 @@
 #define INST_READ_STATREG_1			0x05
 #define INST_WRITE_EN						0x06
 #define INST_READ_STATREG_3			0x33
-
-
 #define INST_READ_STATREG_2			0x35
 #define INST_WRITE_EN_VSTATREG	0x50
 #define INST_BURSTWRAP_SET			0x77
@@ -45,3 +50,8 @@ void Flash_SubSectorErase (unsigned char index);
 
 void _Flash_writeEN (void);
 void _Flash_writeDIS (void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
