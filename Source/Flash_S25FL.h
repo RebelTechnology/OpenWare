@@ -37,6 +37,8 @@
 unsigned char Flash_readLoc(unsigned long address);
 void Flash_writeLoc(unsigned long address, unsigned char data);
 void Flash_readString(unsigned long address, unsigned char *rxBuffer, unsigned char length);
+
+/* Writes 255 bytes (page size limit) */
 void Flash_writeString(unsigned long address, unsigned char *string);
 
 unsigned char Flash_readStatusReg (unsigned char reg);
@@ -44,6 +46,7 @@ void Flash_writeStatusReg (unsigned char reg, unsigned char data);
 void Flash_S25FL_init(SPI_HandleTypeDef *spiconfig);
 void Flash_S25FL_Test(void);
 
+/* 4kByte subsector 64kByte sector */
 void Flash_BulkErase (void);
 void Flash_SectorErase (unsigned char index);
 void Flash_SubSectorErase (unsigned char index);
