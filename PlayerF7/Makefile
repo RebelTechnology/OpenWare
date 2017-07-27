@@ -26,7 +26,7 @@ CPPFLAGS += -ffunction-sections
 #CPPFLAGS +=  -mno-unaligned-access
 #CPPFLAGS  += -fno-omit-frame-pointer
 CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
-CXXFLAGS = -fno-rtti -fno-exceptions -std=c++11
+CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant
