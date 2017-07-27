@@ -696,7 +696,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, CS_nCS_Pin|CS_nRST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : EXTSPI_nCS_Pin FLASH_HOLD_Pin FLASH_nCS_Pin */
   GPIO_InitStruct.Pin = EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin;
@@ -705,18 +705,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : FLASH_nWP_Pin CS_nCS_Pin CS_nRST_Pin */
+  GPIO_InitStruct.Pin = FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /*Configure GPIO pin : GP7_Pin */
   GPIO_InitStruct.Pin = GP7_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GP7_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : CS_nCS_Pin CS_nRST_Pin */
-  GPIO_InitStruct.Pin = CS_nCS_Pin|CS_nRST_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI2_IRQn, 10, 0);
