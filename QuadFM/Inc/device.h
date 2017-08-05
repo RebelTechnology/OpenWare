@@ -2,13 +2,13 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_flash_ex.h"
 
-#define OWL_TESSERACT
-/* #define OWL_QUADFM */
+#define OWL_QUADFM
+/* #define OWL_TESSERACT */
 /* #define OWL_PLAYER */
 /* #define OWL_MODULAR */
 /* #define OWL_PEDAL */
 
-#ifdef OWL_TESSERACT
+#ifdef OWL_QUADFM
 #define ADC_A 1
 #define ADC_B 3
 #define ADC_C 2
@@ -30,10 +30,10 @@
 #define DEBUG_STACK
 #define DEBUG_STORAGE
 
-/* #define CS_CS_Pin CS_nCS_Pin */
-/* #define CS_CS_GPIO_Port CS_nCS_GPIO_Port */
-/* #define CS_RST_Pin CS_nRST_Pin */
-/* #define CS_RST_GPIO_Port CS_nRST_GPIO_Port */
+#define CS_CS_Pin CS_nCS_Pin
+#define CS_CS_GPIO_Port CS_nCS_GPIO_Port
+#define CS_RST_Pin CS_nRST_Pin
+#define CS_RST_GPIO_Port CS_nRST_GPIO_Port
 
 #define CODEC_BLOCKSIZE 256
 #define CODEC_BUFFER_SIZE (4*CODEC_BLOCKSIZE)

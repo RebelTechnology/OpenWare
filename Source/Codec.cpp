@@ -135,7 +135,7 @@ void Codec::reset(){
   codec_init(&hspi4);
 
   codec_write(0x01, (1<<3) | (1<<5) | 1); // i2s mode for DAC and ADC
-#if defined OWL_TESSERACT || defined OWL_PLAYERF7
+#if defined OWL_TESSERACT || defined OWL_PLAYERF7 || defined OWL_QUADFM
   codec_write(0x06, 0x10 | 0x03 ); // hp filters off
 #else
   codec_write(0x06, 0x10); // hp filters on

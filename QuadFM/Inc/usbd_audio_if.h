@@ -1,8 +1,7 @@
 /**
- ******************************************************************************
-  * @file            : USB_HOST
-  * @version         : v1.0_Cube
-  * @brief           :  This file implements the USB Host 
+  ******************************************************************************
+  * @file           : usbd_audio_if.h
+  * @brief          : header file for the usbd_audio_if file
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -47,92 +46,105 @@
   ******************************************************************************
 */
 
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __USBD_AUDIO_IF_H
+#define __USBD_AUDIO_IF_H
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
+#include "usbd_audio.h"
+/* USER CODE BEGIN INCLUDE */
+/* USER CODE END INCLUDE */
 
-#include "usb_host.h"
-#include "usbh_core.h"
-#include "usbh_midi.h"
+/** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
+  * @{
+  */
+  
+/** @defgroup USBD_AUDIO_IF
+  * @brief header 
+  * @{
+  */ 
 
-/* USB Host Core handle declaration */
-USBH_HandleTypeDef hUsbHostFS;
-ApplicationTypeDef Appli_state = APPLICATION_IDLE;
-
-/**
-* -- Insert your variables declaration here --
-*/ 
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/*
-* user callbak declaration
-*/ 
-static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id);
-
-/**
-* -- Insert your external function declaration here --
-*/ 
-/* USER CODE BEGIN 1 */
-
-/*
- * Background task
- */ 
-void MX_USB_HOST_Process() 
-{
-  /* USB Host Background task */
-    USBH_Process(&hUsbHostFS);                                                 
-}
-
-/* USER CODE END 1 */
-
-/* init function */				        
-void MX_USB_HOST_Init(void)
-{
-  /* Init Host Library,Add Supported Class and Start the library*/
-  USBH_Init(&hUsbHostFS, USBH_UserProcess, HOST_FS);
-
-  USBH_RegisterClass(&hUsbHostFS, USBH_MIDI_CLASS);
-
-  USBH_Start(&hUsbHostFS);
-}
-
-/*
- * user callback definition
-*/ 
-static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
-{
-
-  /* USER CODE BEGIN CALL_BACK_1 */
-  switch(id)
-  { 
-  case HOST_USER_SELECT_CONFIGURATION:
-  break;
-    
-  case HOST_USER_DISCONNECTION:
-  Appli_state = APPLICATION_DISCONNECT;
-  break;
-    
-  case HOST_USER_CLASS_ACTIVE:
-  Appli_state = APPLICATION_READY;
-  break;
-
-  case HOST_USER_CONNECTION:
-  Appli_state = APPLICATION_START;
-  break;
-
-  default:
-  break; 
-  }
-  /* USER CODE END CALL_BACK_1 */
-}
-	
+/** @defgroup USBD_AUDIO_IF_Exported_Defines
+  * @{
+  */ 
+/* USER CODE BEGIN EXPORTED_DEFINES */
+/* USER CODE END  EXPORTED_DEFINES */
 
 /**
   * @}
-  */
+  */ 
+
+/** @defgroup USBD_AUDIO_IF_Exported_Types
+  * @{
+  */  
+/* USER CODE BEGIN EXPORTED_TYPES */
+/* USER CODE END EXPORTED_TYPES */
 
 /**
   * @}
+  */ 
+
+/** @defgroup USBD_AUDIO_IF_Exported_Macros
+  * @{
+  */ 
+/* USER CODE BEGIN EXPORTED_MACRO */
+/* USER CODE END EXPORTED_MACRO */
+
+/**
+  * @}
+  */ 
+
+/** @defgroup USBD_AUDIO_IF_Exported_Variables
+  * @{
+  */ 
+  extern USBD_AUDIO_ItfTypeDef  USBD_AUDIO_fops_HS;
+
+/* USER CODE BEGIN EXPORTED_VARIABLES */
+/* USER CODE END EXPORTED_VARIABLES */
+
+/**
+  * @}
+  */ 
+
+/** @defgroup USBD_AUDIO_IF_Exported_FunctionsPrototype
+  * @{
+  */ 
+/**
+  * @brief  Manages the DMA full Transfer complete event.
+  * @param  None
+  * @retval None
   */
+  void TransferComplete_CallBack_HS(void);
+
+/**
+  * @brief  Manages the DMA Half Transfer complete event.
+  * @param  None
+  * @retval None
+  */
+  void HalfTransfer_CallBack_HS(void);
+
+/* USER CODE BEGIN EXPORTED_FUNCTIONS */
+/* USER CODE END EXPORTED_FUNCTIONS */
+/**
+  * @}
+  */ 
+
+/**
+  * @}
+  */ 
+
+/**
+  * @}
+  */ 
+  
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __USBD_AUDIO_IF_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

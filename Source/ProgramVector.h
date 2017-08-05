@@ -3,7 +3,11 @@
 
 #include "device.h"
 
-#if defined OWL_TESSERACT || defined OWL_MICROLAB || defined OWL_PEDAL || defined OWL_MODULAR
+#if defined OWL_TESSERACT || defined OWL_MICROLAB || defined OWL_QUADFM
+#include "ProgramVectorV15.h"
+#endif
+
+#if defined OWL_PEDAL || defined OWL_MODULAR
 #include "ProgramVectorV13.h"
 #endif
 

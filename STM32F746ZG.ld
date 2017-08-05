@@ -8,11 +8,10 @@ _Min_Stack_Size = 0x600; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
-PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 64K    /* total RAM is 112kb */
-CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
-EXTRAM (rwx)     : ORIGIN = 0xD0000000, LENGTH = 1M
-FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 512K
+RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 192K
+PATCHRAM (xrw)  : ORIGIN = 0x20030000, LENGTH = 128K
+EXTRAM (rw)     : ORIGIN = 0xD0000000, LENGTH = 8M
+FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 1M
 }
 
 /* Define output sections */
@@ -121,16 +120,6 @@ SECTIONS
   } >RAM
   _estack = ORIGIN(RAM)+LENGTH(RAM); /* end of firmware RAM */
 
-  /* CCM section, vars must be located here explicitly */
-  /* Example: int foo __attribute__ ((section (".ccmdata"))); */
-  .ccmdata (NOLOAD) :
-  {
-    /* *(.ccmdata) */
-    /* . = ALIGN(8); */
-    PROVIDE (_CCMRAM = .);
-  } >CCMRAM
-  _CCMRAM_SIZE = LENGTH(CCMRAM);
-
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */
   .extdata (NOLOAD) :
@@ -158,5 +147,3 @@ SECTIONS
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }
-
-

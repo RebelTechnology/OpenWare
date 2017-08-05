@@ -14,8 +14,8 @@ MEMORY
 RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 64K    /* total RAM is 112kb */
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 16K    /* Closely Coupled Memory */
-EXTRAM (rwx)     : ORIGIN = 0x68000000, LENGTH = 1M
-FLASH (rx)       : ORIGIN = 0x8000000, LENGTH = 512K
+EXTRAM (rwx)     : ORIGIN = 0xD0000000, LENGTH = 1M
+FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 512K
 }
 
 /* Define output sections */
@@ -98,26 +98,6 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
 
-  _siccmram = LOADADDR(.ccmram);
-
-  /* CCM-RAM section 
-  * 
-  * IMPORTANT NOTE! 
-  * If initialized variables will be placed in this section,
-  * the startup code needs to be modified to copy the init-values.  
-  */
-  .ccmram :
-  {
-    . = ALIGN(4);
-    _sccmram = .;       /* create a global symbol at ccmram start */
-    *(.ccmram)
-    *(.ccmram*)
-    
-    . = ALIGN(4);
-    _eccmram = .;       /* create a global symbol at ccmram end */
-  } >CCMRAM AT> FLASH
-
-  
   /* Uninitialized data section */
   . = ALIGN(4);
   .bss :
@@ -128,7 +108,6 @@ SECTIONS
     *(.bss)
     *(.bss*)
     *(COMMON)
-
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
@@ -138,37 +117,39 @@ SECTIONS
   ._user_heap_stack :
   {
     . = ALIGN(4);
-    PROVIDE ( end = . );
     PROVIDE ( _end = . );
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(4);
   } >RAM
+  _estack = ORIGIN(RAM)+LENGTH(RAM); /* end of firmware RAM */
 
   /* CCM section, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".ccmdata"))); */
   .ccmdata (NOLOAD) :
   {
-    . = ALIGN(8);
-    *(.ccmdata)
-    . = ALIGN(8);
+    /* *(.ccmdata) */
+    /* . = ALIGN(8); */
     PROVIDE (_CCMRAM = .);
   } >CCMRAM
+  _CCMRAM_SIZE = LENGTH(CCMRAM);
 
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */
   .extdata (NOLOAD) :
   {
-    *(.extdata)
-    . = ALIGN(8);
+    /* *(.extdata) */
+    /* . = ALIGN(8); */
     PROVIDE ( _EXTRAM = . );
   } >EXTRAM
+  /* _EXTRAM_SIZE = LENGTH(EXTRAM) - (_EXTRAM - ORIGIN(EXTRAM)); */
+  _EXTRAM_SIZE = LENGTH(EXTRAM);
 
   .patchram (NOLOAD) :
   {
     PROVIDE (_PATCHRAM = .);
   } >PATCHRAM
-  
+  _PATCHRAM_SIZE = LENGTH(PATCHRAM);  
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

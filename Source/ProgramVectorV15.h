@@ -1,6 +1,8 @@
 #ifndef __PROGRAM_VECTOR_V15_H
 #define __PROGRAM_VECTOR_V15_H
 
+#define PROGRAM_VECTOR_V15
+
 #include <stdint.h>
 
 #ifdef __cplusplus

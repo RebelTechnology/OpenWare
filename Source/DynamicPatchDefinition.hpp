@@ -51,7 +51,7 @@ public:
     }
   }
   bool verify(){
-    extern char _PATCHRAM, _EXTRAM, _CCMRAM;
+    // extern char _PATCHRAM, _EXTRAM, _CCMRAM;
     // check we've got an entry function
     if(programFunction == NULL)
       return false;
@@ -60,13 +60,13 @@ public:
     // if(*(uint32_t*)programAddress != 0xDADAC0DE)
       return false;
     // sanity-check stack base address and size
-    char* sb = (char*)stackBase;
-    if((sb >= &_PATCHRAM && sb+stackSize <= (&_PATCHRAM+128*1024)) ||
-       (sb >= &_CCMRAM && sb+stackSize <= (&_CCMRAM+128*1024)) ||
-       (sb >= &_EXTRAM && sb+stackSize <= (&_EXTRAM+8*1024*1024)) ||
-       (sb == 0 && stackSize == 0))
+    // char* sb = (char*)stackBase;
+    // if((sb >= &_PATCHRAM && sb+stackSize <= (&_PATCHRAM+128*1024)) ||
+    //    (sb >= &_CCMRAM && sb+stackSize <= (&_CCMRAM+128*1024)) ||
+    //    (sb >= &_EXTRAM && sb+stackSize <= (&_EXTRAM+8*1024*1024)) ||
+    //    (sb == 0 && stackSize == 0))
       return true;
-    return false;
+    // return false;
   }
   void run(){
     if(linkAddress != programAddress)

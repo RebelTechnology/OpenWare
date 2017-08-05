@@ -203,9 +203,47 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
 }
 
+extern uint32_t _EXTRAM, _EXTRAM_SIZE;
+extern uint32_t _PATCHRAM, _PATCHRAM_SIZE;
+#ifndef OWL_PLAYERF7
+extern uint32_t _CCMRAM, _CCMRAM_SIZE;
+const uint32_t PROGRAMSTACK_SIZE = 8*1024;
+const uint32_t CCMHEAP_SIZE = _CCMRAM_SIZE-PROGRAMSTACK_SIZE;
+const uint32_t CCMHEAP = _CCMRAM;
+const uint32_t PROGRAMSTACK = CCMHEAP+CCMHEAP_SIZE;
+#else
+const uint32_t PROGRAMSTACK_SIZE = 8*1024;
+const uint32_t PROGRAMSTACK = _PATCHRAM+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram
+#endif
+#ifdef PROGRAM_VECTOR_V15
+static const MemorySegment heapSegments[] = {
+#ifndef OWL_PLAYERF7
+  { (uint8_t*)CCMHEAP, CCMHEAP_SIZE },
+#endif
+  { (uint8_t*)_EXTRAM, _EXTRAM_SIZE },
+  { NULL, 0 }
+};
+#endif
+
 void updateProgramVector(ProgramVector* pv){
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
+#if defined OWL_TESSERACT
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V15;
+  pv->hardware_version = TESSERACT_HARDWARE;
+#elif defined OWL_MICROLAB
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V15;
+  pv->hardware_version = MICROLAB_HARDWARE;
+#elif defined OWL_PLAYERF7
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V14;
   pv->hardware_version = PLAYER_HARDWARE;
+#elif defined OWL_PEDAL
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
+  pv->hardware_version = OWL_PEDAL_HARDWARE;
+#elif defined OWL_MODULAR
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
+  pv->hardware_version = OWL_MODULAR_HARDWARE;
+#else
+#error "invalid configuration"
+#endif
   // pv->parameters_size = params.parameters_size;
   // pv->parameters = params.parameters;
   pv->parameters_size = NOF_PARAMETERS;
@@ -224,11 +262,11 @@ void updateProgramVector(ProgramVector* pv){
   pv->setButton = onSetButton;
   pv->setPatchParameter = onSetPatchParameter;
   pv->buttonChangedCallback = NULL;
-  pv->encoderChangedCallback = NULL;
-  // pv->drawCallback = NULL;
+#ifdef PROGRAM_VECTOR_V15
+  pv->heapSegments = (MemorySegment*)heapSegments;
+#endif
   pv->message = NULL;
 }
-
 
 volatile int flashSectorToWrite;
 volatile void* flashAddressToWrite;
@@ -364,18 +402,23 @@ void runManagerTask(void* p){
     if(ulNotifiedValue & START_PROGRAM_NOTIFICATION){ // start
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
-      	static StaticTask_t programTaskBuffer;
-      	if(def->getStackBase() != 0 && 
-      	   def->getStackSize() > configMINIMAL_STACK_SIZE*sizeof(portSTACK_TYPE)){
-      	  audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
-      					def->getStackSize()/sizeof(portSTACK_TYPE),
-      					NULL, AUDIO_TASK_PRIORITY, 
-      					(StackType_t*)def->getStackBase(), 
-      					&programTaskBuffer);
-      	}else{
-      	  xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
-      	  // error(PROGRAM_ERROR, "Invalid program stack");
-      	}
+      	static StaticTask_t audioTaskBuffer;
+	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
+				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
+				      NULL, AUDIO_TASK_PRIORITY, 
+				      (StackType_t*)PROGRAMSTACK, 
+				      &audioTaskBuffer);
+      	// if(def->getStackBase() != 0 && 
+      	//    def->getStackSize() > configMINIMAL_STACK_SIZE*sizeof(portSTACK_TYPE)){
+      	//   audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
+      	// 				def->getStackSize()/sizeof(portSTACK_TYPE),
+      	// 				NULL, AUDIO_TASK_PRIORITY, 
+      	// 				(StackType_t*)def->getStackBase(), 
+      	// 				&audioTaskBuffer);
+      	// }else{
+      	//   xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
+      	//   // error(PROGRAM_ERROR, "Invalid program stack");
+      	// }
       	if(audioTask == NULL)
       	  error(PROGRAM_ERROR, "Failed to start program task");
       }
@@ -403,6 +446,8 @@ ProgramManager::ProgramManager(){
 void ProgramManager::startManager(){
   registry.init();
   codec.start();
+  codec.bypass(true);
+
   // codec.pause();
   updateProgramVector(getProgramVector());
 #ifdef USE_SCREEN

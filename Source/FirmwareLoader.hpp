@@ -27,7 +27,6 @@ public:
   bool ready;
 public:
   void clear(){
-    // free(buffer);
     buffer = NULL;
     index = 0;
     packageIndex = 0;
@@ -86,12 +85,13 @@ public:
       // allocate memory
       if(size > MAX_SYSEX_FIRMWARE_SIZE)
 	return setError("SysEx too big");
-#if 0
+#if 1
       static uint8_t static_buffer[1024*8]; // todo remove!
       buffer = static_buffer; 
 #else
       extern char _EXTRAM; // defined in link script
-      buffer = (uint8_t*)&_EXTRAM+1024*1024;
+      // buffer = (uint8_t*)&_EXTRAM+1024*1024;
+      buffer = (uint8_t*)&_EXTRAM;
 #endif
       return 0;
     }
