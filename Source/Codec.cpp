@@ -70,7 +70,6 @@ void Codec::mute(bool doMute){
 }
 
 #ifdef USE_WM8731
-
 extern "C" {
   extern I2S_HandleTypeDef hi2s2;
   extern SPI_HandleTypeDef hspi1;
@@ -90,10 +89,12 @@ void Codec::start(){
   HAL_StatusTypeDef ret;
   // when a 24-bit data frame or a 32-bit data frame is selected
   // the Size parameter means the number of 16-bit data length
+  while(HAL_I2S_GetState(&hi2s2) != HAL_I2S_STATE_READY); // wait
   ret = HAL_I2S_Receive_DMA(&hi2s2, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE*2);
-  ASSERT(ret == HAL_OK, "Failed to start SAI RX DMA");
+  ASSERT(ret == HAL_OK, "Failed to start I2S RX DMA");
+  while(HAL_I2S_GetState(&hi2s2) != HAL_I2S_STATE_READY); // wait
   ret = HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)txbuf, CODEC_BUFFER_SIZE*2);
-  ASSERT(ret == HAL_OK, "Failed to start SAI TX DMA");
+  ASSERT(ret == HAL_OK, "Failed to start I2S TX DMA");
 }
 
 void Codec::pause(){

@@ -37,6 +37,8 @@ ParameterController params;
 #define FLASH_TASK_PRIORITY 5
 #define FLASH_TASK_STACK_SIZE (512/sizeof(portSTACK_TYPE))
 
+const uint32_t PROGRAMSTACK_SIZE = 8*1024; // size in bytes
+
 
 // #define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT/8)
 // uint8_t pixelbuffer[OLED_DATA_LENGTH];
@@ -203,28 +205,6 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
 }
 
-extern uint32_t _EXTRAM, _EXTRAM_SIZE;
-extern uint32_t _PATCHRAM, _PATCHRAM_SIZE;
-#ifndef OWL_PLAYERF7
-extern uint32_t _CCMRAM, _CCMRAM_SIZE;
-const uint32_t PROGRAMSTACK_SIZE = 8*1024;
-const uint32_t CCMHEAP_SIZE = _CCMRAM_SIZE-PROGRAMSTACK_SIZE;
-const uint32_t CCMHEAP = _CCMRAM;
-const uint32_t PROGRAMSTACK = CCMHEAP+CCMHEAP_SIZE;
-#else
-const uint32_t PROGRAMSTACK_SIZE = 8*1024;
-const uint32_t PROGRAMSTACK = _PATCHRAM+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram
-#endif
-#ifdef PROGRAM_VECTOR_V15
-static const MemorySegment heapSegments[] = {
-#ifndef OWL_PLAYERF7
-  { (uint8_t*)CCMHEAP, CCMHEAP_SIZE },
-#endif
-  { (uint8_t*)_EXTRAM, _EXTRAM_SIZE },
-  { NULL, 0 }
-};
-#endif
-
 void updateProgramVector(ProgramVector* pv){
 #if defined OWL_TESSERACT
   pv->checksum = PROGRAM_VECTOR_CHECKSUM_V15;
@@ -263,6 +243,21 @@ void updateProgramVector(ProgramVector* pv){
   pv->setPatchParameter = onSetPatchParameter;
   pv->buttonChangedCallback = NULL;
 #ifdef PROGRAM_VECTOR_V15
+  extern char _EXTRAM, _EXTRAM_END;
+#ifdef OWL_PLAYERF7
+  static MemorySegment heapSegments[] = {
+  { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM - &_EXTRAM_END) },
+    { NULL, 0 }
+  };
+#else
+  extern char _CCMRAM, _CCMRAM_END;
+  static MemorySegment heapSegments[] = {
+    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM - &_CCMRAM_END) - PROGRAMSTACK_SIZE },
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM - &_EXTRAM_END) },
+    { NULL, 0 }
+  };
+#endif
+
   pv->heapSegments = (MemorySegment*)heapSegments;
 #endif
   pv->message = NULL;
@@ -403,6 +398,17 @@ void runManagerTask(void* p){
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
+#ifndef OWL_PLAYERF7
+	extern char _CCMRAM, _CCMRAM_END;
+	uint32_t CCMHEAP_SIZE = (uint32_t)(&_CCMRAM_END - &_CCMRAM) - PROGRAMSTACK_SIZE;
+	uint8_t* CCMHEAP = (uint8_t*)&_CCMRAM;
+	uint8_t* PROGRAMSTACK = CCMHEAP+CCMHEAP_SIZE;
+#else
+	extern char _PATCHRAM, _PATCHRAM_END;
+	uint32_t PROGRAMSTACK_SIZE = 8*1024;
+	uint32_t PATCHRAM_SIZE = (uint32_t)(&_PATCHRAM_END - &_PATCHRAM);
+	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram
+#endif
 	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
 				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
 				      NULL, AUDIO_TASK_PRIORITY, 

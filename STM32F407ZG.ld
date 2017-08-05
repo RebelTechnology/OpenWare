@@ -129,7 +129,7 @@ SECTIONS
     /* . = ALIGN(8); */
     PROVIDE (_CCMRAM = .);
   } >CCMRAM
-  _CCMRAM_SIZE = LENGTH(CCMRAM);
+  _CCMRAM_END = ORIGIN(CCMRAM) + LENGTH(CCMRAM);
 
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */
@@ -139,14 +139,13 @@ SECTIONS
     /* . = ALIGN(8); */
     PROVIDE ( _EXTRAM = . );
   } >EXTRAM
-  /* _EXTRAM_SIZE = LENGTH(EXTRAM) - (_EXTRAM - ORIGIN(EXTRAM)); */
-  _EXTRAM_SIZE = LENGTH(EXTRAM);
+  _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM);
 
   .patchram (NOLOAD) :
   {
     PROVIDE (_PATCHRAM = .);
   } >PATCHRAM
-  _PATCHRAM_SIZE = LENGTH(PATCHRAM);  
+  _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);  
 
   /* Remove information from the standard libraries */
   /DISCARD/ :
@@ -158,5 +157,3 @@ SECTIONS
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }
-
-
