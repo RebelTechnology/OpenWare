@@ -45,6 +45,7 @@ extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern DMA_HandleTypeDef hdma_adc3;
 extern DMA_HandleTypeDef hdma_spi2_tx;
 extern DMA_HandleTypeDef hdma_i2s2_ext_rx;
+extern I2S_HandleTypeDef hi2s2;
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
@@ -96,7 +97,10 @@ void DMA1_Stream3_IRQHandler(void)
   /* USER CODE END DMA1_Stream3_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_i2s2_ext_rx);
   /* USER CODE BEGIN DMA1_Stream3_IRQn 1 */
-
+  if(__HAL_DMA_GET_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_TCIF1_5))
+    __HAL_DMA_CLEAR_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_TCIF1_5); // transfer complete
+  if(__HAL_DMA_GET_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_HTIF1_5))
+    __HAL_DMA_CLEAR_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_HTIF1_5); // half transfer complete
   /* USER CODE END DMA1_Stream3_IRQn 1 */
 }
 
@@ -110,8 +114,25 @@ void DMA1_Stream4_IRQHandler(void)
   /* USER CODE END DMA1_Stream4_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_spi2_tx);
   /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
-
+  if(__HAL_DMA_GET_FLAG(&hdma_spi2_tx, DMA_FLAG_TCIF0_4))
+    __HAL_DMA_CLEAR_FLAG(&hdma_spi2_tx, DMA_FLAG_TCIF0_4); // transfer complete
+  if(__HAL_DMA_GET_FLAG(&hdma_spi2_tx, DMA_FLAG_HTIF0_4))
+    __HAL_DMA_CLEAR_FLAG(&hdma_spi2_tx, DMA_FLAG_HTIF0_4); // half transfer complete
   /* USER CODE END DMA1_Stream4_IRQn 1 */
+}
+
+/**
+* @brief This function handles SPI2 global interrupt.
+*/
+void SPI2_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI2_IRQn 0 */
+
+  /* USER CODE END SPI2_IRQn 0 */
+  HAL_I2S_IRQHandler(&hi2s2);
+  /* USER CODE BEGIN SPI2_IRQn 1 */
+
+  /* USER CODE END SPI2_IRQn 1 */
 }
 
 /**
