@@ -1,0 +1,27 @@
+
+-----------------------------------------------------------------
+
+todo:
+- refactor build files
+- common top level build file
+- make sure all output files end up in project Build directory
+- refactor device.h files
+
+-----------------------------------------------------------------
+
+STM32F756ZG
+RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 320K
+FLASH (rx)     : ORIGIN = 0x8000000, LENGTH = 1024K
+
+STM32F439ZG
+RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 192K
+CCMRAM (rw)    : ORIGIN = 0x10000000, LENGTH = 64K
+FLASH (rx)     : ORIGIN = 0x8000000, LENGTH = 1024K
+
+STM32F407ZGT6
+RAM (xrw)	: ORIGIN = 0x20000000, LENGTH = 112k
+CCMRAM (xrw)	: ORIGIN = 0x10000000, LENGTH = 64k
+NVRAM (xrw)	: ORIGIN = 0x40024000, LENGTH = 4K
+FLASH (rx)	: ORIGIN = 0x08000000, LENGTH = 1M
+
+-----------------------------------------------------------------
