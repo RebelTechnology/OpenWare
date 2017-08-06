@@ -31,11 +31,16 @@ void codec_init(){
   for(int i=0;i<WM8731_NUM_REGS-1;i++)
     codec_write(i, wm8731_init_data[i]);
 
-  // clear WM8731_OUTPD
-  codec_write(POWER_DOWN_CONTROL_REGISTER, WM8731_MICPD|WM8731_OSCPD|WM8731_CLKOUTPD);
+  // set WM8731_MS master mode
+  codec_write(DIGITAL_AUDIO_INTERFACE_FORMAT_REGISTER, WM8731_MS|WM8731_FORMAT_I2S|WM8731_IWL_24BIT);
+
+  // clear WM8731_OSCPD and WM8731_OUTPD
+  /* codec_write(POWER_DOWN_CONTROL_REGISTER, WM8731_MICPD|WM8731_OSCPD); */
+  /* codec_write(POWER_DOWN_CONTROL_REGISTER, WM8731_MICPD); */
+  codec_write(POWER_DOWN_CONTROL_REGISTER, WM8731_MICPD|WM8731_CLKOUTPD);
+
   // set active control
   codec_write(ACTIVE_CONTROL_REGISTER, WM8731_ACTIVE);
-
 }
 
 void codec_bypass(int bypass){

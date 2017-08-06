@@ -96,16 +96,19 @@ static void I2S_DMARxHalfCplt(DMA_HandleTypeDef *hdma){
 }
 
 void Codec::start(){
-  HAL_StatusTypeDef ret;
-  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE);
   // Ex function doesn't set up a half-complete callback
   extern DMA_HandleTypeDef hdma_spi2_tx;
   extern DMA_HandleTypeDef hdma_i2s2_ext_rx;
   hdma_i2s2_ext_rx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
-  hdma_i2s2_ext_rx.XferCpltCallback = I2S_DMARxCplt;
   hdma_spi2_tx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
-  hdma_spi2_tx.XferCpltCallback = I2S_DMARxCplt;
+  HAL_StatusTypeDef ret;
+  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE);
   ASSERT(ret == HAL_OK, "Failed to start I2S DMA");
+  hdma_i2s2_ext_rx.XferCpltCallback = I2S_DMARxCplt;
+  hdma_spi2_tx.XferCpltCallback = I2S_DMARxCplt;
+  // hdma_i2s2_ext_rx.Instance->CR  |= DMA_IT_HT;
+  // hdma_spi2_tx.Instance->CR  |= DMA_IT_HT;
+
   // while(HAL_I2S_GetState(&hi2s2) != HAL_I2S_STATE_READY); // wait
   // ret = HAL_I2S_Receive_DMA(&hi2s2, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE);
   // ASSERT(ret == HAL_OK, "Failed to start I2S RX DMA");

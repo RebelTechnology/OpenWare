@@ -94,13 +94,64 @@ void DMA1_Stream3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream3_IRQn 0 */
 
+  /* never called? */
+
   /* USER CODE END DMA1_Stream3_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_i2s2_ext_rx);
+  /* HAL_DMA_IRQHandler(&hdma_i2s2_ext_rx); */
   /* USER CODE BEGIN DMA1_Stream3_IRQn 1 */
-  if(__HAL_DMA_GET_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_TCIF1_5))
-    __HAL_DMA_CLEAR_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_TCIF1_5); // transfer complete
-  if(__HAL_DMA_GET_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_HTIF1_5))
-    __HAL_DMA_CLEAR_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_HTIF1_5); // half transfer complete
+
+  /* Private types -------------------------------------------------------------*/
+  typedef struct
+  {
+    __IO uint32_t ISR;   /*!< DMA interrupt status register */
+    __IO uint32_t Reserved0;
+    __IO uint32_t IFCR;  /*!< DMA interrupt flag clear register */
+  } DMA_Base_Registers;
+
+  DMA_HandleTypeDef *hdma = &hdma_i2s2_ext_rx;
+  uint32_t tmpisr;
+  /* __IO uint32_t count = 0U; */
+  /* uint32_t timeout = SystemCoreClock / 9600U; */
+
+  /* calculate DMA base and stream number */
+  DMA_Base_Registers *regs = (DMA_Base_Registers *)hdma->StreamBaseAddress;
+
+  tmpisr = regs->ISR;
+
+  /* Half Transfer Complete Interrupt management ******************************/
+  if ((tmpisr & (DMA_FLAG_HTIF0_4 << hdma->StreamIndex)) != RESET)
+  {
+    if(__HAL_DMA_GET_IT_SOURCE(hdma, DMA_IT_HT) != RESET)
+    {
+      /* Clear the half transfer complete flag */
+      regs->IFCR = DMA_FLAG_HTIF0_4 << hdma->StreamIndex;
+        if(hdma->XferHalfCpltCallback != NULL)
+        {
+          /* Half transfer callback */
+          hdma->XferHalfCpltCallback(hdma);
+        }
+    }
+  }
+
+  /* Transfer Complete Interrupt management ***********************************/
+  if ((tmpisr & (DMA_FLAG_TCIF0_4 << hdma->StreamIndex)) != RESET)
+  {
+    if(__HAL_DMA_GET_IT_SOURCE(hdma, DMA_IT_TC) != RESET)
+    {
+      /* Clear the transfer complete flag */
+      regs->IFCR = DMA_FLAG_TCIF0_4 << hdma->StreamIndex;
+
+        if(hdma->XferCpltCallback != NULL)
+        {
+          /* Transfer complete callback */
+          hdma->XferCpltCallback(hdma);
+        }
+    }
+  }
+  /* if(__HAL_DMA_GET_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_TCIF1_5)) */
+  /*   __HAL_DMA_CLEAR_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_TCIF1_5); // transfer complete */
+  /* if(__HAL_DMA_GET_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_HTIF1_5)) */
+  /*   __HAL_DMA_CLEAR_FLAG(&hdma_i2s2_ext_rx, DMA_FLAG_HTIF1_5); // half transfer complete */
   /* USER CODE END DMA1_Stream3_IRQn 1 */
 }
 
@@ -114,10 +165,11 @@ void DMA1_Stream4_IRQHandler(void)
   /* USER CODE END DMA1_Stream4_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_spi2_tx);
   /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
-  if(__HAL_DMA_GET_FLAG(&hdma_spi2_tx, DMA_FLAG_TCIF0_4))
-    __HAL_DMA_CLEAR_FLAG(&hdma_spi2_tx, DMA_FLAG_TCIF0_4); // transfer complete
-  if(__HAL_DMA_GET_FLAG(&hdma_spi2_tx, DMA_FLAG_HTIF0_4))
-    __HAL_DMA_CLEAR_FLAG(&hdma_spi2_tx, DMA_FLAG_HTIF0_4); // half transfer complete
+
+  /* if(__HAL_DMA_GET_FLAG(&hdma_spi2_tx, DMA_FLAG_TCIF0_4)) */
+  /*   __HAL_DMA_CLEAR_FLAG(&hdma_spi2_tx, DMA_FLAG_TCIF0_4); // transfer complete */
+  /* if(__HAL_DMA_GET_FLAG(&hdma_spi2_tx, DMA_FLAG_HTIF0_4)) */
+  /*   __HAL_DMA_CLEAR_FLAG(&hdma_spi2_tx, DMA_FLAG_HTIF0_4); // half transfer complete */
   /* USER CODE END DMA1_Stream4_IRQn 1 */
 }
 
