@@ -22,7 +22,7 @@
 static TaskHandle_t screenTask = NULL;
 #define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT/8)
 uint8_t pixelbuffer[OLED_DATA_LENGTH];
-ParameterController params;
+ParameterController<NOF_PARAMETERS> params;
 #endif
 
 // FreeRTOS low priority numbers denote low priority tasks. 
@@ -114,13 +114,21 @@ void onProgramStatus(ProgramVectorAudioStatus status){
 
 int16_t getParameterValue(uint8_t ch){
   if(ch < NOF_PARAMETERS)
+#ifdef USE_SCREEN
+    return params.parameters[ch];
+#else
     return parameter_values[ch];
+#endif
   return 0;
 }
 
 void setParameterValue(uint8_t ch, int16_t value){
   if(ch < NOF_PARAMETERS)
+#ifdef USE_SCREEN
+    params.parameters[ch] = value;
+#else
     parameter_values[ch] = value;
+#endif
 }
 
 uint8_t getButtonValue(uint8_t ch){
@@ -145,13 +153,17 @@ void updateParameters(){
   parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
   parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
   parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
+#elif defined USE_SCREEN
+  // todo: route input CVs to parameters
 #else
   parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
   parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
   parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
   parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
 #endif
-
+#if NOF_ADC_VALUES > 4
+  parameter_values[4] = adc_values[4];
+#endif
   // parameter_values[0] = 4095-adc_values[0];
   // parameter_values[1] = 4095-adc_values[1];
   // parameter_values[2] = 4095-adc_values[2];
@@ -226,8 +238,13 @@ void updateProgramVector(ProgramVector* pv){
 #endif
   // pv->parameters_size = params.parameters_size;
   // pv->parameters = params.parameters;
+#ifdef USE_SCREEN
+  pv->parameters_size = params.getSize();
+  pv->parameters = params.parameters;
+#else
   pv->parameters_size = NOF_PARAMETERS;
   pv->parameters = parameter_values;
+#endif
   pv->audio_bitdepth = 24;
   pv->audio_samplingrate = 48000;
   pv->audio_blocksize = CODEC_BLOCKSIZE; // todo!

@@ -24,9 +24,10 @@
 #define USE_SCREEN
 #define SSD1309
 #define OLED_DMA
+#define OLED_SOFT_CS
+
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
-#define OLED_SOFT_CS
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
@@ -72,7 +73,7 @@
 /* #define OLED_SCK_GPIO_Port GPIOB */
 
 #define NOF_ADC_VALUES               4
-#define NOF_PARAMETERS               40
+#define NOF_PARAMETERS               16
 #define NOF_BUTTONS                  5
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
@@ -81,12 +82,6 @@
 
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
-
-/* #define CCMRAM                      ((uint32_t)0x10000000) */
-/* #define PATCHRAM                    ((uint32_t)0x20040000) */
-/* #define PATCHRAM                    ((uint32_t)0x2000c000) */
-/* #define EXTRAM                      ((uint32_t)0x68000000) */
-/* #define EXTRAM                      ((uint32_t)0xD0000000) */
 
 #define PROGRAM_TASK_STACK_SIZE          (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE          (512/sizeof(portSTACK_TYPE))

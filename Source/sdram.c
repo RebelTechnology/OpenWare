@@ -1,8 +1,6 @@
 #include "device.h"
 #include "sdram.h"
 
-static uint32_t FMC_Initialized = 0;
-
 #define SDRAM_BANK1_ADDR                 ((uint32_t)0xC0000000)
 #define SDRAM_BANK2_ADDR                 ((uint32_t)0xD0000000)
 #define SDRAM_MEMORY_WIDTH               FMC_SDRAM_MEM_BUS_WIDTH_32
@@ -106,6 +104,8 @@ void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram){
   hsdram->Instance->SDRTR |= ((uint32_t)((1292)<< 1));
 }
 
+#ifndef OWL_PLAYERF7
+static uint32_t FMC_Initialized = 0;
 static void HAL_FMC_MspInit(void){
   /* USER CODE BEGIN FMC_MspInit 0 */
 
@@ -211,7 +211,6 @@ static void HAL_FMC_MspInit(void){
   /* USER CODE END FMC_MspInit 1 */
 }
 
-#ifndef OWL_PLAYERF7
 void HAL_SDRAM_MspInit(SDRAM_HandleTypeDef* hsdram){
   /* USER CODE BEGIN SDRAM_MspInit 0 */
 
@@ -221,7 +220,6 @@ void HAL_SDRAM_MspInit(SDRAM_HandleTypeDef* hsdram){
 
   /* USER CODE END SDRAM_MspInit 1 */
 }
-#endif
 
 static uint32_t FMC_DeInitialized = 0;
 
@@ -299,7 +297,6 @@ static void HAL_FMC_MspDeInit(void){
   /* USER CODE END FMC_MspDeInit 1 */
 }
 
-#ifndef OWL_PLAYERF7
 void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
   /* USER CODE BEGIN SDRAM_MspDeInit 0 */
 
@@ -309,4 +306,4 @@ void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
 
   /* USER CODE END SDRAM_MspDeInit 1 */
 }
-#endif
+#endif /* OWL_PLAYERF7 */
