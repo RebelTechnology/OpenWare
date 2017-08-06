@@ -85,16 +85,33 @@ void Codec::stop(){
   HAL_I2S_DMAStop(&hi2s2);
 }
 
+// hacked in to enable half-complete callbacks
+static void I2S_DMARxCplt(DMA_HandleTypeDef *hdma){
+  I2S_HandleTypeDef* hi2s = ( I2S_HandleTypeDef* )((DMA_HandleTypeDef* )hdma)->Parent;
+  HAL_I2S_RxCpltCallback(hi2s);
+}
+static void I2S_DMARxHalfCplt(DMA_HandleTypeDef *hdma){
+  I2S_HandleTypeDef* hi2s = (I2S_HandleTypeDef*)((DMA_HandleTypeDef*)hdma)->Parent;
+  HAL_I2S_RxHalfCpltCallback(hi2s);
+}
+
 void Codec::start(){
   HAL_StatusTypeDef ret;
-  // when a 24-bit data frame or a 32-bit data frame is selected
-  // the Size parameter means the number of 16-bit data length
-  while(HAL_I2S_GetState(&hi2s2) != HAL_I2S_STATE_READY); // wait
-  ret = HAL_I2S_Receive_DMA(&hi2s2, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE*2);
-  ASSERT(ret == HAL_OK, "Failed to start I2S RX DMA");
-  while(HAL_I2S_GetState(&hi2s2) != HAL_I2S_STATE_READY); // wait
-  ret = HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)txbuf, CODEC_BUFFER_SIZE*2);
-  ASSERT(ret == HAL_OK, "Failed to start I2S TX DMA");
+  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE);
+  // Ex function doesn't set up a half-complete callback
+  extern DMA_HandleTypeDef hdma_spi2_tx;
+  extern DMA_HandleTypeDef hdma_i2s2_ext_rx;
+  hdma_i2s2_ext_rx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
+  hdma_i2s2_ext_rx.XferCpltCallback = I2S_DMARxCplt;
+  hdma_spi2_tx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
+  hdma_spi2_tx.XferCpltCallback = I2S_DMARxCplt;
+  ASSERT(ret == HAL_OK, "Failed to start I2S DMA");
+  // while(HAL_I2S_GetState(&hi2s2) != HAL_I2S_STATE_READY); // wait
+  // ret = HAL_I2S_Receive_DMA(&hi2s2, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE);
+  // ASSERT(ret == HAL_OK, "Failed to start I2S RX DMA");
+  // while(HAL_I2S_GetState(&hi2s2) != HAL_I2S_STATE_READY); // wait
+  // ret = HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)txbuf, CODEC_BUFFER_SIZE);
+  // ASSERT(ret == HAL_OK, "Failed to start I2S TX DMA");
 }
 
 void Codec::pause(){
@@ -106,6 +123,10 @@ void Codec::resume(){
 }
 
 extern "C"{
+  void HAL_I2SEx_TxRxCpltCallback(I2S_HandleTypeDef *hi2s){
+    audioCallback(rxbuf+CODEC_BUFFER_HALFSIZE, txbuf+CODEC_BUFFER_HALFSIZE, CODEC_BUFFER_QUARTSIZE);
+  }
+
   void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
     audioCallback(rxbuf, txbuf, CODEC_BUFFER_QUARTSIZE);
   }
