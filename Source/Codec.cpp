@@ -96,24 +96,34 @@ static void I2S_DMARxHalfCplt(DMA_HandleTypeDef *hdma){
 }
 
 void Codec::start(){
+
+  /* See STM32F405 Errata, I2S device limitations */
+  /* The I2S peripheral must be enabled when the external master sets the WS line at: */
+  while(HAL_GPIO_ReadPin(I2S_LRCK_GPIO_Port, I2S_LRCK_Pin)); // wait for low
+  /* High level when the I2S protocol is selected. */
+  while(!HAL_GPIO_ReadPin(I2S_LRCK_GPIO_Port, I2S_LRCK_Pin)); // wait for high
+
   // Ex function doesn't set up a half-complete callback
+
   extern DMA_HandleTypeDef hdma_spi2_tx;
   extern DMA_HandleTypeDef hdma_i2s2_ext_rx;
   hdma_i2s2_ext_rx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
   hdma_spi2_tx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
   HAL_StatusTypeDef ret;
-  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE);
+  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, CODEC_BLOCKSIZE);
   ASSERT(ret == HAL_OK, "Failed to start I2S DMA");
   hdma_i2s2_ext_rx.XferCpltCallback = I2S_DMARxCplt;
   hdma_spi2_tx.XferCpltCallback = I2S_DMARxCplt;
-  // hdma_i2s2_ext_rx.Instance->CR  |= DMA_IT_HT;
-  // hdma_spi2_tx.Instance->CR  |= DMA_IT_HT;
+  hdma_spi2_tx.Instance->CR  |= DMA_IT_HT;
 
-  // while(HAL_I2S_GetState(&hi2s2) != HAL_I2S_STATE_READY); // wait
-  // ret = HAL_I2S_Receive_DMA(&hi2s2, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE);
+  // hdma_i2s2_ext_rx.Instance->CR  |= DMA_IT_TC | DMA_IT_TE | DMA_IT_DME;
+  // hdma_i2s2_ext_rx.Instance->FCR |= DMA_IT_FE;
+  // hdma_i2s2_ext_rx.Instance->CR  |= DMA_IT_HT;
+
+  // HAL_StatusTypeDef ret;
+  // ret = HAL_I2S_Receive_DMA(&hi2s2, (uint16_t*)rxbuf, CODEC_BLOCKSIZE);
   // ASSERT(ret == HAL_OK, "Failed to start I2S RX DMA");
-  // while(HAL_I2S_GetState(&hi2s2) != HAL_I2S_STATE_READY); // wait
-  // ret = HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)txbuf, CODEC_BUFFER_SIZE);
+  // ret = HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)txbuf, CODEC_BLOCKSIZE);
   // ASSERT(ret == HAL_OK, "Failed to start I2S TX DMA");
 }
 
@@ -134,6 +144,13 @@ extern "C"{
     audioCallback(rxbuf, txbuf, CODEC_BUFFER_QUARTSIZE);
   }
   void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s){
+    audioCallback(rxbuf+CODEC_BUFFER_HALFSIZE, txbuf+CODEC_BUFFER_HALFSIZE, CODEC_BUFFER_QUARTSIZE);
+  }
+
+  void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
+    audioCallback(rxbuf, txbuf, CODEC_BUFFER_QUARTSIZE);
+  }
+  void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s){
     audioCallback(rxbuf+CODEC_BUFFER_HALFSIZE, txbuf+CODEC_BUFFER_HALFSIZE, CODEC_BUFFER_QUARTSIZE);
   }
 

@@ -178,7 +178,7 @@ void initLed(){
 void setup(){
   settings.init();
   codec.reset();
-  codec.bypass(0);
+  codec.bypass(false);
 
   program.startManager();
 

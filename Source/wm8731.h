@@ -140,7 +140,7 @@ static const uint16_t wm8731_init_data[] = {
   WM8731_DEEMP_NONE,                                      // Reg 0x05: Digital Audio Path Control
 #endif
   WM8731_MICPD|WM8731_OSCPD|WM8731_OUTPD|WM8731_CLKOUTPD, // Reg 0x06: Power Down Control
-  WM8731_FORMAT_I2S|WM8731_IWL_24BIT,                     // Reg 0x07: Digital Audio Interface Format
+  WM8731_MS|WM8731_FORMAT_I2S|WM8731_IWL_24BIT,           // Reg 0x07: Digital Audio Interface Format
   WM8731_MODE_NORMAL|WM8731_SR_48_48,                     // Reg 0x08: Sampling Control
   WM8731_NOT_ACTIVE                    			  // Reg 0x09: Active Control
 /*      0x017,                  // Reg 00: Left Line In (0dB, mute off) */
