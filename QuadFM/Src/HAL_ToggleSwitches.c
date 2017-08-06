@@ -15,13 +15,6 @@ void HAL_Toggles_reset(void)
 	SWL4_OUT(GPIO_PIN_RESET);
 	SWL5_OUT(GPIO_PIN_RESET);
 	
-		// Set all lines high
-	SWL1_OUT(GPIO_PIN_SET);
-	SWL2_OUT(GPIO_PIN_SET);
-	SWL3_OUT(GPIO_PIN_SET);
-	SWL4_OUT(GPIO_PIN_SET);
-	SWL5_OUT(GPIO_PIN_SET);
-	
 	// Make all switch lines inputs
 	GPIO_InitStruct.Pin = SW1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -47,6 +40,13 @@ void HAL_Toggles_reset(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(SW5_GPIO_Port, &GPIO_InitStruct);
+	
+	// Set all lines high
+	SWL1_OUT(GPIO_PIN_SET);
+	SWL2_OUT(GPIO_PIN_SET);
+	SWL3_OUT(GPIO_PIN_SET);
+	SWL4_OUT(GPIO_PIN_SET);
+	SWL5_OUT(GPIO_PIN_SET);
 }
 
 // 16-bit Result Format: [0|0|0|0|SW6H|SW6L|SW5H|SW5L|SW4H|SW4L|SW3H|SW3L|SW2H|SW2L|SW1H|SW1L]
