@@ -58,7 +58,27 @@ OwlWare:
   *         - Prescaler Odd factor (ODD): 1       |
   *         - Linear prescaler (DIV)    : 3       |
 
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C2, ENABLE);
+
+  /* Configures the I2S clock source (I2SCLK). */
+  /* This function must be called before enabling the I2S APB clock. */
   RCC_I2SCLKConfig(RCC_I2S2CLKSource_PLLI2S);
   RCC_PLLI2SCmd(ENABLE);
+  /* Enable the CODEC_I2S peripheral clock */
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
+
+blocking TransmitReceive seems to work on RX (strange values)
+
+HAL_I2S_Receive_DMA: no callbacks on RX
+
+Transmit: time-outs
+TransmitReceive_IT: underrun in TX
+
+DACLRC / ADCLRC / LRCK 48khz
+BCLK / SCLK 3.08MHz
+ADCDAT / SDI data
+DACDAT / SDO flat
+
+Problems fixed byt removing __HAL_I2S_ENABLE(&hi2s2) in Codec::reset()
 
 -----------------------------------------------------------------

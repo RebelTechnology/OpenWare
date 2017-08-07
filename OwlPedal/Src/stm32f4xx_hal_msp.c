@@ -238,6 +238,7 @@ void HAL_I2S_MspInit(I2S_HandleTypeDef* hi2s)
   if(hi2s->Instance==SPI2)
   {
   /* USER CODE BEGIN SPI2_MspInit 0 */
+    __HAL_RCC_PLLI2S_ENABLE();
 
   /* USER CODE END SPI2_MspInit 0 */
     /* Peripheral clock enable */
@@ -270,8 +271,8 @@ void HAL_I2S_MspInit(I2S_HandleTypeDef* hi2s)
     hdma_spi2_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_spi2_tx.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_spi2_tx.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_spi2_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    hdma_spi2_tx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_spi2_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_spi2_tx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
     hdma_spi2_tx.Init.Mode = DMA_CIRCULAR;
     hdma_spi2_tx.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_spi2_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
@@ -288,8 +289,8 @@ void HAL_I2S_MspInit(I2S_HandleTypeDef* hi2s)
     hdma_i2s2_ext_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
     hdma_i2s2_ext_rx.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_i2s2_ext_rx.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_i2s2_ext_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    hdma_i2s2_ext_rx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_i2s2_ext_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_i2s2_ext_rx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
     hdma_i2s2_ext_rx.Init.Mode = DMA_CIRCULAR;
     hdma_i2s2_ext_rx.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_i2s2_ext_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;

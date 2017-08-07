@@ -77,7 +77,7 @@ extern "C" {
 }
 
 void Codec::reset(){
-  __HAL_I2S_ENABLE(&hi2s2);
+  // __HAL_I2S_ENABLE(&hi2s2);
   codec_init(&hspi1);
 }
 
@@ -96,6 +96,7 @@ static void I2S_DMARxHalfCplt(DMA_HandleTypeDef *hdma){
 }
 
 void Codec::start(){
+  HAL_StatusTypeDef ret;
 
   /* See STM32F405 Errata, I2S device limitations */
   /* The I2S peripheral must be enabled when the external master sets the WS line at: */
@@ -104,27 +105,43 @@ void Codec::start(){
   while(!HAL_GPIO_ReadPin(I2S_LRCK_GPIO_Port, I2S_LRCK_Pin)); // wait for high
 
   // Ex function doesn't set up a half-complete callback
-
   extern DMA_HandleTypeDef hdma_spi2_tx;
   extern DMA_HandleTypeDef hdma_i2s2_ext_rx;
   hdma_i2s2_ext_rx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
   hdma_spi2_tx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
-  HAL_StatusTypeDef ret;
-  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, CODEC_BLOCKSIZE);
+  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE);
   ASSERT(ret == HAL_OK, "Failed to start I2S DMA");
   hdma_i2s2_ext_rx.XferCpltCallback = I2S_DMARxCplt;
   hdma_spi2_tx.XferCpltCallback = I2S_DMARxCplt;
-  hdma_spi2_tx.Instance->CR  |= DMA_IT_HT;
+  // hdma_spi2_tx.Instance->CR |= DMA_IT_HT;
 
   // hdma_i2s2_ext_rx.Instance->CR  |= DMA_IT_TC | DMA_IT_TE | DMA_IT_DME;
   // hdma_i2s2_ext_rx.Instance->FCR |= DMA_IT_FE;
   // hdma_i2s2_ext_rx.Instance->CR  |= DMA_IT_HT;
 
-  // HAL_StatusTypeDef ret;
-  // ret = HAL_I2S_Receive_DMA(&hi2s2, (uint16_t*)rxbuf, CODEC_BLOCKSIZE);
+  // ret = HAL_I2S_Receive(&hi2s2, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE*2, 10000);
+  // ASSERT(ret == HAL_OK, "Failed to start I2S RX");
+
+  // ret = HAL_I2S_Receive_IT(&hi2s2, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE*2);
+  // ASSERT(ret == HAL_OK, "Failed to start I2S RX IT");
+
+  // ret = HAL_I2S_Receive_DMA(&hi2s2, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE*2);
   // ASSERT(ret == HAL_OK, "Failed to start I2S RX DMA");
-  // ret = HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)txbuf, CODEC_BLOCKSIZE);
+
+  // ret = HAL_I2S_Transmit(&hi2s2, (uint16_t*)txbuf, CODEC_BUFFER_SIZE*2, 10000);
+  // ASSERT(ret == HAL_OK, "Failed to perform I2S TX");
+
+  // ret = HAL_I2S_Transmit_IT(&hi2s2, (uint16_t*)txbuf, CODEC_BUFFER_SIZE*2);
+  // ASSERT(ret == HAL_OK, "Failed to perform I2S TX");
+
+  // ret = HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t*)txbuf, CODEC_BUFFER_SIZE*2);
   // ASSERT(ret == HAL_OK, "Failed to start I2S TX DMA");
+
+  // ret = HAL_I2SEx_TransmitReceive(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE*2, 10000);
+  // ASSERT(ret == HAL_OK, "Failed to perform I2S TX/RX");
+
+  // ret = HAL_I2SEx_TransmitReceive_IT(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, CODEC_BUFFER_SIZE*2);
+  // ASSERT(ret == HAL_OK, "Failed to perform I2S TX/RX");
 }
 
 void Codec::pause(){
@@ -155,7 +172,7 @@ extern "C"{
   }
 
   void HAL_I2S_ErrorCallback(I2S_HandleTypeDef *hi2s){
-    error(CONFIG_ERROR, "SAI DMA Error");
+    error(CONFIG_ERROR, "I2S Error");
   }
 }
 #endif /* USE_WM8731 */
@@ -172,8 +189,8 @@ void Codec::reset(){
   // MX_SAI1_Init();
   // MX_SPI4_Init();
 
-  __HAL_SAI_ENABLE(&hsai_BlockA1);
-  __HAL_SAI_ENABLE(&hsai_BlockB1);
+  // __HAL_SAI_ENABLE(&hsai_BlockA1);
+  // __HAL_SAI_ENABLE(&hsai_BlockB1);
   codec_init(&hspi4);
 
   codec_write(0x01, (1<<3) | (1<<5) | 1); // i2s mode for DAC and ADC

@@ -179,6 +179,7 @@ void setup(){
   settings.init();
   codec.reset();
   codec.bypass(false);
+  codec.ramp(1<<24);
 
   program.startManager();
 
