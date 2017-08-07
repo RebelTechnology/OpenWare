@@ -77,7 +77,6 @@ extern "C" {
 }
 
 void Codec::reset(){
-  // __HAL_I2S_ENABLE(&hi2s2);
   codec_init(&hspi1);
 }
 

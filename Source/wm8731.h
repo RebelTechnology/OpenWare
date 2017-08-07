@@ -129,10 +129,17 @@ void codec_set_volume(int8_t volume);
 /* static uint16_t wm8731_registers[WM8731_NUM_REGS]; */
 
 static const uint16_t wm8731_init_data[] = {
+#ifdef OWL_MODULAR
+  WM8731_INVOL_0DB,                   			  // Reg 0x00: Left Line In
+  WM8731_INVOL_0DB,			                  // Reg 0x01: Right Line In
+  WM8731_HPVOL_0DB,			                  // Reg 0x02: Left Headphone out
+  WM8731_HPVOL_0DB,	                                  // Reg 0x03: Right Headphone out
+#else
   WM8731_INVOL_P6DB,                   			  // Reg 0x00: Left Line In
   WM8731_INVOL_P6DB,			                  // Reg 0x01: Right Line In
   WM8731_HPVOL_M6DB,			                  // Reg 0x02: Left Headphone out
   WM8731_HPVOL_M6DB,	                                  // Reg 0x03: Right Headphone out
+#endif
   WM8731_MUTEMIC|WM8731_DACSEL,                           // Reg 0x04: Analog Audio Path Control
 #ifdef OWL_MODULAR
   WM8731_ADCHPD|WM8731_DEEMP_NONE,                        // Reg 0x05: Digital Audio Path Control
