@@ -25,3 +25,40 @@ NVRAM (xrw)	: ORIGIN = 0x40024000, LENGTH = 4K
 FLASH (rx)	: ORIGIN = 0x08000000, LENGTH = 1M
 
 -----------------------------------------------------------------
+
+WM8731: I2S_MCLK not needed for Codec Master mode
+
+OpenWare:
+main.c:
+  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLN = 168;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 7;
+  PeriphClkInitStruct.PLLI2S.PLLI2SN = 50;
+  PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
+
+    __HAL_RCC_SPI2_CLK_ENABLE();
+    HAL_NVIC_SetPriority(SPI2_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(SPI2_IRQn);
+
+OwlWare:
+#define PLL_M      8
+#define PLL_N      336
+#define PLL_P      2
+#define PLL_Q      7
+#define PLLI2S_N   258
+#define PLLI2S_R   3
+
+  *        I2S input clock(Hz)                    | 86000000
+  *        To achieve the following I2S config:   |
+  *         - Master clock output (MCKO): ON      |
+  *         - Frame wide                : 16bit   |
+  *         - Audio sampling freq (KHz) : 48      |
+  *         - Error %                   : 0.0186  |
+  *         - Prescaler Odd factor (ODD): 1       |
+  *         - Linear prescaler (DIV)    : 3       |
+
+  RCC_I2SCLKConfig(RCC_I2S2CLKSource_PLLI2S);
+  RCC_PLLI2SCmd(ENABLE);
+
+-----------------------------------------------------------------
