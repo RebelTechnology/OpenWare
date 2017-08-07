@@ -178,8 +178,8 @@ void initLed(){
 void setup(){
   settings.init();
   codec.reset();
+  codec.set(0);
   codec.bypass(false);
-  codec.ramp(1<<24);
 
   program.startManager();
 

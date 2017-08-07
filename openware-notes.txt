@@ -82,8 +82,3 @@ DACDAT / SDO flat
 Problems fixed by removing __HAL_I2S_ENABLE(&hi2s2) in Codec::reset()
 
 -----------------------------------------------------------------
-
-full tilt input
-min/max 0.0000 0.0077
-
------------------------------------------------------------------

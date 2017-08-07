@@ -7,7 +7,7 @@ endif
 
 export OPENWARE CONFIG
 
-all: tesseract microlab owlpedal player quadfm 
+all: tesseract microlab owlpedal player #quadfm 
 
 tesseract:
 	@$(MAKE) -C Tesseract all
@@ -29,7 +29,7 @@ clean:
 	@$(MAKE) -C Tesseract clean
 	@$(MAKE) -C MicroLab clean
 	@$(MAKE) -C OwlPedal clean
-	@$(MAKE) -C QuadFM clean
 	@$(MAKE) -C PlayerF7 clean
+	@$(MAKE) -C QuadFM clean
 
 

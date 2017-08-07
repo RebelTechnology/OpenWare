@@ -219,20 +219,20 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 
 void updateProgramVector(ProgramVector* pv){
 #if defined OWL_TESSERACT
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V15;
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
   pv->hardware_version = TESSERACT_HARDWARE;
 #elif defined OWL_MICROLAB
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V15;
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
   pv->hardware_version = MICROLAB_HARDWARE;
-#elif defined OWL_PLAYERF7
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V14;
-  pv->hardware_version = PLAYER_HARDWARE;
 #elif defined OWL_PEDAL
   pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
   pv->hardware_version = OWL_PEDAL_HARDWARE;
 #elif defined OWL_MODULAR
   pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
   pv->hardware_version = OWL_MODULAR_HARDWARE;
+#elif defined OWL_PLAYERF7
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V14;
+  pv->hardware_version = PLAYER_HARDWARE;
 #else
 #error "invalid configuration"
 #endif
@@ -259,18 +259,22 @@ void updateProgramVector(ProgramVector* pv){
   pv->setButton = onSetButton;
   pv->setPatchParameter = onSetPatchParameter;
   pv->buttonChangedCallback = NULL;
-#ifdef PROGRAM_VECTOR_V15
+#ifdef PROGRAM_VECTOR_V12
+  pv->encoderChangedCallback = NULL;
+#endif
+#ifdef PROGRAM_VECTOR_V13
   extern char _EXTRAM, _EXTRAM_END;
 #ifdef OWL_PLAYERF7
   static MemorySegment heapSegments[] = {
-  { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM - &_EXTRAM_END) },
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM - &_EXTRAM_END) },
     { NULL, 0 }
   };
 #else
   extern char _CCMRAM, _CCMRAM_END;
   static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM - &_CCMRAM_END) - PROGRAMSTACK_SIZE },
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM - &_EXTRAM_END) },
+    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_END - &_CCMRAM) - PROGRAMSTACK_SIZE },
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_END - &_EXTRAM) },
+    // todo: add remaining program space
     { NULL, 0 }
   };
 #endif
@@ -422,7 +426,6 @@ void runManagerTask(void* p){
 	uint8_t* PROGRAMSTACK = CCMHEAP+CCMHEAP_SIZE;
 #else
 	extern char _PATCHRAM, _PATCHRAM_END;
-	uint32_t PROGRAMSTACK_SIZE = 8*1024;
 	uint32_t PATCHRAM_SIZE = (uint32_t)(&_PATCHRAM_END - &_PATCHRAM);
 	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram
 #endif
