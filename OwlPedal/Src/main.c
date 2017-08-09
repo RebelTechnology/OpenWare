@@ -520,6 +520,7 @@ static void MX_FSMC_Init(void)
   /* p.FSMC_CLKDivision = 0; */
   /* p.FSMC_DataLatency = 0; */
   /* p.FSMC_AccessMode = FSMC_AccessMode_A; */
+  __HAL_RCC_FSMC_CLK_ENABLE();
 
   Timing.AddressSetupTime = 3;
   Timing.AddressHoldTime = 1; // >0 <= 15

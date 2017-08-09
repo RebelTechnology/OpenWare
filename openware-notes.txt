@@ -82,3 +82,55 @@ DACDAT / SDO flat
 Problems fixed by removing __HAL_I2S_ENABLE(&hi2s2) in Codec::reset()
 
 -----------------------------------------------------------------
+
+OwlPedal SRAM memory
+
+OwlWare:
+  p.FSMC_AddressSetupTime = 3;
+  p.FSMC_AddressHoldTime = 0;
+  p.FSMC_DataSetupTime = 6;
+  p.FSMC_BusTurnAroundDuration = 1;
+  p.FSMC_CLKDivision = 0;
+  p.FSMC_DataLatency = 0;
+  p.FSMC_AccessMode = FSMC_AccessMode_A;
+
+OpenWare:
+  Timing.AddressSetupTime = 3;
+  Timing.AddressHoldTime = 1; // > 0, <= 15
+  Timing.DataSetupTime = 6;
+  Timing.BusTurnAroundDuration = 1;
+  Timing.CLKDivision = 2; // > 1, <= 16
+  Timing.DataLatency = 2; // > 1, <= 17
+  Timing.AccessMode = FSMC_ACCESS_MODE_A;
+
+  /* Set FSMC_NORSRAM device timing parameters */  
+  tmpr |= (uint32_t)(Timing->AddressSetupTime                  |\
+                    ((Timing->AddressHoldTime) << 4U)          |\
+                    ((Timing->DataSetupTime) << 8U)            |\
+                    ((Timing->BusTurnAroundDuration) << 16U)   |\
+                    (((Timing->CLKDivision)-1U) << 20U)        |\
+                    (((Timing->DataLatency)-2U) << 24U)        |\
+                    (Timing->AccessMode));
+
+
+__HAL_RCC_FSMC_CLK_ENABLE():
+                                      __IO uint32_t tmpreg = 0x00U; \
+                                      SET_BIT(RCC->AHB3ENR, RCC_AHB3ENR_FSMCEN);\
+                                      /* Delay after an RCC peripheral clock enabling */ \
+                                      tmpreg = READ_BIT(RCC->AHB3ENR, RCC_AHB3ENR_FSMCEN);\
+                                      UNUSED(tmpreg); \
+
+-----------------------------------------------------------------
+
+todo:
+/ pass in sample format in PV: 16/24bit, 24bit
+  / change audio_bitdepth to audio_format
+- refactor OwlProgram/PatchProgram/SampleBuffer to allow different conversions depending on format
+- pass in stack as available heap memory (for CCM / non-F7 platforms)
+- check OWL2 sample format and conversion
+
+-----------------------------------------------------------------
+
+OWL2 80kHz 500mV on AINA
+
+-----------------------------------------------------------------

@@ -11,7 +11,7 @@ MEMORY
 RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 64K    /* total RAM is 112kb */
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
-EXTRAM (rwx)     : ORIGIN = 0xD0000000, LENGTH = 1M
+EXTRAM (rwx)     : ORIGIN = 0xD0000000, LENGTH = 8M
 FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 512K
 }
 

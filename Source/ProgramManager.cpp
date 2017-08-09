@@ -245,7 +245,6 @@ void updateProgramVector(ProgramVector* pv){
   pv->parameters_size = NOF_PARAMETERS;
   pv->parameters = parameter_values;
 #endif
-  pv->audio_bitdepth = 24;
   pv->audio_samplingrate = 48000;
   pv->audio_blocksize = CODEC_BLOCKSIZE; // todo!
   pv->buttons = button_values;
@@ -260,6 +259,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->setPatchParameter = onSetPatchParameter;
   pv->buttonChangedCallback = NULL;
 #ifdef PROGRAM_VECTOR_V12
+  pv->audio_bitdepth = 24;
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
@@ -278,7 +278,11 @@ void updateProgramVector(ProgramVector* pv){
     { NULL, 0 }
   };
 #endif
-
+#ifdef USE_WM8731
+  pv->audio_format = AUDIO_FORMAT_24B16;
+#else
+  pv->audio_format = AUDIO_FORMAT_24B32;
+#endif
   pv->heapSegments = (MemorySegment*)heapSegments;
 #endif
   pv->message = NULL;
