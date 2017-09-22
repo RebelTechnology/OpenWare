@@ -125,9 +125,11 @@ __HAL_RCC_FSMC_CLK_ENABLE():
 todo:
 / pass in sample format in PV: 16/24bit, 24bit
   / change audio_bitdepth to audio_format
-- refactor OwlProgram/PatchProgram/SampleBuffer to allow different conversions depending on format
+/ refactor OwlProgram/PatchProgram/SampleBuffer to allow different conversions depending on format
 - pass in stack as available heap memory (for CCM / non-F7 platforms)
 - check OWL2 sample format and conversion
+- owl1 sram
+- replace float div with mul in SampleBuffer conversions - check accuracy
 
 -----------------------------------------------------------------
 
