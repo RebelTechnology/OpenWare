@@ -14,18 +14,18 @@ void TLC5971_SetOutput_GS (unsigned char LED_ID, unsigned char LED_Colour,  unsi
 	switch (LED_Colour)
 	{
 		case LED_Red:
-			rgTxBuffer[ucBuffLoc+0] = (value&0x00FF)>>0;
-			rgTxBuffer[ucBuffLoc+1] = (value&0xFF00)>>8;
+			rgTxBuffer[27-(ucBuffLoc+0)] = (value&0x00FF)>>0;
+			rgTxBuffer[27-(ucBuffLoc+1)] = (value&0xFF00)>>8;
 			break;
 		
 		case LED_Green:
-			rgTxBuffer[ucBuffLoc+2] = (value&0x00FF)>>0;
-			rgTxBuffer[ucBuffLoc+3] = (value&0xFF00)>>8;
+			rgTxBuffer[27-(ucBuffLoc+2)] = (value&0x00FF)>>0;
+			rgTxBuffer[27-(ucBuffLoc+3)] = (value&0xFF00)>>8;
 			break;
 		
 		case LED_Blue:
-			rgTxBuffer[ucBuffLoc+4] = (value&0x00FF)>>0;
-			rgTxBuffer[ucBuffLoc+5] = (value&0xFF00)>>8;
+			rgTxBuffer[27-(ucBuffLoc+4)] = (value&0x00FF)>>0;
+			rgTxBuffer[27-(ucBuffLoc+5)] = (value&0xFF00)>>8;
 			break;
 	}
 }	
@@ -39,29 +39,29 @@ void TLC5971_SetOutput_BC (unsigned char LED_ID, unsigned char LED_Colour,  unsi
 		switch (LED_Colour)
 		{
 			case LED_Red:
-				ucBuffTemp 		 	= rgTxBuffer[24];		
-				rgTxBuffer[24]  = (value&0x7F);
-				rgTxBuffer[24] |= (ucBuffTemp&0x80);
+				ucBuffTemp 		 	= rgTxBuffer[27-24];		
+				rgTxBuffer[27-24]  = (value&0x7F);
+				rgTxBuffer[27-24] |= (ucBuffTemp&0x80);
 				break;
 			
 			case LED_Green:
-				ucBuffTemp 		 	= rgTxBuffer[24];	
-				rgTxBuffer[24]  = (value<<7);
-				rgTxBuffer[24] |= (ucBuffTemp&0x7F);
+				ucBuffTemp 		 	= rgTxBuffer[27-24];	
+				rgTxBuffer[27-24]  = (value<<7);
+				rgTxBuffer[27-24] |= (ucBuffTemp&0x7F);
 			
-				ucBuffTemp 		 	= rgTxBuffer[25];
-				rgTxBuffer[25]  = (value>>1);
-				rgTxBuffer[25] |= (ucBuffTemp&0xC0);
+				ucBuffTemp 		 	= rgTxBuffer[27-25];
+				rgTxBuffer[27-25]  = (value>>1);
+				rgTxBuffer[27-25] |= (ucBuffTemp&0xC0);
 				break;
 			
 			case LED_Blue:
-				ucBuffTemp 		 	= rgTxBuffer[25];
-				rgTxBuffer[25]  = (value<<6);
-				rgTxBuffer[25] |= (ucBuffTemp&0x3F);
+				ucBuffTemp 		 	= rgTxBuffer[27-25];
+				rgTxBuffer[27-25]  = (value<<6);
+				rgTxBuffer[27-25] |= (ucBuffTemp&0x3F);
 			
-				ucBuffTemp 		 	= rgTxBuffer[26];
-				rgTxBuffer[26]  = (value>>2);
-				rgTxBuffer[26] |= (ucBuffTemp&0xE0);
+				ucBuffTemp 		 	= rgTxBuffer[27-26];
+				rgTxBuffer[27-26]  = (value>>2);
+				rgTxBuffer[27-26] |= (ucBuffTemp&0xE0);
 				break;
 		}
 	}		
@@ -69,15 +69,15 @@ void TLC5971_SetOutput_BC (unsigned char LED_ID, unsigned char LED_Colour,  unsi
 
 void TLC5971_Settings (unsigned char value)
 {
-	unsigned char ucBuffTemp = rgTxBuffer[26];
+	unsigned char ucBuffTemp = rgTxBuffer[27-26];
 	
-	rgTxBuffer[26]  = (value<<5);
-	rgTxBuffer[26] |= (ucBuffTemp&0x1F);
-	rgTxBuffer[27]	= (value>>3);
+	rgTxBuffer[27-26]  = (value<<5);
+	rgTxBuffer[27-26] |= (ucBuffTemp&0x1F);
+	rgTxBuffer[27-27]	= (value>>3);
 }
 void TLC5971_Update(void)
 {
-	rgTxBuffer[27] = (0x25<<2);
+	rgTxBuffer[27-27] = (0x25<<2);
 	
 	HAL_SPI_Transmit(TLC5971_SPIConfig, rgTxBuffer, sizeof rgTxBuffer, 100);
 }
