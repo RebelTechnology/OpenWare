@@ -30,7 +30,7 @@ void TLC5971_SetOutput_GS (unsigned char LED_ID, unsigned char LED_Colour,  unsi
 	}
 }	
 
-void TLC5971_SetOutput_DC (unsigned char LED_ID, unsigned char LED_Colour,  unsigned char value)
+void TLC5971_SetOutput_BC (unsigned char LED_ID, unsigned char LED_Colour,  unsigned char value)
 {
 	unsigned char ucBuffTemp;
 		
@@ -77,6 +77,8 @@ void TLC5971_Settings (unsigned char value)
 }
 void TLC5971_Update(void)
 {
+	rgTxBuffer[27] = (0x25<<2);
+	
 	HAL_SPI_Transmit(TLC5971_SPIConfig, rgTxBuffer, sizeof rgTxBuffer, 100);
 }
 
