@@ -136,3 +136,13 @@ todo:
 OWL2 80kHz 500mV on AINA
 
 -----------------------------------------------------------------
+
+Bootloader STM32F42x/3x
+Bootloader activation Pattern 5:
+Boot0(pin) = 1, Boot1(pin) = 0 and BFB2(bit) = 0
+Boot0(pin) = 1, Boot1(pin) = 0 and BFB2 (bit) = 1
+Boot0(pin) = 0, BFB2(bit) = 1 and both banks don’t contain valid code
+
+BFB2: boot from bank 2
+
+-----------------------------------------------------------------
