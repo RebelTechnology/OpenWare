@@ -2,6 +2,7 @@
 #define __PROGRAM_VECTOR_V13_H
 
 #define PROGRAM_VECTOR_V13
+#define PROGRAM_VECTOR_CHECKSUM     0x51
 
 #include <stdint.h>
 

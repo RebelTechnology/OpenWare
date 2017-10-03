@@ -3,9 +3,9 @@
 #include "ServiceCall.h"
 #include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
-
 #include "FastLogTable.h"
 #include "FastPowTable.h"
+#include "ProgramManager.h"
 
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
   switch(len) { 
@@ -108,21 +108,23 @@ int serviceCall(int service, void** params, int len){
 	ret = OWL_SERVICE_INVALID_ARGS;
       }
     }
-    // while(len >= index+2){
-    //   char* p = (char*)params[index++];
-    //   void** value = (void**)params[index++];
-    //   if(strncmp(SYSTEM_TABLE_ICSI_LOG, p, 3) == 0){
-    // 	*value = (void*)fast_log_table;
-    //   }else if(strncmp(SYSTEM_TABLE_ICSI_E_H, p, 3) == 0){
-    // 	*value = (void*)fast_pow_h_table;
-    //   }else if(strncmp(SYSTEM_TABLE_ICSI_E_L, p, 3) == 0){
-    // 	*value = (void*)fast_pow_l_table;
-    //   }else{
-    // 	ret = OWL_SERVICE_INVALID_ARGS;
-    //   }
-    // }
     break;
   }
+  case OWL_SERVICE_REGISTER_CALLBACK: {
+    int index = 0;
+    if(len >= index+2){
+      char* name = (char*)params[index++];
+      void* callback = (void*)params[index++];
+#ifdef USE_SCREEN
+      if(strncmp(SYSTEM_FUNCTION_DRAW, name, 3) == 0){
+	setDrawCallback(callback);
+	ret = OWL_SERVICE_OK;
+      }
+#endif /* USE_SCREEN */
+    }
+    break;
+  }
+
   }
   return ret;
 }     

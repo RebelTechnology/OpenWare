@@ -219,23 +219,19 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 
 void updateProgramVector(ProgramVector* pv){
 #if defined OWL_TESSERACT
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
   pv->hardware_version = TESSERACT_HARDWARE;
 #elif defined OWL_MICROLAB
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
   pv->hardware_version = MICROLAB_HARDWARE;
 #elif defined OWL_PEDAL
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
   pv->hardware_version = OWL_PEDAL_HARDWARE;
 #elif defined OWL_MODULAR
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
   pv->hardware_version = OWL_MODULAR_HARDWARE;
 #elif defined OWL_PLAYERF7
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V14;
   pv->hardware_version = PLAYER_HARDWARE;
 #else
 #error "invalid configuration"
 #endif
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM;
   // pv->parameters_size = params.parameters_size;
   // pv->parameters = params.parameters;
 #ifdef USE_SCREEN
@@ -266,7 +262,7 @@ void updateProgramVector(ProgramVector* pv){
   extern char _EXTRAM, _EXTRAM_END;
 #ifdef OWL_PLAYERF7
   static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM - &_EXTRAM_END) },
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_END - &_EXTRAM) },
     { NULL, 0 }
   };
 #else
@@ -323,6 +319,12 @@ void eraseFlashTask(void* p){
 }
 
 #ifdef USE_SCREEN
+static void (*drawCallback)(uint8_t*, uint16_t, uint16_t) = NULL;
+
+void setDrawCallback(void *callback){
+  drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
+}
+
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
   static ScreenBuffer screen(width, height);
   screen.setBuffer(pixels);
@@ -334,11 +336,8 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
 void runScreenTask(void* p){
   const TickType_t delay = 20 / portTICK_PERIOD_MS;
   for(;;){
-    ProgramVector* pv = getProgramVector();
-    if(pv->drawCallback != NULL){
-      pv->drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-    }else{
-      defaultDrawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
+    if(drawCallback != NULL){
+      drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
     }
     params.draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
     graphics.display(pixelbuffer, OLED_WIDTH*OLED_HEIGHT);
@@ -396,7 +395,9 @@ void runManagerTask(void* p){
 	  staticVector.message = programVector->message;
 	}
 	programVector = &staticVector;
-	// programVector->drawCallback = NULL;
+#ifdef USE_SCREEN
+	drawCallback = &defaultDrawCallback;
+#endif /* USE_SCREEN */
 	vTaskDelete(audioTask);
 	audioTask = NULL;
       }

@@ -10,7 +10,8 @@ MEMORY
 {
 RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 192K
 PATCHRAM (xrw)  : ORIGIN = 0x20030000, LENGTH = 128K
-EXTRAM (rw)     : ORIGIN = 0xD0000000, LENGTH = 8M
+/* EXTRAM (rw)     : ORIGIN = 0xD0000000, LENGTH = 8M */
+EXTRAM (rw)     : ORIGIN = 0xD0100000, LENGTH = 6M /* Player b2 first 1M fails (todo: remove) */
 FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 1M
 }
 

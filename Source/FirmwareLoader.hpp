@@ -90,7 +90,6 @@ public:
       buffer = static_buffer; 
 #else
       extern char _EXTRAM; // defined in link script
-      // buffer = (uint8_t*)&_EXTRAM+1024*1024;
       buffer = (uint8_t*)&_EXTRAM;
 #endif
       return 0;

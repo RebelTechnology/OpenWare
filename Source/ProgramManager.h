@@ -20,6 +20,8 @@ extern "C" {
 
   uint8_t getButtonValue(uint8_t ch);
   void setButtonValue(uint8_t ch, uint8_t value);
+
+  void setDrawCallback(void* callback);
 }
 
 class ProgramManager {
