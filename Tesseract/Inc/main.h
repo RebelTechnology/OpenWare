@@ -86,6 +86,12 @@
 #define PWM1_GPIO_Port GPIOA
 #define PWM2_Pin GPIO_PIN_1
 #define PWM2_GPIO_Port GPIOA
+#define TOGGLE_A1_Pin GPIO_PIN_2
+#define TOGGLE_A1_GPIO_Port GPIOA
+#define TOGGLE_A1_EXTI_IRQn EXTI2_IRQn
+#define TOGGLE_A2_Pin GPIO_PIN_4
+#define TOGGLE_A2_GPIO_Port GPIOA
+#define TOGGLE_A2_EXTI_IRQn EXTI4_IRQn
 #define FLASH_SCK_Pin GPIO_PIN_5
 #define FLASH_SCK_GPIO_Port GPIOA
 #define FLASH_MISO_Pin GPIO_PIN_6
@@ -100,15 +106,18 @@
 #define FLASH_nWP_GPIO_Port GPIOB
 #define PWM3_Pin GPIO_PIN_1
 #define PWM3_GPIO_Port GPIOB
-#define GP7_Pin GPIO_PIN_2
-#define GP7_GPIO_Port GPIOB
-#define GP7_EXTI_IRQn EXTI2_IRQn
 #define CS_nCS_Pin GPIO_PIN_10
 #define CS_nCS_GPIO_Port GPIOB
 #define CS_nRST_Pin GPIO_PIN_11
 #define CS_nRST_GPIO_Port GPIOB
+#define TOGGLE_B1_Pin GPIO_PIN_12
+#define TOGGLE_B1_GPIO_Port GPIOC
+#define TOGGLE_B1_EXTI_IRQn EXTI15_10_IRQn
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
+#define TOGGLE_B2_Pin GPIO_PIN_9
+#define TOGGLE_B2_GPIO_Port GPIOG
+#define TOGGLE_B2_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 
