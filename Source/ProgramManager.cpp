@@ -28,7 +28,6 @@ ParameterController<NOF_PARAMETERS> params;
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
-// #define SCREEN_TASK_PRIORITY 3
 #define AUDIO_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
 #define AUDIO_TASK_PRIORITY  4
 // #define MANAGER_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
@@ -38,10 +37,6 @@ ParameterController<NOF_PARAMETERS> params;
 #define FLASH_TASK_STACK_SIZE (512/sizeof(portSTACK_TYPE))
 
 const uint32_t PROGRAMSTACK_SIZE = 8*1024; // size in bytes
-
-
-// #define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT/8)
-// uint8_t pixelbuffer[OLED_DATA_LENGTH];
 
 #define START_PROGRAM_NOTIFICATION  0x01
 #define STOP_PROGRAM_NOTIFICATION   0x02
@@ -53,7 +48,6 @@ ProgramManager program;
 PatchRegistry registry;
 ProgramVector staticVector;
 ProgramVector* programVector = &staticVector;
-// static TaskHandle_t screenTask = NULL;
 static TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
@@ -67,7 +61,6 @@ uint16_t timestamps[NOF_BUTTONS];
 
 ProgramVector* getProgramVector() { return programVector; }
 static uint16_t getSampleCounter();
-
 
 static int16_t encoders[2] = {INT16_MAX/2, INT16_MAX/2};
 static int16_t deltas[2] = {0, 0};
@@ -439,25 +432,7 @@ void runManagerTask(void* p){
 				      NULL, AUDIO_TASK_PRIORITY, 
 				      (StackType_t*)PROGRAMSTACK, 
 				      &audioTaskBuffer);
-      	// if(def->getStackBase() != 0 && 
-      	//    def->getStackSize() > configMINIMAL_STACK_SIZE*sizeof(portSTACK_TYPE)){
-      	//   audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
-      	// 				def->getStackSize()/sizeof(portSTACK_TYPE),
-      	// 				NULL, AUDIO_TASK_PRIORITY, 
-      	// 				(StackType_t*)def->getStackBase(), 
-      	// 				&audioTaskBuffer);
-      	// }else{
-      	//   xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
-      	//   // error(PROGRAM_ERROR, "Invalid program stack");
-      	// }
-      	if(audioTask == NULL)
-      	  error(PROGRAM_ERROR, "Failed to start program task");
       }
-      // todo: make sure no two tasks are using the same stack
-      // if(audioTask == NULL)
-      // 	xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
-      // else
-      // 	error(PROGRAM_ERROR, "Program already running");
       if(audioTask == NULL)
 	error(PROGRAM_ERROR, "Failed to start program task");
     }
@@ -468,7 +443,9 @@ ProgramManager::ProgramManager(){
 #ifdef DEBUG_DWT
   // DWT cycle count enable
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-  // DWT->LAR = 0xC5ACCE55;
+#ifdef OWL_PLAYERF7
+  DWT->LAR = 0xC5ACCE55; // enable debug access: required on F7
+#endif
   DWT->CYCCNT = 0;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 #endif
@@ -477,13 +454,11 @@ ProgramManager::ProgramManager(){
 void ProgramManager::startManager(){
   registry.init();
   codec.start();
-
   // codec.pause();
   updateProgramVector(getProgramVector());
 #ifdef USE_SCREEN
   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
 #endif
-  // xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
   // xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
   xTaskCreate(runManagerTask, "Manager", MANAGER_TASK_STACK_SIZE, NULL, MANAGER_TASK_PRIORITY, &managerTask);
 }
