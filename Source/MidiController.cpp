@@ -164,10 +164,9 @@ void MidiController::sendStatus(){
   char* p = &buffer[1];
   uint8_t err = getErrorStatus();
   switch(err & 0xf0){
-  case NO_ERROR: {
+  case NO_ERROR:
     sendProgramStats();    
     break;
-  }
   case MEM_ERROR:
     p = stpcpy(p, (const char*)"Memory Error 0x");
     p = stpcpy(p, msg_itoa(err, 16));
@@ -198,8 +197,8 @@ void MidiController::sendStatus(){
     break;
   }
   const char* msg = getErrorMessage();
-  // if(err != NO_ERROR && msg != NULL){
-  if(msg != NULL){
+  if(err != NO_ERROR && msg != NULL){
+  // if(msg != NULL){
     p = stpcpy(p, (const char*)" ");
     p = stpcpy(p, msg);
   }
