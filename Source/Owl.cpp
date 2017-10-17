@@ -146,6 +146,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     setButtonValue(PUSHBUTTON, !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin));
     break;
 #endif
+#ifdef OWL_TESSERACT
+  case TOGGLE_A1_Pin:
+    break;
+  case TOGGLE_A2_Pin:
+    break;
+  case TOGGLE_B1_Pin:
+    break;
+  case TOGGLE_B2_Pin:
+    break;
+#endif
 #ifdef OWL_MICROLAB
     // todo remove
   case TRIG1_Pin:
@@ -246,7 +256,7 @@ void loop(void){
   taskYIELD();
   midi.push();
 #ifdef OWL_TESSERACT
-  setLed(rainbow[(4095-adc_values[3])>>2]);
+  setLed(rainbow[((adc_values[0]>>3)+(adc_values[1]>>3)+(adc_values[2]>>3)+(adc_values[3]>>3))&0x3ff]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
 #endif /* OWL_TESSERACT */
 #ifdef OWL_MICROLAB_LED

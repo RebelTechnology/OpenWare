@@ -113,9 +113,9 @@ int serviceCall(int service, void** params, int len){
   case OWL_SERVICE_REGISTER_CALLBACK: {
     int index = 0;
     if(len >= index+2){
+#ifdef USE_SCREEN
       char* name = (char*)params[index++];
       void* callback = (void*)params[index++];
-#ifdef USE_SCREEN
       if(strncmp(SYSTEM_FUNCTION_DRAW, name, 3) == 0){
 	setDrawCallback(callback);
 	ret = OWL_SERVICE_OK;
