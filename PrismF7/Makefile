@@ -6,8 +6,8 @@ include $(OPENWARE)/STM32F745VG.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
-C_SRC += cs4272.c ssd1309.c
-CPP_SRC += ScreenBuffer.cpp Graphics.cpp
+C_SRC += cs4272.c seps114a.c
+CPP_SRC += ScreenBufferColour.cpp Graphics.cpp
 S_SRC = startup_stm32f745xx.s
 
 include $(OPENWARE)/sources.mk
