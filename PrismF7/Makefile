@@ -1,0 +1,19 @@
+PROJECT = Prism
+BUILDROOT = .
+OPENWARE ?= $(BUILDROOT)/..
+
+include $(OPENWARE)/STM32F745VG.mk
+
+C_SRC = $(notdir $(wildcard Src/*.c))
+CPP_SRC = $(notdir $(wildcard Src/*.cpp))
+C_SRC += cs4272.c ssd1309.c
+CPP_SRC += ScreenBuffer.cpp Graphics.cpp
+S_SRC = startup_stm32f745xx.s
+
+include $(OPENWARE)/sources.mk
+
+OBJS = $(C_SRC:%.c=Build/%.o)
+OBJS += $(CPP_SRC:%.cpp=Build/%.o)
+OBJS += $(S_SRC:%.s=Build/%.o)
+
+include $(OPENWARE)/f7.mk
