@@ -1,54 +1,19 @@
 // #include "cmsis_os.h"
 #include "stm32f7xx_hal.h"
 #include "device.h"
-#include "gpio.h"
 #include "Graphics.h"
 // #include "FreeRTOS.h"
 #include "errorhandlers.h"
-#include "device.h"
-extern "C" {
-#include "HAL_OLED.h"
-}
-
-// extern "C" void delay(uint32_t millisec);
-
-// #ifdef OLED_SOFT_CS
-// #define setCS()    setPin(OLED_CS_GPIO_Port, OLED_CS_Pin)
-// #define clearCS()  clearPin(OLED_CS_GPIO_Port, OLED_CS_Pin)
-// #else
-// #define setCS()    
-// #define clearCS()
-// #endif
-
-// #define setDC()   setPin(OLED_DC_GPIO_Port, OLED_DC_Pin)
-// #define clearDC() clearPin(OLED_DC_GPIO_Port, OLED_DC_Pin)
-
-// #if defined SEPS114A
-// #include "seps114a.h"
-// #elif defined SSD1331
-// #include "ssd1331.h"
-// #elif defined SSD1309
-// #include "ssd1309.h"
-// #endif
+#include "oled.h"
 
 void Graphics::begin(SPI_HandleTypeDef *spi) {
-  hspi = spi;
-  OLED_Config(spi, NULL);
-  // off();
-  // commonInit();
-  // chipInit();
-  // delay(10);
-  // // on();
-  // zero();
+  oled_init(spi);
+  // OLED_Config(spi, NULL);
 }
 
-bool dozero = false;
 void Graphics::display(uint8_t* pixels, uint16_t size){
-  OLED_writeDAT(pixels, size/8);
-  // if(dozero)
-  //   zero();
-  // setDC();
-  // spiwrite((uint8_t*)pixels, size*sizeof(uint16_t));
+  // OLED_writeDAT(pixels, size/8);
+  oled_write(pixels, size);
 }
 
 #if 0
@@ -148,20 +113,20 @@ extern "C" {
 //   spiwrite(value);
 // }
 
-void Graphics::writeCommands(const uint8_t *cmd, uint8_t length){
-  clearDC();
-  // writing with DMA appears to trigger a TC callback too soon
-  spiwritesync(cmd, length);
-}
+// void Graphics::writeCommands(const uint8_t *cmd, uint8_t length){
+//   clearDC();
+//   // writing with DMA appears to trigger a TC callback too soon
+//   spiwritesync(cmd, length);
+// }
 
 /* Initialize PIN, direction and stuff related to hardware on CPU */
-void Graphics::commonInit(){
-  setCS();
-  clearPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
-  delay(10);
-  setPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
-  delay(10);
-}
+// void Graphics::commonInit(){
+//   setCS();
+//   clearPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
+//   delay(10);
+//   setPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
+//   delay(10);
+// }
 
 // void Graphics::clear() {
 //   uint8_t cmd[] = {0x25, 0x00, 0x00, OLED_MW, OLED_MH};

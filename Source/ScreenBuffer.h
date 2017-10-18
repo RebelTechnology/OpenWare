@@ -2,8 +2,13 @@
 #define __ScreenBuffer_h__
 
 #include <stdint.h>
+#include "device.h"
 
+#ifdef OWL_PLAYERF7
 typedef uint8_t Colour;
+#elif defined OWL_PRISMF7
+typedef uint16_t Colour;
+#endif
 
 // Color definitions
 #define	BLACK           0x0000
@@ -36,8 +41,9 @@ public:
   // ScreenBuffer(int w, int h, Colour** buffer) : width(w), height(h), pixels(buffer){}
   // ScreenBuffer();
   ScreenBuffer(int w, int h);
-  void setBuffer(Colour* buffer){
-    pixels = buffer;
+  /* void setBuffer(Colour* buffer){ */
+  void setBuffer(uint8_t* buffer){
+    pixels = (Colour*)buffer;
   }
   Colour* getBuffer(){
     return pixels;

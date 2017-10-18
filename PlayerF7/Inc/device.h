@@ -11,6 +11,7 @@
 /* #define OWL_PEDAL */
 
 #ifdef OWL_PLAYERF7
+#define OWL_ARCH_F7
 #define ADC_A 0
 #define ADC_B 1
 #define ADC_C 2

@@ -52,6 +52,8 @@
 #include "usb_device.h"
 
 /* USER CODE BEGIN Includes */
+void setup();
+void loop(void);
 
 /* USER CODE END Includes */
 
@@ -112,12 +114,6 @@ int main(void)
 
   /* USER CODE END 1 */
 
-  /* Enable I-Cache-------------------------------------------------------------*/
-  SCB_EnableICache();
-
-  /* Enable D-Cache-------------------------------------------------------------*/
-  SCB_EnableDCache();
-
   /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -171,6 +167,9 @@ int main(void)
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
   if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
     Error_Handler();
+
+  // Initialise
+  setup();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -670,7 +669,8 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    loop();
+    /* osDelay(1); */
   }
   /* USER CODE END 5 */ 
 }
@@ -684,9 +684,11 @@ void _Error_Handler(char * file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  while(1) 
-  {
-  }
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END Error_Handler_Debug */ 
 }
 
@@ -704,6 +706,11 @@ void assert_failed(uint8_t* file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END 6 */
 
 }

@@ -221,6 +221,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = OWL_MODULAR_HARDWARE;
 #elif defined OWL_PLAYERF7
   pv->hardware_version = PLAYER_HARDWARE;
+#elif defined OWL_PRISMF7
+  pv->hardware_version = PRISM_HARDWARE;
 #else
 #error "invalid configuration"
 #endif
@@ -253,7 +255,7 @@ void updateProgramVector(ProgramVector* pv){
 #endif
 #ifdef PROGRAM_VECTOR_V13
   extern char _EXTRAM, _EXTRAM_END;
-#ifdef OWL_PLAYERF7
+#ifdef OWL_ARCH_F7
   static MemorySegment heapSegments[] = {
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_END - &_EXTRAM) },
     { NULL, 0 }
@@ -417,7 +419,7 @@ void runManagerTask(void* p){
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
-#ifndef OWL_PLAYERF7
+#ifndef OWL_ARCH_F7
 	extern char _CCMRAM, _CCMRAM_END;
 	uint32_t CCMHEAP_SIZE = (uint32_t)(&_CCMRAM_END - &_CCMRAM) - PROGRAMSTACK_SIZE;
 	uint8_t* CCMHEAP = (uint8_t*)&_CCMRAM;
@@ -443,7 +445,7 @@ ProgramManager::ProgramManager(){
 #ifdef DEBUG_DWT
   // DWT cycle count enable
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-#ifdef OWL_PLAYERF7
+#ifdef OWL_ARCH_F7
   DWT->LAR = 0xC5ACCE55; // enable debug access: required on F7
 #endif
   DWT->CYCCNT = 0;

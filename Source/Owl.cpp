@@ -240,11 +240,13 @@ void setup(){
   graphics.begin(&hspi2);
 #endif /* USE_SCREEN */
 
+#ifndef OWL_PRISMF7
   extern ADC_HandleTypeDef hadc3;
   // extern DMA_HandleTypeDef hdma_adc3;
   HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc_values, NOF_ADC_VALUES);
   if(ret != HAL_OK)
     error(CONFIG_ERROR, "ADC Start failed");
+#endif /* OWL_PRISMF7 */
 
   program.loadProgram(1);
   program.startProgram(false);
