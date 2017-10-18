@@ -285,8 +285,8 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.PLLSAI.PLLSAIN = 100;
   PeriphClkInitStruct.PLLSAI.PLLSAIQ = 4;
   PeriphClkInitStruct.PLLSAIDivQ = 1;
-  PeriphClkInitStruct.SaiAClockSelection = SAI_CLKSOURCE_PLLSAI;
-  PeriphClkInitStruct.SaiBClockSelection = SAI_CLKSOURCE_PLLSAI;
+  /* PeriphClkInitStruct.SaiAClockSelection = SAI_CLKSOURCE_PLLSAI; */
+  /* PeriphClkInitStruct.SaiBClockSelection = SAI_CLKSOURCE_PLLSAI; */
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
