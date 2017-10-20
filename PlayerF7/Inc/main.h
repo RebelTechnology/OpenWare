@@ -121,8 +121,15 @@
 
 /* USER CODE BEGIN Private defines */
 
-#define USB_DM_Pin GPIO_PIN_14
-#define USB_DP_Pin GPIO_PIN_15
+/* #define USB_DM_Pin GPIO_PIN_14 */
+/* #define USB_DP_Pin GPIO_PIN_15 */
+
+#define USB_HOST_RX_BUFF_SIZE   64  /* Max Received data 64 bytes */
+
+#define USB_HOST_PWR_EN_Pin GPIO_PIN_9
+#define USB_HOST_PWR_EN_GPIO_Port GPIOC
+#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_10
+#define USB_HOST_PWR_FAULT_GPIO_Port GPIOA
 
 /* USER CODE END Private defines */
 
