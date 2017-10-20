@@ -263,15 +263,14 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
   
     /**SPI1 GPIO Configuration    
     PA7     ------> SPI1_MOSI
-    PA15     ------> SPI1_NSS
     PB3     ------> SPI1_SCK 
     */
-    GPIO_InitStruct.Pin = OLED_MOSI_Pin|OLED_CS_Pin;
+    GPIO_InitStruct.Pin = OLED_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(OLED_MOSI_GPIO_Port, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = OLED_SCK_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -299,6 +298,9 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 
     __HAL_LINKDMA(hspi,hdmatx,hdma_spi1_tx);
 
+    /* SPI1 interrupt Init */
+    HAL_NVIC_SetPriority(SPI1_IRQn, 10, 0);
+    HAL_NVIC_EnableIRQ(SPI1_IRQn);
   /* USER CODE BEGIN SPI1_MspInit 1 */
 
   /* USER CODE END SPI1_MspInit 1 */
@@ -357,15 +359,17 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
   
     /**SPI1 GPIO Configuration    
     PA7     ------> SPI1_MOSI
-    PA15     ------> SPI1_NSS
     PB3     ------> SPI1_SCK 
     */
-    HAL_GPIO_DeInit(GPIOA, OLED_MOSI_Pin|OLED_CS_Pin);
+    HAL_GPIO_DeInit(OLED_MOSI_GPIO_Port, OLED_MOSI_Pin);
 
     HAL_GPIO_DeInit(OLED_SCK_GPIO_Port, OLED_SCK_Pin);
 
     /* SPI1 DMA DeInit */
     HAL_DMA_DeInit(hspi->hdmatx);
+
+    /* SPI1 interrupt DeInit */
+    HAL_NVIC_DisableIRQ(SPI1_IRQn);
   /* USER CODE BEGIN SPI1_MspDeInit 1 */
 
   /* USER CODE END SPI1_MspDeInit 1 */
@@ -560,6 +564,10 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     if (SAI1_client == 0)
     {
        __HAL_RCC_SAI1_CLK_ENABLE();
+
+    /* Peripheral interrupt init*/
+    HAL_NVIC_SetPriority(SAI1_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(SAI1_IRQn);
     }
     SAI1_client ++;
     
@@ -608,6 +616,10 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
       if (SAI1_client == 0)
       {
        __HAL_RCC_SAI1_CLK_ENABLE();
+
+      /* Peripheral interrupt init*/
+      HAL_NVIC_SetPriority(SAI1_IRQn, 5, 0);
+      HAL_NVIC_EnableIRQ(SAI1_IRQn);
       }
     SAI1_client ++;
     
@@ -659,6 +671,7 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
       {
       /* Peripheral clock disable */ 
        __HAL_RCC_SAI1_CLK_DISABLE();
+      HAL_NVIC_DisableIRQ(SAI1_IRQn);
       }
     
     /**SAI1_A_Block_A GPIO Configuration    
@@ -678,6 +691,7 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
       {
       /* Peripheral clock disable */
       __HAL_RCC_SAI1_CLK_DISABLE();
+      HAL_NVIC_DisableIRQ(SAI1_IRQn);
       }
     
     /**SAI1_B_Block_B GPIO Configuration    
