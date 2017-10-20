@@ -40,6 +40,8 @@
 #endif 
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32f7xx_hal.h"
+#include "main.h"
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
@@ -54,6 +56,7 @@ void TIM2_IRQHandler(void);
 void TIM3_IRQHandler(void);
 void SPI2_IRQHandler(void);
 void EXTI15_10_IRQHandler(void);
+void DMA2_Stream0_IRQHandler(void);
 void DMA2_Stream1_IRQHandler(void);
 void DMA2_Stream4_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
