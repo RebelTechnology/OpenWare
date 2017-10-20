@@ -15,8 +15,26 @@
 #include "Owl.h"
 #include <math.h> /* for ceilf */
 
-uint32_t log2(uint32_t x){ 
-  return x == 0 ? 0 : 31 - __builtin_clz (x); /* clz returns the number of leading 0's */
+#if defined OWL_TESSERACT
+#define HARDWARE_VERSION             "Tesseract"
+#elif defined OWL_MICROLAB
+#define HARDWARE_VERSION             "MicroLab"
+#elif defined OWL_PEDAL
+#define HARDWARE_VERSION             "OWL Pedal"
+#elif defined OWL_MODULAR
+#define HARDWARE_VERSION             "OWL Modular"
+#elif defined OWL_PLAYERF7
+#define HARDWARE_VERSION             "Genius"
+#elif defined OWL_PRISMF7
+#define HARDWARE_VERSION             "Prism"
+#else
+#error "invalid configuration"
+#endif
+
+#define FIRMWARE_VERSION "v20pre"
+
+const char* getFirmwareVersion(){ 
+  return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
 }
 
 void MidiController::init(uint8_t ch){
@@ -34,7 +52,7 @@ void MidiController::sendPatchParameterValues(){
 void MidiController::sendSettings(){
   // sendPc(settings.program_index); // TODO!
   sendPatchParameterValues();
-  // sendCc(PATCH_BUTTON, isPushButtonPressed() ? 127 : 0);
+  sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
   // sendCc(LED, getLed() == NONE ? 0 : getLed() == GREEN ? 42 : 84);
   // sendCc(LEFT_INPUT_GAIN, codec.getInputGainLeft()<<2);
   // sendCc(RIGHT_INPUT_GAIN, codec.getInputGainRight()<<2);
@@ -100,7 +118,7 @@ void MidiController::sendPatchName(uint8_t index){
 void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
   sendProgramMessage();
-  sendProgramStats();
+  //   sendProgramStats(); done by sendStatus() in case of no error
   sendDeviceStats();
   sendStatus();
 }
@@ -165,7 +183,8 @@ void MidiController::sendStatus(){
   uint8_t err = getErrorStatus();
   switch(err & 0xf0){
   case NO_ERROR:
-    sendProgramStats();    
+    sendProgramStats();
+    return;
     break;
   case MEM_ERROR:
     p = stpcpy(p, (const char*)"Memory Error 0x");
@@ -218,11 +237,11 @@ void MidiController::sendProgramMessage(){
 }
 
 void MidiController::sendFirmwareVersion(){
-  // char buffer[32];
-  // buffer[0] = SYSEX_FIRMWARE_VERSION;
-  // char* p = &buffer[1];
-  // p = stpcpy(p, getFirmwareVersion());
-  // sendSysEx((uint8_t*)buffer, p-buffer);
+  char buffer[32];
+  buffer[0] = SYSEX_FIRMWARE_VERSION;
+  char* p = &buffer[1];
+  p = stpcpy(p, getFirmwareVersion());
+  sendSysEx((uint8_t*)buffer, p-buffer);
 }
 
 void MidiController::sendConfigurationSetting(const char* name, uint32_t value){

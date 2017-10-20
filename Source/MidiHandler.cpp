@@ -112,9 +112,9 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     case SYSEX_PROGRAM_STATS:
       midi.sendStatus();
       break;
-    // case PATCH_BUTTON:
-    //   midi.sendCc(PATCH_BUTTON, isPushButtonPressed() ? 127 : 0);
-    //   break;
+    case PATCH_BUTTON:
+      midi.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
+      break;
     }
     break;
   default:
@@ -222,6 +222,16 @@ void MidiHandler::runProgram(){
   }      
 }
 
+void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
+  if(size == 5){
+    uint32_t sector = loader.decodeInt(data);
+    program.eraseFromFlash(sector);
+    loader.clear();
+  }else{
+    error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
+  }
+}
+
 void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t checksum = loader.decodeInt(data);
@@ -274,6 +284,9 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     break;
   case SYSEX_FIRMWARE_FLASH:
     handleFirmwareFlashCommand(data+4, size-5);
+    break;
+  case SYSEX_FLASH_ERASE:
+    handleFlashEraseCommand(data+4, size-5);
     break;
   default:
     error(PROGRAM_ERROR, "Invalid SysEx Message");

@@ -1,5 +1,10 @@
 #include <string.h>
+#include <stdlib.h>
 #include "device.h"
+#ifdef OWL_PLAYERF7
+#include "usbh_core.h"
+#include "usbh_midi.h"
+#endif /* OWL_PLAYERF7 */
 #include "Owl.h"
 #include "Codec.h"
 #include "MidiReader.h"
@@ -144,6 +149,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #ifdef PUSHBUTTON_Pin
   case PUSHBUTTON_Pin:
     setButtonValue(PUSHBUTTON, !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin));
+    midi.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
     break;
 #endif
 #ifdef OWL_TESSERACT
@@ -159,7 +165,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #ifdef OWL_MICROLAB
     // todo remove
   case TRIG1_Pin:
-  case TRIG2_Pin:
+  case TRIG2_Pin:    
     setButtonValue(PUSHBUTTON, !(TRIG1_GPIO_Port->IDR & TRIG1_Pin));
     setParameterValue(PARAMETER_E, (TRIG2_GPIO_Port->IDR & TRIG2_Pin) == 0 ? 4095 : 0);
     setLed(LED1, 0);
@@ -297,5 +303,20 @@ extern "C"{
     else if(htim == &htim3)
       encoderChanged(1, __HAL_TIM_GET_COUNTER(&htim3));
   }
+
+  extern uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE];
+  void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
+    uint8_t* ptr = USB_HOST_RX_BUFFER;
+    uint16_t len = USBH_MIDI_GetLastReceivedDataSize(phost);
+    midi_rx_usb_buffer(ptr, len);
+    // for(uint32_t i=0; i<len; i+=4)
+    //   midireader.readMidiFrame(ptr+i); 
+    USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE); // start a new reception
+  }
+
+  void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost){
+    // get ready to send some data
+  }
+
 #endif /* OWL_PLAYERF7 */
 }
