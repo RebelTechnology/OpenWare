@@ -21,7 +21,9 @@
 #define OWL2
 #define USE_SCREEN
 #define SEPS114A
+
 /* #define OLED_DMA */
+
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
 #define OLED_SOFT_CS
@@ -29,10 +31,10 @@
 #define USE_ENCODERS
 #define ENCODER_TIM1 htim1
 #define ENCODER_TIM2 htim3
-/* #define OVERRIDE_CODEC_CONFIG */
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi2
+#define OVERRIDE_CODEC_CONFIG
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)

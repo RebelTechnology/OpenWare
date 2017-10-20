@@ -213,9 +213,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 
 void setup(){
   settings.init();
-  codec.reset();
+#ifdef USE_CODEC
+  extern SPI_HandleTypeDef CODEC_SPI;
+  codec.begin(&CODEC_SPI);
   codec.set(0);
   codec.bypass(false);
+#endif /* USE_CODEC */
 
   program.startManager();
 
@@ -242,8 +245,8 @@ void setup(){
 #endif /* OWL_PLAYERF7 */
 
 #ifdef USE_SCREEN
-  extern SPI_HandleTypeDef hspi2;
-  graphics.begin(&hspi2);
+  extern SPI_HandleTypeDef OLED_SPI;
+  graphics.begin(&OLED_SPI);
 #endif /* USE_SCREEN */
 
 #ifndef OWL_PRISMF7

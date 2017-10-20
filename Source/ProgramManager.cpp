@@ -20,7 +20,11 @@
 #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
 #define SCREEN_TASK_PRIORITY 3
 static TaskHandle_t screenTask = NULL;
+#ifdef OWL_PLAYERF7 // mono screen
 #define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT/8)
+#else
+#define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT*sizeof(Colour))
+#endif
 uint8_t pixelbuffer[OLED_DATA_LENGTH];
 ParameterController<NOF_PARAMETERS> params;
 #endif
@@ -227,8 +231,6 @@ void updateProgramVector(ProgramVector* pv){
 #error "invalid configuration"
 #endif
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
-  // pv->parameters_size = params.parameters_size;
-  // pv->parameters = params.parameters;
 #ifdef USE_SCREEN
   pv->parameters_size = params.getSize();
   pv->parameters = params.parameters;
@@ -335,7 +337,7 @@ void runScreenTask(void* p){
       drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
     }
     params.draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-    graphics.display(pixelbuffer, OLED_WIDTH*OLED_HEIGHT);
+    graphics.display(pixelbuffer, OLED_DATA_LENGTH);
     vTaskDelay(delay); // allow a minimum amount of time for pixel data to be transferred
   }
 }

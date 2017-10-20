@@ -14,12 +14,10 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
-  // ScreenBuffer(int w, int h, Colour* buffer) : width(w), height(h), pixels(buffer){}
-ScreenBuffer::ScreenBuffer(int w, int h) : width(w), height(h), pixels(NULL){
-  cursor_y  = cursor_x    = 0;
-  textsize  = 1;
-  textcolor = textbgcolor = 0xFFFF;
-}
+ScreenBuffer::ScreenBuffer(uint16_t w, uint16_t h) : 
+  width(w), height(h), pixels(NULL),
+  cursor_x(0), cursor_y(0), textsize(1),
+  textcolor(WHITE), textbgcolor(WHITE) {}
 
 void ScreenBuffer::print(const char* str) {
   unsigned int len = strnlen(str, 256);

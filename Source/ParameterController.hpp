@@ -21,7 +21,7 @@ public:
     }
   }
   void draw(uint8_t* pixels, uint16_t width, uint16_t height){
-    static ScreenBuffer screen(width, height);
+    ScreenBuffer screen(width, height);
     screen.setBuffer(pixels);
     draw(screen);
   }

@@ -12,7 +12,6 @@ void Graphics::begin(SPI_HandleTypeDef *spi) {
 }
 
 void Graphics::display(uint8_t* pixels, uint16_t size){
-  // OLED_writeDAT(pixels, size/8);
   oled_write(pixels, size);
 }
 

@@ -235,7 +235,7 @@ static void spiwrite(const uint8_t* data, size_t size){
   // while(!dmaready);
   while(hspi->State != HAL_SPI_STATE_READY);
   /* dmaready = false; */
-  clearPin(OLED_SCK_GPIO_Port, OLED_SCK_Pin);
+  /* clearPin(OLED_SCK_GPIO_Port, OLED_SCK_Pin); */
   clearCS();
   HAL_StatusTypeDef ret = HAL_SPI_Transmit_DMA(hspi, (uint8_t*)data, size);
   assert_param(ret == HAL_OK);
@@ -256,19 +256,28 @@ static void spiwrite(const uint8_t* data, size_t size){
 }
 
 #if defined OLED_IT || defined OLED_DMA
-extern DMA_HandleTypeDef hdma_spi1_tx;
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
   ASSERT(0, "SPI Error");
 }
-static unsigned int missedcalls = 0;
+
+/* void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){ */
+/*   if(__HAL_DMA_GET_FLAG(OLED_SPIInst,  __HAL_DMA_GET_TC_FLAG_INDEX(OLED_SPIInst))){ */
+/*     pCS_Set();	// CS high */
+/*   } */
+/* } */
+
+/* static unsigned int missedcalls = 0; */
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
   // todo: find out why this is called when tx is not complete
   // and apparently sometimes not called when it is ready
-  if(__HAL_DMA_GET_FLAG(&hdma_spi1_tx,  __HAL_DMA_GET_TC_FLAG_INDEX(&hdma_spi1_tx))){
-    setCS();
-  }else{
-    missedcalls++;
-  }
+  setCS();
+  /* if(__HAL_DMA_GET_FLAG(hspi,  __HAL_DMA_GET_TC_FLAG_INDEX(hspi))){ */
+  /* extern DMA_HandleTypeDef hdma_spi1_tx; */
+  /* if(__HAL_DMA_GET_FLAG(&hdma_spi1_tx,  DMA_FLAG_TCIF1_5)){ */
+  /*   setCS(); */
+  /* }else{ */
+  /*   missedcalls++; */
+  /* } */
 }
 #endif
 

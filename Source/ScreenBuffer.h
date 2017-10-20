@@ -30,17 +30,18 @@ typedef uint16_t Colour;
 
 class ScreenBuffer {
 private:
-  const unsigned int width;
-  const unsigned int height;
+  const uint16_t width;
+  const uint16_t height;
   Colour* pixels;
-
-  uint16_t textcolor, textbgcolor;
-  uint16_t cursor_x, cursor_y;  
+  uint16_t cursor_x;
+  uint16_t cursor_y;  
   uint8_t textsize;
+  uint16_t textcolor;
+  uint16_t textbgcolor;
 public:
   // ScreenBuffer(int w, int h, Colour** buffer) : width(w), height(h), pixels(buffer){}
   // ScreenBuffer();
-  ScreenBuffer(int w, int h);
+  ScreenBuffer(uint16_t w, uint16_t h);
   /* void setBuffer(Colour* buffer){ */
   void setBuffer(uint8_t* buffer){
     pixels = (Colour*)buffer;
@@ -74,7 +75,7 @@ public:
     return height;
   }
   void draw(int x, int y, ScreenBuffer& pixels);
-  static ScreenBuffer* create(int width, int height);
+  static ScreenBuffer* create(uint16_t width, uint16_t height);
 
   void drawChar(uint16_t x, uint16_t y, unsigned char c, Colour fg, Colour bg, uint8_t size);
   void drawRotatedChar(uint16_t x, uint16_t y, unsigned char c, Colour fg, Colour bg, uint8_t size);

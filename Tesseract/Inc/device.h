@@ -28,6 +28,9 @@
 #define STORAGE_MAX_BLOCKS           64
 
 #define USE_CODEC
+#define USE_CS4271
+#define CODEC_SPI hspi4
+
 #define DEBUG_DWT
 #define DEBUG_STACK
 #define DEBUG_STORAGE

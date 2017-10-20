@@ -1,6 +1,6 @@
+#include "device.h"
 #include "Codec.h"
 #include "errorhandlers.h"
-#include "device.h"
 
 #ifdef __cplusplus
  extern "C" {
@@ -72,12 +72,11 @@ void Codec::mute(bool doMute){
 #ifdef USE_WM8731
 extern "C" {
   extern I2S_HandleTypeDef hi2s2;
-  extern SPI_HandleTypeDef hspi1;
   extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
 }
 
-void Codec::reset(){
-  codec_init(&hspi1);
+void Codec::begin(SPI_HandleTypeDef *spi){
+  codec_init(spi);
 }
 
 void Codec::stop(){
@@ -180,17 +179,16 @@ extern "C"{
 extern "C" {
 SAI_HandleTypeDef hsai_BlockA1;
 SAI_HandleTypeDef hsai_BlockB1;
-SPI_HandleTypeDef hspi4;
 }
 
-void Codec::reset(){
+void Codec::begin(SPI_HandleTypeDef *spi){
   // HAL_SAI_MspInit() is called from HAL_SAI_Init() in MX_SAI1_Init()
   // MX_SAI1_Init();
   // MX_SPI4_Init();
 
   // __HAL_SAI_ENABLE(&hsai_BlockA1);
   // __HAL_SAI_ENABLE(&hsai_BlockB1);
-  codec_init(&hspi4);
+  codec_init(spi);
 
   codec_write(0x01, (1<<3) | (1<<5) | 1); // i2s mode for DAC and ADC
 #if defined OWL_TESSERACT || defined OWL_PLAYERF7 || defined OWL_QUADFM

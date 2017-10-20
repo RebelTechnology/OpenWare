@@ -81,8 +81,7 @@ void oled_write(const uint8_t* data, uint16_t length)
 	/* pCS_Set();	// CS high */
 	
 	// Send Data
-	HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length/8);
-	
+	HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length);	
 }
 
 /* void OLED_Refresh(void) */

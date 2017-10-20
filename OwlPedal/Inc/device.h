@@ -13,7 +13,9 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
+#define USE_CODEC
 #define USE_WM8731
+#define CODEC_SPI hspi1
 #define USE_USBD_FS
 #endif
 
@@ -24,7 +26,9 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
+#define USE_CODEC
 #define USE_WM8731
+#define CODEC_SPI hspi1
 #define USE_USBD_FS
 #endif
 
@@ -35,7 +39,6 @@
 
 #include "stm32f4xx_hal.h"
 
-#define USE_CODEC
 #define DEBUG_DWT
 #define DEBUG_STACK
 #define DEBUG_STORAGE
