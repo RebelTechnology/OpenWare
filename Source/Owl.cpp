@@ -1,10 +1,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include "device.h"
-#ifdef OWL_PLAYERF7
+#ifdef USE_USB_HOST
 #include "usbh_core.h"
 #include "usbh_midi.h"
-#endif /* OWL_PLAYERF7 */
+#endif /* USE_USB_HOST */
 #include "Owl.h"
 #include "Codec.h"
 #include "MidiReader.h"
@@ -232,13 +232,13 @@ void setup(){
   setLed(LED4, 0);
 #endif /* OWL_MICROLAB */
 
-#ifdef OWL_PLAYERF7
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
-  __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
-  __HAL_TIM_SET_COUNTER(&htim3, INT16_MAX/2);
-  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
+#if defined OWL_PLAYERF7 || defined OWL_PRISMF7
+  extern TIM_HandleTypeDef ENCODER_TIM1;
+  extern TIM_HandleTypeDef ENCODER_TIM2;
+  __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
+  __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
+  HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
 #endif /* OWL_PLAYERF7 */
 
 #ifdef USE_SCREEN
@@ -283,27 +283,27 @@ extern "C"{
   }
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
 
+#ifdef USE_ENCODERS
   void encoderReset(uint8_t encoder, int32_t value){
-#ifdef OWL_PLAYERF7
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
+  extern TIM_HandleTypeDef ENCODER_TIM1;
+  extern TIM_HandleTypeDef ENCODER_TIM2;
     if(encoder == 0)
-      __HAL_TIM_SetCounter(&htim2, value);
+      __HAL_TIM_SetCounter(&ENCODER_TIM1, value);
     else if(encoder == 1)
-      __HAL_TIM_SetCounter(&htim3, value);
-#endif /* OWL_PLAYERF7 */
+      __HAL_TIM_SetCounter(&ENCODER_TIM2, value);
   }
 
-#ifdef OWL_PLAYERF7
   void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
-    if(htim == &htim2)
-      encoderChanged(0, __HAL_TIM_GET_COUNTER(&htim2));
-    else if(htim == &htim3)
-      encoderChanged(1, __HAL_TIM_GET_COUNTER(&htim3));
+  extern TIM_HandleTypeDef ENCODER_TIM1;
+  extern TIM_HandleTypeDef ENCODER_TIM2;
+    if(htim == &ENCODER_TIM1)
+      encoderChanged(0, __HAL_TIM_GET_COUNTER(&ENCODER_TIM1));
+    else if(htim == &ENCODER_TIM2)
+      encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
   }
+#endif /* OWL_PLAYERF7 */
 
+#ifdef USE_USB_HOST
   extern uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE];
   void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
     uint8_t* ptr = USB_HOST_RX_BUFFER;
@@ -317,6 +317,6 @@ extern "C"{
   void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost){
     // get ready to send some data
   }
+#endif /* USE_USB_HOST */
 
-#endif /* OWL_PLAYERF7 */
 }

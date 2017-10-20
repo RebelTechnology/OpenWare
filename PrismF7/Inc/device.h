@@ -26,6 +26,9 @@
 #define OLED_SOFT_CS
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
+#define USE_ENCODERS
+#define ENCODER_TIM1 htim1
+#define ENCODER_TIM2 htim3
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
