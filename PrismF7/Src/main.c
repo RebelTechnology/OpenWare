@@ -143,6 +143,7 @@ int main(void)
   MX_USART1_UART_Init();
 
   /* USER CODE BEGIN 2 */
+#ifdef OVERRIDE_CODEC_CONFIG
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);
   hsai_BlockA1.Instance = SAI1_Block_A;
@@ -167,6 +168,7 @@ int main(void)
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
   if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
     Error_Handler();
+#endif /* OVERRIDE_CODEC_CONFIG */
 
   // Initialise
   setup();

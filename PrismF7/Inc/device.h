@@ -17,18 +17,22 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
-#define USE_CS4271
 #define USE_USBD_HS
 #define OWL2
 #define USE_SCREEN
 #define SEPS114A
-#define OLED_DMA
-#define OLED_SOFT_CS
+/* #define OLED_DMA */
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
+#define OLED_SOFT_CS
+#define OLED_SPI hspi1
 #define USE_ENCODERS
 #define ENCODER_TIM1 htim1
 #define ENCODER_TIM2 htim3
+/* #define OVERRIDE_CODEC_CONFIG */
+#define USE_CODEC
+#define USE_CS4271
+#define CODEC_SPI hspi2
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
