@@ -20,6 +20,7 @@ extern "C" {
 
   uint8_t getButtonValue(uint8_t ch);
   void setButtonValue(uint8_t ch, uint8_t value);
+  uint16_t getSampleCounter();
 }
 
 class ProgramManager {
@@ -41,7 +42,7 @@ public:
   void resetProgram(bool isr); /* exit and restart program */
   void startProgramChange(bool isr);
   /* void sendMidiData(int type, bool isr); */
-
+  
   // void audioReady();
   // void programReady();
   // void programStatus(int);

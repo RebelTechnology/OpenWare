@@ -53,7 +53,6 @@ uint16_t button_values;
 uint16_t timestamps[NOF_BUTTONS]; 
 
 ProgramVector* getProgramVector() { return programVector; }
-static uint16_t getSampleCounter();
 
 static int16_t encoders[2] = {INT16_MAX/2, INT16_MAX/2};
 static int16_t deltas[2] = {0, 0};
