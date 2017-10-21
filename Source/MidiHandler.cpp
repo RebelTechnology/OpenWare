@@ -19,6 +19,9 @@ MidiHandler::MidiHandler() : channel(MIDI_OMNI_CHANNEL) {
 }
 
 void MidiHandler::handlePitchBend(uint8_t status, uint16_t value){
+  if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
+    return;
+  setParameterValue(PARAMETER_G, ((int16_t)value - 8192)>>1);
 }
 
 void MidiHandler::handleNoteOn(uint8_t status, uint8_t note, uint8_t velocity){
@@ -52,6 +55,14 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
     return;
   switch(cc){
+  case LEFT_OUTPUT_GAIN:
+    settings.outputGainLeft = value;
+    codec.setOutputGain(value);
+    break;
+  case RIGHT_OUTPUT_GAIN:
+    settings.outputGainRight = value;
+    codec.setOutputGain(value);
+    break;
   case PATCH_PARAMETER_A:
     setParameterValue(PARAMETER_A, value<<5); // scale from 7bit to 12bit value
     break;
@@ -123,6 +134,12 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
       break;
     }
     break;
+  case MIDI_CC_EFFECT_CTRL_1:
+    setParameterValue(PARAMETER_G, value<<5);
+    break;
+  case MIDI_CC_EFFECT_CTRL_2:
+    setParameterValue(PARAMETER_H, value<<5);
+    break;
   default:
     if(cc >= PATCH_PARAMETER_AA && cc <= PATCH_PARAMETER_BH)
       setParameterValue(PARAMETER_AA+(cc-PATCH_PARAMETER_AA), value<<5);
@@ -177,6 +194,10 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_BYPASS, p, 2) == 0){
     settings.audio_codec_bypass = value;
     codec.bypass(value);
+  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN, p, 2) == 0){
+    settings.outputGainLeft = value;
+    settings.outputGainRight = value;
+    codec.setOutputGain(value);
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_HALFSPEED, p, 2) == 0){
     settings.audio_codec_halfspeed = value;
     // settings.audio_codec_halfspeed = (p[2] == '1' ? true : false);

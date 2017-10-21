@@ -1,6 +1,9 @@
 #ifndef WM8731_H
 #define WM8731_H
 
+#include <stdint.h>
+#include "device.h"
+
 #ifdef __cplusplus
  extern "C" {
 #endif
