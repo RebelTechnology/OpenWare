@@ -2,6 +2,8 @@
 #define __ParameterController_hpp__
 
 #include "basicmaths.h"
+#include "errorhandlers.h"
+#include "ProgramVector.h"
 
 template<uint8_t SIZE>
 class ParameterController {
@@ -18,6 +20,7 @@ public:
     for(int i=0; i<SIZE; ++i){
       strcpy(names[i], "Parameter  ");
       names[i][10] = 'A'+i;
+      parameters[i] = 0;
     }
   }
   void draw(uint8_t* pixels, uint16_t width, uint16_t height){

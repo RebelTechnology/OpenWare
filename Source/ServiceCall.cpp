@@ -1,11 +1,14 @@
 #include "arm_math.h"
 #include "arm_const_structs.h"
+#include "device.h"
 #include "ServiceCall.h"
 #include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
 #include "FastLogTable.h"
 #include "FastPowTable.h"
-#include "ProgramManager.h"
+#ifdef USE_SCREEN
+#include "Graphics.h"
+#endif
 
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
   switch(len) { 
@@ -117,7 +120,7 @@ int serviceCall(int service, void** params, int len){
       char* name = (char*)params[index++];
       void* callback = (void*)params[index++];
       if(strncmp(SYSTEM_FUNCTION_DRAW, name, 3) == 0){
-	setDrawCallback(callback);
+	graphics.setCallback(callback);
 	ret = OWL_SERVICE_OK;
       }
 #endif /* USE_SCREEN */

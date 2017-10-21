@@ -17,7 +17,7 @@
 ScreenBuffer::ScreenBuffer(uint16_t w, uint16_t h) : 
   width(w), height(h), pixels(NULL),
   cursor_x(0), cursor_y(0), textsize(1),
-  textcolor(WHITE), textbgcolor(WHITE) {}
+  textcolor(WHITE), textbgcolor(WHITE), wrap(true) {}
 
 void ScreenBuffer::print(const char* str) {
   unsigned int len = strnlen(str, 256);
@@ -148,7 +148,76 @@ void ScreenBuffer::setTextColour(Colour c, Colour b) {
   textbgcolor = b; 
 }
 
-// void ScreenBuffer::setTextWrap(bool w) {
-//   wrap = w;
-// }
+void ScreenBuffer::setTextWrap(bool w) {
+  wrap = w;
+}
 
+// Draw a character
+void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char c,
+                            Colour color, Colour bg, uint8_t size) {
+  if((x >= width)            || // Clip right
+     (y >= height)           || // Clip bottom
+     ((x + 6 * size - 1) < 0) || // Clip left
+     ((y + 8 * size - 1) < 0))   // Clip top
+    return;
+  for (int8_t i=0; i<6; i++ ) {
+    uint8_t line;
+    if (i == 5) 
+      line = 0x0;
+    else 
+      line = font[(c*5)+i];
+    for (int8_t j = 0; j<8; j++) {
+      if (line & 0x1) {
+        if (size == 1) // default size
+          setPixel(x+i, y+j, color);
+        else {  // big size
+          fillRectangle(x+(i*size), y+(j*size), size, size, color);
+        } 
+      } else if (bg != color) {
+        if (size == 1) // default size
+          setPixel(x+i, y+j, bg);
+        else {  // big size
+          fillRectangle(x+i*size, y+j*size, size, size, bg);
+        }
+      }
+      line >>= 1;
+    }
+  }
+}
+
+// Draw a character rotated 90 degrees
+void ScreenBuffer::drawRotatedChar(uint16_t x, uint16_t y, unsigned char c,
+                                   Colour color, Colour bg, uint8_t size) {
+  if((x >= width)            || // Clip right
+     (y >= height)           || // Clip bottom
+     ((x + 8 * size - 1) < 0) || // Clip left
+     ((y + 6 * size - 1) < 0))   // Clip top
+    return;
+  // for (int8_t i=5; i>=0; i-- ) {
+  for (int8_t i=0; i<6; i++ ) {
+    uint8_t line;
+    if (i == 5) 
+      line = 0x0;
+    else 
+      line = font[(c*5)+i];
+    // for (int8_t j = 0; j<8; j++) {
+    for (int8_t j = 7; j>=0; j--) {
+      if (line & 0x1) {
+        if (size == 1) // default size
+          setPixel(y+i, x+j, color);
+        else {  // big size
+          // fillRectangle(x+(i*size), y+(j*size), size, size, color);
+          fillRectangle(y+(j*size), x+(i*size), size, size, color);
+        } 
+      } else if (bg != color) {
+        if (size == 1) // default size
+          setPixel(y+i, x+j, bg);
+        else {  // big size
+          // fillRectangle(x+i*size, y+j*size, size, size, bg);
+          fillRectangle(y+j*size, x+i*size, size, size, bg);
+        }
+      }
+      line >>= 1;
+    }
+  }
+}

@@ -38,6 +38,7 @@ private:
   uint8_t textsize;
   uint16_t textcolor;
   uint16_t textbgcolor;
+  bool wrap;
 public:
   // ScreenBuffer(int w, int h, Colour** buffer) : width(w), height(h), pixels(buffer){}
   // ScreenBuffer();
@@ -83,7 +84,7 @@ public:
   void setTextColour(Colour c);
   void setTextColour(Colour fg, Colour bg);
   void setTextSize(uint8_t s);
-  // void setTextWrap(bool w);
+  void setTextWrap(bool w);
 
   void write(uint8_t c);
   void print(const char* str);

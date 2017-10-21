@@ -22,9 +22,15 @@ void MidiHandler::handlePitchBend(uint8_t status, uint16_t value){
 }
 
 void MidiHandler::handleNoteOn(uint8_t status, uint8_t note, uint8_t velocity){
+  if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
+    return;
+  // setButtonValue(MIDI_NOTE_BUTTON+note, velocity<<5);
 }
 
 void MidiHandler::handleNoteOff(uint8_t status, uint8_t note, uint8_t velocity){
+  if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
+    return;
+  // setButtonValue(MIDI_NOTE_BUTTON+note, 0);
 }
 
 void MidiHandler::handleProgramChange(uint8_t status, uint8_t pid){

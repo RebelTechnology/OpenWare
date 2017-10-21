@@ -6,8 +6,6 @@
 #include "ProgramVector.h"
 #include "DynamicPatchDefinition.hpp"
 #include "errorhandlers.h"
-// #include "Graphics.h"
-// #include "ScreenBuffer.h"
 #include "Codec.h"
 #include "ServiceCall.h"
 #include "FlashStorage.h"
@@ -15,18 +13,9 @@
 
 #ifdef USE_SCREEN
 #include "Graphics.h"
-#include "ScreenBuffer.h"
-#include "ParameterController.hpp"
 #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
 #define SCREEN_TASK_PRIORITY 3
 static TaskHandle_t screenTask = NULL;
-#ifdef OWL_PLAYERF7 // mono screen
-#define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT/8)
-#else
-#define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT*sizeof(Colour))
-#endif
-uint8_t pixelbuffer[OLED_DATA_LENGTH];
-ParameterController<NOF_PARAMETERS> params;
 #endif
 
 // FreeRTOS low priority numbers denote low priority tasks. 
@@ -57,7 +46,7 @@ static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
 static DynamicPatchDefinition dynamo;
 
-extern uint16_t adc_values[NOF_PARAMETERS];
+extern uint16_t* adc_values;
 int16_t parameter_values[NOF_PARAMETERS];
 BitState32 stateChanged;
 uint16_t button_values;
@@ -75,7 +64,7 @@ void encoderChanged(uint8_t encoder, int32_t value){
   encoders[encoder] = value;
   deltas[encoder] = delta;
 #ifdef USE_SCREEN
-  params.encoderChanged(encoder, delta);
+  graphics.params.encoderChanged(encoder, delta);
 #endif
   // todo: save changes and pass at programReady()
   // if(getProgramVector()->encoderChangedCallback != NULL)
@@ -112,7 +101,7 @@ void onProgramStatus(ProgramVectorAudioStatus status){
 int16_t getParameterValue(uint8_t ch){
   if(ch < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    return params.parameters[ch];
+    return graphics.params.parameters[ch];
 #else
     return parameter_values[ch];
 #endif
@@ -122,7 +111,7 @@ int16_t getParameterValue(uint8_t ch){
 void setParameterValue(uint8_t ch, int16_t value){
   if(ch < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    params.parameters[ch] = value;
+    graphics.params.parameters[ch] = value;
 #else
     parameter_values[ch] = value;
 #endif
@@ -206,7 +195,7 @@ void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
 // called from program
 void onRegisterPatchParameter(uint8_t id, const char* name){
 #ifdef USE_SCREEN 
-  params.setName(id, name);
+  graphics.params.setName(id, name);
 #endif /* USE_SCREEN */
 }
 
@@ -232,8 +221,8 @@ void updateProgramVector(ProgramVector* pv){
 #endif
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
 #ifdef USE_SCREEN
-  pv->parameters_size = params.getSize();
-  pv->parameters = params.parameters;
+  pv->parameters_size = graphics.params.getSize();
+  pv->parameters = graphics.params.parameters;
 #else
   pv->parameters_size = NOF_PARAMETERS;
   pv->parameters = parameter_values;
@@ -316,28 +305,13 @@ void eraseFlashTask(void* p){
 }
 
 #ifdef USE_SCREEN
-static void (*drawCallback)(uint8_t*, uint16_t, uint16_t) = NULL;
-
-void setDrawCallback(void *callback){
-  drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
-}
-
-void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
-  static ScreenBuffer screen(width, height);
-  screen.setBuffer(pixels);
-  screen.clear();
-  screen.setTextSize(1);
-  screen.print(20, 0, "Rebel Technology");
-}
-
 void runScreenTask(void* p){
+  // this task will be continually interrupted by
+  // the higher priority audio task
   const TickType_t delay = 20 / portTICK_PERIOD_MS;
   for(;;){
-    if(drawCallback != NULL){
-      drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-    }
-    params.draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-    graphics.display(pixelbuffer, OLED_DATA_LENGTH);
+    graphics.draw();
+    graphics.display();
     vTaskDelay(delay); // allow a minimum amount of time for pixel data to be transferred
   }
 }
@@ -345,7 +319,7 @@ void runScreenTask(void* p){
 
 void runAudioTask(void* p){
 #ifdef USE_SCREEN
-    params.reset();
+    graphics.params.reset();
 #endif
     PatchDefinition* def = getPatchDefinition();
     ProgramVector* pv = def == NULL ? NULL : def->getProgramVector();
@@ -393,7 +367,7 @@ void runManagerTask(void* p){
 	}
 	programVector = &staticVector;
 #ifdef USE_SCREEN
-	drawCallback = &defaultDrawCallback;
+	graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
 	vTaskDelete(audioTask);
 	audioTask = NULL;
