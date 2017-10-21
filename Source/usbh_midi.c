@@ -27,11 +27,8 @@
  *
  */
 
-/* Includes ------------------------------------------------------------------*/
 #include "usbh_midi.h"
-
-/*------------------------------------------------------------------------------------------------------------------------------*/
-
+#include "midi.h"
 
 /** @defgroup USBH_MIDI_CORE_Private_FunctionPrototypes
  * @{
@@ -65,8 +62,6 @@ USBH_ClassTypeDef  MIDI_Class =
 		NULL // MIDI handle structure
 };
 
-/*------------------------------------------------------------------------------------------------------------------------------*/
-
 /**
  * @brief  USBH_MIDI_InterfaceInit
  *         The function init the MIDI class.
@@ -74,8 +69,7 @@ USBH_ClassTypeDef  MIDI_Class =
  * @retval USBH Status
  */
 static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost)
-{	
-
+{
 	USBH_StatusTypeDef status = USBH_FAIL ;
 	uint8_t interface = 0;
 	static MIDI_HandleTypeDef staticMidiHandle;
@@ -504,28 +498,29 @@ static void MIDI_ProcessReception(USBH_HandleTypeDef *phost)
 	}
 }
 
-
-/*------------------------------------------------------------------------------------------------------------------------------*/
-
-/**
- * @brief  The function informs user that data have been transmitted.
- *  @param  pdev: Selected device
- * @retval None
- */
-__weak void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost)
-{
-
+uint8_t midi_host_connected(void){
+  extern ApplicationTypeDef Appli_state; // defined in usb_host.c
+  return Appli_state == APPLICATION_START || Appli_state == APPLICATION_READY;
 }
 
-/*------------------------------------------------------------------------------------------------------------------------------*/
-
-/**
- * @brief  The function informs user that data have been received.
- * @retval None
- */
-__weak void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost)
-{
-
+uint8_t midi_host_ready(void){
+  extern ApplicationTypeDef Appli_state;
+  extern USBH_HandleTypeDef hUsbHostFS; // defined in usb_host.c
+  return Appli_state == APPLICATION_READY && hUsbHostFS.data_tx_state == MIDI_IDLE;
 }
 
-/**************************END OF FILE*********************************************************/
+void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
+  uint8_t* ptr = USB_HOST_RX_BUFFER;
+uint16_t len = USBH_MIDI_GetLastReceivedDataSize(phost);
+usb_host_rx(ptr, len);
+USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE); // start a new reception
+}
+
+void midi_host_tx(uint8_t* buffer, uint32_t length){
+  extern USBH_HandleTypeDef hUsbHostFS; // defined in usb_host.c
+  USBH_MIDI_Transmit(&hUsbHostFS, buffer, length);
+}
+
+void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost){
+// get ready to send some data
+}

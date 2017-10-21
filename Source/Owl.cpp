@@ -36,7 +36,8 @@ Graphics graphics;
 #endif
 
 Codec codec;
-MidiReader midireader;
+MidiReader mididevice;
+MidiReader midihost;
 MidiController midi;
 ApplicationSettings settings;
 
@@ -280,11 +281,18 @@ void loop(void){
 
 extern "C"{
   // more from USB device interface
-  void midi_rx_usb_buffer(uint8_t *buffer, uint32_t length){
-    for(uint32_t i=0; i<length; i+=4)
-      midireader.readMidiFrame(buffer+i);
+  void midi_device_rx(uint8_t *buffer, uint32_t length){
+    for(uint16_t i=0; i<length; i+=4)
+      mididevice.readMidiFrame(buffer+i);
   }
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
+
+#ifdef USE_USB_HOST
+  void midi_host_rx(uint8_t *buffer, uint32_t length){
+    for(uint16_t i=0; i<length; i+=4)
+      midihost.readMidiFrame(buffer+i);
+  }
+#endif /* USE_USB_HOST */
 
 #ifdef USE_ENCODERS
   void encoderReset(uint8_t encoder, int32_t value){
@@ -305,21 +313,5 @@ extern "C"{
       encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
   }
 #endif /* OWL_PLAYERF7 */
-
-#ifdef USE_USB_HOST
-  extern uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE];
-  void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
-    uint8_t* ptr = USB_HOST_RX_BUFFER;
-    uint16_t len = USBH_MIDI_GetLastReceivedDataSize(phost);
-    midi_rx_usb_buffer(ptr, len);
-    // for(uint32_t i=0; i<len; i+=4)
-    //   midireader.readMidiFrame(ptr+i); 
-    USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE); // start a new reception
-  }
-
-  void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost){
-    // get ready to send some data
-  }
-#endif /* USE_USB_HOST */
 
 }
