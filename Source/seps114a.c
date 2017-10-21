@@ -283,5 +283,5 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
 
 void oled_write(const uint8_t* pixels, uint16_t size){
   setDC();
-  spiwrite((uint8_t*)pixels, size*sizeof(uint16_t));
+  spiwrite(pixels, size);
 }
