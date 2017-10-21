@@ -393,10 +393,14 @@ void MidiController::push(){
   // 	buffer.incrementReadHead(4);
   // 	len = buffer.getContiguousReadCapacity();
   // }
-  while(len >= 4 && midi_device_ready()){
-    midi_device_tx(buffer.getReadHead(), 4);
+  while(len >= 4 && (!midi_device_connected() || midi_device_ready())
 #ifdef USE_USB_HOST
-    // todo: only works now if both device and host i/f are connected
+	&& (!midi_host_connected() || midi_host_ready())
+#endif
+	){
+    if(midi_device_ready())
+      midi_device_tx(buffer.getReadHead(), 4);
+#ifdef USE_USB_HOST
     if(midi_host_ready())
       midi_host_tx(buffer.getReadHead(), 4);
 #endif
