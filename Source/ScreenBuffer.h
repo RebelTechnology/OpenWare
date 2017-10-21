@@ -4,10 +4,12 @@
 #include <stdint.h>
 #include "device.h"
 
-#ifdef OWL_PLAYERF7
+#if defined SSD1309
 typedef uint8_t Colour;
-#elif defined OWL_PRISMF7
+#elif defined SSD1331 || defined SEPS114A
 typedef uint16_t Colour;
+#else
+#error "Invalid configuration"
 #endif
 
 // Color definitions
@@ -19,14 +21,6 @@ typedef uint16_t Colour;
 #define MAGENTA         0xF81F
 #define YELLOW          0xFFE0  
 #define WHITE           0xFFFF
-
-// class PixelBuffer {
-// public:
-//   void copy(const PixelBuffer& other);
-//   Colour* getPixels();
-//   int getWidth();
-//   int getHeight();
-// };
 
 class ScreenBuffer {
 private:
@@ -40,10 +34,7 @@ private:
   uint16_t textbgcolor;
   bool wrap;
 public:
-  // ScreenBuffer(int w, int h, Colour** buffer) : width(w), height(h), pixels(buffer){}
-  // ScreenBuffer();
   ScreenBuffer(uint16_t w, uint16_t h);
-  /* void setBuffer(Colour* buffer){ */
   void setBuffer(uint8_t* buffer){
     pixels = (Colour*)buffer;
   }
