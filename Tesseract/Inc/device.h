@@ -11,6 +11,8 @@
 /* #define OWL_PEDAL */
 
 #ifdef OWL_TESSERACT
+#define USE_ADC
+#define ADC_PERIPH hadc3
 #define ADC_A 1
 #define ADC_B 3
 #define ADC_C 2

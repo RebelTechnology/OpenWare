@@ -45,7 +45,7 @@ ApplicationTypeDef Appli_state = APPLICATION_IDLE;
 * -- Insert your variables declaration here --
 */ 
 /* USER CODE BEGIN 0 */
-
+uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE]; // MIDI reception buffer
 /* USER CODE END 0 */
 
 /*
@@ -57,7 +57,6 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id);
 * -- Insert your external function declaration here --
 */ 
 /* USER CODE BEGIN 1 */
-uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE]; // MIDI reception buffer
 /* USER CODE END 1 */
 
 /* init function */				        

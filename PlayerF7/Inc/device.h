@@ -12,6 +12,8 @@
 
 #ifdef OWL_PLAYERF7
 #define OWL_ARCH_F7
+#define USE_ADC
+#define ADC_PERIPH hadc3
 #define ADC_A 0
 #define ADC_B 1
 #define ADC_C 2
@@ -19,6 +21,7 @@
 /* #define PUSHBUTTON_Pin GP7_Pin */
 /* #define PUSHBUTTON_GPIO_Port GP7_GPIO_Port */
 #define USE_USBD_HS
+#define USE_USB_HOST
 #define OWL2
 #define USE_USBHOST
 #define USE_SCREEN
@@ -28,7 +31,6 @@
 #define OLED_SPI hspi2
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
-#define USE_USB_HOST
 #define USE_ENCODERS
 #define ENCODER_TIM1 htim2
 #define ENCODER_TIM2 htim3
