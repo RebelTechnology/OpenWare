@@ -191,7 +191,7 @@ void Codec::begin(SPI_HandleTypeDef *spi){
   codec_init(spi);
 
   codec_write(0x01, (1<<3) | (1<<5) | 1); // i2s mode for DAC and ADC
-#if defined OWL_TESSERACT || defined OWL_PLAYERF7 || defined OWL_QUADFM
+#ifdef CODEC_HP_FILTER
   codec_write(0x06, 0x10 | 0x03 ); // hp filters off
 #else
   codec_write(0x06, 0x10); // hp filters on
