@@ -13,14 +13,16 @@
 
 #ifdef OWL_PRISMF7
 #define OWL_ARCH_F7
-#define ADC_A 0
-#define ADC_B 1
-#define ADC_C 2
-#define ADC_D 3
 #define USE_USBD_HS
 #define OWL2
 #define USE_SCREEN
 #define SEPS114A
+#define USE_ADC
+#define ADC_PERIPH hadc1
+#define ADC_A 0
+#define ADC_B 1
+#define ADC_C 2
+#define ADC_D 3
 
 /* #define OLED_DMA */
 
@@ -34,7 +36,7 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi2
-#define OVERRIDE_CODEC_CONFIG
+/* #define OVERRIDE_CODEC_CONFIG */
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
