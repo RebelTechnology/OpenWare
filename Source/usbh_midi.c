@@ -28,6 +28,7 @@
  */
 
 #include "usbh_midi.h"
+#include "usb_host.h"
 #include "midi.h"
 
 /** @defgroup USBH_MIDI_CORE_Private_FunctionPrototypes
@@ -506,14 +507,15 @@ uint8_t midi_host_connected(void){
 uint8_t midi_host_ready(void){
   extern ApplicationTypeDef Appli_state;
   extern USBH_HandleTypeDef hUsbHostFS; // defined in usb_host.c
-  return Appli_state == APPLICATION_READY && hUsbHostFS.data_tx_state == MIDI_IDLE;
+  MIDI_HandleTypeDef *MIDI_Handle =  hUsbHostFS.pActiveClass->pData;
+  return Appli_state == APPLICATION_READY && MIDI_Handle->data_tx_state == MIDI_IDLE;
 }
 
 void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
-  uint8_t* ptr = USB_HOST_RX_BUFFER;
-uint16_t len = USBH_MIDI_GetLastReceivedDataSize(phost);
-usb_host_rx(ptr, len);
-USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE); // start a new reception
+  extern uint8_t* USB_HOST_RX_BUFFER;
+  uint16_t len = USBH_MIDI_GetLastReceivedDataSize(phost);
+  midi_host_rx(USB_HOST_RX_BUFFER, len);
+  USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE); // start a new reception
 }
 
 void midi_host_tx(uint8_t* buffer, uint32_t length){
