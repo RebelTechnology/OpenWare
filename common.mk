@@ -6,19 +6,19 @@ BIN=$(BUILD)/$(PROJECT).bin
 CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
 
 # Tool path
-TOOLROOT ?= ~/devel/OwlWare/Tools/gcc-arm-none-eabi-5_2-2015q4/bin
+TOOLROOT ?= ~/devel/OwlWare/Tools/gcc-arm-none-eabi-5_4-2016q3/bin/
 
 # Tools
-CC=$(TOOLROOT)/arm-none-eabi-gcc
-CXX=$(TOOLROOT)/arm-none-eabi-g++
-LD=$(TOOLROOT)/arm-none-eabi-gcc
-AR=$(TOOLROOT)/arm-none-eabi-ar
-AS=$(TOOLROOT)/arm-none-eabi-as
-RANLIB=$(TOOLROOT)/arm-none-eabi-ranlib
-GDB=$(TOOLROOT)/arm-none-eabi-gdb
-OBJCOPY=$(TOOLROOT)/arm-none-eabi-objcopy
-OBJDUMP=$(TOOLROOT)/arm-none-eabi-objdump
-SIZE=$(TOOLROOT)/arm-none-eabi-size
+CC=$(TOOLROOT)arm-none-eabi-gcc
+CXX=$(TOOLROOT)arm-none-eabi-g++
+LD=$(TOOLROOT)arm-none-eabi-gcc
+AR=$(TOOLROOT)arm-none-eabi-ar
+AS=$(TOOLROOT)arm-none-eabi-as
+RANLIB=$(TOOLROOT)arm-none-eabi-ranlib
+GDB=$(TOOLROOT)arm-none-eabi-gdb
+OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
+OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
+SIZE=$(TOOLROOT)arm-none-eabi-size
 
 # Set up search path
 vpath %.s $(BUILDROOT)/Src

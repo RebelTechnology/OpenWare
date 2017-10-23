@@ -32,6 +32,7 @@ private:
   void handleFirmwareRunCommand(uint8_t* data, uint16_t size);
   void handleFirmwareFlashCommand(uint8_t* data, uint16_t size);
   void handleFirmwareStoreCommand(uint8_t* data, uint16_t size);
+  void handleFlashEraseCommand(uint8_t* data, uint16_t size);
   void runProgram();
 };
 

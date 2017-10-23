@@ -1,10 +1,7 @@
 # object files
 
-# OBJS += $(LIBROOT)/BSP/STM32F7xx_Nucleo_144/stm32f7xx_nucleo_144.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal_rcc.o
-OBJS += $(DRIVERS)/Src/stm32f7xx_hal_dac.o
-OBJS += $(DRIVERS)/Src/stm32f7xx_hal_dac_ex.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal_i2c.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal_i2c_ex.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal_dma.o
@@ -23,12 +20,9 @@ OBJS += $(DRIVERS)/Src/stm32f7xx_hal_sai.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal_sai_ex.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal_uart.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal_spi.o
-OBJS += $(DRIVERS)/Src/stm32f7xx_hal_hcd.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal_pcd.o # USB Device
 OBJS += $(DRIVERS)/Src/stm32f7xx_hal_pcd_ex.o
-OBJS += $(DRIVERS)/Src/stm32f7xx_hal_sdram.o
 OBJS += $(DRIVERS)/Src/stm32f7xx_ll_usb.o
-OBJS += $(DRIVERS)/Src/stm32f7xx_ll_fmc.o
 OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_core.o
 OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_ioreq.o
 OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_ctlreq.o
@@ -37,11 +31,15 @@ OBJS += $(USB_DEVICE_FILE)/Class/AUDIO/Src/usbd_audio.o
 # OBJS += $(DRIVERS)/Src/stm32f7xx_hal_qspi.o
 # OBJS += $(DRIVERS)/Src/stm32f7xx_hal_dma2d.o
 
-OBJS += $(USB_HOST_FILE)/Core/Src/usbh_core.o
-OBJS += $(USB_HOST_FILE)/Core/Src/usbh_pipes.o
-OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
-OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
-OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
+# OBJS += $(DRIVERS)/Src/stm32f7xx_hal_sdram.o
+# OBJS += $(DRIVERS)/Src/stm32f7xx_ll_fmc.o
+
+# OBJS += $(DRIVERS)/Src/stm32f7xx_hal_hcd.o
+# OBJS += $(USB_HOST_FILE)/Core/Src/usbh_core.o
+# OBJS += $(USB_HOST_FILE)/Core/Src/usbh_pipes.o
+# OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
+# OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
+# OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
 
 # OBJS += $(BUILD)/startup.o
 # OBJS += $(USB_DEVICE) $(USB_OTG)

@@ -6,8 +6,6 @@
 #include "ProgramVector.h"
 #include "DynamicPatchDefinition.hpp"
 #include "errorhandlers.h"
-// #include "Graphics.h"
-// #include "ScreenBuffer.h"
 #include "Codec.h"
 #include "ServiceCall.h"
 #include "FlashStorage.h"
@@ -15,20 +13,14 @@
 
 #ifdef USE_SCREEN
 #include "Graphics.h"
-#include "ScreenBuffer.h"
-#include "ParameterController.hpp"
 #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
 #define SCREEN_TASK_PRIORITY 3
 static TaskHandle_t screenTask = NULL;
-#define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT/8)
-uint8_t pixelbuffer[OLED_DATA_LENGTH];
-ParameterController params;
 #endif
 
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
-// #define SCREEN_TASK_PRIORITY 3
 #define AUDIO_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
 #define AUDIO_TASK_PRIORITY  4
 // #define MANAGER_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
@@ -37,9 +29,7 @@ ParameterController params;
 #define FLASH_TASK_PRIORITY 5
 #define FLASH_TASK_STACK_SIZE (512/sizeof(portSTACK_TYPE))
 
-
-// #define OLED_DATA_LENGTH (OLED_WIDTH*OLED_HEIGHT/8)
-// uint8_t pixelbuffer[OLED_DATA_LENGTH];
+const uint32_t PROGRAMSTACK_SIZE = 8*1024; // size in bytes
 
 #define START_PROGRAM_NOTIFICATION  0x01
 #define STOP_PROGRAM_NOTIFICATION   0x02
@@ -51,21 +41,18 @@ ProgramManager program;
 PatchRegistry registry;
 ProgramVector staticVector;
 ProgramVector* programVector = &staticVector;
-// static TaskHandle_t screenTask = NULL;
 static TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
 static DynamicPatchDefinition dynamo;
 
-extern uint16_t adc_values[NOF_PARAMETERS];
+extern uint16_t* adc_values;
 int16_t parameter_values[NOF_PARAMETERS];
 BitState32 stateChanged;
 uint16_t button_values;
 uint16_t timestamps[NOF_BUTTONS]; 
 
 ProgramVector* getProgramVector() { return programVector; }
-static uint16_t getSampleCounter();
-
 
 static int16_t encoders[2] = {INT16_MAX/2, INT16_MAX/2};
 static int16_t deltas[2] = {0, 0};
@@ -76,7 +63,7 @@ void encoderChanged(uint8_t encoder, int32_t value){
   encoders[encoder] = value;
   deltas[encoder] = delta;
 #ifdef USE_SCREEN
-  params.encoderChanged(encoder, delta);
+  graphics.params.encoderChanged(encoder, delta);
 #endif
   // todo: save changes and pass at programReady()
   // if(getProgramVector()->encoderChangedCallback != NULL)
@@ -112,13 +99,21 @@ void onProgramStatus(ProgramVectorAudioStatus status){
 
 int16_t getParameterValue(uint8_t ch){
   if(ch < NOF_PARAMETERS)
+#ifdef USE_SCREEN
+    return graphics.params.parameters[ch];
+#else
     return parameter_values[ch];
+#endif
   return 0;
 }
 
 void setParameterValue(uint8_t ch, int16_t value){
   if(ch < NOF_PARAMETERS)
+#ifdef USE_SCREEN
+    graphics.params.parameters[ch] = value;
+#else
     parameter_values[ch] = value;
+#endif
 }
 
 uint8_t getButtonValue(uint8_t ch){
@@ -143,13 +138,17 @@ void updateParameters(){
   parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
   parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
   parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
+#elif defined USE_SCREEN
+  // todo: route input CVs to parameters
 #else
   parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
   parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
   parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
   parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
 #endif
-
+#if NOF_ADC_VALUES > 4
+  parameter_values[4] = adc_values[4];
+#endif
   // parameter_values[0] = 4095-adc_values[0];
   // parameter_values[1] = 4095-adc_values[1];
   // parameter_values[2] = 4095-adc_values[2];
@@ -195,7 +194,7 @@ void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
 // called from program
 void onRegisterPatchParameter(uint8_t id, const char* name){
 #ifdef USE_SCREEN 
-  params.setName(id, name);
+  graphics.params.setName(id, name);
 #endif /* USE_SCREEN */
 }
 
@@ -204,13 +203,29 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 }
 
 void updateProgramVector(ProgramVector* pv){
-  pv->checksum = PROGRAM_VECTOR_CHECKSUM_V13;
+#if defined OWL_TESSERACT
+  pv->hardware_version = TESSERACT_HARDWARE;
+#elif defined OWL_MICROLAB
+  pv->hardware_version = MICROLAB_HARDWARE;
+#elif defined OWL_PEDAL
+  pv->hardware_version = OWL_PEDAL_HARDWARE;
+#elif defined OWL_MODULAR
+  pv->hardware_version = OWL_MODULAR_HARDWARE;
+#elif defined OWL_PLAYERF7
   pv->hardware_version = PLAYER_HARDWARE;
-  // pv->parameters_size = params.parameters_size;
-  // pv->parameters = params.parameters;
+#elif defined OWL_PRISMF7
+  pv->hardware_version = PRISM_HARDWARE;
+#else
+#error "invalid configuration"
+#endif
+  pv->checksum = PROGRAM_VECTOR_CHECKSUM;
+#ifdef USE_SCREEN
+  pv->parameters_size = graphics.params.getSize();
+  pv->parameters = graphics.params.parameters;
+#else
   pv->parameters_size = NOF_PARAMETERS;
   pv->parameters = parameter_values;
-  pv->audio_bitdepth = 24;
+#endif
   pv->audio_samplingrate = 48000;
   pv->audio_blocksize = CODEC_BLOCKSIZE; // todo!
   pv->buttons = button_values;
@@ -224,11 +239,35 @@ void updateProgramVector(ProgramVector* pv){
   pv->setButton = onSetButton;
   pv->setPatchParameter = onSetPatchParameter;
   pv->buttonChangedCallback = NULL;
+#ifdef PROGRAM_VECTOR_V12
+  pv->audio_bitdepth = 24;
   pv->encoderChangedCallback = NULL;
-  // pv->drawCallback = NULL;
+#endif
+#ifdef PROGRAM_VECTOR_V13
+  extern char _EXTRAM, _EXTRAM_END;
+#ifdef OWL_ARCH_F7
+  static MemorySegment heapSegments[] = {
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_END - &_EXTRAM) },
+    { NULL, 0 }
+  };
+#else
+  extern char _CCMRAM, _CCMRAM_END;
+  static MemorySegment heapSegments[] = {
+    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_END - &_CCMRAM) - PROGRAMSTACK_SIZE },
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_END - &_EXTRAM) },
+    // todo: add remaining program space
+    { NULL, 0 }
+  };
+#endif
+#ifdef USE_WM8731
+  pv->audio_format = AUDIO_FORMAT_24B16;
+#else
+  pv->audio_format = AUDIO_FORMAT_24B32;
+#endif
+  pv->heapSegments = (MemorySegment*)heapSegments;
+#endif
   pv->message = NULL;
 }
-
 
 volatile int flashSectorToWrite;
 volatile void* flashAddressToWrite;
@@ -265,25 +304,13 @@ void eraseFlashTask(void* p){
 }
 
 #ifdef USE_SCREEN
-void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
-  static ScreenBuffer screen(width, height);
-  screen.setBuffer(pixels);
-  screen.clear();
-  screen.setTextSize(1);
-  screen.print(20, 0, "Rebel Technology");
-}
-
 void runScreenTask(void* p){
+  // this task will be continually interrupted by
+  // the higher priority audio task
   const TickType_t delay = 20 / portTICK_PERIOD_MS;
   for(;;){
-    ProgramVector* pv = getProgramVector();
-    if(pv->drawCallback != NULL){
-      pv->drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-    }else{
-      defaultDrawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-    }
-    params.draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-    graphics.display(pixelbuffer, OLED_WIDTH*OLED_HEIGHT);
+    graphics.draw();
+    graphics.display();
     vTaskDelay(delay); // allow a minimum amount of time for pixel data to be transferred
   }
 }
@@ -291,7 +318,7 @@ void runScreenTask(void* p){
 
 void runAudioTask(void* p){
 #ifdef USE_SCREEN
-    params.reset();
+    graphics.params.reset();
 #endif
     PatchDefinition* def = getPatchDefinition();
     ProgramVector* pv = def == NULL ? NULL : def->getProgramVector();
@@ -338,7 +365,9 @@ void runManagerTask(void* p){
 	  staticVector.message = programVector->message;
 	}
 	programVector = &staticVector;
-	// programVector->drawCallback = NULL;
+#ifdef USE_SCREEN
+	graphics.setCallback(NULL);
+#endif /* USE_SCREEN */
 	vTaskDelete(audioTask);
 	audioTask = NULL;
       }
@@ -364,26 +393,23 @@ void runManagerTask(void* p){
     if(ulNotifiedValue & START_PROGRAM_NOTIFICATION){ // start
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
-      	static StaticTask_t programTaskBuffer;
-      	if(def->getStackBase() != 0 && 
-      	   def->getStackSize() > configMINIMAL_STACK_SIZE*sizeof(portSTACK_TYPE)){
-      	  audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
-      					def->getStackSize()/sizeof(portSTACK_TYPE),
-      					NULL, AUDIO_TASK_PRIORITY, 
-      					(StackType_t*)def->getStackBase(), 
-      					&programTaskBuffer);
-      	}else{
-      	  xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
-      	  // error(PROGRAM_ERROR, "Invalid program stack");
-      	}
-      	if(audioTask == NULL)
-      	  error(PROGRAM_ERROR, "Failed to start program task");
+      	static StaticTask_t audioTaskBuffer;
+#ifndef OWL_ARCH_F7
+	extern char _CCMRAM, _CCMRAM_END;
+	uint32_t CCMHEAP_SIZE = (uint32_t)(&_CCMRAM_END - &_CCMRAM) - PROGRAMSTACK_SIZE;
+	uint8_t* CCMHEAP = (uint8_t*)&_CCMRAM;
+	uint8_t* PROGRAMSTACK = CCMHEAP+CCMHEAP_SIZE;
+#else
+	extern char _PATCHRAM, _PATCHRAM_END;
+	uint32_t PATCHRAM_SIZE = (uint32_t)(&_PATCHRAM_END - &_PATCHRAM);
+	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram
+#endif
+	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
+				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
+				      NULL, AUDIO_TASK_PRIORITY, 
+				      (StackType_t*)PROGRAMSTACK, 
+				      &audioTaskBuffer);
       }
-      // todo: make sure no two tasks are using the same stack
-      // if(audioTask == NULL)
-      // 	xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
-      // else
-      // 	error(PROGRAM_ERROR, "Program already running");
       if(audioTask == NULL)
 	error(PROGRAM_ERROR, "Failed to start program task");
     }
@@ -394,7 +420,9 @@ ProgramManager::ProgramManager(){
 #ifdef DEBUG_DWT
   // DWT cycle count enable
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-  // DWT->LAR = 0xC5ACCE55;
+#ifdef OWL_ARCH_F7
+  DWT->LAR = 0xC5ACCE55; // enable debug access: required on F7
+#endif
   DWT->CYCCNT = 0;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 #endif
@@ -408,7 +436,6 @@ void ProgramManager::startManager(){
 #ifdef USE_SCREEN
   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
 #endif
-  // xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
   // xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
   xTaskCreate(runManagerTask, "Manager", MANAGER_TASK_STACK_SIZE, NULL, MANAGER_TASK_PRIORITY, &managerTask);
 }

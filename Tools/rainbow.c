@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 /* 
-gcc -std=c99 rainbow.c -lm 
+gcc -std=c99 rainbow.c -lm -o rainbow && ./rainbow > ../Source/rainbow.h
 */
 
 /*
@@ -18,17 +18,18 @@ VIBGYOR
 
 to 10bit: 
 p/x (0x94<<2)|0x3 : 0x253
+p/x (0x7f<<2)|0x3 : 0x1fc
 */
+#define COLOUR_COUNT 8
 
-#define COLOUR_COUNT 6
-
-static uint32_t rainbow[8][3] = {
+static uint16_t rainbow[9][3] = {
+  {0x3ff, 0x3ff, 0x3ff}, // white
   {0x253, 0x000, 0x34f}, // violet
   {0x12f, 0x000, 0x20b}, // indigo
   {0x000, 0x000, 0x3ff}, // blue
   {0x000, 0x3ff, 0x000}, // green
   {0x3ff, 0x3ff, 0x000}, // yellow
-  {0x3ff, 0x3df, 0x000}, // orange
+  {0x3ff, 0x1fc, 0x000}, // orange
   {0x3ff, 0x000, 0x000}, // red
   {0x3ff, 0x3ff, 0x3ff}, // white
 };
@@ -59,10 +60,10 @@ int main(int argc, char** argv) {
   int c, i;
   uint32_t colour;
   for(c=0 ; c < COLOUR_COUNT ; c++){
-    uint32_t* c1 = rainbow[c];
-    uint32_t* c2 = rainbow[c+1];
+    uint16_t* c1 = rainbow[c];
+    uint16_t* c2 = rainbow[c+1];
     float amt1, amt2;
-    uint32_t r, g, b;
+    uint16_t r, g, b;
     for(i=0 ; i < steps; i++){
       amt1 = (float)(steps-i-1)/(steps-1);
       amt2 = (float)i/(steps-1);

@@ -22,18 +22,24 @@ void MidiHandler::handlePitchBend(uint8_t status, uint16_t value){
 }
 
 void MidiHandler::handleNoteOn(uint8_t status, uint8_t note, uint8_t velocity){
+  if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
+    return;
+  if(getProgramVector()->buttonChangedCallback != NULL)
+    getProgramVector()->buttonChangedCallback(MIDI_NOTE_BUTTON+note, velocity<<5, getSampleCounter());
+  // setButtonValue(MIDI_NOTE_BUTTON+note, velocity<<5);
 }
 
 void MidiHandler::handleNoteOff(uint8_t status, uint8_t note, uint8_t velocity){
+  if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
+    return;
+  if(getProgramVector()->buttonChangedCallback != NULL)
+    getProgramVector()->buttonChangedCallback(MIDI_NOTE_BUTTON+note, 0, getSampleCounter());
+  // setButtonValue(MIDI_NOTE_BUTTON+note, 0);
 }
 
 void MidiHandler::handleProgramChange(uint8_t status, uint8_t pid){
   if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
     return;
-  // if(pid == 0 && loader.isReady()){
-  //   program.loadDynamicProgram(loader.getData(), loader.getSize());
-  //   loader.clear();
-  //   program.startProgram(true);
   if(pid == 0){
     runProgram();
   }else{
@@ -77,10 +83,11 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   //   break;
   // }
   case PATCH_BUTTON:
-    if(value == 127){
+    setButtonValue(PUSHBUTTON, value == 127 ? 4095 : 0);
+    // if(value == 127){
       // togglePushButton();
       // midi.sendCc(LED, getLed() == GREEN ? 42 : 84);
-    }
+    // }
     break;
   case REQUEST_SETTINGS:
     switch(value){
@@ -111,9 +118,9 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     case SYSEX_PROGRAM_STATS:
       midi.sendStatus();
       break;
-    // case PATCH_BUTTON:
-    //   midi.sendCc(PATCH_BUTTON, isPushButtonPressed() ? 127 : 0);
-    //   break;
+    case PATCH_BUTTON:
+      midi.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
+      break;
     }
     break;
   default:
@@ -221,6 +228,16 @@ void MidiHandler::runProgram(){
   }      
 }
 
+void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
+  if(size == 5){
+    uint32_t sector = loader.decodeInt(data);
+    program.eraseFromFlash(sector);
+    loader.clear();
+  }else{
+    error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
+  }
+}
+
 void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t checksum = loader.decodeInt(data);
@@ -273,6 +290,9 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     break;
   case SYSEX_FIRMWARE_FLASH:
     handleFirmwareFlashCommand(data+4, size-5);
+    break;
+  case SYSEX_FLASH_ERASE:
+    handleFlashEraseCommand(data+4, size-5);
     break;
   default:
     error(PROGRAM_ERROR, "Invalid SysEx Message");

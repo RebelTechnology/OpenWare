@@ -84,6 +84,18 @@
 #define FLASH_MOSI_GPIO_Port GPIOA
 #define FLASH_nCS_Pin GPIO_PIN_5
 #define FLASH_nCS_GPIO_Port GPIOC
+#define I2C_SCK_Pin GPIO_PIN_10
+#define I2C_SCK_GPIO_Port GPIOB
+#define I2C_SDA_Pin GPIO_PIN_11
+#define I2C_SDA_GPIO_Port GPIOB
+#define I2S_LRCK_Pin GPIO_PIN_12
+#define I2S_LRCK_GPIO_Port GPIOB
+#define I2S_SCLK_Pin GPIO_PIN_13
+#define I2S_SCLK_GPIO_Port GPIOB
+#define I2S_SDI_Pin GPIO_PIN_14
+#define I2S_SDI_GPIO_Port GPIOB
+#define I2S_SDO_Pin GPIO_PIN_15
+#define I2S_SDO_GPIO_Port GPIOB
 #define I2S_MCLK_Pin GPIO_PIN_6
 #define I2S_MCLK_GPIO_Port GPIOC
 

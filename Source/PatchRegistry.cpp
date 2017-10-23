@@ -1,6 +1,6 @@
 #include "PatchRegistry.h"
 #include "FlashStorage.h"
-#include "FactoryPatches.h"
+// #include "FactoryPatches.h"
 #include "ProgramManager.h"
 #include "ResourceHeader.h"
 #include "ProgramHeader.h"
@@ -8,6 +8,10 @@
 #include "message.h"
 
 // #define REGISTER_PATCH(T, STR, UNUSED, UNUSED2) registerPatch(STR, Register<T>::construct)
+
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
 
 static PatchDefinition emptyPatch("---", 0, 0);
 

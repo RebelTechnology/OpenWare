@@ -27,7 +27,7 @@ int eeprom_wait(){
 int eeprom_erase_sector(uint32_t sector) {
   FLASH_EraseInitTypeDef cfg;
   cfg.TypeErase = FLASH_TYPEERASE_SECTORS;
-#ifndef OWL_PLAYERF7
+#ifndef OWL_ARCH_F7
   cfg.Banks = FLASH_BANK_1;
 #endif
   cfg.Sector = sector;
@@ -103,7 +103,7 @@ int eeprom_erase(uint32_t address){
     ret = eeprom_erase_sector(FLASH_SECTOR_6);
   else if(address < ADDR_FLASH_SECTOR_8)
     ret = eeprom_erase_sector(FLASH_SECTOR_7);
-#ifndef OWL_PLAYERF7
+#ifndef OWL_ARCH_F7
   else if(address < ADDR_FLASH_SECTOR_9)
     ret = eeprom_erase_sector(FLASH_SECTOR_8);
   else if(address < ADDR_FLASH_SECTOR_10)

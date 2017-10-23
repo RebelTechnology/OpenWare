@@ -15,8 +15,26 @@
 #include "Owl.h"
 #include <math.h> /* for ceilf */
 
-uint32_t log2(uint32_t x){ 
-  return x == 0 ? 0 : 31 - __builtin_clz (x); /* clz returns the number of leading 0's */
+#if defined OWL_TESSERACT
+#define HARDWARE_VERSION             "Tesseract"
+#elif defined OWL_MICROLAB
+#define HARDWARE_VERSION             "MicroLab"
+#elif defined OWL_PEDAL
+#define HARDWARE_VERSION             "OWL Pedal"
+#elif defined OWL_MODULAR
+#define HARDWARE_VERSION             "OWL Modular"
+#elif defined OWL_PLAYERF7
+#define HARDWARE_VERSION             "Genius"
+#elif defined OWL_PRISMF7
+#define HARDWARE_VERSION             "Prism"
+#else
+#error "invalid configuration"
+#endif
+
+#define FIRMWARE_VERSION "v20pre"
+
+const char* getFirmwareVersion(){ 
+  return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
 }
 
 void MidiController::init(uint8_t ch){
@@ -34,7 +52,7 @@ void MidiController::sendPatchParameterValues(){
 void MidiController::sendSettings(){
   // sendPc(settings.program_index); // TODO!
   sendPatchParameterValues();
-  // sendCc(PATCH_BUTTON, isPushButtonPressed() ? 127 : 0);
+  sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
   // sendCc(LED, getLed() == NONE ? 0 : getLed() == GREEN ? 42 : 84);
   // sendCc(LEFT_INPUT_GAIN, codec.getInputGainLeft()<<2);
   // sendCc(RIGHT_INPUT_GAIN, codec.getInputGainRight()<<2);
@@ -100,7 +118,7 @@ void MidiController::sendPatchName(uint8_t index){
 void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
   sendProgramMessage();
-  sendProgramStats();
+  //   sendProgramStats(); done by sendStatus() in case of no error
   sendDeviceStats();
   sendStatus();
 }
@@ -164,10 +182,10 @@ void MidiController::sendStatus(){
   char* p = &buffer[1];
   uint8_t err = getErrorStatus();
   switch(err & 0xf0){
-  case NO_ERROR: {
-    sendProgramStats();    
+  case NO_ERROR:
+    sendProgramStats();
+    return;
     break;
-  }
   case MEM_ERROR:
     p = stpcpy(p, (const char*)"Memory Error 0x");
     p = stpcpy(p, msg_itoa(err, 16));
@@ -198,8 +216,8 @@ void MidiController::sendStatus(){
     break;
   }
   const char* msg = getErrorMessage();
-  // if(err != NO_ERROR && msg != NULL){
-  if(msg != NULL){
+  if(err != NO_ERROR && msg != NULL){
+  // if(msg != NULL){
     p = stpcpy(p, (const char*)" ");
     p = stpcpy(p, msg);
   }
@@ -219,11 +237,11 @@ void MidiController::sendProgramMessage(){
 }
 
 void MidiController::sendFirmwareVersion(){
-  // char buffer[32];
-  // buffer[0] = SYSEX_FIRMWARE_VERSION;
-  // char* p = &buffer[1];
-  // p = stpcpy(p, getFirmwareVersion());
-  // sendSysEx((uint8_t*)buffer, p-buffer);
+  char buffer[32];
+  buffer[0] = SYSEX_FIRMWARE_VERSION;
+  char* p = &buffer[1];
+  p = stpcpy(p, getFirmwareVersion());
+  sendSysEx((uint8_t*)buffer, p-buffer);
 }
 
 void MidiController::sendConfigurationSetting(const char* name, uint32_t value){
@@ -367,12 +385,22 @@ void MidiController::write(uint8_t* data, uint16_t size){
 
 void MidiController::push(){
   int len = buffer.getContiguousReadCapacity();
+  // if(midi_device_connected()){
+  //   if(midi_host_connected()){
+  //     while(len >= 4 && midi_device_ready() && midi_host_ready()){
+  // 	midi_device_tx(buffer.getReadHead(), 4);
+  // 	midi_host_tx(buffer.getReadHead(), 4);
+  // 	buffer.incrementReadHead(4);
+  // 	len = buffer.getContiguousReadCapacity();
+  // }
   while(len >= 4 && midi_device_ready()){
-  // while(len >= 4){
-    midi_tx_usb_buffer(buffer.getReadHead(), 4);
+    midi_device_tx(buffer.getReadHead(), 4);
+#ifdef USE_USB_HOST
+    // todo: only works now if both device and host i/f are connected
+    if(midi_host_ready())
+      midi_host_tx(buffer.getReadHead(), 4);
+#endif
     buffer.incrementReadHead(4);
     len = buffer.getContiguousReadCapacity();
   }
-  // while(buffer.available() >= 4){
-  //   uint8_t buf[4];
 }

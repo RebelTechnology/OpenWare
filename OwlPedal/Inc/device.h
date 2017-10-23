@@ -13,7 +13,9 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
+#define USE_CODEC
 #define USE_WM8731
+#define CODEC_SPI hspi1
 #define USE_USBD_FS
 #endif
 
@@ -24,7 +26,9 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
+#define USE_CODEC
 #define USE_WM8731
+#define CODEC_SPI hspi1
 #define USE_USBD_FS
 #endif
 
@@ -35,7 +39,6 @@
 
 #include "stm32f4xx_hal.h"
 
-#define USE_CODEC
 #define DEBUG_DWT
 #define DEBUG_STACK
 #define DEBUG_STORAGE
@@ -58,15 +61,6 @@
 
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
-
-#define CCMRAM                      ((uint32_t)0x10000000)
-/* #define PATCHRAM                    ((uint32_t)0x20040000) */
-#define PATCHRAM                    ((uint32_t)0x2000c000)
-#ifdef OWL1
-#define EXTRAM                      ((uint32_t)0x68000000)
-#else
-#define EXTRAM                      ((uint32_t)0xD0000000)
-#endif
 
 #define PROGRAM_TASK_STACK_SIZE          (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE          (512/sizeof(portSTACK_TYPE))

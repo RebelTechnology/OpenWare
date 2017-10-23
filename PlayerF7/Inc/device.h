@@ -11,22 +11,30 @@
 /* #define OWL_PEDAL */
 
 #ifdef OWL_PLAYERF7
+#define OWL_ARCH_F7
 #define ADC_A 0
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
 /* #define PUSHBUTTON_Pin GP7_Pin */
 /* #define PUSHBUTTON_GPIO_Port GP7_GPIO_Port */
-#define USE_CS4271
 #define USE_USBD_HS
 #define OWL2
 #define USE_USBHOST
 #define USE_SCREEN
 #define SSD1309
 #define OLED_DMA
+#define OLED_SOFT_CS
+#define OLED_SPI hspi2
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
-#define OLED_SOFT_CS
+#define USE_USB_HOST
+#define USE_ENCODERS
+#define ENCODER_TIM1 htim2
+#define ENCODER_TIM2 htim3
+#define USE_CODEC
+#define USE_CS4271
+#define CODEC_SPI hspi4
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
@@ -34,7 +42,6 @@
 #define EEPROM_PAGE_END              ((uint32_t)0x08100000)
 #define STORAGE_MAX_BLOCKS           64
 
-#define USE_CODEC
 #define DEBUG_DWT
 #define DEBUG_STACK
 #define DEBUG_STORAGE
@@ -42,12 +49,15 @@
 #ifdef SSD1331
 #define OLED_WIDTH			96
 #define OLED_HEIGHT			64
+#define OLED_BUFFER_SIZE        (OLED_WIDTH*OLED_HEIGHT/8)
 #elif defined SEPS114A
 #define OLED_WIDTH			96
 #define OLED_HEIGHT			96
+#define OLED_BUFFER_SIZE        (OLED_WIDTH*OLED_HEIGHT*sizeof(uint16_t))
 #elif defined SSD1309
 #define OLED_WIDTH			128
 #define OLED_HEIGHT			64
+#define OLED_BUFFER_SIZE        (OLED_WIDTH*OLED_HEIGHT/8)
 #endif
 
 /* #define CS_CS_Pin CS_nCS_Pin */
@@ -72,7 +82,7 @@
 /* #define OLED_SCK_GPIO_Port GPIOB */
 
 #define NOF_ADC_VALUES               4
-#define NOF_PARAMETERS               40
+#define NOF_PARAMETERS               16
 #define NOF_BUTTONS                  5
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
@@ -81,12 +91,6 @@
 
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
-
-/* #define CCMRAM                      ((uint32_t)0x10000000) */
-/* #define PATCHRAM                    ((uint32_t)0x20040000) */
-/* #define PATCHRAM                    ((uint32_t)0x2000c000) */
-/* #define EXTRAM                      ((uint32_t)0x68000000) */
-/* #define EXTRAM                      ((uint32_t)0xD0000000) */
 
 #define PROGRAM_TASK_STACK_SIZE          (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE          (512/sizeof(portSTACK_TYPE))

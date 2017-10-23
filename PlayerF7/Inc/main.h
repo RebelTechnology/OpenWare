@@ -94,6 +94,10 @@
 #define OLED_SCK_GPIO_Port GPIOB
 #define OLED_CS_Pin GPIO_PIN_12
 #define OLED_CS_GPIO_Port GPIOB
+#define USB_HOST_PWR_EN_Pin GPIO_PIN_9
+#define USB_HOST_PWR_EN_GPIO_Port GPIOC
+#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_10
+#define USB_HOST_PWR_FAULT_GPIO_Port GPIOA
 #define ENC1_CH1_Pin GPIO_PIN_15
 #define ENC1_CH1_GPIO_Port GPIOA
 #define TR_IN_B_Pin GPIO_PIN_10
@@ -121,8 +125,7 @@
 
 /* USER CODE BEGIN Private defines */
 
-#define USB_DM_Pin GPIO_PIN_14
-#define USB_DP_Pin GPIO_PIN_15
+#define USB_HOST_RX_BUFF_SIZE   64  /* Max Received data 64 bytes */
 
 /* USER CODE END Private defines */
 

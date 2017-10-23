@@ -2,6 +2,8 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_flash_ex.h"
 
+#define OWL_TESSERACT_REV4 // SWO mapped to toggle
+
 #define OWL_TESSERACT
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */
@@ -13,8 +15,8 @@
 #define ADC_B 3
 #define ADC_C 2
 #define ADC_D 0
-#define PUSHBUTTON_Pin GP7_Pin
-#define PUSHBUTTON_GPIO_Port GP7_GPIO_Port
+/* #define PUSHBUTTON_Pin GP7_Pin */
+/* #define PUSHBUTTON_GPIO_Port GP7_GPIO_Port */
 #define USE_CS4271
 #define USE_USBD_HS
 #define OWL2
@@ -26,6 +28,9 @@
 #define STORAGE_MAX_BLOCKS           64
 
 #define USE_CODEC
+#define USE_CS4271
+#define CODEC_SPI hspi4
+
 #define DEBUG_DWT
 #define DEBUG_STACK
 #define DEBUG_STORAGE
@@ -49,12 +54,6 @@
 
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
-
-#define CCMRAM                      ((uint32_t)0x10000000)
-/* #define PATCHRAM                    ((uint32_t)0x20040000) */
-#define PATCHRAM                    ((uint32_t)0x2000c000)
-/* #define EXTRAM                      ((uint32_t)0x68000000) */
-#define EXTRAM                      ((uint32_t)0xD0000000)
 
 #define PROGRAM_TASK_STACK_SIZE          (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE          (512/sizeof(portSTACK_TYPE))

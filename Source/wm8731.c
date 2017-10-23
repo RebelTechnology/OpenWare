@@ -25,33 +25,39 @@ void codec_reset(){
 }
 
 void codec_init(){
-  /* memset(wm8731_registers, 0, sizeof(wm8731_registers)); */
-
   /* Load default values */
   for(int i=0;i<WM8731_NUM_REGS-1;i++)
     codec_write(i, wm8731_init_data[i]);
 
-  // clear WM8731_OUTPD
-  codec_write(POWER_DOWN_CONTROL_REGISTER, WM8731_MICPD|WM8731_OSCPD|WM8731_CLKOUTPD);
+  // set WM8731_MS master mode
+  codec_write(DIGITAL_AUDIO_INTERFACE_FORMAT_REGISTER, WM8731_MS|WM8731_FORMAT_I2S|WM8731_IWL_24BIT);
+
+  // clear WM8731_OSCPD and WM8731_OUTPD
+  codec_write(POWER_DOWN_CONTROL_REGISTER, WM8731_MICPD|WM8731_CLKOUTPD);
+
   // set active control
   codec_write(ACTIVE_CONTROL_REGISTER, WM8731_ACTIVE);
-
 }
 
 void codec_bypass(int bypass){
-  if(bypass){
-    codec_write(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER,
-		wm8731_init_data[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] | WM8731_BYPASS);
-    /* softMute(true); */
-    /* writeRegister(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER,  */
-    /* 		  (wm8731_registers[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] & ~WM8731_DACSEL) | WM8731_BYPASS); */
-  }else{
-    codec_write(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER,
-		wm8731_init_data[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] & ~WM8731_BYPASS);
-    /* writeRegister(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER,  */
-    /* 		  (wm8731_registers[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] & ~WM8731_BYPASS) | WM8731_DACSEL); */
-    /* softMute(false); */
-  }
+  uint16_t value = WM8731_MUTEMIC;
+  if(bypass)
+    value |= WM8731_BYPASS;
+  else
+    value |= WM8731_DACSEL;
+  codec_write(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER, value);
+  /* 		wm8731_init_data[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] | WM8731_BYPASS); */
+  /*   /\* softMute(true); *\/ */
+  /*   /\* writeRegister(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER,  *\/ */
+  /*   /\* 		  (wm8731_registers[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] & ~WM8731_DACSEL) | WM8731_BYPASS); *\/ */
+
+  /* }else{ */
+  /*   codec_write(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER, */
+  /* 		wm8731_init_data[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] & ~WM8731_BYPASS); */
+  /*   /\* writeRegister(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER,  *\/ */
+  /*   /\* 		  (wm8731_registers[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] & ~WM8731_BYPASS) | WM8731_DACSEL); *\/ */
+  /*   /\* softMute(false); *\/ */
+  /* } */
 }
 
 #if 0

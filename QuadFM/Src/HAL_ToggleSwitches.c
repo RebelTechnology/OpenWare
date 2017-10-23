@@ -1,4 +1,3 @@
-#include "stm32f4xx_hal.h"
 #include "HAL_ToggleSwitches.h"
 
 uint16_t usiTogCheck;

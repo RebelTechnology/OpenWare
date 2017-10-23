@@ -84,6 +84,17 @@ void codec_init(SPI_HandleTypeDef* spi){
   /* 	      CODEC_DAC_ZERO_CROSS | */
   /* 	      CODEC_DAC_VOL_ATAPI_DEFAULT); */
 
+  uint8_t value;
+#ifdef OWL_MICROLAB
+  /* The digital volume control allows the user to attenuate the signal in 1 dB increments from 0 to -127 dB.  */
+  /* value = 0x20; // -20dB */
+  value = 12; // -12dB
+#else
+  value = 0;
+#endif
+  codec_write(CODEC_DAC_CHA_VOL_REG, value);
+  codec_write(CODEC_DAC_CHB_VOL_REG, value);
+
   // Release power down bit to start up codec
   codec_write(CODEC_MODE_CTRL2_REG, CODEC_MODE_CTRL2_CTRL_PORT_EN);
 }
@@ -96,15 +107,16 @@ void codec_bypass(int bypass){
 }
 
 /* // set volume (negative for mute) */
-/* void codec_set_volume(int8_t level){ */
-/*   uint8_t value = codec_read(CODEC_DAC_CHA_VOL_REG); */
-/*   value &= ~(CODEC_DAC_CHA_VOL_MUTE); */
-/*   value |= CODEC_DAC_CHA_VOL_VOLUME(level); */
-/*   codec_write(CODEC_DAC_CHA_VOL, value); */
-
-/*   value = codec_read(CODEC_DAC_CHB_VOL_REG); */
-/*   value &= ~(CODEC_DAC_CHB_VOL_MUTE); */
-/*   value |= CODEC_DAC_CHB_VOL_VOLUME(level); */
-/*   codec_write(CODEC_DAC_CHB_VOL, value); */
-/* } */
+void codec_set_volume(int8_t level){
+  /* uint8_t value = codec_read(CODEC_DAC_CHA_VOL_REG); */
+  /* value &= ~(CODEC_DAC_CHA_VOL_MUTE); */
+  /* value |= CODEC_DAC_CHA_VOL_VOLUME(level); */
+  /* codec_write(CODEC_DAC_CHA_VOL_REG, value); */
+  /* value = codec_read(CODEC_DAC_CHB_VOL_REG); */
+  /* value &= ~(CODEC_DAC_CHB_VOL_MUTE); */
+  /* value |= CODEC_DAC_CHB_VOL_VOLUME(level); */
+  /* codec_write(CODEC_DAC_CHB_VOL_REG, value); */
+  codec_write(CODEC_DAC_CHA_VOL_REG, level);
+  codec_write(CODEC_DAC_CHB_VOL_REG, level);
+}
 

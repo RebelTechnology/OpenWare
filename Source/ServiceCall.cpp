@@ -1,8 +1,14 @@
 #include "arm_math.h"
 #include "arm_const_structs.h"
+#include "device.h"
 #include "ServiceCall.h"
-// #include "ApplicationSettings.h"
+#include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
+#include "FastLogTable.h"
+#include "FastPowTable.h"
+#ifdef USE_SCREEN
+#include "Graphics.h"
+#endif
 
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
   switch(len) { 
@@ -40,12 +46,13 @@ int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
 }
 
 int serviceCall(int service, void** params, int len){
+  int ret = OWL_SERVICE_INVALID_ARGS;
   switch(service){
   case OWL_SERVICE_VERSION:
     if(len > 0){
       int* value = (int*)params[0];
       *value = OWL_SERVICE_VERSION_V1;
-      return OWL_SERVICE_OK;
+      ret = OWL_SERVICE_OK;
     }
     break;
   case OWL_SERVICE_ARM_RFFT_FAST_INIT_F32:
@@ -53,37 +60,74 @@ int serviceCall(int service, void** params, int len){
       arm_rfft_fast_instance_f32* instance = (arm_rfft_fast_instance_f32*)params[0];
       int fftlen = *(int*)params[1];
       arm_rfft_fast_init_f32(instance, fftlen);
-      return OWL_SERVICE_OK;
+      ret = OWL_SERVICE_OK;
     }
     break;
   case OWL_SERVICE_ARM_CFFT_INIT_F32:
     if(len == 2){
       arm_cfft_instance_f32* instance = (arm_cfft_instance_f32*)params[0];
       int fftlen = *(int*)params[1];
-      return SERVICE_ARM_CFFT_INIT_F32(instance, fftlen);
+      ret = SERVICE_ARM_CFFT_INIT_F32(instance, fftlen);
     }
     break;
-  // case OWL_SERVICE_GET_PARAMETERS: {
-  //   int index = 0;
-  //   int ret = OWL_SERVICE_OK;
-  //   while(len >= index+2){
-  //     char* p = (char*)params[index++];
-  //     int32_t* value = (int32_t*)params[index++];
-  //     if(strncmp(SYSEX_CONFIGURATION_INPUT_OFFSET, p, 2) == 0){
-  // 	*value = settings.input_offset;
-  //     }else if(strncmp(SYSEX_CONFIGURATION_INPUT_SCALAR, p, 2) == 0){
-  // 	*value = settings.input_scalar;
-  //     }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_OFFSET, p, 2) == 0){
-  // 	*value = settings.output_offset;
-  //     }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
-  // 	*value = settings.output_scalar;
-  //     }else{
-  // 	ret = OWL_SERVICE_INVALID_ARGS;
-  //     }
-  //   }
-  //   return ret;
-  //   break;
-  // }
+  case OWL_SERVICE_GET_PARAMETERS: {
+    int index = 0;
+    ret = OWL_SERVICE_OK;
+    while(len >= index+2){
+      char* p = (char*)params[index++];
+      int32_t* value = (int32_t*)params[index++];
+      if(strncmp(SYSEX_CONFIGURATION_INPUT_OFFSET, p, 2) == 0){
+	*value = settings.input_offset;
+      }else if(strncmp(SYSEX_CONFIGURATION_INPUT_SCALAR, p, 2) == 0){
+	*value = settings.input_scalar;
+      }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_OFFSET, p, 2) == 0){
+	*value = settings.output_offset;
+      }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
+	*value = settings.output_scalar;
+      }else{
+	ret = OWL_SERVICE_INVALID_ARGS;
+      }
+    }
+    break;
   }
-  return OWL_SERVICE_INVALID_ARGS;
+  case OWL_SERVICE_GET_ARRAY: {
+    // get array and array size
+    // expects three parameters: name, &array and &size
+    int index = 0;
+    ret = OWL_SERVICE_OK;
+    if(len >= index+3){
+      char* p = (char*)params[index++];
+      void** array = (void**)params[index++];
+      int* size = (int*)params[index++];
+      if(strncmp(SYSTEM_TABLE_LOG, p, 3) == 0){
+	*array = (void*)fast_log_table;
+	*size = fast_log_table_size;
+      }else if(strncmp(SYSTEM_TABLE_POW, p, 3) == 0){
+	*array = (void*)fast_pow_table;
+	*size = fast_pow_table_size;
+      }else{
+	*array = NULL;
+	*size = 0;
+	ret = OWL_SERVICE_INVALID_ARGS;
+      }
+    }
+    break;
+  }
+  case OWL_SERVICE_REGISTER_CALLBACK: {
+    int index = 0;
+    if(len >= index+2){
+#ifdef USE_SCREEN
+      char* name = (char*)params[index++];
+      void* callback = (void*)params[index++];
+      if(strncmp(SYSTEM_FUNCTION_DRAW, name, 3) == 0){
+	graphics.setCallback(callback);
+	ret = OWL_SERVICE_OK;
+      }
+#endif /* USE_SCREEN */
+    }
+    break;
+  }
+
+  }
+  return ret;
 }     

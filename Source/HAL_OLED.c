@@ -1,7 +1,22 @@
 // _____ Includes ______________________________________________________________________
 #include "stm32f7xx_hal.h"
-#include "HAL_OLED.h"
+#include "oled.h"
 #include <string.h>
+
+// _____ Defines _______________________________________________________________________
+#define pRST_Set()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_SET)
+#define pDC_Set()		HAL_GPIO_WritePin(OLED_DC_GPIO_Port, 	OLED_DC_Pin, 	GPIO_PIN_SET)
+#define pCS_Set()		HAL_GPIO_WritePin(OLED_CS_GPIO_Port, 	OLED_CS_Pin, 	GPIO_PIN_SET)
+
+#define pRST_Clr()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET)
+#define pDC_Clr()		HAL_GPIO_WritePin(OLED_DC_GPIO_Port, 	OLED_DC_Pin, 	GPIO_PIN_RESET)
+#define pCS_Clr()		HAL_GPIO_WritePin(OLED_CS_GPIO_Port, 	OLED_CS_Pin, 	GPIO_PIN_RESET)
+
+#define OLED_DAT	1
+#define OLED_CMD	0
+
+// _____ Prototypes ____________________________________________________________________
+void OLED_writeCMD(const uint8_t* data, uint16_t length);
 
 // Delay 
 static void NopDelay(uint32_t nops)
@@ -30,7 +45,7 @@ static const uint8_t OLED_initSequence[] =
 	0x20, 0x01,   // Vertical addressing mode
 	0xaf, 				// Display on
 };
-static unsigned char* OLED_Buffer;
+/* static unsigned char* OLED_Buffer; */
 static SPI_HandleTypeDef* OLED_SPIInst;
 	
 // _____ Functions _____________________________________________________________________
@@ -55,7 +70,8 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
   }
 }
 
-void OLED_writeDAT(const uint8_t* data, uint16_t length)
+/* void OLED_writeDAT(const uint8_t* data, uint16_t length) */
+void oled_write(const uint8_t* data, uint16_t length)
 {
 	pCS_Clr();	// CS low
 	pDC_Set();	// DC high
@@ -65,27 +81,28 @@ void OLED_writeDAT(const uint8_t* data, uint16_t length)
 	/* pCS_Set();	// CS high */
 	
 	// Send Data
-	HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length);
+	HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length/8);
 	
 }
 
-void OLED_Refresh(void)
-{
-	// Write entire buffer to OLED
-	OLED_writeDAT(OLED_Buffer, 1024);
-}
+/* void OLED_Refresh(void) */
+/* { */
+/* 	// Write entire buffer to OLED */
+/* 	OLED_writeDAT(OLED_Buffer, 1024); */
+/* } */
 
-void OLED_ClearScreen(void)
-{
-	// Clear contents of OLED buffer
-	memset(OLED_Buffer, 0, 1024);
-}
+/* void OLED_ClearScreen(void) */
+/* { */
+/* 	// Clear contents of OLED buffer */
+/* 	memset(OLED_Buffer, 0, 1024); */
+/* } */
 
 // Configuration
-void OLED_Config(SPI_HandleTypeDef* spi, unsigned char* buffer){
+/* void OLED_Config(SPI_HandleTypeDef* spi, unsigned char* buffer){ */
+void oled_init(SPI_HandleTypeDef* spi){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	OLED_SPIInst = spi;
-	OLED_Buffer = buffer;
+	/* OLED_Buffer = buffer; */
 		
 	// Configure RST and DC Pins
 	GPIO_InitStruct.Pin   = OLED_RST_Pin | OLED_DC_Pin;					
@@ -131,71 +148,71 @@ void OLED_Config(SPI_HandleTypeDef* spi, unsigned char* buffer){
 }
 
 // Buffer pixel checking and manipulation
-uint8_t OLED_getPixel(uint8_t x, uint8_t y)
-{
-	uint8_t  ucByteOffset = 0;
-	uint16_t usiArrayLoc = 0;
+/* uint8_t OLED_getPixel(uint8_t x, uint8_t y) */
+/* { */
+/* 	uint8_t  ucByteOffset = 0; */
+/* 	uint16_t usiArrayLoc = 0; */
 	
-		// Determine array location
-		usiArrayLoc = (y/8)+(x*8);
+/* 		// Determine array location */
+/* 		usiArrayLoc = (y/8)+(x*8); */
 		
-		// Determine byte offset
-		ucByteOffset = y-((uint8_t)(y/8)*8);
+/* 		// Determine byte offset */
+/* 		ucByteOffset = y-((uint8_t)(y/8)*8); */
 		
-		// Return bit state from buffer
-		return OLED_Buffer[usiArrayLoc] & (1 << ucByteOffset);
-}
+/* 		// Return bit state from buffer */
+/* 		return OLED_Buffer[usiArrayLoc] & (1 << ucByteOffset); */
+/* } */
 
-void OLED_setPixel(uint8_t x, uint8_t y)
-{
-	uint8_t  ucByteOffset = 0;
-	uint16_t usiArrayLoc = 0;
+/* void OLED_setPixel(uint8_t x, uint8_t y) */
+/* { */
+/* 	uint8_t  ucByteOffset = 0; */
+/* 	uint16_t usiArrayLoc = 0; */
 	
-	if (x<128 && y<64)
-	{	
-		// Determine array location
-		usiArrayLoc = (y/8)+(x*8);
+/* 	if (x<128 && y<64) */
+/* 	{	 */
+/* 		// Determine array location */
+/* 		usiArrayLoc = (y/8)+(x*8); */
 		
-		// Determine byte offset
-		ucByteOffset = y-((uint8_t)(y/8)*8);
+/* 		// Determine byte offset */
+/* 		ucByteOffset = y-((uint8_t)(y/8)*8); */
 		
-		// Set pixel in buffer
-		OLED_Buffer[usiArrayLoc] |= (1 << ucByteOffset);
-	}
-}
+/* 		// Set pixel in buffer */
+/* 		OLED_Buffer[usiArrayLoc] |= (1 << ucByteOffset); */
+/* 	} */
+/* } */
 
-void OLED_clearPixel(uint8_t x, uint8_t y)
-{
-	uint8_t  ucByteOffset = 0;
-	uint16_t usiArrayLoc = 0;
+/* void OLED_clearPixel(uint8_t x, uint8_t y) */
+/* { */
+/* 	uint8_t  ucByteOffset = 0; */
+/* 	uint16_t usiArrayLoc = 0; */
 	
-	if (x<128 && y<64)
-	{	
-		// Determine array location
-		usiArrayLoc = (y/8)+(x*8);
+/* 	if (x<128 && y<64) */
+/* 	{	 */
+/* 		// Determine array location */
+/* 		usiArrayLoc = (y/8)+(x*8); */
 		
-		// Determine byte offset
-		ucByteOffset = y-((uint8_t)(y/8)*8);
+/* 		// Determine byte offset */
+/* 		ucByteOffset = y-((uint8_t)(y/8)*8); */
 	
-		// Clear pixel in buffer
-		OLED_Buffer[usiArrayLoc] &= ~(1 << ucByteOffset);
-	}
-}
+/* 		// Clear pixel in buffer */
+/* 		OLED_Buffer[usiArrayLoc] &= ~(1 << ucByteOffset); */
+/* 	} */
+/* } */
 
-void OLED_togglePixel(uint8_t x, uint8_t y)
-{
-	uint8_t  ucByteOffset = 0;
-	uint16_t usiArrayLoc = 0;
+/* void OLED_togglePixel(uint8_t x, uint8_t y) */
+/* { */
+/* 	uint8_t  ucByteOffset = 0; */
+/* 	uint16_t usiArrayLoc = 0; */
 	
-	if (x<128 && y<64)
-	{	
-		// Determine array location
-		usiArrayLoc = (y/8)+(x*8);
+/* 	if (x<128 && y<64) */
+/* 	{	 */
+/* 		// Determine array location */
+/* 		usiArrayLoc = (y/8)+(x*8); */
 		
-		// Determine byte offset
-		ucByteOffset = y-((uint8_t)(y/8)*8);
+/* 		// Determine byte offset */
+/* 		ucByteOffset = y-((uint8_t)(y/8)*8); */
 		
-		// Toggle pixel in buffer
-		OLED_Buffer[usiArrayLoc] ^= (1 << ucByteOffset);
-	}
-}
+/* 		// Toggle pixel in buffer */
+/* 		OLED_Buffer[usiArrayLoc] ^= (1 << ucByteOffset); */
+/* 	} */
+/* } */

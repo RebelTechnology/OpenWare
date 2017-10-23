@@ -25,8 +25,8 @@ void onButtonChanged(uint8_t id, uint16_t value, uint16_t samples){
 }
 
 void onEncoderChanged(uint8_t id, int16_t delta, uint16_t samples){
-  if(processor.patch != NULL)
-    processor.patch->encoderChanged((PatchParameterId)id, delta, samples);
+  // if(processor.patch != NULL)
+  //   processor.patch->encoderChanged((PatchParameterId)id, delta, samples);
 }
 
 // void onDraw(uint8_t* pixels, uint16_t screen_width, uint16_t screen_height){
@@ -51,7 +51,7 @@ void FactoryPatchDefinition::run(){
   // if(pv->checksum >= PROGRAM_VECTOR_CHECKSUM_V12){
     // set event callbacks
   pv->buttonChangedCallback = onButtonChanged;
-  pv->encoderChangedCallback = onEncoderChanged;
+  // pv->encoderChangedCallback = onEncoderChanged;
   // pv->drawCallback = onDraw;
   // }else if(pv->checksum >= PROGRAM_VECTOR_CHECKSUM_V11){
   //   // no event callbacks

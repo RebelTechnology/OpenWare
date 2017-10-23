@@ -1,7 +1,7 @@
 #include "DigitalBusHandler.h"
 #include "MidiStatus.h"
 #include "bus.h"
-#include <string.h>
+#include <cstring>
 
 DigitalBusHandler::DigitalBusHandler() 
   : // uid(0), nuid(NO_UID), 

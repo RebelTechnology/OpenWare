@@ -21,7 +21,9 @@
 #define LED2 2
 #define LED3 3
 #define LED4 4
+#define USE_CODEC
 #define USE_CS4271
+#define CODEC_SPI hspi4
 #define USE_USBD_HS
 #endif
 
@@ -30,7 +32,6 @@
 #define EEPROM_PAGE_END              ((uint32_t)0x08100000)
 #define STORAGE_MAX_BLOCKS           64
 
-#define USE_CODEC
 #define DEBUG_DWT
 #define DEBUG_STACK
 #define DEBUG_STORAGE

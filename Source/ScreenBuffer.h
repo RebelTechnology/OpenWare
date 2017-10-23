@@ -2,8 +2,15 @@
 #define __ScreenBuffer_h__
 
 #include <stdint.h>
+#include "device.h"
 
+#if defined SSD1309
 typedef uint8_t Colour;
+#elif defined SSD1331 || defined SEPS114A
+typedef uint16_t Colour;
+#else
+#error "Invalid configuration"
+#endif
 
 // Color definitions
 #define	BLACK           0x0000
@@ -15,29 +22,21 @@ typedef uint8_t Colour;
 #define YELLOW          0xFFE0  
 #define WHITE           0xFFFF
 
-// class PixelBuffer {
-// public:
-//   void copy(const PixelBuffer& other);
-//   Colour* getPixels();
-//   int getWidth();
-//   int getHeight();
-// };
-
 class ScreenBuffer {
 private:
-  const unsigned int width;
-  const unsigned int height;
+  const uint16_t width;
+  const uint16_t height;
   Colour* pixels;
-
-  uint16_t textcolor, textbgcolor;
-  uint16_t cursor_x, cursor_y;  
+  uint16_t cursor_x;
+  uint16_t cursor_y;  
   uint8_t textsize;
+  uint16_t textcolor;
+  uint16_t textbgcolor;
+  bool wrap;
 public:
-  // ScreenBuffer(int w, int h, Colour** buffer) : width(w), height(h), pixels(buffer){}
-  // ScreenBuffer();
-  ScreenBuffer(int w, int h);
-  void setBuffer(Colour* buffer){
-    pixels = buffer;
+  ScreenBuffer(uint16_t w, uint16_t h);
+  void setBuffer(uint8_t* buffer){
+    pixels = (Colour*)buffer;
   }
   Colour* getBuffer(){
     return pixels;
@@ -68,7 +67,7 @@ public:
     return height;
   }
   void draw(int x, int y, ScreenBuffer& pixels);
-  static ScreenBuffer* create(int width, int height);
+  static ScreenBuffer* create(uint16_t width, uint16_t height);
 
   void drawChar(uint16_t x, uint16_t y, unsigned char c, Colour fg, Colour bg, uint8_t size);
   void drawRotatedChar(uint16_t x, uint16_t y, unsigned char c, Colour fg, Colour bg, uint8_t size);
@@ -76,7 +75,7 @@ public:
   void setTextColour(Colour c);
   void setTextColour(Colour fg, Colour bg);
   void setTextSize(uint8_t s);
-  // void setTextWrap(bool w);
+  void setTextWrap(bool w);
 
   void write(uint8_t c);
   void print(const char* str);

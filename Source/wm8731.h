@@ -129,18 +129,25 @@ void codec_set_volume(int8_t volume);
 /* static uint16_t wm8731_registers[WM8731_NUM_REGS]; */
 
 static const uint16_t wm8731_init_data[] = {
+#ifdef OWL_MODULAR
+  WM8731_INVOL_0DB,                   			  // Reg 0x00: Left Line In
+  WM8731_INVOL_0DB,			                  // Reg 0x01: Right Line In
+  WM8731_HPVOL_0DB,			                  // Reg 0x02: Left Headphone out
+  WM8731_HPVOL_0DB,	                                  // Reg 0x03: Right Headphone out
+#else
   WM8731_INVOL_P6DB,                   			  // Reg 0x00: Left Line In
   WM8731_INVOL_P6DB,			                  // Reg 0x01: Right Line In
   WM8731_HPVOL_M6DB,			                  // Reg 0x02: Left Headphone out
   WM8731_HPVOL_M6DB,	                                  // Reg 0x03: Right Headphone out
+#endif
   WM8731_MUTEMIC|WM8731_DACSEL,                           // Reg 0x04: Analog Audio Path Control
 #ifdef OWL_MODULAR
   WM8731_ADCHPD|WM8731_DEEMP_NONE,                        // Reg 0x05: Digital Audio Path Control
 #else
   WM8731_DEEMP_NONE,                                      // Reg 0x05: Digital Audio Path Control
 #endif
-  WM8731_MICPD|WM8731_OSCPD|WM8731_OUTPD|WM8731_CLKOUTPD, // Reg 0x06: Power Down Control
-  WM8731_FORMAT_I2S|WM8731_IWL_24BIT,                     // Reg 0x07: Digital Audio Interface Format
+  WM8731_MICPD|WM8731_CLKOUTPD|WM8731_OSCPD|WM8731_OUTPD, // Reg 0x06: Power Down Control
+  WM8731_MS|WM8731_FORMAT_I2S|WM8731_IWL_24BIT,           // Reg 0x07: Digital Audio Interface Format
   WM8731_MODE_NORMAL|WM8731_SR_48_48,                     // Reg 0x08: Sampling Control
   WM8731_NOT_ACTIVE                    			  // Reg 0x09: Active Control
 /*      0x017,                  // Reg 00: Left Line In (0dB, mute off) */

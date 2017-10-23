@@ -2,46 +2,31 @@ PROJECT = Player
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-# Debug / Release
-CONFIG ?= Debug
-ifeq ($(CONFIG),Debug)
-  CPPFLAGS = -g -Wall -Wcpp -Wunused-function -DDEBUG -DUSE_FULL_ASSERT
-  ASFLAGS  = -g
-  CFLAGS   = -g
-endif
-ifeq ($(CONFIG),Release)
-  CPPFLAGS = -O2
-  ASFLAGS  = -O2
-  CFLAGS   = -O2
-endif
-
-# Compilation Flags
-LDFLAGS += -Wl,--gc-sections
-LDSCRIPT = Src/STM32F746ZGTx_FLASH.ld
-CPPFLAGS += --specs=nano.specs
-CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
-# CPPFLAGS += -fpic -fpie
-CPPFLAGS += -fdata-sections
-CPPFLAGS += -ffunction-sections
-#CPPFLAGS +=  -mno-unaligned-access
-#CPPFLAGS  += -fno-omit-frame-pointer
-CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
-CXXFLAGS = -fno-rtti -fno-exceptions -std=c++11
-CFLAGS  += -std=gnu99
-ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16
-ARCH_FLAGS += -fsingle-precision-constant
-DEF_FLAGS = -DSTM32F745xx -DARM_MATH_CM7
-DEF_FLAGS += -D__FPU_PRESENT=1
+include $(OPENWARE)/STM32F746ZG.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += sdram.c
-C_SRC += cs4272.c HAL_OLED.c
-CPP_SRC += ScreenBuffer.cpp Graphics.cpp
+C_SRC += cs4272.c ssd1309.c
+C_SRC += usbh_midi.c
+CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
+S_SRC = startup_stm32f745xx.s
 
 include $(OPENWARE)/sources.mk
 
-OBJS = $(C_SRC:%.c=Build/%.o) $(CPP_SRC:%.cpp=Build/%.o)
-OBJS += $(BUILD)/startup_stm32f745xx.o
+OBJS = $(C_SRC:%.c=Build/%.o)
+OBJS += $(CPP_SRC:%.cpp=Build/%.o)
+OBJS += $(S_SRC:%.s=Build/%.o)
+
+OBJS += $(DRIVERS)/Src/stm32f7xx_hal_sdram.o
+OBJS += $(DRIVERS)/Src/stm32f7xx_ll_fmc.o
+OBJS += $(DRIVERS)/Src/stm32f7xx_hal_dac.o
+OBJS += $(DRIVERS)/Src/stm32f7xx_hal_dac_ex.o
+OBJS += $(DRIVERS)/Src/stm32f7xx_hal_hcd.o
+OBJS += $(USB_HOST_FILE)/Core/Src/usbh_core.o
+OBJS += $(USB_HOST_FILE)/Core/Src/usbh_pipes.o
+OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
+OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
+OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
 
 include $(OPENWARE)/f7.mk

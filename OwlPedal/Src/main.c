@@ -207,8 +207,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 168;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 336;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -231,8 +231,8 @@ void SystemClock_Config(void)
   }
 
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2S;
-  PeriphClkInitStruct.PLLI2S.PLLI2SN = 50;
-  PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
+  PeriphClkInitStruct.PLLI2S.PLLI2SN = 258;
+  PeriphClkInitStruct.PLLI2S.PLLI2SR = 3;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -411,8 +411,8 @@ static void MX_UART4_Init(void)
 static void MX_DMA_Init(void) 
 {
   /* DMA controller clock enable */
-  __HAL_RCC_DMA1_CLK_ENABLE();
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
   /* DMA1_Stream3_IRQn interrupt configuration */
@@ -512,12 +512,22 @@ static void MX_FSMC_Init(void)
   hsram3.Init.WriteBurst = FSMC_WRITE_BURST_DISABLE;
   hsram3.Init.PageSize = FSMC_PAGE_SIZE_NONE;
   /* Timing */
+
+  /* p.FSMC_AddressSetupTime = 3; */
+  /* p.FSMC_AddressHoldTime = 0; */
+  /* p.FSMC_DataSetupTime = 6; */
+  /* p.FSMC_BusTurnAroundDuration = 1; */
+  /* p.FSMC_CLKDivision = 0; */
+  /* p.FSMC_DataLatency = 0; */
+  /* p.FSMC_AccessMode = FSMC_AccessMode_A; */
+  __HAL_RCC_FSMC_CLK_ENABLE();
+
   Timing.AddressSetupTime = 3;
-  Timing.AddressHoldTime = 15;
+  Timing.AddressHoldTime = 1; // >0 <= 15
   Timing.DataSetupTime = 6;
   Timing.BusTurnAroundDuration = 1;
-  Timing.CLKDivision = 16;
-  Timing.DataLatency = 17;
+  Timing.CLKDivision = 2; // > 1 <= 16
+  Timing.DataLatency = 2; // > 1 <= 17
   Timing.AccessMode = FSMC_ACCESS_MODE_A;
   /* ExtTiming */
 

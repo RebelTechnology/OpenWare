@@ -15,16 +15,6 @@
 
 /* #define ASSERT(cond, msg) if(!(cond)){assert_failed(msg, __PRETTY_FUNCTION__, __LINE__);} */
 
-/* #define NO_ERROR         0x00 */
-/* #define HARDFAULT_ERROR  0x10 */
-/* #define BUS_ERROR        0x20 */
-/* #define MEM_ERROR        0x30 */
-/* #define NMI_ERROR        0x40 */
-/* #define USAGE_ERROR      0x50 */
-/* #define PROGRAM_ERROR    0x60 */
-/* #define FLASH_ERROR      0x70 */
-/* #define USB_ERROR        0x80 */
-
 /* #define CONFIGURATION_ERROR_STATUS -30 */
 /* #define OUT_OF_MEMORY_ERROR_STATUS -20 */
 /* #define CHECKSUM_ERROR_STATUS      -10 */

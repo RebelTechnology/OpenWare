@@ -1,0 +1,148 @@
+
+-----------------------------------------------------------------
+
+todo:
+- refactor build files
+- common top level build file
+- make sure all output files end up in project Build directory
+- refactor device.h files
+
+-----------------------------------------------------------------
+
+STM32F756ZG
+RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 320K
+FLASH (rx)     : ORIGIN = 0x8000000, LENGTH = 1024K
+
+STM32F439ZG
+RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 192K
+CCMRAM (rw)    : ORIGIN = 0x10000000, LENGTH = 64K
+FLASH (rx)     : ORIGIN = 0x8000000, LENGTH = 1024K
+
+STM32F407ZGT6
+RAM (xrw)	: ORIGIN = 0x20000000, LENGTH = 112k
+CCMRAM (xrw)	: ORIGIN = 0x10000000, LENGTH = 64k
+NVRAM (xrw)	: ORIGIN = 0x40024000, LENGTH = 4K
+FLASH (rx)	: ORIGIN = 0x08000000, LENGTH = 1M
+
+-----------------------------------------------------------------
+
+WM8731: I2S_MCLK not needed for Codec Master mode
+
+OpenWare:
+main.c:
+  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLN = 168;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 7;
+  PeriphClkInitStruct.PLLI2S.PLLI2SN = 50;
+  PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
+
+    __HAL_RCC_SPI2_CLK_ENABLE();
+    HAL_NVIC_SetPriority(SPI2_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(SPI2_IRQn);
+
+OwlWare:
+#define PLL_M      8
+#define PLL_N      336
+#define PLL_P      2
+#define PLL_Q      7
+#define PLLI2S_N   258
+#define PLLI2S_R   3
+
+  *        I2S input clock(Hz)                    | 86000000
+  *        To achieve the following I2S config:   |
+  *         - Master clock output (MCKO): ON      |
+  *         - Frame wide                : 16bit   |
+  *         - Audio sampling freq (KHz) : 48      |
+  *         - Error %                   : 0.0186  |
+  *         - Prescaler Odd factor (ODD): 1       |
+  *         - Linear prescaler (DIV)    : 3       |
+
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C2, ENABLE);
+
+  /* Configures the I2S clock source (I2SCLK). */
+  /* This function must be called before enabling the I2S APB clock. */
+  RCC_I2SCLKConfig(RCC_I2S2CLKSource_PLLI2S);
+  RCC_PLLI2SCmd(ENABLE);
+  /* Enable the CODEC_I2S peripheral clock */
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
+
+blocking TransmitReceive seems to work on RX (strange values)
+
+HAL_I2S_Receive_DMA: no callbacks on RX
+
+Transmit: time-outs
+TransmitReceive_IT: underrun in TX
+
+DACLRC / ADCLRC / LRCK 48khz
+BCLK / SCLK 3.08MHz
+ADCDAT / SDI data
+DACDAT / SDO flat
+
+Problems fixed by removing __HAL_I2S_ENABLE(&hi2s2) in Codec::reset()
+
+-----------------------------------------------------------------
+
+OwlPedal SRAM memory
+
+OwlWare:
+  p.FSMC_AddressSetupTime = 3;
+  p.FSMC_AddressHoldTime = 0;
+  p.FSMC_DataSetupTime = 6;
+  p.FSMC_BusTurnAroundDuration = 1;
+  p.FSMC_CLKDivision = 0;
+  p.FSMC_DataLatency = 0;
+  p.FSMC_AccessMode = FSMC_AccessMode_A;
+
+OpenWare:
+  Timing.AddressSetupTime = 3;
+  Timing.AddressHoldTime = 1; // > 0, <= 15
+  Timing.DataSetupTime = 6;
+  Timing.BusTurnAroundDuration = 1;
+  Timing.CLKDivision = 2; // > 1, <= 16
+  Timing.DataLatency = 2; // > 1, <= 17
+  Timing.AccessMode = FSMC_ACCESS_MODE_A;
+
+  /* Set FSMC_NORSRAM device timing parameters */  
+  tmpr |= (uint32_t)(Timing->AddressSetupTime                  |\
+                    ((Timing->AddressHoldTime) << 4U)          |\
+                    ((Timing->DataSetupTime) << 8U)            |\
+                    ((Timing->BusTurnAroundDuration) << 16U)   |\
+                    (((Timing->CLKDivision)-1U) << 20U)        |\
+                    (((Timing->DataLatency)-2U) << 24U)        |\
+                    (Timing->AccessMode));
+
+
+__HAL_RCC_FSMC_CLK_ENABLE():
+                                      __IO uint32_t tmpreg = 0x00U; \
+                                      SET_BIT(RCC->AHB3ENR, RCC_AHB3ENR_FSMCEN);\
+                                      /* Delay after an RCC peripheral clock enabling */ \
+                                      tmpreg = READ_BIT(RCC->AHB3ENR, RCC_AHB3ENR_FSMCEN);\
+                                      UNUSED(tmpreg); \
+
+-----------------------------------------------------------------
+
+todo:
+/ pass in sample format in PV: 16/24bit, 24bit
+  / change audio_bitdepth to audio_format
+/ refactor OwlProgram/PatchProgram/SampleBuffer to allow different conversions depending on format
+- pass in stack as available heap memory (for CCM / non-F7 platforms)
+- check OWL2 sample format and conversion
+- owl1 sram
+- replace float div with mul in SampleBuffer conversions - check accuracy
+
+-----------------------------------------------------------------
+
+OWL2 80kHz 500mV on AINA
+
+-----------------------------------------------------------------
+
+Bootloader STM32F42x/3x
+Bootloader activation Pattern 5:
+Boot0(pin) = 1, Boot1(pin) = 0 and BFB2(bit) = 0
+Boot0(pin) = 1, Boot1(pin) = 0 and BFB2 (bit) = 1
+Boot0(pin) = 0, BFB2(bit) = 1 and both banks don’t contain valid code
+
+BFB2: boot from bank 2
+
+-----------------------------------------------------------------
