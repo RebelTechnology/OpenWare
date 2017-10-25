@@ -11,12 +11,12 @@ static void NopDelay(uint32_t nops){
 #define CS_TIMEOUT       1000
 
 SPI_HandleTypeDef* hspi;
+static uint8_t volume;
 
 #define setCS()    setPin(CS_CS_GPIO_Port, CS_CS_Pin)
 #define clearCS()  clearPin(CS_CS_GPIO_Port, CS_CS_Pin)
 
-void codec_write(uint8_t reg, uint8_t data)
-{
+void codec_write(uint8_t reg, uint8_t data){
   /* In SPI mode, CS is the CS4271 chip select signal, CCLK is the control port bit clock, CDIN is the input data line from the microcontroller and the chip address is 0010000. All control signals are inputs and data is clocked in on the rising edge of CCLK. */
 
 /* To write to a register, bring CS low. The first 7 bits on CDIN form the chip address, and must be 0010000. The eighth bit is a read/write indicator (R/W), which must be low to write. The next 8 bits form the Memory Address Pointer (MAP), which is set to the address of the register that is to be updated. The next 8 bits are the data which will be placed into the register designated by the MAP. */
@@ -33,8 +33,21 @@ void codec_write(uint8_t reg, uint8_t data)
 /* The CS4271 has MAP auto increment capability, enabled by the INCR bit in the MAP. If INCR is 0, then the MAP will stay constant for successive writes. If INCR is set, then MAP will auto increment after each byte is written, allowing block writes to successive registers. */
 }
 
-void codec_init(SPI_HandleTypeDef* spi){
+void codec_reset(){
+#ifdef CODEC_HP_FILTER
+  codec_write(CODEC_ADC_CTRL, 0x10); // hp filters enabled, i2s data
+#else
+  codec_write(CODEC_ADC_CTRL, 0x10 | 0x03 ); // hp filters disabled
+#endif
 
+#ifdef OWL_MICROLAB
+  codec_set_volume(12); // -12dB
+#else
+  codec_set_volume(0); // 0dB
+#endif
+}
+
+void codec_init(SPI_HandleTypeDef* spi){
   hspi = spi;
 
   /* 1) When using the CS4271 with internally generated MCLK, hold RST low until
@@ -77,6 +90,7 @@ void codec_init(SPI_HandleTypeDef* spi){
 	      CODEC_MC_RATIO_SEL(2) |
 	      CODEC_MC_MASTER_SLAVE);
 
+  codec_write(CODEC_MODE_CTRL1_REG, (1<<3) | (1<<5) | 1); // i2s mode for DAC and ADC
 
   /* codec_write(CODEC_DAC_VOL_REG, */
   /* 	      CODEC_DAC_VOL_CHB_CHA | */
@@ -84,19 +98,11 @@ void codec_init(SPI_HandleTypeDef* spi){
   /* 	      CODEC_DAC_ZERO_CROSS | */
   /* 	      CODEC_DAC_VOL_ATAPI_DEFAULT); */
 
-  uint8_t value;
-#ifdef OWL_MICROLAB
-  /* The digital volume control allows the user to attenuate the signal in 1 dB increments from 0 to -127 dB.  */
-  /* value = 0x20; // -20dB */
-  value = 12; // -12dB
-#else
-  value = 0;
-#endif
-  codec_write(CODEC_DAC_CHA_VOL_REG, value);
-  codec_write(CODEC_DAC_CHB_VOL_REG, value);
+  codec_reset();
 
   // Release power down bit to start up codec
   codec_write(CODEC_MODE_CTRL2_REG, CODEC_MODE_CTRL2_CTRL_PORT_EN);
+
 }
 
 void codec_bypass(int bypass){
@@ -106,17 +112,21 @@ void codec_bypass(int bypass){
   codec_write(CODEC_MODE_CTRL2_REG, value);
 }
 
+void codec_mute(bool mute){  
+  if(mute){
+    codec_write(CODEC_DAC_CHA_VOL_REG, 0x80);
+    codec_write(CODEC_DAC_CHB_VOL_REG, 0x80);
+  }else{
+    codec_write(CODEC_DAC_CHA_VOL_REG, volume);
+    codec_write(CODEC_DAC_CHB_VOL_REG, volume);
+  }
+}
+
 /* // set volume (negative for mute) */
 void codec_set_volume(int8_t level){
-  /* uint8_t value = codec_read(CODEC_DAC_CHA_VOL_REG); */
-  /* value &= ~(CODEC_DAC_CHA_VOL_MUTE); */
-  /* value |= CODEC_DAC_CHA_VOL_VOLUME(level); */
-  /* codec_write(CODEC_DAC_CHA_VOL_REG, value); */
-  /* value = codec_read(CODEC_DAC_CHB_VOL_REG); */
-  /* value &= ~(CODEC_DAC_CHB_VOL_MUTE); */
-  /* value |= CODEC_DAC_CHB_VOL_VOLUME(level); */
-  /* codec_write(CODEC_DAC_CHB_VOL_REG, value); */
-  codec_write(CODEC_DAC_CHA_VOL_REG, level);
-  codec_write(CODEC_DAC_CHB_VOL_REG, level);
+  /* The digital volume control allows the user to attenuate the signal in 1 dB increments from 0 to -127 dB.  */
+  volume = level;
+  codec_write(CODEC_DAC_CHA_VOL_REG, volume);
+  codec_write(CODEC_DAC_CHB_VOL_REG, volume);
 }
 

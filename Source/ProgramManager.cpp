@@ -356,7 +356,6 @@ void runManagerTask(void* p){
     if(ulNotifiedValue & STOP_PROGRAM_NOTIFICATION){ // stop program
       if(audioTask != NULL){
 	// codec.softMute(true);
-	// codec.pause();
 	// capture program error before pv is changed
 	if(programVector != NULL){
 	  staticVector.error = programVector->error;
@@ -436,7 +435,6 @@ void ProgramManager::startManager(){
 #ifdef USE_SCREEN
   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
 #endif
-  // xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
   xTaskCreate(runManagerTask, "Manager", MANAGER_TASK_STACK_SIZE, NULL, MANAGER_TASK_PRIORITY, &managerTask);
 }
 

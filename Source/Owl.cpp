@@ -236,7 +236,7 @@ void setup(){
   setLed(LED4, 0);
 #endif /* OWL_MICROLAB */
 
-#if defined OWL_PLAYERF7 || defined OWL_PRISMF7
+#ifdef USE_ENCODERS
   extern TIM_HandleTypeDef ENCODER_TIM1;
   extern TIM_HandleTypeDef ENCODER_TIM2;
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
@@ -250,13 +250,12 @@ void setup(){
   graphics.begin(&OLED_SPI);
 #endif /* USE_SCREEN */
 
-#ifndef OWL_PRISMF7
-  extern ADC_HandleTypeDef hadc3;
-  // extern DMA_HandleTypeDef hdma_adc3;
-  HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc_values, NOF_ADC_VALUES);
+#ifdef USE_ADC
+  extern ADC_HandleTypeDef ADC_PERIPH;
+  HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES);
   if(ret != HAL_OK)
     error(CONFIG_ERROR, "ADC Start failed");
-#endif /* OWL_PRISMF7 */
+#endif /* USE_ADC */
 
   program.loadProgram(1);
   program.startProgram(false);
