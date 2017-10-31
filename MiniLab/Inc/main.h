@@ -106,8 +106,10 @@
 #define FLASH_WP_GPIO_Port GPIOB
 #define TRIG_SW3_Pin GPIO_PIN_1
 #define TRIG_SW3_GPIO_Port GPIOB
+#define TRIG_SW3_EXTI_IRQn EXTI1_IRQn
 #define TRIG_SW4_Pin GPIO_PIN_2
 #define TRIG_SW4_GPIO_Port GPIOB
+#define TRIG_SW4_EXTI_IRQn EXTI2_IRQn
 #define CS_CS_Pin GPIO_PIN_10
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
@@ -126,12 +128,14 @@
 #define TRIG_OUT_GPIO_Port GPIOG
 #define TRIG_SW2_Pin GPIO_PIN_10
 #define TRIG_SW2_GPIO_Port GPIOG
+#define TRIG_SW2_EXTI_IRQn EXTI15_10_IRQn
 #define FLASH_SCK_Pin GPIO_PIN_3
 #define FLASH_SCK_GPIO_Port GPIOB
 #define PWM3_Pin GPIO_PIN_8
 #define PWM3_GPIO_Port GPIOB
 #define TRIG_SW1_Pin GPIO_PIN_9
 #define TRIG_SW1_GPIO_Port GPIOB
+#define TRIG_SW1_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 
