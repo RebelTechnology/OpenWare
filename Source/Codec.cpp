@@ -19,6 +19,10 @@ static int32_t txbuf[CODEC_BUFFER_SIZE];
 static int32_t rxbuf[CODEC_BUFFER_SIZE];
 static uint16_t blocksize;
 
+uint16_t Codec::getBlockSize(){
+  return blocksize;
+}
+
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
