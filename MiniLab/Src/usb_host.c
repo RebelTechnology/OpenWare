@@ -110,20 +110,25 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   /* USER CODE BEGIN CALL_BACK_1 */
   switch(id){ 
-  case HOST_USER_SELECT_CONFIGURATION:
-    break;    
-  case HOST_USER_DISCONNECTION:
-    Appli_state = APPLICATION_DISCONNECT;
-    midi_host_reset();
-    break;    
+  case HOST_USER_CONNECTION:
+    Appli_state = APPLICATION_START;
+    break;
+  case HOST_USER_CLASS_SELECTED:
+    break;
   case HOST_USER_CLASS_ACTIVE:
     if(Appli_state == APPLICATION_START){
       USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE);
       Appli_state = APPLICATION_READY;
     }
     break;
-  case HOST_USER_CONNECTION:
-    Appli_state = APPLICATION_START;
+  case HOST_USER_DISCONNECTION:
+    Appli_state = APPLICATION_DISCONNECT;
+    midi_host_reset();
+    break;
+  case HOST_USER_UNRECOVERED_ERROR:
+    midi_host_reset(); // reset and hope for the best
+    break;
+  case HOST_USER_SELECT_CONFIGURATION:
     break;
   default:
     break; 
