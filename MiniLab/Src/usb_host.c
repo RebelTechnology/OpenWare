@@ -65,7 +65,7 @@ uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE]; // MIDI reception buffer
 /* USER CODE END 0 */
 
 /*
-* user callbak declaration
+* user callback declaration
 */ 
 static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id);
 
@@ -109,28 +109,24 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 {
 
   /* USER CODE BEGIN CALL_BACK_1 */
-  switch(id)
-  { 
+  switch(id){ 
   case HOST_USER_SELECT_CONFIGURATION:
-  break;
-    
+    break;    
   case HOST_USER_DISCONNECTION:
-  Appli_state = APPLICATION_DISCONNECT;
-  break;
-    
+    Appli_state = APPLICATION_DISCONNECT;
+    midi_host_reset();
+    break;    
   case HOST_USER_CLASS_ACTIVE:
     if(Appli_state == APPLICATION_START){
       USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE);
       Appli_state = APPLICATION_READY;
     }
-  break;
-
+    break;
   case HOST_USER_CONNECTION:
-  Appli_state = APPLICATION_START;
-  break;
-
+    Appli_state = APPLICATION_START;
+    break;
   default:
-  break; 
+    break; 
   }
   /* USER CODE END CALL_BACK_1 */
 }

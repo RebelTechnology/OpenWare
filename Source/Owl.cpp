@@ -37,8 +37,10 @@ Graphics graphics;
 
 Codec codec;
 MidiReader mididevice;
-MidiReader midihost;
 MidiController midi;
+#ifdef USE_USB_HOST
+MidiReader midihost;
+#endif /* USE_USB_HOST */
 ApplicationSettings settings;
 
 uint16_t adc_values[NOF_ADC_VALUES];
@@ -185,6 +187,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   case TOGGLE_B2_Pin:
     break;
 #endif
+#ifdef OWL_MINILAB
+  case TRIG_SW1_Pin:
+    setButtonValue(BUTTON_A, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
+    break;
+  case TRIG_SW2_Pin:
+    setButtonValue(BUTTON_B, !(TRIG_SW2_GPIO_Port->IDR & TRIG_SW2_Pin));
+    break;
+  case TRIG_SW3_Pin:
+    setButtonValue(BUTTON_C, !(TRIG_SW3_GPIO_Port->IDR & TRIG_SW3_Pin));
+    break;
+  case TRIG_SW4_Pin:
+    setButtonValue(BUTTON_D, !(TRIG_SW4_GPIO_Port->IDR & TRIG_SW4_Pin));
+    break;
+#endif
 #ifdef OWL_MICROLAB
     // todo remove
   case TRIG1_Pin:
@@ -289,7 +305,7 @@ void loop(void){
   taskYIELD();
   midi.push();
 #ifdef USE_RGB_LED
-  setLed(rainbow[((adc_values[0]>>3)+(adc_values[1]>>3)+(adc_values[2]>>3)+(adc_values[3]>>3))&0x3ff]);
+  setLed(rainbow[((adc_values[ADC_A]>>3)+(adc_values[ADC_B]>>3)+(adc_values[ADC_C]>>3)+(adc_values[ADC_D]>>3))&0x3ff]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
 #endif /* USE_RGB_LED */
 #ifdef OWL_MICROLAB_LED
@@ -309,6 +325,9 @@ extern "C"{
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
 
 #ifdef USE_USB_HOST
+  void midi_host_reset(void){
+    midihost.reset();
+  }
   void midi_host_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4)
       midihost.readMidiFrame(buffer+i);
