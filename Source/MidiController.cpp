@@ -19,6 +19,8 @@
 #define HARDWARE_VERSION             "Tesseract"
 #elif defined OWL_MICROLAB
 #define HARDWARE_VERSION             "MicroLab"
+#elif defined OWL_MINILAB
+#define HARDWARE_VERSION             "MiniLab"
 #elif defined OWL_PEDAL
 #define HARDWARE_VERSION             "OWL Pedal"
 #elif defined OWL_MODULAR

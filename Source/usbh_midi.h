@@ -30,7 +30,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_core.h"
-#include "stm32f7xx_hal.h"
 
 #ifdef __cplusplus
  extern "C" {

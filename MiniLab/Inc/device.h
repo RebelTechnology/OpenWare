@@ -10,16 +10,19 @@
 /* #define OWL_PEDAL */
 
 #ifdef OWL_MINILAB
+#define USE_RGB_LED
 #define TRIG1_Pin GP7_Pin
 #define TRIG1_GPIO_Port GP7_GPIO_Port
 #define TRIG2_Pin GP8_Pin
 #define TRIG2_GPIO_Port GP8_GPIO_Port
 #define USE_ADC
 #define ADC_PERIPH hadc3
+#define NOF_ADC_VALUES 5
 #define ADC_A 2
 #define ADC_B 3
 #define ADC_C 0
 #define ADC_D 1
+#define ADC_E 4
 #define LED1 1
 #define LED2 2
 #define LED3 3
@@ -51,7 +54,6 @@
 #define CODEC_BUFFER_SIZE (4*CODEC_BLOCKSIZE)
 #define AUDIO_MAX_BLOCK_SIZE (CODEC_BUFFER_SIZE/4)
 
-#define NOF_ADC_VALUES               4
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  4
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6

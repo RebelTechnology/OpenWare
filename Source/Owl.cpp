@@ -16,7 +16,7 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 
-#ifdef OWL_TESSERACT
+#ifdef USE_RGB_LED
 #include "rainbow.h"
 #endif /* OWL_TESSERACT */
 
@@ -97,15 +97,20 @@ void initLed(){
   HAL_TIM_Base_Start(&htim5);
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
 }
-
 #endif /* OWL_MICROLAB */
 
-#ifdef OWL_TESSERACT
+#ifdef USE_RGB_LED
 void setLed(uint32_t rgb){
+#if defined OWL_TESSERACT
   // rgb should be a 3x 10 bit value
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
+#elif defined OWL_MINILAB
+  TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
+  TIM5->CCR2 = 1023 - ((rgb>>10)&0x3ff);
+  TIM4->CCR3 = 1023 - ((rgb>>00)&0x3ff);
+#endif
 }
 
 void setLed(int16_t red, int16_t green, int16_t blue){
@@ -113,37 +118,54 @@ void setLed(int16_t red, int16_t green, int16_t blue){
   red = 1023-(red>>2);
   green = 1023-(green>>2);
   blue = 1023-(blue>>2);
+#if defined OWL_TESSERACT
   TIM2->CCR1 = red;
   TIM3->CCR4 = green;
   TIM5->CCR2 = blue;
-// LED_R PA0/LGP1 TIM2_CH1
-// LED_G PA1/LGP2 TIM5_CH2
-// LED_B PB1/LGP6 TIM3_CH4
+#elif defined OWL_MINILAB
+  TIM2->CCR1 = red;
+  TIM5->CCR2 = green;
+  TIM4->CCR3 = blue;
+#endif
 }
 
 void initLed(){
+  // minilab
+  // PWM1: TIM2_CH1
+  // PWM2: TIM5_CH2
+  // PWM3: TIM4_CH3
+  // Tesseract
+  // LED_R PA0/LGP1 TIM2_CH1
+  // LED_G PA1/LGP2 TIM5_CH2
+  // LED_B PB1/LGP6 TIM3_CH4
+
   // Initialise RGB LED PWM timers
+#if defined OWL_TESSERACT
   extern TIM_HandleTypeDef htim2;
   extern TIM_HandleTypeDef htim3;
   extern TIM_HandleTypeDef htim5;
-
   // Red
   HAL_TIM_Base_Start(&htim2);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  // only channels 1 and 8 have complementary output
-  // HAL_TIMEx_PWMN_Start(&htim2, TIM_CHANNEL_1);
-	
   // Green
   HAL_TIM_Base_Start(&htim5);
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
-  // HAL_TIMEx_PWMN_Start(&htim5,TIM_CHANNEL_2);
-
   // Blue
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  // HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
+#elif defined OWL_MINILAB
+  extern TIM_HandleTypeDef htim2;
+  extern TIM_HandleTypeDef htim5;
+  extern TIM_HandleTypeDef htim4;
+  HAL_TIM_Base_Start(&htim2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_Base_Start(&htim5);
+  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
+  HAL_TIM_Base_Start(&htim4);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+#endif
 }
-#endif /* OWL_TESSERACT */
+#endif /* USE_RGB_LED */
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
@@ -223,10 +245,10 @@ void setup(){
 
   program.startManager();
 
-#ifdef OWL_TESSERACT
+#ifdef USE_RGB_LED
   initLed();
   setLed(1000, 1000, 1000);
-#endif /* OWL_TESSERACT */
+#endif /* USE_RGB_LED */
 
 #ifdef OWL_MICROLAB
   initLed();
@@ -266,10 +288,10 @@ void setup(){
 void loop(void){
   taskYIELD();
   midi.push();
-#ifdef OWL_TESSERACT
+#ifdef USE_RGB_LED
   setLed(rainbow[((adc_values[0]>>3)+(adc_values[1]>>3)+(adc_values[2]>>3)+(adc_values[3]>>3))&0x3ff]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
-#endif /* OWL_TESSERACT */
+#endif /* USE_RGB_LED */
 #ifdef OWL_MICROLAB_LED
   setLed(LED1, adc_values[ADC_A]>>2);
   setLed(LED2, adc_values[ADC_B]>>2);

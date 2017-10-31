@@ -206,6 +206,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = TESSERACT_HARDWARE;
 #elif defined OWL_MICROLAB
   pv->hardware_version = MICROLAB_HARDWARE;
+#elif defined OWL_MINILAB
+  pv->hardware_version = MINILAB_HARDWARE;
 #elif defined OWL_PEDAL
   pv->hardware_version = OWL_PEDAL_HARDWARE;
 #elif defined OWL_MODULAR
