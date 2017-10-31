@@ -1,0 +1,6 @@
+#define CS_CS_Pin GPIO_PIN_10
+#define CS_CS_GPIO_Port GPIOB
+#define CS_RST_Pin GPIO_PIN_11
+#define CS_RST_GPIO_Port GPIOB
+
+not nCS / nRST
