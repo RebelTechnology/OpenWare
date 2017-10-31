@@ -164,22 +164,18 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     settings.audio_samplingrate = value;
   }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_BLOCKSIZE, p, 2) == 0){
     settings.audio_blocksize = value;
+    codec.reset();
   }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_BITDEPTH, p, 2) == 0){
     settings.audio_bitdepth = value;
   }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_DATAFORMAT, p, 2) == 0){
     settings.audio_dataformat = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_PROTOCOL, p, 2) == 0){
-    settings.audio_codec_protocol = (I2SProtocol)value;
-  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_MASTER, p, 2) == 0){
-    settings.audio_codec_master = value;
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_SWAP, p, 2) == 0){
     settings.audio_codec_swaplr = value;
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_BYPASS, p, 2) == 0){
     settings.audio_codec_bypass = value;
     codec.bypass(value);
-  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_HALFSPEED, p, 2) == 0){
-    settings.audio_codec_halfspeed = value;
-    // settings.audio_codec_halfspeed = (p[2] == '1' ? true : false);
+  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN, p, 2) == 0){
+    codec.setOutputGain(value);
   }else if(strncmp(SYSEX_CONFIGURATION_PC_BUTTON, p, 2) == 0){
     settings.program_change_button = value;
   }else if(strncmp(SYSEX_CONFIGURATION_INPUT_OFFSET, p, 2) == 0){

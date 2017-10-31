@@ -2,7 +2,7 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_flash_ex.h"
 
-#define OWL_TESSERACT_REV4 // SWO mapped to toggle
+/* #define OWL_TESSERACT_REV4 // SWO mapped to toggle */
 
 #define OWL_TESSERACT
 /* #define OWL_QUADFM */
@@ -11,6 +11,8 @@
 /* #define OWL_PEDAL */
 
 #ifdef OWL_TESSERACT
+#define USE_ADC
+#define ADC_PERIPH hadc3
 #define ADC_A 1
 #define ADC_B 3
 #define ADC_C 2

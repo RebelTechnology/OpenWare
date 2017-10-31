@@ -46,18 +46,13 @@ void codec_bypass(int bypass){
   else
     value |= WM8731_DACSEL;
   codec_write(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER, value);
-  /* 		wm8731_init_data[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] | WM8731_BYPASS); */
-  /*   /\* softMute(true); *\/ */
-  /*   /\* writeRegister(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER,  *\/ */
-  /*   /\* 		  (wm8731_registers[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] & ~WM8731_DACSEL) | WM8731_BYPASS); *\/ */
+}
 
-  /* }else{ */
-  /*   codec_write(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER, */
-  /* 		wm8731_init_data[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] & ~WM8731_BYPASS); */
-  /*   /\* writeRegister(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER,  *\/ */
-  /*   /\* 		  (wm8731_registers[ANALOGUE_AUDIO_PATH_CONTROL_REGISTER] & ~WM8731_BYPASS) | WM8731_DACSEL); *\/ */
-  /*   /\* softMute(false); *\/ */
-  /* } */
+void codec_set_volume(int8_t level){
+  uint16_t gain = (wm8731_init_data[LEFT_HEADPHONE_OUT_REGISTER] & 0x80) | (level & 0x7f);
+  codec_write(LEFT_HEADPHONE_OUT_REGISTER, gain);
+  gain = (wm8731_init_data[RIGHT_HEADPHONE_OUT_REGISTER] & 0x80) | (level & 0x7f);
+  codec_write(RIGHT_HEADPHONE_OUT_REGISTER, gain);
 }
 
 #if 0

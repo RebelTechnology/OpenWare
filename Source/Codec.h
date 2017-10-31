@@ -18,9 +18,11 @@ class Codec {
   void txrx();
   void set(uint32_t value);
   void ramp(uint32_t max);
+  void setOutputGain(int8_t value);
   int32_t getMin();
   int32_t getMax();
   float getAvg();
+  uint16_t getBlockSize();
  private:
   SPI_HandleTypeDef *hspi;
 };
