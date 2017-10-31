@@ -30,6 +30,7 @@
 #define CODEC_SPI hspi4
 #define USE_USBD_HS
 #define USE_USB_HOST
+#define USB_HOST_RX_BUFF_SIZE   64  /* Max Received data 64 bytes */
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)

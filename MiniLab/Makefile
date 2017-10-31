@@ -8,6 +8,7 @@ C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += sdram.c
 C_SRC += cs4272.c
+C_SRC += usbh_midi.c
 S_SRC = startup_stm32f439xx.s
 
 include $(OPENWARE)/sources.mk

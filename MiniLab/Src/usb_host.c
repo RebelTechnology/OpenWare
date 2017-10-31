@@ -51,7 +51,7 @@
 
 #include "usb_host.h"
 #include "usbh_core.h"
-#include "usbh_audio.h"
+#include "usbh_midi.h"
 
 /* USB Host Core handle declaration */
 USBH_HandleTypeDef hUsbHostFS;
@@ -61,7 +61,7 @@ ApplicationTypeDef Appli_state = APPLICATION_IDLE;
 * -- Insert your variables declaration here --
 */ 
 /* USER CODE BEGIN 0 */
-
+uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE]; // MIDI reception buffer
 /* USER CODE END 0 */
 
 /*
@@ -73,7 +73,14 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id);
 * -- Insert your external function declaration here --
 */ 
 /* USER CODE BEGIN 1 */
-
+/*
+ * Background task
+*/ 
+void MX_USB_HOST_Process() 
+{
+  /* USB Host Background task */
+    USBH_Process(&hUsbHostFS); 						
+}
 /* USER CODE END 1 */
 
 /* init function */                                        
@@ -86,7 +93,7 @@ void MX_USB_HOST_Init(void)
   /* Init Host Library,Add Supported Class and Start the library*/
   USBH_Init(&hUsbHostFS, USBH_UserProcess, HOST_FS);
 
-  USBH_RegisterClass(&hUsbHostFS, USBH_AUDIO_CLASS);
+  USBH_RegisterClass(&hUsbHostFS, USBH_MIDI_CLASS);
 
   USBH_Start(&hUsbHostFS);
   /* USER CODE BEGIN USB_HOST_Init_PostTreatment */
@@ -112,7 +119,10 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
   break;
     
   case HOST_USER_CLASS_ACTIVE:
-  Appli_state = APPLICATION_READY;
+    if(Appli_state == APPLICATION_START){
+      USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE);
+      Appli_state = APPLICATION_READY;
+    }
   break;
 
   case HOST_USER_CONNECTION:

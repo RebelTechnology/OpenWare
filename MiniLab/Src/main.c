@@ -54,6 +54,10 @@
 
 /* USER CODE BEGIN Includes */
 
+#include "errorhandlers.h"
+
+#define REFRESH_COUNT       ((uint32_t)0x0569)   /* SDRAM refresh counter (90MHz SD clock) */
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -108,6 +112,11 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+
+void setup(void);
+void loop(void);
+void MX_USB_HOST_Process(void);
+void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 
 /* USER CODE END PFP */
 
@@ -677,19 +686,19 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, FLASH_WP_Pin|CS_CS_Pin|CS_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(USB_H_PWR_EN_GPIO_Port, USB_H_PWR_EN_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : EXTSPI_nCS_Pin FLASH_HOLD_Pin FLASH_nCS_Pin USB_H_PWR_EN_Pin */
-  GPIO_InitStruct.Pin = EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin|USB_H_PWR_EN_Pin;
+  /*Configure GPIO pins : EXTSPI_nCS_Pin FLASH_HOLD_Pin FLASH_nCS_Pin USB_HOST_PWR_EN_Pin */
+  GPIO_InitStruct.Pin = EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin|USB_HOST_PWR_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : FLASH_WP_Pin CS_nCS_Pin CS_nRST_Pin */
+  /*Configure GPIO pins : FLASH_WP_Pin CS_CS_Pin CS_RST_Pin */
   GPIO_InitStruct.Pin = FLASH_WP_Pin|CS_CS_Pin|CS_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -702,11 +711,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : USB_H_FAULT_Pin */
-  GPIO_InitStruct.Pin = USB_H_FAULT_Pin;
+  /*Configure GPIO pin : USB_HOST_PWR_FAULT_Pin */
+  GPIO_InitStruct.Pin = USB_HOST_PWR_FAULT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(USB_H_FAULT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(USB_HOST_PWR_FAULT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TRIG_OUT_Pin */
   GPIO_InitStruct.Pin = TRIG_OUT_Pin;
