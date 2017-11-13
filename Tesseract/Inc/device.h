@@ -2,7 +2,7 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_flash_ex.h"
 
-#define OWL_TESSERACT_REV4 // SWO mapped to toggle
+/* #define OWL_TESSERACT_REV4 // SWO mapped to toggle */
 
 #define OWL_TESSERACT
 /* #define OWL_QUADFM */
@@ -11,6 +11,9 @@
 /* #define OWL_PEDAL */
 
 #ifdef OWL_TESSERACT
+#define USE_RGB_LED
+#define USE_ADC
+#define ADC_PERIPH hadc3
 #define ADC_A 1
 #define ADC_B 3
 #define ADC_C 2
@@ -21,16 +24,13 @@
 #define USE_USBD_HS
 #define OWL2
 #endif
-
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
 #define EEPROM_PAGE_SIZE             (128*1024)
 #define EEPROM_PAGE_END              ((uint32_t)0x08100000)
 #define STORAGE_MAX_BLOCKS           64
-
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
-
 #define DEBUG_DWT
 #define DEBUG_STACK
 #define DEBUG_STORAGE

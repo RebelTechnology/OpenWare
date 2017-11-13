@@ -35,7 +35,6 @@ const uint32_t PROGRAMSTACK_SIZE = 8*1024; // size in bytes
 #define STOP_PROGRAM_NOTIFICATION   0x02
 #define PROGRAM_FLASH_NOTIFICATION  0x04
 #define ERASE_FLASH_NOTIFICATION    0x08
-#define PROGRAM_CHANGE_NOTIFICATION 0x10
 
 ProgramManager program;
 PatchRegistry registry;
@@ -46,7 +45,7 @@ static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
 static DynamicPatchDefinition dynamo;
 
-extern uint16_t* adc_values;
+extern uint16_t adc_values[NOF_ADC_VALUES];
 int16_t parameter_values[NOF_PARAMETERS];
 BitState32 stateChanged;
 uint16_t button_values;
@@ -146,8 +145,8 @@ void updateParameters(){
   parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
   parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
 #endif
-#if NOF_ADC_VALUES > 4
-  parameter_values[4] = adc_values[4];
+#if (NOF_ADC_VALUES > 4) && defined ADC_E
+  parameter_values[4] = adc_values[ADC_E];
 #endif
   // parameter_values[0] = 4095-adc_values[0];
   // parameter_values[1] = 4095-adc_values[1];
@@ -207,6 +206,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = TESSERACT_HARDWARE;
 #elif defined OWL_MICROLAB
   pv->hardware_version = MICROLAB_HARDWARE;
+#elif defined OWL_MINILAB
+  pv->hardware_version = MINILAB_HARDWARE;
 #elif defined OWL_PEDAL
   pv->hardware_version = OWL_PEDAL_HARDWARE;
 #elif defined OWL_MODULAR
@@ -227,7 +228,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->parameters = parameter_values;
 #endif
   pv->audio_samplingrate = 48000;
-  pv->audio_blocksize = CODEC_BLOCKSIZE; // todo!
+  pv->audio_blocksize = codec.getBlockSize();
   pv->buttons = button_values;
   pv->registerPatch = onRegisterPatch;
   pv->registerPatchParameter = onRegisterPatchParameter;
@@ -259,13 +260,13 @@ void updateProgramVector(ProgramVector* pv){
     { NULL, 0 }
   };
 #endif
+  pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16;
 #else
   pv->audio_format = AUDIO_FORMAT_24B32;
 #endif
-  pv->heapSegments = (MemorySegment*)heapSegments;
-#endif
+#endif /* PROGRAM_VECTOR_V13 */
   pv->message = NULL;
 }
 
@@ -356,7 +357,6 @@ void runManagerTask(void* p){
     if(ulNotifiedValue & STOP_PROGRAM_NOTIFICATION){ // stop program
       if(audioTask != NULL){
 	// codec.softMute(true);
-	// codec.pause();
 	// capture program error before pv is changed
 	if(programVector != NULL){
 	  staticVector.error = programVector->error;
@@ -436,7 +436,6 @@ void ProgramManager::startManager(){
 #ifdef USE_SCREEN
   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
 #endif
-  // xTaskCreate(runAudioTask, "Audio", AUDIO_TASK_STACK_SIZE, NULL, AUDIO_TASK_PRIORITY, &audioTask);
   xTaskCreate(runManagerTask, "Manager", MANAGER_TASK_STACK_SIZE, NULL, MANAGER_TASK_PRIORITY, &managerTask);
 }
 
@@ -474,13 +473,6 @@ void ProgramManager::resetProgram(bool isr){
     notifyManagerFromISR(STOP_PROGRAM_NOTIFICATION|START_PROGRAM_NOTIFICATION);
   else
     notifyManager(STOP_PROGRAM_NOTIFICATION|START_PROGRAM_NOTIFICATION);
-}
-
-void ProgramManager::startProgramChange(bool isr){
-  if(isr)
-    notifyManagerFromISR(STOP_PROGRAM_NOTIFICATION|PROGRAM_CHANGE_NOTIFICATION);
-  else
-    notifyManager(STOP_PROGRAM_NOTIFICATION|PROGRAM_CHANGE_NOTIFICATION);
 }
 
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){

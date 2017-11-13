@@ -19,6 +19,8 @@
 #define HARDWARE_VERSION             "Tesseract"
 #elif defined OWL_MICROLAB
 #define HARDWARE_VERSION             "MicroLab"
+#elif defined OWL_MINILAB
+#define HARDWARE_VERSION             "MiniLab"
 #elif defined OWL_PEDAL
 #define HARDWARE_VERSION             "OWL Pedal"
 #elif defined OWL_MODULAR
@@ -68,10 +70,7 @@ void MidiController::sendSettings(){
   sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_BITDEPTH, settings.audio_bitdepth);
   sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_DATAFORMAT, settings.audio_dataformat);
   sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_BLOCKSIZE, settings.audio_blocksize);
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_MASTER, settings.audio_codec_master);
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_PROTOCOL, settings.audio_codec_protocol);
   sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_BYPASS, settings.audio_codec_bypass);
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_HALFSPEED, settings.audio_codec_halfspeed);
   sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_SWAP, settings.audio_codec_swaplr);
   sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_PC_BUTTON, settings.program_change_button);
 }

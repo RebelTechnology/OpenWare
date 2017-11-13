@@ -41,6 +41,9 @@
 
 /* USER CODE BEGIN Includes */
 
+#include "HAL_ToggleSwitches.h"
+#include "TLC5971.h"
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -102,7 +105,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+	
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -125,17 +128,48 @@ int main(void)
   MX_USB_OTG_HS_PCD_Init();
 
   /* USER CODE BEGIN 2 */
+	TLC5971_init(&hspi5);
+	
+	TLC5971_SetOutput_GS(LED_A, LED_Red, 	0xFFFF);
+//	TLC5971_SetOutput_GS(LED_A, LED_Green,0xFFFF);
+//	TLC5971_SetOutput_GS(LED_A, LED_Blue, 0xFFFF);
 
+//	TLC5971_SetOutput_GS(LED_B, LED_Red, 	0xFFFF);
+	TLC5971_SetOutput_GS(LED_B, LED_Green,0xFFFF);
+//	TLC5971_SetOutput_GS(LED_B, LED_Blue, 0xFFFF);
+
+//	TLC5971_SetOutput_GS(LED_C, LED_Red, 	0xFFFF);
+//	TLC5971_SetOutput_GS(LED_C, LED_Green,0xFFFF);
+	TLC5971_SetOutput_GS(LED_C, LED_Blue, 0xFFFF);
+
+	TLC5971_SetOutput_GS(LED_D, LED_Red, 	0xFFFF);
+	TLC5971_SetOutput_GS(LED_D, LED_Green,0xFFFF);
+	TLC5971_SetOutput_GS(LED_D, LED_Blue, 0xFFFF);
+
+	TLC5971_SetOutput_BC(LED_Red, 	 0x08);
+	TLC5971_SetOutput_BC(LED_Green,  0x02);
+	TLC5971_SetOutput_BC(LED_Blue,   0x05);
+	
+	TLC5971_Settings(REG_DSRPT);
+	TLC5971_Update();
   /* USER CODE END 2 */
 
+		
+		
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		uint32_t delay = 1000000;
+		while(--delay){}
+		
+	
   /* USER CODE END WHILE */
-
+		
+		
+		
   /* USER CODE BEGIN 3 */
-
+		
   }
   /* USER CODE END 3 */
 
@@ -340,7 +374,6 @@ static void MX_SPI4_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-
 }
 
 /* SPI5 init function */
@@ -349,12 +382,12 @@ static void MX_SPI5_Init(void)
 
   hspi5.Instance = SPI5;
   hspi5.Init.Mode = SPI_MODE_MASTER;
-  hspi5.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi5.Init.Direction = SPI_DIRECTION_1LINE;
   hspi5.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi5.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi5.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi5.Init.NSS = SPI_NSS_SOFT;
-  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
   hspi5.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi5.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi5.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -363,7 +396,6 @@ static void MX_SPI5_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-
 }
 
 /* TIM3 init function */

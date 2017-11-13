@@ -8,6 +8,8 @@
 
 #ifdef OWL_PEDAL
 #define OWL1
+#define USE_ADC
+#define ADC_PERIPH hadc3
 #define NOF_ADC_VALUES               5
 #define ADC_A 0
 #define ADC_B 1
@@ -21,6 +23,8 @@
 
 #ifdef OWL_MODULAR
 #define OWL1
+#define USE_ADC
+#define ADC_PERIPH hadc3
 #define NOF_ADC_VALUES               5
 #define ADC_A 0
 #define ADC_B 1

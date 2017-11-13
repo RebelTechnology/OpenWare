@@ -512,8 +512,7 @@ uint8_t midi_host_ready(void){
 }
 
 void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
-  extern uint8_t* USB_HOST_RX_BUFFER;
-  /* uint8_t* ptr = USB_HOST_RX_BUFFER; */
+  extern uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE];
   uint16_t len = USBH_MIDI_GetLastReceivedDataSize(phost);
   midi_host_rx(USB_HOST_RX_BUFFER, len);
   USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE); // start a new reception

@@ -125,8 +125,6 @@
 
 /* USER CODE BEGIN Private defines */
 
-#define USB_HOST_RX_BUFF_SIZE   64  /* Max Received data 64 bytes */
-
 /* USER CODE END Private defines */
 
 void _Error_Handler(char *, int);

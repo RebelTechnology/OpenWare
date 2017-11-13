@@ -433,7 +433,11 @@ PH0/OSC_IN.Signal=RCC_OSC_IN
 PH1/OSC_OUT.Mode=HSE-External-Oscillator
 PH1/OSC_OUT.Signal=RCC_OSC_OUT
 PinOutPanel.RotationAngle=0
+<<<<<<< HEAD
 ProjectManager.AskForMigrate=true
+=======
+ProjectManager.AskForMigrate=false
+>>>>>>> 890c9e1becbb20c627e716faf1e44856c4d676c4
 ProjectManager.BackupPrevious=false
 ProjectManager.CompilerOptimize=2
 ProjectManager.ComputerToolchain=false
