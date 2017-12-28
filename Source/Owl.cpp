@@ -190,6 +190,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #ifdef OWL_MINILAB
   case TRIG_SW1_Pin:
     setButtonValue(BUTTON_A, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
+    setButtonValue(PUSHBUTTON, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
     break;
   case TRIG_SW2_Pin:
     setButtonValue(BUTTON_B, !(TRIG_SW2_GPIO_Port->IDR & TRIG_SW2_Pin));
