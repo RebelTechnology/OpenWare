@@ -53,14 +53,14 @@ static void MIDI_ProcessReception(USBH_HandleTypeDef *phost);
 
 USBH_ClassTypeDef  MIDI_Class =
 {
-		"MIDI",
-		USB_AUDIO_CLASS,
-		USBH_MIDI_InterfaceInit,
-		USBH_MIDI_InterfaceDeInit,
-		USBH_MIDI_ClassRequest,
-		USBH_MIDI_Process, // background process called in HOST_CLASS state (core state machine)
-		USBH_MIDI_SOFProcess,
-		NULL // MIDI handle structure
+  "MIDI", // Name
+  USB_AUDIO_CLASS, // ClassCode
+  USBH_MIDI_InterfaceInit, // Init
+  USBH_MIDI_InterfaceDeInit, // DeInit
+  USBH_MIDI_ClassRequest, // Requests
+  USBH_MIDI_Process, // BgndProcess: background process called in HOST_CLASS state (core state machine)
+  USBH_MIDI_SOFProcess, // SOFProcess
+  NULL // pData: MIDI handle structure
 };
 
 /**

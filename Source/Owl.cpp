@@ -320,8 +320,11 @@ void loop(void){
 extern "C"{
   // more from USB device interface
   void midi_device_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4)
-      mididevice.readMidiFrame(buffer+i);
+    for(uint16_t i=0; i<length; i+=4){
+      if(!mididevice.readMidiFrame(buffer+i)){
+	mididevice.reset();
+      }
+    }
   }
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
 
@@ -330,8 +333,11 @@ extern "C"{
     midihost.reset();
   }
   void midi_host_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4)
-      midihost.readMidiFrame(buffer+i);
+    for(uint16_t i=0; i<length; i+=4){
+      if(!midihost.readMidiFrame(buffer+i)){
+	midihost.reset();
+      }
+    }
   }
 #endif /* USE_USB_HOST */
 

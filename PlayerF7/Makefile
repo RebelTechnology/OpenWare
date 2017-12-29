@@ -27,6 +27,6 @@ OBJS += $(USB_HOST_FILE)/Core/Src/usbh_core.o
 OBJS += $(USB_HOST_FILE)/Core/Src/usbh_pipes.o
 OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
 OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
-OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
+# OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
 
 include $(OPENWARE)/f7.mk
