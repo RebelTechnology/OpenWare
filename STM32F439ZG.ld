@@ -145,7 +145,7 @@ SECTIONS
   {
     PROVIDE (_PATCHRAM = .);
   } >PATCHRAM
-  _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);  
+  _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

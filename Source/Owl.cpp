@@ -45,6 +45,7 @@ ApplicationSettings settings;
 
 uint16_t adc_values[NOF_ADC_VALUES];
 uint16_t dac_values[2];
+uint32_t ledstatus;
 
 uint16_t getAnalogValue(uint8_t ch){
   if(ch < NOF_ADC_VALUES)
@@ -249,6 +250,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     break;
 #endif
   }
+#ifdef USE_RGB_LED
+  ledstatus = getButtonValue(PUSHBUTTON) ? 0x3fffffff : 0;
+#endif
 }
 
 void setup(){
@@ -306,7 +310,13 @@ void loop(void){
   taskYIELD();
   midi.push();
 #ifdef USE_RGB_LED
-  setLed(rainbow[((adc_values[ADC_A]>>3)+(adc_values[ADC_B]>>3)+(adc_values[ADC_C]>>3)+(adc_values[ADC_D]>>3))&0x3ff]);
+  uint32_t colour =
+    (adc_values[ADC_A]>>3)+
+    (adc_values[ADC_B]>>3)+
+    (adc_values[ADC_C]>>3)+
+    (adc_values[ADC_D]>>3);
+  colour &= 0x3ff;
+  setLed(ledstatus ^ rainbow[colour]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
 #endif /* USE_RGB_LED */
 #ifdef OWL_MICROLAB_LED
@@ -331,6 +341,7 @@ extern "C"{
 #ifdef USE_USB_HOST
   void midi_host_reset(void){
     midihost.reset();
+    ledstatus ^= 0x3ff00000;
   }
   void midi_host_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4){

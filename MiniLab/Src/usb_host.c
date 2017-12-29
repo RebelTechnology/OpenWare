@@ -53,6 +53,7 @@
 #include "usbh_core.h"
 #include "usbh_midi.h"
 #include "device.h"
+#include "message.h"
 
 /* USB Host Core handle declaration */
 USBH_HandleTypeDef hUsbHostFS;
@@ -128,6 +129,7 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
     break;
   case HOST_USER_UNRECOVERED_ERROR:
     midi_host_reset(); // reset and hope for the best
+    error("USB Host unrecovered error");
     break;
   case HOST_USER_SELECT_CONFIGURATION:
     break;

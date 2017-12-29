@@ -1,48 +1,18 @@
-/*
-*****************************************************************************
-**
-
-**  File        : stm32_flash.ld
-**
-**  Abstract    : Linker script for STM32F427ZI Device with
-**                2048KByte FLASH, 192KByte RAM
-**
-**                Set heap size, stack size and stack location according
-**                to application requirements.
-**
-**                Set memory bank area and size if external memory is used.
-**
-**  Target      : STMicroelectronics STM32
-**
-**  Environment : Atollic TrueSTUDIO(R)
-**
-**  Distribution: The file is distributed as is, without any warranty
-**                of any kind.
-**
-**  (c)Copyright Atollic AB.
-**  You may use this file as-is or modify it according to the needs of your
-**  project. This file may only be built (assembled or compiled and linked)
-**  using the Atollic TrueSTUDIO(R) product. The use of this file together
-**  with other tools than Atollic TrueSTUDIO(R) is not permitted.
-**
-*****************************************************************************
-*/
-
 /* Entry Point */
 ENTRY(Reset_Handler)
 
-/* Highest address of the user mode stack */
-_estack = 0x20030000;    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x200;      /* required amount of heap  */
-_Min_Stack_Size = 0x400; /* required amount of stack */
+_Min_Heap_Size  = 0x000; /* required amount of heap  */
+_Min_Stack_Size = 0x600; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 192K
-CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K
-FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 2048K
+RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
+PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 64K    /* total RAM is 112kb */
+CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
+EXTRAM (rwx)     : ORIGIN = 0xD0000000, LENGTH = 8M
+FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 2048K
 }
 
 /* Define output sections */
@@ -125,25 +95,6 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
 
-  _siccmram = LOADADDR(.ccmram);
-
-  /* CCM-RAM section 
-  * 
-  * IMPORTANT NOTE! 
-  * If initialized variables will be placed in this section,
-  * the startup code needs to be modified to copy the init-values.  
-  */
-  .ccmram :
-  {
-    . = ALIGN(4);
-    _sccmram = .;       /* create a global symbol at ccmram start */
-    *(.ccmram)
-    *(.ccmram*)
-    
-    . = ALIGN(4);
-    _eccmram = .;       /* create a global symbol at ccmram end */
-  } >CCMRAM AT> FLASH
-
   
   /* Uninitialized data section */
   . = ALIGN(4);
@@ -165,14 +116,38 @@ SECTIONS
   ._user_heap_stack :
   {
     . = ALIGN(4);
-    PROVIDE ( end = . );
     PROVIDE ( _end = . );
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(4);
   } >RAM
+  _estack = ORIGIN(RAM)+LENGTH(RAM); /* end of firmware RAM */
 
-  
+  /* CCM section, vars must be located here explicitly */
+  /* Example: int foo __attribute__ ((section (".ccmdata"))); */
+  .ccmdata (NOLOAD) :
+  {
+    /* *(.ccmdata) */
+    /* . = ALIGN(8); */
+    PROVIDE (_CCMRAM = .);
+  } >CCMRAM
+  _CCMRAM_END = ORIGIN(CCMRAM) + LENGTH(CCMRAM);
+
+  /* External memory, vars must be located here explicitly */
+  /* Example: int foo __attribute__ ((section (".extdata"))); */
+  .extdata (NOLOAD) :
+  {
+    /* *(.extdata) */
+    /* . = ALIGN(8); */
+    PROVIDE ( _EXTRAM = . );
+  } >EXTRAM
+  _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM);
+
+  .patchram (NOLOAD) :
+  {
+    PROVIDE (_PATCHRAM = .);
+  } >PATCHRAM
+  _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
 
   /* Remove information from the standard libraries */
   /DISCARD/ :
