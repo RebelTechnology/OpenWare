@@ -52,6 +52,7 @@
 #include "usb_host.h"
 #include "usbh_core.h"
 #include "usbh_midi.h"
+#include "device.h"
 
 /* USB Host Core handle declaration */
 USBH_HandleTypeDef hUsbHostFS;
