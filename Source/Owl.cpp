@@ -251,11 +251,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #endif
   }
 #ifdef USE_RGB_LED
-  ledstatus = getButtonValue(PUSHBUTTON) ? 0x3fffffff : 0;
+  ledstatus = getButtonValue(PUSHBUTTON) ? 0x3ff : 0;
 #endif
 }
 
 void setup(){
+  ledstatus = 0;
   settings.init();
 #ifdef USE_CODEC
   extern SPI_HandleTypeDef CODEC_SPI;
@@ -347,6 +348,8 @@ extern "C"{
     for(uint16_t i=0; i<length; i+=4){
       if(!midihost.readMidiFrame(buffer+i)){
 	midihost.reset();
+      }else{
+	ledstatus ^= 0x80000; // 0x20000000
       }
     }
   }
