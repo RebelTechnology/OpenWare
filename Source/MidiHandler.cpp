@@ -19,6 +19,7 @@ MidiHandler::MidiHandler() : channel(MIDI_OMNI_CHANNEL) {
 }
 
 void MidiHandler::handlePitchBend(uint8_t status, uint16_t value){
+  setParameterValue(PARAMETER_G, ((int16_t)value - 8192)>>1);
 }
 
 void MidiHandler::handleNoteOn(uint8_t status, uint8_t note, uint8_t velocity){
@@ -52,6 +53,9 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
     return;
   switch(cc){
+  case MIDI_CC_VOLUME:
+    codec.setOutputGain(value);
+    break;
   case PATCH_PARAMETER_A:
     setParameterValue(PARAMETER_A, value<<5); // scale from 7bit to 12bit value
     break;
@@ -69,6 +73,12 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     break;
   case MIDI_CC_MODULATION:
     setParameterValue(PARAMETER_F, value<<5);
+    break;
+  case MIDI_CC_EFFECT_CTRL_1:
+    setParameterValue(PARAMETER_G, value<<5);
+    break;
+  case MIDI_CC_EFFECT_CTRL_2:
+    setParameterValue(PARAMETER_H, value<<5);
     break;
   // case 21: {
   //   static uint8_t last = 0;
@@ -124,7 +134,7 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     }
     break;
   default:
-    if(cc >= PATCH_PARAMETER_AA && cc <= PATCH_PARAMETER_BH)
+    if(cc >= PATCH_PARAMETER_AA && cc <= PATCH_PARAMETER_DH)
       setParameterValue(PARAMETER_AA+(cc-PATCH_PARAMETER_AA), value<<5);
     break;
   }
