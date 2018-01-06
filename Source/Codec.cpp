@@ -29,6 +29,11 @@ uint16_t Codec::getBlockSize(){
 
 void Codec::begin(SPI_HandleTypeDef *spi){
   codec_init(spi);
+#ifdef OWL_MICROLAB
+  codec_set_volume(127-18); // -18dB
+#else
+  codec_set_volume(127); // 0dB
+#endif
 }
 
 void Codec::reset(){

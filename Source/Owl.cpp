@@ -45,6 +45,7 @@ ApplicationSettings settings;
 
 uint16_t adc_values[NOF_ADC_VALUES];
 uint16_t dac_values[2];
+uint32_t ledstatus;
 
 uint16_t getAnalogValue(uint8_t ch){
   if(ch < NOF_ADC_VALUES)
@@ -190,6 +191,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #ifdef OWL_MINILAB
   case TRIG_SW1_Pin:
     setButtonValue(BUTTON_A, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
+    setButtonValue(PUSHBUTTON, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
     break;
   case TRIG_SW2_Pin:
     setButtonValue(BUTTON_B, !(TRIG_SW2_GPIO_Port->IDR & TRIG_SW2_Pin));
@@ -248,14 +250,23 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     break;
 #endif
   }
+#ifdef USE_RGB_LED
+  ledstatus = getButtonValue(PUSHBUTTON) ? 0x3ff : 0;
+#endif
 }
 
 void setup(){
+  ledstatus = 0;
   settings.init();
 #ifdef USE_CODEC
   extern SPI_HandleTypeDef CODEC_SPI;
   codec.begin(&CODEC_SPI);
-  codec.set(0);
+  // codec.set(0);
+#if defined OWL_MICROLAB || defined OWL_MINILAB || defined OWL_MAGUS
+  codec.setOutputGain(127-18); // -18dB
+#else
+  codec.setOutputGain(0); // 0dB
+#endif
   codec.bypass(false);
 #endif /* USE_CODEC */
 
@@ -305,7 +316,13 @@ void loop(void){
   taskYIELD();
   midi.push();
 #ifdef USE_RGB_LED
-  setLed(rainbow[((adc_values[ADC_A]>>3)+(adc_values[ADC_B]>>3)+(adc_values[ADC_C]>>3)+(adc_values[ADC_D]>>3))&0x3ff]);
+  uint32_t colour =
+    (adc_values[ADC_A]>>3)+
+    (adc_values[ADC_B]>>3)+
+    (adc_values[ADC_C]>>3)+
+    (adc_values[ADC_D]>>3);
+  colour &= 0x3ff;
+  setLed(ledstatus ^ rainbow[colour]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
 #endif /* USE_RGB_LED */
 #ifdef OWL_MICROLAB_LED
@@ -319,18 +336,27 @@ void loop(void){
 extern "C"{
   // more from USB device interface
   void midi_device_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4)
-      mididevice.readMidiFrame(buffer+i);
+    for(uint16_t i=0; i<length; i+=4){
+      if(!mididevice.readMidiFrame(buffer+i)){
+	mididevice.reset();
+      }
+    }
   }
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
 
 #ifdef USE_USB_HOST
   void midi_host_reset(void){
     midihost.reset();
+    ledstatus ^= 0x3ff00000;
   }
   void midi_host_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4)
-      midihost.readMidiFrame(buffer+i);
+    for(uint16_t i=0; i<length; i+=4){
+      if(!midihost.readMidiFrame(buffer+i)){
+	midihost.reset();
+      }else{
+	ledstatus ^= 0x80000; // 0x20000000
+      }
+    }
   }
 #endif /* USE_USB_HOST */
 

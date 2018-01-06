@@ -29,12 +29,12 @@ OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sdram.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fmc.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_ll_usb.o
 
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sram.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fsmc.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2s.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2s_ex.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c_ex.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sram.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fsmc.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2s.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2s_ex.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c_ex.o
 
 ### USB Device Library ###
 OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_core.o
