@@ -61,7 +61,7 @@ void setAnalogValue(uint8_t ch, uint16_t value){
   }
 }
 
-#ifdef OWL_MICROLAB
+#ifdef OWL_MICROLAB_LED
 void setLed(uint8_t ch, uint16_t brightness){
   // brightness should be a 10 bit value
   brightness = brightness&0x3ff;
@@ -100,7 +100,7 @@ void initLed(){
   HAL_TIM_Base_Start(&htim5);
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
 }
-#endif /* OWL_MICROLAB */
+#endif /* OWL_MICROLAB_LED */
 
 #ifdef USE_RGB_LED
 void setLed(uint32_t rgb){
@@ -109,7 +109,7 @@ void setLed(uint32_t rgb){
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
-#elif defined OWL_MINILAB
+#elif defined OWL_MINILAB || defined OWL_MICROLAB
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM4->CCR3 = 1023 - ((rgb>>00)&0x3ff);
@@ -125,7 +125,7 @@ void setLed(int16_t red, int16_t green, int16_t blue){
   TIM2->CCR1 = red;
   TIM3->CCR4 = green;
   TIM5->CCR2 = blue;
-#elif defined OWL_MINILAB
+#elif defined OWL_MINILAB || defined OWL_MICROLAB
   TIM2->CCR1 = red;
   TIM5->CCR2 = green;
   TIM4->CCR3 = blue;
@@ -205,22 +205,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #endif
 #ifdef OWL_MICROLAB
     // todo remove
-  case TRIG1_Pin:
-  case TRIG2_Pin:    
-    setButtonValue(PUSHBUTTON, !(TRIG1_GPIO_Port->IDR & TRIG1_Pin));
-    setParameterValue(PARAMETER_E, (TRIG2_GPIO_Port->IDR & TRIG2_Pin) == 0 ? 4095 : 0);
-    setLed(LED1, 0);
-    setLed(LED2, 0);
-    setLed(LED3, 0);
-    setLed(LED4, 0);
-    if(!(TRIG1_GPIO_Port->IDR & TRIG1_Pin)){
-      setLed(LED1, 1023);
-      setLed(LED3, 1023);
-    }
-    if(!(TRIG2_GPIO_Port->IDR & TRIG2_Pin)){
-      setLed(LED2, 1023);
-      setLed(LED4, 1023);
-    }
+  case SW1_Pin:
+    setButtonValue(BUTTON_A, !(SW1_GPIO_Port->IDR & SW1_Pin));
+    setButtonValue(PUSHBUTTON, !(SW1_GPIO_Port->IDR & SW1_Pin));
+    break;
+  case SW2_Pin:
+    setButtonValue(BUTTON_B, !(SW2_GPIO_Port->IDR & SW2_Pin));
+    setParameterValue(PARAMETER_E, (SW2_GPIO_Port->IDR & SW2_Pin) == 0 ? 4095 : 0);
+    break;
+  case SW3_Pin:
+    setButtonValue(BUTTON_C, !(SW3_GPIO_Port->IDR & SW3_Pin));
+    break;
     break;
 #endif
 #ifdef OWL_MICROLAB_LED
@@ -277,13 +272,13 @@ void setup(){
   setLed(1000, 1000, 1000);
 #endif /* USE_RGB_LED */
 
-#ifdef OWL_MICROLAB
+#ifdef OWL_MICROLAB_LED
   initLed();
   setLed(LED1, 0);
   setLed(LED2, 0);
   setLed(LED3, 0);
   setLed(LED4, 0);
-#endif /* OWL_MICROLAB */
+#endif /* OWL_MICROLAB_LED */
 
 #ifdef USE_ENCODERS
   extern TIM_HandleTypeDef ENCODER_TIM1;

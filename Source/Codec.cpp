@@ -228,10 +228,6 @@ void Codec::resume(){
   HAL_SAI_DMAResume(&hsai_BlockA1);
 }
 
-void Codec::setOutputGain(uint8_t value){
-  codec_set_volume(value);
-}
-
 extern "C" {
 
 // void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){

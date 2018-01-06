@@ -1,7 +1,10 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
+/* #define OWL_MICROLAB_LED */
 #define OWL_MICROLAB
+#define USE_RGB_LED
+
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */
@@ -9,10 +12,6 @@
 /* #define OWL_PEDAL */
 
 #ifdef OWL_MICROLAB
-#define TRIG1_Pin GP7_Pin
-#define TRIG1_GPIO_Port GP7_GPIO_Port
-#define TRIG2_Pin GP8_Pin
-#define TRIG2_GPIO_Port GP8_GPIO_Port
 #define USE_ADC
 #define ADC_PERIPH hadc3
 #define ADC_A 2
