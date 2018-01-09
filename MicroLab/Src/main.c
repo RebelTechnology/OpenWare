@@ -45,6 +45,7 @@
   *
   ******************************************************************************
   */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
@@ -243,6 +244,14 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
 
+    /**Macro to configure SAI1BlockB clock source selection 
+    */
+  __HAL_RCC_SAI_BLOCKBCLKSOURCE_CONFIG(SAI_CLKSOURCE_PLLSAI);
+
+    /**Macro to configure SAI1BlockA clock source selection 
+    */
+  __HAL_RCC_SAI_BLOCKACLKSOURCE_CONFIG(SAI_CLKSOURCE_PLLSAI);
+
     /**Configure the main internal regulator output voltage 
     */
   __HAL_RCC_PWR_CLK_ENABLE();
@@ -282,8 +291,6 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.PLLSAI.PLLSAIN = 100;
   PeriphClkInitStruct.PLLSAI.PLLSAIQ = 4;
   PeriphClkInitStruct.PLLSAIDivQ = 1;
-  /* PeriphClkInitStruct.SaiAClockSelection = SAI_CLKSOURCE_PLLSAI; */
-  /* PeriphClkInitStruct.SaiBClockSelection = SAI_CLKSOURCE_PLLSAI; */
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -724,8 +731,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : SW3_Pin */
   GPIO_InitStruct.Pin = SW3_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(SW3_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
