@@ -80,6 +80,8 @@ osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 uint8_t x;
+uint16_t rgADCValues[20];
+uint16_t rgDACValues[20];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -181,6 +183,55 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	
+	// Pixi
+	MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep/*|DCR_BRST_Contextual*/);
+
+/*
+	MAX11300_setPortMode(PORT_1,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+	MAX11300_setPortMode(PORT_3,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+	MAX11300_setPortMode(PORT_7,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+	MAX11300_setPortMode(PORT_9,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+	MAX11300_setPortMode(PORT_10, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+	MAX11300_setPortMode(PORT_11, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+	MAX11300_setPortMode(PORT_12, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+	MAX11300_setPortMode(PORT_13, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+	MAX11300_setPortMode(PORT_14, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+	MAX11300_setPortMode(PORT_15, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+*/
+
+	MAX11300_setPortMode(PORT_0,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_1,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+	MAX11300_setPortMode(PORT_2,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_3,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+	MAX11300_setPortMode(PORT_4,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_5,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+	MAX11300_setPortMode(PORT_6,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_7,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+	MAX11300_setPortMode(PORT_8,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_9,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_10, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_11, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_12, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_13, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_14, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  MAX11300_setPortMode(PORT_15, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+	
+	rgDACValues[PORT_0]  = 4095;
+	rgDACValues[PORT_1]  = 2048;
+  rgDACValues[PORT_2]  = 1024;
+  rgDACValues[PORT_3]  = 0;
+	
+  rgDACValues[PORT_7]  = 1024;
+  rgDACValues[PORT_9]  = 512;
+  rgDACValues[PORT_10] = 1024;
+  rgDACValues[PORT_11] = 1024;
+  rgDACValues[PORT_12] = 1024;
+  rgDACValues[PORT_13] = 1024;
+  rgDACValues[PORT_14] = 4095;
+  rgDACValues[PORT_15] = 4095;
+  rgDACValues[PORT_16] = 4095;
+	
+	// LEDs
 	Magus_setRGB_DC(63,63,63);
 	for (x=1; x<17; x++) {Magus_setRGB(x,	400,	400,	400);}
 
@@ -191,10 +242,10 @@ int main(void)
   /* USER CODE BEGIN 3 */
 		OLED_Refresh();
 		TLC5946_Refresh_GS();
+		MAX11300_bulksetDAC();
 		HAL_Delay(5);
   }
   /* USER CODE END 3 */
-
 }
 
 /** System Clock Configuration

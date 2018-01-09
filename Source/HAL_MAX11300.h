@@ -7,26 +7,27 @@
 #endif
 
 // Port Mapping
-#define PORT_1    0
-#define PORT_2    1
-#define PORT_3    2
-#define PORT_4    3
-#define PORT_5    4
-#define PORT_6    5
-#define PORT_7    6
-#define PORT_8    7
-#define PORT_9    15
-#define PORT_10   14
+#define PORT_16		0
+#define PORT_17   1
+#define PORT_18   2
+#define PORT_19   3
+#define PORT_0    4
+#define PORT_15   5
+#define PORT_14   6
+#define PORT_1    7
+#define PORT_2    8
+#define PORT_13   9
+#define PORT_12   10
+#define PORT_3   	11
+#define PORT_4   	12
 #define PORT_11   13
-#define PORT_12   12
-#define PORT_13   11
-#define PORT_14   10
-#define PORT_15   9
-#define PORT_16   8
-//#define PORT_17   7
-//#define PORT_18   6
-//#define PORT_19   5
-//#define PORT_20		4
+#define PORT_10   14
+#define PORT_5   	15
+#define PORT_6   	16
+#define PORT_9   	17
+#define PORT_8   	18
+#define PORT_7   	19
+
  
 // RAM addresses
 #define ADDR_Interrupt							0x01
