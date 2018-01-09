@@ -1,39 +1,44 @@
 
-#include "stm32f1xx_hal.h"
+#include "stm32f4xx_hal.h"
 #include "HAL_TLC5946.h"
 
-#define TLC_CONTINUOUS
+// #define TLC_CONTINUOUS
+#define TLC_DEVICES 	3
 
-uint8_t rgGSbuf[24] = {0};
-uint8_t rgDCbuf[12] = {255,255,255,255,255,255,255,255,255,255,255,255};
+uint8_t rgGSbuf[TLC_DEVICES][24];
+uint8_t rgDCbuf[TLC_DEVICES][12];
 SPI_HandleTypeDef* TLC5946_SPIConfig;
+
+uint8_t rgLED_R[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
+uint8_t rgLED_G[16] = {14,12,10,8,7,4,2,0,15,13,11,9,6,5,3,1};
+uint8_t rgLED_B[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
 	
 //_____ Functions _____________________________________________________________________________________________________
-void TLC5946_SetOutput_GS (unsigned char LED_ID, unsigned short value)
+void TLC5946_SetOutput_GS(unsigned char IC, unsigned char LED_ID, unsigned short value)
 {
 	unsigned char temp;
 	unsigned char ucBuffLoc = (unsigned char)(LED_ID*1.5);
 	
-	if (value < 4095)
+	if (value < 4096)
 	{
-	  if(LED_ID & 0x01) // bbbbaaaa aaaaaaaa
+	  if(LED_ID & 0x01)	// bbbbaaaa aaaaaaaa
 		{ 
-			temp									= rgGSbuf[ucBuffLoc]; 
-			rgGSbuf[ucBuffLoc] 	  = (value&0xF00)>>8; 
-			rgGSbuf[ucBuffLoc]   |= (temp&0xF0); 
-			rgGSbuf[ucBuffLoc+1]  = (value&0x0FF); 	
+			temp											= rgGSbuf[IC][ucBuffLoc]; 
+			rgGSbuf[IC][ucBuffLoc] 	 	= (value&0xF00)>>8; 
+			rgGSbuf[IC][ucBuffLoc]   |= (temp&0xF0); 
+			rgGSbuf[IC][ucBuffLoc+1]  = (value&0x0FF); 	
 		}
-	  else              // aaaaaaaa aaaabbbb
+	  else            	// aaaaaaaa aaaabbbb
 		{
-			rgGSbuf[ucBuffLoc] 	  = (value&0xFF0)>>4; 
-			temp 								  = rgGSbuf[ucBuffLoc+1]; 
-			rgGSbuf[ucBuffLoc+1]  = (value&0x00F)<<4; 
-			rgGSbuf[ucBuffLoc+1] |= (temp&0x0F);
+			rgGSbuf[IC][ucBuffLoc] 	  = (value&0xFF0)>>4; 
+			temp 								  		= rgGSbuf[IC][ucBuffLoc+1]; 
+			rgGSbuf[IC][ucBuffLoc+1]  = (value&0x00F)<<4; 
+			rgGSbuf[IC][ucBuffLoc+1] |= (temp&0x0F);
 		}			
 	}
 }
 
-void TLC5946_SetOutput_DC (unsigned char LED_ID, unsigned char value)
+void TLC5946_SetOutput_DC(unsigned char IC, unsigned char LED_ID, unsigned char value)
 {
 	unsigned char temp;
 	unsigned char ucBuffLoc = (unsigned char)(LED_ID*0.75);
@@ -42,35 +47,35 @@ void TLC5946_SetOutput_DC (unsigned char LED_ID, unsigned char value)
 	{
 		if (LED_ID==0 || LED_ID==4 || LED_ID==8 || LED_ID==12)
 		{
-			temp 									= rgDCbuf[ucBuffLoc];
-			rgDCbuf[ucBuffLoc] 		= (value&0x3F);
-			rgDCbuf[ucBuffLoc] 	 |= (temp&0xC0);
+			temp 											= rgDCbuf[IC][ucBuffLoc];
+			rgDCbuf[IC][ucBuffLoc] 		= (value&0x3F);
+			rgDCbuf[IC][ucBuffLoc] 	 |= (temp&0xC0);
 		}
 		else if (LED_ID==1 || LED_ID==5 ||LED_ID==9 || LED_ID==13)
 		{
-			temp 									= rgDCbuf[ucBuffLoc];
-			rgDCbuf[ucBuffLoc] 		= (value&0x03)<<6;
-			rgDCbuf[ucBuffLoc] 	 |= (temp&0x3F);
+			temp 											= rgDCbuf[IC][ucBuffLoc];
+			rgDCbuf[IC][ucBuffLoc] 		= (value&0x03)<<6;
+			rgDCbuf[IC][ucBuffLoc] 	 |= (temp&0x3F);
 			
-			temp 									= rgDCbuf[ucBuffLoc+1];
-			rgDCbuf[ucBuffLoc+1] 	= (value&0x0F);
-			rgDCbuf[ucBuffLoc+1] |= (temp&0xF0);
+			temp 											= rgDCbuf[IC][ucBuffLoc+1];
+			rgDCbuf[IC][ucBuffLoc+1] 	= (value&0x0F);
+			rgDCbuf[IC][ucBuffLoc+1] |= (temp&0xF0);
 		}
 		else if (LED_ID==2 || LED_ID==6 || LED_ID==10 || LED_ID==14)
 		{
-			temp 									= rgDCbuf[ucBuffLoc];
-			rgDCbuf[ucBuffLoc] 		= (value&0x0F)<<4;
-			rgDCbuf[ucBuffLoc] 	 |= (temp&0x0F);
+			temp 											= rgDCbuf[IC][ucBuffLoc];
+			rgDCbuf[IC][ucBuffLoc] 		= (value&0x0F)<<4;
+			rgDCbuf[IC][ucBuffLoc] 	 |= (temp&0x0F);
 			
-			temp 									= rgDCbuf[ucBuffLoc+1];
-			rgDCbuf[ucBuffLoc+1]	= (value&0xC0)>>6;
-			rgDCbuf[ucBuffLoc+1] |= (temp&0xFC);
+			temp 											= rgDCbuf[IC][ucBuffLoc+1];
+			rgDCbuf[IC][ucBuffLoc+1]	= (value&0xC0)>>6;
+			rgDCbuf[IC][ucBuffLoc+1] |= (temp&0xFC);
 		}
 		else if (LED_ID==3 || LED_ID==7 || LED_ID==11 || LED_ID==15)
 		{
-			temp 									= rgDCbuf[ucBuffLoc];
-			rgDCbuf[ucBuffLoc] 		= value<<2;
-			rgDCbuf[ucBuffLoc] 	 |= (temp&0x03);
+			temp 											= rgDCbuf[IC][ucBuffLoc];
+			rgDCbuf[IC][ucBuffLoc] 		= value<<2;
+			rgDCbuf[IC][ucBuffLoc] 	 |= (temp&0x03);
 		}
 	}		
 }
@@ -84,59 +89,72 @@ void TLC5946_TxINTCallback(void)
 
 #ifdef TLC_CONTINUOUS
 	pBLANK(0);
-	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf, sizeof rgGSbuf);
+	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf[0], sizeof rgGSbuf[0]);	// IC 0 
+	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf[1], sizeof rgGSbuf[1]);	// IC 1
+	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf[2], sizeof rgGSbuf[2]);	// IC 3
 #endif
 }
 
 void TLC5946_Refresh_GS(void)
 {
-	pXLAT(0);
 	// Update Grayscale
 	pMODE(Mode_GS);
 	pBLANK(0);
-#ifdef TLC_CONTINUOUS
-	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf, sizeof rgGSbuf);
+	
+#ifdef TLC_CONTINUOUS	
+	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf[0], sizeof rgGSbuf[0]);		// IC 0 
+	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf[1], sizeof rgGSbuf[1]);		// IC 1
+	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf[2], sizeof rgGSbuf[2]);		// IC 3
 #else
-	HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf, sizeof rgGSbuf, 100);
-	pBLANK(1);
+	HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf[0], sizeof rgGSbuf[0], 100);	// IC 0 
+	HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf[1], sizeof rgGSbuf[1], 100);	// IC 1
+	HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf[2], sizeof rgGSbuf[2], 100);	// IC 3
+	
 	pXLAT(1);
+	pBLANK(1);
+	pXLAT(0);
 #endif
 }
 
 void TLC5946_Refresh_DC(void)
 {
-	pXLAT(0);
-	// Update Dot Correction
 	pMODE(Mode_DC);
-	HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf, sizeof rgDCbuf, 100);	
+	
+	pXLAT(0);
 	pXLAT(1);
+	pXLAT(0);
+	
+	// Update Dot Correction
+	HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf[0], sizeof rgDCbuf[0], 100);	// IC 0
+	HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf[1], sizeof rgDCbuf[1], 100);	// IC 1
+	HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf[2], sizeof rgDCbuf[2], 100);	// IC 3
 }
+
+// _____ Magus Functions _____
+void Magus_setRGB(unsigned char LED_ID, unsigned short val_R, unsigned short val_G, unsigned short val_B)
+{
+	TLC5946_SetOutput_GS(0, rgLED_R[LED_ID-1], val_R);
+	TLC5946_SetOutput_GS(2, rgLED_G[LED_ID-1], val_G);
+	TLC5946_SetOutput_GS(1, rgLED_B[LED_ID-1], val_B);
+}
+
+void Magus_setRGB_DC(unsigned short val_R, unsigned short val_G, unsigned short val_B)
+{
+	uint8_t x;
+	
+	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(0, x, val_R);}
+	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(2, x, val_G);}
+	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(1, x, val_B);}
+	
+	TLC5946_Refresh_DC();
+}
+
 
 //_____ Initialisaion _________________________________________________________________________________________________
 void TLC5946_init (SPI_HandleTypeDef *spiconfig)
 {
-	GPIO_InitTypeDef GPIO_InitStruct;
-	
-	/*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, TLC_MODE_Pin|TLC_XLAT_Pin, GPIO_PIN_RESET);
-	
-  /*Configure GPIO pins : TLC_MODE_Pin TLC_XLAT_Pin */
-  GPIO_InitStruct.Pin   = TLC_MODE_Pin|TLC_XLAT_Pin;
-  GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : TLC_XERR_Pin */
-  GPIO_InitStruct.Pin  = TLC_XERR_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(TLC_XERR_GPIO_Port, &GPIO_InitStruct);
-
-	/*Configure GPIO pin : TLC_BLANK_Pin */
-  GPIO_InitStruct.Pin   = TLC_BLANK_Pin;
-  GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-  HAL_GPIO_Init(TLC_BLANK_GPIO_Port, &GPIO_InitStruct);
-	
+	// Copy SPI handle to local variable
 	TLC5946_SPIConfig = spiconfig;
+	
+	// 
 }
