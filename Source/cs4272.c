@@ -39,12 +39,6 @@ void codec_reset(){
 #else
   codec_write(CODEC_ADC_CTRL, 0x10 | 0x03 ); // hp filters disabled
 #endif
-
-#ifdef OWL_MICROLAB
-  codec_set_volume(12); // -12dB
-#else
-  codec_set_volume(0); // 0dB
-#endif
 }
 
 void codec_init(SPI_HandleTypeDef* spi){
@@ -102,7 +96,6 @@ void codec_init(SPI_HandleTypeDef* spi){
 
   // Release power down bit to start up codec
   codec_write(CODEC_MODE_CTRL2_REG, CODEC_MODE_CTRL2_CTRL_PORT_EN);
-
 }
 
 void codec_bypass(int bypass){
@@ -122,10 +115,10 @@ void codec_mute(bool mute){
   }
 }
 
-/* // set volume (negative for mute) */
+/* Set output gain between 0 (mute) and 127 (max) */
 void codec_set_volume(int8_t level){
   /* The digital volume control allows the user to attenuate the signal in 1 dB increments from 0 to -127 dB.  */
-  volume = level;
+  volume = 127-level;
   codec_write(CODEC_DAC_CHA_VOL_REG, volume);
   codec_write(CODEC_DAC_CHB_VOL_REG, volume);
 }
