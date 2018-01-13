@@ -29,7 +29,7 @@
     <heapSize>0x200</heapSize>
     <stackSize>0x400</stackSize>
     
-    	<cpuclock>1</cpuclock>
+    	<cpuclock>48</cpuclock>
     	<board>custom</board>
 			
     <usedDebug>true</usedDebug>

@@ -1,4 +1,4 @@
-#include "stm32f7xx_hal.h"
+#include "stm32f4xx_hal.h"
 
 // _____ Defines _______________________________________________________________________
 #define pRST_Set()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_SET)
@@ -20,4 +20,5 @@ void OLED_setPixel(uint8_t x, uint8_t y);
 void OLED_clearPixel(uint8_t x, uint8_t y);
 void OLED_togglePixel(uint8_t x, uint8_t y);
 void OLED_ClearScreen(void);
-void OLED_Config(SPI_HandleTypeDef* spi, uint8_t* pixel);
+void OLED_init(SPI_HandleTypeDef* spi);
+void OLED_Refresh(void);
