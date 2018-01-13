@@ -10,6 +10,7 @@
 /* #define OWL_PEDAL */
 
 #ifdef OWL_MINILAB
+#define USE_MIDI_CALLBACK
 #define USE_RGB_LED
 #define TRIG1_Pin GP7_Pin
 #define TRIG1_GPIO_Port GP7_GPIO_Port
