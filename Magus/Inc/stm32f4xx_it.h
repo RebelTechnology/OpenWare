@@ -51,7 +51,9 @@ void SysTick_Handler(void);
 void DMA2_Stream1_IRQHandler(void);
 void DMA2_Stream4_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
+void DMA2_Stream6_IRQHandler(void);
 void OTG_HS_IRQHandler(void);
+void SPI5_IRQHandler(void);
 void SAI1_IRQHandler(void);
 
 #ifdef __cplusplus

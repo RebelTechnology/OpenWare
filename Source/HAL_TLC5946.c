@@ -98,6 +98,7 @@ void TLC5946_TxINTCallback(void)
 void TLC5946_Refresh_GS(void)
 {
 	// Update Grayscale
+	pXLAT(0);
 	pMODE(Mode_GS);
 	pBLANK(0);
 	
@@ -112,7 +113,6 @@ void TLC5946_Refresh_GS(void)
 	
 	pXLAT(1);
 	pBLANK(1);
-	pXLAT(0);
 #endif
 }
 
