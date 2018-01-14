@@ -6,11 +6,11 @@
 // _____ Defines _______________________________________________________________________
 #define pRST_Set()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, 	OLED_RST_Pin, GPIO_PIN_SET)
 #define pDC_Set()		HAL_GPIO_WritePin(OLED_DC_GPIO_Port, 		OLED_DC_Pin, 	GPIO_PIN_SET)
-#define pCS_Set()		HAL_GPIO_WritePin(OLED_nCS_GPIO_Port, 	OLED_nCS_Pin, 	GPIO_PIN_SET)
+#define pCS_Set()		HAL_GPIO_WritePin(OLED_CS_GPIO_Port, 	OLED_CS_Pin, 	GPIO_PIN_SET)
 
 #define pRST_Clr()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, 	OLED_RST_Pin, GPIO_PIN_RESET)
 #define pDC_Clr()		HAL_GPIO_WritePin(OLED_DC_GPIO_Port, 		OLED_DC_Pin, 	GPIO_PIN_RESET)
-#define pCS_Clr()		HAL_GPIO_WritePin(OLED_nCS_GPIO_Port, 	OLED_nCS_Pin, 	GPIO_PIN_RESET)
+#define pCS_Clr()		HAL_GPIO_WritePin(OLED_CS_GPIO_Port, 	OLED_CS_Pin, 	GPIO_PIN_RESET)
 
 #define OLED_DAT	1
 #define OLED_CMD	0
@@ -47,7 +47,7 @@ static const uint8_t OLED_initSequence[] =
 	0x20, 0x01,   // Vertical addressing mode
 	0xaf, 				// Display on
 };
- static unsigned char* OLED_Buffer;
+static uint8_t OLED_Buffer[1024];
 static SPI_HandleTypeDef* OLED_SPIInst;
 	
 // _____ Functions _____________________________________________________________________
@@ -62,6 +62,7 @@ void OLED_writeCMD(const uint8_t* data, uint16_t length)
 	pCS_Set();	// CS high
 }
 
+#ifdef DMA_Comms
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
   assert_param(0);
 }
@@ -71,6 +72,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
     pCS_Set();	// CS high
   }
 }
+#endif
 
 /* void OLED_writeDAT(const uint8_t* data, uint16_t length) */
 void OLED_write(const uint8_t* data, uint16_t length)
@@ -80,7 +82,7 @@ void OLED_write(const uint8_t* data, uint16_t length)
 	
 	// Send Data
 	#ifdef DMA_Comms
-		HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length/8);
+		HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length);
 	
 	#else
 		HAL_SPI_Transmit(OLED_SPIInst, (uint8_t*)data, length, 1000); 

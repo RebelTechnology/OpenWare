@@ -56,7 +56,7 @@
 /* USER CODE BEGIN Includes */
 #include "HAL_MAX11300.h"
 #include "HAL_TLC5946.h"
-/* #include "HAL_OLED.h" */
+#include "HAL_OLED.h"
 #include "errorhandlers.h"
 /* USER CODE END Includes */
 
@@ -179,7 +179,7 @@ int main(void)
 
   TLC5946_init(&hspi5);
   MAX11300_init(&hspi5);
-  /* OLED_init(&hspi5); */
+  OLED_init(&hspi5);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */

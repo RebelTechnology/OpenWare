@@ -1,5 +1,4 @@
 // _____ Includes ______________________________________________________________________
-/* #include "stm32f7xx_hal.h" */
 #include "oled.h"
 #include "device.h"
 #include <string.h>
@@ -17,7 +16,7 @@
 #define OLED_CMD	0
 
 // _____ Prototypes ____________________________________________________________________
-void OLED_writeCMD(const uint8_t* data, uint16_t length);
+static void OLED_writeCMD(const uint8_t* data, uint16_t length);
 
 // Delay 
 static void NopDelay(uint32_t nops)
@@ -50,7 +49,7 @@ static const uint8_t OLED_initSequence[] =
 static SPI_HandleTypeDef* OLED_SPIInst;
 	
 // _____ Functions _____________________________________________________________________
-void OLED_writeCMD(const uint8_t* data, uint16_t length)
+static void OLED_writeCMD(const uint8_t* data, uint16_t length)
 {
 	pCS_Clr();	// CS low
 	pDC_Clr();	// DC low		

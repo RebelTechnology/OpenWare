@@ -12,6 +12,11 @@
 #define OLED_DAT	1
 #define OLED_CMD	0
 
+
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
 // _____ Prototypes ____________________________________________________________________
 void OLED_writeCMD(const uint8_t* data, uint16_t length);
 void OLED_writeDAT(const uint8_t* data, uint16_t length);
@@ -22,3 +27,7 @@ void OLED_togglePixel(uint8_t x, uint8_t y);
 void OLED_ClearScreen(void);
 void OLED_init(SPI_HandleTypeDef* spi);
 void OLED_Refresh(void);
+
+#ifdef __cplusplus
+}
+#endif

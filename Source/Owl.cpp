@@ -316,7 +316,7 @@ void setup(){
 
 #ifdef USE_SCREEN
   extern SPI_HandleTypeDef OLED_SPI;
-  graphics.begin(&OLED_SPI);
+  // graphics.begin(&OLED_SPI);
 #endif /* USE_SCREEN */
 
 #ifdef USE_ADC
