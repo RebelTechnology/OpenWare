@@ -77,8 +77,8 @@
 #define OSC1_GPIO_Port GPIOH
 #define OSC2_Pin GPIO_PIN_1
 #define OSC2_GPIO_Port GPIOH
-#define OLED_nCS_Pin GPIO_PIN_0
-#define OLED_nCS_GPIO_Port GPIOA
+#define OLED_CS_Pin GPIO_PIN_0
+#define OLED_CS_GPIO_Port GPIOA
 #define OLED_RST_Pin GPIO_PIN_1
 #define OLED_RST_GPIO_Port GPIOA
 #define USART_MOSI_Pin GPIO_PIN_2
@@ -103,10 +103,10 @@
 #define TLC_GSCLK_GPIO_Port GPIOB
 #define ENC_CHGRDY_Pin GPIO_PIN_2
 #define ENC_CHGRDY_GPIO_Port GPIOB
-#define CS_nCS_Pin GPIO_PIN_10
-#define CS_nCS_GPIO_Port GPIOB
-#define CS_nRST_Pin GPIO_PIN_11
-#define CS_nRST_GPIO_Port GPIOB
+#define CS_CS_Pin GPIO_PIN_10
+#define CS_CS_GPIO_Port GPIOB
+#define CS_RST_Pin GPIO_PIN_11
+#define CS_RST_GPIO_Port GPIOB
 #define USB_HOST_PWR_EN_Pin GPIO_PIN_6
 #define USB_HOST_PWR_EN_GPIO_Port GPIOC
 #define USB_HOST_PWR_FAULT_Pin GPIO_PIN_7

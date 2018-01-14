@@ -18,6 +18,11 @@
 static TaskHandle_t screenTask = NULL;
 #endif
 
+#ifdef OWL_MAGUS
+#include "HAL_MAX11300.h"
+#include "HAL_TLC5946.h"
+#endif
+
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
@@ -216,6 +221,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = PLAYER_HARDWARE;
 #elif defined OWL_PRISMF7
   pv->hardware_version = PRISM_HARDWARE;
+#elif defined OWL_MAGUS
+  pv->hardware_version = MAGUS_HARDWARE;
 #else
 #error "invalid configuration"
 #endif
@@ -310,6 +317,14 @@ void runScreenTask(void* p){
   // the higher priority audio task
   const TickType_t delay = 20 / portTICK_PERIOD_MS;
   for(;;){
+    // todo: run USB Host task here
+#ifdef OWL_MAGUS
+    // also update LEDs and MAX11300
+    // OLED_Refresh();
+    TLC5946_Refresh_GS();
+    MAX11300_bulksetDAC();
+    // HAL_Delay(5);
+#endif /* OWL_MAGUS */
     graphics.draw();
     graphics.display();
     vTaskDelay(delay); // allow a minimum amount of time for pixel data to be transferred

@@ -1,6 +1,7 @@
 // _____ Includes ______________________________________________________________________
-#include "stm32f7xx_hal.h"
+/* #include "stm32f7xx_hal.h" */
 #include "oled.h"
+#include "device.h"
 #include <string.h>
 
 // _____ Defines _______________________________________________________________________
@@ -125,14 +126,18 @@ void oled_init(SPI_HandleTypeDef* spi){
 	OLED_SPIInst->Init.CLKPolarity = SPI_POLARITY_LOW;
 	OLED_SPIInst->Init.CLKPhase = SPI_PHASE_1EDGE;
 	OLED_SPIInst->Init.NSS = SPI_NSS_SOFT;
+#ifndef OWL_MAGUS
 	OLED_SPIInst->Init.NSSPMode = SPI_NSS_PULSE_DISABLED;
+#endif
 
 	OLED_SPIInst->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
 	OLED_SPIInst->Init.FirstBit = SPI_FIRSTBIT_MSB;
 	OLED_SPIInst->Init.TIMode = SPI_TIMODE_DISABLED;
 	OLED_SPIInst->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
 	OLED_SPIInst->Init.CRCPolynomial = 7;
+#ifndef OWL_MAGUS	
 	OLED_SPIInst->Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+#endif
 	HAL_SPI_Init(OLED_SPIInst);
 	
 	// Initialisation

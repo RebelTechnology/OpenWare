@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2017 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -51,7 +51,9 @@
 
 #include "usb_host.h"
 #include "usbh_core.h"
-#include "usbh_audio.h"
+#include "usbh_midi.h"
+#include "device.h"
+#include "errorhandlers.h"
 
 /* USB Host Core handle declaration */
 USBH_HandleTypeDef hUsbHostFS;
@@ -61,11 +63,11 @@ ApplicationTypeDef Appli_state = APPLICATION_IDLE;
 * -- Insert your variables declaration here --
 */ 
 /* USER CODE BEGIN 0 */
-
+uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE]; // MIDI reception buffer
 /* USER CODE END 0 */
 
 /*
-* user callbak declaration
+* user callback declaration
 */ 
 static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id);
 
@@ -73,7 +75,14 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id);
 * -- Insert your external function declaration here --
 */ 
 /* USER CODE BEGIN 1 */
-
+/*
+ * Background task
+*/ 
+void MX_USB_HOST_Process() 
+{
+  /* USB Host Background task */
+    USBH_Process(&hUsbHostFS); 						
+}
 /* USER CODE END 1 */
 
 /* init function */                                        
@@ -86,7 +95,7 @@ void MX_USB_HOST_Init(void)
   /* Init Host Library,Add Supported Class and Start the library*/
   USBH_Init(&hUsbHostFS, USBH_UserProcess, HOST_FS);
 
-  USBH_RegisterClass(&hUsbHostFS, USBH_AUDIO_CLASS);
+  USBH_RegisterClass(&hUsbHostFS, USBH_MIDI_CLASS);
 
   USBH_Start(&hUsbHostFS);
   /* USER CODE BEGIN USB_HOST_Init_PostTreatment */
@@ -102,25 +111,30 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 {
 
   /* USER CODE BEGIN CALL_BACK_1 */
-  switch(id)
-  { 
-  case HOST_USER_SELECT_CONFIGURATION:
-  break;
-    
-  case HOST_USER_DISCONNECTION:
-  Appli_state = APPLICATION_DISCONNECT;
-  break;
-    
-  case HOST_USER_CLASS_ACTIVE:
-  Appli_state = APPLICATION_READY;
-  break;
-
+  switch(id){ 
   case HOST_USER_CONNECTION:
-  Appli_state = APPLICATION_START;
-  break;
-
+    Appli_state = APPLICATION_START;
+    break;
+  case HOST_USER_CLASS_SELECTED:
+    break;
+  case HOST_USER_CLASS_ACTIVE:
+    if(Appli_state == APPLICATION_START){
+      USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE);
+      Appli_state = APPLICATION_READY;
+    }
+    break;
+  case HOST_USER_DISCONNECTION:
+    Appli_state = APPLICATION_DISCONNECT;
+    midi_host_reset();
+    break;
+  case HOST_USER_UNRECOVERED_ERROR:
+    midi_host_reset(); // reset and hope for the best
+    error(USB_ERROR, "USB Host unrecovered error");
+    break;
+  case HOST_USER_SELECT_CONFIGURATION:
+    break;
   default:
-  break; 
+    break; 
   }
   /* USER CODE END CALL_BACK_1 */
 }

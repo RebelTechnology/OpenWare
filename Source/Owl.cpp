@@ -285,6 +285,13 @@ void setup(){
 
   program.startManager();
 
+#ifdef OWL_MAGUS
+  extern TIM_HandleTypeDef htim3;
+  HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+  HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
+#endif
+  
 #ifdef USE_RGB_LED
   initLed();
   setLed(1000, 1000, 1000);

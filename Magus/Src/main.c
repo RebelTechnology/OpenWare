@@ -56,7 +56,8 @@
 /* USER CODE BEGIN Includes */
 #include "HAL_MAX11300.h"
 #include "HAL_TLC5946.h"
-#include "HAL_OLED.h"
+/* #include "HAL_OLED.h" */
+#include "errorhandlers.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -102,6 +103,10 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+void setup(void);
+void loop(void);
+void MX_USB_HOST_Process(void);
+void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 
 /* USER CODE END PFP */
 
@@ -144,9 +149,36 @@ int main(void)
   MX_TIM3_Init();
 
   /* USER CODE BEGIN 2 */
-	TLC5946_init(&hspi5);
-	MAX11300_init(&hspi5);
-	OLED_init(&hspi5);
+  HAL_SAI_DeInit(&hsai_BlockA1);
+  HAL_SAI_DeInit(&hsai_BlockB1);
+  hsai_BlockA1.Instance = SAI1_Block_A;
+  hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_TX;
+  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+    Error_Handler();
+  hsai_BlockB1.Instance = SAI1_Block_B;
+  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
+  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
+  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+    Error_Handler();
+
+  SDRAM_Initialization_Sequence(&hsdram1);   
+
+  TLC5946_init(&hspi5);
+  MAX11300_init(&hspi5);
+  /* OLED_init(&hspi5); */
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -163,8 +195,8 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-//  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-//  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -176,76 +208,23 @@ int main(void)
  
 
   /* Start scheduler */
-//  osKernelStart();
+  osKernelStart();
   
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	
-	// Pixi
-	MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep/*|DCR_BRST_Contextual*/);
-
-/*
-	MAX11300_setPortMode(PORT_1,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(PORT_3,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(PORT_7,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(PORT_9,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(PORT_10, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(PORT_11, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(PORT_12, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(PORT_13, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(PORT_14, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(PORT_15, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-*/
-
-	MAX11300_setPortMode(PORT_0,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_1,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-	MAX11300_setPortMode(PORT_2,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_3,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-	MAX11300_setPortMode(PORT_4,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_5,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-	MAX11300_setPortMode(PORT_6,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_7,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-	MAX11300_setPortMode(PORT_8,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_9,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_10, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_11, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_12, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_13, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_14, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  MAX11300_setPortMode(PORT_15, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-	
-	rgDACValues[PORT_0]  = 4095;
-	rgDACValues[PORT_1]  = 2048;
-  rgDACValues[PORT_2]  = 1024;
-  rgDACValues[PORT_3]  = 0;
-	
-  rgDACValues[PORT_7]  = 1024;
-  rgDACValues[PORT_9]  = 512;
-  rgDACValues[PORT_10] = 1024;
-  rgDACValues[PORT_11] = 1024;
-  rgDACValues[PORT_12] = 1024;
-  rgDACValues[PORT_13] = 1024;
-  rgDACValues[PORT_14] = 4095;
-  rgDACValues[PORT_15] = 4095;
-  rgDACValues[PORT_16] = 4095;
-	
-	// LEDs
-	Magus_setRGB_DC(63,63,63);
-	for (x=1; x<17; x++) {Magus_setRGB(x,	400,	400,	400);}
 
   while (1)
   {
   /* USER CODE END WHILE */
-		
+
   /* USER CODE BEGIN 3 */
-		OLED_Refresh();
-		TLC5946_Refresh_GS();
-		MAX11300_bulksetDAC();
-		HAL_Delay(5);
+
   }
   /* USER CODE END 3 */
+
 }
 
 /** System Clock Configuration
@@ -433,7 +412,7 @@ static void MX_SPI5_Init(void)
   hspi5.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi5.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi5.Init.NSS = SPI_NSS_SOFT;
-  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi5.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi5.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi5.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -455,7 +434,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 10;
+  htim3.Init.Period = 100;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
   {
@@ -470,19 +449,16 @@ static void MX_TIM3_Init(void)
   }
 
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 5;
+  sConfigOC.Pulse = 50;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
 
   HAL_TIM_MspPostInit(&htim3);
-	
-	HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
+
 }
 
 /* USART2 init function */
@@ -579,13 +555,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, OLED_nCS_Pin|OLED_RST_Pin|OLED_DC_Pin|PIXI_nCS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, OLED_CS_Pin|OLED_RST_Pin|OLED_DC_Pin|PIXI_nCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, FLASH_HOLD_Pin|FLASH_nCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin|TLC_BLANK_Pin 
+  HAL_GPIO_WritePin(GPIOB, FLASH_nWP_Pin|CS_CS_Pin|CS_RST_Pin|TLC_BLANK_Pin 
                           |ENC_nCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -594,8 +570,8 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, TLC_MODE_Pin|TLC_XLAT_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : OLED_nCS_Pin OLED_RST_Pin OLED_DC_Pin PIXI_nCS_Pin */
-  GPIO_InitStruct.Pin = OLED_nCS_Pin|OLED_RST_Pin|OLED_DC_Pin|PIXI_nCS_Pin;
+  /*Configure GPIO pins : OLED_CS_Pin OLED_RST_Pin OLED_DC_Pin PIXI_nCS_Pin */
+  GPIO_InitStruct.Pin = OLED_CS_Pin|OLED_RST_Pin|OLED_DC_Pin|PIXI_nCS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -608,9 +584,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : FLASH_nWP_Pin CS_nCS_Pin CS_nRST_Pin TLC_BLANK_Pin 
+  /*Configure GPIO pins : FLASH_nWP_Pin CS_CS_Pin CS_RST_Pin TLC_BLANK_Pin 
                            ENC_nCS_Pin */
-  GPIO_InitStruct.Pin = FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin|TLC_BLANK_Pin 
+  GPIO_InitStruct.Pin = FLASH_nWP_Pin|CS_CS_Pin|CS_RST_Pin|TLC_BLANK_Pin 
                           |ENC_nCS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -651,10 +627,72 @@ void StartDefaultTask(void const * argument)
   MX_USB_HOST_Init();
 
   /* USER CODE BEGIN 5 */
+  // Pixi
+  MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep/*|DCR_BRST_Contextual*/);
+
+  MAX11300_setPortMode(PORT_1,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  MAX11300_setPortMode(PORT_3,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  MAX11300_setPortMode(PORT_5,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  MAX11300_setPortMode(PORT_7,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  MAX11300_setPortMode(PORT_9,  PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  MAX11300_setPortMode(PORT_11, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  MAX11300_setPortMode(PORT_13, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  MAX11300_setPortMode(PORT_15, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+
+  MAX11300_setPortMode(PORT_0,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  /* MAX11300_setPortMode(PORT_1,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC); */
+  MAX11300_setPortMode(PORT_2,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  /* MAX11300_setPortMode(PORT_3,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC); */
+  MAX11300_setPortMode(PORT_4,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  /* MAX11300_setPortMode(PORT_5,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC); */
+  MAX11300_setPortMode(PORT_6,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  /* MAX11300_setPortMode(PORT_7,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC); */
+  MAX11300_setPortMode(PORT_8,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  /* MAX11300_setPortMode(PORT_9,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC); */
+  MAX11300_setPortMode(PORT_10, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  /* MAX11300_setPortMode(PORT_11, PCR_Range_DAC_M5_P5|PCR_Mode_DAC); */
+  MAX11300_setPortMode(PORT_12, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  /* MAX11300_setPortMode(PORT_13, PCR_Range_DAC_M5_P5|PCR_Mode_DAC); */
+  MAX11300_setPortMode(PORT_14, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  /* MAX11300_setPortMode(PORT_15, PCR_Range_DAC_M5_P5|PCR_Mode_DAC); */
+  MAX11300_setPortMode(PORT_16, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+	
+  for(int i=0; i<16; ++i)
+    rgDACValues[i] = 0;
+  /* rgDACValues[PORT_0]  = 4095; */
+  /* rgDACValues[PORT_1]  = 2048; */
+  /* rgDACValues[PORT_2]  = 1024; */
+  /* rgDACValues[PORT_3]  = 0;	 */
+  /* rgDACValues[PORT_7]  = 1024; */
+  /* rgDACValues[PORT_9]  = 512; */
+  /* rgDACValues[PORT_10] = 1024; */
+  /* rgDACValues[PORT_11] = 1024; */
+  /* rgDACValues[PORT_12] = 1024; */
+  /* rgDACValues[PORT_13] = 1024; */
+  /* rgDACValues[PORT_14] = 4095; */
+  /* rgDACValues[PORT_15] = 4095; */
+  /* rgDACValues[PORT_16] = 4095; */
+	
+  // LEDs
+  Magus_setRGB_DC(63,63,63);
+  for (x=1; x<17; x++)
+    Magus_setRGB(x, 400, 400, 400);
+
+  setup();
+
+  // enable USB Host power
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+      error(USB_ERROR, "USB Host PWR fault");
+    }else{
+      MX_USB_HOST_Process();
+    }
+    loop();
   }
   /* USER CODE END 5 */ 
 }
