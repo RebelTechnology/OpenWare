@@ -292,20 +292,24 @@ void setup(){
   program.startManager();
 
 #ifdef OWL_MAGUS
+  extern SPI_HandleTypeDef hspi5;
+  /* OLED_init(&hspi5); */
+
+  // LEDs
+  TLC5946_init(&hspi5);
+  Magus_setRGB_DC(10, 10, 10); // todo balance levels
+  for(int x=1; x<17; x++)
+    Magus_setRGB(x, 400, 400, 400);
   extern TIM_HandleTypeDef htim3;
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
+  // HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
 
   // Pixi
+  MAX11300_init(&hspi5);
   for(int i=0; i<20; ++i)
     MAX11300_setPortMode(i, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  // MAX11300_setPortMode(0,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-	
-  // LEDs
-  Magus_setRGB_DC(63,63,63);
-  for(int x=1; x<17; x++)
-    Magus_setRGB(x, 400, 400, 400);
+  // MAX11300_setPortMode(0,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);	
 #endif
   
 #ifdef USE_RGB_LED
@@ -351,8 +355,8 @@ void setup(){
 #ifdef OWL_MAGUS
 void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
-  // Magus_setRGB(led+1, (rgb>>20)&0x3ff, (rgb>>10)&0x3ff, (rgb>>00)&0x3ff);
-  Magus_setRGB(led+1, (rgb>>20)&0xfff, (rgb>>10)&0xfff, (rgb>>00)&0xfff);
+  Magus_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+  // Magus_setRGB(led+1, (rgb>>20)&0xfff, (rgb>>10)&0xfff, (rgb>>00)&0xfff);
 }
 
 #endif
@@ -367,8 +371,10 @@ void loop(void){
     (adc_values[ADC_A]>>4)+
     (adc_values[ADC_B]>>4)+
     (adc_values[ADC_C]>>4)+
-    (adc_values[ADC_D]>>4)+
-    (adc_values[ADC_E]>>4);
+    (adc_values[ADC_D]>>4);
+#ifdef ADC_E
+  colour += (adc_values[ADC_E]>>4);
+#endif
   colour &= 0x3ff;
   setLed(ledstatus ^ rainbow[colour]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);

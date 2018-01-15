@@ -44,9 +44,9 @@ void MAX11300_setPortMode(uint8_t port, uint16_t config)
 	uint8_t rgData[3] = "";
      
 	// Split config into two bytes
-	rgData[0] = (ADDR_CFGbase+rgPortMap[port])<<1 | SPI_Write;
+	rgData[0] = ((ADDR_CFGbase+rgPortMap[port])<<1) | SPI_Write;
 	rgData[1] = (config&0xFF00)>>8;
-	rgData[2] = (config&0x00FF);
+	rgData[2] = config&0x00FF;
    
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);
@@ -57,8 +57,9 @@ void MAX11300_setPortMode(uint8_t port, uint16_t config)
 		HAL_SPI_Transmit(MAX11300_SPIConfig, rgData, sizeof rgData, 100);
 		pbarCS(1);
 	#endif
-	
-	Nop_delay(100000);
+
+	HAL_Delay(100);
+	/* Nop_delay(100000); */
 }
 
 uint16_t MAX11300_readPortMode(uint8_t port)
@@ -66,7 +67,7 @@ uint16_t MAX11300_readPortMode(uint8_t port)
 	uint8_t ucAddress, rgRtnData[2] = "";
 	uint16_t usiRtnValue = 0;
 	 
-	ucAddress = (ADDR_CFGbase+rgPortMap[port])<<1 | SPI_Read;
+	ucAddress = ((ADDR_CFGbase+rgPortMap[port])<<1) | SPI_Read;
 	
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);
@@ -84,9 +85,9 @@ void MAX11300_setDeviceControl(uint16_t config)
 {
 	uint8_t rgData[3] = "";
 	
-	rgData[0] = (ADDR_DevCont)<<1 | SPI_Write;
+	rgData[0] = (ADDR_DevCont<<1) | SPI_Write;
 	rgData[1] = (config&0xFF00)>>8;
-	rgData[2] = (config&0x00FF);
+	rgData[2] = config&0x00FF;
 	
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);	
@@ -98,7 +99,8 @@ void MAX11300_setDeviceControl(uint16_t config)
 		pbarCS(1);
 	#endif
 	
-	Nop_delay(100000);
+	HAL_Delay(100);
+	/* Nop_delay(100000); */
 }
 
 // ADC Functions
@@ -116,7 +118,7 @@ uint16_t MAX11300_readADC(uint8_t port)
 
 void MAX11300_bulkreadADC(void)
 {
-	rgADCData_Rx[0] = (ADDR_ADCbase)<<1 | SPI_Read;
+       rgADCData_Rx[0] = ((ADDR_ADCbase)<<1) | SPI_Read;
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);
 	setPixiTask(TASK_readADC);
@@ -135,9 +137,9 @@ void MAX11300_setDAC(uint8_t port, uint16_t value)
 {
 	uint8_t rgData[3] = "";
 	 
-	rgData[0] = (ADDR_DACbase+rgPortMap[port])<<1 | SPI_Write;
+	rgData[0] = ((ADDR_DACbase+rgPortMap[port])<<1) | SPI_Write;
 	rgData[1] = (value&0xFF00)>>8;
-	rgData[2] = (value&0x00FF);
+	rgData[2] = value&0x00FF;
 	 	
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);	
@@ -152,7 +154,7 @@ void MAX11300_setDAC(uint8_t port, uint16_t value)
 
 void MAX11300_setDACValue(uint8_t ucChannel, uint16_t value){
   rgDACData_Tx[(ucChannel*2)+1]	= (value&0x0F00)>>8;
-  rgDACData_Tx[(ucChannel*2)+2] = (value&0x00FF);
+  rgDACData_Tx[(ucChannel*2)+2] = value&0x00FF;
 }
 
 void MAX11300_bulksetDAC(uint16_t* rgDACData)
@@ -180,7 +182,7 @@ uint16_t MAX11300_readDAC(uint8_t port)
 	uint8_t ucAddress, rgRtnData[2] = "";
 	uint16_t usiRtnValue = 0;
 	 
-	ucAddress = (ADDR_DACbase+port)<<1 | SPI_Read;
+	ucAddress = ((ADDR_DACbase+port)<<1) | SPI_Read;
 	
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);
@@ -228,8 +230,8 @@ void MAX11300_TxINTCallback(void)
 }
 
 uint16_t MAX11300_getADCValue(uint8_t ucChannel){
-  uint16_t ret = rgADCData_Rx[(ucChannel*2)+1]<<8;
-  ret += rgADCData_Rx[(ucChannel*2)+2];
+  uint16_t ret = rgADCData_Rx[ucChannel*2+1]<<8;
+  ret += rgADCData_Rx[ucChannel*2+2];
   return ret;
 }
 
@@ -258,8 +260,8 @@ void MAX11300_TxRxINTCallback(void){
   }
 }
 
-void Nop_delay(uint32_t nops){
-  while (nops--)
-    __asm("NOP");
-}
+/* void Nop_delay(uint32_t nops){ */
+/*   while (nops--) */
+/*     __asm("NOP"); */
+/* } */
 

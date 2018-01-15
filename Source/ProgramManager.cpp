@@ -319,6 +319,7 @@ void runScreenTask(void* p){
   // the higher priority audio task
   // const TickType_t delay = 20 / portTICK_PERIOD_MS;
   volatile TickType_t delay = 20 / portTICK_PERIOD_MS;
+  volatile uint32_t baseled = 0xfff00000ul;
   // OLED_ClearScreen();
   for(;;){
     // todo: run USB Host task here, get rid of loop and idle tasks
@@ -327,8 +328,8 @@ void runScreenTask(void* p){
     TLC5946_Refresh_GS();
     // MAX11300_bulksetDAC(...);
     MAX11300_bulkreadADC();
-    for(int i=0; i<16; ++i)
-      setLed(i, MAX11300_getADCValue(i));
+    for(int i=0; i<16; i+=2)
+      setLed(i, MAX11300_getADCValue(i) + baseled);
 #else
 #endif /* OWL_MAGUS */
     graphics.draw();

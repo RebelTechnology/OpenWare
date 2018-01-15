@@ -86,7 +86,7 @@ public:
       if(size > MAX_SYSEX_FIRMWARE_SIZE)
 	return setError("SysEx too big");
 #if 0
-      static uint8_t static_buffer[1024*8]; // todo remove!
+      static uint8_t static_buffer[1024*12]; // todo remove!
       buffer = static_buffer; 
 #else
       extern char _EXTRAM; // defined in link script

@@ -13,6 +13,11 @@ void setup(void){
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
   HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
 
+  extern SPI_HandleTypeDef hspi5;
+  TLC5946_init(&hspi5);
+  MAX11300_init(&hspi5);
+  OLED_init(&hspi5);
+
   // Pixi
   MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep/*|DCR_BRST_Contextual*/);
 

@@ -54,9 +54,6 @@
 #include "usb_host.h"
 
 /* USER CODE BEGIN Includes */
-#include "HAL_MAX11300.h"
-#include "HAL_TLC5946.h"
-/* #include "HAL_OLED.h" */
 #include "errorhandlers.h"
 /* USER CODE END Includes */
 
@@ -174,9 +171,6 @@ int main(void)
 
   SDRAM_Initialization_Sequence(&hsdram1);   
 
-  TLC5946_init(&hspi5);
-  MAX11300_init(&hspi5);
-  /* OLED_init(&hspi5); */
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -655,10 +649,11 @@ void StartDefaultTask(void const * argument)
 void _Error_Handler(char * file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  while(1) 
-  {
-  }
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END Error_Handler_Debug */ 
 }
 
@@ -674,8 +669,11 @@ void _Error_Handler(char * file, int line)
 void assert_failed(uint8_t* file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-    ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END 6 */
 
 }
