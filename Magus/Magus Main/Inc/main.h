@@ -77,15 +77,15 @@
 #define OSC1_GPIO_Port GPIOH
 #define OSC2_Pin GPIO_PIN_1
 #define OSC2_GPIO_Port GPIOH
-#define OLED_nCS_Pin GPIO_PIN_0
+#define OLED_nCS_Pin GPIO_PIN_4
 #define OLED_nCS_GPIO_Port GPIOA
-#define OLED_RST_Pin GPIO_PIN_1
+#define OLED_RST_Pin GPIO_PIN_3
 #define OLED_RST_GPIO_Port GPIOA
 #define USART_MOSI_Pin GPIO_PIN_2
 #define USART_MOSI_GPIO_Port GPIOA
 #define USART_MISO_Pin GPIO_PIN_3
 #define USART_MISO_GPIO_Port GPIOA
-#define OLED_DC_Pin GPIO_PIN_4
+#define OLED_DC_Pin GPIO_PIN_0
 #define OLED_DC_GPIO_Port GPIOA
 #define PIXI_nCS_Pin GPIO_PIN_5
 #define PIXI_nCS_GPIO_Port GPIOA
@@ -118,13 +118,13 @@
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
 #define TLC_MODE_Pin GPIO_PIN_9
-#define TLC_MODE_GPIO_Port GPIOG
-#define TLC_XLAT_Pin GPIO_PIN_10
-#define TLC_XLAT_GPIO_Port GPIOG
+#define TLC_MODE_GPIO_Port GPIOB
+#define TLC_XLAT_Pin GPIO_PIN_8
+#define TLC_XLAT_GPIO_Port GPIOB
 #define FLASH_SCK_Pin GPIO_PIN_3
 #define FLASH_SCK_GPIO_Port GPIOB
-#define TLC_BLANK_Pin GPIO_PIN_8
-#define TLC_BLANK_GPIO_Port GPIOB
+#define TLC_BLANK_Pin GPIO_PIN_10
+#define TLC_BLANK_GPIO_Port GPIOG
 #define ENC_nCS_Pin GPIO_PIN_9
 #define ENC_nCS_GPIO_Port GPIOB
 

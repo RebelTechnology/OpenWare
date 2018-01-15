@@ -230,21 +230,68 @@ int main(void)
   rgDACValues[PORT_15] = 4095;
   rgDACValues[PORT_16] = 4095;
 	
-	
 	for (x=0; x<20; x++) {MAX11300_setDAC(x, rgDACValues[x]);}
 	
 	// LEDs
-	Magus_setRGB_DC(63,63,63);
-	for (x=1; x<17; x++) {Magus_setRGB(x,	400,	400,	400);}
+	Magus_setRGB_DC(10,	10,	10);
+	
+	// Start LED Driver PWM
+	HAL_TIM_MspPostInit(&htim3);
+	HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+  HAL_TIMEx_PWMN_Start(&htim3, TIM_CHANNEL_4);
 
+	// Red
+	Magus_setRGB(1,		3000,	0,	0);
+	Magus_setRGB(2,		3000,	0,	0);
+	Magus_setRGB(9,		3000,	0,	0);
+	Magus_setRGB(10,	3000,	0,	0);
+	
+	// Green
+	Magus_setRGB(3,		0,	3000,	0);
+	Magus_setRGB(4,		0,	3000,	0);
+	Magus_setRGB(11,	0,	3000,	0);
+	Magus_setRGB(12,	0,	3000,	0);
+	
+	// Blue
+	Magus_setRGB(5,		0,	0,	3000);
+	Magus_setRGB(6,		0,	0,	3000);
+	Magus_setRGB(13,	0,	0,	3000);
+	Magus_setRGB(14,	0,	0,	3000);
+	
+	// White
+	Magus_setRGB(7,		3000,	3000,	3000);
+	Magus_setRGB(8,		3000,	3000,	3000);
+	Magus_setRGB(15,	3000,	3000,	3000);
+	Magus_setRGB(16,	3000,	3000,	3000);
+
+	// Clear Screen
+	OLED_ClearScreen();
+	
+	OLED_setPixel(10,0);
+	OLED_setPixel(11,1);
+	OLED_setPixel(12,2);
+	OLED_setPixel(13,3);
+	OLED_setPixel(14,4);
+	OLED_setPixel(15,5);
+	OLED_setPixel(16,6);
+	OLED_setPixel(17,7);
+	OLED_setPixel(18,6);
+	OLED_setPixel(19,5);
+	OLED_setPixel(20,4);
+	OLED_setPixel(21,3);
+	OLED_setPixel(22,2);
+	OLED_setPixel(23,1);
+	OLED_setPixel(24,0);
+	
   while (1)
   {
   /* USER CODE END WHILE */
 		
   /* USER CODE BEGIN 3 */
-		OLED_Refresh();
 		TLC5946_Refresh_GS();
-		HAL_Delay(5);
+		OLED_Refresh();
+		HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -434,7 +481,7 @@ static void MX_SPI5_Init(void)
   hspi5.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi5.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi5.Init.NSS = SPI_NSS_SOFT;
-  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi5.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi5.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi5.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -478,12 +525,6 @@ static void MX_TIM3_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-
-  HAL_TIM_MspPostInit(&htim3);
-	
-	HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
 }
 
 /* USART2 init function */
@@ -609,10 +650,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : FLASH_nWP_Pin CS_nCS_Pin CS_nRST_Pin TLC_BLANK_Pin 
+  /*Configure GPIO pins : FLASH_nWP_Pin CS_nCS_Pin CS_nRST_Pin 
                            ENC_nCS_Pin */
-  GPIO_InitStruct.Pin = FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin|TLC_BLANK_Pin 
-                          |ENC_nCS_Pin;
+  GPIO_InitStruct.Pin = FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin|TLC_MODE_Pin|TLC_XLAT_Pin|ENC_nCS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -630,8 +670,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(USB_HOST_PWR_FAULT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TLC_MODE_Pin TLC_XLAT_Pin */
-  GPIO_InitStruct.Pin = TLC_MODE_Pin|TLC_XLAT_Pin;
+  /*Configure GPIO pins : TLC_BLANK_Pin */
+  GPIO_InitStruct.Pin = TLC_BLANK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

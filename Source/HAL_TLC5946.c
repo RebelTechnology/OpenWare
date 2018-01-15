@@ -83,6 +83,7 @@ void TLC5946_SetOutput_DC(unsigned char IC, unsigned char LED_ID, unsigned char 
 
 void TLC5946_TxINTCallback(void)
 {
+	// Latch pulse
 	pXLAT(1);
 	pBLANK(1);
 	pXLAT(0);
@@ -99,7 +100,7 @@ void TLC5946_Refresh_GS(void)
 {
 	// Update Grayscale
 	pMODE(Mode_GS);
-	pBLANK(0);
+	pBLANK(1);
 	
 #ifdef TLC_CONTINUOUS	
 	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf[0], sizeof rgGSbuf[0]);		// IC 0 
@@ -110,24 +111,29 @@ void TLC5946_Refresh_GS(void)
 	HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf[1], sizeof rgGSbuf[1], 100);	// IC 1
 	HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf[2], sizeof rgGSbuf[2], 100);	// IC 3
 	
+	// Latch pulse
 	pXLAT(1);
-	pBLANK(1);
+	HAL_Delay(1);
 	pXLAT(0);
+	
+	pBLANK(0);
 #endif
 }
 
 void TLC5946_Refresh_DC(void)
 {
+	pXLAT(0);
 	pMODE(Mode_DC);
-	
-	pXLAT(0);
-	pXLAT(1);
-	pXLAT(0);
 	
 	// Update Dot Correction
 	HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf[0], sizeof rgDCbuf[0], 100);	// IC 0
 	HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf[1], sizeof rgDCbuf[1], 100);	// IC 1
 	HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf[2], sizeof rgDCbuf[2], 100);	// IC 3
+	
+	// Latch pulse
+	pXLAT(1);
+	HAL_Delay(1);
+	pXLAT(0);
 }
 
 // _____ Magus Functions _____
