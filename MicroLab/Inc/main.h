@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : main.h
+  * File Name          : main.hpp
   * Description        : This file contains the common defines of the application
   ******************************************************************************
   * This notice applies to any and all portions of this file
@@ -9,7 +9,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -50,6 +50,7 @@
 #define __MAIN_H
   /* Includes ------------------------------------------------------------------*/
 
+/* Includes ------------------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -98,20 +99,28 @@
 #define FLASH_nCS_GPIO_Port GPIOC
 #define PWM3_Pin GPIO_PIN_1
 #define PWM3_GPIO_Port GPIOB
-#define GP7_Pin GPIO_PIN_2
-#define GP7_GPIO_Port GPIOB
-#define GP7_EXTI_IRQn EXTI2_IRQn
+#define SW1_Pin GPIO_PIN_2
+#define SW1_GPIO_Port GPIOB
+#define SW1_EXTI_IRQn EXTI2_IRQn
 #define CS_nCS_Pin GPIO_PIN_10
 #define CS_nCS_GPIO_Port GPIOB
 #define CS_nRST_Pin GPIO_PIN_11
 #define CS_nRST_GPIO_Port GPIOB
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
-#define PWM4_Pin GPIO_PIN_8
-#define PWM4_GPIO_Port GPIOB
-#define GP8_Pin GPIO_PIN_9
-#define GP8_GPIO_Port GPIOB
-#define GP8_EXTI_IRQn EXTI9_5_IRQn
+#define SW3_Pin GPIO_PIN_8
+#define SW3_GPIO_Port GPIOB
+#define SW3_EXTI_IRQn EXTI9_5_IRQn
+#define SW2_Pin GPIO_PIN_9
+#define SW2_GPIO_Port GPIOB
+#define SW2_EXTI_IRQn EXTI9_5_IRQn
+
+/* ########################## Assert Selection ############################## */
+/**
+  * @brief Uncomment the line below to expanse the "assert_param" macro in the 
+  *        HAL drivers code
+  */
+ #define USE_FULL_ASSERT    1U 
 
 /* USER CODE BEGIN Private defines */
 
@@ -122,9 +131,15 @@
 
 /* USER CODE END Private defines */
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 void _Error_Handler(char *, int);
 
 #define Error_Handler() _Error_Handler(__FILE__, __LINE__)
+#ifdef __cplusplus
+}
+#endif
 
 /**
   * @}

@@ -61,7 +61,7 @@ void setAnalogValue(uint8_t ch, uint16_t value){
   }
 }
 
-#ifdef OWL_MICROLAB
+#ifdef OWL_MICROLAB_LED
 void setLed(uint8_t ch, uint16_t brightness){
   // brightness should be a 10 bit value
   brightness = brightness&0x3ff;
@@ -100,12 +100,12 @@ void initLed(){
   HAL_TIM_Base_Start(&htim5);
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
 }
-#endif /* OWL_MICROLAB */
+#endif /* OWL_MICROLAB_LED */
 
 #ifdef USE_RGB_LED
 void setLed(uint32_t rgb){
-#if defined OWL_TESSERACT
   // rgb should be a 3x 10 bit value
+#if defined OWL_TESSERACT
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
@@ -113,6 +113,10 @@ void setLed(uint32_t rgb){
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM4->CCR3 = 1023 - ((rgb>>00)&0x3ff);
+#elif defined OWL_MICROLAB
+  TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
+  TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
+  TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
 #endif
 }
 
@@ -129,15 +133,19 @@ void setLed(int16_t red, int16_t green, int16_t blue){
   TIM2->CCR1 = red;
   TIM5->CCR2 = green;
   TIM4->CCR3 = blue;
+#elif defined OWL_MICROLAB
+  TIM2->CCR1 = red;
+  TIM3->CCR4 = green;
+  TIM5->CCR2 = blue;
 #endif
 }
 
 void initLed(){
-  // minilab
+  // MiniLab
   // PWM1: TIM2_CH1
   // PWM2: TIM5_CH2
   // PWM3: TIM4_CH3
-  // Tesseract
+  // Tesseract and MicroLab
   // LED_R PA0/LGP1 TIM2_CH1
   // LED_G PA1/LGP2 TIM5_CH2
   // LED_B PB1/LGP6 TIM3_CH4
@@ -166,6 +174,16 @@ void initLed(){
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
   HAL_TIM_Base_Start(&htim4);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+#elif defined OWL_MICROLAB
+  extern TIM_HandleTypeDef htim2;
+  extern TIM_HandleTypeDef htim3;
+  extern TIM_HandleTypeDef htim5;
+  HAL_TIM_Base_Start(&htim2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_Base_Start(&htim5);
+  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
+  HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 #endif
 }
 #endif /* USE_RGB_LED */
@@ -204,23 +222,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     break;
 #endif
 #ifdef OWL_MICROLAB
-    // todo remove
-  case TRIG1_Pin:
-  case TRIG2_Pin:    
-    setButtonValue(PUSHBUTTON, !(TRIG1_GPIO_Port->IDR & TRIG1_Pin));
-    setParameterValue(PARAMETER_E, (TRIG2_GPIO_Port->IDR & TRIG2_Pin) == 0 ? 4095 : 0);
-    setLed(LED1, 0);
-    setLed(LED2, 0);
-    setLed(LED3, 0);
-    setLed(LED4, 0);
-    if(!(TRIG1_GPIO_Port->IDR & TRIG1_Pin)){
-      setLed(LED1, 1023);
-      setLed(LED3, 1023);
-    }
-    if(!(TRIG2_GPIO_Port->IDR & TRIG2_Pin)){
-      setLed(LED2, 1023);
-      setLed(LED4, 1023);
-    }
+  case SW1_Pin:
+    setButtonValue(BUTTON_A, !(SW1_GPIO_Port->IDR & SW1_Pin));
+    setButtonValue(PUSHBUTTON, !(SW1_GPIO_Port->IDR & SW1_Pin));
+    break;
+  case SW2_Pin:
+    setButtonValue(BUTTON_B, !(SW2_GPIO_Port->IDR & SW2_Pin));
+    setParameterValue(PARAMETER_E, (SW2_GPIO_Port->IDR & SW2_Pin) == 0 ? 4095 : 0);
+    ledstatus = getButtonValue(BUTTON_B) ? 0xffc00 : 0;
+    break;
+  case SW3_Pin:
+    setButtonValue(BUTTON_C, !(SW3_GPIO_Port->IDR & SW3_Pin));
+    ledstatus = getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
     break;
 #endif
 #ifdef OWL_MICROLAB_LED
@@ -277,13 +290,13 @@ void setup(){
   setLed(1000, 1000, 1000);
 #endif /* USE_RGB_LED */
 
-#ifdef OWL_MICROLAB
+#ifdef OWL_MICROLAB_LED
   initLed();
   setLed(LED1, 0);
   setLed(LED2, 0);
   setLed(LED3, 0);
   setLed(LED4, 0);
-#endif /* OWL_MICROLAB */
+#endif /* OWL_MICROLAB_LED */
 
 #ifdef USE_ENCODERS
   extern TIM_HandleTypeDef ENCODER_TIM1;
@@ -317,10 +330,11 @@ void loop(void){
   midi.push();
 #ifdef USE_RGB_LED
   uint32_t colour =
-    (adc_values[ADC_A]>>3)+
-    (adc_values[ADC_B]>>3)+
-    (adc_values[ADC_C]>>3)+
-    (adc_values[ADC_D]>>3);
+    (adc_values[ADC_A]>>4)+
+    (adc_values[ADC_B]>>4)+
+    (adc_values[ADC_C]>>4)+
+    (adc_values[ADC_D]>>4)+
+    (adc_values[ADC_E]>>4);
   colour &= 0x3ff;
   setLed(ledstatus ^ rainbow[colour]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);

@@ -9,6 +9,10 @@ bool midi_error(const char* str){
 
 bool MidiReader::readMidiFrame(uint8_t* frame){
   // apparently no running status in USB MIDI frames
+#ifdef USE_MIDI_CALLBACK
+  if(midiCallback != NULL && frame[0] >= USB_COMMAND_NOTE_OFF)
+    midiCallback(frame[0], frame[1], frame[2], frame[3]);
+#endif
   switch(frame[0]){
   case USB_COMMAND_MISC:
   case USB_COMMAND_CABLE_EVENT:
@@ -132,3 +136,13 @@ bool MidiReader::readMidiFrame(uint8_t* frame){
 void MidiReader::reset(){
   pos = 0;
 }
+
+#ifdef USE_MIDI_CALLBACK
+void MidiReader::setCallback(void *callback){
+  // if(callback == NULL)
+  //   midiCallback = NULL;
+  // else
+  midiCallback = (void (*)(uint8_t, uint8_t, uint8_t, uint8_t))callback;
+}
+#endif /* USE_MIDI_CALLBACK */
+

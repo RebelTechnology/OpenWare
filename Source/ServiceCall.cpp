@@ -9,6 +9,9 @@
 #ifdef USE_SCREEN
 #include "Graphics.h"
 #endif
+#ifdef USE_MIDI_CALLBACK
+#include "MidiReader.h"
+#endif /* USE_MIDI_CALLBACK */
 
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
   switch(len) { 
@@ -116,18 +119,30 @@ int serviceCall(int service, void** params, int len){
   case OWL_SERVICE_REGISTER_CALLBACK: {
     int index = 0;
     if(len >= index+2){
-#ifdef USE_SCREEN
       char* name = (char*)params[index++];
       void* callback = (void*)params[index++];
+#ifdef USE_SCREEN
       if(strncmp(SYSTEM_FUNCTION_DRAW, name, 3) == 0){
+	// void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
 	graphics.setCallback(callback);
 	ret = OWL_SERVICE_OK;
       }
 #endif /* USE_SCREEN */
+#ifdef USE_MIDI_CALLBACK
+      if(strncmp(SYSTEM_FUNCTION_MIDI, name, 3) == 0){
+	// void (*midiCallback)(uint8_t port, uint8_t status, uint8_t, uint8_t);
+	extern MidiReader mididevice;
+	mididevice.setCallback(callback);
+#ifdef USE_USB_HOST
+	extern MidiReader midihost;
+	midihost.setCallback(callback);
+#endif /* USE_USB_HOST */
+	ret = OWL_SERVICE_OK;
+      }
+#endif /* USE_MIDI_CALLBACK */
     }
     break;
   }
-
   }
   return ret;
-}     
+}

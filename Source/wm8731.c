@@ -55,6 +55,13 @@ void codec_set_volume(int8_t level){
   codec_write(RIGHT_HEADPHONE_OUT_REGISTER, gain);
 }
 
+void codec_set_volume(int8_t gain){
+  gain = (wm8731_registers[LEFT_HEADPHONE_OUT_REGISTER] & 0x80) | (gain & 0x7f);
+  writeRegister(LEFT_HEADPHONE_OUT_REGISTER, gain);
+  gain = (wm8731_registers[RIGHT_HEADPHONE_OUT_REGISTER] & 0x80) | (gain & 0x7f);
+  writeRegister(RIGHT_HEADPHONE_OUT_REGISTER, gain);
+}
+
 #if 0
 /* void CodecController::clear(){ */
 /*   memset(tx_buffer, 0, AUDIO_BUFFER_SIZE*sizeof(int16_t)); */
