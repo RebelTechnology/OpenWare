@@ -126,7 +126,7 @@
 #define TLC_BLANK_Pin GPIO_PIN_10
 #define TLC_BLANK_GPIO_Port GPIOG
 #define ENC_nCS_Pin GPIO_PIN_9
-#define ENC_nCS_GPIO_Port GPIOB
+#define ENC_nCS_GPIO_Port GPIOG
 
 /* ########################## Assert Selection ############################## */
 /**

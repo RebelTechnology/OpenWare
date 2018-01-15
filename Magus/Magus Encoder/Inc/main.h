@@ -85,6 +85,8 @@
 #define ENC5_B_GPIO_Port GPIOB
 #define ENC6_SW_Pin GPIO_PIN_7
 #define ENC6_SW_GPIO_Port GPIOB
+#define SPI_NCS_Pin	GPIO_PIN_4
+#define SPI_NCS_GPIO_Port GPIOA
 
 /* ########################## Assert Selection ############################## */
 /**

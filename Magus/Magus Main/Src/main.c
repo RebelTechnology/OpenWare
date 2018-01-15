@@ -57,6 +57,7 @@
 #include "HAL_MAX11300.h"
 #include "HAL_TLC5946.h"
 #include "HAL_OLED.h"
+#include "HAL_Encoders.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -80,8 +81,6 @@ osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 uint8_t x;
-uint16_t rgADCValues[20];
-uint16_t rgDACValues[20];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -147,6 +146,7 @@ int main(void)
 	TLC5946_init(&hspi5);
 	MAX11300_init(&hspi5);
 	OLED_init(&hspi5);
+	Encoders_init(&hspi5);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -216,21 +216,7 @@ int main(void)
   MAX11300_setPortMode(PORT_14, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
   MAX11300_setPortMode(PORT_15, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
 	
-	rgDACValues[PORT_0]  = 4095;
-	rgDACValues[PORT_1]  = 2048;
-  rgDACValues[PORT_2]  = 1024;
-  rgDACValues[PORT_3]  = 0;
-  rgDACValues[PORT_7]  = 1024;
-  rgDACValues[PORT_9]  = 512;
-  rgDACValues[PORT_10] = 1024;
-  rgDACValues[PORT_11] = 1024;
-  rgDACValues[PORT_12] = 1024;
-  rgDACValues[PORT_13] = 1024;
-  rgDACValues[PORT_14] = 4095;
-  rgDACValues[PORT_15] = 4095;
-  rgDACValues[PORT_16] = 4095;
-	
-	for (x=0; x<20; x++) {MAX11300_setDAC(x, rgDACValues[x]);}
+	for (x=0; x<20; x++) {MAX11300_setDAC(x, 0);}
 	
 	// LEDs
 	Magus_setRGB_DC(10,	10,	10);
@@ -290,8 +276,10 @@ int main(void)
 		
   /* USER CODE BEGIN 3 */
 		TLC5946_Refresh_GS();
-		OLED_Refresh();
 		HAL_Delay(10);
+//		OLED_Refresh();
+		Encoders_readAll();
+		HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
@@ -481,7 +469,7 @@ static void MX_SPI5_Init(void)
   hspi5.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi5.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi5.Init.NSS = SPI_NSS_SOFT;
-  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
   hspi5.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi5.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi5.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -627,8 +615,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, FLASH_HOLD_Pin|FLASH_nCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin|TLC_BLANK_Pin 
-                          |ENC_nCS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin|TLC_BLANK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
@@ -652,7 +639,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : FLASH_nWP_Pin CS_nCS_Pin CS_nRST_Pin 
                            ENC_nCS_Pin */
-  GPIO_InitStruct.Pin = FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin|TLC_MODE_Pin|TLC_XLAT_Pin|ENC_nCS_Pin;
+  GPIO_InitStruct.Pin = FLASH_nWP_Pin|CS_nCS_Pin|CS_nRST_Pin|TLC_MODE_Pin|TLC_XLAT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -671,7 +658,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(USB_HOST_PWR_FAULT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : TLC_BLANK_Pin */
-  GPIO_InitStruct.Pin = TLC_BLANK_Pin;
+  GPIO_InitStruct.Pin = TLC_BLANK_Pin|ENC_nCS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

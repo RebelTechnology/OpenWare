@@ -94,7 +94,6 @@ int main(void)
   MX_SPI1_Init();
 
   /* USER CODE BEGIN 2 */
-	
 	HAL_NVIC_SetPriority(EXTI0_1_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
 	HAL_NVIC_SetPriority(EXTI2_3_IRQn, 3, 0);
@@ -249,6 +248,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : ENC4_A_Pin ENC5_A_Pin ENC5_B_Pin */
+  GPIO_InitStruct.Pin = SPI_NCS_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(SPI_NCS_GPIO_Port, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 4 */

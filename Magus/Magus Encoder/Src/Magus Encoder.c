@@ -92,23 +92,29 @@ void scan_Encoders (void)
 
 void send_SPI(void)
 {
-	uint16_t Data[7];
+	uint8_t Data[13] = "";
 	
 	// Build Tx string
-	Data[0]  = bSwitch_ENC[1]<<0;
-	Data[0] |= bSwitch_ENC[2]<<1;
-	Data[0] |= bSwitch_ENC[3]<<2;
-	Data[0] |= bSwitch_ENC[4]<<3;
-	Data[0] |= bSwitch_ENC[5]<<4;
-	Data[0] |= bSwitch_ENC[6]<<5;
-	Data[1]  = siValue_ENC[1];
-	Data[2]  = siValue_ENC[2];
-	Data[3]  = siValue_ENC[3];
-	Data[4]  = siValue_ENC[4];
-	Data[5]  = siValue_ENC[5];
-	Data[6]  = siValue_ENC[6];
+	Data[0]   = bSwitch_ENC[1]<<0;
+	Data[0]  |= bSwitch_ENC[2]<<1;
+	Data[0]  |= bSwitch_ENC[3]<<2;
+	Data[0]  |= bSwitch_ENC[4]<<3;
+	Data[0]  |= bSwitch_ENC[5]<<4;
+	Data[0]  |= bSwitch_ENC[6]<<5;
+	Data[1]   = (siValue_ENC[1]&0xFF00)>>8;
+	Data[2]  |= (siValue_ENC[1]&0x00FF);
+	Data[3]   = (siValue_ENC[2]&0xFF00)>>8;
+	Data[4]  |= (siValue_ENC[2]&0x00FF);
+	Data[5]   = (siValue_ENC[3]&0xFF00)>>8;
+	Data[6]  |= (siValue_ENC[3]&0x00FF);
+	Data[7]   = (siValue_ENC[4]&0xFF00)>>8;
+	Data[8]  |= (siValue_ENC[4]&0x00FF);
+	Data[9]   = (siValue_ENC[5]&0xFF00)>>8;
+	Data[10] |= (siValue_ENC[5]&0x00FF);
+	Data[11]  = (siValue_ENC[6]&0xFF00)>>8;
+	Data[12] |= (siValue_ENC[6]&0x00FF);
 	
 	// Send data
-	HAL_SPI_Transmit(&hspi1, (uint8_t*)&Data, 7, 100);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&Data, 13, 100);
 }
 
