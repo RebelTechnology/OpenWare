@@ -318,14 +318,15 @@ void runScreenTask(void* p){
   // the higher priority audio task
   // const TickType_t delay = 20 / portTICK_PERIOD_MS;
   volatile TickType_t delay = 20 / portTICK_PERIOD_MS;
-	OLED_ClearScreen();
+  OLED_ClearScreen();
   for(;;){
     // todo: run USB Host task here, get rid of loop and idle tasks
 #ifdef OWL_MAGUS
     // also update LEDs and MAX11300
     OLED_Refresh();
     TLC5946_Refresh_GS();
-    MAX11300_bulksetDAC();
+    // MAX11300_bulksetDAC();
+    MAX11300_bulkreadADC();
     // HAL_Delay(5);
     // static uint16_t x = 0;
     // static uint16_t y = 0;

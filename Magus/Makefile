@@ -4,7 +4,8 @@ OPENWARE ?= $(BUILDROOT)/..
 
 include $(OPENWARE)/STM32F427ZI.mk
 
-C_SRC = $(notdir $(wildcard Src/*.c))
+C_SRC = $(filter-out test.c,$(notdir $(wildcard Src/*.c)))
+# C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += sdram.c
 C_SRC += cs4272.c
