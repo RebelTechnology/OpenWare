@@ -28,7 +28,7 @@ Graphics graphics;
 #ifdef OWL_MAGUS
 #include "HAL_TLC5946.h"
 #include "HAL_MAX11300.h"
-#include "HAL_OLED.h"
+// #include "HAL_OLED.h"
 #endif
 
 #ifndef min
@@ -357,7 +357,7 @@ void setup(){
 
 #ifdef USE_SCREEN
   extern SPI_HandleTypeDef OLED_SPI;
-  // graphics.begin(&OLED_SPI);
+  graphics.begin(&OLED_SPI);
 #endif /* USE_SCREEN */
 
 #ifdef USE_ADC
@@ -384,7 +384,7 @@ void setLed(uint8_t led, uint32_t rgb){
 void loop(void){
   taskYIELD();
   midi.push();
-  volatile TickType_t delay = 10 / portTICK_PERIOD_MS;
+  volatile TickType_t delay = 20 / portTICK_PERIOD_MS;
   vTaskDelay(delay);
 #ifdef USE_RGB_LED
   uint32_t colour =

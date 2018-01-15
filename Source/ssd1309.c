@@ -19,11 +19,11 @@
 static void OLED_writeCMD(const uint8_t* data, uint16_t length);
 
 // Delay 
-static void NopDelay(uint32_t nops)
-{
-	while (nops--)	
-	  __asm("NOP");
-}
+/* static void NopDelay(uint32_t nops) */
+/* { */
+/* 	while (nops--)	 */
+/* 	  __asm("NOP"); */
+/* } */
 
 // _____ Variables _____________________________________________________________________
 static const uint8_t OLED_initSequence[] = 
@@ -60,6 +60,7 @@ static void OLED_writeCMD(const uint8_t* data, uint16_t length)
 	pCS_Set();	// CS high
 }
 
+#ifdef OLED_DMA
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
   assert_param(0);
 }
@@ -69,19 +70,21 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
     pCS_Set();	// CS high
   }
 }
+#endif
 
 /* void OLED_writeDAT(const uint8_t* data, uint16_t length) */
 void oled_write(const uint8_t* data, uint16_t length)
 {
 	pCS_Clr();	// CS low
 	pDC_Set();	// DC high
-	
-	/* // Send Data */
-	/* HAL_SPI_Transmit(OLED_SPIInst, (uint8_t*)data, length, 1000); */
-	/* pCS_Set();	// CS high */
-	
+
+#ifdef OLED_DMA
 	// Send Data
-	HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length);	
+	HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length);
+#else
+	HAL_SPI_Transmit(OLED_SPIInst, (uint8_t*)data, length, 1000);
+	pCS_Set();	// CS high
+#endif
 }
 
 /* void OLED_Refresh(void) */
@@ -142,12 +145,15 @@ void oled_init(SPI_HandleTypeDef* spi){
 #endif	
 	// Initialisation
 	pRST_Clr();
-	NopDelay(2000);
+	HAL_Delay(10);
+	/* NopDelay(2000); */
 	pRST_Set();
 	
-	NopDelay(20000);
+	HAL_Delay(20);
+	/* NopDelay(20000); */
 	OLED_writeCMD(OLED_initSequence, sizeof OLED_initSequence);
-	NopDelay(20000);
+	HAL_Delay(20);
+	/* NopDelay(20000); */
 	
 }
 

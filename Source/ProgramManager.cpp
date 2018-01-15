@@ -21,7 +21,7 @@ static TaskHandle_t screenTask = NULL;
 #ifdef OWL_MAGUS
 #include "HAL_MAX11300.h"
 #include "HAL_TLC5946.h"
-#include "HAL_OLED.h"
+// #include "HAL_OLED.h"
 #endif
 
 // FreeRTOS low priority numbers denote low priority tasks. 
@@ -318,12 +318,12 @@ void runScreenTask(void* p){
   // the higher priority audio task
   // const TickType_t delay = 20 / portTICK_PERIOD_MS;
   volatile TickType_t delay = 20 / portTICK_PERIOD_MS;
-  OLED_ClearScreen();
+  // OLED_ClearScreen();
   for(;;){
     // todo: run USB Host task here, get rid of loop and idle tasks
 #ifdef OWL_MAGUS
     // also update LEDs and MAX11300
-    OLED_Refresh();
+    // OLED_Refresh();
     TLC5946_Refresh_GS();
     // MAX11300_bulksetDAC();
     MAX11300_bulkreadADC();
@@ -339,10 +339,10 @@ void runScreenTask(void* p){
     //   }
     // }
 #else
+#endif /* OWL_MAGUS */
     graphics.draw();
     graphics.display();
     vTaskDelay(delay); // allow a minimum amount of time for pixel data to be transferred
-#endif /* OWL_MAGUS */
   }
 }
 #endif
