@@ -35,6 +35,8 @@ static volatile uint8_t ucPixiBusy;
 // Pin Control
 #define pbarCS(state)		HAL_GPIO_WritePin(PIXI_nCS_GPIO_Port,  PIXI_nCS_Pin,  (GPIO_PinState)state)
  
+uint8_t rgPortMap[20] = {PORT_0,PORT_1,PORT_2,PORT_3,PORT_4,PORT_5,PORT_6,PORT_7,PORT_8,PORT_9,PORT_10,PORT_11,PORT_12,PORT_13,PORT_14,PORT_15,PORT_16,PORT_17,PORT_18,PORT_19};
+	 
 //_____ Functions _____________________________________________________________________________________________________
 // Port and Chip Setup
 void MAX11300_setPortMode(uint8_t port, uint16_t config)
@@ -42,7 +44,7 @@ void MAX11300_setPortMode(uint8_t port, uint16_t config)
 	uint8_t rgData[3] = "";
      
 	// Split config into two bytes
-	rgData[0] = (ADDR_CFGbase+port)<<1 | SPI_Write;
+	rgData[0] = (ADDR_CFGbase+rgPortMap[port])<<1 | SPI_Write;
 	rgData[1] = (config&0xFF00)>>8;
 	rgData[2] = (config&0x00FF);
    
@@ -64,7 +66,7 @@ uint16_t MAX11300_readPortMode(uint8_t port)
 	uint8_t ucAddress, rgRtnData[2] = "";
 	uint16_t usiRtnValue = 0;
 	 
-	ucAddress = (ADDR_CFGbase+port)<<1 | SPI_Read;
+	ucAddress = (ADDR_CFGbase+rgPortMap[port])<<1 | SPI_Read;
 	
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);
@@ -103,7 +105,7 @@ void MAX11300_setDeviceControl(uint16_t config)
 uint16_t MAX11300_readADC(uint8_t port)
 {
 	uint16_t usiRtnValue = 0;
-	uint8_t rgData[3] = {((ADDR_ADCbase+port)<<1) | SPI_Read, 0, 0 };
+	uint8_t rgData[3] = {((ADDR_ADCbase+rgPortMap[port])<<1) | SPI_Read, 0, 0 };
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);
 	HAL_SPI_TransmitReceive(MAX11300_SPIConfig, rgData, rgData, 3, 100);
@@ -133,7 +135,7 @@ void MAX11300_setDAC(uint8_t port, uint16_t value)
 {
 	uint8_t rgData[3] = "";
 	 
-	rgData[0] = (ADDR_DACbase+port)<<1 | SPI_Write;
+	rgData[0] = (ADDR_DACbase+rgPortMap[port])<<1 | SPI_Write;
 	rgData[1] = (value&0xFF00)>>8;
 	rgData[2] = (value&0x00FF);
 	 	
@@ -153,8 +155,10 @@ void MAX11300_setDACValue(uint8_t ucChannel, uint16_t value){
   rgDACData_Tx[(ucChannel*2)+2] = (value&0x00FF);
 }
 
-void MAX11300_bulksetDAC(void)
+void MAX11300_bulksetDAC(uint16_t* rgDACData)
 {
+	memcpy(rgDACData_Tx, rgDACData, 16);
+	
 	// Set address
 	rgDACData_Tx[0] = ADDR_DACbase<<1 | SPI_Write;	
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
@@ -218,8 +222,8 @@ void MAX11300_TxINTCallback(void)
 	// Manage next task
 	if (getPixiState() == STATE_ContConv)
 	{
-		if (getPixiTask() == TASK_setDAC) 	{MAX11300_bulkreadADC();}
-		else  															{MAX11300_bulksetDAC();}
+//		if (getPixiTask() == TASK_setDAC) 	{MAX11300_bulkreadADC();}
+//		else  															{MAX11300_bulksetDAC();}
 	}
 }
 
@@ -237,8 +241,8 @@ void MAX11300_RxINTCallback(void)
 	// Manage next task
 	if (getPixiState() == STATE_ContConv)
 	{
-		if (getPixiTask() == TASK_setDAC) 	{MAX11300_bulkreadADC();}
-		else  															{MAX11300_bulksetDAC();}
+//		if (getPixiTask() == TASK_setDAC) 	{MAX11300_bulkreadADC();}
+//		else  															{MAX11300_bulksetDAC();}
 	}
 }
 
@@ -247,10 +251,10 @@ void MAX11300_TxRxINTCallback(void){
   setPixiBusy(STATE_Idle);	
   // Manage next task
   if (getPixiState() == STATE_ContConv){
-    if(getPixiTask() == TASK_setDAC)
-      MAX11300_bulkreadADC();
-    else
-      MAX11300_bulksetDAC();
+//    if(getPixiTask() == TASK_setDAC)
+ //     MAX11300_bulkreadADC();
+//    else
+//      MAX11300_bulksetDAC();
   }
 }
 

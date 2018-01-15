@@ -7,26 +7,30 @@
 #endif
 
 // Port Mapping
+
+
+
+
+#define PORT_0    4
+#define PORT_1    7
+#define PORT_2    8
+#define PORT_3   	11
+#define PORT_4   	12
+#define PORT_5   	15
+#define PORT_6   	16
+#define PORT_7   	19
+#define PORT_8   	18
+#define PORT_9   	17
+#define PORT_10   14
+#define PORT_11   13
+#define PORT_12   10
+#define PORT_13   9
+#define PORT_14   6
+#define PORT_15   5
 #define PORT_16		0
 #define PORT_17   1
 #define PORT_18   2
 #define PORT_19   3
-#define PORT_0    4
-#define PORT_15   5
-#define PORT_14   6
-#define PORT_1    7
-#define PORT_2    8
-#define PORT_13   9
-#define PORT_12   10
-#define PORT_3   	11
-#define PORT_4   	12
-#define PORT_11   13
-#define PORT_10   14
-#define PORT_5   	15
-#define PORT_6   	16
-#define PORT_9   	17
-#define PORT_8   	18
-#define PORT_7   	19
 
  
 // RAM addresses
@@ -148,7 +152,7 @@ void MAX11300_ConfigPort(uint8_t, uint16_t);
 uint16_t MAX11300_readADC(uint8_t port);
 void MAX11300_setDAC(uint8_t, uint16_t);
 void MAX11300_bulkreadADC(void);
-void MAX11300_bulksetDAC(void);
+void MAX11300_bulksetDAC(uint16_t* rgDACData_Tx);
 uint16_t MAX11300_getADCValue(uint8_t port);
 void MAX11300_setDACValue(uint8_t port, uint16_t value);
 
