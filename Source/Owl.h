@@ -15,6 +15,7 @@ extern "C" {
   uint16_t getAnalogValue(uint8_t index);
   void setAnalogValue(uint8_t ch, uint16_t value);
 
+  void setLed(uint8_t led, uint32_t rgb);
 #ifdef USE_ENCODERS
   void encoderReset(uint8_t encoder, int32_t value);
   void encoderChanged(uint8_t encoder, int32_t value);

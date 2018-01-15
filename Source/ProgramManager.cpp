@@ -1,6 +1,7 @@
 #include <string.h>
 #include "device.h"
 #include "cmsis_os.h"
+#include "Owl.h"
 #include "PatchRegistry.h"
 #include "ProgramManager.h"
 #include "ProgramVector.h"
@@ -323,21 +324,11 @@ void runScreenTask(void* p){
     // todo: run USB Host task here, get rid of loop and idle tasks
 #ifdef OWL_MAGUS
     // also update LEDs and MAX11300
-    // OLED_Refresh();
     TLC5946_Refresh_GS();
-    // MAX11300_bulksetDAC();
+    // MAX11300_bulksetDAC(...);
     MAX11300_bulkreadADC();
-    // HAL_Delay(5);
-    // static uint16_t x = 0;
-    // static uint16_t y = 0;
-    // OLED_setPixel(x, y);
-    // if(++x > 63){
-    //   x = 0;
-    //   if(++y > 61){
-    // 	y = 0;
-    // 	OLED_ClearScreen();
-    //   }
-    // }
+    for(int i=0; i<16; ++i)
+      setLed(i, MAX11300_getADCValue(i));
 #else
 #endif /* OWL_MAGUS */
     graphics.draw();
