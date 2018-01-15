@@ -17,7 +17,7 @@ uint8_t rgLED_B[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
 void TLC5946_SetOutput_GS(unsigned char IC, unsigned char LED_ID, unsigned short value)
 {
 	unsigned char temp;
-	unsigned char ucBuffLoc = (unsigned char)(LED_ID*1.5);
+	unsigned char ucBuffLoc = LED_ID + (LED_ID>>1); // (unsigned char)(LED_ID*1.5);
 	
 	if (value < 4096)
 	{
