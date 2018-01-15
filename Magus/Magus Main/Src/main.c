@@ -220,7 +220,6 @@ int main(void)
 	rgDACValues[PORT_1]  = 2048;
   rgDACValues[PORT_2]  = 1024;
   rgDACValues[PORT_3]  = 0;
-	
   rgDACValues[PORT_7]  = 1024;
   rgDACValues[PORT_9]  = 512;
   rgDACValues[PORT_10] = 1024;
@@ -230,6 +229,9 @@ int main(void)
   rgDACValues[PORT_14] = 4095;
   rgDACValues[PORT_15] = 4095;
   rgDACValues[PORT_16] = 4095;
+	
+	
+	for (x=0; x<20; x++) {MAX11300_setDAC(x, rgDACValues[x]);}
 	
 	// LEDs
 	Magus_setRGB_DC(63,63,63);
@@ -242,7 +244,6 @@ int main(void)
   /* USER CODE BEGIN 3 */
 		OLED_Refresh();
 		TLC5946_Refresh_GS();
-		MAX11300_bulksetDAC();
 		HAL_Delay(5);
   }
   /* USER CODE END 3 */
