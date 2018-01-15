@@ -66,7 +66,7 @@
 	MiddleWare version : 
 */
 /*----------   -----------*/
-#define USBH_MAX_NUM_ENDPOINTS      5 
+#define USBH_MAX_NUM_ENDPOINTS      10 
  
 /*----------   -----------*/
 #define USBH_MAX_NUM_INTERFACES      10 
@@ -75,13 +75,13 @@
 #define USBH_MAX_NUM_CONFIGURATION      1 
  
 /*----------   -----------*/
-#define USBH_KEEP_CFG_DESCRIPTOR      1 
+#define USBH_KEEP_CFG_DESCRIPTOR      0 
  
 /*----------   -----------*/
 #define USBH_MAX_NUM_SUPPORTED_CLASS      1 
  
 /*----------   -----------*/
-#define USBH_MAX_SIZE_CONFIGURATION      256 
+#define USBH_MAX_SIZE_CONFIGURATION      512 
  
 /*----------   -----------*/
 #define USBH_MAX_DATA_BUFFER      512 
@@ -90,7 +90,7 @@
 #define USBH_DEBUG_LEVEL      0 
  
 /*----------   -----------*/
-#define USBH_USE_OS      1 
+#define USBH_USE_OS      0 
  
  
  
