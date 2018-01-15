@@ -99,10 +99,11 @@ void oled_write(const uint8_t* data, uint16_t length)
 // Configuration
 /* void OLED_Config(SPI_HandleTypeDef* spi, unsigned char* buffer){ */
 void oled_init(SPI_HandleTypeDef* spi){
-	GPIO_InitTypeDef GPIO_InitStruct;
 	OLED_SPIInst = spi;
 	/* OLED_Buffer = buffer; */
-		
+
+#if 0 // should be done by Cube in main.c
+	GPIO_InitTypeDef GPIO_InitStruct;
 	// Configure RST and DC Pins
 	GPIO_InitStruct.Pin   = OLED_RST_Pin | OLED_DC_Pin;					
 	GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
@@ -138,7 +139,7 @@ void oled_init(SPI_HandleTypeDef* spi){
 	OLED_SPIInst->Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
 #endif
 	HAL_SPI_Init(OLED_SPIInst);
-	
+#endif	
 	// Initialisation
 	pRST_Clr();
 	NopDelay(2000);

@@ -317,7 +317,7 @@ void runScreenTask(void* p){
   // this task will be continually interrupted by
   // the higher priority audio task
   // const TickType_t delay = 20 / portTICK_PERIOD_MS;
-  volatile TickType_t delay = 5 / portTICK_PERIOD_MS;
+  volatile TickType_t delay = 20 / portTICK_PERIOD_MS;
 	OLED_ClearScreen();
   for(;;){
     // todo: run USB Host task here, get rid of loop and idle tasks
@@ -326,17 +326,17 @@ void runScreenTask(void* p){
     OLED_Refresh();
     TLC5946_Refresh_GS();
     MAX11300_bulksetDAC();
-    HAL_Delay(5);
-    static uint16_t x = 0;
-    static uint16_t y = 0;
-    OLED_setPixel(x, y);
-    if(++x > 63){
-      x = 0;
-      if(++y > 61){
-	y = 0;
-	OLED_ClearScreen();
-      }
-    }
+    // HAL_Delay(5);
+    // static uint16_t x = 0;
+    // static uint16_t y = 0;
+    // OLED_setPixel(x, y);
+    // if(++x > 63){
+    //   x = 0;
+    //   if(++y > 61){
+    // 	y = 0;
+    // 	OLED_ClearScreen();
+    //   }
+    // }
 #else
     graphics.draw();
     graphics.display();

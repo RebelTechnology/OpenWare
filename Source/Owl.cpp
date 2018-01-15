@@ -16,7 +16,7 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 
-#ifdef USE_RGB_LED
+#if defined USE_RGB_LED || defined OWL_MAGUS
 #include "rainbow.h"
 #endif /* OWL_TESSERACT */
 
@@ -24,6 +24,10 @@
 #include "Graphics.h"
 Graphics graphics;
 #endif /* USE_SCREEN */
+
+#ifdef OWL_MAGUS
+#include "HAL_TLC5946.h"
+#endif
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -331,10 +335,20 @@ void setup(){
 
   midi.init(0);
 }
- 
+
+#ifdef OWL_MAGUS
+void setLed(uint8_t led, uint32_t rgb){
+  // rgb should be a 3x 10 bit value
+  Magus_setRGB(led, (rgb>>20)&0x3ff, (rgb>>10)&0x3ff, (rgb>>00)&0x3ff);
+}
+
+#endif
+
 void loop(void){
   taskYIELD();
   midi.push();
+  volatile TickType_t delay = 10 / portTICK_PERIOD_MS;
+  vTaskDelay(delay);
 #ifdef USE_RGB_LED
   uint32_t colour =
     (adc_values[ADC_A]>>4)+
