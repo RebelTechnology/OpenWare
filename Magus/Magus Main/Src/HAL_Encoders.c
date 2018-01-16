@@ -20,24 +20,38 @@ SPI_HandleTypeDef* Encoders_SPIConfig;
 // Pin Control
 #define pbarCS(state)		HAL_GPIO_WritePin(ENC_nCS_GPIO_Port,  ENC_nCS_Pin,  (GPIO_PinState)state)
 
-uint8_t rgEncoderData[13];
 uint16_t rgENC_Values[7];
 	 
 //_____ Functions _____________________________________________________________________________________________________
 // Port and Chip Setup
 void Encoders_readAll(void)
-{
+{ uint16_t x  = 200;
+	uint8_t rgEncoderData[13];
+	
 	pbarCS(0);
-	HAL_Delay(1);
+	while(--x){__NOP();}
 	HAL_SPI_Receive(Encoders_SPIConfig, rgEncoderData, 13, 1000);
 	pbarCS(1);
 	
+	rgENC_Values[0] = rgEncoderData[0];
 	rgENC_Values[1] = (rgEncoderData[1]<<8)  | rgEncoderData[2];
 	rgENC_Values[2] = (rgEncoderData[3]<<8)  | rgEncoderData[4];
 	rgENC_Values[3] = (rgEncoderData[5]<<8)  | rgEncoderData[6];
 	rgENC_Values[4] = (rgEncoderData[7]<<8)  | rgEncoderData[8];
 	rgENC_Values[5] = (rgEncoderData[9]<<8)  | rgEncoderData[10];
 	rgENC_Values[6] = (rgEncoderData[11]<<8) | rgEncoderData[12];
+}
+
+void Encoders_readSwitches(void)
+{ uint16_t x  = 200;
+	uint8_t rgEncoderData[2];
+	
+	pbarCS(0);
+	while(--x){__NOP();}
+	HAL_SPI_Receive(Encoders_SPIConfig, rgEncoderData, 1, 1000);
+	pbarCS(1);
+	
+	rgENC_Values[0] = rgEncoderData[0];
 }
 
 

@@ -8,6 +8,7 @@
 
 // Prototypes
 void Encoders_readAll(void);
+void Encoders_readSwitches(void);
 void Encoders_init (SPI_HandleTypeDef *spiconfig);
 
 #ifdef __cplusplus

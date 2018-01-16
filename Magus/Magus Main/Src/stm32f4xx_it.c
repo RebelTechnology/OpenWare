@@ -37,7 +37,7 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "HAL_Encoders.h"
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -146,6 +146,10 @@ void SAI1_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
+void EXTI2_IRQHandler(void)
+{	
+	Encoders_readSwitches();
+	__HAL_GPIO_EXTI_CLEAR_IT(ENC_CHGRDY_Pin);
+}
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
