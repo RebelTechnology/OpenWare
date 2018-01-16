@@ -145,14 +145,14 @@ void oled_init(SPI_HandleTypeDef* spi){
 #endif	
 	// Initialisation
 	pRST_Clr();
-	HAL_Delay(10);
+	HAL_Delay(1);
 	/* NopDelay(2000); */
 	pRST_Set();
 	
-	HAL_Delay(20);
+	HAL_Delay(4);
 	/* NopDelay(20000); */
 	OLED_writeCMD(OLED_initSequence, sizeof OLED_initSequence);
-	HAL_Delay(20);
+	HAL_Delay(4);
 	/* NopDelay(20000); */
 	
 }

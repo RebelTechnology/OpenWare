@@ -319,7 +319,7 @@ void runScreenTask(void* p){
   // the higher priority audio task
   // const TickType_t delay = 20 / portTICK_PERIOD_MS;
   volatile TickType_t delay = 20 / portTICK_PERIOD_MS;
-  volatile uint32_t baseled = 0xfff00000ul;
+  volatile uint32_t baseled = 0x3ff00000ul;
   // OLED_ClearScreen();
   for(;;){
     // todo: run USB Host task here, get rid of loop and idle tasks

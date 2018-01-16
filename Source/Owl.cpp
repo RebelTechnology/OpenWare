@@ -297,7 +297,8 @@ void setup(){
 
   // LEDs
   TLC5946_init(&hspi5);
-  Magus_setRGB_DC(10, 10, 10); // todo balance levels
+  Magus_setRGB_DC(20, 20, 20); // todo balance levels
+  // Magus_setRGB_DC(63, 63, 63); // max
   for(int x=1; x<17; x++)
     Magus_setRGB(x, 400, 400, 400);
   extern TIM_HandleTypeDef htim3;

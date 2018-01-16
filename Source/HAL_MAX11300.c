@@ -58,7 +58,7 @@ void MAX11300_setPortMode(uint8_t port, uint16_t config)
 		pbarCS(1);
 	#endif
 
-	HAL_Delay(100);
+	HAL_Delay(5);
 	/* Nop_delay(100000); */
 }
 
@@ -98,8 +98,7 @@ void MAX11300_setDeviceControl(uint16_t config)
 		HAL_SPI_Transmit(MAX11300_SPIConfig, rgData, sizeof rgData, 100);
 		pbarCS(1);
 	#endif
-	
-	HAL_Delay(100);
+	HAL_Delay(5);
 	/* Nop_delay(100000); */
 }
 
