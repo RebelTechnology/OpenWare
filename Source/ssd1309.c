@@ -29,23 +29,25 @@ static void OLED_writeCMD(const uint8_t* data, uint16_t length);
 // _____ Variables _____________________________________________________________________
 static const uint8_t OLED_initSequence[] = 
 {
-	0xfd, 0x12, 	// Command lock
-	0xae, 				// Display off
+	0xfd, 0x12, 	// Command unlock
+	0xae, 		// Display off
 	0xd5, 0xa0, 	// Clock divide ratio / Oscillator Frequency
-	0xa8, 0x3f, 	// Multiplex ratio
+	0xa8, 0x3f, 	// Multiplex ratio 64
+	0xc8, 		// Scan direction: c0: scan dir normal, c8: reverse
 	0xd3, 0x00, 	// Display offset
-	0x40, 				// Start line
-	0xa1, 				// segment re-map
-	0xc8, 				// scan direction
+	0x40, 		// Start line
+	0xa1, 		// Segment re-map: a0: col0 -> SEG0, a1: col127 -> SEG0
+	/* 0xa0,        // writes right-to-left */
 	0xda, 0x12, 	// COM pins
 	0x81, 0xcf, 	// Current control
 	0xd9, 0x22, 	// Pre-charge period
 	0xdb, 0x34, 	// VCOMH deselect level
-	0xa4, 				// Entire display on/off
-	0xa6, 				// Normal / inverse display
-	0x20, 0x01,   // Vertical addressing mode
-	0xaf, 				// Display on
+	0xa4, 		// Entire display on/off
+	0xa6, 		// Normal / inverse display
+	0x20, 0x01,     // Vertical addressing mode
+	0xaf, 		// Display on
 };
+
 /* static unsigned char* OLED_Buffer; */
 static SPI_HandleTypeDef* OLED_SPIInst;
 	
@@ -148,11 +150,9 @@ void oled_init(SPI_HandleTypeDef* spi){
 	pRST_Clr();
 	delay(2);
 	pRST_Set();
-	
-	delay(20);
+	delay(5);
 	OLED_writeCMD(OLED_initSequence, sizeof OLED_initSequence);
-	delay(20);
-	
+	delay(100);
 }
 
 // Buffer pixel checking and manipulation
@@ -224,3 +224,19 @@ void oled_init(SPI_HandleTypeDef* spi){
 /* 		OLED_Buffer[usiArrayLoc] ^= (1 << ucByteOffset); */
 /* 	} */
 /* } */
+
+/* static const uint8_t u8x8_d_ssd1309_128x64_flip0_seq[] = { */
+/*   U8X8_START_TRANSFER(),             	/\* enable chip, delay is part of the transfer start *\/ */
+/*   U8X8_C(0x0a1),				/\* segment remap a0/a1*\/ */
+/*   U8X8_C(0x0c8),				/\* c0: scan dir normal, c8: reverse *\/ */
+/*   U8X8_END_TRANSFER(),             	/\* disable chip *\/ */
+/*   U8X8_END()             			/\* end of sequence *\/ */
+/* }; */
+
+/* static const uint8_t u8x8_d_ssd1309_128x64_flip1_seq[] = { */
+/*   U8X8_START_TRANSFER(),             	/\* enable chip, delay is part of the transfer start *\/ */
+/*   U8X8_C(0x0a0),				/\* segment remap a0/a1*\/ */
+/*   U8X8_C(0x0c0),				/\* c0: scan dir normal, c8: reverse *\/ */
+/*   U8X8_END_TRANSFER(),             	/\* disable chip *\/ */
+/*   U8X8_END()             			/\* end of sequence *\/ */
+/* }; */

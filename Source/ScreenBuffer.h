@@ -55,6 +55,7 @@ public:
   void invert();
   void fade(uint16_t steps);
   void clear(){
+    cursor_x = cursor_y = 0;
     fill(BLACK);
   }
   void clear(int x, int y, int width, int height){

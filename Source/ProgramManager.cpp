@@ -329,6 +329,9 @@ void runScreenTask(void* p){
     MAX11300_bulkreadADC();
     for(int i=0; i<16; i+=2)
       setLed(i, MAX11300_getADCValue(i) + baseled);
+
+    // for(int i=0; i<16; i+=2)
+    //   setLed(i, MAX11300_readADC(i) + baseled);
 #else
 #endif /* OWL_MAGUS */
     graphics.draw();
