@@ -3,10 +3,11 @@
 #include "device.h"
 
 static void NopDelay(uint32_t nops){
-  while (nops--)	
+  while (nops--)
     __asm("NOP");
 }
 #define delay(x) NopDelay(x*1000)
+/* #define delay(x) HAL_Delay(x) */
 
 #define CS_TIMEOUT       1000
 

@@ -3,6 +3,14 @@
 #include "device.h"
 #include <string.h>
 
+static void NopDelay(uint32_t nops){
+  while (nops--)
+    __asm("NOP");
+}
+#define delay(x) NopDelay(x*1000)
+/* #define delay(x) HAL_Delay(x) */
+/* #define delay(x) osDelay(x) */
+
 // _____ Defines _______________________________________________________________________
 #define pRST_Set()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_SET)
 #define pDC_Set()		HAL_GPIO_WritePin(OLED_DC_GPIO_Port, 	OLED_DC_Pin, 	GPIO_PIN_SET)
@@ -17,13 +25,6 @@
 
 // _____ Prototypes ____________________________________________________________________
 static void OLED_writeCMD(const uint8_t* data, uint16_t length);
-
-// Delay 
-/* static void NopDelay(uint32_t nops) */
-/* { */
-/* 	while (nops--)	 */
-/* 	  __asm("NOP"); */
-/* } */
 
 // _____ Variables _____________________________________________________________________
 static const uint8_t OLED_initSequence[] = 
@@ -145,15 +146,12 @@ void oled_init(SPI_HandleTypeDef* spi){
 #endif	
 	// Initialisation
 	pRST_Clr();
-	HAL_Delay(1);
-	/* NopDelay(2000); */
+	delay(2);
 	pRST_Set();
 	
-	HAL_Delay(4);
-	/* NopDelay(20000); */
+	delay(20);
 	OLED_writeCMD(OLED_initSequence, sizeof OLED_initSequence);
-	HAL_Delay(4);
-	/* NopDelay(20000); */
+	delay(20);
 	
 }
 

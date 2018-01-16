@@ -3,8 +3,15 @@
 
 #include <string.h>
 //#define Pixi_SPIDMA_CTRL
-  
-SPI_HandleTypeDef* MAX11300_SPIConfig;
+
+static void NopDelay(uint32_t nops){
+  while (nops--)
+    __asm("NOP");
+}
+#define delay(x) NopDelay(x*1000)
+/* #define delay(x) HAL_Delay(x) */
+
+static SPI_HandleTypeDef* MAX11300_SPIConfig;
  
 // Variables
 static uint8_t rgADCData_Rx[41];
@@ -58,8 +65,7 @@ void MAX11300_setPortMode(uint8_t port, uint16_t config)
 		pbarCS(1);
 	#endif
 
-	HAL_Delay(5);
-	/* Nop_delay(100000); */
+	delay(100);
 }
 
 uint16_t MAX11300_readPortMode(uint8_t port)
@@ -98,8 +104,7 @@ void MAX11300_setDeviceControl(uint16_t config)
 		HAL_SPI_Transmit(MAX11300_SPIConfig, rgData, sizeof rgData, 100);
 		pbarCS(1);
 	#endif
-	HAL_Delay(5);
-	/* Nop_delay(100000); */
+	delay(100);
 }
 
 // ADC Functions
@@ -158,7 +163,7 @@ void MAX11300_setDACValue(uint8_t ucChannel, uint16_t value){
 
 void MAX11300_bulksetDAC(uint16_t* rgDACData)
 {
-	memcpy(rgDACData_Tx, rgDACData, 16);
+	memcpy(rgDACData_Tx, rgDACData, 40);
 	
 	// Set address
 	rgDACData_Tx[0] = ADDR_DACbase<<1 | SPI_Write;	
@@ -202,6 +207,9 @@ void MAX11300_init (SPI_HandleTypeDef *spiconfig)
 
 	setPixiState(STATE_Idle);
 	setPixiBusy(STATE_Idle);
+
+	// todo: configure BRST, THSDN, ADCCONV 0x10 0x00c0
+	/* DCR_ADCCTL_ContSweep|DCR_ADCCONV_200ksps */
 }
 
 void MAX11300_startContinuous(void)
@@ -229,8 +237,8 @@ void MAX11300_TxINTCallback(void)
 }
 
 uint16_t MAX11300_getADCValue(uint8_t ucChannel){
-  uint16_t ret = rgADCData_Rx[ucChannel*2+1]<<8;
-  ret += rgADCData_Rx[ucChannel*2+2];
+  // todo: define buffer as struct { uint8_t address; uint16_t data[10]; }
+  uint16_t ret = rgADCData_Rx[ucChannel*2+1]<<8 | rgADCData_Rx[ucChannel*2+2];
   return ret;
 }
 
@@ -258,9 +266,4 @@ void MAX11300_TxRxINTCallback(void){
 //      MAX11300_bulksetDAC();
   }
 }
-
-/* void Nop_delay(uint32_t nops){ */
-/*   while (nops--) */
-/*     __asm("NOP"); */
-/* } */
 

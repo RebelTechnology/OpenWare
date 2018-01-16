@@ -298,9 +298,8 @@ void setup(){
   // LEDs
   TLC5946_init(&hspi5);
   Magus_setRGB_DC(20, 20, 20); // todo balance levels
-  // Magus_setRGB_DC(63, 63, 63); // max
-  for(int x=1; x<17; x++)
-    Magus_setRGB(x, 400, 400, 400);
+  for(int i=0; i<16; i++)
+    setLed(i, (512<<20) + (512<<10) + 512);
   extern TIM_HandleTypeDef htim3;
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
@@ -308,9 +307,12 @@ void setup(){
 
   // Pixi
   MAX11300_init(&hspi5);
-  for(int i=0; i<20; ++i)
-    MAX11300_setPortMode(i, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  // MAX11300_setPortMode(0,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);	
+  // MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep|DCR_ADCCONV_200ksps /*|DCR_BRST_Contextual*/);
+  MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /*|DCR_BRST_Contextual*/);
+  for(int i=0; i<20; i+=2)
+    MAX11300_setPortMode(i, PCR_Range_ADC_M5_P5|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  for(int i=1; i<20; i+=2)
+    MAX11300_setPortMode(i, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);	
 #endif
   
 #ifdef USE_RGB_LED
