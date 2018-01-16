@@ -81,6 +81,7 @@ osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 uint8_t x;
+extern uint16_t rgENC_Values[7];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -256,9 +257,9 @@ int main(void)
 	Magus_setRGB(16,	3000,	3000,	3000);
 
 	// Clear Screen
-	OLED_ClearScreen();
 	
-	OLED_setPixel(10,0);
+	
+/*	OLED_setPixel(10,0);
 	OLED_setPixel(11,1);
 	OLED_setPixel(12,2);
 	OLED_setPixel(13,3);
@@ -273,17 +274,20 @@ int main(void)
 	OLED_setPixel(22,2);
 	OLED_setPixel(23,1);
 	OLED_setPixel(24,0);
-	
+*/	
   while (1)
   {
   /* USER CODE END WHILE */
 		
   /* USER CODE BEGIN 3 */
+		OLED_setPixel(rgENC_Values[3],rgENC_Values[4]);
+		if (rgENC_Values[0] & 0x3F)
+{OLED_ClearScreen();}
+		
 		TLC5946_Refresh_GS();
-		HAL_Delay(10);
-//		OLED_Refresh();
+		OLED_Refresh();
 		Encoders_readAll();
-		HAL_Delay(100);
+		HAL_Delay(5);
   }
   /* USER CODE END 3 */
 }

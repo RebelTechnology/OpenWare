@@ -25,33 +25,23 @@ uint16_t rgENC_Values[7];
 //_____ Functions _____________________________________________________________________________________________________
 // Port and Chip Setup
 void Encoders_readAll(void)
-{ uint16_t x  = 200;
-	uint8_t rgEncoderData[13];
+{ 
+	uint16_t x  = 130;
 	
 	pbarCS(0);
-	while(--x){__NOP();}
-	HAL_SPI_Receive(Encoders_SPIConfig, rgEncoderData, 13, 1000);
+	while(--x){__NOP();}																									// *** The minimum NOP delay for proper operation seems to be 130 ***
+	HAL_SPI_Receive(Encoders_SPIConfig, (uint8_t*)rgENC_Values, 14, 100);
 	pbarCS(1);
-	
-	rgENC_Values[0] = rgEncoderData[0];
-	rgENC_Values[1] = (rgEncoderData[1]<<8)  | rgEncoderData[2];
-	rgENC_Values[2] = (rgEncoderData[3]<<8)  | rgEncoderData[4];
-	rgENC_Values[3] = (rgEncoderData[5]<<8)  | rgEncoderData[6];
-	rgENC_Values[4] = (rgEncoderData[7]<<8)  | rgEncoderData[8];
-	rgENC_Values[5] = (rgEncoderData[9]<<8)  | rgEncoderData[10];
-	rgENC_Values[6] = (rgEncoderData[11]<<8) | rgEncoderData[12];
 }
 
 void Encoders_readSwitches(void)
-{ uint16_t x  = 200;
-	uint8_t rgEncoderData[2];
+{ 
+	uint16_t x  = 130;
 	
 	pbarCS(0);
 	while(--x){__NOP();}
-	HAL_SPI_Receive(Encoders_SPIConfig, rgEncoderData, 1, 1000);
+	HAL_SPI_Receive(Encoders_SPIConfig, (uint8_t*)rgENC_Values, 1, 100);
 	pbarCS(1);
-	
-	rgENC_Values[0] = rgEncoderData[0];
 }
 
 

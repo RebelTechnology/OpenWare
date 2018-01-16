@@ -148,7 +148,7 @@ void SAI1_IRQHandler(void)
 /* USER CODE BEGIN 1 */
 void EXTI2_IRQHandler(void)
 {	
-	Encoders_readSwitches();
+	// Encoders_readSwitches();
 	__HAL_GPIO_EXTI_CLEAR_IT(ENC_CHGRDY_Pin);
 }
 /* USER CODE END 1 */

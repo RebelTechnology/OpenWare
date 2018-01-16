@@ -9,7 +9,7 @@ int16_t siValue_ENC[7];
 uint8_t bSwitch_ENC[7], bSwitch_ENC_Prev[7];
 uint8_t seqA[7] = "", seqB[7] = "", ucA_Val_Prev[7] = "", ucB_Val_Prev[7] = "";
 
-uint8_t rgENC_Data[13] = "";
+uint8_t rgENC_Data[14] = "";
 
 void Encoders_Init (void)
 {
@@ -86,7 +86,7 @@ void scan_Encoders (void)
 			if (seqA[x] == 0x09 && seqB[x] == 0x03) {siValue_ENC[x]--;}
 			if (seqA[x] == 0x03 && seqB[x] == 0x09) {siValue_ENC[x]++;}
 			
-			rgENC_Data[(x*2)-1] = (siValue_ENC[x]&0xFF00)>>8;
+			rgENC_Data[(x*2)+1] = (siValue_ENC[x]&0xFF00)>>8;
 			rgENC_Data[(x*2)] 	= (siValue_ENC[x]&0x00FF);
 		}
 		
@@ -94,13 +94,11 @@ void scan_Encoders (void)
 		ucA_Val_Prev[x] = ucA_Val;
 		ucB_Val_Prev[x] = ucB_Val;
 	}
-	
-	
 }
 
 void send_SPI(void)
 {	
 	// Send data
-	HAL_SPI_Transmit(&hspi1, (uint8_t*)&rgENC_Data, 13, 100);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&rgENC_Data, 14, 100);
 }
 

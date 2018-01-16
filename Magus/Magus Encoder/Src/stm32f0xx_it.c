@@ -146,7 +146,8 @@ void EXTI0_1_IRQHandler(void)
 	if (__HAL_GPIO_EXTI_GET_FLAG(ENC5_SW_Pin))
 	{
 		bSwitch_ENC[5] = 1-HAL_GPIO_ReadPin(ENC5_SW_GPIO_Port, ENC5_SW_Pin);
-		rgENC_Data[0]  = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[1] = 0;
 		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
 		__HAL_GPIO_EXTI_CLEAR_IT(ENC5_SW_Pin);
 	}
@@ -158,7 +159,8 @@ void EXTI2_3_IRQHandler(void)
 	if (__HAL_GPIO_EXTI_GET_FLAG(ENC2_SW_Pin))
 	{
 		bSwitch_ENC[2] = 1-HAL_GPIO_ReadPin(ENC2_SW_GPIO_Port, ENC2_SW_Pin);
-		rgENC_Data[0]  = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[1] = 0;
 		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
 		__HAL_GPIO_EXTI_CLEAR_IT(ENC2_SW_Pin);
 	}
@@ -167,7 +169,8 @@ void EXTI2_3_IRQHandler(void)
 	if (__HAL_GPIO_EXTI_GET_FLAG(ENC4_SW_Pin))
 	{
 		bSwitch_ENC[4] = 1-HAL_GPIO_ReadPin(ENC4_SW_GPIO_Port, ENC4_SW_Pin);
-		rgENC_Data[0]  = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[1] = 0;
 		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
 		__HAL_GPIO_EXTI_CLEAR_IT(ENC4_SW_Pin);
 	}
@@ -186,7 +189,8 @@ void EXTI4_15_IRQHandler(void)
 	if (__HAL_GPIO_EXTI_GET_FLAG(ENC1_SW_Pin))
 	{
 		bSwitch_ENC[1] = 1-HAL_GPIO_ReadPin(ENC1_SW_GPIO_Port, ENC1_SW_Pin);
-		rgENC_Data[0]  = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[1] = 0;
 		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
 		__HAL_GPIO_EXTI_CLEAR_IT(ENC1_SW_Pin);
 	}
@@ -195,7 +199,8 @@ void EXTI4_15_IRQHandler(void)
 	if (__HAL_GPIO_EXTI_GET_FLAG(ENC3_SW_Pin))
 	{
 		bSwitch_ENC[3] = 1-HAL_GPIO_ReadPin(ENC3_SW_GPIO_Port, ENC3_SW_Pin);
-		rgENC_Data[0]  = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[1] = 0;
 		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
 		__HAL_GPIO_EXTI_CLEAR_IT(ENC3_SW_Pin);
 	}
@@ -204,7 +209,8 @@ void EXTI4_15_IRQHandler(void)
 	if (__HAL_GPIO_EXTI_GET_FLAG(ENC6_SW_Pin))
 	{
 		bSwitch_ENC[6] = 1-HAL_GPIO_ReadPin(ENC6_SW_GPIO_Port, ENC6_SW_Pin);
-		rgENC_Data[0]  = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
+		rgENC_Data[1] = 0;
 		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
 		__HAL_GPIO_EXTI_CLEAR_IT(ENC6_SW_Pin);
 	}
