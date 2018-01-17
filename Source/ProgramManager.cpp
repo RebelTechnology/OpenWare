@@ -23,6 +23,7 @@ static TaskHandle_t screenTask = NULL;
 #include "HAL_MAX11300.h"
 #include "HAL_TLC5946.h"
 // #include "HAL_OLED.h"
+#include "HAL_Encoders.h"
 #endif
 
 // FreeRTOS low priority numbers denote low priority tasks. 
@@ -320,8 +321,6 @@ void runScreenTask(void* p){
   // const TickType_t delay = 20 / portTICK_PERIOD_MS;
   volatile TickType_t delay = 20 / portTICK_PERIOD_MS;
   volatile uint32_t baseled = 0x3fful << 20;
-  if(baseled == 0)
-    testMap();
   for(;;){
     // todo: run USB Host task here, get rid of loop and idle tasks
 #ifdef OWL_MAGUS
@@ -331,7 +330,7 @@ void runScreenTask(void* p){
     MAX11300_bulkreadADC();
     for(int i=0; i<16; i+=2)
       setLed(i, MAX11300_getADCValue(i) + baseled);
-
+    Encoders_readAll();
     // for(int i=0; i<16; i+=2)
     //   setLed(i, MAX11300_readADC(i) + baseled);
 #else

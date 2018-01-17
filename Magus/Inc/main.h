@@ -118,15 +118,15 @@
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
 #define TLC_MODE_Pin GPIO_PIN_9
-#define TLC_MODE_GPIO_Port GPIOG
-#define TLC_XLAT_Pin GPIO_PIN_10
-#define TLC_XLAT_GPIO_Port GPIOG
+#define TLC_MODE_GPIO_Port GPIOB
+#define TLC_XLAT_Pin GPIO_PIN_8
+#define TLC_XLAT_GPIO_Port GPIOB
 #define FLASH_SCK_Pin GPIO_PIN_3
 #define FLASH_SCK_GPIO_Port GPIOB
-#define TLC_BLANK_Pin GPIO_PIN_8
-#define TLC_BLANK_GPIO_Port GPIOB
+#define TLC_BLANK_Pin GPIO_PIN_10
+#define TLC_BLANK_GPIO_Port GPIOG
 #define ENC_nCS_Pin GPIO_PIN_9
-#define ENC_nCS_GPIO_Port GPIOB
+#define ENC_nCS_GPIO_Port GPIOG
 
 /* ########################## Assert Selection ############################## */
 /**
