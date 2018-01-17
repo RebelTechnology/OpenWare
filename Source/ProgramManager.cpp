@@ -320,6 +320,8 @@ void runScreenTask(void* p){
   // const TickType_t delay = 20 / portTICK_PERIOD_MS;
   volatile TickType_t delay = 20 / portTICK_PERIOD_MS;
   volatile uint32_t baseled = 0x3fful << 20;
+  if(baseled == 0)
+    testMap();
   for(;;){
     // todo: run USB Host task here, get rid of loop and idle tasks
 #ifdef OWL_MAGUS
