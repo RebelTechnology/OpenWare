@@ -4,11 +4,13 @@
 <CMSIS>../Drivers/CMSIS</CMSIS>
 <HAL_Driver>/home/mars/STM32Cube/Repository//STM32Cube_FW_F0_V1.9.0/Drivers/CMSIS</HAL_Driver>
 
-<Toolchain>TrueSTUDIO</Toolchain>
+<Toolchain>MDK-ARM</Toolchain>
+	<Toolversion>5</Toolversion>
 <Version>0</Version>
 
 <filestoremove>
 	<file>
+	   		<name>../Drivers/CMSIS/Device/ST/STM32F0xx/Source/Templates/arm/startup_stm32f051x8.s</name>
 	</file>
 </filestoremove>
 
@@ -27,12 +29,13 @@
     <heapSize>0x200</heapSize>
     <stackSize>0x400</stackSize>
     
+    	<cpuclock>48</cpuclock>
     	<board>custom</board>
 			
     <usedDebug>true</usedDebug>
     	<debugprobe>swd</debugprobe>
     <optimization></optimization>
-    <icfloc>1</icfloc>
+    <icfloc>0</icfloc>
     <Adefines>
         <define></define>
     </Adefines>   
@@ -44,8 +47,6 @@
 	    	<include></include>
     </Aincludes>
     <Cdefines>
-        <define>__weak=&quot;__attribute__((weak))&quot;</define>
-        <define>__packed=&quot;__attribute__((__packed__))&quot;</define>
     </Cdefines>
     <definestoremove>
         <Adefines>
@@ -53,7 +54,7 @@
         </Adefines>
         <Cdefines>
             <define>USE_FULL_LL_DRIVER</define>
-            <define>MBEDTLS_CONFIG_FILE=&quot;mbedtls_config.h&quot;</define>
+            <define>MBEDTLS_CONFIG_FILE=&lt;mbedtls_config.h&gt;</define>
             <define>_TIMEVAL_DEFINED</define>
             <define>_SYS_TIME_H_</define>
         </Cdefines>         
@@ -70,18 +71,105 @@
       </config>
     </configs> 
 
-    <underRoot>true</underRoot>
-    	<copyAsReference>false</copyAsReference>
-	  		<sourceEntries>
-		    	<sourceEntry>
-		    		<name>Inc</name>
-		    	</sourceEntry>
-		    	<sourceEntry>
-		    		<name>Src</name>
-		    	</sourceEntry>
-		    	<sourceEntry>
-		    		<name>Drivers</name>
-		    	</sourceEntry>
-		    </sourceEntries>
+    <underRoot>false</underRoot>
 
+	   <group>
+	    <name>Drivers</name> 
+		   <group>
+		 		<name>STM32F0xx_HAL_Driver</name>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_spi.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_spi_ex.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim_ex.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_rcc.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_rcc_ex.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_i2c.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_i2c_ex.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_dma.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_cortex.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr_ex.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash.c</name>
+						</file>
+						<file>
+							<name>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash_ex.c</name>
+						</file>
+		    </group>
+		    <group>
+		    	<name>CMSIS</name>
+							<file>
+								<name>../Src/system_stm32f0xx.c</name>
+							</file>
+		    	</group>
+	  </group>   
+	  <group>
+	  <name>Application</name>
+	    <group>
+	      <name>User</name>  
+                                <file>
+                                 <name>../Src/main.c</name>
+                                </file>
+
+                                <file>
+                                 <name>../Src/stm32f0xx_it.c</name>
+                                </file>
+
+                                <file>
+                                 <name>../Src/stm32f0xx_hal_msp.c</name>
+                                </file>
+
+
+
+               <group>
+        <name>..</name>
+                    <group>
+                    <name>Src</name>
+                    </group>
+        </group>
+               <group>
+        <name>..</name>
+                    <group>
+                    <name>Src</name>
+                    </group>
+        </group>
+               <group>
+        <name>..</name>
+                    <group>
+                    <name>Src</name>
+                    </group>
+        </group>
+
+</group> 
+  </group>
 </Project>
