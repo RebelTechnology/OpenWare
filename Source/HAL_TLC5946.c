@@ -99,8 +99,8 @@ void TLC5946_TxINTCallback(void)
 void TLC5946_Refresh_GS(void)
 {
 	// Update Grayscale
-	pXLAT(0);
 	pMODE(Mode_GS);
+	pXLAT(0);
 	pBLANK(1);
 	
 #ifdef TLC_CONTINUOUS	
@@ -114,7 +114,8 @@ void TLC5946_Refresh_GS(void)
 	
 	// Latch pulse
 	pXLAT(1);
-	pBLANK(1);
+	/* HAL_Delay(1); */
+	pBLANK(0);
 #endif
 }
 

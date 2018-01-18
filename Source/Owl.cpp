@@ -301,6 +301,7 @@ void setup(){
   for(int i=0; i<16; i++)
     setLed(i, (512<<10) + 1023);
     // setLed(i, (512<<20) + (512<<10) + 512);
+  // Start LED Driver PWM
   extern TIM_HandleTypeDef htim3;
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
