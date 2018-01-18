@@ -1,7 +1,7 @@
 # Debug / Release
 CONFIG ?= Debug
 ifeq ($(CONFIG),Debug)
-  CPPFLAGS = -g -Wall -Wcpp -Wunused-function -DDEBUG -DUSE_FULL_ASSERT
+  CPPFLAGS = -g -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g
   CFLAGS   = -g
 endif
@@ -13,7 +13,7 @@ endif
 
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
-LDSCRIPT = ../STM32F745VG.ld
+LDSCRIPT = $(OPENWARE)/mcu/STM32F439ZG.ld
 CPPFLAGS += --specs=nano.specs
 CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
@@ -24,7 +24,7 @@ CPPFLAGS += -ffunction-sections
 CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
 CFLAGS  += -std=gnu99
-ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16
+ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant
-DEF_FLAGS = -DSTM32F745xx -DARM_MATH_CM7
-DEF_FLAGS += -D__FPU_PRESENT=1
+DEF_FLAGS = -DSTM32F439xx -DARM_MATH_CM4
+DEF_FLAGS += -D__FPU_PRESENT=1U

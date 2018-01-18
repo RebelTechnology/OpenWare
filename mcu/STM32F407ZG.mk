@@ -13,7 +13,7 @@ endif
 
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
-LDSCRIPT = ../STM32F407ZG.ld
+LDSCRIPT = $(OPENWARE)/mcu/STM32F407ZG.ld
 CPPFLAGS += --specs=nano.specs
 CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie

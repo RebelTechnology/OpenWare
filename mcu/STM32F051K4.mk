@@ -13,7 +13,7 @@ endif
 
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
-LDSCRIPT = ../STM32F427ZI.ld
+LDSCRIPT = $(OPENWARE)/mcu/STM32F051K4_FLASH.ld
 CPPFLAGS += --specs=nano.specs
 CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
@@ -24,7 +24,7 @@ CPPFLAGS += -ffunction-sections
 CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
 CFLAGS  += -std=gnu99
-ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+ARCH_FLAGS = -mcpu=cortex-m0 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant
-DEF_FLAGS = -DSTM32F427xx -DARM_MATH_CM4
+DEF_FLAGS = -DSTM32F407xx -DARM_MATH_CM4
 DEF_FLAGS += -D__FPU_PRESENT=1U
