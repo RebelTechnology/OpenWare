@@ -41,7 +41,7 @@
 #include "stm32f0xx_hal.h"
 
 /* USER CODE BEGIN Includes */
-#include "Magus Encoder.h"
+#include "MagusEncoder.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -236,23 +236,24 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(CHANGE_RDY_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : SPI_NCS_Pin */
+  GPIO_InitStruct.Pin = SPI_NCS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SPI_NCS_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pins : ENC5_SW_Pin ENC4_SW_Pin ENC6_SW_Pin */
   GPIO_InitStruct.Pin = ENC5_SW_Pin|ENC4_SW_Pin|ENC6_SW_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
+  
   /*Configure GPIO pins : ENC4_A_Pin ENC5_A_Pin ENC5_B_Pin */
   GPIO_InitStruct.Pin = ENC4_A_Pin|ENC5_A_Pin|ENC5_B_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ENC4_A_Pin ENC5_A_Pin ENC5_B_Pin */
-  GPIO_InitStruct.Pin = SPI_NCS_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(SPI_NCS_GPIO_Port, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 4 */

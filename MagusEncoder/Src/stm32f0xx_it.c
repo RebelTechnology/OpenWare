@@ -36,7 +36,7 @@
 #include "stm32f0xx_it.h"
 
 /* USER CODE BEGIN 0 */
-#include "Magus Encoder.h"
+#include "MagusEncoder.h"
 extern uint8_t bSwitch_ENC[7];
 extern uint8_t rgENC_Data[13];
 /* USER CODE END 0 */

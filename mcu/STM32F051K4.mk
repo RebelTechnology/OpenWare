@@ -24,7 +24,7 @@ CPPFLAGS += -ffunction-sections
 CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
 CFLAGS  += -std=gnu99
-ARCH_FLAGS = -mcpu=cortex-m0 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+ARCH_FLAGS = -mcpu=cortex-m0 -mthumb # -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant
-DEF_FLAGS = -DSTM32F407xx -DARM_MATH_CM4
-DEF_FLAGS += -D__FPU_PRESENT=1U
+DEF_FLAGS = -DSTM32F051x8 -DARM_MATH_CM0
+DEF_FLAGS += -D__FPU_PRESENT=0U

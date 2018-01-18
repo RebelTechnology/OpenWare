@@ -59,6 +59,8 @@
 #define ENC2_SW_GPIO_Port GPIOA
 #define CHANGE_RDY_Pin GPIO_PIN_3
 #define CHANGE_RDY_GPIO_Port GPIOA
+#define SPI_NCS_Pin GPIO_PIN_4
+#define SPI_NCS_GPIO_Port GPIOA
 #define ENC4_B_Pin GPIO_PIN_7
 #define ENC4_B_GPIO_Port GPIOA
 #define ENC5_SW_Pin GPIO_PIN_0
@@ -85,8 +87,6 @@
 #define ENC5_B_GPIO_Port GPIOB
 #define ENC6_SW_Pin GPIO_PIN_7
 #define ENC6_SW_GPIO_Port GPIOB
-#define SPI_NCS_Pin	GPIO_PIN_4
-#define SPI_NCS_GPIO_Port GPIOA
 
 /* ########################## Assert Selection ############################## */
 /**
