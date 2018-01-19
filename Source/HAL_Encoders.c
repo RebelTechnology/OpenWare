@@ -29,7 +29,8 @@ void Encoders_readAll(void)
 	uint16_t x  = 130;
 	
 	pbarCS(0);
-	while(--x){__NOP();}																									// *** The minimum NOP delay for proper operation seems to be 130 ***
+	while(--x){__NOP();}
+	// *** The minimum NOP delay for proper operation seems to be 130 ***
 	HAL_SPI_Receive(Encoders_SPIConfig, (uint8_t*)rgENC_Values, 14, 100);
 	pbarCS(1);
 }
@@ -40,7 +41,7 @@ void Encoders_readSwitches(void)
 	
 	pbarCS(0);
 	while(--x){__NOP();}
-	HAL_SPI_Receive(Encoders_SPIConfig, (uint8_t*)rgENC_Values, 1, 100);
+	HAL_SPI_Receive(Encoders_SPIConfig, (uint8_t*)rgENC_Values, 2, 100);
 	pbarCS(1);
 }
 
