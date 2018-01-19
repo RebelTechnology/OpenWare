@@ -66,7 +66,7 @@
 	MiddleWare version : 
 */
 /*----------   -----------*/
-#define USBH_MAX_NUM_ENDPOINTS      10 
+#define USBH_MAX_NUM_ENDPOINTS      2 
  
 /*----------   -----------*/
 #define USBH_MAX_NUM_INTERFACES      10 
@@ -75,13 +75,13 @@
 #define USBH_MAX_NUM_CONFIGURATION      1 
  
 /*----------   -----------*/
-#define USBH_KEEP_CFG_DESCRIPTOR      0 
+#define USBH_KEEP_CFG_DESCRIPTOR      1 
  
 /*----------   -----------*/
 #define USBH_MAX_NUM_SUPPORTED_CLASS      1 
  
 /*----------   -----------*/
-#define USBH_MAX_SIZE_CONFIGURATION      512 
+#define USBH_MAX_SIZE_CONFIGURATION      256 
  
 /*----------   -----------*/
 #define USBH_MAX_DATA_BUFFER      512 
@@ -106,7 +106,7 @@
 #if (USBH_USE_OS == 1)
   #include "cmsis_os.h"
   #define   USBH_PROCESS_PRIO          osPriorityNormal
-  #define   USBH_PROCESS_STACK_SIZE    ((uint16_t)128)
+  #define   USBH_PROCESS_STACK_SIZE    ((uint16_t)0)
 #endif    
 
  /* Memory management macros */   

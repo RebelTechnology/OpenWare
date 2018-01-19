@@ -42,7 +42,7 @@ static volatile uint8_t ucPixiBusy;
 // Pin Control
 #define pbarCS(state)		HAL_GPIO_WritePin(PIXI_nCS_GPIO_Port,  PIXI_nCS_Pin,  (GPIO_PinState)state)
  
-uint8_t rgPortMap[20] = {PORT_0,PORT_1,PORT_2,PORT_3,PORT_4,PORT_5,PORT_6,PORT_7,PORT_8,PORT_9,PORT_10,PORT_11,PORT_12,PORT_13,PORT_14,PORT_15,PORT_16,PORT_17,PORT_18,PORT_19};
+uint8_t rgPortMap[21] = {0, PORT_1,PORT_2,PORT_3,PORT_4,PORT_5,PORT_6,PORT_7,PORT_8,PORT_9,PORT_10,PORT_11,PORT_12,PORT_13,PORT_14,PORT_15,PORT_16,PORT_17,PORT_18,PORT_19, PORT_20};
 	 
 //_____ Functions _____________________________________________________________________________________________________
 // Port and Chip Setup
@@ -111,18 +111,20 @@ void MAX11300_setDeviceControl(uint16_t config)
 uint16_t MAX11300_readADC(uint8_t port)
 {
 	uint16_t usiRtnValue = 0;
-	uint8_t rgData[3] = {((ADDR_ADCbase+rgPortMap[port])<<1) | SPI_Read, 0, 0 };
+	uint8_t rgData[3] = {((ADDR_ADCbase+rgPortMap[port])<<1) | SPI_Read};
+	
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);
 	HAL_SPI_TransmitReceive(MAX11300_SPIConfig, rgData, rgData, 3, 100);
 	pbarCS(1);
 	usiRtnValue  = (rgData[1]<<8) | rgData[2];
+	
 	return usiRtnValue & 0x0FFF;
 }
 
 void MAX11300_bulkreadADC(void)
 {
-       rgADCData_Rx[0] = ((ADDR_ADCbase)<<1) | SPI_Read;
+  rgADCData_Rx[0] = ((ADDR_ADCbase)<<1) | SPI_Read;
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished
 	pbarCS(0);
 	setPixiTask(TASK_readADC);

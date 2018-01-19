@@ -10,12 +10,12 @@
 
 //_____ External Definitions _______________________________________________________________________
 // Pin Mappings
-#define Flash_Select()				HAL_GPIO_WritePin(FLASH_nCS_GPIO_Port,  FLASH_nCS_Pin, 	RESET)
-#define Flash_Deselect()			HAL_GPIO_WritePin(FLASH_nCS_GPIO_Port,  FLASH_nCS_Pin, 	SET)	
-#define Flash_Hold()					HAL_GPIO_WritePin(FLASH_HOLD_GPIO_Port, FLASH_HOLD_Pin, RESET)
-#define Flash_Release()				HAL_GPIO_WritePin(FLASH_HOLD_GPIO_Port, FLASH_HOLD_Pin, SET)
-#define Flash_WP_Disable()		HAL_GPIO_WritePin(FLASH_nWP_GPIO_Port,  FLASH_nWP_Pin, 	RESET)
-#define Flash_WP_Enable()			HAL_GPIO_WritePin(FLASH_nWP_GPIO_Port,  FLASH_nWP_Pin, 	SET)
+#define Flash_Select()				HAL_GPIO_WritePin(FLASH_nCS_GPIO_Port,  FLASH_nCS_Pin, 	GPIO_PIN_RESET)
+#define Flash_Deselect()			HAL_GPIO_WritePin(FLASH_nCS_GPIO_Port,  FLASH_nCS_Pin, 	GPIO_PIN_SET)	
+#define Flash_Hold()					HAL_GPIO_WritePin(FLASH_HOLD_GPIO_Port, FLASH_HOLD_Pin, GPIO_PIN_RESET)
+#define Flash_Release()				HAL_GPIO_WritePin(FLASH_HOLD_GPIO_Port, FLASH_HOLD_Pin, GPIO_PIN_SET)
+#define Flash_WP_Disable()		HAL_GPIO_WritePin(FLASH_nWP_GPIO_Port,  FLASH_nWP_Pin, 	GPIO_PIN_RESET)
+#define Flash_WP_Enable()			HAL_GPIO_WritePin(FLASH_nWP_GPIO_Port,  FLASH_nWP_Pin, 	GPIO_PIN_SET)
 
 // Instruction Commands
 #define INST_WRITE_STATREG			0x01
@@ -34,8 +34,8 @@
 #define INST_ERASE_CHIP					0xC7
 
 //_____ Prototypes _______________________________________________________________________
-unsigned char Flash_readLoc(unsigned long address);
-void Flash_writeLoc(unsigned long address, unsigned char data);
+unsigned char Flash_readByte(unsigned long address);
+void Flash_writeByte(unsigned long address, unsigned char data);
 void Flash_readString(unsigned long address, unsigned char *rxBuffer, unsigned char length);
 
 /* Writes 255 bytes (page size limit) */

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project>
-<ProjectName>/home/mars/devel/OpenWare/Magus/\Magus</ProjectName>
-<CMSIS>../Drivers/CMSIS</CMSIS>
-<HAL_Driver>/home/mars/STM32Cube/Repository//STM32Cube_FW_F4_V1.18.0/Drivers/CMSIS</HAL_Driver>
+<ProjectName>C:\Users\James\Dropbox (Personal)\Freelance\Rebel Tech\Git Repository\OpenWare\Magus\\Magus</ProjectName>
+<CMSIS>..\Drivers\CMSIS</CMSIS>
+<HAL_Driver>C:\Users\James\STM32Cube\Repository\STM32Cube_FW_F4_V1.18.0\Drivers\CMSIS</HAL_Driver>
 
 <Toolchain>MDK-ARM</Toolchain>
 	<Toolversion>5</Toolversion>
@@ -10,38 +10,26 @@
 
 <filestoremove>
 	<file>
-	   		<name>../Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/arm/startup_stm32f427xx.s</name>
-	   		<name>../Src/stm32f7xx_it.c</name>
-	   		<name>../Src/stm32f7xx_hal_msp.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd_ex.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_hcd.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_fmc.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sdram.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai_ex.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_spi.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c</name>
-	   		<name>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c</name>
-	   		<name>../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM7/r0p1/port.c</name>
-	   		<name>../Src/system_stm32f7xx.c</name>
-	   		<name>../Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c</name>
-	   		<name>../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM7/r0p1/port.c</name>
+	   		<name>..\Drivers\CMSIS\Device\ST\STM32F4xx\Source\Templates\arm\startup_stm32f427xx.s</name>
+	   		<name>..\Src\freertos.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\portable\RVDS\ARM_CM4F\port.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\croutine.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\event_groups.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\list.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\queue.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\tasks.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\timers.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\portable\RVDS\ARM_CM4F\port.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\croutine.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\event_groups.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\list.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\queue.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\tasks.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\timers.c</name>
+	   		<name>..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.c</name>
 	</file>
 </filestoremove>
 
@@ -50,10 +38,9 @@
 	   <include></include>
     </Aincludes>
 	<Cincludes>
-	   		<include>../Drivers/STM32F7xx_HAL_Driver/Inc</include>
-	   		<include>../Drivers/STM32F7xx_HAL_Driver/Inc/Legacy</include>
-	   		<include>../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM7/r0p1</include>
-	   		<include>../Drivers/CMSIS/Device/ST/STM32F7xx/Include</include>
+	   		<include>..\Middlewares\Third_Party\FreeRTOS\Source\portable\RVDS\ARM_CM4F</include>
+	   		<include>..\Middlewares\Third_Party\FreeRTOS\Source\include</include>
+	   		<include>..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS</include>
     </Cincludes>
 </inctoremove>
 
@@ -75,9 +62,11 @@
         <define></define>
     </Adefines>   
 
-    <UsedFreeRTOS>true</UsedFreeRTOS>
+    <UsedFreeRTOS></UsedFreeRTOS>
     <Aincludes>
-	   			<include>../Inc</include>
+
+
+	    	<include></include>
     </Aincludes>
     <Cdefines>
     </Cdefines>
@@ -94,18 +83,15 @@
     </definestoremove>
     
 	<Cincludes>
-	   <include>../Inc</include>
-	   <include>../Drivers/STM32F4xx_HAL_Driver/Inc</include>
-	   <include>../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy</include>
-	   <include>../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F</include>
-	   <include>../Middlewares/ST/STM32_USB_Device_Library/Core/Inc</include>
-	   <include>../Middlewares/ST/STM32_USB_Device_Library/Class/AUDIO/Inc</include>
-	   <include>../Middlewares/ST/STM32_USB_Host_Library/Core/Inc</include>
-	   <include>../Middlewares/ST/STM32_USB_Host_Library/Class/AUDIO/Inc</include>
-	   <include>../Drivers/CMSIS/Device/ST/STM32F4xx/Include</include>
-	   <include>../Middlewares/Third_Party/FreeRTOS/Source/include</include>
-	   <include>../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS</include>
-	   <include>../Drivers/CMSIS/Include</include>
+	   <include>..\Inc</include>
+	   <include>..\Drivers\STM32F4xx_HAL_Driver\Inc</include>
+	   <include>..\Drivers\STM32F4xx_HAL_Driver\Inc\Legacy</include>
+	   <include>..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc</include>
+	   <include>..\Middlewares\ST\STM32_USB_Device_Library\Class\AUDIO\Inc</include>
+	   <include>..\Middlewares\ST\STM32_USB_Host_Library\Core\Inc</include>
+	   <include>..\Middlewares\ST\STM32_USB_Host_Library\Class\AUDIO\Inc</include>
+	   <include>..\Drivers\CMSIS\Device\ST\STM32F4xx\Include</include>
+	   <include>..\Drivers\CMSIS\Include</include>
 
     </Cincludes>
       </config>
@@ -115,36 +101,6 @@
 
       <group>
         <name>Middlewares</name>  
-                    <group>
-                            <name>FreeRTOS</name>
-                                            <file>
-                                                    <name>../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c</name>
-                                            </file>
-                                            <file>
-                                                    <name>../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c</name>
-                                            </file>
-                                            <file>
-                                                    <name>../Middlewares/Third_Party/FreeRTOS/Source/croutine.c</name>
-                                            </file>
-                                            <file>
-                                                    <name>../Middlewares/Third_Party/FreeRTOS/Source/event_groups.c</name>
-                                            </file>
-                                            <file>
-                                                    <name>../Middlewares/Third_Party/FreeRTOS/Source/tasks.c</name>
-                                            </file>
-                                            <file>
-                                                    <name>../Middlewares/Third_Party/FreeRTOS/Source/queue.c</name>
-                                            </file>
-                                            <file>
-                                                    <name>../Middlewares/Third_Party/FreeRTOS/Source/timers.c</name>
-                                            </file>
-                                            <file>
-                                                    <name>../Middlewares/Third_Party/FreeRTOS/Source/list.c</name>
-                                            </file>
-                                            <file>
-                                                    <name>../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c</name>
-                                            </file>
-                </group>
                     <group>
                             <name>USB_Device_Library</name>
                                             <file>
@@ -268,107 +224,43 @@
 	    <group>
 	      <name>User</name>  
                                 <file>
-                                 <name>../Src/main.c</name>
+                                 <name>..\Src\main.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/freertos.c</name>
+                                 <name>..\Src\usb_device.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/usb_device.c</name>
+                                 <name>..\Src\usbd_conf.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/usbd_conf.c</name>
+                                 <name>..\Src\usbd_desc.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/usbd_desc.c</name>
+                                 <name>..\Src\usbd_audio_if.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/usbd_audio_if.c</name>
+                                 <name>..\Src\usb_host.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/usb_host.c</name>
+                                 <name>..\Src\usbh_conf.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/usbh_conf.c</name>
+                                 <name>..\Src\stm32f4xx_it.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/stm32f4xx_it.c</name>
-                                </file>
-
-                                <file>
-                                 <name>../Src/stm32f4xx_hal_msp.c</name>
+                                 <name>..\Src\stm32f4xx_hal_msp.c</name>
                                 </file>
 
 
 
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
 
 </group> 
   </group>

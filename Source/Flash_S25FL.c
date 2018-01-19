@@ -195,7 +195,7 @@ void Flash_S25FL_init (SPI_HandleTypeDef *spiconfig)
 {
 	// Copy SPI configuration to local variable
 	FLASH_SPIConfig = spiconfig;
-	
+		
 	Flash_Deselect();		  			// Deslect chip
 	Flash_Release();	  				// Disable Hold
 	Flash_WP_Enable();		  		// Enable Write Protect
@@ -204,19 +204,19 @@ void Flash_S25FL_init (SPI_HandleTypeDef *spiconfig)
 void Flash_S25FL_Test(void)
 {
 	unsigned short usiMemLoc = 0;
-	unsigned char ucTestNumber = 2;
+	unsigned char ucTestNumber = 1;
 	
 	switch (ucTestNumber)
 	{
 		// Byte read
 		case 0:
-			ucTestData = _Flash_readLoc(usiMemLoc);
+			ucTestData = Flash_readByte(usiMemLoc);
 			break;
 		
 		// Byte read & write
 		case 1:
-			_Flash_writeLoc(usiMemLoc, 0xAA);
-			ucTestData = _Flash_readLoc(usiMemLoc);
+			Flash_writeByte(usiMemLoc, 0xAA);
+			ucTestData = Flash_readByte(usiMemLoc);
 			break;
 		
 		// String read & write

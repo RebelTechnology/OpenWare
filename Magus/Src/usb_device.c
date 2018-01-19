@@ -4,8 +4,13 @@
   * @version        : v1.0_Cube
   * @brief          : This file implements the USB Device 
   ******************************************************************************
+  * This notice applies to any and all portions of this file
+  * that are not between comment pairs USER CODE BEGIN and
+  * USER CODE END. Other portions of this file, whether 
+  * inserted by the user or by software development tools
+  * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -47,24 +52,31 @@
 #include "usb_device.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
-#include "usbd_midi.h"
-#include "usbd_midi_if.h"
+#include "usbd_audio.h"
+#include "usbd_audio_if.h"
 
 /* USB Device Core handle declaration */
 USBD_HandleTypeDef hUsbDeviceHS;
 
-/* init function */				        
+/* init function */                                        
 void MX_USB_DEVICE_Init(void)
 {
+  /* USER CODE BEGIN USB_DEVICE_Init_PreTreatment */
+  
+  /* USER CODE END USB_DEVICE_Init_PreTreatment */
+  
   /* Init Device Library,Add Supported Class and Start the library*/
   USBD_Init(&hUsbDeviceHS, &HS_Desc, DEVICE_HS);
 
-  USBD_RegisterClass(&hUsbDeviceHS, &USBD_Midi_ClassDriver);
+  USBD_RegisterClass(&hUsbDeviceHS, &USBD_AUDIO);
 
-  USBD_Midi_RegisterInterface(&hUsbDeviceHS, &USBD_Midi_fops);
+  USBD_AUDIO_RegisterInterface(&hUsbDeviceHS, &USBD_AUDIO_fops_HS);
 
   USBD_Start(&hUsbDeviceHS);
 
+  /* USER CODE BEGIN USB_DEVICE_Init_PostTreatment */
+  
+  /* USER CODE END USB_DEVICE_Init_PostTreatment */
 }
 /**
   * @}
