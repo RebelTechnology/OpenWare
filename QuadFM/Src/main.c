@@ -43,6 +43,7 @@
 
 #include "HAL_ToggleSwitches.h"
 #include "TLC5971.h"
+#include "Flash_S25FL.h"
 
 /* USER CODE END Includes */
 
@@ -128,30 +129,31 @@ int main(void)
   MX_USB_OTG_HS_PCD_Init();
 
   /* USER CODE BEGIN 2 */
-	TLC5971_init(&hspi5);
+	Flash_S25FL_init(&hspi1);
+//	TLC5971_init(&hspi5);
 	
-	TLC5971_SetOutput_GS(LED_A, LED_Red, 	0xFFFF);
+//	TLC5971_SetOutput_GS(LED_A, LED_Red, 	0xFFFF);
 //	TLC5971_SetOutput_GS(LED_A, LED_Green,0xFFFF);
 //	TLC5971_SetOutput_GS(LED_A, LED_Blue, 0xFFFF);
 
 //	TLC5971_SetOutput_GS(LED_B, LED_Red, 	0xFFFF);
-	TLC5971_SetOutput_GS(LED_B, LED_Green,0xFFFF);
+//	TLC5971_SetOutput_GS(LED_B, LED_Green,0xFFFF);
 //	TLC5971_SetOutput_GS(LED_B, LED_Blue, 0xFFFF);
 
 //	TLC5971_SetOutput_GS(LED_C, LED_Red, 	0xFFFF);
 //	TLC5971_SetOutput_GS(LED_C, LED_Green,0xFFFF);
-	TLC5971_SetOutput_GS(LED_C, LED_Blue, 0xFFFF);
+//	TLC5971_SetOutput_GS(LED_C, LED_Blue, 0xFFFF);
 
-	TLC5971_SetOutput_GS(LED_D, LED_Red, 	0xFFFF);
-	TLC5971_SetOutput_GS(LED_D, LED_Green,0xFFFF);
-	TLC5971_SetOutput_GS(LED_D, LED_Blue, 0xFFFF);
+//	TLC5971_SetOutput_GS(LED_D, LED_Red, 	0xFFFF);
+//	TLC5971_SetOutput_GS(LED_D, LED_Green,0xFFFF);
+//	TLC5971_SetOutput_GS(LED_D, LED_Blue, 0xFFFF);
 
-	TLC5971_SetOutput_BC(LED_Red, 	 0x08);
-	TLC5971_SetOutput_BC(LED_Green,  0x02);
-	TLC5971_SetOutput_BC(LED_Blue,   0x05);
+//	TLC5971_SetOutput_BC(LED_Red, 	 0x08);
+//	TLC5971_SetOutput_BC(LED_Green,  0x02);
+//	TLC5971_SetOutput_BC(LED_Blue,   0x05);
 	
-	TLC5971_Settings(REG_DSRPT);
-	TLC5971_Update();
+//	TLC5971_Settings(REG_DSRPT);
+//	TLC5971_Update();
   /* USER CODE END 2 */
 
 		
@@ -160,9 +162,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		uint32_t delay = 1000000;
-		while(--delay){}
-		
+		HAL_Delay(100);
+		Flash_S25FL_Test();
 	
   /* USER CODE END WHILE */
 		
@@ -342,7 +343,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -565,7 +566,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GP7_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : CS_nCS_Pin CS_nRST_Pin */
-  GPIO_InitStruct.Pin = CS_nCS_Pin|CS_nRST_Pin;
+  GPIO_InitStruct.Pin = CS_nCS_Pin|CS_nRST_Pin|FLASH_nWP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

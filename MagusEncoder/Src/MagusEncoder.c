@@ -1,5 +1,5 @@
 #include "stm32f0xx_hal.h"
-#include "Magus Encoder.h"
+#include "MagusEncoder.h"
 #include "main.h"
 
 extern SPI_HandleTypeDef hspi1;

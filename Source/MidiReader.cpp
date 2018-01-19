@@ -10,15 +10,17 @@ bool midi_error(const char* str){
 bool MidiReader::readMidiFrame(uint8_t* frame){
   // apparently no running status in USB MIDI frames
 #ifdef USE_MIDI_CALLBACK
-  if(midiCallback != NULL && frame[0] >= USB_COMMAND_NOTE_OFF)
+  if(midiCallback != NULL && (frame[0]&0x0f) >= USB_COMMAND_NOTE_OFF)
     midiCallback(frame[0], frame[1], frame[2], frame[3]);
 #endif
-  switch(frame[0]){
+  // The Cable Number (CN) is a value ranging from 0x0 to 0xF indicating the number assignment of the Embedded MIDI Jack associated with the endpoint that is transferring the data.    
+  switch(frame[0] & 0x0f){ // accept any cable number /  port
   case USB_COMMAND_MISC:
   case USB_COMMAND_CABLE_EVENT:
     return false;
     break;
   case USB_COMMAND_SINGLE_BYTE:
+    // Single Byte: in some special cases, an application may prefer not to use parsed MIDI events. Using CIN=0xF, a MIDI data stream may be transferred by placing each individual byte in one 32 Bit USB-MIDI Event Packet. This way, any MIDI data may be transferred without being parsed.
     if(frame[1] == 0xF7 && pos > 2){
       // suddenly found the end of our sysex as a Single Byte Unparsed
       buffer[pos++] = frame[1];
