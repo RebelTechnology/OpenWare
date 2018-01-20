@@ -49,12 +49,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
+#include "cmsis_os.h"
 #include "usb_device.h"
 #include "usb_host.h"
 
 /* USER CODE BEGIN Includes */
-//#include "errorhandlers.h"
 #include "device.h"
+#include "errorhandlers.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -74,6 +75,8 @@ UART_HandleTypeDef huart2;
 
 SDRAM_HandleTypeDef hsdram1;
 
+osThreadId defaultTaskHandle;
+
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE END PV */
@@ -89,7 +92,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI5_Init(void);
 static void MX_TIM3_Init(void);
-void MX_USB_HOST_Process(void);
+void StartDefaultTask(void const * argument);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
                                 
@@ -137,8 +140,6 @@ int main(void)
   MX_SAI1_Init();
   MX_SPI4_Init();
   MX_USART2_UART_Init();
-  MX_USB_DEVICE_Init();
-  MX_USB_HOST_Init();
   MX_SPI1_Init();
   MX_SPI5_Init();
   MX_TIM3_Init();
@@ -172,25 +173,54 @@ int main(void)
   HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
-//  SDRAM_Initialization_Sequence(&hsdram1);   
+  SDRAM_Initialization_Sequence(&hsdram1);   
 
 	
   /* USER CODE END 2 */
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+ 
+
+  /* Start scheduler */
+  osKernelStart();
+  
+  /* We should never get here as control is now taken by the scheduler */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	setup();
 
   while (1)
   {
   /* USER CODE END WHILE */
-    MX_USB_HOST_Process();
 
-		loop();
   /* USER CODE BEGIN 3 */
 
   }
   /* USER CODE END 3 */
+
 }
 
 /** System Clock Configuration
@@ -263,7 +293,7 @@ void SystemClock_Config(void)
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
   /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(SysTick_IRQn, 15, 0);
 }
 
 /* SAI1 init function */
@@ -321,6 +351,7 @@ static void MX_SAI1_Init(void)
 /* SPI1 init function */
 static void MX_SPI1_Init(void)
 {
+
   /* SPI1 parameter configuration*/
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
@@ -338,11 +369,13 @@ static void MX_SPI1_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
 }
 
 /* SPI4 init function */
 static void MX_SPI4_Init(void)
 {
+
   /* SPI4 parameter configuration*/
   hspi4.Instance = SPI4;
   hspi4.Init.Mode = SPI_MODE_MASTER;
@@ -360,11 +393,13 @@ static void MX_SPI4_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
 }
 
 /* SPI5 init function */
 static void MX_SPI5_Init(void)
 {
+
   /* SPI5 parameter configuration*/
   hspi5.Instance = SPI5;
   hspi5.Init.Mode = SPI_MODE_MASTER;
@@ -382,11 +417,13 @@ static void MX_SPI5_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
 }
 
 /* TIM3 init function */
 static void MX_TIM3_Init(void)
 {
+
   TIM_MasterConfigTypeDef sMasterConfig;
   TIM_OC_InitTypeDef sConfigOC;
 
@@ -417,6 +454,7 @@ static void MX_TIM3_Init(void)
   }
 
   HAL_TIM_MspPostInit(&htim3);
+
 }
 
 /* USART2 init function */
@@ -435,6 +473,7 @@ static void MX_USART2_UART_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
 }
 
 /** 
@@ -453,7 +492,7 @@ static void MX_DMA_Init(void)
   HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
   /* DMA2_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);
 
 }
@@ -489,6 +528,7 @@ static void MX_FMC_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
 }
 
 /** Configure pins as 
@@ -500,6 +540,7 @@ static void MX_FMC_Init(void)
 */
 static void MX_GPIO_Init(void)
 {
+
   GPIO_InitTypeDef GPIO_InitStruct;
 
   /* GPIO Ports Clock Enable */
@@ -569,10 +610,39 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
 /* USER CODE END 4 */
+
+/* StartDefaultTask function */
+void StartDefaultTask(void const * argument)
+{
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
+
+  /* init code for USB_HOST */
+  MX_USB_HOST_Init();
+
+  /* USER CODE BEGIN 5 */
+  setup();
+  // enable USB Host power
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+ 
+  /* Infinite loop */
+  for(;;)
+  {
+    if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+      error(USB_ERROR, "USB Host PWR fault");
+    }else{
+      MX_USB_HOST_Process();
+    }
+    loop();
+  }
+  /* USER CODE END 5 */ 
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
