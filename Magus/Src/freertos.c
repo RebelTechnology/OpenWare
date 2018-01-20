@@ -1,8 +1,7 @@
 /**
- ******************************************************************************
-  * @file            : USB_HOST
-  * @version         : v1.0_Cube
-  * @brief           : Header for usb_host file.
+  ******************************************************************************
+  * File Name          : freertos.c
+  * Description        : Code for freertos applications
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -45,39 +44,75 @@
   * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
-*/
-
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __usb_host_H
-#define __usb_host_H
-#ifdef __cplusplus
- extern "C" {
-#endif
+  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
-typedef enum {
-  APPLICATION_IDLE = 0,  
-  APPLICATION_START,   
-  APPLICATION_READY,
-  APPLICATION_DISCONNECT,
-}ApplicationTypeDef;
-		
-void MX_USB_HOST_Init(void);
+/* USER CODE BEGIN Includes */     
 
-#ifdef __cplusplus
-}
-#endif
-#endif /*__usb_host_H */
+/* USER CODE END Includes */
 
-/**
-  * @}
-  */
+/* Variables -----------------------------------------------------------------*/
 
-/**
-  * @}
-  */
+/* USER CODE BEGIN Variables */
+
+/* USER CODE END Variables */
+
+/* Function prototypes -------------------------------------------------------*/
+
+/* USER CODE BEGIN FunctionPrototypes */
+
+/* USER CODE END FunctionPrototypes */
+
+/* GetIdleTaskMemory prototype (linked to static allocation support) */
+void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+
+/* Hook prototypes */
+void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName);
+void vApplicationMallocFailedHook(void);
+
+/* USER CODE BEGIN 4 */
+/* __weak void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName) */
+/* { */
+   /* Run time stack overflow checking is performed if
+   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
+   called if a stack overflow is detected. */
+/* } */
+/* USER CODE END 4 */
+
+/* USER CODE BEGIN 5 */
+/* __weak void vApplicationMallocFailedHook(void) */
+/* { */
+   /* vApplicationMallocFailedHook() will only be called if
+   configUSE_MALLOC_FAILED_HOOK is set to 1 in FreeRTOSConfig.h. It is a hook
+   function that will get called if a call to pvPortMalloc() fails.
+   pvPortMalloc() is called internally by the kernel whenever a task, queue,
+   timer or semaphore is created. It is also called by various parts of the
+   demo application. If heap_1.c or heap_2.c are used, then the size of the
+   heap available to pvPortMalloc() is defined by configTOTAL_HEAP_SIZE in
+   FreeRTOSConfig.h, and the xPortGetFreeHeapSize() API function can be used
+   to query the size of free heap space that remains (although it does not
+   provide information on how the remaining heap might be fragmented). */
+/* } */
+/* USER CODE END 5 */
+
+/* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
+static StaticTask_t xIdleTaskTCBBuffer;
+static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
+  
+void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize )
+{
+  *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+  *ppxIdleTaskStackBuffer = &xIdleStack[0];
+  *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+  /* place for user code */
+}                   
+/* USER CODE END GET_IDLE_TASK_MEMORY */
+
+/* USER CODE BEGIN Application */
+     
+/* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
