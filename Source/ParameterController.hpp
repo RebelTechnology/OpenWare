@@ -5,6 +5,8 @@
 #include "errorhandlers.h"
 #include "ProgramVector.h"
 
+/* shows a single parameter selected and controlled with a single encoder
+ */
 template<uint8_t SIZE>
 class ParameterController {
 public:
@@ -13,8 +15,6 @@ public:
   int8_t selected = 0;
   ParameterController(){
     reset();
-    for(int i=0; i<SIZE; ++i)
-      parameters[i] = 0;
   }
   void reset(){
     for(int i=0; i<SIZE; ++i){

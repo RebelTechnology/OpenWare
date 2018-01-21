@@ -73,30 +73,42 @@ void ScreenBuffer::print(int x, int y, const char* text){
   print(text);
 }
 
-void ScreenBuffer::drawFastVLine(int x, int y,
-				 int h, Colour color) {
-  // Update in subclasses if desired!
-  drawLine(x, y, x, y+h-1, color);
+void ScreenBuffer::drawVerticalLine(int x, int y,
+				    int length, Colour c){
+  // drawLine(x, y, x, y+length-1, c);
+  length += y;
+  while(y < length)
+    setPixel(x, y++, c);
 }
 
-void ScreenBuffer::drawFastHLine(int x, int y,
-				 int w, Colour color) {
-  // Update in subclasses if desired!
-  drawLine(x, y, x+w-1, y, color);
+void ScreenBuffer::drawHorizontalLine(int x, int y,
+				      int length, Colour c){
+  // drawLine(x, y, x+length-1, y, c);
+  length += x;
+  while(x < length)
+    setPixel(x++, y, c);
 }
 
 void ScreenBuffer::fillRectangle(int x, int y, int w, int h,
-			    Colour color) {
-  // Update in subclasses if desired!
-  for (int i=x; i<x+w; i++) {
-    drawFastVLine(i, y, h, color);
-  }
+				 Colour c) {
+  // for(int i=x; i<x+w; i++)
+  //   drawVerticalLine(i, y, h, c);
+  for(int i=y; i<y+h; i++)
+    drawHorizontalLine(i, y, w, c);
+}
+
+void ScreenBuffer::drawRectangle(int x, int y, int w, int h,
+				 Colour c) {
+  drawHorizontalLine(x+1, y, w-2, c);
+  drawHorizontalLine(x+1, y+h-1, w-2, c);
+  drawVerticalLine(x, y, h, c);
+  drawVerticalLine(x+w-1, y, h, c);
 }
 
 // Bresenham's algorithm - thx wikpedia
 void ScreenBuffer::drawLine(int x0, int y0,
 			    int x1, int y1,
-			    Colour color) {
+			    Colour c) {
   int steep = abs(y1 - y0) > abs(x1 - x0);
   if (steep) {
     swap(x0, y0);
@@ -117,9 +129,9 @@ void ScreenBuffer::drawLine(int x0, int y0,
     ystep = -1;
   for (; x0<=x1; x0++) {
     if (steep)
-      setPixel(y0, x0, color);
+      setPixel(y0, x0, c);
     else
-      setPixel(x0, y0, color);
+      setPixel(x0, y0, c);
     err -= dy;
     if (err < 0) {
       y0 += ystep;
@@ -153,8 +165,8 @@ void ScreenBuffer::setTextWrap(bool w) {
 }
 
 // Draw a character
-void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char c,
-                            Colour color, Colour bg, uint8_t size) {
+void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char ch,
+                            Colour c, Colour bg, uint8_t size) {
   if((x >= width)            || // Clip right
      (y >= height)           || // Clip bottom
      ((x + 6 * size - 1) < 0) || // Clip left
@@ -165,15 +177,15 @@ void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char c,
     if (i == 5) 
       line = 0x0;
     else 
-      line = font[(c*5)+i];
+      line = font[(ch*5)+i];
     for (int8_t j = 0; j<8; j++) {
       if (line & 0x1) {
         if (size == 1) // default size
-          setPixel(x+i, y+j, color);
+          setPixel(x+i, y+j, c);
         else {  // big size
-          fillRectangle(x+(i*size), y+(j*size), size, size, color);
+          fillRectangle(x+(i*size), y+(j*size), size, size, c);
         } 
-      } else if (bg != color) {
+      } else if (bg != c) {
         if (size == 1) // default size
           setPixel(x+i, y+j, bg);
         else {  // big size
@@ -186,8 +198,8 @@ void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char c,
 }
 
 // Draw a character rotated 90 degrees
-void ScreenBuffer::drawRotatedChar(uint16_t x, uint16_t y, unsigned char c,
-                                   Colour color, Colour bg, uint8_t size) {
+void ScreenBuffer::drawRotatedChar(uint16_t x, uint16_t y, unsigned char ch,
+                                   Colour c, Colour bg, uint8_t size) {
   if((x >= width)            || // Clip right
      (y >= height)           || // Clip bottom
      ((x + 8 * size - 1) < 0) || // Clip left
@@ -196,20 +208,20 @@ void ScreenBuffer::drawRotatedChar(uint16_t x, uint16_t y, unsigned char c,
   // for (int8_t i=5; i>=0; i-- ) {
   for (int8_t i=0; i<6; i++ ) {
     uint8_t line;
-    if (i == 5) 
+    if (i == 5)
       line = 0x0;
     else 
-      line = font[(c*5)+i];
+      line = font[(ch*5)+i];
     // for (int8_t j = 0; j<8; j++) {
     for (int8_t j = 7; j>=0; j--) {
       if (line & 0x1) {
         if (size == 1) // default size
-          setPixel(y+i, x+j, color);
+          setPixel(y+i, x+j, c);
         else {  // big size
-          // fillRectangle(x+(i*size), y+(j*size), size, size, color);
-          fillRectangle(y+(j*size), x+(i*size), size, size, color);
+          // fillRectangle(x+(i*size), y+(j*size), size, size, c);
+          fillRectangle(y+(j*size), x+(i*size), size, size, c);
         } 
-      } else if (bg != color) {
+      } else if (bg != c) {
         if (size == 1) // default size
           setPixel(y+i, x+j, bg);
         else {  // big size
