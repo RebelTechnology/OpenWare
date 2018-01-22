@@ -97,6 +97,8 @@
 #define DCR_BRST_Default						(0<<14)
 #define DCR_BRST_Contextual					(1<<14)
 
+#define DCR_RESET										(1<<15)
+
 // Port Configuration Values
 #define PCR_ADCSamples_1            (0<<5)
 #define PCR_ADCSamples_2            (1<<5)

@@ -14,7 +14,7 @@ uint16_t rgENC_Values[7];
 // Port and Chip Setup
 void Encoders_readAll(void)
 { 
-	uint16_t x  = 150;
+	uint16_t x  = 250;
 	
 	pbarCS(0);
 	while(--x){__NOP();}

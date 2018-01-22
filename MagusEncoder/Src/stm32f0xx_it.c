@@ -126,22 +126,12 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-* @brief This function handles SPI1 global interrupt.
+* @brief This function handles EXTI line 0 and 1 interrupts.
 */
-void SPI1_IRQHandler(void)
-{
-  /* USER CODE BEGIN SPI1_IRQn 0 */
-	
-  /* USER CODE END SPI1_IRQn 0 */
-  HAL_SPI_IRQHandler(&hspi1);
-  /* USER CODE BEGIN SPI1_IRQn 1 */
-
-  /* USER CODE END SPI1_IRQn 1 */
-}
-
-/* USER CODE BEGIN 1 */
 void EXTI0_1_IRQHandler(void)
 {
+  /* USER CODE BEGIN EXTI0_1_IRQn 0 */
+
 	// ENC5 Switch (INT0)
 	if (__HAL_GPIO_EXTI_GET_FLAG(ENC5_SW_Pin))
 	{
@@ -151,10 +141,21 @@ void EXTI0_1_IRQHandler(void)
 		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
 		__HAL_GPIO_EXTI_CLEAR_IT(ENC5_SW_Pin);
 	}
+	
+  /* USER CODE END EXTI0_1_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+  /* USER CODE BEGIN EXTI0_1_IRQn 1 */
+
+  /* USER CODE END EXTI0_1_IRQn 1 */
 }
 
+/**
+* @brief This function handles EXTI line 2 and 3 interrupts.
+*/
 void EXTI2_3_IRQHandler(void)
 {
+  /* USER CODE BEGIN EXTI2_3_IRQn 0 */
+
 	// ENC2 Switch (INT2)
 	if (__HAL_GPIO_EXTI_GET_FLAG(ENC2_SW_Pin))
 	{
@@ -174,10 +175,22 @@ void EXTI2_3_IRQHandler(void)
 		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
 		__HAL_GPIO_EXTI_CLEAR_IT(ENC4_SW_Pin);
 	}
+	
+  /* USER CODE END EXTI2_3_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
+  /* USER CODE BEGIN EXTI2_3_IRQn 1 */
+
+  /* USER CODE END EXTI2_3_IRQn 1 */
 }
 
+/**
+* @brief This function handles EXTI line 4 to 15 interrupts.
+*/
 void EXTI4_15_IRQHandler(void)
 {
+  /* USER CODE BEGIN EXTI4_15_IRQn 0 */
+	
 	// SPI NSS Pin
 	if (__HAL_GPIO_EXTI_GET_FLAG(SPI_NCS_Pin))
 	{
@@ -214,7 +227,35 @@ void EXTI4_15_IRQHandler(void)
 		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
 		__HAL_GPIO_EXTI_CLEAR_IT(ENC6_SW_Pin);
 	}
+	
+  /* USER CODE END EXTI4_15_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
+  /* USER CODE BEGIN EXTI4_15_IRQn 1 */
+
+  /* USER CODE END EXTI4_15_IRQn 1 */
 }
+
+/**
+* @brief This function handles SPI1 global interrupt.
+*/
+void SPI1_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI1_IRQn 0 */
+	
+	
+	
+  /* USER CODE END SPI1_IRQn 0 */
+  HAL_SPI_IRQHandler(&hspi1);
+  /* USER CODE BEGIN SPI1_IRQn 1 */
+
+  /* USER CODE END SPI1_IRQn 1 */
+}
+
+/* USER CODE BEGIN 1 */
+
 
 
 /* USER CODE END 1 */

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project>
-<ProjectName>/home/mars/devel/OpenWare/MagusEncoder/\MagusEncoder</ProjectName>
-<CMSIS>../Drivers/CMSIS</CMSIS>
-<HAL_Driver>/home/mars/STM32Cube/Repository//STM32Cube_FW_F0_V1.9.0/Drivers/CMSIS</HAL_Driver>
+<ProjectName>C:\Users\James\Dropbox (Personal)\Freelance\Rebel Tech\Git Repository\OpenWare\MagusEncoder\\MagusEncoder</ProjectName>
+<CMSIS>..\Drivers\CMSIS</CMSIS>
+<HAL_Driver>C:\Users\James\STM32Cube\Repository\STM32Cube_FW_F0_V1.9.0\Drivers\CMSIS</HAL_Driver>
 
 <Toolchain>MDK-ARM</Toolchain>
 	<Toolversion>5</Toolversion>
@@ -10,7 +10,7 @@
 
 <filestoremove>
 	<file>
-	   		<name>../Drivers/CMSIS/Device/ST/STM32F0xx/Source/Templates/arm/startup_stm32f051x8.s</name>
+	   		<name>..\Drivers\CMSIS\Device\ST\STM32F0xx\Source\Templates\arm\startup_stm32f051x8.s</name>
 	</file>
 </filestoremove>
 
@@ -35,7 +35,7 @@
     <usedDebug>true</usedDebug>
     	<debugprobe>swd</debugprobe>
     <optimization></optimization>
-    <icfloc>0</icfloc>
+    <icfloc>1</icfloc>
     <Adefines>
         <define></define>
     </Adefines>   
@@ -61,11 +61,11 @@
     </definestoremove>
     
 	<Cincludes>
-	   <include>../Inc</include>
-	   <include>../Drivers/STM32F0xx_HAL_Driver/Inc</include>
-	   <include>../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy</include>
-	   <include>../Drivers/CMSIS/Device/ST/STM32F0xx/Include</include>
-	   <include>../Drivers/CMSIS/Include</include>
+	   <include>..\Inc</include>
+	   <include>..\Drivers\STM32F0xx_HAL_Driver\Inc</include>
+	   <include>..\Drivers\STM32F0xx_HAL_Driver\Inc\Legacy</include>
+	   <include>..\Drivers\CMSIS\Device\ST\STM32F0xx\Include</include>
+	   <include>..\Drivers\CMSIS\Include</include>
 
     </Cincludes>
       </config>
@@ -138,37 +138,19 @@
 	    <group>
 	      <name>User</name>  
                                 <file>
-                                 <name>../Src/main.c</name>
+                                 <name>..\Src\main.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/stm32f0xx_it.c</name>
+                                 <name>..\Src\stm32f0xx_it.c</name>
                                 </file>
 
                                 <file>
-                                 <name>../Src/stm32f0xx_hal_msp.c</name>
+                                 <name>..\Src\stm32f0xx_hal_msp.c</name>
                                 </file>
 
 
 
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
-               <group>
-        <name>..</name>
-                    <group>
-                    <name>Src</name>
-                    </group>
-        </group>
 
 </group> 
   </group>

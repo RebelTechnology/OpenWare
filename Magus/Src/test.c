@@ -41,24 +41,26 @@ void setup(void){
 	Encoders_init(&hspi5);
 
   // Pixi
+	MAX11300_setDeviceControl(DCR_RESET);
+	HAL_Delay(1000);
   MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep/*|DCR_BRST_Contextual*/);
 
-  MAX11300_setPortMode(1,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(2,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(3,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(4,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(5,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(6, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(7, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(8, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(9,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(10, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(1,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(12, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(13, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(14, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  MAX11300_setPortMode(15, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-	MAX11300_setPortMode(16, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  MAX11300_setPortMode(1,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(2,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(3,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(4,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(5,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(6, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(7, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(8, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+	MAX11300_setPortMode(9,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(10, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(1,  	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(12, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(13, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(14, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+  MAX11300_setPortMode(15, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
+	MAX11300_setPortMode(16, 	PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|DCR_ADCCONV_400ksps|PCR_ADCref_INT);
 
 //  MAX11300_setPortMode(0,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
   /* MAX11300_setPortMode(PORT_1,  PCR_Range_DAC_M5_P5|PCR_Mode_DAC); */
@@ -87,7 +89,8 @@ void setup(void){
 
 void loop(void)
 {
-	for(int x=1; x<17; x++)
+	
+	for(int x=16; x>0; x--)
 	{
 		usiResult = MAX11300_readADC(x);
 		Magus_setRGB(x, usiResult, usiResult, usiResult);
