@@ -1,10 +1,10 @@
 #ifndef __MagusParameterController_hpp__
 #define __ParameterController_hpp__
 
-// #include "basicmaths.h"
+#include "basicmaths.h"
 // #include "errorhandlers.h"
-// #include "ProgramVector.h"
-// #include "HAL_Encoders.h"
+#include "ProgramVector.h"
+#include "HAL_Encoders.h"
 
 /*    
 screen 128 x 64, font 5x7
@@ -52,7 +52,7 @@ public:
 #if 0
     // stacked
     // 6px high by up to 128px long rectangle
-    screen.drawRectangle(x, y, max(0, min(128, parameters[pid]/32)), 6, WHITE);
+    screen.drawRectangle(x, y, max(1, min(128, parameters[pid]/32)), 6, WHITE);
     // y -= 7;
     screen.setTextSize(1);
     screen.print(x, y, names[pid]);
@@ -62,7 +62,7 @@ public:
     // 6px high by up to 128px long rectangle
     y -= 7;
     x += 64;
-    screen.drawRectangle(x, y, max(0, min(64, parameters[pid]/64)), 6, WHITE);
+    screen.drawRectangle(x, y, max(1, min(64, parameters[pid]/64)), 6, WHITE);
 }
 
   void drawBlocks(ScreenBuffer& screen){
@@ -158,26 +158,26 @@ public:
     drawBlocks(screen);
   }
 
-//   void encoderChanged(uint8_t encoder, int32_t delta){
-//     if(encoder == 0){
-//       if(sw2()){
-// 	if(delta > 1)
-// 	  selected = min(SIZE-1, selected+1);
-// 	else if(delta < 1)
-// 	  selected = max(0, selected-1);
-//       }else{
-// 	parameters[selected] += delta*10;
-// 	parameters[selected] = min(4095, max(0, parameters[selected]));
-//       }
-//     } // todo: change patch with enc1/sw1
-//   }
-//   void setName(uint8_t pid, const char* name){
-//     if(pid < SIZE)
-//       strncpy(names[pid], name, 11);
-//   }
-//   uint8_t getSize(){
-//     return SIZE;
-//   }
+  void encoderChanged(uint8_t encoder, int32_t delta){
+    // if(encoder == 0){
+    //   if(sw2()){
+    // 	if(delta > 1)
+    // 	  selected = min(SIZE-1, selected+1);
+    // 	else if(delta < 1)
+    // 	  selected = max(0, selected-1);
+    //   }else{
+    // 	parameters[selected] += delta*10;
+    // 	parameters[selected] = min(4095, max(0, parameters[selected]));
+    //   }
+    // } // todo: change patch with enc1/sw1
+  }
+  void setName(uint8_t pid, const char* name){
+    if(pid < SIZE)
+      strncpy(names[pid], name, 11);
+  }
+  uint8_t getSize(){
+    return SIZE;
+  }
 // private:
 //   bool sw1(){
 //     return HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_14) != GPIO_PIN_SET;
