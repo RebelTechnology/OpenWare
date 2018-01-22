@@ -2,9 +2,11 @@
 #define __ParameterController_hpp__
 
 #include "basicmaths.h"
-// #include "errorhandlers.h"
+#ifdef OWL_MAGUS
+#include "errorhandlers.h"
+#endif
 #include "ProgramVector.h"
-#include "HAL_Encoders.h"
+// #include "HAL_Encoders.h"
 
 /*    
 screen 128 x 64, font 5x7
@@ -28,9 +30,13 @@ public:
   int16_t parameters[SIZE];
   char names[SIZE][22]; // max 21 chars/128px
   char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
-  int8_t selected = 0;
-  int8_t global = 0;
-  int8_t mode = 0;
+  int8_t selectedBlock = 0;
+  int8_t selectedPid[4] = {0,2,4,6};
+  int8_t global = 3;
+  enum ScreenMode {
+    STANDARD, SELECTBLOCKPARAMETER, SELECTGLOBALPARAMETER, ERROR
+  };
+  ScreenMode mode = STANDARD;
   ParameterController(){
     reset();
   }
@@ -80,9 +86,10 @@ public:
     int y = 29;
     screen.setTextSize(1);
     // int i = (selected % 8) & 0xe;
+    int selected = selectedPid[selectedBlock];
     int i = selected & 0x06;
     screen.print(1, y, names[i]);
-    if(selected == i)
+    if(selectedPid[selectedBlock] == i)
       screen.invert(0, y-10, 64, 10);
     i += 1;
     screen.print(65, y, names[i]);
@@ -103,16 +110,20 @@ public:
     // draw 4x2x2 levels on bottom 8px row
     int x = 0;
     int y = 63-7;
+    int block = 0;
     for(int i=0; i<16; ++i){
       // 4px high by up to 16px long rectangle, filled if selected
-      if(i == selected)
+      if(i == selectedPid[block])
 	screen.fillRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
       else
 	screen.drawRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
       x += 16;
+      if(i & 0x01)
+	block++;
       if(i == 7){
 	x = 0;
 	y += 3;
+	block = 0;
       }
     }
   }
@@ -138,24 +149,56 @@ public:
     }    
   }
 
+  void drawError(ScreenBuffer& screen){
+    if(getErrorMessage() != NULL){
+      screen.setTextWrap(true);
+      screen.print(0, 29, getErrorMessage());
+      screen.setTextWrap(false);
+    }
+  }
+
   void draw(ScreenBuffer& screen){
     screen.clear();
     screen.setTextWrap(false);
     drawStatus(screen);
     switch(mode){
-    case 0:
+    case STANDARD:
       // standard mode stacked
       // drawParameter(global, 63-32-6, screen);
       // drawParameter(selected, 63-17-6, screen);
       drawParameter(global, 29, screen);
-      drawParameter(selected, 41, screen);
+      drawParameter(selectedPid[selectedBlock], 41, screen);
       break;
-    case 1:
+    case SELECTBLOCKPARAMETER:
       // select block parameter mode
       drawBlockParameterNames(screen);
       break;
+    case SELECTGLOBALPARAMETER:
+      break;
+    case ERROR:
+      drawError(screen);
+      break;
     }      
     drawBlocks(screen);
+  }
+
+  void setName(uint8_t pid, const char* name){
+    if(pid < SIZE)
+      strncpy(names[pid], name, 11);
+  }
+  uint8_t getSize(){
+    return SIZE;
+  }
+
+  void updateEncoders(uint16_t* data, uint8_t size){
+    uint16_t pressed = data[0];
+    mode = STANDARD;
+    for(int i=1; i<=4; ++i){
+      if(pressed&(1<<i)){
+	selectedBlock = i;
+	mode = SELECTBLOCKPARAMETER;
+      }
+    }
   }
 
   void encoderChanged(uint8_t encoder, int32_t delta){
@@ -171,14 +214,8 @@ public:
     //   }
     // } // todo: change patch with enc1/sw1
   }
-  void setName(uint8_t pid, const char* name){
-    if(pid < SIZE)
-      strncpy(names[pid], name, 11);
-  }
-  uint8_t getSize(){
-    return SIZE;
-  }
-// private:
+
+  // private:
 //   bool sw1(){
 //     return HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_14) != GPIO_PIN_SET;
 //   }

@@ -39,16 +39,16 @@ static const uint8_t OLED_initSequence[] =
 	0xa1, 		// Segment re-map: a0: col0 -> SEG0, a1: col127 -> SEG0
 	/* 0xa0,        // writes right-to-left */
 	0xda, 0x12, 	// COM pins
-	0x81, 0xcf, 	// Current control
+	0x81, 0xcf, 	// Contrast control: 0 to 0xff. Current increases with contrast.
 	0xd9, 0x22, 	// Pre-charge period
 	0xdb, 0x34, 	// VCOMH deselect level
-	0xa4, 		// Entire display on/off
+	/* 0xa4, 		// Entire display on/off */
 	0xa6, 		// Normal / inverse display
 	0x20, 0x01,     // Vertical addressing mode
 	0x21, 0x00, 0x7f, // Set column address
 	/* 0x22, 0x00, 0x07, // Set page address */
 	0xaf, 		// Display on
-	0xa6,		// Set Normal/Inverse Display
+	/* 0xa6,		// Set Normal/Inverse Display */
 };
 
 /* static unsigned char* OLED_Buffer; */

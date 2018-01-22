@@ -53,8 +53,12 @@ static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
 static DynamicPatchDefinition dynamo;
 
+#ifdef USE_ADC
 extern uint16_t adc_values[NOF_ADC_VALUES];
+#endif
+#ifndef USE_SCREEN
 int16_t parameter_values[NOF_PARAMETERS];
+#endif
 BitState32 stateChanged;
 uint16_t button_values;
 uint16_t timestamps[NOF_BUTTONS]; 
@@ -138,6 +142,7 @@ void setButtonValue(uint8_t ch, uint8_t value){
   button_values |= (bool(value)<<ch);
 }
 
+#ifdef USE_ADC
 void updateParameters(){
   // IIR exponential filter with lambda 0.75
 #if defined OWL_MODULAR || defined OWL_TESSERACT /* inverting ADCs */
@@ -146,7 +151,7 @@ void updateParameters(){
   parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
   parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
 #elif defined USE_SCREEN
-  // todo: route input CVs to parameters
+  // Player todo: route input CVs to parameters
 #else
   parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
   parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
@@ -161,6 +166,10 @@ void updateParameters(){
   // parameter_values[2] = 4095-adc_values[2];
   // parameter_values[3] = 4095-adc_values[3];
 }
+#else
+void updateParameters(){
+}
+#endif
 
 /* called by the program when a block has been processed */
 void onProgramReady(){

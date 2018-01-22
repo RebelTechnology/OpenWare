@@ -26,8 +26,10 @@ void ScreenBuffer::setPixel(unsigned int x, unsigned int y, Colour c){
     // Determine byte offset
     ucByteOffset = y-((uint8_t)(y/8)*8);		
     // Set pixel in buffer
-    pixels[usiArrayLoc] |= (1 << ucByteOffset);
-    // pixels[y*width+x] = c;
+    if(c == BLACK)
+      pixels[usiArrayLoc] &= ~(1 << ucByteOffset);
+    else
+      pixels[usiArrayLoc] |= (1 << ucByteOffset);
   }
 }
 
