@@ -4,13 +4,6 @@
 #include <string.h>
 //#define Pixi_SPIDMA_CTRL
 
-static void NopDelay(uint32_t nops){
-  while (nops--)
-    __asm("NOP");
-}
-#define delay(x) NopDelay(x*1000)
-/* #define delay(x) HAL_Delay(x) */
-
 static SPI_HandleTypeDef* MAX11300_SPIConfig;
  
 // Variables
@@ -65,7 +58,7 @@ void MAX11300_setPortMode(uint8_t port, uint16_t config)
 		pbarCS(1);
 	#endif
 
-	delay(100);
+	HAL_Delay(1);
 }
 
 uint16_t MAX11300_readPortMode(uint8_t port)
@@ -104,7 +97,8 @@ void MAX11300_setDeviceControl(uint16_t config)
 		HAL_SPI_Transmit(MAX11300_SPIConfig, rgData, sizeof rgData, 100);
 		pbarCS(1);
 	#endif
-	delay(100);
+	
+	HAL_Delay(1);
 }
 
 // ADC Functions

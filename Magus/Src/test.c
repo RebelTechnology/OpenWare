@@ -4,12 +4,30 @@
 #include "HAL_TLC5946.h"
 #include "HAL_OLED.h"
 #include "HAL_Encoders.h"
+//#include "FreeRTOS.h"
 
 uint16_t usiResult;
 extern uint16_t rgENC_Values[7];
 
 void setup(void);
 void loop(void);
+
+void midi_host_reset(){}
+   void midi_device_rx(uint8_t *buffer, uint32_t length){}
+   void midi_host_rx(uint8_t *buffer, uint32_t length){}
+
+   void vApplicationMallocFailedHook(void) {
+    // taskDISABLE_INTERRUPTS();
+    for(;;);
+  }
+	 
+  void vApplicationIdleHook(void) {
+  }
+typedef void * TaskHandle_t;
+  void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName) {
+    // taskDISABLE_INTERRUPTS();
+    for(;;);
+  }
 
 void setup(void){
   extern TIM_HandleTypeDef htim3;
