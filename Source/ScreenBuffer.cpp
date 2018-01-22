@@ -94,7 +94,7 @@ void ScreenBuffer::fillRectangle(int x, int y, int w, int h,
   // for(int i=x; i<x+w; i++)
   //   drawVerticalLine(i, y, h, c);
   for(int i=y; i<y+h; i++)
-    drawHorizontalLine(i, y, w, c);
+    drawHorizontalLine(x, i, w, c);
 }
 
 void ScreenBuffer::drawRectangle(int x, int y, int w, int h,
@@ -172,7 +172,8 @@ void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char ch,
      ((x + 6 * size - 1) < 0) || // Clip left
      ((y + 8 * size - 1) < 0))   // Clip top
     return;
-  for (int8_t i=0; i<6; i++ ) {
+  y -= 8 * size; // set origin to bottom left
+  for(int8_t i=0; i<6; i++ ) {
     uint8_t line;
     if (i == 5) 
       line = 0x0;
@@ -232,4 +233,13 @@ void ScreenBuffer::drawRotatedChar(uint16_t x, uint16_t y, unsigned char ch,
       line >>= 1;
     }
   }
+}
+
+void ScreenBuffer::invert(){
+
+}
+void ScreenBuffer::invert(int x, int y, int width, int height){
+  for(int i=x; i<x+width; ++i)
+    for(int j=y; j<y+height; ++j)
+      invertPixel(i, j);
 }

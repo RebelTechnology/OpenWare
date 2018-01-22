@@ -51,6 +51,7 @@ public:
   }
   Colour getPixel(unsigned int x, unsigned int y);
   void setPixel(unsigned int x, unsigned int y, Colour c);
+  void invertPixel(unsigned int x, unsigned int y);
   void fill(Colour c);
   void fade(uint16_t steps);
   void clear(){

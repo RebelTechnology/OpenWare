@@ -16,15 +16,16 @@ void Graphics::display(){
 
 void Graphics::draw(){
   drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-  // params.draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-  params.draw(screen);
+  // // params.draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
+  // params.draw(screen);
 }
 
 static void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
   graphics.screen.setBuffer(pixels);
   graphics.screen.clear();
-  graphics.screen.setTextSize(1);
-  graphics.screen.print(20, 0, "Rebel Technology");
+  // graphics.screen.setTextSize(1);
+  // graphics.screen.print(20, 0, "Rebel Technology");
+  graphics.params.draw(graphics.screen);
 }
 
 void Graphics::setCallback(void *callback){

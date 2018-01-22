@@ -46,7 +46,7 @@ static const uint8_t OLED_initSequence[] =
 	0xa6, 		// Normal / inverse display
 	0x20, 0x01,     // Vertical addressing mode
 	0x21, 0x00, 0x7f, // Set column address
-	0x22, 0x00, 0x07, // Set page address
+	/* 0x22, 0x00, 0x07, // Set page address */
 	0xaf, 		// Display on
 	0xa6,		// Set Normal/Inverse Display
 };
