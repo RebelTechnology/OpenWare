@@ -28,6 +28,7 @@ class ParameterController {
 public:
   char title[11] = "Magus"; // max 5 chars/64px
   int16_t parameters[SIZE];
+  int16_t encoders[SIZE]; // virtual encoder values
   char names[SIZE][22]; // max 21 chars/128px
   char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   int8_t selectedBlock = 0;
@@ -193,12 +194,20 @@ public:
   void updateEncoders(uint16_t* data, uint8_t size){
     uint16_t pressed = data[0];
     mode = STANDARD;
-    for(int i=1; i<=4; ++i){
+    for(int i=0; i<4; ++i){
       if(pressed&(1<<i)){
 	selectedBlock = i;
 	mode = SELECTBLOCKPARAMETER;
+      }else{
+	int pid = selectedPid[i];
+	encoders[pid] = data[i+1];
       }
     }
+  }
+
+  void updateValues(uint16_t* data, uint8_t size){
+    for(int i=0; i<16; ++i)
+      parameters[selectedPid[i]] = encoders[i] + data[i];
   }
 
   void encoderChanged(uint8_t encoder, int32_t delta){

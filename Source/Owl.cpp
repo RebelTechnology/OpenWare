@@ -309,13 +309,16 @@ void setup(){
 
   // Pixi
   MAX11300_init(&hspi5);
+  MAX11300_setDeviceControl(DCR_RESET);
+  HAL_Delay(1000);
   MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
-  for(int i=0; i<20; i+=2)
-    MAX11300_setPortMode(i, PCR_Range_ADC_M5_P5|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  for(int i=1; i<20; i+=2)
-    MAX11300_setPortMode(i, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  // for (x=0; x<20; x++)
-  //   MAX11300_setDACValue(x, 0);
+
+  for(int i=0; i<20; i+=1)
+    MAX11300_setPortMode(i+1, PCR_Range_ADC_M5_P5|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|PCR_ADCref_INT);
+  // for(int i=1; i<20; i+=2)
+  //   MAX11300_setPortMode(i+1, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  // for(int i=0; i<20; i+=2)
+  //   MAX11300_setDACValue(i, 0);
 #endif
   
 #ifdef USE_RGB_LED

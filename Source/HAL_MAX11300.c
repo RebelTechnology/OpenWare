@@ -7,7 +7,7 @@
 static SPI_HandleTypeDef* MAX11300_SPIConfig;
  
 // Variables
-static uint8_t rgADCData_Rx[41];
+uint8_t rgADCData_Rx[41];
 static uint8_t rgDACData_Tx[41];
 static volatile uint8_t ucPixiTask;
 static volatile uint8_t ucPixiState;

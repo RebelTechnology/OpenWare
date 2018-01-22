@@ -3,12 +3,12 @@
 #include "device.h"
 #include <string.h>
 
-static void NopDelay(uint32_t nops){
-  while (nops--)
-    __asm("NOP");
-}
-#define delay(x) NopDelay(x*1000)
-/* #define delay(x) HAL_Delay(x) */
+/* static void NopDelay(uint32_t nops){ */
+/*   while (nops--) */
+/*     __asm("NOP"); */
+/* } */
+/* #define delay(x) NopDelay(x*1000) */
+#define delay(x) HAL_Delay(x)
 /* #define delay(x) osDelay(x) */
 
 // _____ Defines _______________________________________________________________________
@@ -155,7 +155,7 @@ void oled_init(SPI_HandleTypeDef* spi){
 	pRST_Set();
 	delay(5);
 	OLED_writeCMD(OLED_initSequence, sizeof OLED_initSequence);
-	delay(100);
+	delay(10);
 }
 
 // Buffer pixel checking and manipulation

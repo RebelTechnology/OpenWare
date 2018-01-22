@@ -336,12 +336,22 @@ void runScreenTask(void* p){
     // also update LEDs and MAX11300
     TLC5946_Refresh_GS();
     // MAX11300_bulksetDAC(...);
-    MAX11300_bulkreadADC();
-    for(int i=0; i<16; i+=2)
-      setLed(i, MAX11300_getADCValue(i) + baseled);
-    Encoders_readAll();
+
+    // MAX11300_bulkreadADC();
     // for(int i=0; i<16; i+=2)
-    //   setLed(i, MAX11300_readADC(i) + baseled);
+    //   setLed(i, MAX11300_getADCValue(i) + baseled);
+    
+    for(int i=0; i<16; i+=1){
+      uint16_t value = MAX11300_readADC(i+1);
+      setLed(i, baseled | (value << 10) | value);
+      graphics.params.parameters[i] = value;
+    }
+    // extern uint8_t rgADCData_Rx[41];
+    // graphics.params.updateValues((uint16_t*)(rgADCData_Rx+1), 16);
+
+    Encoders_readAll();
+    // extern uint16_t rgENC_Values[7];
+    // graphics.params.updateEncoders(rgENC_Values, 7);
 #else
 #endif /* OWL_MAGUS */
     graphics.draw();
