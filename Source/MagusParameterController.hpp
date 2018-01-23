@@ -32,9 +32,9 @@ public:
   int16_t user[SIZE]; // user set values
   char names[SIZE][22]; // max 21 chars/128px
   char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
-  int8_t selectedBlock = 0;
-  int8_t selectedPid[4] = {0,2,4,6};
-  int8_t global = 3;
+  uint8_t selectedBlock = 0;
+  uint8_t selectedPid[4] = {0,2,4,6};
+  uint8_t global = 3;
   enum ScreenMode {
     STANDARD, SELECTBLOCKPARAMETER, SELECTGLOBALPARAMETER, ERROR
   };
@@ -78,7 +78,9 @@ public:
     int y = 63-8;
     screen.setTextSize(1);
     for(int i=0; i<4; ++i){
-      screen.print(x, y, blocknames[i]);
+      screen.print(x+1, y, blocknames[i]);
+      if(selectedBlock == i)
+	screen.invert(x, y-10, 32, 10);
       x += 32;
     }
     drawBlockValues(screen);
@@ -86,9 +88,11 @@ public:
 
   void drawGlobalParameterNames(ScreenBuffer& screen){
     screen.setTextSize(1);
-    screen.print(1, 24, names[(global-1)&0xff]);
+    if(global > 0)
+      screen.print(1, 24, names[global-1]);
     screen.print(1, 24+10, names[global]);
-    screen.print(1, 24+20, names[(global+1)&0xff]);
+    if(global < SIZE)
+      screen.print(1, 24+20, names[global+1]);
     screen.invert(0, 25, 128, 10);
   }
 
@@ -205,7 +209,7 @@ public:
   void updateEncoders(int16_t* data, uint8_t size){
     uint16_t pressed = data[0];
     mode = STANDARD;
-    for(int i=0; i<4; ++i){
+    for(uint8_t i=0; i<4; ++i){
       int16_t value = data[i+3];
       if(pressed&(1<<(i+2))){
 	// update selected block parameter. TODO: reset encoder value
@@ -214,10 +218,14 @@ public:
 	if(value < encoders[i+2]){
 	  encoders[i+2] = value;
 	  selectedPid[i]--;
+	  if(selectedPid[i] < i*2+8 && selectedPid[i] > i*2+1)
+	    selectedPid[i] = i*2+1;
 	  selectedPid[i] = max(i*2, min(i*2+9, selectedPid[i]));
 	}else if(value > encoders[i+2]){
 	  encoders[i+2] = value;
 	  selectedPid[i]++;
+	  if(selectedPid[i] < i*2+8 && selectedPid[i] > i*2+1)
+	    selectedPid[i] = i*2+8;
 	  selectedPid[i] = max(i*2, min(i*2+9, selectedPid[i]));
 	}
       }else{
@@ -231,6 +239,7 @@ public:
     }
     if(pressed&(1<<0)){
       // update selected global parameter. TODO: reset encoder value
+      // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
       mode = SELECTGLOBALPARAMETER;
       int16_t value = data[1];
       if(value < encoders[0]){
