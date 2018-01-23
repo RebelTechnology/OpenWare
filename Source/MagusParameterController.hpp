@@ -254,6 +254,10 @@ public:
       encoders[0] = value;
       user[global] = value;
     }
+    if(pressed&(1<<1)){
+      // TODO
+      // mode = SELECTPRESET;
+    }
   }
 
   void updateValue(uint8_t port, int16_t value){

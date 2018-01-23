@@ -152,7 +152,8 @@ void MAX11300_setDAC(uint8_t port, uint16_t value)
 	#endif
 }
 
-void MAX11300_setDACValue(uint8_t ucChannel, uint16_t value){
+void MAX11300_setDACValue(uint8_t port, uint16_t value){
+  uint8_t ucChannel = rgPortMap[port];
   rgDACData_Tx[(ucChannel*2)+1]	= (value&0x0F00)>>8;
   rgDACData_Tx[(ucChannel*2)+2] = value&0x00FF;
 }

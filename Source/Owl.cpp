@@ -304,8 +304,12 @@ void setup(){
   // LEDs
   TLC5946_init(&hspi5);
   Magus_setRGB_DC(20, 20, 20); // todo balance levels
-  for(int i=0; i<16; i++)
-    setLed(i, (512<<10) + 1023);
+  for(int i=0; i<16; i+=3)
+    setLed(i, (1023<<00));
+  for(int i=1; i<16; i+=3)
+    setLed(i, (1023<<10));
+  for(int i=2; i<16; i+=3)
+    setLed(i, (1023<<20));
     // setLed(i, (512<<20) + (512<<10) + 512);
   // Start LED Driver PWM
   extern TIM_HandleTypeDef htim3;
