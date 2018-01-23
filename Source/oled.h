@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "stm32f4xx_hal.h"
+#include "device.h"
 
 #ifdef __cplusplus
  extern "C" {
