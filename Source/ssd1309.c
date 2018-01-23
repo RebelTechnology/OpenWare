@@ -46,7 +46,7 @@ static const uint8_t OLED_initSequence[] =
 	0xa6, 		// Normal / inverse display
 	0x20, 0x01,     // Vertical addressing mode
 	0x21, 0x00, 0x7f, // Set column address
-	/* 0x22, 0x00, 0x07, // Set page address */
+	0x22, 0x00, 0x07, // Set page address
 	0xaf, 		// Display on
 	/* 0xa6,		// Set Normal/Inverse Display */
 };
@@ -64,6 +64,7 @@ static void OLED_writeCMD(const uint8_t* data, uint16_t length)
 	HAL_SPI_Transmit(OLED_SPIInst, (uint8_t*)data, length, 1000);
 	
 	pCS_Set();	// CS high
+	delay(1);
 }
 
 #ifdef OLED_DMA

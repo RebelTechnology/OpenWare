@@ -232,8 +232,9 @@ void MAX11300_TxINTCallback(void)
 	}
 }
 
-uint16_t MAX11300_getADCValue(uint8_t ucChannel){
+uint16_t MAX11300_getADCValue(uint8_t port){
   // todo: define buffer as struct { uint8_t address; uint16_t data[10]; }
+  uint8_t ucChannel = rgPortMap[port];
   uint16_t ret = rgADCData_Rx[ucChannel*2+1]<<8 | rgADCData_Rx[ucChannel*2+2];
   return ret;
 }

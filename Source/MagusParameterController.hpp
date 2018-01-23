@@ -28,7 +28,8 @@ class ParameterController {
 public:
   char title[11] = "Magus"; // max 5 chars/64px
   int16_t parameters[SIZE];
-  int16_t encoders[SIZE]; // virtual encoder values
+  int16_t encoders[6]; // last seen encoder values
+  int16_t user[SIZE]; // user set values
   char names[SIZE][22]; // max 21 chars/128px
   char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   int8_t selectedBlock = 0;
@@ -81,6 +82,14 @@ public:
       x += 32;
     }
     drawBlockValues(screen);
+  }
+
+  void drawGlobalParameterNames(ScreenBuffer& screen){
+    screen.setTextSize(1);
+    screen.print(1, 24, names[(global-1)&0xff]);
+    screen.print(1, 24+10, names[global]);
+    screen.print(1, 24+20, names[(global+1)&0xff]);
+    screen.invert(0, 25, 128, 10);
   }
 
   void drawBlockParameterNames(ScreenBuffer& screen){
@@ -175,6 +184,7 @@ public:
       drawBlockParameterNames(screen);
       break;
     case SELECTGLOBALPARAMETER:
+      drawGlobalParameterNames(screen);
       break;
     case ERROR:
       drawError(screen);
@@ -187,28 +197,65 @@ public:
     if(pid < SIZE)
       strncpy(names[pid], name, 11);
   }
+
   uint8_t getSize(){
     return SIZE;
   }
 
-  void updateEncoders(uint16_t* data, uint8_t size){
+  void updateEncoders(int16_t* data, uint8_t size){
     uint16_t pressed = data[0];
     mode = STANDARD;
     for(int i=0; i<4; ++i){
-      if(pressed&(1<<i)){
+      int16_t value = data[i+3];
+      if(pressed&(1<<(i+2))){
+	// update selected block parameter. TODO: reset encoder value
 	selectedBlock = i;
 	mode = SELECTBLOCKPARAMETER;
+	if(value < encoders[i+2]){
+	  encoders[i+2] = value;
+	  selectedPid[i]--;
+	  selectedPid[i] = max(i*2, min(i*2+9, selectedPid[i]));
+	}else if(value > encoders[i+2]){
+	  encoders[i+2] = value;
+	  selectedPid[i]++;
+	  selectedPid[i] = max(i*2, min(i*2+9, selectedPid[i]));
+	}
       }else{
-	int pid = selectedPid[i];
-	encoders[pid] = data[i+1];
+	if(encoders[i+2] != value){
+	  selectedBlock = i;
+	  encoders[i+2] = value;
+	  int pid = selectedPid[i];
+	  user[pid] = value;
+	}
       }
+    }
+    if(pressed&(1<<0)){
+      // update selected global parameter. TODO: reset encoder value
+      mode = SELECTGLOBALPARAMETER;
+      int16_t value = data[1];
+      if(value < encoders[0]){
+	encoders[0] = value;
+	global = max(0, min(SIZE-1, global-1));
+      }else if(value > encoders[0]){
+	encoders[0] = value;
+	global = max(0, min(SIZE-1, global+1));
+      }
+    }else{
+      int16_t value = data[1];
+      encoders[0] = value;
+      user[global] = value;
     }
   }
 
-  void updateValues(uint16_t* data, uint8_t size){
-    for(int i=0; i<16; ++i)
-      parameters[selectedPid[i]] = encoders[i] + data[i];
+  void updateValue(uint8_t port, int16_t value){
+    static int16_t multiplier = 32;
+    parameters[port] = user[port]*multiplier + value;
   }
+
+  // void updateValues(uint16_t* data, uint8_t size){
+    // for(int i=0; i<16; ++i)
+    //   parameters[selectedPid[i]] = encoders[i] + data[i];
+  // }
 
   void encoderChanged(uint8_t encoder, int32_t delta){
     // if(encoder == 0){

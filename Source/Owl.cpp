@@ -29,6 +29,7 @@ Graphics graphics;
 #include "HAL_TLC5946.h"
 #include "HAL_MAX11300.h"
 // #include "HAL_OLED.h"
+#include "HAL_Encoders.h"
 #endif
 
 #ifndef min
@@ -274,6 +275,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #endif
 }
 
+
+static TickType_t xLastWakeTime;
+static TickType_t xFrequency;
+
 void setup(){
   ledstatus = 0;
   settings.init();
@@ -294,6 +299,7 @@ void setup(){
 #ifdef OWL_MAGUS
   extern SPI_HandleTypeDef hspi5;
   /* OLED_init(&hspi5); */
+  Encoders_init(&hspi5);
 
   // LEDs
   TLC5946_init(&hspi5);
@@ -359,6 +365,9 @@ void setup(){
   program.startProgram(false);
 
   midi.init(0);
+
+  xLastWakeTime = xTaskGetTickCount();
+  xFrequency = 20 / portTICK_PERIOD_MS;
 }
 
 #ifdef OWL_MAGUS
@@ -367,22 +376,52 @@ void setLed(uint8_t led, uint32_t rgb){
   Magus_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
   // Magus_setRGB(led+1, (rgb>>20)&0xfff, (rgb>>10)&0xfff, (rgb>>00)&0xfff);
 }
-
 #endif
 
+static uint32_t baseled = 0x3fful << 20;
 void loop(void){
-  taskYIELD();
+  vTaskDelayUntil(&xLastWakeTime, xFrequency);
+  // taskYIELD();
   midi.push();
-  volatile TickType_t delay = 20 / portTICK_PERIOD_MS;
-  vTaskDelay(delay);
+
+#ifdef OWL_MAGUS
+    // also update LEDs and MAX11300
+    TLC5946_Refresh_GS();
+    // MAX11300_bulksetDAC(...);
+    // for(int i=0; i<16; i+=2)
+    //   setLed(i, MAX11300_getADCValue(i) + baseled);    
+    // for(int i=0; i<16; i+=1){
+    //   uint16_t value = MAX11300_readADC(i+1);
+    //   setLed(i, baseled | ((value << 10) & 0x3ff) | (value & 0x3ff));
+    //   graphics.params.parameters[i] = value;
+    // }
+    Encoders_readAll();
+    extern uint16_t rgENC_Values[7];
+    graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
+    // extern uint8_t rgADCData_Rx[41];
+    // graphics.params.updateValues((uint16_t*)(rgADCData_Rx+1), 16);
+
+    MAX11300_bulkreadADC();
+    for(int i=0; i<16; i+=1){
+      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+      setLed(i, baseled | (graphics.params.parameters[i] >> 2)); // MAX11300_getADCValue(i+1)>>2));
+    }
+#else
+#endif /* OWL_MAGUS */
+
+#ifdef USE_SCREEN
+  graphics.draw();
+  graphics.display();
+#endif /* USE_SCREEN */
+
 #ifdef USE_RGB_LED
   uint32_t colour =
-    (adc_values[ADC_A]>>4)+
-    (adc_values[ADC_B]>>4)+
-    (adc_values[ADC_C]>>4)+
-    (adc_values[ADC_D]>>4);
+    (adc_values[ADC_A]>>3)+
+    (adc_values[ADC_B]>>3)+
+    (adc_values[ADC_C]>>3)+
+    (adc_values[ADC_D]>>3);
 #ifdef ADC_E
-  colour += (adc_values[ADC_E]>>4);
+  colour += (adc_values[ADC_E]>>3);
 #endif
   colour &= 0x3ff;
   setLed(ledstatus ^ rainbow[colour]);

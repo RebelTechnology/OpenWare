@@ -14,9 +14,12 @@
 
 #ifdef USE_SCREEN
 #include "Graphics.h"
+#endif
+#if 0
 #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
 #define SCREEN_TASK_PRIORITY 3
 static TaskHandle_t screenTask = NULL;
+/* makeFreeRtosPriority(osPriorityNormal) = 3 */
 #endif
 
 #ifdef OWL_MAGUS
@@ -31,6 +34,7 @@ static TaskHandle_t screenTask = NULL;
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
 #define AUDIO_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
 #define AUDIO_TASK_PRIORITY  4
+
 // #define MANAGER_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_PRIORITY  (AUDIO_TASK_PRIORITY | portPRIVILEGE_BIT)
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
@@ -323,13 +327,19 @@ void eraseFlashTask(void* p){
   vTaskDelete(NULL);
 }
 
-#ifdef USE_SCREEN
+#if 0 // USE_SCREEN
 void runScreenTask(void* p){
   // this task will be continually interrupted by
   // the higher priority audio task
   // const TickType_t delay = 20 / portTICK_PERIOD_MS;
-  volatile TickType_t delay = 10 / portTICK_PERIOD_MS;
+  volatile TickType_t period = 50 / portTICK_PERIOD_MS; // 20Hz
   volatile uint32_t baseled = 0x3fful << 20;
+
+  TickType_t xLastWakeTime;
+  const TickType_t xFrequency = 10 / portTICK_PERIOD_MS;
+  // Initialise the xLastWakeTime variable with the current time.
+  xLastWakeTime = xTaskGetTickCount();
+
   for(;;){
     // todo: run USB Host task here, get rid of loop and idle tasks
 #ifdef OWL_MAGUS
@@ -356,7 +366,9 @@ void runScreenTask(void* p){
 #endif /* OWL_MAGUS */
     graphics.draw();
     graphics.display();
-    vTaskDelay(delay); // allow a minimum amount of time for pixel data to be transferred
+
+    vTaskDelayUntil( &xLastWakeTime, period);
+    // vTaskDelay(delay); // allow a minimum amount of time for pixel data to be transferred
   }
 }
 #endif
@@ -477,9 +489,9 @@ void ProgramManager::startManager(){
   codec.start();
   // codec.pause();
   updateProgramVector(getProgramVector());
-#ifdef USE_SCREEN
-  xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
-#endif
+// #ifdef USE_SCREEN
+//   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
+// #endif
   xTaskCreate(runManagerTask, "Manager", MANAGER_TASK_STACK_SIZE, NULL, MANAGER_TASK_PRIORITY, &managerTask);
 }
 
