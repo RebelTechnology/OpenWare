@@ -286,8 +286,8 @@ void setup(){
   extern SPI_HandleTypeDef CODEC_SPI;
   codec.begin(&CODEC_SPI);
   // codec.set(0);
-#if defined OWL_MICROLAB || defined OWL_MINILAB || defined OWL_MAGUS
-  codec.setOutputGain(127-18); // -18dB
+#if defined OWL_MICROLAB || defined OWL_MINILAB // || defined OWL_MAGUS
+  codec.setOutputGain(127-9); // -9dB
 #else
   codec.setOutputGain(0); // 0dB
 #endif
@@ -297,6 +297,7 @@ void setup(){
   program.startManager();
 
 #ifdef OWL_MAGUS
+  ledstatus = 0x3fful << 20;
   extern SPI_HandleTypeDef hspi5;
   /* OLED_init(&hspi5); */
   Encoders_init(&hspi5);
@@ -371,7 +372,7 @@ void setup(){
   midi.init(0);
 
   xLastWakeTime = xTaskGetTickCount();
-  xFrequency = 20 / portTICK_PERIOD_MS;
+  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS, 50Hz refresh rate
 }
 
 #ifdef OWL_MAGUS
@@ -382,7 +383,6 @@ void setLed(uint8_t led, uint32_t rgb){
 }
 #endif
 
-static uint32_t baseled = 0x3fful << 20;
 void loop(void){
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
   // taskYIELD();
@@ -408,7 +408,7 @@ void loop(void){
     MAX11300_bulkreadADC();
     for(int i=0; i<16; i+=1){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
-      setLed(i, baseled | (graphics.params.parameters[i] >> 2)); // MAX11300_getADCValue(i+1)>>2));
+      setLed(i, ledstatus ^ (graphics.params.parameters[i] >> 2)); // MAX11300_getADCValue(i+1)>>2));
     }
 #else
 #endif /* OWL_MAGUS */

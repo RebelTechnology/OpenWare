@@ -57,10 +57,12 @@ void ScreenBuffer::fade(uint16_t steps){
   //     (((pixels[i] & GREEN) >> steps) & GREEN) |
   //     (((pixels[i] & BLUE) >> steps) & BLUE);
   // todo!
+
+  // todo: update contrast setting
 }
 
 void ScreenBuffer::fill(Colour c) {
-  memset(pixels, c, height*width/8); // todo: height*width/8
+  memset(pixels, c, height*width/8);
   // for(unsigned int i=0; i<height*width; ++i)
   //   pixels[i] = c;
 }

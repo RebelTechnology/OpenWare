@@ -82,6 +82,9 @@ public:
   uint8_t getSize(){
     return SIZE;
   }
+  void setValue(uint8_t ch, int16_t value){
+    parameters[ch] = value;
+  }
 private:
   bool tr1(){
     return HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_11) != GPIO_PIN_SET;

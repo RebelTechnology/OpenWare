@@ -125,7 +125,8 @@ int16_t getParameterValue(uint8_t ch){
 void setParameterValue(uint8_t ch, int16_t value){
   if(ch < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    graphics.params.parameters[ch] = value;
+    graphics.params.setValue(ch, value);
+  // graphics.params.parameters[ch] = value;
 #else
     parameter_values[ch] = value;
 #endif
@@ -220,6 +221,9 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 
 // called from program
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
+#ifdef OWL_MAGUS
+  graphics.params.setTitle(name);
+#endif /* OWL_MAGUS */
 }
 
 void updateProgramVector(ProgramVector* pv){

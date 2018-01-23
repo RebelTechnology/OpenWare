@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stddef.h>
 #include "font.c"
+#include "message.h"
 
 #define swap(a, b) { int16_t t = a; a = b; b = t; }
 #ifndef min
@@ -25,47 +26,12 @@ void ScreenBuffer::print(const char* str) {
     write(str[i]);
 }
 
-static const char hexnumerals[] = "0123456789abcdef";
-
-char* itoa(int val, int base){
-  static char buf[13] = {0};
-  int i = 11;
-  unsigned int part = abs(val);
-  do{
-    buf[i--] = hexnumerals[part % base];
-    part /= base;
-  }while(part && i);
-  if(val < 0)
-    buf[i--] = '-';
-  return &buf[i+1];
-}
-
-char* ftoa(float val, int base){
-  static char buf[16] = {0};
-  int i = 14;
-  // print 4 decimal points
-  unsigned int part = abs((int)((val-int(val))*10000));
-  do{
-    buf[i--] = hexnumerals[part % base];
-    part /= base;
-  }while(i>10);
-  buf[i--] = '.';
-  part = abs(int(val));
-  do{
-    buf[i--] = hexnumerals[part % base];
-    part /= base;
-  }while(part && i);
-  if(val < 0.0f)
-    buf[i--] = '-';
-  return &buf[i+1];
-}
-
 void ScreenBuffer::print(float num) {
-  print(ftoa(num, 10));
+  print(msg_ftoa(num, 10));
 }
 
 void ScreenBuffer::print(int num) {
-  print(itoa(num, 10));
+  print(msg_itoa(num, 10));
 }
 
 void ScreenBuffer::print(int x, int y, const char* text){
@@ -167,11 +133,11 @@ void ScreenBuffer::setTextWrap(bool w) {
 // Draw a character
 void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char ch,
                             Colour c, Colour bg, uint8_t size) {
-  if((x >= width)            || // Clip right
-     (y >= height)           || // Clip bottom
-     ((x + 6 * size - 1) < 0) || // Clip left
-     ((y + 8 * size - 1) < 0))   // Clip top
-    return;
+  // if((x >= width)            || // Clip right
+  //    (y >= height)           || // Clip bottom
+  //    ((x + 6 * size - 1) < 0) || // Clip left
+  //    ((y + 8 * size - 1) < 0))   // Clip top
+  //   return;
   y -= 8 * size; // set origin to bottom left
   for(int8_t i=0; i<6; i++ ) {
     uint8_t line;
@@ -201,11 +167,11 @@ void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char ch,
 // Draw a character rotated 90 degrees
 void ScreenBuffer::drawRotatedChar(uint16_t x, uint16_t y, unsigned char ch,
                                    Colour c, Colour bg, uint8_t size) {
-  if((x >= width)            || // Clip right
-     (y >= height)           || // Clip bottom
-     ((x + 8 * size - 1) < 0) || // Clip left
-     ((y + 6 * size - 1) < 0))   // Clip top
-    return;
+  // if((x >= width)            || // Clip right
+  //    (y >= height)           || // Clip bottom
+  //    ((x + 8 * size - 1) < 0) || // Clip left
+  //    ((y + 6 * size - 1) < 0))   // Clip top
+  //   return;
   // for (int8_t i=5; i>=0; i-- ) {
   for (int8_t i=0; i<6; i++ ) {
     uint8_t line;
@@ -236,10 +202,11 @@ void ScreenBuffer::drawRotatedChar(uint16_t x, uint16_t y, unsigned char ch,
 }
 
 void ScreenBuffer::invert(){
-
+  invert(0, 0, width, height);
 }
-void ScreenBuffer::invert(int x, int y, int width, int height){
-  for(int i=x; i<x+width; ++i)
-    for(int j=y; j<y+height; ++j)
+
+void ScreenBuffer::invert(int x, int y, int w, int h){
+  for(int i=x; i<x+w; ++i)
+    for(int j=y; j<y+h; ++j)
       invertPixel(i, j);
 }

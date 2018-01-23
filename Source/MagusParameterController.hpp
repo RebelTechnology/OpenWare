@@ -26,7 +26,7 @@ todo:
 template<uint8_t SIZE>
 class ParameterController {
 public:
-  char title[11] = "Magus"; // max 5 chars/64px
+  char title[8] = "Magus"; // max 7 chars or it hits status
   int16_t parameters[SIZE];
   int16_t encoders[6]; // last seen encoder values
   int16_t user[SIZE]; // user set values
@@ -49,6 +49,7 @@ public:
       parameters[i] = 0;
     }
   }
+ 
   void draw(uint8_t* pixels, uint16_t width, uint16_t height){
     ScreenBuffer screen(width, height);
     screen.setBuffer(pixels);
@@ -143,24 +144,27 @@ public:
   }
 
   void drawStatus(ScreenBuffer& screen){
+    // draw title
     screen.setTextSize(2);
     screen.print(0, 16, title);
     screen.setTextSize(1);
-    screen.print(64, 8, "cpu");
-    screen.print(96, 8, "mem");
-    screen.setCursor(64, 17);
+    // draw memory use
+    screen.print(87, 8, "mem");
     ProgramVector* pv = getProgramVector();
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
-    screen.print("%");
-    screen.setCursor(96, 17);
+    screen.setCursor(87, 17);
     int mem = (int)(pv->heap_bytes_used)/1024;
     if(mem > 999){
-      screen.print(mem/1024.0f);
+      screen.print(mem/1024);
       screen.print("M");
     }else{
       screen.print(mem);
       screen.print("k");
-    }    
+    }
+    // draw CPU load
+    screen.print(111, 8, "cpu");
+    screen.setCursor(111, 17);
+    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
+    screen.print("%");
   }
 
   void drawError(ScreenBuffer& screen){
@@ -200,6 +204,10 @@ public:
   void setName(uint8_t pid, const char* name){
     if(pid < SIZE)
       strncpy(names[pid], name, 11);
+  }
+
+  void setTitle(const char* str){
+    strncpy(title, str, 7);    
   }
 
   uint8_t getSize(){
@@ -258,11 +266,21 @@ public:
       // TODO
       // mode = SELECTPRESET;
     }
+    if(mode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
+      mode = ERROR;
+  }
+
+  void setValue(uint8_t port, int16_t value){
+    user[port] = value;
+    // called by MIDI cc
+    // todo: reset encoder value if associated through global or selectedPid
   }
 
   void updateValue(uint8_t port, int16_t value){
     static int16_t multiplier = 32;
-    parameters[port] = user[port]*multiplier + value;
+    // parameters[port] = (parameters[port]*3 + user[port]*multiplier + value)>>2;
+    // smoothing at apprx 50Hz
+    parameters[port] = (parameters[port] + user[port]*multiplier + value)>>1;
   }
 
   // void updateValues(uint16_t* data, uint8_t size){
