@@ -43,6 +43,9 @@ extern uint8_t rgENC_Data[13];
 
 /* External variables --------------------------------------------------------*/
 extern SPI_HandleTypeDef hspi1;
+extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim3;
 
 /******************************************************************************/
 /*            Cortex-M0 Processor Interruption and Exception Handlers         */ 
@@ -131,57 +134,13 @@ void SysTick_Handler(void)
 void EXTI0_1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_1_IRQn 0 */
-
-	// ENC5 Switch (INT0)
-	if (__HAL_GPIO_EXTI_GET_FLAG(ENC5_SW_Pin))
-	{
-		bSwitch_ENC[5] = 1-HAL_GPIO_ReadPin(ENC5_SW_GPIO_Port, ENC5_SW_Pin);
-		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
-		rgENC_Data[1] = 0;
-		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
-		__HAL_GPIO_EXTI_CLEAR_IT(ENC5_SW_Pin);
-	}
 	
   /* USER CODE END EXTI0_1_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
   /* USER CODE BEGIN EXTI0_1_IRQn 1 */
 
   /* USER CODE END EXTI0_1_IRQn 1 */
-}
-
-/**
-* @brief This function handles EXTI line 2 and 3 interrupts.
-*/
-void EXTI2_3_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI2_3_IRQn 0 */
-
-	// ENC2 Switch (INT2)
-	if (__HAL_GPIO_EXTI_GET_FLAG(ENC2_SW_Pin))
-	{
-		bSwitch_ENC[2] = 1-HAL_GPIO_ReadPin(ENC2_SW_GPIO_Port, ENC2_SW_Pin);
-		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
-		rgENC_Data[1] = 0;
-		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
-		__HAL_GPIO_EXTI_CLEAR_IT(ENC2_SW_Pin);
-	}
-	
-	// ENC4 Switch (INT3)
-	if (__HAL_GPIO_EXTI_GET_FLAG(ENC4_SW_Pin))
-	{
-		bSwitch_ENC[4] = 1-HAL_GPIO_ReadPin(ENC4_SW_GPIO_Port, ENC4_SW_Pin);
-		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
-		rgENC_Data[1] = 0;
-		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
-		__HAL_GPIO_EXTI_CLEAR_IT(ENC4_SW_Pin);
-	}
-	
-  /* USER CODE END EXTI2_3_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
-  /* USER CODE BEGIN EXTI2_3_IRQn 1 */
-
-  /* USER CODE END EXTI2_3_IRQn 1 */
 }
 
 /**
@@ -190,52 +149,58 @@ void EXTI2_3_IRQHandler(void)
 void EXTI4_15_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_15_IRQn 0 */
-	
-	// SPI NSS Pin
-	if (__HAL_GPIO_EXTI_GET_FLAG(SPI_NCS_Pin))
-	{
-		send_SPI();
-		__HAL_GPIO_EXTI_CLEAR_IT(SPI_NCS_Pin);
-	}
-	
-	// ENC1 Switch (INT10)
-	if (__HAL_GPIO_EXTI_GET_FLAG(ENC1_SW_Pin))
-	{
-		bSwitch_ENC[1] = 1-HAL_GPIO_ReadPin(ENC1_SW_GPIO_Port, ENC1_SW_Pin);
-		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
-		rgENC_Data[1] = 0;
-		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
-		__HAL_GPIO_EXTI_CLEAR_IT(ENC1_SW_Pin);
-	}
-	
-	// ENC3 Switch (INT15)
-	if (__HAL_GPIO_EXTI_GET_FLAG(ENC3_SW_Pin))
-	{
-		bSwitch_ENC[3] = 1-HAL_GPIO_ReadPin(ENC3_SW_GPIO_Port, ENC3_SW_Pin);
-		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
-		rgENC_Data[1] = 0;
-		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
-		__HAL_GPIO_EXTI_CLEAR_IT(ENC3_SW_Pin);
-	}
-	
-	// ENC6 Switch (INT7)
-	if (__HAL_GPIO_EXTI_GET_FLAG(ENC6_SW_Pin))
-	{
-		bSwitch_ENC[6] = 1-HAL_GPIO_ReadPin(ENC6_SW_GPIO_Port, ENC6_SW_Pin);
-		rgENC_Data[0] = bSwitch_ENC[1]<<0 | bSwitch_ENC[2]<<1 | bSwitch_ENC[3]<<2 | bSwitch_ENC[4]<<3 | bSwitch_ENC[5]<<4 | bSwitch_ENC[6]<<5;
-		rgENC_Data[1] = 0;
-		HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_SET);
-		__HAL_GPIO_EXTI_CLEAR_IT(ENC6_SW_Pin);
-	}
-	
+
   /* USER CODE END EXTI4_15_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
 
   /* USER CODE END EXTI4_15_IRQn 1 */
+}
+
+/**
+* @brief This function handles TIM1 capture compare interrupt.
+*/
+void TIM1_CC_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM1_CC_IRQn 0 */
+
+  /* USER CODE END TIM1_CC_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim1);
+  /* USER CODE BEGIN TIM1_CC_IRQn 1 */
+
+  /* USER CODE END TIM1_CC_IRQn 1 */
+}
+
+/**
+* @brief This function handles TIM2 global interrupt.
+*/
+void TIM2_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM2_IRQn 0 */
+
+  /* USER CODE END TIM2_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim2);
+  /* USER CODE BEGIN TIM2_IRQn 1 */
+
+  /* USER CODE END TIM2_IRQn 1 */
+}
+
+/**
+* @brief This function handles TIM3 global interrupt.
+*/
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+
+  /* USER CODE END TIM3_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+
+  /* USER CODE END TIM3_IRQn 1 */
 }
 
 /**
