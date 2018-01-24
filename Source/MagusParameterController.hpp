@@ -1,4 +1,4 @@
-#ifndef __MagusParameterController_hpp__
+#ifndef __ParameterController_hpp__
 #define __ParameterController_hpp__
 
 #include "basicmaths.h"
@@ -32,13 +32,14 @@ public:
   int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
   char names[SIZE][22]; // max 21 chars/128px
   char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
-  uint8_t selectedBlock = 0;
-  uint8_t selectedPid[4] = {0,2,4,6};
-  uint8_t global = 3;
+  uint8_t selectedBlock;;
+  uint8_t selectedPid[4];
+  uint8_t global;
+  uint8_t mostRecentPid;
   enum ScreenMode {
-    STANDARD, SELECTBLOCKPARAMETER, SELECTGLOBALPARAMETER, ERROR
+    STANDARD, SELECTBLOCKPARAMETER, SELECTGLOBALPARAMETER, SELECTPROGRAM, ERROR
   };
-  ScreenMode mode = STANDARD;
+  ScreenMode mode;
   ParameterController(){
     reset();
   }
@@ -48,6 +49,14 @@ public:
       names[i][9] = 'A'+i;
       parameters[i] = 0;
     }
+    selectedBlock = -1;
+    selectedPid[0] = 0;
+    selectedPid[1] = 2;
+    selectedPid[2] = 4;
+    selectedPid[3] = 6;
+    global = 0;
+    mostRecentPid = global;
+    mode = STANDARD;
   }
  
   void draw(uint8_t* pixels, uint16_t width, uint16_t height){
@@ -101,6 +110,7 @@ public:
     int y = 29;
     screen.setTextSize(1);
     // int i = (selected % 8) & 0xe;
+    selectedBlock &= 0x03;
     int selected = selectedPid[selectedBlock];
     int i = selected & 0x06;
     screen.print(1, y, names[i]);
@@ -145,11 +155,11 @@ public:
 
   void drawStats(ScreenBuffer& screen){
     screen.setTextSize(1);
-    screen.clear(86, 0, 128-86, 16);
+    // screen.clear(86, 0, 128-86, 16);
     // draw memory use
-    screen.print(87, 8, "mem");
+    screen.print(80, 8, "mem");
     ProgramVector* pv = getProgramVector();
-    screen.setCursor(87, 17);
+    screen.setCursor(80, 17);
     int mem = (int)(pv->heap_bytes_used)/1024;
     if(mem > 999){
       screen.print(mem/1024);
@@ -167,38 +177,60 @@ public:
 
   void drawError(ScreenBuffer& screen){
     if(getErrorMessage() != NULL){
+      screen.setTextSize(1);
       screen.setTextWrap(true);
-      screen.print(0, 29, getErrorMessage());
+      screen.print(0, 26, getErrorMessage());
       screen.setTextWrap(false);
     }
+  }
+
+  void drawTitle(const char* title, ScreenBuffer& screen){
+    // draw title
+    screen.setTextSize(2);
+    screen.print(0, 16, title);
+  }
+
+  void drawMessage(ScreenBuffer& screen){
+    ProgramVector* pv = getProgramVector();
+    if(pv->message != NULL){
+      screen.setTextSize(1);
+      screen.setTextWrap(true);
+      screen.print(0, 26, pv->message);
+    }    
   }
 
   void draw(ScreenBuffer& screen){
     screen.clear();
     screen.setTextWrap(false);
-    // draw title
-    screen.setTextSize(2);
-    screen.print(0, 16, title);
-    drawStats(screen);
     switch(mode){
     case STANDARD:
       // standard mode stacked
-      // drawParameter(global, 63-32-6, screen);
-      // drawParameter(selected, 63-17-6, screen);
-      drawParameter(global, 29, screen);
-      drawParameter(selectedPid[selectedBlock], 41, screen);
+      // drawParameter(global, 29, screen);
+      // drawParameter(selectedPid[selectedBlock], 41, screen);
+      drawTitle(title, screen);
+      drawMessage(screen);
+      drawParameter(mostRecentPid, 44, screen);
       break;
     case SELECTBLOCKPARAMETER:
-      // select block parameter mode
+      drawTitle(title, screen);
       drawBlockParameterNames(screen);
       break;
     case SELECTGLOBALPARAMETER:
+      drawTitle(title, screen);
       drawGlobalParameterNames(screen);
       break;
-    case ERROR:
-      drawError(screen);
+    case SELECTPROGRAM:
+      drawTitle("Magus", screen);
+      drawMessage(screen);
+      drawStats(screen);
+      // todo!
       break;
-    }      
+    case ERROR:
+      drawTitle("ERROR", screen);
+      drawError(screen);
+      drawStats(screen);
+      break;
+    }
     drawBlocks(screen);
   }
 
@@ -243,6 +275,7 @@ public:
 	  encoders[i+2] = value;
 	  int pid = selectedPid[i];
 	  user[pid] = value<<5; // scale encoder values up
+	  mostRecentPid = pid;
 	}
       }
     }
@@ -258,14 +291,18 @@ public:
 	encoders[0] = value;
 	global = max(0, min(SIZE-1, global+1));
       }
+      mostRecentPid = global;
+      selectedBlock = -1;
     }else{
       int16_t value = data[1];
-      encoders[0] = value;
-      user[global] = value<<5; // scale encoder values up
+      if(encoders[0] != value){
+	encoders[0] = value;
+	user[global] = value<<5; // scale encoder values up
+	mostRecentPid = global;
+      }
     }
     if(pressed&(1<<1)){
-      // TODO
-      // mode = SELECTPRESET;
+      mode = SELECTPROGRAM;
       setErrorStatus(NO_ERROR);
     }
     if(mode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
