@@ -324,12 +324,14 @@ void setup(){
   HAL_Delay(1000);
   MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
 
-  for(int i=0; i<20; i+=1)
-    MAX11300_setPortMode(i+1, PCR_Range_ADC_M5_P5|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|PCR_ADCref_INT);
-  // for(int i=1; i<20; i+=2)
-  //   MAX11300_setPortMode(i+1, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  // for(int i=0; i<20; i+=2)
-  //   MAX11300_setDACValue(i, 0);
+  for(int i=0; i<8; ++i)
+    MAX11300_setPortMode(i+1, PCR_Range_ADC_M5_P5|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  for(int i=8; i<16; ++i)
+    MAX11300_setPortMode(i+1, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+  for(int i=16; i<20; ++i)
+    MAX11300_setPortMode(i+1, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+  for(int i=0; i<20; ++i)
+    MAX11300_setDACValue(i, 0);
 #endif
   
 #ifdef USE_RGB_LED
@@ -391,7 +393,6 @@ void loop(void){
 #ifdef OWL_MAGUS
     // also update LEDs and MAX11300
     TLC5946_Refresh_GS();
-    // MAX11300_bulksetDAC(...);
     // for(int i=0; i<16; i+=2)
     //   setLed(i, MAX11300_getADCValue(i) + baseled);    
     // for(int i=0; i<16; i+=1){
@@ -406,10 +407,17 @@ void loop(void){
     // graphics.params.updateValues((uint16_t*)(rgADCData_Rx+1), 16);
 
     MAX11300_bulkreadADC();
-    for(int i=0; i<16; i+=1){
+    for(int i=0; i<8; ++i){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
       setLed(i, ledstatus ^ (graphics.params.parameters[i] >> 2)); // MAX11300_getADCValue(i+1)>>2));
     }
+    for(int i=8; i<16; ++i){
+      graphics.params.updateValue(i, 0);
+      MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
+      setLed(i, ledstatus ^ (graphics.params.parameters[i] >> 2)); // MAX11300_getADCValue(i+1)>>2));
+    }
+    MAX11300_bulkwriteDAC();
+      
 #else
 #endif /* OWL_MAGUS */
 

@@ -26,10 +26,10 @@ todo:
 template<uint8_t SIZE>
 class ParameterController {
 public:
-  char title[8] = "Magus"; // max 7 chars or it hits status
+  char title[8] = "Magus"; // max 7 chars or it hits stats
   int16_t parameters[SIZE];
   int16_t encoders[6]; // last seen encoder values
-  int16_t user[SIZE]; // user set values
+  int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
   char names[SIZE][22]; // max 21 chars/128px
   char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   uint8_t selectedBlock = 0;
@@ -143,11 +143,9 @@ public:
     }
   }
 
-  void drawStatus(ScreenBuffer& screen){
-    // draw title
-    screen.setTextSize(2);
-    screen.print(0, 16, title);
+  void drawStats(ScreenBuffer& screen){
     screen.setTextSize(1);
+    screen.clear(86, 0, 128-86, 16);
     // draw memory use
     screen.print(87, 8, "mem");
     ProgramVector* pv = getProgramVector();
@@ -178,7 +176,10 @@ public:
   void draw(ScreenBuffer& screen){
     screen.clear();
     screen.setTextWrap(false);
-    drawStatus(screen);
+    // draw title
+    screen.setTextSize(2);
+    screen.print(0, 16, title);
+    drawStats(screen);
     switch(mode){
     case STANDARD:
       // standard mode stacked
@@ -241,7 +242,7 @@ public:
 	  selectedBlock = i;
 	  encoders[i+2] = value;
 	  int pid = selectedPid[i];
-	  user[pid] = value;
+	  user[pid] = value<<5; // scale encoder values up
 	}
       }
     }
@@ -260,11 +261,12 @@ public:
     }else{
       int16_t value = data[1];
       encoders[0] = value;
-      user[global] = value;
+      user[global] = value<<5; // scale encoder values up
     }
     if(pressed&(1<<1)){
       // TODO
       // mode = SELECTPRESET;
+      setErrorStatus(NO_ERROR);
     }
     if(mode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
       mode = ERROR;
@@ -277,10 +279,9 @@ public:
   }
 
   void updateValue(uint8_t port, int16_t value){
-    static int16_t multiplier = 32;
     // parameters[port] = (parameters[port]*3 + user[port]*multiplier + value)>>2;
     // smoothing at apprx 50Hz
-    parameters[port] = (parameters[port] + user[port]*multiplier + value)>>1;
+    parameters[port] = (parameters[port] + user[port] + value)>>1;
   }
 
   // void updateValues(uint16_t* data, uint8_t size){

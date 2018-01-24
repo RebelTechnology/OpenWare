@@ -75,9 +75,9 @@
 /* #define OLED_SCK_Pin GPIO_PIN_10 */
 /* #define OLED_SCK_GPIO_Port GPIOB */
 
-#define NOF_ADC_VALUES               4
-#define NOF_PARAMETERS               16
-#define NOF_BUTTONS                  5
+#define NOF_ADC_VALUES               0
+#define NOF_PARAMETERS               20
+#define NOF_BUTTONS                  0
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
 #define MAX_FACTORY_PATCHES          36

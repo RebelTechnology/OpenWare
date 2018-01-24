@@ -206,10 +206,12 @@ void onProgramReady(){
 }
 
 // called from program
-void onSetPatchParameter(uint8_t pid, int16_t value){     
+void onSetPatchParameter(uint8_t pid, int16_t value){
+  setParameterValue(pid, value);
 }
 // called from program
 void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
+  setButtonValue(bid, state);
 }
 
 // called from program
