@@ -212,10 +212,8 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
   }else if(ret == 0){
     // toggleLed(); todo!
   }// else error
-  getProgramVector()->parameters[0] = loader.index*4095/loader.size;
-  getProgramVector()->parameters[1] = loader.packageIndex;
-  getProgramVector()->parameters[2] = loader.index;
-  getProgramVector()->parameters[3] = loader.size;
+  // TODO: set screen to LOADING mode if available
+  setParameterValue(PARAMETER_A, loader.index*4095/loader.size);
 }
 
 void MidiHandler::handleFirmwareRunCommand(uint8_t* data, uint16_t size){
