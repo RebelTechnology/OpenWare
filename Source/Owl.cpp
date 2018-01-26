@@ -289,7 +289,7 @@ void setup(){
 #if defined OWL_MICROLAB || defined OWL_MINILAB // || defined OWL_MAGUS
   codec.setOutputGain(127-9); // -9dB
 #else
-  codec.setOutputGain(0); // 0dB
+  codec.setOutputGain(127); // 0dB
 #endif
   codec.bypass(false);
 #endif /* USE_CODEC */
@@ -366,7 +366,7 @@ void setup(){
   midi.init(0);
 
   xLastWakeTime = xTaskGetTickCount();
-  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+  xFrequency = 14 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 }
 
 #ifdef OWL_MAGUS
