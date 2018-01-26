@@ -23,10 +23,11 @@
 #define PORT_14   14		
 #define PORT_15   17
 #define PORT_16		18
-#define PORT_17   0		
-#define PORT_18   1
-#define PORT_19   2
-#define PORT_20   3
+
+#define PORT_17   3
+#define PORT_18   2
+#define PORT_19   1
+#define PORT_20   0
 
 
 
