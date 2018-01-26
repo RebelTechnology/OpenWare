@@ -50,6 +50,7 @@ extern SAI_HandleTypeDef hsai_BlockA1;
 extern SAI_HandleTypeDef hsai_BlockB1;
 extern DMA_HandleTypeDef hdma_spi5_tx;
 extern SPI_HandleTypeDef hspi5;
+extern TIM_HandleTypeDef htim3;
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
@@ -76,6 +77,33 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f4xx.s).                    */
 /******************************************************************************/
+
+/**
+* @brief This function handles TIM3 global interrupt.
+*/
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+  static uint16_t cnt = 0;
+  /* USER CODE END TIM3_IRQn 0 */
+  /* HAL_TIM_IRQHandler(&htim3); */
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+  if(__HAL_TIM_GET_FLAG(&htim3, TIM_FLAG_CC1) != RESET){
+    if(__HAL_TIM_GET_IT_SOURCE(&htim3, TIM_IT_CC1) !=RESET){
+      __HAL_TIM_CLEAR_IT(&htim3, TIM_IT_CC1);
+  /* if(__HAL_TIM_GET_FLAG(&htim3, TIM_FLAG_UPDATE) != RESET){ */
+  /*   __HAL_TIM_CLEAR_IT(&htim3, TIM_IT_UPDATE); */
+      if(cnt++ == 4096){
+	HAL_GPIO_TogglePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin);
+	cnt = 0;
+      }
+    }
+  }
+  /* if(__HAL_TIM_GET_FLAG(htim, TIM_FLAG_UPDATE) != RESET) */
+  /*   if(__HAL_TIM_GET_IT_SOURCE(htim, TIM_IT_UPDATE) !=RESET) */
+  /*     __HAL_TIM_CLEAR_IT(htim, TIM_IT_UPDATE); */
+  /* USER CODE END TIM3_IRQn 1 */
+}
 
 /**
 * @brief This function handles DMA2 stream1 global interrupt.

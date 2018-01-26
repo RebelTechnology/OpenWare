@@ -79,7 +79,7 @@ void TLC5946_Refresh_GS(void)
 	// Update Grayscale
 	pMODE(Mode_GS);
 	pXLAT(0);
-	pBLANK(1);
+	/* pBLANK(1); */
 	
 #ifdef TLC_CONTINUOUS	
 	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf[0], sizeof rgGSbuf[0]);		// IC 0 
@@ -93,7 +93,7 @@ void TLC5946_Refresh_GS(void)
 	// Latch pulse
 	pXLAT(1);
 	/* HAL_Delay(1); */
-	pBLANK(0);
+	/* pBLANK(0); */
 #endif
 }
 
