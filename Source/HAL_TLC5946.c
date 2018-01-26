@@ -1,17 +1,18 @@
 
 #include "stm32f4xx_hal.h"
 #include "HAL_TLC5946.h"
+#include <string.h>
 
 // #define TLC_CONTINUOUS
 #define TLC_DEVICES 	3
 
-uint8_t rgGSbuf[TLC_DEVICES][24];
-uint8_t rgDCbuf[TLC_DEVICES][12];
-SPI_HandleTypeDef* TLC5946_SPIConfig;
+static uint8_t rgGSbuf[TLC_DEVICES][24];
+static uint8_t rgDCbuf[TLC_DEVICES][12];
+static SPI_HandleTypeDef* TLC5946_SPIConfig;
 
-uint8_t rgLED_R[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
-uint8_t rgLED_G[16] = {14,12,10,8,7,4,2,0,15,13,11,9,6,5,3,1};
-uint8_t rgLED_B[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
+static const uint8_t rgLED_R[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
+static const uint8_t rgLED_G[16] = {14,12,10,8,7,4,2,0,15,13,11,9,6,5,3,1};
+static const uint8_t rgLED_B[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
 	
 //_____ Functions _____________________________________________________________________________________________________
 void TLC5946_SetOutput_GS(unsigned char IC, unsigned char LED_ID, unsigned short value)
@@ -22,62 +23,39 @@ void TLC5946_SetOutput_GS(unsigned char IC, unsigned char LED_ID, unsigned short
 	if (value < 4096)
 	{
 	  if(LED_ID & 0x01)	// bbbbaaaa aaaaaaaa
-		{ 
-			temp											= rgGSbuf[IC][ucBuffLoc]; 
-			rgGSbuf[IC][ucBuffLoc] 	 	= (value&0xF00)>>8; 
-			rgGSbuf[IC][ucBuffLoc]   |= (temp&0xF0); 
-			rgGSbuf[IC][ucBuffLoc+1]  = (value&0x0FF); 	
+		{
+			temp											= rgGSbuf[IC][ucBuffLoc];
+			rgGSbuf[IC][ucBuffLoc] 	 	= (value&0xF00)>>8;
+			rgGSbuf[IC][ucBuffLoc]   |= (temp&0xF0);
+			rgGSbuf[IC][ucBuffLoc+1]  = (value&0x0FF);
 		}
 	  else            	// aaaaaaaa aaaabbbb
 		{
-			rgGSbuf[IC][ucBuffLoc] 	  = (value&0xFF0)>>4; 
-			temp 								  		= rgGSbuf[IC][ucBuffLoc+1]; 
-			rgGSbuf[IC][ucBuffLoc+1]  = (value&0x00F)<<4; 
+			rgGSbuf[IC][ucBuffLoc] 	  = (value&0xFF0)>>4;
+			temp 								  		= rgGSbuf[IC][ucBuffLoc+1];
+			rgGSbuf[IC][ucBuffLoc+1]  = (value&0x00F)<<4;
 			rgGSbuf[IC][ucBuffLoc+1] |= (temp&0x0F);
-		}			
+		}
 	}
+
+  /* uint8_t bitshift = LED_ID*12; */
+  /* uint8_t word = bitshift/32; */
+  /* uint8_t bit = bitshift % 32; */
+  /* uint32_t* data = (uint32_t*)rgGSbuf[IC]; */
+  /* data[word] = (data[word] & ~(0xfffu << bit)) | ((value & 0xfff) << bit); */
+  /* if(bit > 20) */
+  /*   data[word+1] = (data[word] & ~(0xfffu >> (32-bit))) | (value & 0xfff) >> (32-bit); */
 }
 
 void TLC5946_SetOutput_DC(unsigned char IC, unsigned char LED_ID, unsigned char value)
 {
-	unsigned char temp;
-	unsigned char ucBuffLoc = (unsigned char)(LED_ID*0.75);
-	
-	if (value < 64)
-	{
-		if (LED_ID==0 || LED_ID==4 || LED_ID==8 || LED_ID==12)
-		{
-			temp 											= rgDCbuf[IC][ucBuffLoc];
-			rgDCbuf[IC][ucBuffLoc] 		= (value&0x3F);
-			rgDCbuf[IC][ucBuffLoc] 	 |= (temp&0xC0);
-		}
-		else if (LED_ID==1 || LED_ID==5 ||LED_ID==9 || LED_ID==13)
-		{
-			temp 											= rgDCbuf[IC][ucBuffLoc];
-			rgDCbuf[IC][ucBuffLoc] 		= (value&0x03)<<6;
-			rgDCbuf[IC][ucBuffLoc] 	 |= (temp&0x3F);
-			
-			temp 											= rgDCbuf[IC][ucBuffLoc+1];
-			rgDCbuf[IC][ucBuffLoc+1] 	= (value&0x0F);
-			rgDCbuf[IC][ucBuffLoc+1] |= (temp&0xF0);
-		}
-		else if (LED_ID==2 || LED_ID==6 || LED_ID==10 || LED_ID==14)
-		{
-			temp 											= rgDCbuf[IC][ucBuffLoc];
-			rgDCbuf[IC][ucBuffLoc] 		= (value&0x0F)<<4;
-			rgDCbuf[IC][ucBuffLoc] 	 |= (temp&0x0F);
-			
-			temp 											= rgDCbuf[IC][ucBuffLoc+1];
-			rgDCbuf[IC][ucBuffLoc+1]	= (value&0xC0)>>6;
-			rgDCbuf[IC][ucBuffLoc+1] |= (temp&0xFC);
-		}
-		else if (LED_ID==3 || LED_ID==7 || LED_ID==11 || LED_ID==15)
-		{
-			temp 											= rgDCbuf[IC][ucBuffLoc];
-			rgDCbuf[IC][ucBuffLoc] 		= value<<2;
-			rgDCbuf[IC][ucBuffLoc] 	 |= (temp&0x03);
-		}
-	}		
+  uint8_t bitshift = LED_ID*6;
+  uint8_t word = bitshift/32;
+  uint8_t bit = bitshift % 32;
+  uint32_t* data = (uint32_t*)rgDCbuf[IC];
+  data[word] = (data[word] & ~(0x3fu << bit)) | ((value & 0x3f) << bit);
+  if(bit > 26)
+    data[word+1] = (data[word] & ~(0x3fu >> (32-bit))) | (value & 0x3f) >> (32-bit);
 }
 
 
@@ -136,14 +114,14 @@ void TLC5946_Refresh_DC(void)
 }
 
 // _____ Magus Functions _____
-void Magus_setRGB(unsigned char LED_ID, unsigned short val_R, unsigned short val_G, unsigned short val_B)
+void TLC5946_setRGB(unsigned char LED_ID, unsigned short val_R, unsigned short val_G, unsigned short val_B)
 {
 	TLC5946_SetOutput_GS(0, rgLED_R[LED_ID-1], val_R);
 	TLC5946_SetOutput_GS(2, rgLED_G[LED_ID-1], val_G);
 	TLC5946_SetOutput_GS(1, rgLED_B[LED_ID-1], val_B);
 }
 
-void Magus_setRGB_DC(unsigned short val_R, unsigned short val_G, unsigned short val_B)
+void TLC5946_setRGB_DC(unsigned short val_R, unsigned short val_G, unsigned short val_B)
 {
 	uint8_t x;
 	
@@ -152,6 +130,14 @@ void Magus_setRGB_DC(unsigned short val_R, unsigned short val_G, unsigned short 
 	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(1, x, val_B);}
 	
 	TLC5946_Refresh_DC();
+}
+
+void TLC5946_setAll(unsigned short val_R, unsigned short val_G, unsigned short val_B){
+  for(int i=0; i<16; i++){
+    TLC5946_SetOutput_GS(0, i, val_R);
+    TLC5946_SetOutput_GS(2, i, val_G);
+    TLC5946_SetOutput_GS(1, i, val_B);
+  }
 }
 
 

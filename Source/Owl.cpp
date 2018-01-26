@@ -297,37 +297,29 @@ void setup(){
   program.startManager();
 
 #ifdef OWL_MAGUS
-  ledstatus = 0x3fful << 20;
   extern SPI_HandleTypeDef hspi5;
-  /* OLED_init(&hspi5); */
-  Encoders_init(&hspi5);
-
   // LEDs
   TLC5946_init(&hspi5);
-  Magus_setRGB_DC(20, 20, 20); // todo balance levels
-  for(int i=0; i<16; i+=3)
-    setLed(i, (1023<<00));
-  for(int i=1; i<16; i+=3)
-    setLed(i, (1023<<10));
-  for(int i=2; i<16; i+=3)
-    setLed(i, (1023<<20));
-    // setLed(i, (512<<20) + (512<<10) + 512);
+  TLC5946_setRGB_DC(31, 31, 31); // TODO: balance levels
+  TLC5946_setAll(0x1f, 0x1f, 0x1f);
   // Start LED Driver PWM
   extern TIM_HandleTypeDef htim3;
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  // HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
+  TLC5946_Refresh_DC();
+
+  // Encoders
+  Encoders_init(&hspi5);
 
   // Pixi
   MAX11300_init(&hspi5);
   MAX11300_setDeviceControl(DCR_RESET);
   HAL_Delay(1000);
   MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
-
   for(int i=0; i<8; ++i)
-    MAX11300_setPortMode(i+1, PCR_Range_ADC_M5_P5|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
+    MAX11300_setPortMode(i+1, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
   for(int i=8; i<16; ++i)
-    MAX11300_setPortMode(i+1, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
+    MAX11300_setPortMode(i+1, PCR_Range_DAC_0_P10|PCR_Mode_DAC);
   for(int i=16; i<20; ++i)
     MAX11300_setPortMode(i+1, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
   for(int i=0; i<20; ++i)
@@ -374,57 +366,59 @@ void setup(){
   midi.init(0);
 
   xLastWakeTime = xTaskGetTickCount();
-  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS, 50Hz refresh rate
+  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 }
 
 #ifdef OWL_MAGUS
 void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
-  Magus_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+  TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
   // Magus_setRGB(led+1, (rgb>>20)&0xfff, (rgb>>10)&0xfff, (rgb>>00)&0xfff);
 }
 #endif
 
+#define LED_RED   (0x3ff<<20)
+#define LED_GREEN (0x3ff<<10)
+#define LED_BLUE  (0x3ff<<00)
+
 void loop(void){
-  vTaskDelayUntil(&xLastWakeTime, xFrequency);
-  // taskYIELD();
-  midi.push();
-
-#ifdef OWL_MAGUS
-    // also update LEDs and MAX11300
-    TLC5946_Refresh_GS();
-    // for(int i=0; i<16; i+=2)
-    //   setLed(i, MAX11300_getADCValue(i) + baseled);    
-    // for(int i=0; i<16; i+=1){
-    //   uint16_t value = MAX11300_readADC(i+1);
-    //   setLed(i, baseled | ((value << 10) & 0x3ff) | (value & 0x3ff));
-    //   graphics.params.parameters[i] = value;
-    // }
-    Encoders_readAll();
-    extern uint16_t rgENC_Values[7];
-    graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
-    // extern uint8_t rgADCData_Rx[41];
-    // graphics.params.updateValues((uint16_t*)(rgADCData_Rx+1), 16);
-
-    MAX11300_bulkreadADC();
-    for(int i=0; i<8; ++i){
-      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
-      setLed(i, ledstatus ^ (graphics.params.parameters[i] >> 2)); // MAX11300_getADCValue(i+1)>>2));
-    }
-    for(int i=8; i<16; ++i){
-      graphics.params.updateValue(i, 0);
-      MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
-      setLed(i, ledstatus ^ (graphics.params.parameters[i] >> 2)); // MAX11300_getADCValue(i+1)>>2));
-    }
-    MAX11300_bulkwriteDAC();
-      
-#else
-#endif /* OWL_MAGUS */
-
 #ifdef USE_SCREEN
   graphics.draw();
   graphics.display();
 #endif /* USE_SCREEN */
+  vTaskDelayUntil(&xLastWakeTime, xFrequency);
+  // vTaskDelay(xFrequency);
+  midi.push();
+
+#ifdef OWL_MAGUS
+  TLC5946_Refresh_GS();
+  Encoders_readAll();
+  extern uint16_t rgENC_Values[7];
+  graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
+  for(int i=8; i<16; ++i){
+    graphics.params.updateValue(i, 0);
+    // graphics.params.updateOutput(i, 0);
+    MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
+    // uint16_t val = graphics.params.parameters[i]>>7;
+    // setLed(i, ledstatus ^ (rainbow[val & 0x1f]));
+    uint16_t val = graphics.params.parameters[i]>>2;
+    setLed(i, ledstatus ^ (((0x3ff-val)<<10)|LED_RED));
+  }
+  MAX11300_bulkwriteDAC();      
+  MAX11300_bulkreadADC();
+  for(int i=0; i<8; ++i){
+    graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+    // uint16_t val = graphics.params.parameters[i]>>7;
+    // setLed(i, ledstatus ^ (rainbow[(val<<5) & 0x3e]));
+    // setLed(i, ledstatus ^ ((LED_BLUE - (val<<00) | ((val<<10) - LED_GREEN)));
+    uint16_t val = graphics.params.parameters[i]>>2;
+    setLed(i, ledstatus ^ (((0x3ff-val)<<10)|(val<<00)));
+    // setLed(i, ledstatus ^ (((graphics.params.parameters[i] >> 2)<<10)|LED_BLUE));
+  }
+  for(int i=16; i<20; ++i)
+    graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+#else
+#endif /* OWL_MAGUS */
 
 #ifdef USE_RGB_LED
   uint32_t colour =

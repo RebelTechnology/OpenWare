@@ -1,6 +1,7 @@
 // _____ Includes ______________________________________________________________________
 #include "oled.h"
 #include "device.h"
+#include "errorhandlers.h"
 #include <string.h>
 
 /* static void NopDelay(uint32_t nops){ */
@@ -69,13 +70,19 @@ static void OLED_writeCMD(const uint8_t* data, uint16_t length)
 
 #ifdef OLED_DMA
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
-  assert_param(0);
+  if(hspi->ErrorCode == HAL_SPI_ERROR_OVR){
+    __HAL_SPI_CLEAR_OVRFLAG(hspi);
+    error(RUNTIME_ERROR, "SPI OVR");
+  }else{
+    assert_param(0);
+  }
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
-  if(__HAL_DMA_GET_FLAG(OLED_SPIInst,  __HAL_DMA_GET_TC_FLAG_INDEX(OLED_SPIInst))){
-    pCS_Set();	// CS high
-  }
+  /* if(__HAL_DMA_GET_FLAG(OLED_SPIInst,  __HAL_DMA_GET_TC_FLAG_INDEX(OLED_SPIInst))){ */
+  /*   pCS_Set();	// CS high */
+  /* } */
+  pCS_Set();	// CS high
 }
 #endif
 

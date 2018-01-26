@@ -24,8 +24,9 @@ void TLC5946_Refresh_GS(void);
 void TLC5946_Refresh_DC(void);
 void TLC5946_TxINTCallback(void);
 
-void Magus_setRGB(unsigned char LED_ID, unsigned short val_R, unsigned short val_G, unsigned short val_B);
-void Magus_setRGB_DC(unsigned short val_R, unsigned short val_G, unsigned short val_B);
+void TLC5946_setRGB(unsigned char LED_ID, unsigned short val_R, unsigned short val_G, unsigned short val_B);
+void TLC5946_setRGB_DC(unsigned short val_R, unsigned short val_G, unsigned short val_B);
+void TLC5946_setAll(unsigned short val_R, unsigned short val_G, unsigned short val_B);
 
 #ifdef __cplusplus
 }

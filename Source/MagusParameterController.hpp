@@ -8,6 +8,8 @@
 #include "ProgramVector.h"
 // #include "HAL_Encoders.h"
 
+
+#define ENC_MULTIPLIER 6 // shift left by this many steps
 /*    
 screen 128 x 64, font 5x7
 4 blocks, 32px per each, 3-4 letters each
@@ -26,7 +28,7 @@ todo:
 template<uint8_t SIZE>
 class ParameterController {
 public:
-  char title[8] = "Magus"; // max 7 chars or it hits stats
+  char title[11] = "Magus";
   int16_t parameters[SIZE];
   int16_t encoders[6]; // last seen encoder values
   int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
@@ -101,7 +103,7 @@ public:
     if(global > 0)
       screen.print(1, 24, names[global-1]);
     screen.print(1, 24+10, names[global]);
-    if(global < SIZE)
+    if(global < SIZE-1)
       screen.print(1, 24+20, names[global+1]);
     screen.invert(0, 25, 128, 10);
   }
@@ -240,7 +242,7 @@ public:
   }
 
   void setTitle(const char* str){
-    strncpy(title, str, 7);    
+    strncpy(title, str, 10);    
   }
 
   uint8_t getSize(){
@@ -269,13 +271,14 @@ public:
 	    selectedPid[i] = i*2+8;
 	  selectedPid[i] = max(i*2, min(i*2+9, selectedPid[i]));
 	}
+	mostRecentPid = selectedPid[i];
       }else{
 	if(encoders[i+2] != value){
 	  selectedBlock = i;
 	  encoders[i+2] = value;
 	  int pid = selectedPid[i];
-	  user[pid] = value<<5; // scale encoder values up
-	  mostRecentPid = pid;
+	  user[pid] = value<<ENC_MULTIPLIER; // scale encoder values up
+	  mostRecentPid = selectedPid[i];
 	}
       }
     }
@@ -297,8 +300,9 @@ public:
       int16_t value = data[1];
       if(encoders[0] != value){
 	encoders[0] = value;
-	user[global] = value<<5; // scale encoder values up
+	user[global] = value<<ENC_MULTIPLIER; // scale encoder values up
 	mostRecentPid = global;
+	selectedBlock = -1;
       }
     }
     if(pressed&(1<<1)){
@@ -318,7 +322,11 @@ public:
   void updateValue(uint8_t port, int16_t value){
     // parameters[port] = (parameters[port]*3 + user[port]*multiplier + value)>>2;
     // smoothing at apprx 50Hz
-    parameters[port] = (parameters[port] + user[port] + value)>>1;
+    parameters[port] = max(0, min(4095, (parameters[port] + user[port] + value)>>1));
+  }
+
+  void updateOutput(uint8_t port, int16_t value){
+    parameters[port] = max(0, min(4095, (((parameters[port] + (user[port]*value))>>12)>>1)));
   }
 
   // void updateValues(uint16_t* data, uint8_t size){
