@@ -306,9 +306,11 @@ void setup(){
   extern TIM_HandleTypeDef htim3;
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1);
-  // extern TIM_HandleTypeDef htim1;
-  // HAL_TIM_Base_Start_IT(&htim1);
+  // HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1);
+  extern TIM_HandleTypeDef htim1;
+  HAL_TIM_Base_Start_IT(&htim1);
+  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
+
   TLC5946_Refresh_DC();
 
   // Encoders
@@ -375,10 +377,7 @@ void setup(){
 #ifdef OWL_MAGUS
 extern "C" {
   void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
-// void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-    // extern TIM_HandleTypeDef htim3;
-    // if(htim == &htim3)
-    //   HAL_GPIO_TogglePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin);
+    HAL_GPIO_TogglePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin);
   }
 }
 
