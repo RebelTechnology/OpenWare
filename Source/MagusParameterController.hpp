@@ -258,13 +258,13 @@ public:
 	// update selected block parameter. TODO: reset encoder value
 	selectedBlock = i;
 	mode = SELECTBLOCKPARAMETER;
-	if(value < encoders[i+2]){
+	if(value < encoders[i+2]-1){
 	  encoders[i+2] = value;
 	  selectedPid[i]--;
 	  if(selectedPid[i] < i*2+8 && selectedPid[i] > i*2+1)
 	    selectedPid[i] = i*2+1;
 	  selectedPid[i] = max(i*2, min(i*2+9, selectedPid[i]));
-	}else if(value > encoders[i+2]){
+	}else if(value > encoders[i+2]+1){
 	  encoders[i+2] = value;
 	  selectedPid[i]++;
 	  if(selectedPid[i] < i*2+8 && selectedPid[i] > i*2+1)

@@ -280,6 +280,11 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
+#ifdef OWL_MAGUS
+  HAL_GPIO_ClearPin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin); // LEDs off
+  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
+#endif /* OWL_MAGUS */
+  
   ledstatus = 0;
   settings.init();
 #ifdef USE_CODEC
@@ -300,7 +305,7 @@ void setup(){
   extern SPI_HandleTypeDef hspi5;
   // LEDs
   TLC5946_init(&hspi5);
-  TLC5946_setRGB_DC(31, 31, 31); // TODO: balance levels
+  TLC5946_setRGB_DC(10, 10, 10); // TODO: balance levels
   TLC5946_setAll(0x1f, 0x1f, 0x1f);
   // Start LED Driver PWM
   extern TIM_HandleTypeDef htim3;
@@ -329,7 +334,7 @@ void setup(){
     MAX11300_setPortMode(i+1, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
   for(int i=0; i<20; ++i)
     MAX11300_setDACValue(i, 0);
-#endif
+#endif /* OWL_MAGUS */
   
 #ifdef USE_RGB_LED
   initLed();
