@@ -281,7 +281,7 @@ static TickType_t xFrequency;
 
 void setup(){
 #ifdef OWL_MAGUS
-  HAL_GPIO_ClearPin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin); // LEDs off
+  HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET); // LEDs off
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
 #endif /* OWL_MAGUS */
   
@@ -409,8 +409,8 @@ void loop(void){
 #ifdef OWL_MAGUS
   TLC5946_Refresh_GS();
   Encoders_readAll();
-  extern uint16_t rgENC_Values[7];
-  graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
+  // graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
+  graphics.params.updateEncoders(Encoders_get(), 7);
   for(int i=8; i<16; ++i){
     graphics.params.updateValue(i, 0);
     // graphics.params.updateOutput(i, 0);
