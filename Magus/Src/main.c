@@ -701,12 +701,12 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
     // TODO: fix in hardware
-    /* if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){ */
-    /*   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET); */
-    /*   error(USB_ERROR, "USB Host PWR fault"); */
-    /* }else{ */
+    if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+      error(USB_ERROR, "USB Host PWR fault");
+    }else{
       MX_USB_HOST_Process();
-    /* } */
+    }
     loop();
   }
   /* USER CODE END 5 */ 
