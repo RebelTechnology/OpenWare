@@ -413,7 +413,8 @@ void loop(void){
   graphics.params.updateEncoders(Encoders_get(), 7);
   for(int i=8; i<16; ++i){
     graphics.params.updateValue(i, 0);
-    // graphics.params.updateOutput(i, 0);
+    // TODO: store values set from patch somewhere and multiply with user[] value for outputs
+    // graphics.params.updateOutput(i, getOutputValue(i));
     MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
     // uint16_t val = graphics.params.parameters[i]>>7;
     // setLed(i, ledstatus ^ (rainbow[val & 0x1f]));

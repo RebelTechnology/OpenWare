@@ -8,6 +8,7 @@
 #include "ProgramVector.h"
 // #include "HAL_Encoders.h"
 
+void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #define ENC_MULTIPLIER 6 // shift left by this many steps
 /*    
@@ -18,6 +19,7 @@ screen 128 x 64, font 5x7
 press once to toggle mode: update > select
 turn to scroll through 4 functions
 press again to select parameter: select > update
+
 
 todo:
 - update parameter / encoderChanged
@@ -45,6 +47,7 @@ public:
     reset();
   }
   void reset(){
+    drawCallback = defaultDrawCallback;
     for(int i=0; i<SIZE; ++i){
       strcpy(names[i], "Parameter ");
       names[i][9] = 'A'+i;
@@ -61,12 +64,12 @@ public:
   }
  
   int16_t getEncoderValue(uint8_t eid){
-    return encoders[eid] - offsets[eid];
+    return (encoders[eid] - offsets[eid]) << ENC_MULTIPLIER;
     // value<<ENC_MULTIPLIER; // scale encoder values up
   }
 
   void setEncoderValue(uint8_t eid, int16_t value){
-    offsets[eid] = encoders[eid] - value;
+    offsets[eid] = encoders[eid] - (value >> ENC_MULTIPLIER);
   }
 
   void draw(uint8_t* pixels, uint16_t width, uint16_t height){
@@ -192,6 +195,10 @@ public:
     }
   }
 
+  void drawTitle(ScreenBuffer& screen){
+    drawTitle(title, screen);
+  }
+
   void drawTitle(const char* title, ScreenBuffer& screen){
     // draw title
     screen.setTextSize(2);
@@ -215,16 +222,19 @@ public:
       // standard mode stacked
       // drawParameter(selectedPid[0], 29, screen);
       // drawParameter(selectedPid[selectedBlock], 41, screen);
-      drawTitle(title, screen);
-      drawMessage(screen);
+
+      // draw most recently changed parameter
       drawParameter(selectedPid[selectedBlock], 44, screen);
+
+      // use callback to draw title and message
+      drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       break;
     case SELECTBLOCKPARAMETER:
-      drawTitle(title, screen);
+      drawTitle(screen);
       drawBlockParameterNames(screen);
       break;
     case SELECTGLOBALPARAMETER:
-      drawTitle(title, screen);
+      drawTitle(screen);
       drawGlobalParameterNames(screen);
       break;
     case SELECTPROGRAM:
@@ -245,6 +255,7 @@ public:
   void setName(uint8_t pid, const char* name){
     if(pid < SIZE)
       strncpy(names[pid], name, 11);
+    // if(name[0] == '<') // output parameter TODO!
   }
 
   void setTitle(const char* str){
@@ -287,7 +298,7 @@ public:
       selectedBlock = 0;
     }else{
       if(encoders[0] != value){
-	user[selectedPid[0]] = getEncoderValue(0)<<ENC_MULTIPLIER; // scale encoder values up
+	user[selectedPid[0]] = getEncoderValue(0);
 	selectedBlock = 0;
       }
     }
@@ -314,7 +325,7 @@ public:
       }else{
 	if(encoders[i] != value){
 	  selectedBlock = i;
-	  user[selectedPid[i]] = getEncoderValue(i)<<ENC_MULTIPLIER;
+	  user[selectedPid[i]] = getEncoderValue(i);
 	}
       }
       encoders[i] = value;
@@ -323,20 +334,23 @@ public:
       mode = ERROR;
   }
 
-  void setValue(uint8_t port, int16_t value){
-    user[port] = value;
-    // called by MIDI cc and/or from patch
-    // todo: reset encoder value if associated through selectedPid
+  // called by MIDI cc and/or from patch
+  void setValue(uint8_t pid, int16_t value){
+    user[pid] = value;
+    // reset encoder value if associated through selectedPid to avoid skipping
+    for(int i=0; i<6; ++i)
+      if(selectedPid[i] == pid)
+        setEncoderValue(i, value);
   }
 
-  void updateValue(uint8_t port, int16_t value){
-    // parameters[port] = (parameters[port]*3 + user[port]*multiplier + value)>>2;
+  // @param value is the modulation ADC value
+  void updateValue(uint8_t pid, int16_t value){
     // smoothing at apprx 50Hz
-    parameters[port] = max(0, min(4095, (parameters[port] + user[port] + value)>>1));
+    parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
   }
 
-  void updateOutput(uint8_t port, int16_t value){
-    parameters[port] = max(0, min(4095, (((parameters[port] + (user[port]*value))>>12)>>1)));
+  void updateOutput(uint8_t pid, int16_t value){
+    parameters[pid] = max(0, min(4095, (((parameters[pid] + (user[pid]*value))>>12)>>1)));
   }
 
   // void updateValues(uint16_t* data, uint8_t size){
@@ -365,6 +379,15 @@ public:
 //   bool sw2(){
 //     return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) != GPIO_PIN_SET;
 //   }
+
+
+  void setCallback(void *callback){
+    if(callback == NULL)
+      drawCallback = defaultDrawCallback;
+    else
+      drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
+  }
+  void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
 };
 
 #endif // __ParameterController_hpp__
