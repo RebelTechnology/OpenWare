@@ -28,6 +28,8 @@
 #elif defined OWL_PLAYERF7
 #define HARDWARE_VERSION             "Genius"
 #elif defined OWL_PRISMF7
+#define HARDWARE_VERSION             "PrismF7"
+#elif defined OWL_PRISM
 #define HARDWARE_VERSION             "Prism"
 #elif defined OWL_MAGUS
 #define HARDWARE_VERSION             "Magus"
