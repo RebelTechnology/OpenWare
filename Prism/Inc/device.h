@@ -21,7 +21,7 @@
 #define ADC_C 2
 #define ADC_D 3
 
-/* #define OLED_DMA */
+#define OLED_DMA
 
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
@@ -64,7 +64,7 @@
 #define CODEC_BUFFER_SIZE (4*CODEC_BLOCKSIZE)
 #define AUDIO_MAX_BLOCK_SIZE (CODEC_BUFFER_SIZE/4)
 
-#define NOF_ADC_VALUES               4
+#define NOF_ADC_VALUES               2
 #define NOF_PARAMETERS               16
 #define NOF_BUTTONS                  5
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
