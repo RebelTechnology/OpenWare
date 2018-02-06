@@ -104,12 +104,12 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
     PB14     ------> USB_OTG_HS_DM
     PB15     ------> USB_OTG_HS_DP 
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_13;
+    GPIO_InitStruct.Pin = USB_VBUS_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    HAL_GPIO_Init(USB_VBUS_GPIO_Port, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15;
+    GPIO_InitStruct.Pin = USB_DM_Pin|USB_DP_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
@@ -143,7 +143,7 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* pcdHandle)
     PB14     ------> USB_OTG_HS_DM
     PB15     ------> USB_OTG_HS_DP 
     */
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15);
+    HAL_GPIO_DeInit(GPIOB, USB_VBUS_Pin|USB_DM_Pin|USB_DP_Pin);
 
     /* Peripheral interrupt Deinit*/
     HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
