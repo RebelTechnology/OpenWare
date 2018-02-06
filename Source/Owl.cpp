@@ -280,9 +280,11 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
-#ifdef OWL_MAGUS
-  HAL_GPIO_ClearPin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin); // LEDs off
+#ifdef USE_SCREEN
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
+#endif
+#ifdef OWL_MAGUS
+  HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET); // LEDs off
 #endif /* OWL_MAGUS */
   
   ledstatus = 0;
@@ -377,6 +379,9 @@ void setup(){
 
   xLastWakeTime = xTaskGetTickCount();
   xFrequency = 14 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+#ifdef OWL_PRISM
+  xFrequency = 60 / portTICK_PERIOD_MS;
+#endif
 }
 
 #ifdef OWL_MAGUS

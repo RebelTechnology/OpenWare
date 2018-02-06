@@ -55,15 +55,18 @@
 #endif
 #define setDC()   setPin(OLED_DC_GPIO_Port, OLED_DC_Pin)
 #define clearDC() clearPin(OLED_DC_GPIO_Port, OLED_DC_Pin)
+#define clearRST() clearPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
+#define setRST() setPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
 
 SPI_HandleTypeDef *hspi;
 
 extern void osDelay(uint32_t millisec);
+extern void vPortEnterCritical(void);
 
 #define OLED_TIMEOUT 1000
 static void spiwritesync(const uint8_t* data, size_t size){
   while(hspi->State != HAL_SPI_STATE_READY);
-  clearPin(OLED_SCK_GPIO_Port, OLED_SCK_Pin);
+  /* clearPin(OLED_SCK_GPIO_Port, OLED_SCK_Pin); */
   clearCS();
   HAL_StatusTypeDef ret = HAL_SPI_Transmit(hspi, (uint8_t*)data, size, OLED_TIMEOUT);
   assert_param(ret == HAL_OK);
@@ -189,24 +192,19 @@ static void zero() {
   writeCommand(SEPS114A_MEM_X2, 0x5f);
   writeCommand(SEPS114A_MEM_Y1, 0x00);
   writeCommand(SEPS114A_MEM_Y2, 0x5f);
-  clearDC();
   writeCommand1byte(SEPS114A_DDRAM_DATA_ACCESS_PORT);
-}
-
-static void commonInit(){
-  // with clock speed 8MHz a screen update takes 25mS
-  // 30MHz: 16mS
-  setCS();
-  clearPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
-  osDelay(10);
-  setPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
-  osDelay(10);
 }
 
 void oled_init(SPI_HandleTypeDef *spi){
   hspi = spi;
-  off();
-  commonInit();
+  /* off(); */
+  // with clock speed 8MHz a screen update takes 25mS
+  // 30MHz: 16mS
+  setCS();
+  clearRST();
+  osDelay(10);
+  setRST();
+  osDelay(10);
   chipInit();
   osDelay(10);
   on();
