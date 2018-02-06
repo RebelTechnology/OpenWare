@@ -49,7 +49,7 @@
 #ifdef SSD1331
 #define OLED_WIDTH			96
 #define OLED_HEIGHT			64
-#define OLED_BUFFER_SIZE        (OLED_WIDTH*OLED_HEIGHT/8)
+#define OLED_BUFFER_SIZE        (OLED_WIDTH*OLED_HEIGHT*sizeof(uint16_t))
 #elif defined SEPS114A
 #define OLED_WIDTH			96
 #define OLED_HEIGHT			96

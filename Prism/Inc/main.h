@@ -92,12 +92,6 @@
 #define FLASH_MOSI_GPIO_Port GPIOE
 #define CS_SCL_Pin GPIO_PIN_10
 #define CS_SCL_GPIO_Port GPIOB
-#define USB_VBUS_Pin GPIO_PIN_13
-#define USB_VBUS_GPIO_Port GPIOB
-#define USB_DM_Pin GPIO_PIN_14
-#define USB_DM_GPIO_Port GPIOB
-#define USB_DP_Pin GPIO_PIN_15
-#define USB_DP_GPIO_Port GPIOB
 #define FLASH_HOLD_Pin GPIO_PIN_8
 #define FLASH_HOLD_GPIO_Port GPIOD
 #define ENC_A_Pin GPIO_PIN_6
