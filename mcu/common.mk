@@ -15,11 +15,13 @@ CXX=$(TOOLROOT)arm-none-eabi-g++
 LD=$(TOOLROOT)arm-none-eabi-gcc
 AR=$(TOOLROOT)arm-none-eabi-ar
 AS=$(TOOLROOT)arm-none-eabi-as
+NM=$(TOOLROOT)arm-none-eabi-nm
 RANLIB=$(TOOLROOT)arm-none-eabi-ranlib
 GDB=$(TOOLROOT)arm-none-eabi-gdb
 OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
+STFLASH ?= st-flash
 
 # Set up search path
 vpath %.s $(BUILDROOT)/Src
@@ -86,6 +88,11 @@ as: $(ELF)
 dfu: $(BIN)
 	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s 0x8000000:leave -D $(BIN)
 	@echo Uploaded $(BIN) to firmware
+
+size: $(ELF) $(BIN)
+	$(NM) --print-size --size-sort $(ELF) | tail -n 10
+	$(SIZE) $(ELF)
+	ls -s $(BIN)
 
 # pull in dependencies
 -include $(OBJS:.o=.d)
