@@ -66,19 +66,3 @@ void ScreenBuffer::fill(Colour c) {
   // for(unsigned int i=0; i<height*width; ++i)
   //   pixels[i] = c;
 }
-
-void ScreenBuffer::write(uint8_t c) {
-  if (c == '\n') {
-    cursor_y += textsize*8;
-    cursor_x  = 0;
-  } else if (c == '\r') {
-    // skip em
-  } else {
-    drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
-    cursor_x += textsize*6;
-    if(wrap && (cursor_x > (width - textsize*6))){
-      cursor_y += textsize*8;
-      cursor_x = 0;
-    }
-  }
-}

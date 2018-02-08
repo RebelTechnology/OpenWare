@@ -15,11 +15,13 @@ CXX=$(TOOLROOT)arm-none-eabi-g++
 LD=$(TOOLROOT)arm-none-eabi-gcc
 AR=$(TOOLROOT)arm-none-eabi-ar
 AS=$(TOOLROOT)arm-none-eabi-as
+NM=$(TOOLROOT)arm-none-eabi-nm
 RANLIB=$(TOOLROOT)arm-none-eabi-ranlib
 GDB=$(TOOLROOT)arm-none-eabi-gdb
 OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
+STFLASH ?= st-flash
 
 # Set up search path
 vpath %.s $(BUILDROOT)/Src
@@ -62,30 +64,33 @@ clean:
 	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) gdbscript
 
 debug: $(ELF)
-	echo "target extended localhost:4242" > gdbscript
-	echo "load $(ELF)" >> gdbscript
-	$(GDB) -x gdbscript $(ELF)
-# 	bash -c "$(GDB) -x <(echo target extended localhost:4242) $(ELF)"
+	@echo "target extended localhost:4242" > gdbscript
+	@echo "load $(ELF)" >> gdbscript
+	@$(GDB) -x gdbscript $(ELF)
 
 flash:
-	$(STFLASH) write $(BIN) 0x8000000
+	@$(STFLASH) write $(BIN) 0x8000000
 
 stlink:
-	echo "target extended localhost:4242" > gdbscript
-	$(GDB) -x gdbscript $(ELF)
+	@$(GDB) -ex "target extended localhost:4242" $(ELF)
 
 bin: $(BIN)
 	@echo Successfully built $(CONFIG) firmware in $(BIN)
 
 map : $(OBJS) $(LDSCRIPT)
-	$(LD) $(LDFLAGS) -Wl,-Map=$(ELF:.elf=.map) $(OBJS) $(LDLIBS)
+	@$(LD) $(LDFLAGS) -Wl,-Map=$(ELF:.elf=.map) $(OBJS) $(LDLIBS)
 
 as: $(ELF)
-	$(OBJDUMP) -S $(ELF) > $(ELF:.elf=.s)
+	@$(OBJDUMP) -S $(ELF) > $(ELF:.elf=.s)
 
 dfu: $(BIN)
 	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s 0x8000000:leave -D $(BIN)
 	@echo Uploaded $(BIN) to firmware
+
+size: $(ELF) $(BIN)
+	@$(NM) --print-size --size-sort $(ELF) | tail -n 10
+	@$(SIZE) $(ELF)
+	@ls -sh $(BIN)
 
 # pull in dependencies
 -include $(OBJS:.o=.d)

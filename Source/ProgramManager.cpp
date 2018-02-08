@@ -243,6 +243,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = PLAYER_HARDWARE;
 #elif defined OWL_PRISMF7
   pv->hardware_version = PRISM_HARDWARE;
+#elif defined OWL_PRISM
+  pv->hardware_version = PRISM_HARDWARE;
 #elif defined OWL_MAGUS
   pv->hardware_version = MAGUS_HARDWARE;
 #else
