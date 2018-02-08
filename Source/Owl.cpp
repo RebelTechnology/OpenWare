@@ -419,11 +419,12 @@ void loop(void){
 #ifdef OWL_MAGUS
   TLC5946_Refresh_GS();
   Encoders_readAll();
-  extern uint16_t rgENC_Values[7];
-  graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
+  // graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
+  graphics.params.updateEncoders(Encoders_get(), 7);
   for(int i=8; i<16; ++i){
     graphics.params.updateValue(i, 0);
-    // graphics.params.updateOutput(i, 0);
+    // TODO: store values set from patch somewhere and multiply with user[] value for outputs
+    // graphics.params.updateOutput(i, getOutputValue(i));
     MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
     uint16_t val = graphics.params.parameters[i]>>2;
     setLed(i, ledstatus ^ rainbowoutputs[val&0x3ff]);

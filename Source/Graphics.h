@@ -26,7 +26,6 @@ public:
   ScreenBuffer screen;
 private:
   uint8_t pixelbuffer[OLED_BUFFER_SIZE];
-  void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
 };
 
 extern Graphics graphics;
