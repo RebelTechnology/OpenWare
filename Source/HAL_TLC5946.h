@@ -5,6 +5,7 @@
 	extern "C" {
 #endif
 
+#include <stdint.h>
 #include "stm32f4xx_hal.h"
 
 // Modes
@@ -18,15 +19,15 @@
  
 // Prototypes
 void TLC5946_init (SPI_HandleTypeDef *config);
-void TLC5946_SetOutput_GS(unsigned char IC, unsigned char LED_ID, unsigned short value);
-void TLC5946_SetOutput_DC(unsigned char IC, unsigned char LED_ID, unsigned char value);
+void TLC5946_SetOutput_GS(uint8_t IC, uint8_t LED_ID, uint16_t value);
+void TLC5946_SetOutput_DC(uint8_t IC, uint8_t LED_ID, uint8_t value);
 void TLC5946_Refresh_GS(void);
 void TLC5946_Refresh_DC(void);
 void TLC5946_TxINTCallback(void);
 
-void TLC5946_setRGB(unsigned char LED_ID, unsigned short val_R, unsigned short val_G, unsigned short val_B);
-void TLC5946_setRGB_DC(unsigned short val_R, unsigned short val_G, unsigned short val_B);
-void TLC5946_setAll(unsigned short val_R, unsigned short val_G, unsigned short val_B);
+void TLC5946_setRGB(uint8_t LED_ID, uint16_t val_R, uint16_t val_G, uint16_t val_B);
+void TLC5946_setRGB_DC(uint16_t val_R, uint16_t val_G, uint16_t val_B);
+void TLC5946_setAll(uint16_t val_R, uint16_t val_G, uint16_t val_B);
 
 #ifdef __cplusplus
 }

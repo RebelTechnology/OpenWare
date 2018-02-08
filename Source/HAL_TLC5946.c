@@ -15,42 +15,104 @@ static const uint8_t rgLED_B[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
 //_____ Functions _____________________________________________________________________________________________________
 void TLC5946_SetOutput_GS(uint8_t IC, uint8_t LED_ID, uint16_t value)
 {
-	uint8_t temp;
-	uint8_t ucBuffLoc = LED_ID + (LED_ID>>1); // (uint8_t)(LED_ID*1.5);
-	
-	  if(LED_ID & 0x01)	// bbbbaaaa aaaaaaaa
-		{
-			temp											= rgGSbuf[IC][ucBuffLoc];
-			rgGSbuf[IC][ucBuffLoc] 	 	= (value&0xF00)>>8;
-			rgGSbuf[IC][ucBuffLoc]   |= (temp&0xF0);
-			rgGSbuf[IC][ucBuffLoc+1]  = (value&0x0FF);
-		}
-	  else            	// aaaaaaaa aaaabbbb
-		{
-			rgGSbuf[IC][ucBuffLoc] 	  = (value&0xFF0)>>4;
-			temp 								  		= rgGSbuf[IC][ucBuffLoc+1];
-			rgGSbuf[IC][ucBuffLoc+1]  = (value&0x00F)<<4;
-			rgGSbuf[IC][ucBuffLoc+1] |= (temp&0x0F);
-		}
-
-  /* uint8_t bitshift = LED_ID*12; */
-  /* uint8_t word = bitshift/32; */
-  /* uint8_t bit = bitshift % 32; */
-  /* uint32_t* data = (uint32_t*)(rgGSbuf[IC]); */
-  /* data[word] = (data[word] & ~(0xfffu << bit)) | ((value & 0xfff) << bit); */
-  /* if(bit > 20) */
-  /*   data[word+1] = (data[word+1] & ~(0xfffu >> (32-bit))) | (value & 0xfff) >> (32-bit); */
+#if 1
+  uint8_t temp;
+  uint8_t ucBuffLoc = LED_ID + (LED_ID>>1); // (uint8_t)(LED_ID*1.5);
+  if(LED_ID & 0x01)	// bbbbaaaa aaaaaaaa
+    {
+      temp			= rgGSbuf[IC][ucBuffLoc];
+      rgGSbuf[IC][ucBuffLoc] 	= (value&0xF00)>>8;
+      rgGSbuf[IC][ucBuffLoc]   |= (temp&0xF0);
+      rgGSbuf[IC][ucBuffLoc+1]  = (value&0x0FF);
+    }
+  else            	// aaaaaaaa aaaabbbb
+    {
+      rgGSbuf[IC][ucBuffLoc] 	= (value&0xFF0)>>4;
+      temp 			= rgGSbuf[IC][ucBuffLoc+1];
+      rgGSbuf[IC][ucBuffLoc+1]  = (value&0x00F)<<4;
+      rgGSbuf[IC][ucBuffLoc+1] |= (temp&0x0F);
+    }
+#elif 0
+  uint32_t bitshift = LED_ID*12;
+  uint32_t word = bitshift/8;
+  uint32_t bit = bitshift % 8;
+  uint8_t* data = (uint8_t*)(rgGSbuf[IC]);
+  data[word+1] = (data[word+1] & ~(0xfffu << bit)) | ((value & 0xfffu) << bit);
+  data[word] = (data[word] & ~(0xfffu >> (8-bit))) | (value & 0xfffu) >> (8-bit);
+#else
+  uint32_t bitshift = LED_ID*12;
+  uint32_t word = bitshift/32;
+  uint32_t bit = bitshift % 32;
+  uint32_t* data = (uint32_t*)(rgGSbuf[IC]);
+  data[word] = (data[word] & ~(0xfffu << bit)) | ((value & 0xfffu) << bit);
+  if(bit > 20)
+    data[word+1] = (data[word+1] & ~(0xfffu >> (32-bit))) | (value & 0xfffu) >> (32-bit);
+#endif
 }
 
 void TLC5946_SetOutput_DC(uint8_t IC, uint8_t LED_ID, uint8_t value)
 {
-  uint8_t bitshift = LED_ID*6;
-  uint8_t word = bitshift/32;
-  uint8_t bit = bitshift % 32;
+#if 0
+  uint8_t temp;
+  /* uint8_t ucBuffLoc = (uint8_t)(LED_ID*0.75); */
+  uint8_t ucBuffLoc = (LED_ID*3)>>2;
+  switch(LED_ID){
+  case 0:
+  case 4:
+  case 8:
+  case 12:
+    temp = rgDCbuf[IC][ucBuffLoc];
+    rgDCbuf[IC][ucBuffLoc] = (value&0x3F);
+    rgDCbuf[IC][ucBuffLoc] |= (temp&0xC0);
+    break;
+  case 1:
+  case 5:
+  case 9:
+  case 13:
+    temp = rgDCbuf[IC][ucBuffLoc];
+    rgDCbuf[IC][ucBuffLoc]          = (value&0x03)<<6;
+    rgDCbuf[IC][ucBuffLoc]   |= (temp&0x3F);
+    temp = rgDCbuf[IC][ucBuffLoc+1];
+    rgDCbuf[IC][ucBuffLoc+1]        = (value&0x0F);
+    rgDCbuf[IC][ucBuffLoc+1] |= (temp&0xF0);
+    break;
+  case 2:
+  case 6:
+  case 10:
+  case 14:
+    temp = rgDCbuf[IC][ucBuffLoc];
+    rgDCbuf[IC][ucBuffLoc]          = (value&0x0F)<<4;
+    rgDCbuf[IC][ucBuffLoc]   |= (temp&0x0F);
+    temp = rgDCbuf[IC][ucBuffLoc+1];
+    rgDCbuf[IC][ucBuffLoc+1]        = (value&0xC0)>>6;
+    rgDCbuf[IC][ucBuffLoc+1] |= (temp&0xFC);
+    break;
+  case 3:
+  case 7:
+  case 11:
+  case 15:
+    temp = rgDCbuf[IC][ucBuffLoc];
+    rgDCbuf[IC][ucBuffLoc]          = value<<2;
+    rgDCbuf[IC][ucBuffLoc]   |= (temp&0x03);
+    break;
+  }               
+#elif 1
+  uint32_t bitshift = LED_ID*6;
+  uint32_t word = bitshift/8;
+  uint32_t bit = bitshift % 8;
+  uint8_t* data = (uint8_t*)(rgDCbuf[IC]);
+  data[word] = (data[word] & ~(0x3fu << bit)) | ((value & 0x3fu) << bit);
+  if(bit > 2)
+    data[word+1] = (data[word+1] & ~(0x3fu >> (8-bit))) | (value & 0x3fu) >> (8-bit);
+#else
+  uint32_t bitshift = LED_ID*6;
+  uint32_t word = bitshift/32;
+  uint32_t bit = bitshift % 32;
   uint32_t* data = (uint32_t*)(rgDCbuf[IC]);
-  data[word] = (data[word] & ~(0x3fu << bit)) | ((value & 0x3f) << bit);
+  data[word] = (data[word] & ~(0x3fu << bit)) | ((value & 0x3fu) << bit);
   if(bit > 26)
-    data[word+1] = (data[word+1] & ~(0x3fu >> (32-bit))) | (value & 0x3f) >> (32-bit);
+    data[word+1] = (data[word+1] & ~(0x3fu >> (32-bit))) | (value & 0x3fu) >> (32-bit);
+#endif
 }
 
 

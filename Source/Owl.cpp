@@ -16,9 +16,14 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 
-#if defined USE_RGB_LED || defined OWL_MAGUS
+#if defined USE_RGB_LED
 #include "rainbow.h"
 #endif /* OWL_TESSERACT */
+
+#ifdef OWL_MAGUS
+#include "purple-blue-cyan.h"
+#include "orange-red-pink.h"
+#endif
 
 #ifdef USE_SCREEN
 #include "Graphics.h"
@@ -307,7 +312,8 @@ void setup(){
   extern SPI_HandleTypeDef hspi5;
   // LEDs
   TLC5946_init(&hspi5);
-  TLC5946_setRGB_DC(10, 10, 10); // TODO: balance levels
+  // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
+  TLC5946_setRGB_DC(0xaa, 0xaa, 0xaa);
   TLC5946_setAll(0x1f, 0x1f, 0x1f);
   // Start LED Driver PWM
   extern TIM_HandleTypeDef htim3;
@@ -394,7 +400,6 @@ extern "C" {
 void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
-  // Magus_setRGB(led+1, (rgb>>20)&0xfff, (rgb>>10)&0xfff, (rgb>>00)&0xfff);
 }
 #endif
 
@@ -420,21 +425,15 @@ void loop(void){
     graphics.params.updateValue(i, 0);
     // graphics.params.updateOutput(i, 0);
     MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
-    // uint16_t val = graphics.params.parameters[i]>>7;
-    // setLed(i, ledstatus ^ (rainbow[val & 0x1f]));
     uint16_t val = graphics.params.parameters[i]>>2;
-    setLed(i, ledstatus ^ (((0x3ff-val)<<10)|LED_RED));
+    setLed(i, ledstatus ^ rainbowoutputs[val&0x3ff]);
   }
   MAX11300_bulkwriteDAC();      
   MAX11300_bulkreadADC();
   for(int i=0; i<8; ++i){
     graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
-    // uint16_t val = graphics.params.parameters[i]>>7;
-    // setLed(i, ledstatus ^ (rainbow[(val<<5) & 0x3e]));
-    // setLed(i, ledstatus ^ ((LED_BLUE - (val<<00) | ((val<<10) - LED_GREEN)));
     uint16_t val = graphics.params.parameters[i]>>2;
-    setLed(i, ledstatus ^ (((0x3ff-val)<<10)|(val<<00)));
-    // setLed(i, ledstatus ^ (((graphics.params.parameters[i] >> 2)<<10)|LED_BLUE));
+    setLed(i, ledstatus ^ rainbowinputs[val&0x3ff]);
   }
   for(int i=16; i<20; ++i)
     graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
