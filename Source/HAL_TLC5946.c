@@ -11,7 +11,9 @@ static SPI_HandleTypeDef* TLC5946_SPIConfig;
 static const uint8_t rgLED_R[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
 static const uint8_t rgLED_G[16] = {14,12,10,8,7,4,2,0,15,13,11,9,6,5,3,1};
 static const uint8_t rgLED_B[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
-	
+
+// see also https://yurichev.com/blog/FAT12/ for optimised ASM
+
 //_____ Functions _____________________________________________________________________________________________________
 void TLC5946_SetOutput_GS(uint8_t IC, uint8_t LED_ID, uint16_t value)
 {

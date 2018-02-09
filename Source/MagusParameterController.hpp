@@ -56,10 +56,10 @@ public:
     selectedBlock = 0;
     selectedPid[0] = 0;
     selectedPid[1] = 0;
-    selectedPid[2] = 2;
-    selectedPid[3] = 4;
-    selectedPid[4] = 6;
-    selectedPid[5] = 8;
+    selectedPid[2] = 0;
+    selectedPid[3] = 2;
+    selectedPid[4] = 4;
+    selectedPid[5] = 6;
     mode = STANDARD;
   }
  
@@ -97,16 +97,16 @@ public:
 }
 
   void drawBlocks(ScreenBuffer& screen){
+    drawBlockValues(screen);
     int x = 0;
     int y = 63-8;
-    screen.setTextSize(1);
     for(int i=2; i<6; ++i){
-      screen.print(x+1, y, blocknames[i-1]);
+      // screen.print(x+1, y, blocknames[i-1]);
       if(selectedBlock == i)
-	screen.invert(x, y-10, 32, 10);
+	screen.invert(x, 63-8, 32, 8);
+	// screen.invert(x, y-10, 32, 10);
       x += 32;
     }
-    drawBlockValues(screen);
   }
 
   void drawGlobalParameterNames(ScreenBuffer& screen){
@@ -266,19 +266,19 @@ public:
     return SIZE;
   }
 
-  void selectBlockParameter(uint8_t enc, uint8_t pid){
+  void selectBlockParameter(uint8_t enc, int8_t pid){
     uint8_t i = enc-2;
     if(pid == i*2+2)
       pid = i*2+8; // skip up
     if(pid == i*2+7)
       pid = i*2+1; // skip down
-    selectedPid[i] = max(i*2, min(i*2+9, pid));
-    setEncoderValue(enc, user[enc]);
+    selectedPid[enc] = max(i*2, min(i*2+9, pid));
+    setEncoderValue(enc, user[selectedPid[enc]]);
   }
 
-  void selectGlobalParameter(uint8_t pid){
+  void selectGlobalParameter(int8_t pid){
     selectedPid[0] = max(0, min(SIZE-1, pid));
-    setEncoderValue(0, user[0]);    
+    setEncoderValue(0, user[selectedPid[0]]);
   }
   
   void updateEncoders(int16_t* data, uint8_t size){
@@ -291,9 +291,9 @@ public:
       // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
       mode = SELECTGLOBALPARAMETER;
       int16_t delta = value - encoders[0];
-      if(delta < -1)
+      if(delta < 0)
 	selectGlobalParameter(selectedPid[0]-1);
-      else if(delta > 1)
+      else if(delta > 0)
 	selectGlobalParameter(selectedPid[0]+1);
       selectedBlock = 0;
     }else{
@@ -318,9 +318,9 @@ public:
 	selectedBlock = i;
 	mode = SELECTBLOCKPARAMETER;
 	int16_t delta = value - encoders[i];
-	if(delta < -1)
+	if(delta < 0)
 	  selectBlockParameter(i, selectedPid[i]-1);
-	else if(delta > 1)
+	else if(delta > 0)
 	  selectBlockParameter(i, selectedPid[i]+1);
       }else{
 	if(encoders[i] != value){
