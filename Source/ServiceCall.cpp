@@ -4,8 +4,8 @@
 #include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
 
-// #define USE_FFT_TABLES
-// #define USE_FAST_POW
+#define USE_FFT_TABLES
+#define USE_FAST_POW
 
 #ifdef USE_FFT_TABLES
 #include "arm_const_structs.h"

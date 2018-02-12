@@ -207,6 +207,11 @@ void onProgramReady(){
 
 // called from program
 void onSetPatchParameter(uint8_t pid, int16_t value){
+// #ifdef USE_SCREEN
+//   graphics.params.setDynamicValue(ch, value);
+// #else
+//   parameter_values[ch] = value;
+// #endif
   setParameterValue(pid, value);
 }
 // called from program

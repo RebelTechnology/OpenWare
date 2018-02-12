@@ -1,12 +1,15 @@
 #ifndef __ParameterController_hpp__
 #define __ParameterController_hpp__
 
+#include "device.h"
 #include "basicmaths.h"
 #ifdef OWL_MAGUS
 #include "errorhandlers.h"
 #endif
 #include "ProgramVector.h"
 // #include "HAL_Encoders.h"
+#include "Owl.h"
+#include "OpenWareMidiControl.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -35,8 +38,8 @@ public:
   int16_t encoders[6]; // last seen encoder values
   int16_t offsets[6]; // last seen encoder values
   int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
-  char names[SIZE][22]; // max 21 chars/128px
-  char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
+  char names[SIZE][12];
+  // char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   uint8_t selectedBlock;
   uint8_t selectedPid[6];
   enum ScreenMode {
@@ -51,15 +54,20 @@ public:
     for(int i=0; i<SIZE; ++i){
       strcpy(names[i], "Parameter ");
       names[i][9] = 'A'+i;
+      user[i] = 0;
       parameters[i] = 0;
     }
+    for(int i=0; i<6; ++i){
+      encoders[i] = 0;
+      offsets[i] = 0;
+    }
     selectedBlock = 0;
-    selectedPid[0] = 0;
+    selectedPid[0] = PARAMETER_BA;
     selectedPid[1] = 0;
-    selectedPid[2] = 0;
-    selectedPid[3] = 2;
-    selectedPid[4] = 4;
-    selectedPid[5] = 6;
+    selectedPid[2] = PARAMETER_A;
+    selectedPid[3] = PARAMETER_C;
+    selectedPid[4] = PARAMETER_E;
+    selectedPid[5] = PARAMETER_G;
     mode = STANDARD;
   }
  
@@ -103,7 +111,8 @@ public:
     for(int i=2; i<6; ++i){
       // screen.print(x+1, y, blocknames[i-1]);
       if(selectedBlock == i)
-	screen.invert(x, 63-8, 32, 8);
+	screen.drawHorizontalLine(x, y, 32, WHITE);
+	// screen.invert(x, 63-8, 32, 8);
 	// screen.invert(x, y-10, 32, 10);
       x += 32;
     }
@@ -180,8 +189,8 @@ public:
       screen.print("k");
     }
     // draw CPU load
-    screen.print(111, 8, "cpu");
-    screen.setCursor(111, 17);
+    screen.print(110, 8, "cpu");
+    screen.setCursor(110, 17);
     screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
     screen.print("%");
   }
@@ -219,12 +228,10 @@ public:
     screen.setTextWrap(false);
     switch(mode){
     case STANDARD:
-      // standard mode stacked
-      // drawParameter(selectedPid[0], 29, screen);
-      // drawParameter(selectedPid[selectedBlock], 41, screen);
 
       // draw most recently changed parameter
-      drawParameter(selectedPid[selectedBlock], 44, screen);
+      // drawParameter(selectedPid[selectedBlock], 44, screen);
+      drawParameter(selectedPid[selectedBlock], 54, screen);
 
       // use callback to draw title and message
       drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
@@ -242,6 +249,7 @@ public:
       drawMessage(screen);
       drawStats(screen);
       // todo!
+      // select: Scope, VU Meter, Patch Stats, Set Volume, Show MIDI, Reset Patch, Select Patch...
       break;
     case ERROR:
       drawTitle("ERROR", screen);
@@ -253,9 +261,13 @@ public:
   }
 
   void setName(uint8_t pid, const char* name){
-    if(pid < SIZE)
+    if(pid < SIZE){
       strncpy(names[pid], name, 11);
-    // if(name[0] == '<') // output parameter TODO!
+      if(names[pid][strnlen(names[pid], 11)-1] == '>')
+	setPortMode(pid, PORT_UNI_OUTPUT);
+      else
+	setPortMode(pid, PORT_UNI_INPUT);
+    }
   }
 
   void setTitle(const char* str){
@@ -341,7 +353,10 @@ public:
     for(int i=0; i<6; ++i)
       if(selectedPid[i] == pid)
         setEncoderValue(i, value);
-  }
+
+    // TODO: store values set from patch somewhere and multiply with user[] value for outputs
+    // graphics.params.updateOutput(i, getOutputValue(i));
+}
 
   // @param value is the modulation ADC value
   void updateValue(uint8_t pid, int16_t value){

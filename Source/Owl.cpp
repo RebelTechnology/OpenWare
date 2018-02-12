@@ -280,6 +280,24 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #endif
 }
 
+#ifdef OWL_MAGUS
+bool updateMAX11300 = false;
+// int16_t dynamicParameterValues[NOF_PARAMETERS];
+uint8_t portMode[20];
+void setPortMode(uint8_t index, uint8_t mode){
+  if(index < 20){
+    if(portMode[index] != mode){
+      portMode[index] = mode;
+      updateMAX11300 = true;
+    }
+  }
+}
+uint8_t getPortMode(uint8_t index){
+  if(index < 20)
+    return portMode[index];
+  return 0;
+}
+#endif
 
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
@@ -334,14 +352,11 @@ void setup(){
   MAX11300_setDeviceControl(DCR_RESET);
   HAL_Delay(1000);
   MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
-  for(int i=0; i<8; ++i)
-    MAX11300_setPortMode(i+1, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  for(int i=8; i<16; ++i)
-    MAX11300_setPortMode(i+1, PCR_Range_DAC_0_P10|PCR_Mode_DAC);
-  for(int i=16; i<20; ++i)
-    MAX11300_setPortMode(i+1, PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
-  for(int i=0; i<20; ++i)
+  for(int i=0; i<20; ++i){
+    setPortMode(i, PORT_UNI_INPUT);
     MAX11300_setDACValue(i, 0);
+    updateMAX11300 = true;
+  }
 #endif /* OWL_MAGUS */
   
 #ifdef USE_RGB_LED
@@ -417,27 +432,50 @@ void loop(void){
   midi.push();
 
 #ifdef OWL_MAGUS
+  if(updateMAX11300){
+    for(int i=0; i<20; ++i){
+      uint16_t mode;
+      switch(portMode[i]){
+      case PORT_UNI_OUTPUT:
+	mode = PCR_Range_DAC_0_P10|PCR_Mode_DAC;
+	break;
+      case PORT_UNI_INPUT:
+      default:
+	mode = PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT;
+	break;
+      }
+      MAX11300_setPortMode(i+1, mode);
+    }
+    updateMAX11300 = false;
+  }
   TLC5946_Refresh_GS();
   Encoders_readAll();
   // graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
   graphics.params.updateEncoders(Encoders_get(), 7);
-  for(int i=8; i<16; ++i){
-    graphics.params.updateValue(i, 0);
+  MAX11300_bulkreadADC();
+  for(int i=0; i<16; ++i){
+    if(getPortMode(i) == PORT_UNI_INPUT){
+      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+      uint16_t val = graphics.params.parameters[i]>>2;
+      setLed(i, ledstatus ^ rainbowinputs[val&0x3ff]);
+    }else{
+      // DACs
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
-    MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
-    uint16_t val = graphics.params.parameters[i]>>2;
-    setLed(i, ledstatus ^ rainbowoutputs[val&0x3ff]);
+      MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
+      graphics.params.updateValue(i, 0);
+      uint16_t val = graphics.params.parameters[i]>>2;
+      setLed(i, ledstatus ^ rainbowoutputs[val&0x3ff]);
+    }
   }
-  MAX11300_bulkwriteDAC();      
-  MAX11300_bulkreadADC();
   for(int i=0; i<8; ++i){
-    graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
-    uint16_t val = graphics.params.parameters[i]>>2;
-    setLed(i, ledstatus ^ rainbowinputs[val&0x3ff]);
   }
   for(int i=16; i<20; ++i)
-    graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+    if(getPortMode(i) == PORT_UNI_INPUT)
+      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+    else
+      graphics.params.updateValue(i, 0);
+  MAX11300_bulkwriteDAC();
 #else
 #endif /* OWL_MAGUS */
 

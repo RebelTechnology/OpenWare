@@ -21,6 +21,16 @@ extern "C" {
   void encoderChanged(uint8_t encoder, int32_t value);
 #endif
 
+#ifdef OWL_MAGUS
+#define PORT_UNI_INPUT 1
+#define PORT_UNI_OUTPUT 2
+#define PORT_BI_INPUT 3
+#define PORT_BI_OUTPUT 4
+
+  void setPortMode(uint8_t index, uint8_t mode);
+  uint8_t getPortMode(uint8_t index);
+#endif /* OWL_MAGUS */
+
   int16_t getParameterValue(uint8_t index);
   void setParameterValue(uint8_t ch, int16_t value);
 

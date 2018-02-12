@@ -19,7 +19,7 @@ MidiHandler::MidiHandler() : channel(MIDI_OMNI_CHANNEL) {
 }
 
 void MidiHandler::handlePitchBend(uint8_t status, uint16_t value){
-  setParameterValue(PARAMETER_G, ((int16_t)value - 8192)>>1);
+  // setParameterValue(PARAMETER_G, ((int16_t)value - 8192)>>1);
 }
 
 void MidiHandler::handleNoteOn(uint8_t status, uint8_t note, uint8_t velocity){
