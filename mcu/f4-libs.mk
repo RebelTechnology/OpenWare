@@ -27,12 +27,12 @@ OBJS += $(DRIVERS)/Src/stm32f4xx_ll_usb.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sai.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sai_ex.o
 
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_dac.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_dac.o
 # external SDRAM
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sdram.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fmc.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sdram.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fmc.o
 # USB Host
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_hcd.o
+# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_hcd.o
 
 # required by OWL 1
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sram.o

@@ -79,13 +79,13 @@
 #define OLED_RST_GPIO_Port GPIOA
 #define OLED_MOSI_Pin GPIO_PIN_7
 #define OLED_MOSI_GPIO_Port GPIOA
-#define SWENC_A_Pin GPIO_PIN_9
-#define SWENC_A_GPIO_Port GPIOE
-#define SW1_Pin GPIO_PIN_10
-#define SW1_GPIO_Port GPIOE
-#define SW1_EXTI_IRQn EXTI15_10_IRQn
-#define SWENC_B_Pin GPIO_PIN_11
-#define SWENC_B_GPIO_Port GPIOE
+#define ENC1_A_Pin GPIO_PIN_9
+#define ENC1_A_GPIO_Port GPIOE
+#define ENC1_SW_Pin GPIO_PIN_10
+#define ENC1_SW_GPIO_Port GPIOE
+#define ENC1_SW_EXTI_IRQn EXTI15_10_IRQn
+#define ENC1_B_Pin GPIO_PIN_11
+#define ENC1_B_GPIO_Port GPIOE
 #define FLASH_MISO_Pin GPIO_PIN_13
 #define FLASH_MISO_GPIO_Port GPIOE
 #define FLASH_MOSI_Pin GPIO_PIN_14
@@ -100,10 +100,10 @@
 #define USB_DP_GPIO_Port GPIOB
 #define FLASH_HOLD_Pin GPIO_PIN_8
 #define FLASH_HOLD_GPIO_Port GPIOD
-#define ENC_A_Pin GPIO_PIN_6
-#define ENC_A_GPIO_Port GPIOC
-#define ENC_B_Pin GPIO_PIN_7
-#define ENC_B_GPIO_Port GPIOC
+#define ENC2_A_Pin GPIO_PIN_6
+#define ENC2_A_GPIO_Port GPIOC
+#define ENC2_B_Pin GPIO_PIN_7
+#define ENC2_B_GPIO_Port GPIOC
 #define UART_TX_Pin GPIO_PIN_9
 #define UART_TX_GPIO_Port GPIOA
 #define UART_RX_Pin GPIO_PIN_10
@@ -126,9 +126,9 @@
 #define FLASH_NCS_GPIO_Port GPIOB
 #define FLASH_W_Pin GPIO_PIN_7
 #define FLASH_W_GPIO_Port GPIOB
-#define SW2_Pin GPIO_PIN_9
-#define SW2_GPIO_Port GPIOB
-#define SW2_EXTI_IRQn EXTI9_5_IRQn
+#define ENC2_SW_Pin GPIO_PIN_9
+#define ENC2_SW_GPIO_Port GPIOB
+#define ENC2_SW_EXTI_IRQn EXTI9_5_IRQn
 
 /* ########################## Assert Selection ############################## */
 /**

@@ -262,18 +262,28 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   // tr1() pc11
   // tr2() pc10
   case ENC1_SW_Pin: // GPIO_PIN_14:
-    setButtonValue(PUSHBUTTON, (ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+    setButtonValue(BUTTON_A, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+    setButtonValue(PUSHBUTTON, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
     break;
   case ENC2_SW_Pin: // GPIO_PIN_4:
-    setButtonValue(PUSHBUTTON, (ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
+    setButtonValue(BUTTON_B, !(ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
     break;
   case TR_IN_A_Pin: // GPIO_PIN_11:
-    setButtonValue(BYPASS_BUTTON, !(TR_IN_A_GPIO_Port->IDR & TR_IN_A_Pin));
+    setButtonValue(BUTTON_C, !(TR_IN_A_GPIO_Port->IDR & TR_IN_A_Pin));
     break;
   case TR_IN_B_Pin: // GPIO_PIN_10:
-    setButtonValue(BYPASS_BUTTON, !(TR_IN_B_GPIO_Port->IDR & TR_IN_B_Pin));
+    setButtonValue(BUTTON_D, !(TR_IN_B_GPIO_Port->IDR & TR_IN_B_Pin));
     break;
 #endif
+#ifdef OWL_PRISM
+  case ENC1_SW_Pin:
+    setButtonValue(BUTTON_A, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+    setButtonValue(PUSHBUTTON, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+    break;
+  case ENC2_SW_Pin:
+    setButtonValue(BUTTON_B, !(ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
+    break;
+#endif    
   }
 #ifdef USE_RGB_LED
   ledstatus = getButtonValue(PUSHBUTTON) ? 0x3ff : 0;
@@ -468,16 +478,22 @@ void loop(void){
       setLed(i, ledstatus ^ rainbowoutputs[val&0x3ff]);
     }
   }
-  for(int i=0; i<8; ++i){
-  }
-  for(int i=16; i<20; ++i)
+  for(int i=16; i<NOF_PARAMETERS; ++i)
     if(getPortMode(i) == PORT_UNI_INPUT)
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
     else
       graphics.params.updateValue(i, 0);
   MAX11300_bulkwriteDAC();
-#else
 #endif /* OWL_MAGUS */
+
+#ifdef OWL_PRISM
+  int16_t encoders[2] = { getEncoderValue(0), getEncoderValue(1) };
+  graphics.params.updateEncoders(encoders, 2);
+  for(int i=0; i<2; ++i)
+    graphics.params.updateValue(i, getAnalogValue(i));
+  for(int i=2; i<NOF_PARAMETERS; ++i)
+    graphics.params.updateValue(i, 0);
+#endif /* OWL_PRISM */
 
 #ifdef USE_RGB_LED
   uint32_t colour =
@@ -528,9 +544,18 @@ extern "C"{
 #endif /* USE_USB_HOST */
 
 #ifdef USE_ENCODERS
-  void encoderReset(uint8_t encoder, int32_t value){
-  extern TIM_HandleTypeDef ENCODER_TIM1;
-  extern TIM_HandleTypeDef ENCODER_TIM2;
+  int16_t getEncoderValue(uint8_t encoder){
+    extern TIM_HandleTypeDef ENCODER_TIM1;
+    extern TIM_HandleTypeDef ENCODER_TIM2;
+    if(encoder == 0)
+      return __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
+    else // if(encoder == 1)
+      return __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
+  }
+
+  void encoderReset(uint8_t encoder, int16_t value){
+    extern TIM_HandleTypeDef ENCODER_TIM1;
+    extern TIM_HandleTypeDef ENCODER_TIM2;
     if(encoder == 0)
       __HAL_TIM_SetCounter(&ENCODER_TIM1, value);
     else if(encoder == 1)
@@ -545,6 +570,6 @@ extern "C"{
     else if(htim == &ENCODER_TIM2)
       encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
   }
-#endif /* OWL_PLAYERF7 */
+#endif /* USE_ENCODERS */
 
 }

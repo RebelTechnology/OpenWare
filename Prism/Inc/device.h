@@ -18,8 +18,8 @@
 #define ADC_PERIPH hadc1
 #define ADC_A 0
 #define ADC_B 1
-#define ADC_C 2
-#define ADC_D 3
+/* #define ADC_C 2 */
+/* #define ADC_D 3 */
 
 #define OLED_DMA
 
@@ -28,8 +28,8 @@
 #define OLED_SOFT_CS
 #define OLED_SPI hspi1
 #define USE_ENCODERS
-#define ENCODER_TIM1 htim1
-#define ENCODER_TIM2 htim3
+#define ENCODER_TIM1 htim3
+#define ENCODER_TIM2 htim1
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi2
@@ -65,7 +65,7 @@
 #define AUDIO_MAX_BLOCK_SIZE (CODEC_BUFFER_SIZE/4)
 
 #define NOF_ADC_VALUES               2
-#define NOF_PARAMETERS               16
+#define NOF_PARAMETERS               20
 #define NOF_BUTTONS                  5
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector

@@ -5,8 +5,10 @@
 #include "device.h"
 #include "ScreenBuffer.h"
 
-#ifdef OWL_MAGUS
+#if defined OWL_MAGUS
 #include "MagusParameterController.hpp"
+#elif defined OWL_PRISM
+#include "PrismParameterController.hpp"
 #else
 #include "ParameterController.hpp"
 #endif

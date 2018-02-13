@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include "PatchDefinition.hpp"
 #include "ProgramVector.h"
+#include "Owl.h"
 
 extern "C" {
   void updateProgramVector(ProgramVector* pv);
@@ -11,16 +12,16 @@ extern "C" {
   void onProgramStatus(ProgramVectorAudioStatus status);
   void onAudioReady(void);
   void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
-  void encoderChanged(uint8_t encoder, int32_t value);
-  uint16_t getAnalogValue(uint8_t index);
-  void setAnalogValue(uint8_t ch, uint16_t value);
+  /* void encoderChanged(uint8_t encoder, int32_t value); */
+  /* uint16_t getAnalogValue(uint8_t index); */
+  /* void setAnalogValue(uint8_t ch, uint16_t value); */
 
-  int16_t getParameterValue(uint8_t ch);
-  void setParameterValue(uint8_t ch, int16_t value);
+  /* int16_t getParameterValue(uint8_t ch); */
+  /* void setParameterValue(uint8_t ch, int16_t value); */
 
-  uint8_t getButtonValue(uint8_t ch);
-  void setButtonValue(uint8_t ch, uint8_t value);
-  uint16_t getSampleCounter();
+  /* uint8_t getButtonValue(uint8_t ch); */
+  /* void setButtonValue(uint8_t ch, uint8_t value); */
+  /* uint16_t getSampleCounter(); */
 }
 
 class ProgramManager {

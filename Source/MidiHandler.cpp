@@ -10,9 +10,6 @@
 #include "Owl.h"
 
 static FirmwareLoader loader;
-extern "C" {
-  void encoderChanged(uint8_t encoder, int32_t value);
-}
 
 MidiHandler::MidiHandler() : channel(MIDI_OMNI_CHANNEL) {
   // memset(midi_values, 0, NOF_PARAMETERS*sizeof(uint16_t));

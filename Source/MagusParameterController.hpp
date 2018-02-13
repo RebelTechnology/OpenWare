@@ -58,7 +58,7 @@ public:
       parameters[i] = 0;
     }
     for(int i=0; i<6; ++i){
-      encoders[i] = 0;
+      // encoders[i] = 0;
       offsets[i] = 0;
     }
     selectedBlock = 0;
