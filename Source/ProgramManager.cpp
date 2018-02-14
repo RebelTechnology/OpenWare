@@ -286,7 +286,9 @@ void updateProgramVector(ProgramVector* pv){
   extern char _CCMRAM, _CCMRAM_END;
   static MemorySegment heapSegments[] = {
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_END - &_CCMRAM) - PROGRAMSTACK_SIZE },
+#ifndef OWL_PRISM
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_END - &_EXTRAM) },
+#endif
     // todo: add remaining program space
     { NULL, 0 }
   };
