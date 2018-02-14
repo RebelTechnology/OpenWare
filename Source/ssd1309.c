@@ -1,6 +1,7 @@
 // _____ Includes ______________________________________________________________________
 #include "oled.h"
 #include "device.h"
+#include "errorhandlers.h"
 #include <string.h>
 
 /* static void NopDelay(uint32_t nops){ */
@@ -69,13 +70,19 @@ static void OLED_writeCMD(const uint8_t* data, uint16_t length)
 
 #ifdef OLED_DMA
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
-  assert_param(0);
+  if(hspi->ErrorCode == HAL_SPI_ERROR_OVR){
+    __HAL_SPI_CLEAR_OVRFLAG(hspi);
+    error(RUNTIME_ERROR, "SPI OVR");
+  }else{
+    assert_param(0);
+  }
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
-  if(__HAL_DMA_GET_FLAG(OLED_SPIInst,  __HAL_DMA_GET_TC_FLAG_INDEX(OLED_SPIInst))){
-    pCS_Set();	// CS high
-  }
+  /* if(__HAL_DMA_GET_FLAG(OLED_SPIInst,  __HAL_DMA_GET_TC_FLAG_INDEX(OLED_SPIInst))){ */
+  /*   pCS_Set();	// CS high */
+  /* } */
+  pCS_Set();	// CS high
 }
 #endif
 
@@ -110,46 +117,6 @@ void oled_write(const uint8_t* data, uint16_t length)
 /* void OLED_Config(SPI_HandleTypeDef* spi, unsigned char* buffer){ */
 void oled_init(SPI_HandleTypeDef* spi){
 	OLED_SPIInst = spi;
-	/* OLED_Buffer = buffer; */
-
-#if 0 // should be done by Cube in main.c
-	GPIO_InitTypeDef GPIO_InitStruct;
-	// Configure RST and DC Pins
-	GPIO_InitStruct.Pin   = OLED_RST_Pin | OLED_DC_Pin;					
-	GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	GPIO_InitStruct.Pull  = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-	
-	// Configure CS Pin
-	GPIO_InitStruct.Pin   = OLED_CS_Pin;					
-	GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	GPIO_InitStruct.Pull  = GPIO_NOPULL;
-	HAL_GPIO_Init(OLED_CS_GPIO_Port, &GPIO_InitStruct);
-	
-	// Set up SPI	
-	OLED_SPIInst->Instance = SPI2;
-	OLED_SPIInst->Init.Mode = SPI_MODE_MASTER;
-	OLED_SPIInst->Init.Direction = SPI_DIRECTION_2LINES;
-	OLED_SPIInst->Init.DataSize = SPI_DATASIZE_8BIT;
-	OLED_SPIInst->Init.CLKPolarity = SPI_POLARITY_LOW;
-	OLED_SPIInst->Init.CLKPhase = SPI_PHASE_1EDGE;
-	OLED_SPIInst->Init.NSS = SPI_NSS_SOFT;
-#ifndef OWL_MAGUS
-	OLED_SPIInst->Init.NSSPMode = SPI_NSS_PULSE_DISABLED;
-#endif
-
-	OLED_SPIInst->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
-	OLED_SPIInst->Init.FirstBit = SPI_FIRSTBIT_MSB;
-	OLED_SPIInst->Init.TIMode = SPI_TIMODE_DISABLED;
-	OLED_SPIInst->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
-	OLED_SPIInst->Init.CRCPolynomial = 7;
-#ifndef OWL_MAGUS	
-	OLED_SPIInst->Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-#endif
-	HAL_SPI_Init(OLED_SPIInst);
-#endif	
 	// Initialisation
 	pRST_Clr();
 	delay(2);

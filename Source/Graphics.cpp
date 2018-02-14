@@ -15,28 +15,32 @@ void Graphics::display(){
 }
 
 void Graphics::draw(){
-  drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
+  // drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
   // // params.draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-  // params.draw(screen);
+  params.draw(screen);
 }
 
-static void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
-  graphics.screen.setBuffer(pixels);
-  graphics.screen.clear();
-  // graphics.screen.setTextSize(1);
-  // graphics.screen.print(20, 0, "Rebel Technology");
-  graphics.params.draw(graphics.screen);
-}
+// static void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
+//   graphics.screen.setBuffer(pixels);
+//   graphics.screen.clear();
+//   graphics.params.draw(graphics.screen);
+// }
 
 void Graphics::setCallback(void *callback){
-  if(callback == NULL)
-    drawCallback = defaultDrawCallback;
-  else
-    drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
+  params.setCallback(callback);
+  // if(callback == NULL)
+  //   drawCallback = defaultDrawCallback;
+  // else
+  //   drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
 }
 
 Graphics::Graphics() :
-  screen(OLED_WIDTH, OLED_HEIGHT),
-  drawCallback(defaultDrawCallback)
+  screen(OLED_WIDTH, OLED_HEIGHT)
+  // drawCallback(defaultDrawCallback)
 {  
+}
+
+void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
+  graphics.params.drawTitle(graphics.screen);
+  graphics.params.drawMessage(graphics.screen);
 }

@@ -10,16 +10,13 @@
 #include "Owl.h"
 
 static FirmwareLoader loader;
-extern "C" {
-  void encoderChanged(uint8_t encoder, int32_t value);
-}
 
 MidiHandler::MidiHandler() : channel(MIDI_OMNI_CHANNEL) {
   // memset(midi_values, 0, NOF_PARAMETERS*sizeof(uint16_t));
 }
 
 void MidiHandler::handlePitchBend(uint8_t status, uint16_t value){
-  setParameterValue(PARAMETER_G, ((int16_t)value - 8192)>>1);
+  // setParameterValue(PARAMETER_G, ((int16_t)value - 8192)>>1);
 }
 
 void MidiHandler::handleNoteOn(uint8_t status, uint8_t note, uint8_t velocity){
@@ -212,10 +209,8 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
   }else if(ret == 0){
     // toggleLed(); todo!
   }// else error
-  getProgramVector()->parameters[0] = loader.index*4095/loader.size;
-  getProgramVector()->parameters[1] = loader.packageIndex;
-  getProgramVector()->parameters[2] = loader.index;
-  getProgramVector()->parameters[3] = loader.size;
+  // TODO: set screen to LOADING mode if available
+  setParameterValue(PARAMETER_A, loader.index*4095/loader.size);
 }
 
 void MidiHandler::handleFirmwareRunCommand(uint8_t* data, uint16_t size){

@@ -5,11 +5,14 @@
 #include "errorhandlers.h"
 #include "ProgramVector.h"
 
+void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
+
 /* shows a single parameter selected and controlled with a single encoder
  */
 template<uint8_t SIZE>
 class ParameterController {
 public:
+  char title[11] = "Prism";
   int16_t parameters[SIZE];
   char names[SIZE][12];
   int8_t selected = 0;
@@ -17,6 +20,7 @@ public:
     reset();
   }
   void reset(){
+    drawCallback = defaultDrawCallback;
     for(int i=0; i<SIZE; ++i){
       strcpy(names[i], "Parameter  ");
       names[i][10] = 'A'+i;
@@ -28,7 +32,9 @@ public:
     screen.setBuffer(pixels);
     draw(screen);
   }
+
   void draw(ScreenBuffer& screen){
+    drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
     if(sw1()){
       screen.clear();
       drawStats(screen);
@@ -52,7 +58,9 @@ public:
       screen.print(parameters[selected]/41);
     }
   }
+
   void drawStats(ScreenBuffer& screen){
+    screen.setTextSize(1);
     ProgramVector* pv = getProgramVector();
     if(pv->message != NULL)
       screen.print(2, 36, pv->message);
@@ -62,6 +70,7 @@ public:
     screen.print((int)(pv->heap_bytes_used)/1024);
     screen.print("kB");
   }
+
   void encoderChanged(uint8_t encoder, int32_t delta){
     if(encoder == 0){
       if(sw2()){
@@ -85,7 +94,34 @@ public:
   void setValue(uint8_t ch, int16_t value){
     parameters[ch] = value;
   }
+    void drawTitle(ScreenBuffer& screen){
+    drawTitle(title, screen);
+  }
+
+  void drawMessage(ScreenBuffer& screen){
+    ProgramVector* pv = getProgramVector();
+    if(pv->message != NULL){
+      screen.setTextSize(1);
+      screen.setTextWrap(true);
+      screen.print(0, 26, pv->message);
+    }    
+  }
+
+  void drawTitle(const char* title, ScreenBuffer& screen){
+    // draw title
+    screen.setTextSize(2);
+    screen.print(0, 16, title);
+  }
+
+  void setCallback(void *callback){
+    if(callback == NULL)
+      drawCallback = defaultDrawCallback;
+    else
+      drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
+  }
+
 private:
+  void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
   bool tr1(){
     return HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_11) != GPIO_PIN_SET;
   }

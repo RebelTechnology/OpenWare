@@ -23,10 +23,11 @@
 #define PORT_14   14		
 #define PORT_15   17
 #define PORT_16		18
-#define PORT_17   0		
-#define PORT_18   1
-#define PORT_19   2
-#define PORT_20   3
+
+#define PORT_17   3
+#define PORT_18   2
+#define PORT_19   1
+#define PORT_20   0
 
 
 
@@ -152,6 +153,7 @@ uint16_t MAX11300_readADC(uint8_t port);
 void MAX11300_setDAC(uint8_t, uint16_t);
 void MAX11300_bulkreadADC(void);
 void MAX11300_bulksetDAC(uint16_t* rgDACData_Tx);
+void MAX11300_bulkwriteDAC();
 uint16_t MAX11300_getADCValue(uint8_t port);
 void MAX11300_setDACValue(uint8_t port, uint16_t value);
 

@@ -16,9 +16,14 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 
-#if defined USE_RGB_LED || defined OWL_MAGUS
+#if defined USE_RGB_LED
 #include "rainbow.h"
 #endif /* OWL_TESSERACT */
+
+#ifdef OWL_MAGUS
+#include "purple-blue-cyan.h"
+#include "orange-red-pink.h"
+#endif
 
 #ifdef USE_SCREEN
 #include "Graphics.h"
@@ -257,29 +262,64 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   // tr1() pc11
   // tr2() pc10
   case ENC1_SW_Pin: // GPIO_PIN_14:
-    setButtonValue(PUSHBUTTON, (ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+    setButtonValue(BUTTON_A, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+    setButtonValue(PUSHBUTTON, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
     break;
   case ENC2_SW_Pin: // GPIO_PIN_4:
-    setButtonValue(PUSHBUTTON, (ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
+    setButtonValue(BUTTON_B, !(ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
     break;
   case TR_IN_A_Pin: // GPIO_PIN_11:
-    setButtonValue(BYPASS_BUTTON, !(TR_IN_A_GPIO_Port->IDR & TR_IN_A_Pin));
+    setButtonValue(BUTTON_C, !(TR_IN_A_GPIO_Port->IDR & TR_IN_A_Pin));
     break;
   case TR_IN_B_Pin: // GPIO_PIN_10:
-    setButtonValue(BYPASS_BUTTON, !(TR_IN_B_GPIO_Port->IDR & TR_IN_B_Pin));
+    setButtonValue(BUTTON_D, !(TR_IN_B_GPIO_Port->IDR & TR_IN_B_Pin));
     break;
 #endif
+#ifdef OWL_PRISM
+  case ENC1_SW_Pin:
+    setButtonValue(BUTTON_A, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+    setButtonValue(PUSHBUTTON, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+    break;
+  case ENC2_SW_Pin:
+    setButtonValue(BUTTON_B, !(ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
+    break;
+#endif    
   }
 #ifdef USE_RGB_LED
   ledstatus = getButtonValue(PUSHBUTTON) ? 0x3ff : 0;
 #endif
 }
 
+#ifdef OWL_MAGUS
+bool updateMAX11300 = false;
+// int16_t dynamicParameterValues[NOF_PARAMETERS];
+uint8_t portMode[20];
+void setPortMode(uint8_t index, uint8_t mode){
+  if(index < 20){
+    if(portMode[index] != mode){
+      portMode[index] = mode;
+      updateMAX11300 = true;
+    }
+  }
+}
+uint8_t getPortMode(uint8_t index){
+  if(index < 20)
+    return portMode[index];
+  return 0;
+}
+#endif
 
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
+#ifdef USE_SCREEN
+  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
+#endif
+#ifdef OWL_MAGUS
+  HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET); // LEDs off
+#endif /* OWL_MAGUS */
+  
   ledstatus = 0;
   settings.init();
 #ifdef USE_CODEC
@@ -289,7 +329,7 @@ void setup(){
 #if defined OWL_MICROLAB || defined OWL_MINILAB // || defined OWL_MAGUS
   codec.setOutputGain(127-9); // -9dB
 #else
-  codec.setOutputGain(0); // 0dB
+  codec.setOutputGain(127); // 0dB
 #endif
   codec.bypass(false);
 #endif /* USE_CODEC */
@@ -297,40 +337,37 @@ void setup(){
   program.startManager();
 
 #ifdef OWL_MAGUS
-  ledstatus = 0x3fful << 20;
   extern SPI_HandleTypeDef hspi5;
-  /* OLED_init(&hspi5); */
-  Encoders_init(&hspi5);
-
   // LEDs
   TLC5946_init(&hspi5);
-  Magus_setRGB_DC(20, 20, 20); // todo balance levels
-  for(int i=0; i<16; i+=3)
-    setLed(i, (1023<<00));
-  for(int i=1; i<16; i+=3)
-    setLed(i, (1023<<10));
-  for(int i=2; i<16; i+=3)
-    setLed(i, (1023<<20));
-    // setLed(i, (512<<20) + (512<<10) + 512);
+  // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
+  TLC5946_setRGB_DC(0xaa, 0xaa, 0xaa);
+  TLC5946_setAll(0x1f, 0x1f, 0x1f);
   // Start LED Driver PWM
   extern TIM_HandleTypeDef htim3;
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  // HAL_TIMEx_PWMN_Start(&htim3,TIM_CHANNEL_4);
+  // HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1);
+  extern TIM_HandleTypeDef htim1;
+  HAL_TIM_Base_Start_IT(&htim1);
+  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
+
+  TLC5946_Refresh_DC();
+
+  // Encoders
+  Encoders_init(&hspi5);
 
   // Pixi
   MAX11300_init(&hspi5);
   MAX11300_setDeviceControl(DCR_RESET);
   HAL_Delay(1000);
   MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
-
-  for(int i=0; i<20; i+=1)
-    MAX11300_setPortMode(i+1, PCR_Range_ADC_M5_P5|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_4|PCR_ADCref_INT);
-  // for(int i=1; i<20; i+=2)
-  //   MAX11300_setPortMode(i+1, PCR_Range_DAC_M5_P5|PCR_Mode_DAC);
-  // for(int i=0; i<20; i+=2)
-  //   MAX11300_setDACValue(i, 0);
-#endif
+  for(int i=0; i<20; ++i){
+    setPortMode(i, PORT_UNI_INPUT);
+    MAX11300_setDACValue(i, 0);
+    updateMAX11300 = true;
+  }
+#endif /* OWL_MAGUS */
   
 #ifdef USE_RGB_LED
   initLed();
@@ -372,51 +409,91 @@ void setup(){
   midi.init(0);
 
   xLastWakeTime = xTaskGetTickCount();
-  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS, 50Hz refresh rate
+  xFrequency = 14 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+#ifdef OWL_PRISM
+  xFrequency = 60 / portTICK_PERIOD_MS;
+#endif
 }
 
 #ifdef OWL_MAGUS
+extern "C" {
+  void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
+    HAL_GPIO_TogglePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin);
+  }
+}
+
 void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
-  Magus_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
-  // Magus_setRGB(led+1, (rgb>>20)&0xfff, (rgb>>10)&0xfff, (rgb>>00)&0xfff);
+  TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
 }
 #endif
 
+#define LED_RED   (0x3ff<<20)
+#define LED_GREEN (0x3ff<<10)
+#define LED_BLUE  (0x3ff<<00)
+
 void loop(void){
-  vTaskDelayUntil(&xLastWakeTime, xFrequency);
-  // taskYIELD();
-  midi.push();
-
-#ifdef OWL_MAGUS
-    // also update LEDs and MAX11300
-    TLC5946_Refresh_GS();
-    // MAX11300_bulksetDAC(...);
-    // for(int i=0; i<16; i+=2)
-    //   setLed(i, MAX11300_getADCValue(i) + baseled);    
-    // for(int i=0; i<16; i+=1){
-    //   uint16_t value = MAX11300_readADC(i+1);
-    //   setLed(i, baseled | ((value << 10) & 0x3ff) | (value & 0x3ff));
-    //   graphics.params.parameters[i] = value;
-    // }
-    Encoders_readAll();
-    extern uint16_t rgENC_Values[7];
-    graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
-    // extern uint8_t rgADCData_Rx[41];
-    // graphics.params.updateValues((uint16_t*)(rgADCData_Rx+1), 16);
-
-    MAX11300_bulkreadADC();
-    for(int i=0; i<16; i+=1){
-      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
-      setLed(i, ledstatus ^ (graphics.params.parameters[i] >> 2)); // MAX11300_getADCValue(i+1)>>2));
-    }
-#else
-#endif /* OWL_MAGUS */
-
 #ifdef USE_SCREEN
   graphics.draw();
   graphics.display();
 #endif /* USE_SCREEN */
+  vTaskDelayUntil(&xLastWakeTime, xFrequency);
+  // vTaskDelay(xFrequency);
+  midi.push();
+
+#ifdef OWL_MAGUS
+  if(updateMAX11300){
+    for(int i=0; i<20; ++i){
+      uint16_t mode;
+      switch(portMode[i]){
+      case PORT_UNI_OUTPUT:
+	mode = PCR_Range_DAC_0_P10|PCR_Mode_DAC;
+	break;
+      case PORT_UNI_INPUT:
+      default:
+	mode = PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT;
+	break;
+      }
+      MAX11300_setPortMode(i+1, mode);
+    }
+    updateMAX11300 = false;
+  }
+  TLC5946_Refresh_GS();
+  Encoders_readAll();
+  // graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
+  graphics.params.updateEncoders(Encoders_get(), 7);
+  MAX11300_bulkreadADC();
+  for(int i=0; i<16; ++i){
+    if(getPortMode(i) == PORT_UNI_INPUT){
+      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+      uint16_t val = graphics.params.parameters[i]>>2;
+      setLed(i, ledstatus ^ rainbowinputs[val&0x3ff]);
+    }else{
+      // DACs
+    // TODO: store values set from patch somewhere and multiply with user[] value for outputs
+    // graphics.params.updateOutput(i, getOutputValue(i));
+      MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
+      graphics.params.updateValue(i, 0);
+      uint16_t val = graphics.params.parameters[i]>>2;
+      setLed(i, ledstatus ^ rainbowoutputs[val&0x3ff]);
+    }
+  }
+  for(int i=16; i<NOF_PARAMETERS; ++i)
+    if(getPortMode(i) == PORT_UNI_INPUT)
+      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+    else
+      graphics.params.updateValue(i, 0);
+  MAX11300_bulkwriteDAC();
+#endif /* OWL_MAGUS */
+
+#ifdef OWL_PRISM
+  int16_t encoders[2] = { getEncoderValue(0), getEncoderValue(1) };
+  graphics.params.updateEncoders(encoders, 2);
+  for(int i=0; i<2; ++i)
+    graphics.params.updateValue(i, getAnalogValue(i));
+  for(int i=2; i<NOF_PARAMETERS; ++i)
+    graphics.params.updateValue(i, 0);
+#endif /* OWL_PRISM */
 
 #ifdef USE_RGB_LED
   uint32_t colour =
@@ -467,9 +544,18 @@ extern "C"{
 #endif /* USE_USB_HOST */
 
 #ifdef USE_ENCODERS
-  void encoderReset(uint8_t encoder, int32_t value){
-  extern TIM_HandleTypeDef ENCODER_TIM1;
-  extern TIM_HandleTypeDef ENCODER_TIM2;
+  int16_t getEncoderValue(uint8_t encoder){
+    extern TIM_HandleTypeDef ENCODER_TIM1;
+    extern TIM_HandleTypeDef ENCODER_TIM2;
+    if(encoder == 0)
+      return __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
+    else // if(encoder == 1)
+      return __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
+  }
+
+  void encoderReset(uint8_t encoder, int16_t value){
+    extern TIM_HandleTypeDef ENCODER_TIM1;
+    extern TIM_HandleTypeDef ENCODER_TIM2;
     if(encoder == 0)
       __HAL_TIM_SetCounter(&ENCODER_TIM1, value);
     else if(encoder == 1)
@@ -484,6 +570,6 @@ extern "C"{
     else if(htim == &ENCODER_TIM2)
       encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
   }
-#endif /* OWL_PLAYERF7 */
+#endif /* USE_ENCODERS */
 
 }

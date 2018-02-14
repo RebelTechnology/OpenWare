@@ -5,8 +5,10 @@
 #include "device.h"
 #include "ScreenBuffer.h"
 
-#ifdef OWL_MAGUS
+#if defined OWL_MAGUS
 #include "MagusParameterController.hpp"
+#elif defined OWL_PRISM
+#include "PrismParameterController.hpp"
 #else
 #include "ParameterController.hpp"
 #endif
@@ -18,11 +20,14 @@ public:
   void display();
   void draw();
   void setCallback(void *callback);
+#ifdef OWL_MAGUS
+  ParameterController<20> params;
+#else
   ParameterController<NOF_PARAMETERS> params;
+#endif
   ScreenBuffer screen;
 private:
   uint8_t pixelbuffer[OLED_BUFFER_SIZE];
-  void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
 };
 
 extern Graphics graphics;

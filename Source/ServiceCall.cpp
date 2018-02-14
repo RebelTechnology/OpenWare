@@ -1,11 +1,19 @@
 #include "arm_math.h"
-#include "arm_const_structs.h"
 #include "device.h"
 #include "ServiceCall.h"
 #include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
+
+#define USE_FFT_TABLES
+#define USE_FAST_POW
+
+#ifdef USE_FFT_TABLES
+#include "arm_const_structs.h"
+#endif /* USE_FFT_TABLES */
+#ifdef USE_FAST_POW
 #include "FastLogTable.h"
 #include "FastPowTable.h"
+#endif /* USE_FAST_POW */
 #ifdef USE_SCREEN
 #include "Graphics.h"
 #endif
@@ -13,6 +21,7 @@
 #include "MidiReader.h"
 #endif /* USE_MIDI_CALLBACK */
 
+#ifdef USE_FFT_TABLES
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
   switch(len) { 
   case 16:
@@ -47,6 +56,8 @@ int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
   }
   return OWL_SERVICE_OK;
 }
+#endif /* USE_FFT_TABLES */
+
 
 int serviceCall(int service, void** params, int len){
   int ret = OWL_SERVICE_INVALID_ARGS;
@@ -58,6 +69,7 @@ int serviceCall(int service, void** params, int len){
       ret = OWL_SERVICE_OK;
     }
     break;
+#ifdef USE_FFT_TABLES
   case OWL_SERVICE_ARM_RFFT_FAST_INIT_F32:
     if(len == 2){
       arm_rfft_fast_instance_f32* instance = (arm_rfft_fast_instance_f32*)params[0];
@@ -73,6 +85,7 @@ int serviceCall(int service, void** params, int len){
       ret = SERVICE_ARM_CFFT_INIT_F32(instance, fftlen);
     }
     break;
+#endif /* USE_FFT_TABLES */
   case OWL_SERVICE_GET_PARAMETERS: {
     int index = 0;
     ret = OWL_SERVICE_OK;
@@ -96,6 +109,7 @@ int serviceCall(int service, void** params, int len){
   case OWL_SERVICE_GET_ARRAY: {
     // get array and array size
     // expects three parameters: name, &array and &size
+#ifdef USE_FAST_POW
     int index = 0;
     ret = OWL_SERVICE_OK;
     if(len >= index+3){
@@ -114,6 +128,9 @@ int serviceCall(int service, void** params, int len){
 	ret = OWL_SERVICE_INVALID_ARGS;
       }
     }
+#else
+    ret = OWL_SERVICE_INVALID_ARGS;    
+#endif /* USE_FAST_POW */
     break;
   }
   case OWL_SERVICE_REGISTER_CALLBACK: {

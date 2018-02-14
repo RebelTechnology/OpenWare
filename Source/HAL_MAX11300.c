@@ -7,7 +7,7 @@
 static SPI_HandleTypeDef* MAX11300_SPIConfig;
  
 // Variables
-uint8_t rgADCData_Rx[41];
+static uint8_t rgADCData_Rx[41];
 static uint8_t rgDACData_Tx[41];
 static volatile uint8_t ucPixiTask;
 static volatile uint8_t ucPixiState;
@@ -160,8 +160,12 @@ void MAX11300_setDACValue(uint8_t port, uint16_t value){
 
 void MAX11300_bulksetDAC(uint16_t* rgDACData)
 {
-	memcpy(rgDACData_Tx, rgDACData, 40);
-	
+	memcpy(rgDACData_Tx+1, rgDACData, 40);
+	MAX11300_bulkwriteDAC();
+}
+	void MAX11300_bulkwriteDAC()
+{
+
 	// Set address
 	rgDACData_Tx[0] = ADDR_DACbase<<1 | SPI_Write;	
 	while(getPixiBusy() == STATE_Busy); // wait until last transfer has finished

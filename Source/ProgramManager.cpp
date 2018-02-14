@@ -71,15 +71,17 @@ ProgramVector* getProgramVector() { return programVector; }
 
 static int16_t encoders[2] = {INT16_MAX/2, INT16_MAX/2};
 static int16_t deltas[2] = {0, 0};
-void encoderChanged(uint8_t encoder, int32_t value){
+void encoderChanged(uint8_t encoder, int16_t value){
   // // todo: debounce
   // // pass encoder change event to patch
   int32_t delta = value - encoders[encoder];
   encoders[encoder] = value;
   deltas[encoder] = delta;
-#ifdef USE_SCREEN
+
+#if defined USE_SCREEN && !defined OWL_PRISM
   graphics.params.encoderChanged(encoder, delta);
 #endif
+
   // todo: save changes and pass at programReady()
   // if(getProgramVector()->encoderChangedCallback != NULL)
   //   getProgramVector()->encoderChangedCallback(encoder, delta, 0);
@@ -206,10 +208,17 @@ void onProgramReady(){
 }
 
 // called from program
-void onSetPatchParameter(uint8_t pid, int16_t value){     
+void onSetPatchParameter(uint8_t pid, int16_t value){
+// #ifdef USE_SCREEN
+//   graphics.params.setDynamicValue(ch, value);
+// #else
+//   parameter_values[ch] = value;
+// #endif
+  setParameterValue(pid, value);
 }
 // called from program
 void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
+  setButtonValue(bid, state);
 }
 
 // called from program
@@ -221,7 +230,7 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 
 // called from program
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
-#ifdef OWL_MAGUS
+#if defined OWL_MAGUS || defined OWL_PRISM
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
 }
@@ -240,6 +249,8 @@ void updateProgramVector(ProgramVector* pv){
 #elif defined OWL_PLAYERF7
   pv->hardware_version = PLAYER_HARDWARE;
 #elif defined OWL_PRISMF7
+  pv->hardware_version = PRISM_HARDWARE;
+#elif defined OWL_PRISM
   pv->hardware_version = PRISM_HARDWARE;
 #elif defined OWL_MAGUS
   pv->hardware_version = MAGUS_HARDWARE;
