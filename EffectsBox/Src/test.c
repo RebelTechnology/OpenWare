@@ -16,3 +16,5 @@ void loop(void)
 //		Flash_S25FL_Test();
 		EffectsBox_Main();	
 }
+
+void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram){}
