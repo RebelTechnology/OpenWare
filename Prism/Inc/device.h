@@ -10,6 +10,8 @@
 /* #define OWL_MODULAR */
 /* #define OWL_PEDAL */
 
+#define OWL_RACK
+
 #ifdef OWL_PRISM
 #define USE_USBD_HS
 #define USE_SCREEN
@@ -20,9 +22,7 @@
 #define ADC_B 1
 /* #define ADC_C 2 */
 /* #define ADC_D 3 */
-
 #define OLED_DMA
-
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
 #define OLED_SOFT_CS
@@ -67,6 +67,7 @@
 #define NOF_ADC_VALUES               2
 #define NOF_PARAMETERS               20
 #define NOF_BUTTONS                  5
+#define NOF_ENCODERS                 2
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
 #define MAX_FACTORY_PATCHES          36
