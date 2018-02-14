@@ -52,7 +52,7 @@
 #include "usb_device.h"
 
 /* USER CODE BEGIN Includes */
-#include "EffectsBox_Test.h"
+/* #include "EffectsBox_Test.h" */
 #include "Flash_S25FL.h"
 #include "HAL_OLED.h"
 /* USER CODE END Includes */
@@ -103,6 +103,10 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
+void setup();
+void loop(void);
+void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -148,9 +152,39 @@ int main(void)
   MX_SPI5_Init();
 
   /* USER CODE BEGIN 2 */
-	Flash_S25FL_init(&hspi1);
-	OLED_init(&hspi5);
-	EffectsBox_Init();
+
+  HAL_SAI_DeInit(&hsai_BlockA1);
+  HAL_SAI_DeInit(&hsai_BlockB1);
+  hsai_BlockA1.Instance = SAI1_Block_A;
+  hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_TX;
+  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+    Error_Handler();
+  hsai_BlockB1.Instance = SAI1_Block_B;
+  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
+  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
+  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+    Error_Handler();
+
+  SDRAM_Initialization_Sequence(&hsdram1);   
+
+  // Initialise
+  setup();
+
+  Flash_S25FL_init(&hspi1);
+  OLED_init(&hspi5);
 	
   /* USER CODE END 2 */
 
@@ -161,8 +195,6 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-//		Flash_S25FL_Test();
-		EffectsBox_Main();
   }
   /* USER CODE END 3 */
 
