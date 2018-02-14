@@ -10,6 +10,10 @@ C_SRC += cs4272.c seps114a.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferColour.cpp Graphics.cpp
 S_SRC = startup_stm32f427xx.s
 
+C_SRC += serial.c
+CPP_SRC += bus.cpp
+# CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp 
+
 include $(OPENWARE)/mcu/sources.mk
 
 OBJS = $(C_SRC:%.c=Build/%.o)

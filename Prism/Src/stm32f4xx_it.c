@@ -51,6 +51,9 @@ extern DMA_HandleTypeDef hdma_spi1_tx;
 extern SPI_HandleTypeDef hspi1;
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim3;
+extern DMA_HandleTypeDef hdma_usart1_rx;
+extern DMA_HandleTypeDef hdma_usart1_tx;
+extern UART_HandleTypeDef huart1;
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
@@ -177,6 +180,38 @@ void SPI1_IRQHandler(void)
 }
 
 /**
+* @brief This function handles USART1 global interrupt.
+*/
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+  /* if(LL_USART_IsActiveFlag_IDLE(UART1)) { */
+  /*   LL_USART_ClearFlag_IDLE(UART1); */
+  /*   LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_2); */
+  /* }     */
+  /* Check for IDLE flag */
+  UART_HandleTypeDef *huart = &huart1;
+  /* if(USART1->SR & UART_FLAG_IDLE){ */
+  if(huart->Instance->SR & UART_FLAG_IDLE){
+    
+    /* This part is important */
+    /* Clear IDLE flag by reading status register first */
+    /* And follow by reading data register */
+    volatile uint32_t tmp;                  /* Must be volatile to prevent optimizations */
+    tmp = huart->Instance->SR;                       /* Read status register */
+    tmp = huart->Instance->DR;                       /* Read data register */
+    (void)tmp;                              /* Prevent compiler warnings */
+    DMA2_Stream2->CR &= ~DMA_SxCR_EN;       /* Disabling DMA will force transfer complete interrupt if enabled */
+  }
+
+  /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
 * @brief This function handles EXTI line[15:10] interrupts.
 */
 void EXTI15_10_IRQHandler(void)
@@ -219,6 +254,20 @@ void DMA2_Stream1_IRQHandler(void)
 }
 
 /**
+* @brief This function handles DMA2 stream2 global interrupt.
+*/
+void DMA2_Stream2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream2_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA2_Stream2_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream2_IRQn 1 */
+}
+
+/**
 * @brief This function handles DMA2 stream3 global interrupt.
 */
 void DMA2_Stream3_IRQHandler(void)
@@ -244,6 +293,20 @@ void DMA2_Stream4_IRQHandler(void)
   /* USER CODE BEGIN DMA2_Stream4_IRQn 1 */
 
   /* USER CODE END DMA2_Stream4_IRQn 1 */
+}
+
+/**
+* @brief This function handles DMA2 stream7 global interrupt.
+*/
+void DMA2_Stream7_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream7_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream7_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_tx);
+  /* USER CODE BEGIN DMA2_Stream7_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream7_IRQn 1 */
 }
 
 /**

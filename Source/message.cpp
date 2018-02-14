@@ -146,6 +146,12 @@ const char* getDebugMessage(){
   return NULL;
 }
 
+void setDebugMessage(char* msg){
+  ProgramVector* pv = getProgramVector();
+  if(pv != NULL)
+    pv->message = msg;    
+}
+
 void assert_failed(const char* msg, const char* location, int line){
   char* p = buffer;
   p = stpncpy(p, msg, 32);
@@ -161,3 +167,53 @@ void assert_failed(const char* msg, const char* location, int line){
 // void assert_failed(uint8_t* location, uint32_t line){
 //   assert_failed("Assertion Failed", (const char*)location, line);
 // }
+
+// semihosting
+// static void put_char(char c){
+//     asm (
+//     "mov r0, #0x03\n"   /* SYS_WRITEC */
+//     "mov r1, %[msg]\n"
+//     "bkpt #0xAB\n"
+//     :
+//     : [msg] "r" (&c)
+//     : "r0", "r1"
+//     );
+// }
+
+Debug debug;
+
+void Debug::print(char arg){
+  if(getDebugMessage() != buffer)
+    pos = 0;
+  if(pos < sizeof(buffer)-1)
+    buffer[pos++] = arg;
+  setDebugMessage(buffer);
+}
+
+void Debug::print(const char* arg){
+  if(getDebugMessage() != buffer)
+    pos = 0;
+  char* p = buffer+pos;
+  p = stpncpy(p, arg, sizeof(buffer)-pos);
+  pos = p-buffer;
+  setDebugMessage(buffer);
+}
+
+void Debug::print(float arg){
+  if(getDebugMessage() != buffer)
+    pos = 0;
+  char* p = buffer+pos;
+  p = stpncpy(p, msg_ftoa(arg, 10), sizeof(buffer)-pos);
+  pos = p-buffer;
+  setDebugMessage(buffer);
+}
+
+void Debug::print(int arg){ 
+  if(getDebugMessage() != buffer)
+    pos = 0;
+  char* p = buffer+pos;
+  p = stpncpy(p, msg_itoa(arg, 10), sizeof(buffer)-pos);
+  pos = p-buffer;
+  setDebugMessage(buffer);
+}
+

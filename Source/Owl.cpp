@@ -1,10 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "device.h"
-#ifdef USE_USB_HOST
-#include "usbh_core.h"
-#include "usbh_midi.h"
-#endif /* USE_USB_HOST */
 #include "Owl.h"
 #include "Codec.h"
 #include "MidiReader.h"
@@ -16,13 +12,13 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 
-#if defined USE_RGB_LED
-#include "rainbow.h"
-#endif /* OWL_TESSERACT */
-
 #ifdef OWL_MAGUS
 #include "purple-blue-cyan.h"
 #include "orange-red-pink.h"
+#include "HAL_TLC5946.h"
+#include "HAL_MAX11300.h"
+// #include "HAL_OLED.h"
+#include "HAL_Encoders.h"
 #endif
 
 #ifdef USE_SCREEN
@@ -30,12 +26,18 @@
 Graphics graphics;
 #endif /* USE_SCREEN */
 
-#ifdef OWL_MAGUS
-#include "HAL_TLC5946.h"
-#include "HAL_MAX11300.h"
-// #include "HAL_OLED.h"
-#include "HAL_Encoders.h"
-#endif
+#if defined USE_RGB_LED
+#include "rainbow.h"
+#endif /* OWL_TESSERACT */
+
+#ifdef USE_USB_HOST
+#include "usbh_core.h"
+#include "usbh_midi.h"
+#endif /* USE_USB_HOST */
+
+#ifdef USE_DIGITALBUS
+#include "bus.h"
+#endif /* USE_DIGITALBUS */
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -351,12 +353,9 @@ void setup(){
   extern TIM_HandleTypeDef htim1;
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
-
   TLC5946_Refresh_DC();
-
   // Encoders
   Encoders_init(&hspi5);
-
   // Pixi
   MAX11300_init(&hspi5);
   MAX11300_setDeviceControl(DCR_RESET);
@@ -411,7 +410,11 @@ void setup(){
   xLastWakeTime = xTaskGetTickCount();
   xFrequency = 14 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 #ifdef OWL_PRISM
-  xFrequency = 60 / portTICK_PERIOD_MS;
+  xFrequency = 20 / portTICK_PERIOD_MS;
+#endif
+
+#ifdef USE_DIGITALBUS
+  bus_setup();
 #endif
 }
 
@@ -437,8 +440,12 @@ void loop(void){
   graphics.draw();
   graphics.display();
 #endif /* USE_SCREEN */
+#ifdef OLED_DMA
+  // When using OLED_DMA this must delay for a minimum amount to allow screen to update
+  vTaskDelay(xFrequency);
+#else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
-  // vTaskDelay(xFrequency);
+#endif  
   midi.push();
 
 #ifdef OWL_MAGUS

@@ -28,7 +28,7 @@ player:
 	@$(MAKE) -C PlayerF7 all
 
 prism:
-	@$(MAKE) -C PrismF7 all
+	@$(MAKE) -C Prism all
 
 magus:
 	@$(MAKE) -C Magus all
@@ -39,6 +39,7 @@ clean:
 	@$(MAKE) -C OwlPedal clean
 	@$(MAKE) -C PlayerF7 clean
 	@$(MAKE) -C PrismF7 clean
+	@$(MAKE) -C Prism clean
 	@$(MAKE) -C Magus clean
 	@$(MAKE) -C QuadFM clean
 

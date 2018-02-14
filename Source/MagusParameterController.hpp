@@ -353,10 +353,9 @@ public:
     for(int i=0; i<6; ++i)
       if(selectedPid[i] == pid)
         setEncoderValue(i, value);
-
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
-}
+  }
 
   // @param value is the modulation ADC value
   void updateValue(uint8_t pid, int16_t value){
@@ -374,26 +373,7 @@ public:
   // }
 
   void encoderChanged(uint8_t encoder, int32_t delta){
-    // if(encoder == 0){
-    //   if(sw2()){
-    // 	if(delta > 1)
-    // 	  selected = min(SIZE-1, selected+1);
-    // 	else if(delta < 1)
-    // 	  selected = max(0, selected-1);
-    //   }else{
-    // 	parameters[selected] += delta*10;
-    // 	parameters[selected] = min(4095, max(0, parameters[selected]));
-    //   }
-    // } // todo: change patch with enc1/sw1
   }
-
-  // private:
-//   bool sw1(){
-//     return HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_14) != GPIO_PIN_SET;
-//   }
-//   bool sw2(){
-//     return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) != GPIO_PIN_SET;
-//   }
 
 
   void setCallback(void *callback){

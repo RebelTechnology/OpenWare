@@ -18,12 +18,12 @@ class ParameterController {
 public:
   char title[11] = "Prism";
   int16_t parameters[SIZE];
-  int16_t encoders[2]; // last seen encoder values
-  int16_t offsets[2]; // last seen encoder values
+  int16_t encoders[NOF_ENCODERS]; // last seen encoder values
+  int16_t offsets[NOF_ENCODERS]; // last seen encoder values
   int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
   char names[SIZE][12];
   int8_t selected = 0;
-  uint8_t selectedPid[2];
+  uint8_t selectedPid[NOF_ENCODERS];
 
   enum ScreenMode {
     STANDARD, SELECTGLOBALPARAMETER, SELECTPROGRAM, ERROR
@@ -40,7 +40,7 @@ public:
       parameters[i] = 0;
       user[i] = 0;
     }
-    for(int i=0; i<2; ++i){
+    for(int i=0; i<NOF_ENCODERS; ++i){
       // encoders[i] = 0;
       offsets[i] = 0;
     }
@@ -61,54 +61,31 @@ public:
     switch(mode){
     case STANDARD:
       screen.fill(BLUE);
-      drawParameter(selectedPid[0], 54, screen);
+      drawParameter(selectedPid[0], 86, screen);
       // use callback to draw title and message
       drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       break;
     case SELECTGLOBALPARAMETER:
-      screen.fill(GREEN);
+      screen.fill(MAGENTA);
       drawTitle(screen);
       drawGlobalParameterNames(screen);
       break;
     case SELECTPROGRAM:
-      screen.fill(RED);
+      screen.fill(CYAN);
       drawTitle("Prism", screen);
-      drawMessage(screen);
-      drawStats(screen);
+      drawStats(26, screen);
+      drawMessage(46, screen);
       // todo!
       // select: Scope, VU Meter, Patch Stats, Set Volume, Show MIDI, Reset Patch, Select Patch...
       break;
     case ERROR:
-      screen.fill(CYAN);
+      screen.fill(RED);
       drawTitle("ERROR", screen);
-      drawError(screen);
       drawStats(screen);
+      drawError(26, screen);
+      drawMessage(46, screen);
       break;
     }
-#if 0      
-    if(sw1()){
-      screen.clear();
-      drawStats(screen);
-      // todo: show patch name and next/previous patch
-    }else if(sw2()){
-      screen.clear();
-      screen.setTextSize(1);
-      screen.print(2, 0, names[selected]);
-      screen.setTextSize(3);
-      screen.setCursor(30, 20);
-      screen.print(parameters[selected]/41); // assuming parameter value [0-4095]
-      screen.print("%");
-    }else if(getErrorStatus() != NO_ERROR && getErrorMessage() != NULL){
-      screen.clear();
-      screen.setTextSize(1);
-      screen.print(2, 20, getErrorMessage());
-    }else{
-      screen.setTextSize(1);
-      screen.print(2, 56, names[selected]);
-      screen.print(": ");
-      screen.print(parameters[selected]/41);
-    }
-#endif
   }
 
   void drawGlobalParameterNames(ScreenBuffer& screen){
@@ -118,7 +95,11 @@ public:
     screen.print(1, 24+10, names[selectedPid[0]]);
     if(selectedPid[0] < SIZE-1)
       screen.print(1, 24+20, names[selectedPid[0]+1]);
-    screen.invert(0, 25, 128, 10);
+    if(selectedPid[0] < SIZE-2)
+      screen.print(1, 24+30, names[selectedPid[0]+2]);
+    if(selectedPid[0] < SIZE-3)
+      screen.print(1, 24+40, names[selectedPid[0]+3]);
+    screen.invert(0, 25, screen.getWidth(), 10);
   }
 
   void drawParameter(int pid, int y, ScreenBuffer& screen){
@@ -131,21 +112,19 @@ public:
     screen.drawRectangle(x, y, max(1, min(95, parameters[pid]/42)), 6, WHITE);
   }
 
-    void drawError(ScreenBuffer& screen){
+  void drawError(int16_t y, ScreenBuffer& screen){
     if(getErrorMessage() != NULL){
       screen.setTextSize(1);
       screen.setTextWrap(true);
-      screen.print(0, 26, getErrorMessage());
+      screen.print(0, y, getErrorMessage());
       screen.setTextWrap(false);
     }
   }
 
-  void drawStats(ScreenBuffer& screen){
+  void drawStats(int16_t y, ScreenBuffer& screen){
     screen.setTextSize(1);
     ProgramVector* pv = getProgramVector();
-    if(pv->message != NULL)
-      screen.print(2, 36, pv->message);
-    screen.print(2, 46, "cpu/mem: ");
+    screen.print(1, y, "cpu/mem ");
     screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
     screen.print("% ");
     screen.print((int)(pv->heap_bytes_used)/1024);
@@ -174,26 +153,32 @@ public:
     return SIZE;
   }
 
-  void setValue(uint8_t ch, int16_t value){
-    parameters[ch] = value;
+  void setValue(uint8_t pid, int16_t value){
+    user[pid] = value;
+    // reset encoder value if associated through selectedPid to avoid skipping
+    for(int i=0; i<NOF_ENCODERS; ++i)
+      if(selectedPid[i] == pid)
+        setEncoderValue(i, value);
   }
-    void drawTitle(ScreenBuffer& screen){
+
+  void drawTitle(ScreenBuffer& screen){
     drawTitle(title, screen);
   }
 
-  void drawMessage(ScreenBuffer& screen){
+  void drawMessage(int16_t y, ScreenBuffer& screen){
     ProgramVector* pv = getProgramVector();
     if(pv->message != NULL){
       screen.setTextSize(1);
       screen.setTextWrap(true);
-      screen.print(0, 26, pv->message);
+      screen.print(0, y, pv->message);
+      screen.setTextWrap(false);
     }    
   }
 
   void drawTitle(const char* title, ScreenBuffer& screen){
     // draw title
     screen.setTextSize(2);
-    screen.print(0, 16, title);
+    screen.print(1, 17, title);
   }
 
   void setCallback(void *callback){
@@ -242,19 +227,6 @@ public:
   }
 
   void encoderChanged(uint8_t encoder, int32_t delta){
-#if 0
-    if(encoder == 0){
-      if(sw2()){
-	if(delta > 1)
-	  selected = min(SIZE-1, selected+1);
-	else if(delta < 1)
-	  selected = max(0, selected-1);
-      }else{
-	parameters[selected] += delta*10;
-	parameters[selected] = min(4095, max(0, parameters[selected]));
-      }
-    } // todo: change patch with enc1/sw1
-#endif  
   }
 
   void selectGlobalParameter(int8_t pid){
@@ -264,12 +236,6 @@ public:
 
 private:
   void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
-  bool sw1(){
-    return HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_14) != GPIO_PIN_SET;
-  }
-  bool sw2(){
-    return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) != GPIO_PIN_SET;
-  }
 };
 
 #endif // __ParameterController_hpp__
