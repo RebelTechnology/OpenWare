@@ -16,7 +16,6 @@ OBJS += $(DRIVERS)/Src/stm32f4xx_hal_tim.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_cortex.o
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_rng.o
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_qspi.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_uart.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_spi.o
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_dma2d.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_pcd.o # USB Device
@@ -26,13 +25,16 @@ OBJS += $(DRIVERS)/Src/stm32f4xx_ll_usb.o
 # required by OWL 2
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sai.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sai_ex.o
-
+# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_uart.o
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_dac.o
+
 # external SDRAM
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sdram.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fmc.o
+OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sdram.o
+OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fmc.o
+
 # USB Host
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_hcd.o
+
 
 # required by OWL 1
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sram.o

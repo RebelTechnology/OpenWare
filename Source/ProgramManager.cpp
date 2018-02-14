@@ -254,6 +254,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = PRISM_HARDWARE;
 #elif defined OWL_MAGUS
   pv->hardware_version = MAGUS_HARDWARE;
+#elif defined OWL_EFFECTSBOX
+  pv->hardware_version = EFFECTSBOX_HARDWARE;
 #else
 #error "invalid configuration"
 #endif

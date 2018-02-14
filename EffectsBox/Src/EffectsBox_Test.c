@@ -1,6 +1,9 @@
 #include <stdint.h>
+#include "EffectsBox_Test.h"
 #include "stm32f4xx_hal.h"
 #include "main.h"
+#include "HAL_OLED.h"
+#include "Flash_S25FL.h"
 
 #define LED_RED	0
 #define LED_GRN	1

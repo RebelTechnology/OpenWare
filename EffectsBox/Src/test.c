@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include "device.h"
-#include "EffectsBox_Test.h"
 #include "Flash_S25FL.h"
 #include "HAL_OLED.h"
+#include "EffectsBox_Test.h"
 
 void setup(void);
 void loop(void);
