@@ -16,13 +16,13 @@
 #define SW6_LED(state)	HAL_GPIO_WritePin(SW6_LED_GPIO_Port,  SW6_LED_Pin,  (GPIO_PinState)state)
 #define SW7_LED(state)	HAL_GPIO_WritePin(SW7_LED_GPIO_Port,  SW7_LED_Pin,  (GPIO_PinState)state)
 
-#define SW1_Read()		1-HAL_GPIO_ReadPin(SW1_BTN_GPIO_Port,  SW1_BTN_Pin)
-#define SW2_Read()		1-HAL_GPIO_ReadPin(SW2_BTN_GPIO_Port,  SW2_BTN_Pin)
-#define SW3_Read()		1-HAL_GPIO_ReadPin(SW3_BTN_GPIO_Port,  SW3_BTN_Pin)
-#define SW4_Read()		1-HAL_GPIO_ReadPin(SW4_BTN_GPIO_Port,  SW4_BTN_Pin)
-#define SW5_Read()		1-HAL_GPIO_ReadPin(SW5_BTN_GPIO_Port,  SW5_BTN_Pin)
-#define SW6_Read()		1-HAL_GPIO_ReadPin(SW6_BTN_GPIO_Port,  SW6_BTN_Pin)
-#define SW7_Read()		1-HAL_GPIO_ReadPin(SW7_BTN_GPIO_Port,  SW7_BTN_Pin)
+#define SW1_Read()		(uint8_t)(1-HAL_GPIO_ReadPin(SW1_BTN_GPIO_Port,  SW1_BTN_Pin))
+#define SW2_Read()		(uint8_t)(1-HAL_GPIO_ReadPin(SW2_BTN_GPIO_Port,  SW2_BTN_Pin))
+#define SW3_Read()		(uint8_t)(1-HAL_GPIO_ReadPin(SW3_BTN_GPIO_Port,  SW3_BTN_Pin))
+#define SW4_Read()		(uint8_t)(1-HAL_GPIO_ReadPin(SW4_BTN_GPIO_Port,  SW4_BTN_Pin))
+#define SW5_Read()		(uint8_t)(1-HAL_GPIO_ReadPin(SW5_BTN_GPIO_Port,  SW5_BTN_Pin))
+#define SW6_Read()		(uint8_t)(1-HAL_GPIO_ReadPin(SW6_BTN_GPIO_Port,  SW6_BTN_Pin))
+#define SW7_Read()		(uint8_t)(1-HAL_GPIO_ReadPin(SW7_BTN_GPIO_Port,  SW7_BTN_Pin))
 
 #define TSW1_Read()		(1-HAL_GPIO_ReadPin(TSW1_A_GPIO_Port,  TSW1_A_Pin)) | (1-HAL_GPIO_ReadPin(TSW1_B_GPIO_Port,  TSW1_B_Pin))<<1
 #define TSW2_Read()		(1-HAL_GPIO_ReadPin(TSW2_A_GPIO_Port,  TSW2_A_Pin)) | (1-HAL_GPIO_ReadPin(TSW2_B_GPIO_Port,  TSW2_B_Pin))<<1
@@ -54,21 +54,17 @@ void EffectsBox_Init(void)
 
 void EffectsBox_Main(void)
 {
-	SW1_LED(TSW1_Read());
-	SW2_LED(TSW1_Read());
-	SW3_LED(TSW1_Read());
-	SW4_LED(TSW2_Read());
-	SW5_LED(TSW2_Read());
-	SW6_LED(TSW2_Read());
-	
+
+	SW1_LED(SW1_Read());
+	SW2_LED(SW2_Read());
+	SW3_LED(SW3_Read());
+	SW4_LED(SW4_Read());
+	SW5_LED(SW5_Read());
+	SW6_LED(SW6_Read());
 	SW7_LED(SW7_Read());
 
-	
 	TSW1_State = TSW1_Read();
 	TSW2_State = TSW2_Read();
-	
-	
-	OLED_Refresh();
-	
-	
+
+//	OLED_Refresh();
 }
