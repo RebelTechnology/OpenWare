@@ -11,6 +11,7 @@
 #include "cmsis_os.h"
 #include "BitState.hpp"
 #include "errorhandlers.h"
+#include "message.h"
 
 #ifdef OWL_MAGUS
 #include "purple-blue-cyan.h"
@@ -425,7 +426,7 @@ void setup(){
 
 #ifdef USE_DIGITALBUS
   bus_setup();
-#endif
+#endif /* USE_DIGITALBUS */
 }
 
 #ifdef OWL_MAGUS
@@ -446,6 +447,22 @@ void setLed(uint8_t led, uint32_t rgb){
 #define LED_BLUE  (0x3ff<<00)
 
 void loop(void){
+
+#ifdef USE_DIGITALBUS
+  extern SerialBuffer<128> bus_tx_buf;
+  extern SerialBuffer<128> bus_rx_buf;
+  int busstatus = bus_status();
+  char* msg = (char*)"idle";
+  // if(busstatus == BUS_STATUS_IDLE)
+  //   debugMessage("idle", bus_rx_buf.available(), bus_tx_buf.available());
+  if(busstatus == BUS_STATUS_DISCOVER)
+    msg = (char*)"disco";
+  if(busstatus == BUS_STATUS_CONNECTED)
+    msg = (char*)"conn";
+  if(busstatus == BUS_STATUS_ERROR)
+    msg = (char*)"err";
+  debugMessage(msg, (int)bus_rx_buf.available(), (int)bus_tx_buf.available());
+#endif
 #ifdef USE_SCREEN
   graphics.draw();
   graphics.display();
@@ -534,12 +551,15 @@ void loop(void){
 }
 
 extern "C"{
-  // more from USB device interface
+  // incoming data from USB device interface
   void midi_device_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4){
-      if(!mididevice.readMidiFrame(buffer+i)){
+      if(!mididevice.readMidiFrame(buffer+i))
 	mididevice.reset();
-      }
+#ifdef USE_DIGITALBUS
+      else
+	bus_tx_frame(buffer+i);
+#endif /* USE_DIGITALBUS */
     }
   }
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);

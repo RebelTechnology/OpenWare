@@ -34,8 +34,9 @@ IDENT:    0x30|UID, UUID 24bit (x5) (out of sequence messages possible?)
 - what to do with USB MIDI messages? no room for UID?
 
 - todo: enumerate parameter id's
-
 */
+
+not used!
 
 class BusHandler {
 public:
@@ -52,7 +53,7 @@ public:
   virtual void handleParameterChange(uint8_t pid, uint16_t value){}
 };
 
-class DigitalBus {
+class DigitalBus { // : public MidiReader {
 private:
   uint8_t uid;
   uint8_t downstream;
@@ -164,48 +165,9 @@ public:
 
   // read a 4-byte data frame
   void readFrame(uint8_t* frame){
-    switch(frame[0]){
-    case USB_COMMAND_MISC:
-    case USB_COMMAND_CABLE_EVENT:
-      // ignore
-      break;
-    case USB_COMMAND_SINGLE_BYTE:
-      handleSystemCommon(frame[1]);
-      break;
-    case USB_COMMAND_SYSEX_EOX1:
-      handleSysex(&frame[1], 1);
-      break;
-    case USB_COMMAND_2BYTE_SYSTEM_COMMON:
-      handleSystemCommon(frame[1], frame[2]);
-      break;
-    case USB_COMMAND_SYSEX_EOX2:
-      handleSysex(&frame[1], 2);
-      break;
-    case USB_COMMAND_PROGRAM_CHANGE:
-      handleProgramChange(frame[1], frame[2]);
-      break;
-    case USB_COMMAND_CHANNEL_PRESSURE:
-      handleChannelPressure(frame[1], frame[2]);
-      break;
-    case USB_COMMAND_NOTE_OFF:
-      handleNoteOff(frame[1], frame[2], frame[3]);
-      break;
-    case USB_COMMAND_NOTE_ON:
-      if(frame[3] == 0)
-	handleNoteOff(frame[1], frame[2], frame[3]);
-      else
-	handleNoteOn(frame[1], frame[2], frame[3]);
-      break;
-    case USB_COMMAND_POLY_KEY_PRESSURE:
-      handlePolyKeyPressure(frame[1], frame[2], frame[3]);
-      break;
-    case USB_COMMAND_CONTROL_CHANGE:
-      handleControlChange(frame[1], frame[2], frame[3]);
-      break;
-    case USB_COMMAND_PITCH_BEND_CHANGE:
-      handlePitchBend(frame[1], frame[2] | (frame[3]<<7));
-      break;
-    default:
+    if(frame[0] & 0x0f){
+      readMidiFrame(frame);
+    }else{
       switch(frame[0] & 0xf0){
       case OWL_COMMAND_DISCOVER:
 	handleDiscover(frame[0]&0x0f, (frame[1] << 16) | (frame[2]<<8) | frame[3]);

@@ -150,7 +150,8 @@ void DigitalBusHandler::sendReset(){
 }
 
 bool DigitalBusHandler::isMidiFrame(uint8_t* frame){
-  return frame[0] <= USB_COMMAND_SINGLE_BYTE && frame[0] > USB_COMMAND_CABLE_EVENT;
+  uint8_t cmd = frame[0] & 0x0f;
+  return cmd <= USB_COMMAND_SINGLE_BYTE && cmd > USB_COMMAND_CABLE_EVENT;
   // return (frame[0] & 0xf0) == 0 && 
   //   (frame[0] & 0x0f) > USB_COMMAND_CABLE_EVENT &&
   //   (frame[1] & 0xf0)  >= NOTE_ON;

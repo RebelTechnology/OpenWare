@@ -3,23 +3,27 @@
 #include "serial.h"
 #include "device.h"
 #include "message.h"
-#include "DigitalBusStreamReader.h"
-#include "MidiReader.h"
+#include "SerialBuffer.hpp"
+// #include "DigitalBusStreamReader.h"
+#include "DigitalBusReader.h"
 #include "cmsis_os.h"
-#include "MidiWriter.hpp"
 #include "errorhandlers.h"
 
 #ifdef USE_DIGITALBUS
 
 // static uint8_t busframe[4];
-MidiWriter writer;
-static DigitalBusStreamReader bus;
-static SerialBuffer<128> bus_tx_buf;
-static SerialBuffer<128> bus_rx_buf;
-static MidiReader midi;
+static DigitalBusReader bus;
+SerialBuffer<128> bus_tx_buf;
+SerialBuffer<128> bus_rx_buf;
+// todo: store data in 32bit frame buffers
 bool DIGITAL_BUS_PROPAGATE_MIDI = 0;
 bool DIGITAL_BUS_ENABLE_BUS = 0;
 
+#if 0
+#include "MidiReader.h"
+#include "MidiWriter.hpp"
+MidiWriter writer;
+static MidiReader midi;
 void midiSendCC(uint8_t ch, uint8_t cc, uint8_t value){
   writer.controlChange(ch, cc, value); // send to bus
   // midi.controlChange(ch, cc, value); // send over USB
@@ -32,21 +36,30 @@ void midiSendCC(uint8_t ch, uint8_t cc, uint8_t value){
   // todo: to update an attached USB client the message should be forwarded
   // but to avoid message feedback loops this is disabled
 }
-
 void midiSendPC(uint8_t ch, uint8_t pc){
   writer.programChange(ch, pc);
 }
+extern "C" {
+  void midi_rx_usb_buffer(uint8_t *buffer, uint32_t length){
+    midi.readMidiFrame(buffer); // process locally
+    bus.sendFrame(buffer); // forward USB MIDI to serial bus
+  }
+}
+#endif
 
 extern "C" {
 
 #if 1
   void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
-    bus_tx_buf.incrementReadHead(huart->TxXferCount);
+    int size = huart->TxXferSize - huart->TxXferCount;
+    bus_tx_buf.incrementReadHead(size);
     if(bus_tx_buf.notEmpty())
       HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
   }
   void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-    bus_rx_buf.incrementWriteHead(huart->RxXferCount);
+    // what is the correct size if IDLE called? (huart->RxXferSize - huart->RxXferCount) ?
+    int size = huart->RxXferSize - huart->RxXferCount;
+    bus_rx_buf.incrementWriteHead(size);
     HAL_UART_Receive_DMA(huart, bus_rx_buf.getWriteHead(), bus_rx_buf.getContiguousWriteCapacity());
   }
   void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
@@ -115,6 +128,7 @@ extern "C" {
 	}
     }
   }
+
 #endif
 
   void serial_write(uint8_t* data, uint16_t size){
@@ -124,12 +138,8 @@ extern "C" {
     /* Check that a Tx process is not already ongoing */
     if(huart->gState == HAL_UART_STATE_READY) 
       HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
-
     // if(huart->RxState == HAL_UART_STATE_READY)
-    //   HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
-
-      
-      
+    //   HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());      
     /* Enable the UART Transmit Data Register Empty Interrupt */
     // extern UART_HandleTypeDef huart1;
     // SET_BIT(huart1.Instance->CR1, USART_CR1_TXEIE);
@@ -181,7 +191,16 @@ void bus_setup(){
 #define BUS_IDLE_INTERVAL 2197
 
 int bus_status(){
-  bus.process();
+  // bus.process();
+  while(bus_rx_buf.available() >= 4){
+    uint8_t frame[4];
+    bus_rx_buf.pull(frame, 4);
+    if(frame[0] == OWL_COMMAND_RESET){
+      bus_rx_buf.skipUntilLast(OWL_COMMAND_RESET);
+    }else{
+      bus.readBusFrame(frame);
+    }
+  }
   static uint32_t lastpolled = 0;
   if(osKernelSysTick() > lastpolled + BUS_IDLE_INTERVAL){
     bus.connected();
@@ -206,25 +225,30 @@ void bus_tx_message(const char* msg){
 }
 
 void bus_tx_error(const char* reason){
-  debug << "Digital bus send error: " << reason << ".";
+  debug << "tx error: " << reason << ".";
 }
 
-void bus_rx_parameter(uint8_t pid, int16_t value){}
-void bus_rx_command(uint8_t cmd, int16_t data){}
-void bus_rx_message(const char* msg){}
-void bus_rx_data(const uint8_t* data, uint16_t size){}
+void bus_tx_frame(uint8_t* data){
+  bus.sendFrame(data);
+}
+
+void bus_rx_parameter(uint8_t pid, int16_t value){
+  debug << "rx par: " << pid << ".";
+}
+void bus_rx_command(uint8_t cmd, int16_t data){
+  debug << "rx cmd: " << cmd << ".";
+}
+void bus_rx_message(const char* msg){
+  debug << "rx msg: " << msg << ".";
+}
+void bus_rx_data(const uint8_t* data, uint16_t size){
+  debug << "rx data: " << size << ".";
+}
 
 void bus_rx_error(const char* reason){
-  debug << "Digital bus receive error: " << reason << ".";
+  debug << "rx error: " << reason << ".";
   bus.reset();
   bus.sendReset();
-}
-
-extern "C" {
-  void midi_rx_usb_buffer(uint8_t *buffer, uint32_t length){
-    midi.readMidiFrame(buffer); // process locally
-    bus.sendFrame(buffer); // forward USB MIDI to serial bus
-  }
 }
 
 #endif /* USE_UART */
