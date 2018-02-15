@@ -115,8 +115,8 @@
 #define FLASH_WP_GPIO_Port GPIOB
 #define SW2_BTN_Pin GPIO_PIN_1
 #define SW2_BTN_GPIO_Port GPIOB
-#define SW3_BTN_Pin GPIO_PIN_2
-#define SW3_BTN_GPIO_Port GPIOB
+#define SW4_BTN_Pin GPIO_PIN_2
+#define SW4_BTN_GPIO_Port GPIOB
 #define CS_CS_Pin GPIO_PIN_10
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
@@ -147,8 +147,8 @@
 #define SW6_LED_GPIO_Port GPIOG
 #define SW5_BTN_Pin GPIO_PIN_12
 #define SW5_BTN_GPIO_Port GPIOG
-#define SW4_BTN_Pin GPIO_PIN_13
-#define SW4_BTN_GPIO_Port GPIOG
+#define SW3_BTN_Pin GPIO_PIN_13
+#define SW3_BTN_GPIO_Port GPIOG
 #define SW5_LED_Pin GPIO_PIN_14
 #define SW5_LED_GPIO_Port GPIOG
 #define FLASH_SCK_Pin GPIO_PIN_3
