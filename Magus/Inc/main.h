@@ -1,8 +1,7 @@
 /**
   ******************************************************************************
-  * @file           : main.h
-  * @brief          : Header for main.c file.
-  *                   This file contains the common defines of the application.
+  * File Name          : main.hpp
+  * Description        : This file contains the common defines of the application
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -46,13 +45,12 @@
   *
   ******************************************************************************
   */
-
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#ifndef __MAIN_H
+#define __MAIN_H
+  /* Includes ------------------------------------------------------------------*/
 
 /* Includes ------------------------------------------------------------------*/
-
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -109,18 +107,10 @@
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
 #define CS_RST_GPIO_Port GPIOB
-/* #define MAGUS_REV01_MOD */
-#ifdef MAGUS_REV01_MOD
-#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_7
-#define USB_HOST_PWR_FAULT_GPIO_Port GPIOC
-#define USB_HOST_PWR_EN_Pin GPIO_PIN_6
+#define USB_HOST_PWR_EN_Pin GPIO_PIN_7
 #define USB_HOST_PWR_EN_GPIO_Port GPIOC
-#else
 #define USB_HOST_PWR_FAULT_Pin GPIO_PIN_6
 #define USB_HOST_PWR_FAULT_GPIO_Port GPIOC
-#define USB_HOST_PWR_EN_Pin GPIO_PIN_9
-#define USB_HOST_PWR_EN_GPIO_Port GPIOA
-#endif
 #define SWDIO_Pin GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
@@ -159,6 +149,13 @@ void _Error_Handler(char *, int);
 }
 #endif
 
-#endif /* __MAIN_H__ */
+/**
+  * @}
+  */ 
 
+/**
+  * @}
+*/ 
+
+#endif /* __MAIN_H */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

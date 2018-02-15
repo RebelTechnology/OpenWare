@@ -1,4 +1,5 @@
 #include "Flash_S25FL.h"
+#include <string.h>
 
 // ____ SPI Config 
 SPI_HandleTypeDef* FLASH_SPIConfig;
@@ -215,7 +216,7 @@ void Flash_S25FL_Test(void)
 		
 		// Byte read & write
 		case 1:
-			Flash_writeByte(usiMemLoc, 0xAA);
+			Flash_writeByte(usiMemLoc, 0xAB);
 			ucTestData = Flash_readByte(usiMemLoc);
 			break;
 		

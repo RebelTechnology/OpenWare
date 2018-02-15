@@ -6,6 +6,8 @@
 #include "HAL_Encoders.h"
 //#include "FreeRTOS.h"
 
+#define pUSBH_PwrEN(state)		HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port,  USB_HOST_PWR_EN_Pin,  (GPIO_PinState)state)
+
 uint16_t usiResult;
 extern uint16_t rgENC_Values[7];
 
@@ -83,8 +85,9 @@ void setup(void){
   // LEDs
   Magus_setRGB_DC(63,63,63);
   
-	
 	OLED_ClearScreen();
+	
+	pUSBH_PwrEN(1);
 }
 
 void loop(void)
@@ -92,7 +95,7 @@ void loop(void)
 	
 	for(int x=16; x>0; x--)
 	{
-		usiResult = MAX11300_readADC(x);
+		usiResult = 1000;
 		Magus_setRGB(x, usiResult, usiResult, usiResult);
 	}
 	

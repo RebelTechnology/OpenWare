@@ -33,6 +33,8 @@
 #define HARDWARE_VERSION             "Prism"
 #elif defined OWL_MAGUS
 #define HARDWARE_VERSION             "Magus"
+#elif defined OWL_EFFECTSBOX
+#define HARDWARE_VERSION             "fxbox"
 #else
 #error "invalid configuration"
 #endif

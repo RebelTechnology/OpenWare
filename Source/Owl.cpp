@@ -367,7 +367,17 @@ void setup(){
     updateMAX11300 = true;
   }
 #endif /* OWL_MAGUS */
-  
+
+#ifdef OWL_EFFECTSBOX
+  extern TIM_HandleTypeDef htim11;
+  HAL_TIM_Base_Start(&htim11);
+  HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
+	
+  extern TIM_HandleTypeDef htim1;
+  HAL_TIM_Base_Start(&htim1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+#endif /* OWL_EFFECTSBOX */
+
 #ifdef USE_RGB_LED
   initLed();
   setLed(1000, 1000, 1000);
