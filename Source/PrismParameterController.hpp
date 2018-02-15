@@ -81,7 +81,6 @@ public:
     case ERROR:
       screen.fill(RED);
       drawTitle("ERROR", screen);
-      drawStats(screen);
       drawError(26, screen);
       drawMessage(46, screen);
       break;
