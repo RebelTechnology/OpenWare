@@ -27,6 +27,8 @@
 #define TSW1_Read()		(1-HAL_GPIO_ReadPin(TSW1_A_GPIO_Port,  TSW1_A_Pin)) | (1-HAL_GPIO_ReadPin(TSW1_B_GPIO_Port,  TSW1_B_Pin))<<1
 #define TSW2_Read()		(1-HAL_GPIO_ReadPin(TSW2_A_GPIO_Port,  TSW2_A_Pin)) | (1-HAL_GPIO_ReadPin(TSW2_B_GPIO_Port,  TSW2_B_Pin))<<1
 
+extern SPI_HandleTypeDef hspi5;
+	
 uint8_t TSW1_State;
 uint8_t TSW2_State;
 
@@ -40,6 +42,7 @@ void EffectsBox_Init(void)
   HAL_TIM_Base_Start(&htim1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 	
+	OLED_init(&hspi5);
 	
 	OLED_setPixel(10,10);
 	OLED_setPixel(10,11);
