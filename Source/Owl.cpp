@@ -446,22 +446,13 @@ void setLed(uint8_t led, uint32_t rgb){
 #define LED_GREEN (0x3ff<<10)
 #define LED_BLUE  (0x3ff<<00)
 
-void loop(void){
-
 #ifdef USE_DIGITALBUS
-  extern SerialBuffer<128> bus_tx_buf;
-  extern SerialBuffer<128> bus_rx_buf;
-  int busstatus = bus_status();
-  char* msg = (char*)"idle";
-  // if(busstatus == BUS_STATUS_IDLE)
-  //   debugMessage("idle", bus_rx_buf.available(), bus_tx_buf.available());
-  if(busstatus == BUS_STATUS_DISCOVER)
-    msg = (char*)"disco";
-  if(busstatus == BUS_STATUS_CONNECTED)
-    msg = (char*)"conn";
-  if(busstatus == BUS_STATUS_ERROR)
-    msg = (char*)"err";
-  debugMessage(msg, (int)bus_rx_buf.available(), (int)bus_tx_buf.available());
+int busstatus;
+#endif
+
+void loop(void){
+#ifdef USE_DIGITALBUS
+  busstatus = bus_status();
 #endif
 #ifdef USE_SCREEN
   graphics.draw();

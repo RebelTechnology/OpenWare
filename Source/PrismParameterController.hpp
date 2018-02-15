@@ -6,6 +6,11 @@
 #include "ProgramVector.h"
 #include "OpenWareMidiControl.h"
 #include "Owl.h"
+#include "message.h"
+
+#ifdef USE_DIGITALBUS
+#include "bus.h"
+#endif
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -216,8 +221,17 @@ public:
 
     value = data[1];
     if(getButtonValue(BUTTON_A)){
-      mode = SELECTPROGRAM;
-      setErrorStatus(NO_ERROR);
+      if(mode != SELECTPROGRAM){
+	mode = SELECTPROGRAM;
+	setErrorStatus(NO_ERROR);
+#ifdef USE_DIGITALBUS
+	bus_tx_message("prismatic");
+#endif
+      }
+    }else{
+      if(mode == SELECTPROGRAM){
+	debugMessage(NULL);
+      }
     }
     encoders[1] = value;
 

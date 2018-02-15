@@ -197,13 +197,11 @@ void USART1_IRQHandler(void)
   UART_HandleTypeDef *huart = &huart1;
   /* if(USART1->SR & UART_FLAG_IDLE){ */
   if(huart->Instance->SR & UART_FLAG_IDLE){
-    
     /* This part is important */
-    /* Clear IDLE flag by reading status register first */
-    /* And follow by reading data register */
+    /* Clear IDLE flag by reading status and data registers */
     volatile uint32_t tmp;                  /* Must be volatile to prevent optimizations */
-    tmp = huart->Instance->SR;                       /* Read status register */
-    tmp = huart->Instance->DR;                       /* Read data register */
+    tmp = huart->Instance->SR;              /* Read status register */
+    tmp = huart->Instance->DR;              /* Read data register */
     (void)tmp;                              /* Prevent compiler warnings */
     DMA2_Stream2->CR &= ~DMA_SxCR_EN;       /* Disabling DMA will force transfer complete interrupt if enabled */
   }
