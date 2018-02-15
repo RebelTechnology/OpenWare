@@ -33,7 +33,7 @@ prism:
 magus:
 	@$(MAKE) -C Magus all
 
-clean:
+clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
 	@$(MAKE) -C MicroLab clean
 	@$(MAKE) -C OwlPedal clean
@@ -42,5 +42,13 @@ clean:
 	@$(MAKE) -C Prism clean
 	@$(MAKE) -C Magus clean
 	@$(MAKE) -C QuadFM clean
+
+docs: ## generate HTML documentation
+	@doxygen Doxyfile
+
+help: ## show this help
+	@echo 'Usage: make [target] ...'
+	@echo 'Targets:'
+	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e  's/^\(.*\): .*##\(.*\)/\1:#\2/' | column -t -c 2 -s '#'
 
 
