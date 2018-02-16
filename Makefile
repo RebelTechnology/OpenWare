@@ -7,7 +7,7 @@ endif
 
 export OPENWARE CONFIG
 
-all: tesseract microlab minilab owlpedal player prism magus #quadfm 
+all: tesseract microlab minilab owlpedal player prism magus effectsbox #quadfm 
 
 tesseract:
 	@$(MAKE) -C Tesseract all
@@ -45,6 +45,7 @@ clean: ## remove generated files
 	@$(MAKE) -C Prism clean
 	@$(MAKE) -C Magus clean
 	@$(MAKE) -C QuadFM clean
+	@$(MAKE) -C EffectsBox clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile

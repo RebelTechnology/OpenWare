@@ -104,7 +104,7 @@ void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram){
   hsdram->Instance->SDRTR |= ((uint32_t)((1292)<< 1));
 }
 
-#if !defined OWL_PLAYERF7 && !defined OWL_MINILAB // && !defined OWL_MICROLAB && !defined OWL_MAGUS
+#if !defined OWL_PLAYERF7 && !defined OWL_MINILAB && !defined OWL_EFFECTSBOX // && !defined OWL_MICROLAB && !defined OWL_MAGUS
 static uint32_t FMC_Initialized = 0;
 static void HAL_FMC_MspInit(void){
   /* USER CODE BEGIN FMC_MspInit 0 */

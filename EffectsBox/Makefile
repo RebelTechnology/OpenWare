@@ -4,11 +4,9 @@ OPENWARE ?= $(BUILDROOT)/..
 
 include $(OPENWARE)/mcu/STM32F427ZI.mk
 
-# C_SRC = $(notdir $(wildcard Src/*.c))
 C_SRC = freertos.c main.c
 C_SRC += stm32f4xx_hal_msp.c system_stm32f4xx.c
 C_SRC += usbd_conf.c usbd_desc.c usb_device.c 
-CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += sdram.c
 C_SRC += cs4272.c
 C_SRC += ssd1309.c

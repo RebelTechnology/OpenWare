@@ -21,5 +21,6 @@ OBJS += $(OBJS_SDRAM)
 OBJS += $(OBJS_USBD)
 OBJS += $(OBJS_DSP)
 OBJS += $(OBJS_OS)
+OBJS += $(OBJS_UART)
 
 include $(OPENWARE)/mcu/f4.mk
