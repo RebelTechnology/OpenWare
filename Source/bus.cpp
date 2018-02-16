@@ -14,8 +14,8 @@
 
 // static uint8_t busframe[4];
 static DigitalBusReader bus;
-SerialBuffer<128> bus_tx_buf;
-SerialBuffer<128> bus_rx_buf;
+SerialBuffer<256> bus_tx_buf;
+SerialBuffer<256> bus_rx_buf;
 // todo: store data in 32bit frame buffers
 bool DIGITAL_BUS_PROPAGATE_MIDI = 0;
 bool DIGITAL_BUS_ENABLE_BUS = 1;

@@ -29,7 +29,9 @@ public:
   char names[SIZE][12];
   int8_t selected = 0;
   uint8_t selectedPid[NOF_ENCODERS];
-
+#define PROGRAM_COUNT 3
+  char programnames[PROGRAM_COUNT][6] = { "<", "Reset", "Msg" };
+    
   enum ScreenMode {
     STANDARD, SELECTGLOBALPARAMETER, SELECTPROGRAM, ERROR
   };
@@ -78,8 +80,9 @@ public:
     case SELECTPROGRAM:
       screen.fill(CYAN);
       drawTitle("Prism", screen);
-      drawStats(26, screen);
-      drawMessage(46, screen);
+      drawProgramNames(screen);
+      drawStats(86, screen);
+      // drawMessage(46, screen);
       // todo!
       // select: Scope, VU Meter, Patch Stats, Set Volume, Show MIDI, Reset Patch, Select Patch...
       break;
@@ -90,6 +93,16 @@ public:
       drawMessage(46, screen);
       break;
     }
+  }
+
+  void drawProgramNames(ScreenBuffer& screen){
+    screen.setTextSize(1);
+    if(selectedPid[1] > 0)
+      screen.print(1, 24, programnames[selectedPid[1]-1]);
+    screen.print(1, 24+10, programnames[selectedPid[1]]);
+    if(selectedPid[1] < PROGRAM_COUNT-1)
+      screen.print(1, 24+20, programnames[selectedPid[1]+1]);
+    screen.invert(0, 25, screen.getWidth(), 10);
   }
 
   void drawGlobalParameterNames(ScreenBuffer& screen){
@@ -198,13 +211,13 @@ public:
   }
 
   void updateEncoders(int16_t* data, uint8_t size){
-    mode = STANDARD;
+    ScreenMode nextMode = STANDARD;
 
     int16_t value = data[0];
     if(getButtonValue(BUTTON_B)){
       // update selected global parameter
       // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
-      mode = SELECTGLOBALPARAMETER;
+      nextMode = SELECTGLOBALPARAMETER;
       int16_t delta = value - encoders[0];
       if(delta < 0)
 	selectGlobalParameter(selectedPid[0]-1);
@@ -221,27 +234,53 @@ public:
 
     value = data[1];
     if(getButtonValue(BUTTON_A)){
-      if(mode != SELECTPROGRAM){
-	mode = SELECTPROGRAM;
-	setErrorStatus(NO_ERROR);
-#ifdef USE_DIGITALBUS
-	bus_tx_message("prismatic");
-#endif
-      }
+      nextMode = SELECTPROGRAM;
+      int16_t delta = value - encoders[1];
+      if(delta < 0)
+	selectProgramParameter(selectedPid[1]-1);
+      else if(delta > 0)
+	selectProgramParameter(selectedPid[1]+1);
     }else{
       if(mode == SELECTPROGRAM){
-	debugMessage(NULL);
+	selectProgram(selectedPid[1]);
+      }
+      if(encoders[1] != value){
+	user[selectedPid[1]] = getEncoderValue(1);
+	// selectedBlock = 0;
       }
     }
     encoders[1] = value;
 
-    if(mode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
+    if(nextMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
       mode = ERROR;
+    else
+      mode = nextMode;
   }
 
   void encoderChanged(uint8_t encoder, int32_t delta){
   }
 
+  void selectProgram(int8_t pid){
+    switch(pid){
+    case 0:
+      break;
+    case 1:
+      setErrorStatus(NO_ERROR);
+      debugMessage(NULL);
+      break;
+#ifdef USE_DIGITALBUS
+    case 2:
+      bus_tx_message("prismatic");
+      break;      
+#endif
+    }
+  }
+
+  void selectProgramParameter(int8_t pid){
+    selectedPid[1] = max(0, min(PROGRAM_COUNT-1, pid));
+    setEncoderValue(1, user[selectedPid[1]]);
+  }
+  
   void selectGlobalParameter(int8_t pid){
     selectedPid[0] = max(0, min(SIZE-1, pid));
     setEncoderValue(0, user[selectedPid[0]]);
