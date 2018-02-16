@@ -33,6 +33,9 @@ prism:
 magus:
 	@$(MAKE) -C Magus all
 
+effectsbox:
+	@$(MAKE) -C EffectsBox all
+
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
 	@$(MAKE) -C MicroLab clean

@@ -214,12 +214,13 @@ public:
     screen.print(0, 16, title);
   }
 
-  void drawMessage(ScreenBuffer& screen){
+  void drawMessage(int16_t y, ScreenBuffer& screen){
     ProgramVector* pv = getProgramVector();
     if(pv->message != NULL){
       screen.setTextSize(1);
       screen.setTextWrap(true);
-      screen.print(0, 26, pv->message);
+      screen.print(0, y, pv->message);
+      screen.setTextWrap(false);
     }    
   }
 
@@ -246,8 +247,8 @@ public:
       break;
     case SELECTPROGRAM:
       drawTitle("Magus", screen);
-      drawMessage(screen);
       drawStats(screen);
+      drawMessage(46, screen);
       // todo!
       // select: Scope, VU Meter, Patch Stats, Set Volume, Show MIDI, Reset Patch, Select Patch...
       break;

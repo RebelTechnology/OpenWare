@@ -178,10 +178,6 @@ public:
         setEncoderValue(i, value);
   }
 
-  void drawTitle(ScreenBuffer& screen){
-    drawTitle(title, screen);
-  }
-
   void drawMessage(int16_t y, ScreenBuffer& screen){
     ProgramVector* pv = getProgramVector();
     if(pv->message != NULL){
@@ -190,6 +186,10 @@ public:
       screen.print(0, y, pv->message);
       screen.setTextWrap(false);
     }    
+  }
+
+  void drawTitle(ScreenBuffer& screen){
+    drawTitle(title, screen);
   }
 
   void drawTitle(const char* title, ScreenBuffer& screen){
