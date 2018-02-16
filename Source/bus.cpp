@@ -12,10 +12,12 @@
 
 #ifdef USE_DIGITALBUS
 
+#define DIGITAL_BUS_BUFFER_SIZE 512
+
 // static uint8_t busframe[4];
 static DigitalBusReader bus;
-SerialBuffer<256> bus_tx_buf;
-SerialBuffer<256> bus_rx_buf;
+SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
+SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
 // todo: store data in 32bit frame buffers
 bool DIGITAL_BUS_PROPAGATE_MIDI = 0;
 bool DIGITAL_BUS_ENABLE_BUS = 1;
@@ -25,7 +27,7 @@ static void initiateBusRead(){
   UART_HandleTypeDef *huart = &huart1;
   /* Check that a Rx process is not already ongoing */
   if(huart->RxState == HAL_UART_STATE_READY){
-    uint16_t size = min(64, bus_rx_buf.getContiguousWriteCapacity());
+    uint16_t size = min(bus_rx_buf.getCapacity()/2, bus_rx_buf.getContiguousWriteCapacity());
     HAL_UART_Receive_DMA(huart, bus_rx_buf.getWriteHead(), size);
   }
 }

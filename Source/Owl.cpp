@@ -316,6 +316,16 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
+  // SRAM_Init();
+#ifdef OWL_PEDAL
+  /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
+  // if (HAL_GetREVID() == 0x1001)
+  // {
+  //   /* Enable the Flash prefetch */
+  //   __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
+  // }
+#endif
+
 #ifdef USE_SCREEN
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
 #endif
