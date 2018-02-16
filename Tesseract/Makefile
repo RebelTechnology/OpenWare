@@ -16,4 +16,10 @@ OBJS = $(C_SRC:%.c=Build/%.o)
 OBJS += $(CPP_SRC:%.cpp=Build/%.o)
 OBJS += $(S_SRC:%.s=Build/%.o)
 
+OBJS += $(OBJS_SAI)
+OBJS += $(OBJS_SDRAM)
+OBJS += $(OBJS_USBD)
+OBJS += $(OBJS_DSP)
+OBJS += $(OBJS_OS)
+
 include $(OPENWARE)/mcu/f4.mk

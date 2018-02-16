@@ -35,8 +35,10 @@
    void bus_tx_error(const char* reason);
    void bus_rx_error(const char* reason);
 
-   void serial_write(uint8_t* data, uint16_t len);
+   void bus_tx_frame(uint8_t* data);
 
+   void serial_write(uint8_t* data, uint16_t len);
+   
 #ifdef __cplusplus
 }
 #endif

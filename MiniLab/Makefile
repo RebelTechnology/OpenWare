@@ -18,10 +18,12 @@ OBJS = $(C_SRC:%.c=Build/%.o)
 OBJS += $(CPP_SRC:%.cpp=Build/%.o)
 OBJS += $(S_SRC:%.s=Build/%.o)
 
-OBJS += $(USB_HOST_FILE)/Core/Src/usbh_core.o
-OBJS += $(USB_HOST_FILE)/Core/Src/usbh_pipes.o
-OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
-OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
-# OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
+OBJS += $(OBJS_SAI)
+OBJS += $(OBJS_DAC)
+OBJS += $(OBJS_SDRAM)
+OBJS += $(OBJS_USBD)
+OBJS += $(OBJS_USBH)
+OBJS += $(OBJS_DSP)
+OBJS += $(OBJS_OS)
 
 include $(OPENWARE)/mcu/f4.mk

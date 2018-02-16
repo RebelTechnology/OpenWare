@@ -1,10 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "device.h"
-#ifdef USE_USB_HOST
-#include "usbh_core.h"
-#include "usbh_midi.h"
-#endif /* USE_USB_HOST */
 #include "Owl.h"
 #include "Codec.h"
 #include "MidiReader.h"
@@ -15,14 +11,15 @@
 #include "cmsis_os.h"
 #include "BitState.hpp"
 #include "errorhandlers.h"
-
-#if defined USE_RGB_LED
-#include "rainbow.h"
-#endif /* OWL_TESSERACT */
+#include "message.h"
 
 #ifdef OWL_MAGUS
 #include "purple-blue-cyan.h"
 #include "orange-red-pink.h"
+#include "HAL_TLC5946.h"
+#include "HAL_MAX11300.h"
+// #include "HAL_OLED.h"
+#include "HAL_Encoders.h"
 #endif
 
 #ifdef USE_SCREEN
@@ -30,12 +27,18 @@
 Graphics graphics;
 #endif /* USE_SCREEN */
 
-#ifdef OWL_MAGUS
-#include "HAL_TLC5946.h"
-#include "HAL_MAX11300.h"
-// #include "HAL_OLED.h"
-#include "HAL_Encoders.h"
-#endif
+#if defined USE_RGB_LED
+#include "rainbow.h"
+#endif /* OWL_TESSERACT */
+
+#ifdef USE_USB_HOST
+#include "usbh_core.h"
+#include "usbh_midi.h"
+#endif /* USE_USB_HOST */
+
+#ifdef USE_DIGITALBUS
+#include "bus.h"
+#endif /* USE_DIGITALBUS */
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -351,12 +354,9 @@ void setup(){
   extern TIM_HandleTypeDef htim1;
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
-
   TLC5946_Refresh_DC();
-
   // Encoders
   Encoders_init(&hspi5);
-
   // Pixi
   MAX11300_init(&hspi5);
   MAX11300_setDeviceControl(DCR_RESET);
@@ -421,8 +421,12 @@ void setup(){
   xLastWakeTime = xTaskGetTickCount();
   xFrequency = 14 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 #ifdef OWL_PRISM
-  xFrequency = 60 / portTICK_PERIOD_MS;
+  xFrequency = 20 / portTICK_PERIOD_MS;
 #endif
+
+#ifdef USE_DIGITALBUS
+  bus_setup();
+#endif /* USE_DIGITALBUS */
 }
 
 #ifdef OWL_MAGUS
@@ -442,13 +446,24 @@ void setLed(uint8_t led, uint32_t rgb){
 #define LED_GREEN (0x3ff<<10)
 #define LED_BLUE  (0x3ff<<00)
 
+#ifdef USE_DIGITALBUS
+int busstatus;
+#endif
+
 void loop(void){
+#ifdef USE_DIGITALBUS
+  busstatus = bus_status();
+#endif
 #ifdef USE_SCREEN
   graphics.draw();
   graphics.display();
 #endif /* USE_SCREEN */
+#ifdef OLED_DMA
+  // When using OLED_DMA this must delay for a minimum amount to allow screen to update
+  vTaskDelay(xFrequency);
+#else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
-  // vTaskDelay(xFrequency);
+#endif  
   midi.push();
 
 #ifdef OWL_MAGUS
@@ -527,12 +542,15 @@ void loop(void){
 }
 
 extern "C"{
-  // more from USB device interface
+  // incoming data from USB device interface
   void midi_device_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4){
-      if(!mididevice.readMidiFrame(buffer+i)){
+      if(!mididevice.readMidiFrame(buffer+i))
 	mididevice.reset();
-      }
+#ifdef USE_DIGITALBUS
+      else
+	bus_tx_frame(buffer+i);
+#endif /* USE_DIGITALBUS */
     }
   }
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);

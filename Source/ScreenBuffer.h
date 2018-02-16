@@ -12,23 +12,22 @@ typedef uint8_t Colour;
 #elif defined SSD1331 || defined SEPS114A
 typedef uint16_t Colour;
 // Color definitions
-/* #define	BLACK           0x0000 */
-/* #define	BLUE            0x001F */
-/* #define	RED             0xF800 */
-/* #define	GREEN           0x07E0 */
+/* #define BLACK           0x0000 */
+/* #define BLUE            0x001F */
+/* #define RED             0xF800 */
+/* #define GREEN           0x07E0 */
 /* #define CYAN            0x07FF */
 /* #define MAGENTA         0xF81F */
 /* #define YELLOW          0xFFE0   */
 /* #define WHITE           0xFFFF */
-
+  
 #define	BLACK           0x0000
-
+#define	RED             0xF800
 #define	GREEN           0x001F
 #define	BLUE            0x07E0
-#define	RED             0xF800
+#define YELLOW          0xF81F  // puke
 #define CYAN            0x07FF
-#define MAGENTA         0xF81F
-#define YELLOW          0xFFE0  
+#define MAGENTA         0xFFE0
 #define WHITE           0xFFFF
 #else
 #error "Invalid configuration"

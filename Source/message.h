@@ -32,6 +32,21 @@
 #ifdef __cplusplus
 }
 
+class Debug {
+private:
+  uint8_t pos = 0;
+public:
+  void print(char arg);
+  void print(float arg);
+  void print(int arg);
+  void print(const char* arg);
+};
+extern Debug debug;
+
+template<class T>
+inline Debug &operator <<(Debug &obj, T arg)
+{ obj.print(arg); return obj; }
+
 void debugMessage(const char* msg, int);
 void debugMessage(const char* msg, int, int, int);
 void debugMessage(const char* msg, float);
