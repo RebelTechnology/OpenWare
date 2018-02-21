@@ -525,7 +525,7 @@ void loop(void){
   int16_t encoders[2] = { getEncoderValue(0), getEncoderValue(1) };
   graphics.params.updateEncoders(encoders, 2);
   for(int i=0; i<2; ++i)
-    graphics.params.updateValue(i, getAnalogValue(i));
+    graphics.params.updateValue(i, getAnalogValue(i)-2048); // update two bipolar cv inputs
   for(int i=2; i<NOF_PARAMETERS; ++i)
     graphics.params.updateValue(i, 0);
 #endif /* OWL_PRISM */

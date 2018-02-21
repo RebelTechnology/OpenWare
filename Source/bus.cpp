@@ -20,7 +20,9 @@ SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
 SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
 // todo: store data in 32bit frame buffers
 bool DIGITAL_BUS_PROPAGATE_MIDI = 0;
-bool DIGITAL_BUS_ENABLE_BUS = 1;
+bool DIGITAL_BUS_ENABLE_BUS = 0;
+uint32_t bus_tx_packets = 0;
+uint32_t bus_rx_packets = 0;
 
 static void initiateBusRead(){
   extern UART_HandleTypeDef huart1;
@@ -36,6 +38,7 @@ extern "C" {
   void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
     int size = huart->TxXferSize; // - huart->TxXferCount;
     bus_tx_buf.incrementReadHead(size);
+    bus_tx_packets += size/4;
     if(bus_tx_buf.notEmpty())
       HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
   }
@@ -44,6 +47,7 @@ extern "C" {
     // int size = huart->RxXferSize - huart->RxXferCount;
     int size = huart->RxXferSize - huart->hdmarx->Instance->NDTR;
     bus_rx_buf.incrementWriteHead(size);
+    bus_rx_packets += size/4;
     initiateBusRead();
   }
   void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){

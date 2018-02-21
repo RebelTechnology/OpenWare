@@ -21,10 +21,12 @@
 #define HARDWARE_VERSION             "MicroLab"
 #elif defined OWL_MINILAB
 #define HARDWARE_VERSION             "MiniLab"
-#elif defined OWL_PEDAL
-#define HARDWARE_VERSION             "OWL Pedal"
+#elif defined OWL_RACK
+#define HARDWARE_VERSION             "OWL Rack"
 #elif defined OWL_MODULAR
 #define HARDWARE_VERSION             "OWL Modular"
+#elif defined OWL_PEDAL
+#define HARDWARE_VERSION             "OWL Pedal"
 #elif defined OWL_PLAYERF7
 #define HARDWARE_VERSION             "Genius"
 #elif defined OWL_PRISMF7

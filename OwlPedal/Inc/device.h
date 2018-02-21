@@ -1,6 +1,7 @@
 #include "main.h"
 
 #define OWL_PEDAL
+#define OWL_RACK
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */

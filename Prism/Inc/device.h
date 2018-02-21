@@ -18,12 +18,6 @@
 #define USE_USBD_HS
 #define USE_SCREEN
 #define SEPS114A
-#define USE_ADC
-#define ADC_PERIPH hadc1
-#define ADC_A 0
-#define ADC_B 1
-/* #define ADC_C 2 */
-/* #define ADC_D 3 */
 #define OLED_DMA
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
@@ -35,8 +29,15 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi2
-/* #define OVERRIDE_CODEC_CONFIG */
+
+#ifndef OWL_RACK
+#define USE_ADC
+#define ADC_PERIPH hadc1
+#define ADC_A 0
+#define ADC_B 1
 #endif
+#endif
+
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
 #define EEPROM_PAGE_SIZE             (128*1024)
