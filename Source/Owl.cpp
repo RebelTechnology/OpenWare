@@ -85,51 +85,10 @@ void setAnalogValue(uint8_t ch, uint16_t value){
 #endif
 }
 
-#ifdef OWL_MICROLAB_LED
-void setLed(uint8_t ch, uint16_t brightness){
-  // brightness should be a 10 bit value
-  brightness = brightness&0x3ff;
-  switch(ch){
-  case LED1:
-    // left
-    TIM2->CCR1 = brightness;
-    break;
-  case LED2:
-    // top
-    TIM4->CCR3 = brightness;
-    break;
-  case LED3:
-    // right
-    TIM3->CCR4 = brightness;
-    break;
-  case LED4:
-    // bottom
-    TIM5->CCR2 = brightness;
-    break;
-  }
-}
-
-void initLed(){
-  // Initialise RGB LED PWM timers
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
-  extern TIM_HandleTypeDef htim4;
-  extern TIM_HandleTypeDef htim5;
-  HAL_TIM_Base_Start(&htim2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  HAL_TIM_Base_Start(&htim4);
-  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-  HAL_TIM_Base_Start(&htim5);
-  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
-}
-#endif /* OWL_MICROLAB_LED */
-
 #ifdef USE_RGB_LED
 void setLed(uint32_t rgb){
   // rgb should be a 3x 10 bit value
-#if defined OWL_TESSERACT
+#if defined OWL_TESSERACT || defined OWL_MICROLAB
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
@@ -137,10 +96,6 @@ void setLed(uint32_t rgb){
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM4->CCR3 = 1023 - ((rgb>>00)&0x3ff);
-#elif defined OWL_MICROLAB
-  TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
-  TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
-  TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
 #endif
 }
 
@@ -149,7 +104,7 @@ void setLed(int16_t red, int16_t green, int16_t blue){
   red = 1023-(red>>2);
   green = 1023-(green>>2);
   blue = 1023-(blue>>2);
-#if defined OWL_TESSERACT
+#if defined OWL_TESSERACT || defined OWL_MICROLAB
   TIM2->CCR1 = red;
   TIM3->CCR4 = green;
   TIM5->CCR2 = blue;
@@ -157,10 +112,6 @@ void setLed(int16_t red, int16_t green, int16_t blue){
   TIM2->CCR1 = red;
   TIM5->CCR2 = green;
   TIM4->CCR3 = blue;
-#elif defined OWL_MICROLAB
-  TIM2->CCR1 = red;
-  TIM3->CCR4 = green;
-  TIM5->CCR2 = blue;
 #endif
 }
 
@@ -175,7 +126,7 @@ void initLed(){
   // LED_B PB1/LGP6 TIM3_CH4
 
   // Initialise RGB LED PWM timers
-#if defined OWL_TESSERACT
+#if defined OWL_TESSERACT || defined OWL_MICROLAB
   extern TIM_HandleTypeDef htim2;
   extern TIM_HandleTypeDef htim3;
   extern TIM_HandleTypeDef htim5;
@@ -198,16 +149,6 @@ void initLed(){
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
   HAL_TIM_Base_Start(&htim4);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-#elif defined OWL_MICROLAB
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
-  extern TIM_HandleTypeDef htim5;
-  HAL_TIM_Base_Start(&htim2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_Base_Start(&htim5);
-  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
-  HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 #endif
 }
 #endif /* USE_RGB_LED */
@@ -234,38 +175,35 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   case TRIG_SW1_Pin:
     setButtonValue(BUTTON_A, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
     setButtonValue(PUSHBUTTON, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
+    ledstatus ^= 0x000003ff;
     break;
   case TRIG_SW2_Pin:
     setButtonValue(BUTTON_B, !(TRIG_SW2_GPIO_Port->IDR & TRIG_SW2_Pin));
+    ledstatus ^= 0x000ffc00;
     break;
   case TRIG_SW3_Pin:
     setButtonValue(BUTTON_C, !(TRIG_SW3_GPIO_Port->IDR & TRIG_SW3_Pin));
-    break;
+    ledstatus ^= 0x3ff00000;
+ break;
   case TRIG_SW4_Pin:
     setButtonValue(BUTTON_D, !(TRIG_SW4_GPIO_Port->IDR & TRIG_SW4_Pin));
+    ledstatus ^= 0x3ff003ff;
     break;
 #endif
 #ifdef OWL_MICROLAB
   case SW1_Pin:
     setButtonValue(BUTTON_A, !(SW1_GPIO_Port->IDR & SW1_Pin));
     setButtonValue(PUSHBUTTON, !(SW1_GPIO_Port->IDR & SW1_Pin));
+    ledstatus ^= 0x000003ff;
     break;
   case SW2_Pin:
     setButtonValue(BUTTON_B, !(SW2_GPIO_Port->IDR & SW2_Pin));
     setParameterValue(PARAMETER_E, (SW2_GPIO_Port->IDR & SW2_Pin) == 0 ? 4095 : 0);
-    ledstatus = getButtonValue(BUTTON_B) ? 0xffc00 : 0;
+    ledstatus ^= 0x000ffc00; // getButtonValue(BUTTON_B) ? 0x000ffc00 : 0;
     break;
   case SW3_Pin:
     setButtonValue(BUTTON_C, !(SW3_GPIO_Port->IDR & SW3_Pin));
-    ledstatus = getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
-    break;
-#endif
-#ifdef OWL_MICROLAB_LED
-  case TRIG1_Pin:
-    setButtonValue(PUSHBUTTON, !(TRIG1_GPIO_Port->IDR & TRIG1_Pin));
-    break;
-  case TRIG2_Pin:
-    setParameterValue(PARAMETER_E, (TRIG2_GPIO_Port->IDR & TRIG2_Pin) == 0 ? 4095 : 0);
+    ledstatus ^= 0x3ff00000; // getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
     break;
 #endif
 #ifdef OWL_PLAYERF7
@@ -297,9 +235,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     break;
 #endif    
   }
-#ifdef USE_RGB_LED
-  ledstatus = getButtonValue(PUSHBUTTON) ? 0x3ff : 0;
-#endif
 }
 
 #ifdef OWL_MAGUS
@@ -402,14 +337,6 @@ void setup(){
   initLed();
   setLed(1000, 1000, 1000);
 #endif /* USE_RGB_LED */
-
-#ifdef OWL_MICROLAB_LED
-  initLed();
-  setLed(LED1, 0);
-  setLed(LED2, 0);
-  setLed(LED3, 0);
-  setLed(LED4, 0);
-#endif /* OWL_MICROLAB_LED */
 
 #ifdef USE_ENCODERS
   extern TIM_HandleTypeDef ENCODER_TIM1;
@@ -557,12 +484,6 @@ void loop(void){
   setLed(ledstatus ^ rainbow[colour]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
 #endif /* USE_RGB_LED */
-#ifdef OWL_MICROLAB_LED
-  setLed(LED1, adc_values[ADC_A]>>2);
-  setLed(LED2, adc_values[ADC_B]>>2);
-  setLed(LED3, adc_values[ADC_C]>>2);
-  setLed(LED4, adc_values[ADC_D]>>2);
-#endif /* OWL_MICROLAB */
 }
 
 extern "C"{
@@ -582,14 +503,14 @@ extern "C"{
 #ifdef USE_USB_HOST
   void midi_host_reset(void){
     midihost.reset();
-    ledstatus ^= 0x3ff00000;
+    ledstatus ^= 0x3ff003ff;
   }
   void midi_host_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4){
       if(!midihost.readMidiFrame(buffer+i)){
 	midihost.reset();
       }else{
-	ledstatus ^= 0x80000; // 0x20000000
+	ledstatus ^= 0x000ffc00;
       }
     }
   }
