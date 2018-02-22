@@ -18,10 +18,6 @@
 #define ADC_B 3
 #define ADC_C 0
 #define ADC_D 1
-#define LED1 1
-#define LED2 2
-#define LED3 3
-#define LED4 4
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_HP_FILTER
@@ -38,18 +34,13 @@
 #define DEBUG_STACK
 #define DEBUG_STORAGE
 
-/* #define CS_CS_Pin CS_nCS_Pin */
-/* #define CS_CS_GPIO_Port CS_nCS_GPIO_Port */
-/* #define CS_RST_Pin CS_nRST_Pin */
-/* #define CS_RST_GPIO_Port CS_nRST_GPIO_Port */
-
 #define CODEC_BLOCKSIZE 256
 #define CODEC_BUFFER_SIZE (4*CODEC_BLOCKSIZE)
 #define AUDIO_MAX_BLOCK_SIZE (CODEC_BUFFER_SIZE/4)
 
 #define NOF_ADC_VALUES               4
 #define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  4
+#define NOF_BUTTONS                  3
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
 #define MAX_FACTORY_PATCHES          36
