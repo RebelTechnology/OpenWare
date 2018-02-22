@@ -58,22 +58,31 @@ MidiReader midihost;
 #endif /* USE_USB_HOST */
 ApplicationSettings settings;
 
+#ifdef USE_ADC
 uint16_t adc_values[NOF_ADC_VALUES];
+#endif
+#ifdef USE_DAC
 uint16_t dac_values[2];
+#endif
 uint32_t ledstatus;
 
 uint16_t getAnalogValue(uint8_t ch){
+#ifdef USE_ADC
   if(ch < NOF_ADC_VALUES)
     return adc_values[ch];
   else
+#endif
     return 0;
+
 }
 
 void setAnalogValue(uint8_t ch, uint16_t value){
+#ifdef USE_DAC
   if(ch < 2){
     value &= 0xfff;
     dac_values[ch] = value;
   }
+#endif
 }
 
 #ifdef OWL_MICROLAB_LED
@@ -524,10 +533,15 @@ void loop(void){
 #ifdef OWL_PRISM
   int16_t encoders[2] = { getEncoderValue(0), getEncoderValue(1) };
   graphics.params.updateEncoders(encoders, 2);
+#ifdef OWL_RACK
+  for(int i=0; i<NOF_PARAMETERS; ++i)
+    graphics.params.updateValue(i, 0);
+#else
   for(int i=0; i<2; ++i)
     graphics.params.updateValue(i, getAnalogValue(i)-2048); // update two bipolar cv inputs
   for(int i=2; i<NOF_PARAMETERS; ++i)
     graphics.params.updateValue(i, 0);
+#endif
 #endif /* OWL_PRISM */
 
 #ifdef USE_RGB_LED

@@ -101,15 +101,15 @@ void Codec::stop(){
   HAL_I2S_DMAStop(&hi2s2);
 }
 
-// hacked in to enable half-complete callbacks
-static void I2S_DMARxCplt(DMA_HandleTypeDef *hdma){
-  I2S_HandleTypeDef* hi2s = ( I2S_HandleTypeDef* )((DMA_HandleTypeDef* )hdma)->Parent;
-  HAL_I2S_RxCpltCallback(hi2s);
-}
-static void I2S_DMARxHalfCplt(DMA_HandleTypeDef *hdma){
-  I2S_HandleTypeDef* hi2s = (I2S_HandleTypeDef*)((DMA_HandleTypeDef*)hdma)->Parent;
-  HAL_I2S_RxHalfCpltCallback(hi2s);
-}
+// // hacked in to enable half-complete callbacks
+// static void I2S_DMARxCplt(DMA_HandleTypeDef *hdma){
+//   I2S_HandleTypeDef* hi2s = ( I2S_HandleTypeDef* )((DMA_HandleTypeDef* )hdma)->Parent;
+//   HAL_I2SEx_TxRxCpltCallback(hi2s);
+// }
+// static void I2S_DMARxHalfCplt(DMA_HandleTypeDef *hdma){
+//   I2S_HandleTypeDef* hi2s = (I2S_HandleTypeDef*)((DMA_HandleTypeDef*)hdma)->Parent;
+//   HAL_I2SEx_TxRxHalfCpltCallback(hi2s);
+// }
 
 void Codec::start(){
   blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
@@ -121,14 +121,15 @@ void Codec::start(){
   while(!HAL_GPIO_ReadPin(I2S_LRCK_GPIO_Port, I2S_LRCK_Pin)); // wait for high
 
   // Ex function doesn't set up a half-complete callback
-  extern DMA_HandleTypeDef hdma_spi2_tx;
-  extern DMA_HandleTypeDef hdma_i2s2_ext_rx;
-  hdma_i2s2_ext_rx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
-  hdma_spi2_tx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
+  // extern DMA_HandleTypeDef hdma_spi2_tx;
+  // extern DMA_HandleTypeDef hdma_i2s2_ext_rx;
+  // hdma_i2s2_ext_rx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
+  // hdma_spi2_tx.XferHalfCpltCallback = I2S_DMARxHalfCplt;
+  // when a 24-bit data frame or a 32-bit data frame is selected the Size parameter means the number of 16-bit data length
   ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, blocksize*4);
   ASSERT(ret == HAL_OK, "Failed to start I2S DMA");
-  hdma_i2s2_ext_rx.XferCpltCallback = I2S_DMARxCplt;
-  hdma_spi2_tx.XferCpltCallback = I2S_DMARxCplt;
+  // hdma_i2s2_ext_rx.XferCpltCallback = I2S_DMARxCplt;
+  // hdma_spi2_tx.XferCpltCallback = I2S_DMARxCplt;
   // hdma_spi2_tx.Instance->CR |= DMA_IT_HT;
 
   // hdma_i2s2_ext_rx.Instance->CR  |= DMA_IT_TC | DMA_IT_TE | DMA_IT_DME;
@@ -169,23 +170,29 @@ void Codec::resume(){
 }
 
 extern "C"{
+
+  
+  void HAL_I2SEx_TxRxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
+    audioCallback(rxbuf, txbuf, blocksize);
+  }
+
   void HAL_I2SEx_TxRxCpltCallback(I2S_HandleTypeDef *hi2s){
     audioCallback(rxbuf+blocksize*2, txbuf+blocksize*2, blocksize);
   }
 
-  void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
-    audioCallback(rxbuf, txbuf, blocksize);
-  }
-  void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s){
-    audioCallback(rxbuf+blocksize*2, txbuf+blocksize*2, blocksize);
-  }
+  // void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
+  //   audioCallback(rxbuf, txbuf, blocksize);
+  // }
+  // void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s){
+  //   audioCallback(rxbuf+blocksize*2, txbuf+blocksize*2, blocksize);
+  // }
 
-  void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
-    audioCallback(rxbuf, txbuf, blocksize);
-  }
-  void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s){
-    audioCallback(rxbuf+blocksize*2, txbuf+blocksize*2, blocksize);
-  }
+  // void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
+  //   audioCallback(rxbuf, txbuf, blocksize);
+  // }
+  // void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s){
+  //   audioCallback(rxbuf+blocksize*2, txbuf+blocksize*2, blocksize);
+  // }
 
   void HAL_I2S_ErrorCallback(I2S_HandleTypeDef *hi2s){
     error(CONFIG_ERROR, "I2S Error");

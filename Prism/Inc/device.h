@@ -11,10 +11,9 @@
 /* #define OWL_PEDAL */
 
 #define OWL_RACK
-
-#ifdef OWL_PRISM
 #define USE_DIGITALBUS
 
+#ifdef OWL_PRISM
 #define USE_USBD_HS
 #define USE_SCREEN
 #define SEPS114A
