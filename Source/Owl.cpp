@@ -171,26 +171,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   case TOGGLE_B2_Pin:
     break;
 #endif
-#ifdef OWL_MINILAB
-  case TRIG_SW1_Pin:
-    setButtonValue(BUTTON_A, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
-    setButtonValue(PUSHBUTTON, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
-    ledstatus ^= 0x000003ff;
-    break;
-  case TRIG_SW2_Pin:
-    setButtonValue(BUTTON_B, !(TRIG_SW2_GPIO_Port->IDR & TRIG_SW2_Pin));
-    ledstatus ^= 0x000ffc00;
-    break;
-  case TRIG_SW3_Pin:
-    setButtonValue(BUTTON_C, !(TRIG_SW3_GPIO_Port->IDR & TRIG_SW3_Pin));
-    ledstatus ^= 0x3ff00000;
- break;
-  case TRIG_SW4_Pin:
-    setButtonValue(BUTTON_D, !(TRIG_SW4_GPIO_Port->IDR & TRIG_SW4_Pin));
-    ledstatus ^= 0x3ff003ff;
-    break;
-#endif
-#ifdef OWL_MICROLAB
+#if defined OWL_MINILAB || defined OWL_MICROLAB
   case SW1_Pin:
     setButtonValue(BUTTON_A, !(SW1_GPIO_Port->IDR & SW1_Pin));
     setButtonValue(PUSHBUTTON, !(SW1_GPIO_Port->IDR & SW1_Pin));
@@ -204,6 +185,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   case SW3_Pin:
     setButtonValue(BUTTON_C, !(SW3_GPIO_Port->IDR & SW3_Pin));
     ledstatus ^= 0x3ff00000; // getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
+    break;
+#endif
+#ifdef OWL_MINILAB
+  case SW4_Pin:
+    setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
+    ledstatus ^= 0x3ff003ff;
     break;
 #endif
 #ifdef OWL_PLAYERF7
