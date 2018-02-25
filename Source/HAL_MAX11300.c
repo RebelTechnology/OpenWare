@@ -135,7 +135,7 @@ void MAX11300_bulkreadADC(void)
 // DAC Functions
 void MAX11300_setDAC(uint8_t port, uint16_t value)
 {
-	uint8_t rgData[3] = "";
+        uint8_t rgData[3];
 	 
 	rgData[0] = ((ADDR_DACbase+rgPortMap[port])<<1) | SPI_Write;
 	rgData[1] = (value&0xFF00)>>8;
@@ -163,7 +163,8 @@ void MAX11300_bulksetDAC(uint16_t* rgDACData)
 	memcpy(rgDACData_Tx+1, rgDACData, 40);
 	MAX11300_bulkwriteDAC();
 }
-	void MAX11300_bulkwriteDAC()
+
+void MAX11300_bulkwriteDAC()
 {
 
 	// Set address

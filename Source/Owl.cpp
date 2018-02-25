@@ -239,7 +239,7 @@ void setPortMode(uint8_t index, uint8_t mode){
 uint8_t getPortMode(uint8_t index){
   if(index < 20)
     return portMode[index];
-  return 0;
+  return PORT_UNI_INPUT;
 }
 #endif
 
@@ -301,12 +301,10 @@ void setup(){
   // Pixi
   MAX11300_init(&hspi5);
   MAX11300_setDeviceControl(DCR_RESET);
-  HAL_Delay(1000);
-  MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
+  HAL_Delay(200);
   for(int i=0; i<20; ++i){
     setPortMode(i, PORT_UNI_INPUT);
-    MAX11300_setDACValue(i, 0);
-    updateMAX11300 = true;
+    MAX11300_setDACValue(i+1, 0);
   }
 #endif /* OWL_MAGUS */
 
@@ -352,10 +350,7 @@ void setup(){
   midi.init(0);
 
   xLastWakeTime = xTaskGetTickCount();
-  xFrequency = 14 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
-#ifdef OWL_PRISM
-  xFrequency = 20 / portTICK_PERIOD_MS;
-#endif
+  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 
 #ifdef USE_DIGITALBUS
   bus_setup();
@@ -401,6 +396,7 @@ void loop(void){
 
 #ifdef OWL_MAGUS
   if(updateMAX11300){
+    MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
     for(int i=0; i<20; ++i){
       uint16_t mode;
       switch(portMode[i]){
@@ -430,18 +426,22 @@ void loop(void){
       // DACs
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
-      MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
+      // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
       graphics.params.updateValue(i, 0);
       uint16_t val = graphics.params.parameters[i]>>2;
       setLed(i, ledstatus ^ rainbowoutputs[val&0x3ff]);
+      MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
   }
-  for(int i=16; i<NOF_PARAMETERS; ++i)
-    if(getPortMode(i) == PORT_UNI_INPUT)
+  for(int i=16; i<20; ++i){
+    if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
-    else
+    }else{
       graphics.params.updateValue(i, 0);
-  MAX11300_bulkwriteDAC();
+      MAX11300_setDAC(i+1, graphics.params.parameters[i]);
+    }
+  }
+  // MAX11300_bulkwriteDAC();
 #endif /* OWL_MAGUS */
 
 #ifdef OWL_PRISM
