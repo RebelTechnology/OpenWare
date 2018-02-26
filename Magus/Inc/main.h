@@ -53,6 +53,8 @@
 /* Includes ------------------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+/* #define MAGUS_USBH_MOD */
+
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
@@ -108,9 +110,9 @@
 #define CS_RST_Pin GPIO_PIN_11
 #define CS_RST_GPIO_Port GPIOB
 #ifdef MAGUS_USBH_MOD
-#define USB_HOST_PWR_EN_Pin GPIO_PIN_7
+#define USB_HOST_PWR_EN_Pin GPIO_PIN_6
 #define USB_HOST_PWR_EN_GPIO_Port GPIOC
-#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_6
+#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_7
 #define USB_HOST_PWR_FAULT_GPIO_Port GPIOC
 #else
 #define USB_HOST_PWR_EN_Pin GPIO_PIN_9

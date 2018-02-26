@@ -20,6 +20,9 @@
 #include "HAL_MAX11300.h"
 // #include "HAL_OLED.h"
 #include "HAL_Encoders.h"
+#define TLC5940_RED_DC 0x55
+#define TLC5940_GREEN_DC 0x55
+#define TLC5940_BLUE_DC 0x55
 #endif
 
 #ifdef USE_SCREEN
@@ -225,14 +228,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 }
 
 #ifdef OWL_MAGUS
-bool updateMAX11300 = false;
+static bool updateMAX11300 = false;
 // int16_t dynamicParameterValues[NOF_PARAMETERS];
-uint8_t portMode[20];
+static uint8_t portMode[20];
 void setPortMode(uint8_t index, uint8_t mode){
   if(index < 20){
     if(portMode[index] != mode){
       portMode[index] = mode;
       updateMAX11300 = true;
+      // MAX11300_setDACValue(index+1, 0);
     }
   }
 }
@@ -285,8 +289,8 @@ void setup(){
   // LEDs
   TLC5946_init(&hspi5);
   // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
-  TLC5946_setRGB_DC(0xaa, 0xaa, 0xaa);
-  TLC5946_setAll(0x1f, 0x1f, 0x1f);
+  TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
+  TLC5946_setAll(0x10, 0x10, 0x10);
   // Start LED Driver PWM
   extern TIM_HandleTypeDef htim3;
   HAL_TIM_Base_Start(&htim3);
@@ -296,16 +300,12 @@ void setup(){
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
   TLC5946_Refresh_DC();
+  TLC5946_Refresh_GS();
   // Encoders
   Encoders_init(&hspi5);
   // Pixi
   MAX11300_init(&hspi5);
   MAX11300_setDeviceControl(DCR_RESET);
-  HAL_Delay(200);
-  for(int i=0; i<20; ++i){
-    setPortMode(i, PORT_UNI_INPUT);
-    MAX11300_setDACValue(i+1, 0);
-  }
 #endif /* OWL_MAGUS */
 
 #ifdef OWL_EFFECTSBOX
@@ -421,7 +421,7 @@ void loop(void){
     if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
       uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, ledstatus ^ rainbowinputs[val&0x3ff]);
+      setLed(i, rainbowinputs[val&0x3ff]);
     }else{
       // DACs
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
@@ -429,7 +429,7 @@ void loop(void){
       // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
       graphics.params.updateValue(i, 0);
       uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, ledstatus ^ rainbowoutputs[val&0x3ff]);
+      setLed(i, rainbowoutputs[val&0x3ff]);
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
   }

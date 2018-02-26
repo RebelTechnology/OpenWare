@@ -69,6 +69,9 @@ public:
     selectedPid[4] = PARAMETER_E;
     selectedPid[5] = PARAMETER_G;
     mode = STANDARD;
+
+    for(int i=0; i<20; ++i)
+      setPortMode(i, PORT_UNI_INPUT);
   }
  
   int16_t getEncoderValue(uint8_t eid){

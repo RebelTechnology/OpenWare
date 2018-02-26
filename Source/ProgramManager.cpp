@@ -11,7 +11,9 @@
 #include "ServiceCall.h"
 #include "FlashStorage.h"
 #include "BitState.hpp"
-
+#ifdef USE_MIDI_CALLBACK
+#include "MidiReader.h"
+#endif /* USE_MIDI_CALLBACK */
 #ifdef USE_SCREEN
 #include "Graphics.h"
 #endif
@@ -389,9 +391,18 @@ void runManagerTask(void* p){
 	  staticVector.message = programVector->message;
 	}
 	programVector = &staticVector;
+	// clear callbacks
 #ifdef USE_SCREEN
 	graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
+#ifdef USE_MIDI_CALLBACK
+	extern MidiReader mididevice;
+	mididevice.setCallback(NULL);
+#ifdef USE_USB_HOST
+	extern MidiReader midihost;
+	midihost.setCallback(NULL);
+#endif /* USE_USB_HOST */
+#endif /* USE_MIDI_CALLBACK */
 	vTaskDelete(audioTask);
 	audioTask = NULL;
       }
