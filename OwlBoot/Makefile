@@ -9,9 +9,11 @@ CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 
 C_SRC += usbd_midi.c
 C_SRC += usbd_midi_if.c
-C_SRC += sramalloc.c
+C_SRC += sdram.c
 C_SRC += sysex.c
 C_SRC += crc32.c
+C_SRC += eepromcontrol.c
+# S_SRC = startup_openboot.s
 
 # CPP_SRC += MidiReader.cpp
 

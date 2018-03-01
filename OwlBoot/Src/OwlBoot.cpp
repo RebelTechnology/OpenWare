@@ -5,15 +5,59 @@
 #include "OpenWareMidiControl.h"
 #include "FirmwareLoader.hpp"
 #include "errorhandlers.h"
+#include "eepromcontrol.h"
+
+
+typedef  void (*pFunction)(void);
+pFunction jumpToApplication;
+uint32_t JumpAddress;
+#define APPLICATION_ADDRESS        ADDR_FLASH_SECTOR_5 // (uint32_t)0x08008000
 
 static MidiReader mididevice;
 static FirmwareLoader loader;
+ProgramManager program;
 
 MidiHandler::MidiHandler(){}
+ProgramManager::ProgramManager(){}
+void ProgramManager::exitProgram(bool isr){}
+void setParameterValue(uint8_t ch, int16_t value){}
+void MidiReader::reset(){}
 
-// MidiReader::MidiReader(){}
+void ProgramManager::eraseFromFlash(uint8_t sector){
+  eeprom_erase_sector(sector);
+  // FLASH_EraseInitTypeDef init;
+  // init.TypeErase = FLASH_TYPEERASE_SECTORS;
+  // init.Banks = FLASH_BANK_1;
+  // init.Sector = sector;
+  // init.NbSectors = 1;
+  // init.VoltageRange = FLASH_VOLTAGE_RANGE_4;
+  // HAL_StatusTypeDef ret = HAL_FLASHEx_Erase(&init, SectorError);
+  // if(ret != HAL_OK)
+  //   error(FLASH_ERROR, "Flash erase failed");
+}
+
+void ProgramManager::saveToFlash(uint8_t sector, void* data, uint32_t length){
+  if(sector == -1 && length <= 3*128*1024){
+    eeprom_unlock();
+    eeprom_erase_sector(FLASH_SECTOR_5);
+    if(length > 128*1024){
+      eeprom_erase_sector(FLASH_SECTOR_6);
+      if(length > 2*128*1024){
+	eeprom_erase_sector(FLASH_SECTOR_7);
+      }
+    }
+    eeprom_write_block(ADDR_FLASH_SECTOR_5, data, length);
+    eeprom_lock();
+  }
+}
+
+void run(){
+  for(;;); // wait for interrupts
+}
 
 extern "C" {
+  const uint32_t bootloaderMagicNumber = 0xDADAB007;
+
   void error(int8_t code, const char* reason){
     // todo!
   }
@@ -22,6 +66,38 @@ extern "C" {
   bool midi_error(const char* str){
     error(PROGRAM_ERROR, str);
     return false;
+  }
+
+  void reboot(){
+    // reboot into bootloader
+    *((unsigned long*)0x2000FFF0) = bootloaderMagicNumber;
+    NVIC_SystemReset();
+  }
+
+  bool testMagic(){
+    return *((unsigned long*)0x2000FFF0) == bootloaderMagicNumber;
+  }
+  bool testButton(){
+    return !(SW1_GPIO_Port->IDR & SW1_Pin);
+  }
+
+  void setup(){
+    if(testButton() || testMagic()){
+      run();
+    }else{
+      /* Check Vector Table: Test if user code is programmed starting from address 
+	 "APPLICATION_ADDRESS" */
+      // if(((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) == 0x20000000){
+      // setLed(GREEN);
+      // }
+      /* Jump to user application */
+      JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
+      jumpToApplication = (pFunction) JumpAddress;
+      /* Initialize user application's Stack Pointer */
+      __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
+      jumpToApplication();
+      /* } */
+    }
   }
 }
 
@@ -34,13 +110,13 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
     // toggleLed(); todo!
   }// else error
   // TODO: set screen to LOADING mode if available
-  setParameterValue(PARAMETER_A, loader.index*4095/loader.size);
+  // setParameterValue(PARAMETER_A, loader.index*4095/loader.size);
 }
 
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
   if(size == 5){
     uint32_t sector = loader.decodeInt(data);
-    // program.eraseFromFlash(sector); todo!
+    program.eraseFromFlash(sector);
     loader.clear();
   }else{
     error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
@@ -51,7 +127,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t checksum = loader.decodeInt(data);
     if(checksum == loader.getChecksum()){
-      // program.saveToFlash(-1, loader.getData(), loader.getSize()); // todo!
+      program.saveToFlash(-1, loader.getData(), loader.getSize());
       loader.clear();
     }else{
       error(PROGRAM_ERROR, "Invalid FLASH checksum");
@@ -65,7 +141,7 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t slot = loader.decodeInt(data);
     if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
-      // program.saveToFlash(slot, loader.getData(), loader.getSize()); // todo!
+      program.saveToFlash(slot, loader.getData(), loader.getSize());
       loader.clear();
     }else{
       error(PROGRAM_ERROR, "Invalid program slot");
@@ -173,6 +249,7 @@ bool MidiReader::readMidiFrame(uint8_t* frame){
     }
     break;
   }
+  return true;
 }
 
 void midi_device_rx(uint8_t *buffer, uint32_t length){
