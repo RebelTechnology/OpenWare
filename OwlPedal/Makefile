@@ -7,7 +7,6 @@ include $(OPENWARE)/mcu/STM32F407ZG.mk
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += wm8731.c
-S_SRC = startup_stm32f407xx.s
 
 include $(OPENWARE)/mcu/sources.mk
 

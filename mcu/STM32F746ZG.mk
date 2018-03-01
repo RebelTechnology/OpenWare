@@ -28,3 +28,4 @@ ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32F745xx -DARM_MATH_CM7
 DEF_FLAGS += -D__FPU_PRESENT=1
+S_SRC = startup_stm32f745xx.s

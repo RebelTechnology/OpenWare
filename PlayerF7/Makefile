@@ -10,7 +10,6 @@ C_SRC += sdram.c
 C_SRC += cs4272.c ssd1309.c
 C_SRC += usbh_midi.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
-S_SRC = startup_stm32f745xx.s
 
 include $(OPENWARE)/mcu/sources.mk
 

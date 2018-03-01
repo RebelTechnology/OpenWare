@@ -64,9 +64,10 @@ clean:
 	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) gdbscript
 
 debug: $(ELF)
-	@echo "target extended localhost:4242" > gdbscript
-	@echo "load $(ELF)" >> gdbscript
-	@$(GDB) -x gdbscript $(ELF)
+	@$(GDB) -ex "target extended localhost:4242" -ex "load $(ELF)" $(ELF)
+	# @echo "target extended localhost:4242" > gdbscript
+	# @echo "load $(ELF)" >> gdbscript
+	# @$(GDB) -x gdbscript $(ELF)
 
 flash:
 	@$(STFLASH) write $(BIN) 0x8000000
