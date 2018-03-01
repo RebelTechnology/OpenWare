@@ -1,39 +1,29 @@
 #include "main.h"
 
 #define OWL_PEDAL
+/* #define OWL_RACK */
+
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */
 /* #define OWL_MODULAR */
 
-#ifdef OWL_PEDAL
 #define OWL1
-#define USE_ADC
-#define ADC_PERIPH hadc3
-#define NOF_ADC_VALUES               5
-#define ADC_A 0
-#define ADC_B 1
-#define ADC_C 2
-#define ADC_D 3
 #define USE_CODEC
 #define USE_WM8731
 #define CODEC_SPI hspi1
 #define USE_USBD_FS
-#endif
 
-#ifdef OWL_MODULAR
-#define OWL1
+#ifdef OWL_RACK
+#define NOF_ADC_VALUES               0
+#else
 #define USE_ADC
-#define ADC_PERIPH hadc3
 #define NOF_ADC_VALUES               5
+#define ADC_PERIPH hadc3
 #define ADC_A 0
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
-#define USE_CODEC
-#define USE_WM8731
-#define CODEC_SPI hspi1
-#define USE_USBD_FS
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)

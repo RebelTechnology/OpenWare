@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
-  * File Name          : main.c
-  * Description        : Main program body
+  * @file           : main.c
+  * @brief          : Main program body
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -9,7 +9,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -72,7 +72,7 @@ SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart4;
 
-SRAM_HandleTypeDef hsram3;
+SRAM_HandleTypeDef hsram1;
 
 osThreadId defaultTaskHandle;
 
@@ -86,15 +86,91 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_FSMC_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_ADC3_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_UART4_Init(void);
+static void MX_FSMC_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+
+static void SDRAM_Init(void){
+    /*##-1- Configure the SRAM device ##########################################*/
+  /* SRAM device configuration */ 
+  hsram1.Instance  = FSMC_NORSRAM_DEVICE;
+  hsram1.Extended  = FSMC_NORSRAM_EXTENDED_DEVICE;
+
+  FSMC_NORSRAM_TimingTypeDef Timing;
+  
+  Timing.AddressSetupTime       = 2;
+  Timing.AddressHoldTime        = 1;
+  Timing.DataSetupTime          = 2;
+  Timing.BusTurnAroundDuration  = 1;
+  Timing.CLKDivision            = 2;
+  Timing.DataLatency            = 2;
+  Timing.AccessMode             = FSMC_ACCESS_MODE_A;
+
+  hsram1.Init.NSBank             = FSMC_NORSRAM_BANK3;
+  hsram1.Init.DataAddressMux     = FSMC_DATA_ADDRESS_MUX_DISABLE;
+  hsram1.Init.MemoryType         = FSMC_MEMORY_TYPE_SRAM;
+  hsram1.Init.MemoryDataWidth    = FSMC_NORSRAM_MEM_BUS_WIDTH_16;// = SRAM_MEMORY_WIDTH;
+  hsram1.Init.BurstAccessMode    = FSMC_BURST_ACCESS_MODE_DISABLE;
+  hsram1.Init.WaitSignalPolarity = FSMC_WAIT_SIGNAL_POLARITY_LOW;
+  hsram1.Init.WrapMode           = FSMC_WRAP_MODE_DISABLE;
+  hsram1.Init.WaitSignalActive   = FSMC_WAIT_TIMING_BEFORE_WS;
+  hsram1.Init.WriteOperation     = FSMC_WRITE_OPERATION_ENABLE;
+  hsram1.Init.WaitSignal         = FSMC_WAIT_SIGNAL_DISABLE;
+  hsram1.Init.ExtendedMode       = FSMC_EXTENDED_MODE_DISABLE;
+  hsram1.Init.AsynchronousWait   = FSMC_ASYNCHRONOUS_WAIT_DISABLE;
+  hsram1.Init.WriteBurst         = FSMC_WRITE_BURST_DISABLE;
+
+  if (HAL_SRAM_Init(&hsram1, &Timing, NULL) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+}
+
+void SystemInit_ExtMemCtl(void)
+{
+  __HAL_RCC_FSMC_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
+  
+  GPIO_InitTypeDef GPIO_InitStruct;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF12_FSMC;
+
+  /* GPIOD configuration */
+  GPIO_InitStruct.Pin = GPIO_PIN_0  | GPIO_PIN_1  | GPIO_PIN_4  | GPIO_PIN_5  | 
+    GPIO_PIN_8  | GPIO_PIN_9  | GPIO_PIN_10 | GPIO_PIN_11 |
+    GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /* GPIOE configuration */
+  GPIO_InitStruct.Pin = GPIO_PIN_0  | GPIO_PIN_1  | GPIO_PIN_2  | GPIO_PIN_3 |  
+    GPIO_PIN_4  | GPIO_PIN_5  | GPIO_PIN_6  | GPIO_PIN_7 |
+    GPIO_PIN_8  | GPIO_PIN_9  | GPIO_PIN_10 | GPIO_PIN_11|
+    GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /* GPIOF configuration */
+  GPIO_InitStruct.Pin = GPIO_PIN_0  | GPIO_PIN_1  | GPIO_PIN_2  | GPIO_PIN_3  | 
+    GPIO_PIN_4  | GPIO_PIN_5  | GPIO_PIN_12 | GPIO_PIN_13 |
+    GPIO_PIN_14 | GPIO_PIN_15;      
+  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+
+  /* GPIOG configuration */
+  GPIO_InitStruct.Pin = GPIO_PIN_0  | GPIO_PIN_1  | GPIO_PIN_2  | GPIO_PIN_3 | 
+    GPIO_PIN_4  | GPIO_PIN_5  | GPIO_PIN_10;      
+  /*                                 GPIO_Pin_4  | GPIO_Pin_5  |GPIO_Pin_9;       */
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+}
 
 /* USER CODE END PFP */
 
@@ -102,9 +178,13 @@ void StartDefaultTask(void const * argument);
 
 /* USER CODE END 0 */
 
+/**
+  * @brief  The application entry point.
+  *
+  * @retval None
+  */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -122,21 +202,22 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  SystemInit_ExtMemCtl();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_SPI1_Init();
-  MX_FSMC_Init();
   MX_I2S2_Init();
   MX_ADC3_Init();
   MX_I2C2_Init();
   MX_UART4_Init();
-
+  MX_FSMC_Init();
   /* USER CODE BEGIN 2 */
 
+  SDRAM_Init();
+    
   // Initialise
   setup();
 
@@ -186,8 +267,10 @@ int main(void)
 
 }
 
-/** System Clock Configuration
-*/
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
 
@@ -367,6 +450,7 @@ static void MX_I2S2_Init(void)
 static void MX_SPI1_Init(void)
 {
 
+  /* SPI1 parameter configuration*/
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
@@ -411,18 +495,18 @@ static void MX_UART4_Init(void)
 static void MX_DMA_Init(void) 
 {
   /* DMA controller clock enable */
-  __HAL_RCC_DMA2_CLK_ENABLE();
   __HAL_RCC_DMA1_CLK_ENABLE();
+  __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
   /* DMA1_Stream3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 8, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
   /* DMA1_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 8, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 10, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
@@ -492,46 +576,36 @@ static void MX_FSMC_Init(void)
 {
   FSMC_NORSRAM_TimingTypeDef Timing;
 
-  /** Perform the SRAM3 memory initialization sequence
+  /** Perform the SRAM1 memory initialization sequence
   */
-  hsram3.Instance = FSMC_NORSRAM_DEVICE;
-  hsram3.Extended = FSMC_NORSRAM_EXTENDED_DEVICE;
-  /* hsram3.Init */
-  hsram3.Init.NSBank = FSMC_NORSRAM_BANK3;
-  hsram3.Init.DataAddressMux = FSMC_DATA_ADDRESS_MUX_DISABLE;
-  hsram3.Init.MemoryType = FSMC_MEMORY_TYPE_SRAM;
-  hsram3.Init.MemoryDataWidth = FSMC_NORSRAM_MEM_BUS_WIDTH_16;
-  hsram3.Init.BurstAccessMode = FSMC_BURST_ACCESS_MODE_DISABLE;
-  hsram3.Init.WaitSignalPolarity = FSMC_WAIT_SIGNAL_POLARITY_LOW;
-  hsram3.Init.WrapMode = FSMC_WRAP_MODE_DISABLE;
-  hsram3.Init.WaitSignalActive = FSMC_WAIT_TIMING_BEFORE_WS;
-  hsram3.Init.WriteOperation = FSMC_WRITE_OPERATION_ENABLE;
-  hsram3.Init.WaitSignal = FSMC_WAIT_SIGNAL_DISABLE;
-  hsram3.Init.ExtendedMode = FSMC_EXTENDED_MODE_DISABLE;
-  hsram3.Init.AsynchronousWait = FSMC_ASYNCHRONOUS_WAIT_DISABLE;
-  hsram3.Init.WriteBurst = FSMC_WRITE_BURST_DISABLE;
-  hsram3.Init.PageSize = FSMC_PAGE_SIZE_NONE;
+  hsram1.Instance = FSMC_NORSRAM_DEVICE;
+  hsram1.Extended = FSMC_NORSRAM_EXTENDED_DEVICE;
+  /* hsram1.Init */
+  hsram1.Init.NSBank = FSMC_NORSRAM_BANK3;
+  hsram1.Init.DataAddressMux = FSMC_DATA_ADDRESS_MUX_DISABLE;
+  hsram1.Init.MemoryType = FSMC_MEMORY_TYPE_SRAM;
+  hsram1.Init.MemoryDataWidth = FSMC_NORSRAM_MEM_BUS_WIDTH_16;
+  hsram1.Init.BurstAccessMode = FSMC_BURST_ACCESS_MODE_DISABLE;
+  hsram1.Init.WaitSignalPolarity = FSMC_WAIT_SIGNAL_POLARITY_LOW;
+  hsram1.Init.WrapMode = FSMC_WRAP_MODE_DISABLE;
+  hsram1.Init.WaitSignalActive = FSMC_WAIT_TIMING_BEFORE_WS;
+  hsram1.Init.WriteOperation = FSMC_WRITE_OPERATION_ENABLE;
+  hsram1.Init.WaitSignal = FSMC_WAIT_SIGNAL_DISABLE;
+  hsram1.Init.ExtendedMode = FSMC_EXTENDED_MODE_DISABLE;
+  hsram1.Init.AsynchronousWait = FSMC_ASYNCHRONOUS_WAIT_DISABLE;
+  hsram1.Init.WriteBurst = FSMC_WRITE_BURST_DISABLE;
+  hsram1.Init.PageSize = FSMC_PAGE_SIZE_NONE;
   /* Timing */
-
-  /* p.FSMC_AddressSetupTime = 3; */
-  /* p.FSMC_AddressHoldTime = 0; */
-  /* p.FSMC_DataSetupTime = 6; */
-  /* p.FSMC_BusTurnAroundDuration = 1; */
-  /* p.FSMC_CLKDivision = 0; */
-  /* p.FSMC_DataLatency = 0; */
-  /* p.FSMC_AccessMode = FSMC_AccessMode_A; */
-  __HAL_RCC_FSMC_CLK_ENABLE();
-
-  Timing.AddressSetupTime = 3;
-  Timing.AddressHoldTime = 1; // >0 <= 15
-  Timing.DataSetupTime = 6;
+  Timing.AddressSetupTime = 2;
+  Timing.AddressHoldTime = 15;
+  Timing.DataSetupTime = 2;
   Timing.BusTurnAroundDuration = 1;
-  Timing.CLKDivision = 2; // > 1 <= 16
-  Timing.DataLatency = 2; // > 1 <= 17
+  Timing.CLKDivision = 16;
+  Timing.DataLatency = 17;
   Timing.AccessMode = FSMC_ACCESS_MODE_A;
   /* ExtTiming */
 
-  if (HAL_SRAM_Init(&hsram3, &Timing, NULL) != HAL_OK)
+  if (HAL_SRAM_Init(&hsram1, &Timing, NULL) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -560,10 +634,11 @@ void StartDefaultTask(void const * argument)
 
 /**
   * @brief  This function is executed in case of error occurrence.
-  * @param  None
+  * @param  file: The file name as string.
+  * @param  line: The line in file as a number.
   * @retval None
   */
-void _Error_Handler(char * file, int line)
+void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
@@ -572,20 +647,19 @@ void _Error_Handler(char * file, int line)
 #else
   NVIC_SystemReset();
 #endif
-  /* USER CODE END Error_Handler_Debug */ 
+  /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef USE_FULL_ASSERT
-
+#ifdef  USE_FULL_ASSERT
 /**
-   * @brief Reports the name of the source file and the source line number
-   * where the assert_param error has occurred.
-   * @param file: pointer to the source file name
-   * @param line: assert_param error line source number
-   * @retval None
-   */
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
 void assert_failed(uint8_t* file, uint32_t line)
-{
+{ 
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
@@ -595,17 +669,15 @@ void assert_failed(uint8_t* file, uint32_t line)
   NVIC_SystemReset();
 #endif
   /* USER CODE END 6 */
-
 }
-
-#endif
-
-/**
-  * @}
-  */ 
+#endif /* USE_FULL_ASSERT */
 
 /**
   * @}
-*/ 
+  */
+
+/**
+  * @}
+  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

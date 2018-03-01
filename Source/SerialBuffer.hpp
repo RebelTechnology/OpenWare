@@ -10,6 +10,9 @@ private:
   volatile uint16_t readpos = 0;
   uint8_t buffer[size];
 public:
+  uint16_t getCapacity(){
+    return size;
+  }
   void push(uint8_t* data, uint16_t len){
     uint8_t* dest = getWriteHead();
     uint16_t rem = size-writepos;

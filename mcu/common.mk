@@ -88,7 +88,7 @@ dfu: $(BIN)
 	@echo Uploaded $(BIN) to firmware
 
 size: $(ELF) $(BIN)
-	@$(NM) --print-size --size-sort $(ELF) | tail -n 10
+	@$(NM) --print-size --size-sort $(ELF) | grep -v '^08'| tail -n 10
 	@$(SIZE) $(ELF)
 	@ls -sh $(BIN)
 

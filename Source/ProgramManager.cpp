@@ -22,13 +22,6 @@ static TaskHandle_t screenTask = NULL;
 /* makeFreeRtosPriority(osPriorityNormal) = 3 */
 #endif
 
-#ifdef OWL_MAGUS
-#include "HAL_MAX11300.h"
-#include "HAL_TLC5946.h"
-// #include "HAL_OLED.h"
-#include "HAL_Encoders.h"
-#endif
-
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
@@ -242,6 +235,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = MICROLAB_HARDWARE;
 #elif defined OWL_MINILAB
   pv->hardware_version = MINILAB_HARDWARE;
+#elif defined OWL_RACK
+  pv->hardware_version = OWL_RACK_HARDWARE;
 #elif defined OWL_PEDAL
   pv->hardware_version = OWL_PEDAL_HARDWARE;
 #elif defined OWL_MODULAR
@@ -295,7 +290,9 @@ void updateProgramVector(ProgramVector* pv){
   extern char _CCMRAM, _CCMRAM_END;
   static MemorySegment heapSegments[] = {
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_END - &_CCMRAM) - PROGRAMSTACK_SIZE },
+#ifndef OWL_PRISM
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_END - &_EXTRAM) },
+#endif
     // todo: add remaining program space
     { NULL, 0 }
   };
@@ -343,52 +340,6 @@ void eraseFlashTask(void* p){
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
-
-#if 0 // USE_SCREEN
-void runScreenTask(void* p){
-  // this task will be continually interrupted by
-  // the higher priority audio task
-  // const TickType_t delay = 20 / portTICK_PERIOD_MS;
-  volatile TickType_t period = 50 / portTICK_PERIOD_MS; // 20Hz
-  volatile uint32_t baseled = 0x3fful << 20;
-
-  TickType_t xLastWakeTime;
-  const TickType_t xFrequency = 10 / portTICK_PERIOD_MS;
-  // Initialise the xLastWakeTime variable with the current time.
-  xLastWakeTime = xTaskGetTickCount();
-
-  for(;;){
-    // todo: run USB Host task here, get rid of loop and idle tasks
-#ifdef OWL_MAGUS
-    // also update LEDs and MAX11300
-    TLC5946_Refresh_GS();
-    // MAX11300_bulksetDAC(...);
-
-    // MAX11300_bulkreadADC();
-    // for(int i=0; i<16; i+=2)
-    //   setLed(i, MAX11300_getADCValue(i) + baseled);
-    
-    for(int i=0; i<16; i+=1){
-      uint16_t value = MAX11300_readADC(i+1);
-      setLed(i, baseled | (value << 10) | value);
-      graphics.params.parameters[i] = value;
-    }
-    // extern uint8_t rgADCData_Rx[41];
-    // graphics.params.updateValues((uint16_t*)(rgADCData_Rx+1), 16);
-
-    Encoders_readAll();
-    // extern uint16_t rgENC_Values[7];
-    // graphics.params.updateEncoders(rgENC_Values, 7);
-#else
-#endif /* OWL_MAGUS */
-    graphics.draw();
-    graphics.display();
-
-    vTaskDelayUntil( &xLastWakeTime, period);
-    // vTaskDelay(delay); // allow a minimum amount of time for pixel data to be transferred
-  }
-}
-#endif
 
 void runAudioTask(void* p){
 #ifdef USE_SCREEN

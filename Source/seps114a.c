@@ -112,9 +112,22 @@ static void chipInit(){
   /* Set MCU Interface */
   writeCommand(SEPS114A_CPU_IF,0x00);                 // MPU External interface mode, 8bits
   /* Set Memory Read/Write mode */
-  writeCommand(SEPS114A_MEMORY_WRITE_READ, 0x01);     // Memory write/read direction (was: 0x00)
+#ifdef OWL_RACK
+  writeCommand(SEPS114A_MEMORY_WRITE_READ, 0x07);
+#else
+  writeCommand(SEPS114A_MEMORY_WRITE_READ, 0x02);     // Memory write/read direction
+#endif
+  /* SEPS114A_MEMORY_WRITE_READ : 0x0: mirrored 0deg,
+                                  0x1: normal 0deg (upside down when folded back: Prism Rev03),
+                                  0x2: normal 180deg (Prism Rev04)
+                                  0x3: mirrored 180deg
+                                  0x4: normal, 90deg
+                                  0x5: mirrored, 90deg
+                                  0x6: mirrored, 270deg
+                                  0x7: normal, 270deg (OWL Rack) */  
   /* Set row scan direction */
   writeCommand(SEPS114A_ROW_SCAN_DIRECTION,0x00);     // Column : 0 --> Max, Row : 0 --> Max
+  /* SEPS114A_ROW_SCAN_DIRECTION : 0x2 or 0x3: upside down and mirrored */  
   /* Set row scan mode */
   writeCommand(SEPS114A_ROW_SCAN_MODE,0x00);          // Alternate scan mode
   /* Set column current */

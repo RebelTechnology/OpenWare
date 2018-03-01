@@ -14,62 +14,59 @@ OBJS += $(DRIVERS)/Src/stm32f4xx_hal_flash_ex.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_tim_ex.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_tim.o
 OBJS += $(DRIVERS)/Src/stm32f4xx_hal_cortex.o
+OBJS += $(DRIVERS)/Src/stm32f4xx_hal_spi.o
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_rng.o
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_qspi.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_spi.o
 # OBJS += $(DRIVERS)/Src/stm32f4xx_hal_dma2d.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_pcd.o # USB Device
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_pcd_ex.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_ll_usb.o
+
+# optionals
+OBJS_UART = $(DRIVERS)/Src/stm32f4xx_hal_uart.o
+OBJS_DAC = $(DRIVERS)/Src/stm32f4xx_hal_dac.o
 
 # required by OWL 2
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sai.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sai_ex.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_uart.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_dac.o
+OBJS_SAI = $(DRIVERS)/Src/stm32f4xx_hal_sai.o
+OBJS_SAI += $(DRIVERS)/Src/stm32f4xx_hal_sai_ex.o
 
 # external SDRAM
-OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sdram.o
-OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fmc.o
-
-# USB Host
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_hcd.o
-
+OBJS_SDRAM = $(DRIVERS)/Src/stm32f4xx_hal_sdram.o
+OBJS_SDRAM += $(DRIVERS)/Src/stm32f4xx_ll_fmc.o
 
 # required by OWL 1
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_sram.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_ll_fsmc.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2s.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2s_ex.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c.o
-# OBJS += $(DRIVERS)/Src/stm32f4xx_hal_i2c_ex.o
+OBJS_SRAM = $(DRIVERS)/Src/stm32f4xx_hal_sram.o
+OBJS_SRAM += $(DRIVERS)/Src/stm32f4xx_ll_fsmc.o
+OBJS_I2S = $(DRIVERS)/Src/stm32f4xx_hal_i2s.o
+OBJS_I2S += $(DRIVERS)/Src/stm32f4xx_hal_i2s_ex.o
+OBJS_I2S += $(DRIVERS)/Src/stm32f4xx_hal_i2c.o
+OBJS_I2S += $(DRIVERS)/Src/stm32f4xx_hal_i2c_ex.o
 
 ### USB Device Library ###
-OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_core.o
-OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_ioreq.o
-OBJS += $(USB_DEVICE_FILE)/Core/Src/usbd_ctlreq.o
-# OBJS += $(USB_DEVICE_FILE)/Class/AUDIO/Src/usbd_audio.o
+OBJS_USBD = $(DRIVERS)/Src/stm32f4xx_hal_pcd.o
+OBJS_USBD += $(DRIVERS)/Src/stm32f4xx_hal_pcd_ex.o
+OBJS_USBD += $(DRIVERS)/Src/stm32f4xx_ll_usb.o
+OBJS_USBD += $(USB_DEVICE_FILE)/Core/Src/usbd_core.o
+OBJS_USBD += $(USB_DEVICE_FILE)/Core/Src/usbd_ioreq.o
+OBJS_USBD += $(USB_DEVICE_FILE)/Core/Src/usbd_ctlreq.o
 
 ### USB Host Library ###
-# OBJS += $(USB_HOST_FILE)/Core/Src/usbh_core.o
-# OBJS += $(USB_HOST_FILE)/Core/Src/usbh_pipes.o
-# OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
-# OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
-# OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
+OBJS_USBH = $(DRIVERS)/Src/stm32f4xx_hal_hcd.o
+OBJS_USBH += $(USB_HOST_FILE)/Core/Src/usbh_core.o
+OBJS_USBH += $(USB_HOST_FILE)/Core/Src/usbh_pipes.o
+OBJS_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
+OBJS_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
 
 ### CMSIS DSP Library ####
 
 # OBJS += $(USB_DEVICE) $(USB_OTG)
-OBJS += $(DSPLIB)/FastMathFunctions/arm_sin_f32.o
-OBJS += $(DSPLIB)/FastMathFunctions/arm_cos_f32.o
-OBJS += $(DSPLIB)/CommonTables/arm_common_tables.o
+OBJS_DSP = $(DSPLIB)/FastMathFunctions/arm_sin_f32.o
+OBJS_DSP += $(DSPLIB)/FastMathFunctions/arm_cos_f32.o
+OBJS_DSP += $(DSPLIB)/CommonTables/arm_common_tables.o
 
-OBJS += $(DSPLIB)/TransformFunctions/arm_cfft_f32.o
-OBJS += $(DSPLIB)/TransformFunctions/arm_cfft_radix8_f32.o
-OBJS += $(DSPLIB)/TransformFunctions/arm_bitreversal.o
-OBJS += $(DSPLIB)/TransformFunctions/arm_rfft_fast_f32.o
-OBJS += $(DSPLIB)/TransformFunctions/arm_rfft_fast_init_f32.o
-OBJS += $(DSPLIB)/CommonTables/arm_const_structs.o
+OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_cfft_f32.o
+OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_cfft_radix8_f32.o
+OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_bitreversal.o
+OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_rfft_fast_f32.o
+OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_rfft_fast_init_f32.o
+OBJS_DSP += $(DSPLIB)/CommonTables/arm_const_structs.o
 
 # OBJS += $(DSPLIB)/FilteringFunctions/arm_biquad_cascade_df1_init_f32.o
 # OBJS += $(DSPLIB)/FilteringFunctions/arm_biquad_cascade_df1_f32.o
@@ -90,12 +87,12 @@ OBJS += $(DSPLIB)/CommonTables/arm_const_structs.o
 # OBJS += $(DSPLIB)/SupportFunctions/arm_q15_to_float.o
 
 ### FreeRTOS ###
-OBJS += $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.o
-# OBJS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.o
-OBJS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.o
-OBJS += $(FREERTOS_DIR)/tasks.o
-OBJS += $(FREERTOS_DIR)/timers.o
-OBJS += $(FREERTOS_DIR)/queue.o
-OBJS += $(FREERTOS_DIR)/list.o
-OBJS += $(FREERTOS_DIR)/croutine.o
-OBJS += $(FREERTOS_DIR)/portable/MemMang/heap_4.o
+OBJS_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.o
+# OBJS_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.o
+OBJS_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.o
+OBJS_OS += $(FREERTOS_DIR)/tasks.o
+OBJS_OS += $(FREERTOS_DIR)/timers.o
+OBJS_OS += $(FREERTOS_DIR)/queue.o
+OBJS_OS += $(FREERTOS_DIR)/list.o
+OBJS_OS += $(FREERTOS_DIR)/croutine.o
+OBJS_OS += $(FREERTOS_DIR)/portable/MemMang/heap_4.o

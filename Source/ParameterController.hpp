@@ -94,23 +94,25 @@ public:
   void setValue(uint8_t ch, int16_t value){
     parameters[ch] = value;
   }
-    void drawTitle(ScreenBuffer& screen){
-    drawTitle(title, screen);
-  }
 
-  void drawMessage(ScreenBuffer& screen){
+  void drawMessage(int16_t y, ScreenBuffer& screen){
     ProgramVector* pv = getProgramVector();
     if(pv->message != NULL){
       screen.setTextSize(1);
       screen.setTextWrap(true);
-      screen.print(0, 26, pv->message);
+      screen.print(0, y, pv->message);
+      screen.setTextWrap(false);
     }    
+  }
+
+  void drawTitle(ScreenBuffer& screen){
+    drawTitle(title, screen);
   }
 
   void drawTitle(const char* title, ScreenBuffer& screen){
     // draw title
     screen.setTextSize(2);
-    screen.print(0, 16, title);
+    screen.print(1, 17, title);
   }
 
   void setCallback(void *callback){
