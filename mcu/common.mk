@@ -21,7 +21,10 @@ GDB=$(TOOLROOT)arm-none-eabi-gdb
 OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
-STFLASH ?= st-flash
+STFLASH ?= ~/bin/st-flash
+
+MCU_ADDRESS = 0x8000000
+# MCU_ADDRESS = 0x8020000
 
 # Set up search path
 vpath %.s $(BUILDROOT)/Src
@@ -70,7 +73,7 @@ debug: $(ELF)
 	# @$(GDB) -x gdbscript $(ELF)
 
 flash:
-	@$(STFLASH) write $(BIN) 0x8000000
+	@$(STFLASH) write $(BIN) $(MCU_ADDRESS)
 
 stlink:
 	@$(GDB) -ex "target extended localhost:4242" $(ELF)
@@ -85,7 +88,7 @@ as: $(ELF)
 	@$(OBJDUMP) -S $(ELF) > $(ELF:.elf=.s)
 
 dfu: $(BIN)
-	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s 0x8000000:leave -D $(BIN)
+	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s $(MCU_ADDRESS):leave -D $(BIN)
 	@echo Uploaded $(BIN) to firmware
 
 size: $(ELF) $(BIN)
