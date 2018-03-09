@@ -16,6 +16,7 @@ extern "C" {
   void setAnalogValue(uint8_t ch, uint16_t value);
 
   void setLed(uint8_t led, uint32_t rgb);
+
 #ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder);
   void encoderReset(uint8_t encoder, int16_t value);
@@ -40,6 +41,8 @@ extern "C" {
   void delay(uint32_t ms);
 
   void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
+
+  void jump_to_bootloader(void);  
 
 #ifdef __cplusplus
 }

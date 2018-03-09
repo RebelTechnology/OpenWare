@@ -531,5 +531,55 @@ extern "C"{
       encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
   }
 #endif /* USE_ENCODERS */
-
+  
 }
+
+// __attribute__((naked))
+// void reboot(void){
+//   const uint32_t bootloaderMagicNumber = 0xDADAB007;
+//   /* This address is within the first 64k of memory.
+//    * The magic number must match what is in the bootloader */
+//   *((unsigned long *)0x2000FFF0) = bootloaderMagicNumber;
+//   NVIC_SystemReset();
+//   /* Shouldn't get here */
+//   while(1);
+// }
+
+
+/* Jump to the bootloader. We set a magic number in memory that our bootloader 
+ * startup code looks for. RAM is preserved across system reset, so when it 
+ * finds this magic number, it will go to the bootloader code 
+ * rather than the application code.
+ */
+void jump_to_bootloader(void){
+  /* Disable USB in advance: this will give the computer time to
+   * recognise it's been disconnected, so when the system bootloader
+   * comes online it will get re-enumerated.
+   */
+  // usb_deinit();
+
+  /* Disable all interrupts */
+  RCC->CIR = 0x00000000;
+
+  const uint32_t bootloaderMagicNumber = 0xDADAB007;
+  /* This address is within the first 64k of memory.
+   * The magic number must match what is in the bootloader */
+  *((unsigned long *)0x2000FFF0) = bootloaderMagicNumber;
+  NVIC_SystemReset();
+  /* Shouldn't get here */
+  while(1);
+
+  // uint16_t i;
+  // volatile uint32_t delayCounter;
+  /* Blink LEDs */
+  // setLed(RED);
+  // for(i = 0; i < 3; i++) {
+  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
+  //   setLed(NONE);
+  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
+  //   setLed(RED);
+  // }
+
+  // reboot();
+}
+

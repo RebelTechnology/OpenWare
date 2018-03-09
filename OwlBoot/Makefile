@@ -16,6 +16,7 @@ C_SRC += eepromcontrol.c
 # S_SRC = startup_openboot.s
 
 # CPP_SRC += MidiReader.cpp
+CPP_SRC += MidiController.cpp
 
 # include $(OPENWARE)/mcu/sources.mk
 

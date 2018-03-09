@@ -36,7 +36,9 @@
 #elif defined OWL_MAGUS
 #define HARDWARE_VERSION             "Magus"
 #elif defined OWL_EFFECTSBOX
-#define HARDWARE_VERSION             "fxbox"
+#define HARDWARE_VERSION             "FX Box"
+#elif defined OWL_BOOT
+#define HARDWARE_VERSION             "OWL Boot"
 #else
 #error "invalid configuration"
 #endif

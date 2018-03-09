@@ -6,14 +6,10 @@
 #include "FirmwareLoader.hpp"
 #include "errorhandlers.h"
 #include "eepromcontrol.h"
-
-
-typedef  void (*pFunction)(void);
-pFunction jumpToApplication;
-uint32_t JumpAddress;
-#define APPLICATION_ADDRESS        ADDR_FLASH_SECTOR_5 // (uint32_t)0x08008000
+#include "MidiController.h"
 
 static MidiReader mididevice;
+MidiController midi;
 static FirmwareLoader loader;
 ProgramManager program;
 
@@ -51,12 +47,7 @@ void ProgramManager::saveToFlash(uint8_t sector, void* data, uint32_t length){
   }
 }
 
-void run(){
-  for(;;); // wait for interrupts
-}
-
 extern "C" {
-  const uint32_t bootloaderMagicNumber = 0xDADAB007;
 
   void error(int8_t code, const char* reason){
     // todo!
@@ -68,36 +59,14 @@ extern "C" {
     return false;
   }
 
-  void reboot(){
-    // reboot into bootloader
-    *((unsigned long*)0x2000FFF0) = bootloaderMagicNumber;
-    NVIC_SystemReset();
+  void setup(){    
+    midi.init(0);
+    midi.sendFirmwareVersion();
   }
 
-  bool testMagic(){
-    return *((unsigned long*)0x2000FFF0) == bootloaderMagicNumber;
-  }
-  bool testButton(){
-    return !(SW1_GPIO_Port->IDR & SW1_Pin);
-  }
-
-  void setup(){
-    if(testButton() || testMagic()){
-      run();
-    }else{
-      /* Check Vector Table: Test if user code is programmed starting from address 
-	 "APPLICATION_ADDRESS" */
-      // if(((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) == 0x20000000){
-      // setLed(GREEN);
-      // }
-      /* Jump to user application */
-      JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
-      jumpToApplication = (pFunction) JumpAddress;
-      /* Initialize user application's Stack Pointer */
-      __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
-      jumpToApplication();
-      /* } */
-    }
+  void loop(void){
+    midi.push();
+    // wait for interrupts
   }
 }
 

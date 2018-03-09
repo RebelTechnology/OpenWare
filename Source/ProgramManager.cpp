@@ -200,6 +200,8 @@ void onProgramReady(){
       bid = stateChanged.getFirstSetIndex();
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
+  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+
 }
 
 // called from program
@@ -302,6 +304,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16;
+  // pv->audio_format = AUDIO_FORMAT_24B24;
 #else
   pv->audio_format = AUDIO_FORMAT_24B32;
 #endif

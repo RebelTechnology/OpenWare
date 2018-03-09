@@ -78,6 +78,21 @@ static void MX_USART2_UART_Init(void);
 
 void setup();
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
+void loop(void);
+
+typedef  void (*pFunction)(void);
+#define ADDR_FLASH_SECTOR_5     ((uint32_t)0x08020000) /* Base @ of Sector 5, 128 Kbyte */
+#define APPLICATION_ADDRESS        ADDR_FLASH_SECTOR_5// (uint32_t)0x08020000 // was: 0x08008000
+const uint32_t bootloaderMagicNumber = 0xDADAB007;
+
+static int testMagic(){
+  return *((unsigned long*)0x2000FFF0) == bootloaderMagicNumber;
+}
+
+static int testButton(){
+  // return false;
+  return !(SW1_GPIO_Port->IDR & SW1_Pin);
+}
 
 /* USER CODE END PFP */
 
@@ -110,17 +125,37 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
+  MX_GPIO_Init();
+  
+  if(testButton() || testMagic()){
+    MX_FMC_Init();
+    MX_SPI1_Init();
+    MX_USART2_UART_Init();
+    MX_USB_DEVICE_Init();
+    SDRAM_Initialization_Sequence(&hsdram1);
+  }else{
+    // jump to application code
+
+    /* Disable all interrupts */
+    RCC->CIR = 0x00000000;
+
+    /* Check Vector Table: Test if valid stack pointer is programmed at APPLICATION_ADDRESS */
+    // if(((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) == 0x20000000){
+    // setLed(GREEN);
+    // }
+    /* Jump to user application */
+    uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
+    pFunction jumpToApplication = (pFunction) JumpAddress;
+    /* Initialize user application's Stack Pointer */
+    __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
+    jumpToApplication();
+    for(;;);
+  }
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_FMC_Init();
-  MX_SPI1_Init();
-  MX_USART2_UART_Init();
-  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-
-  SDRAM_Initialization_Sequence(&hsdram1);   
 
   // Initialise
   setup();
@@ -133,6 +168,7 @@ int main(void)
   {
 
   /* USER CODE END WHILE */
+    loop();
 
   /* USER CODE BEGIN 3 */
 
@@ -357,9 +393,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SW1_Pin SW3_Pin SW2_Pin */
-  GPIO_InitStruct.Pin = SW1_Pin|SW3_Pin|SW2_Pin;
+  GPIO_InitStruct.Pin = SW1_Pin;//|SW3_Pin|SW2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD11 PD12 PD13 PD2 

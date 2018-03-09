@@ -277,9 +277,9 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
   case SYSEX_CONFIGURATION_COMMAND:
     handleConfigurationCommand(data+4, size-5);
     break;
-  // case SYSEX_DFU_COMMAND:
-  //   jump_to_bootloader();
-  //   break;
+  case SYSEX_BOOTLOADER_COMMAND:
+    jump_to_bootloader();
+    break;
   case SYSEX_FIRMWARE_UPLOAD:
     handleFirmwareUploadCommand(data+1, size-2);
     break;
