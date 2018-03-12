@@ -71,6 +71,7 @@ DMA_HandleTypeDef hdma_i2s2_ext_rx;
 SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart4;
+DMA_HandleTypeDef hdma_uart4_rx;
 
 SRAM_HandleTypeDef hsram1;
 
@@ -499,6 +500,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
   /* DMA1_Stream3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 8, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
