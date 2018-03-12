@@ -12,6 +12,7 @@
 
 #define OWL_RACK
 #define USE_DIGITALBUS
+#define USE_MIDI_CALLBACK
 
 #ifdef OWL_PRISM
 #define USE_USBD_HS
@@ -28,8 +29,12 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi2
+#define BUS_HUART huart1
 
-#ifndef OWL_RACK
+#ifdef OWL_RACK
+#define NOF_ADC_VALUES               0
+#else
+#define NOF_ADC_VALUES               2
 #define USE_ADC
 #define ADC_PERIPH hadc1
 #define ADC_A 0
@@ -66,7 +71,6 @@
 #define CODEC_BUFFER_SIZE (4*CODEC_BLOCKSIZE)
 #define AUDIO_MAX_BLOCK_SIZE (CODEC_BUFFER_SIZE/4)
 
-#define NOF_ADC_VALUES               2
 #define NOF_PARAMETERS               20
 #define NOF_BUTTONS                  5
 #define NOF_ENCODERS                 2
