@@ -17,11 +17,8 @@
 #ifdef USE_SCREEN
 #include "Graphics.h"
 #endif
-#if 0
-#define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
-#define SCREEN_TASK_PRIORITY 3
-static TaskHandle_t screenTask = NULL;
-/* makeFreeRtosPriority(osPriorityNormal) = 3 */
+#ifdef USE_DIGITALBUS
+#include "bus.h"
 #endif
 
 // FreeRTOS low priority numbers denote low priority tasks. 
@@ -120,6 +117,7 @@ int16_t getParameterValue(uint8_t ch){
 }
 
 void setParameterValue(uint8_t ch, int16_t value){
+  // called from program, MIDI, or (potentially) digital bus
   if(ch < NOF_PARAMETERS)
 #ifdef USE_SCREEN
     graphics.params.setValue(ch, value);
@@ -200,7 +198,7 @@ void onProgramReady(){
       bid = stateChanged.getFirstSetIndex();
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
-  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+  // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
 }
 
@@ -212,6 +210,9 @@ void onSetPatchParameter(uint8_t pid, int16_t value){
 //   parameter_values[ch] = value;
 // #endif
   setParameterValue(pid, value);
+#ifdef USE_DIGITALBUS
+  bus_tx_parameter(pid, value);
+#endif
 }
 // called from program
 void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){

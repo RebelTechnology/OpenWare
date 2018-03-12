@@ -5,7 +5,9 @@
 #include "device.h"
 #include "ScreenBuffer.h"
 
-#if defined OWL_MAGUS
+#if defined OWL_RACK
+#include "BollardsParameterController.hpp"
+#elif defined OWL_MAGUS
 #include "MagusParameterController.hpp"
 #elif defined OWL_PRISM
 #include "PrismParameterController.hpp"

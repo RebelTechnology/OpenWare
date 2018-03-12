@@ -9,6 +9,7 @@
 #include "cmsis_os.h"
 #include "errorhandlers.h"
 #include "basicmaths.h"
+#include "Owl.h"
 
 #ifdef USE_DIGITALBUS
 
@@ -19,17 +20,18 @@ static DigitalBusReader bus;
 SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
 SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
 // todo: store data in 32bit frame buffers
-bool DIGITAL_BUS_PROPAGATE_MIDI = 0;
-bool DIGITAL_BUS_ENABLE_BUS = 0;
+bool DIGITAL_BUS_PROPAGATE_MIDI = 1;
+bool DIGITAL_BUS_ENABLE_BUS = 1;
 uint32_t bus_tx_packets = 0;
 uint32_t bus_rx_packets = 0;
 
 static void initiateBusRead(){
-  extern UART_HandleTypeDef huart1;
-  UART_HandleTypeDef *huart = &huart1;
+  extern UART_HandleTypeDef BUS_HUART;
+  UART_HandleTypeDef *huart = &BUS_HUART;
   /* Check that a Rx process is not already ongoing */
   if(huart->RxState == HAL_UART_STATE_READY){
     uint16_t size = min(bus_rx_buf.getCapacity()/2, bus_rx_buf.getContiguousWriteCapacity());
+    // keep at least half the buffer back, it will fill up while this half is processing
     HAL_UART_Receive_DMA(huart, bus_rx_buf.getWriteHead(), size);
   }
 }
@@ -40,7 +42,11 @@ extern "C" {
     bus_tx_buf.incrementReadHead(size);
     bus_tx_packets += size/4;
     if(bus_tx_buf.notEmpty())
+#ifdef OWL_PEDAL // no DMA available for UART4 tx!
+      HAL_UART_Transmit_IT(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
+#else
       HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
+#endif
   }
   void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // what is the correct size if IDLE interrupts?
@@ -59,8 +65,8 @@ extern "C" {
 
   void serial_write(uint8_t* data, uint16_t size){
     bus_tx_buf.push(data, size);
-    extern UART_HandleTypeDef huart1;
-    UART_HandleTypeDef *huart = &huart1;
+    extern UART_HandleTypeDef BUS_HUART;
+    UART_HandleTypeDef *huart = &BUS_HUART;
     /* Check that a Tx process is not already ongoing */
     if(huart->gState == HAL_UART_STATE_READY) 
       HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
@@ -83,8 +89,8 @@ void bus_setup(){
   // serial_setup(USART_BAUDRATE);
   // bus.sendReset();
 
-  extern UART_HandleTypeDef huart1;
-  UART_HandleTypeDef *huart = &huart1;
+  extern UART_HandleTypeDef BUS_HUART;
+  UART_HandleTypeDef *huart = &BUS_HUART;
 
   /* Enable IDLE line detection */
   __HAL_UART_ENABLE_IT(huart, UART_IT_IDLE);
@@ -100,8 +106,8 @@ void bus_setup(){
 
     initiateBusRead();
 
-  // extern UART_HandleTypeDef huart1;
-  // UART_HandleTypeDef *huart = &huart1;
+  // extern UART_HandleTypeDef BUS_HUART;
+  // UART_HandleTypeDef *huart = &BUS_HUART;
   // SET_BIT(huart->Instance->CR1, USART_CR1_PEIE);
   // /* Enable the UART Error Interrupt: (Frame error, noise error, overrun error) */
   // // SET_BIT(huart->Instance->CR3, USART_CR3_EIE);
@@ -133,6 +139,10 @@ int bus_status(){
   return bus.getStatus();
 }
 
+void bus_tx_frame(uint8_t* data){
+  bus.sendFrame(data);
+}
+
 void bus_tx_parameter(uint8_t pid, int16_t value){
   debug << "tx par[" << pid << "][" << value << "]" ;
   bus.sendParameterChange(pid, value);
@@ -149,18 +159,15 @@ void bus_tx_message(const char* msg){
 }
 
 void bus_tx_error(const char* reason){
-  debug << "tx error: " << reason << ".";
-}
-
-void bus_tx_frame(uint8_t* data){
-  bus.sendFrame(data);
+  debug << "tx err[" << reason << "]";
 }
 
 void bus_rx_parameter(uint8_t pid, int16_t value){
+  setParameterValue(pid, value);
   debug << "rx par[" << pid << "]";
 }
 void bus_rx_command(uint8_t cmd, int16_t data){
-  debug << "rx cmd[" << cmd << ".";
+  debug << "rx cmd[" << cmd << "]";
 }
 void bus_rx_message(const char* msg){
   debug << "rx msg[" << msg << "]";

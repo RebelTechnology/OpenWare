@@ -4,6 +4,7 @@
 #define OWL_SERVICE_GET_PARAMETERS         0x1000
 #define OWL_SERVICE_GET_ARRAY              0x1010
 #define OWL_SERVICE_REGISTER_CALLBACK      0x1100
+#define OWL_SERVICE_REQUEST_CALLBACK       0x1101
 #define OWL_SERVICE_OK                     0x000
 #define OWL_SERVICE_INVALID_ARGS           -1
 

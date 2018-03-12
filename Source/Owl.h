@@ -23,12 +23,15 @@ extern "C" {
   void encoderChanged(uint8_t encoder, int16_t value);
 #endif
 
+#ifdef USE_MIDI_CALLBACK
+  void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2);
+#endif
+
 #ifdef OWL_MAGUS
 #define PORT_UNI_INPUT 1
 #define PORT_UNI_OUTPUT 2
 #define PORT_BI_INPUT 3
 #define PORT_BI_OUTPUT 4
-
   void setPortMode(uint8_t index, uint8_t mode);
   uint8_t getPortMode(uint8_t index);
 #endif /* OWL_MAGUS */

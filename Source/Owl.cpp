@@ -557,10 +557,18 @@ void jump_to_bootloader(void){
    * comes online it will get re-enumerated.
    */
   // usb_deinit();
+  /* Blink LEDs */
+  // setLed(RED);
+  // for(uint8_t i = 0; i < 3; i++) {
+  //   volatile uint32_t delayCounter;
+  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
+  //   setLed(NONE);
+  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
+  //   setLed(RED);
+  // }
 
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
-
   const uint32_t bootloaderMagicNumber = 0xDADAB007;
   /* This address is within the first 64k of memory.
    * The magic number must match what is in the bootloader */
@@ -568,18 +576,12 @@ void jump_to_bootloader(void){
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
-
-  // uint16_t i;
-  // volatile uint32_t delayCounter;
-  /* Blink LEDs */
-  // setLed(RED);
-  // for(i = 0; i < 3; i++) {
-  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
-  //   setLed(NONE);
-  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
-  //   setLed(RED);
-  // }
-
-  // reboot();
 }
 
+void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
+  uint8_t data[] = {port, status, d1, d2};
+  midi.write(data, 4);
+#ifdef USE_DIGITALBUS
+  bus_tx_frame(data);
+#endif /* USE_DIGITALBUS */
+}

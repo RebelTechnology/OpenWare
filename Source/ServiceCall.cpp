@@ -3,6 +3,7 @@
 #include "ServiceCall.h"
 #include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
+#include "Owl.h"
 
 #define USE_FFT_TABLES
 #define USE_FAST_POW
@@ -133,6 +134,20 @@ int serviceCall(int service, void** params, int len){
 #endif /* USE_FAST_POW */
     break;
   }
+  case OWL_SERVICE_REQUEST_CALLBACK: {
+    int index = 0;
+    if(len >= index+2){
+      char* name = (char*)params[index++];
+      void** callback = (void**)params[index++];
+#ifdef USE_MIDI_CALLBACK
+      if(strncmp(SYSTEM_FUNCTION_MIDI, name, 3) == 0){
+	*callback = (void*)midi_send;
+	ret = OWL_SERVICE_OK;
+      }
+#endif /* USE_MIDI_CALLBACK */
+    }
+  }
+    
   case OWL_SERVICE_REGISTER_CALLBACK: {
     int index = 0;
     if(len >= index+2){
