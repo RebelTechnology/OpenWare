@@ -1,18 +1,21 @@
 #include "main.h"
 
 #define OWL_PEDAL
-/* #define OWL_RACK */
+#define OWL_RACK
+#define USE_DIGITALBUS
+#define USE_MIDI_CALLBACK
 
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */
 /* #define OWL_MODULAR */
 
-#define OWL1
 #define USE_CODEC
 #define USE_WM8731
 #define CODEC_SPI hspi1
 #define USE_USBD_FS
+
+#define BUS_HUART huart4
 
 #ifdef OWL_RACK
 #define NOF_ADC_VALUES               0

@@ -8,6 +8,10 @@ C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += wm8731.c
 
+C_SRC += serial.c
+CPP_SRC += bus.cpp
+# CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp 
+
 include $(OPENWARE)/mcu/sources.mk
 
 OBJS = $(C_SRC:%.c=Build/%.o)
