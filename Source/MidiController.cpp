@@ -394,18 +394,14 @@ void MidiController::write(uint8_t* data, uint16_t size){
 
 void MidiController::push(){
   int len = buffer.getContiguousReadCapacity();
-  while(len >= 4 && (!midi_device_connected() || midi_device_ready())
-#ifdef USE_USB_HOST
-	&& (!midi_host_connected() || midi_host_ready())
-#endif
-	){
-    if(midi_device_ready())
-      midi_device_tx(buffer.getReadHead(), 4);
+  while(len >= 4){
+    if(midi_device_ready()) // if not ready, packets will be missed
+      midi_device_tx(buffer.getReadHead(), len);
 #ifdef USE_USB_HOST
     if(midi_host_ready())
-      midi_host_tx(buffer.getReadHead(), 4);
+      midi_host_tx(buffer.getReadHead(), len);
 #endif
-    buffer.incrementReadHead(4);
+    buffer.incrementReadHead(len);
     len = buffer.getContiguousReadCapacity();
   }
 }
