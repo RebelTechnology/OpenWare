@@ -7,7 +7,7 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
-   void codec_init(SPI_HandleTypeDef*);
+   void codec_init();
    void codec_write(uint8_t reg, uint8_t data);
    void codec_bypass(int bypass);
    void codec_set_volume(int8_t volume);

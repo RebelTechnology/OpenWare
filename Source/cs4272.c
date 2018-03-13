@@ -11,7 +11,6 @@ static void NopDelay(uint32_t nops){
 
 #define CS_TIMEOUT       1000
 
-SPI_HandleTypeDef* hspi;
 static uint8_t volume;
 
 #define setCS()    setPin(CS_CS_GPIO_Port, CS_CS_Pin)
@@ -28,7 +27,8 @@ void codec_write(uint8_t reg, uint8_t data){
   buf[1] = reg & 0x0f;
   buf[2] = data;
   /* i2c_write(CODEC_ADDR,2,buf); */
-  HAL_SPI_Transmit(hspi, buf, 3, CS_TIMEOUT);
+  extern SPI_HandleTypeDef CODEC_SPI;
+  HAL_SPI_Transmit(&CODEC_SPI, buf, 3, CS_TIMEOUT);
   setCS();
 
 /* The CS4271 has MAP auto increment capability, enabled by the INCR bit in the MAP. If INCR is 0, then the MAP will stay constant for successive writes. If INCR is set, then MAP will auto increment after each byte is written, allowing block writes to successive registers. */
@@ -42,9 +42,7 @@ void codec_reset(){
 #endif
 }
 
-void codec_init(SPI_HandleTypeDef* spi){
-  hspi = spi;
-
+void codec_init(){
   /* 1) When using the CS4271 with internally generated MCLK, hold RST low until
    * the power supply is stable. In this state, the Control Port is reset to its 
    * default settings. */

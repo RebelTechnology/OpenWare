@@ -6,7 +6,7 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
-   void codec_init(SPI_HandleTypeDef*);
+   void codec_init();
    void codec_write(uint8_t reg, uint8_t data);
    void codec_bypass(int bypass);
    void codec_mute(bool mute);
@@ -27,8 +27,8 @@ uint16_t Codec::getBlockSize(){
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-void Codec::begin(SPI_HandleTypeDef *spi){
-  codec_init(spi);
+void Codec::begin(){
+  codec_init();
 #ifdef OWL_MICROLAB
   codec_set_volume(127-18); // -18dB
 #else

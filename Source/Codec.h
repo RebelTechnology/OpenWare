@@ -5,8 +5,7 @@
 
 class Codec {
  public:
-  Codec() : hspi(NULL) {}
-  void begin(SPI_HandleTypeDef *spi);
+  void begin();
   void reset();
   void start();
   void stop();
@@ -24,8 +23,6 @@ class Codec {
   int32_t getMax();
   float getAvg();
   uint16_t getBlockSize();
- private:
-  SPI_HandleTypeDef *hspi;
 };
 
 extern Codec codec;
