@@ -207,6 +207,19 @@ void UART4_IRQHandler(void)
   /* USER CODE END UART4_IRQn 0 */
   HAL_UART_IRQHandler(&huart4);
   /* USER CODE BEGIN UART4_IRQn 1 */
+  /* Check for IDLE flag */
+  UART_HandleTypeDef *huart = &huart4;
+  if(huart->Instance->SR & UART_FLAG_IDLE){
+    /* This part is important */
+    /* Clear IDLE flag by reading status and data registers */
+    volatile uint32_t tmp;                  /* Must be volatile to prevent optimizations */
+    tmp = huart->Instance->SR;              /* Read status register */
+    tmp = huart->Instance->DR;              /* Read data register */
+    (void)tmp;                              /* Prevent compiler warnings */
+    if(huart->hdmarx != NULL)
+      huart->hdmarx->Instance->CR &= ~DMA_SxCR_EN;       /* Disabling DMA will force transfer complete interrupt if enabled */
+    /* DMA1_Stream2->CR &= ~DMA_SxCR_EN;       /\* Disabling DMA will force transfer complete interrupt if enabled *\/ */
+  }
 
   /* USER CODE END UART4_IRQn 1 */
 }
