@@ -271,8 +271,7 @@ void setup(){
   ledstatus = 0;
   settings.init();
 #ifdef USE_CODEC
-  extern SPI_HandleTypeDef CODEC_SPI;
-  codec.begin(&CODEC_SPI);
+  codec.begin();
   // codec.set(0);
 #if defined OWL_MICROLAB || defined OWL_MINILAB // || defined OWL_MAGUS
   codec.setOutputGain(127-9); // -9dB
@@ -391,7 +390,7 @@ void loop(void){
   vTaskDelay(xFrequency);
 #else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
-#endif  
+#endif
   midi.push();
 
 #ifdef OWL_MAGUS
