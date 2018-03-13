@@ -1,6 +1,7 @@
 #include "ApplicationSettings.h"
 // #include "eepromcontrol.h"
 #include "device.h"
+#include "MidiStatus.h"
 
 #define APPLICATION_SETTINGS_ADDR ADDR_FLASH_SECTOR_1
 #define APPLICATION_SETTINGS_SECTOR FLASH_Sector_1
@@ -30,7 +31,7 @@ void ApplicationSettings::reset(){
   input_scalar = AUDIO_INPUT_SCALAR;
   output_offset = AUDIO_OUTPUT_OFFSET;
   output_scalar = AUDIO_OUTPUT_SCALAR;
-  midi_input_channel = MIDI_OMNI_CHANNEL;
+  midi_input_channel = MIDI_INPUT_CHANNEL;
   midi_output_channel = MIDI_OUTPUT_CHANNEL;
 }
 

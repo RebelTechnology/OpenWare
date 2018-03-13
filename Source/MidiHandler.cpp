@@ -8,6 +8,16 @@
 #include "errorhandlers.h"
 #include "Codec.h"
 #include "Owl.h"
+#ifdef USE_DIGITALBUS
+#include "bus.h"
+#endif
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
 
 static FirmwareLoader loader;
 
@@ -152,15 +162,15 @@ void MidiHandler::handleChannelPressure(uint8_t status, uint8_t value){
 void MidiHandler::handlePolyKeyPressure(uint8_t status, uint8_t note, uint8_t value){
 }
 
-void MidiHandler::updateCodecSettings(){
-  // codec.softMute(true);
-  // codec.stop();
-  // codec.init(settings);
-  // codec.start();
-  // program.resetProgram(true);
-  // midi_set_input_channel(settings.midi_input_channel);
-  // midi_set_output_channel(settings.midi_output_channel);
-}
+// void MidiHandler::updateCodecSettings(){
+//   mididevice.setInputChannel(settings.midi_input_channel);  
+// #ifdef USE_USB_HOST
+//   midihost.setInputChannel(settings.midi_input_channel);
+// #endif
+// #ifdef USE_DIGITALBUS
+//   bus_set_input_channel(settings.midi_input_channel);
+// #endif
+// }
 
 void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   if(size < 4)
@@ -194,11 +204,13 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
     settings.output_scalar = value;
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_INPUT_CHANNEL, p, 2) == 0){
-    settings.midi_input_channel = value;
+    settings.midi_input_channel = max(-1, min(15, value));
+    setInputChannel(settings.midi_input_channel);
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
-    settings.midi_output_channel = value;
+    settings.midi_output_channel = max(-1, min(15, value));
+    midi.setOutputChannel(settings.midi_output_channel);
   }
-  updateCodecSettings();
+  // updateCodecSettings();
 }
 
 void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){

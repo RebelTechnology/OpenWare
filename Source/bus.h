@@ -34,9 +34,9 @@
    void bus_rx_data(const uint8_t* data, uint16_t size); 
    void bus_tx_error(const char* reason);
    void bus_rx_error(const char* reason);
+   void bus_set_input_channel(uint8_t ch);
 
    void bus_tx_frame(uint8_t* data);
-
    void serial_write(uint8_t* data, uint16_t len);
    
 #ifdef __cplusplus

@@ -146,3 +146,12 @@ Boot0(pin) = 0, BFB2(bit) = 1 and both banks don’t contain valid code
 BFB2: boot from bank 2
 
 -----------------------------------------------------------------
+
+note:
+for all projects, check main.c and stm32xyz_it.c for common blocks, e.g.
+SRAM / SDRAM initialisation
+I2S / SAI initialisation and interrupts
+uart / bus IDLE interrupts
+USB stuff
+
+-----------------------------------------------------------------

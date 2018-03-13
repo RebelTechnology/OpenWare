@@ -346,13 +346,15 @@ void setup(){
   program.loadProgram(1);
   program.startProgram(false);
 
-  midi.init(0);
+  midi.setOutputChannel(settings.midi_output_channel);
+  mididevice.setInputChannel(settings.midi_input_channel);
 
   xLastWakeTime = xTaskGetTickCount();
   xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 
 #ifdef USE_DIGITALBUS
   bus_setup();
+  bus_set_input_channel(settings.midi_input_channel);
 #endif /* USE_DIGITALBUS */
 }
 
@@ -576,6 +578,7 @@ void jump_to_bootloader(void){
   /* Shouldn't get here */
   while(1);
 }
+
 
 void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
   uint8_t data[] = {port, status, d1, d2};

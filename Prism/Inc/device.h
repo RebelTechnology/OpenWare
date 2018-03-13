@@ -90,7 +90,7 @@
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        3500 /* 168MHz / 48kHz */
 
-#define MIDI_OMNI_CHANNEL            (-1)
+#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
 #define MIDI_OUTPUT_CHANNEL          0
 
 /* +0db in and out */

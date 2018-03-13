@@ -5,10 +5,8 @@
 #define USE_DIGITALBUS
 #define USE_MIDI_CALLBACK
 
-/* #define OWL_TESSERACT */
-/* #define OWL_QUADFM */
-/* #define OWL_PLAYER */
-/* #define OWL_MODULAR */
+#define MIDI_INPUT_CHANNEL           2
+#define MIDI_OUTPUT_CHANNEL          2
 
 #define USE_CODEC
 #define USE_WM8731
@@ -65,9 +63,6 @@
 #define IDLE_TASK_STACK_SIZE         (128/sizeof(portSTACK_TYPE))
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        3500 /* 168MHz / 48kHz */
-
-#define MIDI_OMNI_CHANNEL            (-1)
-#define MIDI_OUTPUT_CHANNEL          0
 
 /* +0db in and out */
 #define AUDIO_INPUT_GAIN_LEFT        0x017

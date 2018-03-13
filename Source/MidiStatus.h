@@ -1,6 +1,8 @@
 #ifndef _MidiStatus_h_
 #define _MidiStatus_h_
 
+#define MIDI_OMNI_CHANNEL            (-1)
+
 enum MidiStatus {
   STATUS_BYTE			= 0x80,
   NOTE_OFF			= 0x80,

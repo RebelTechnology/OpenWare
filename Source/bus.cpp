@@ -14,9 +14,9 @@
 #define DIGITAL_BUS_BUFFER_SIZE 512
 
 // static uint8_t busframe[4];
-static DigitalBusReader bus;
-SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
-SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
+DigitalBusReader bus;
+static SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
+static SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
 // todo: store data in 32bit frame buffers
 bool DIGITAL_BUS_PROPAGATE_MIDI = 1;
 bool DIGITAL_BUS_ENABLE_BUS = 0;
@@ -34,17 +34,28 @@ static void initiateBusRead(){
   }
 }
 
-extern "C" {
-  void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
-    int size = huart->TxXferSize; // - huart->TxXferCount;
-    bus_tx_buf.incrementReadHead(size);
-    bus_tx_packets += size/4;
-    if(bus_tx_buf.notEmpty())
+static void initiateBusWrite(){
+  if(bus_tx_buf.notEmpty()){
+    /* Check that a tx process is not already ongoing */
+    extern UART_HandleTypeDef BUS_HUART;
+    UART_HandleTypeDef *huart = &BUS_HUART;
+    if(huart->gState == HAL_UART_STATE_READY) 
 #ifdef OWL_PEDAL // no DMA available for UART4 tx!
       HAL_UART_Transmit_IT(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
 #else
       HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
 #endif
+  }
+}
+
+extern "C" {
+  void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
+    // /* Disable TXEIE and TCIE interrupts */
+    // CLEAR_BIT(huart->Instance->CR1, (USART_CR1_TXEIE | USART_CR1_TCIE));
+    int size = huart->TxXferSize; // - huart->TxXferCount;
+    bus_tx_buf.incrementReadHead(size);
+    bus_tx_packets += size/4;
+    initiateBusWrite();
   }
   void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // what is the correct size if IDLE interrupts?
@@ -63,15 +74,6 @@ extern "C" {
 
   void serial_write(uint8_t* data, uint16_t size){
     bus_tx_buf.push(data, size);
-    extern UART_HandleTypeDef BUS_HUART;
-    UART_HandleTypeDef *huart = &BUS_HUART;
-    /* Check that a Tx process is not already ongoing */
-    if(huart->gState == HAL_UART_STATE_READY) 
-#ifdef OWL_PEDAL // no DMA available for UART4 tx!
-      HAL_UART_Transmit_IT(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
-#else
-      HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
-#endif
   }
 }
 
@@ -103,6 +105,7 @@ void bus_setup(){
 #define BUS_IDLE_INTERVAL 2197
 
 int bus_status(){
+  // incoming data
   while(bus_rx_buf.available() >= 4){
     uint8_t frame[4];
     bus_rx_buf.pull(frame, 4);
@@ -114,6 +117,9 @@ int bus_status(){
   }
   initiateBusRead();
 
+  // outgoing data
+  initiateBusWrite();
+  
   if(DIGITAL_BUS_ENABLE_BUS){
     static uint32_t lastpolled = 0;
     if(osKernelSysTick() > lastpolled + BUS_IDLE_INTERVAL){
@@ -145,6 +151,7 @@ void bus_tx_message(const char* msg){
 
 void bus_tx_error(const char* reason){
   debug << "tx err[" << reason << "]";
+  bus_tx_buf.reset();
 }
 
 void bus_rx_parameter(uint8_t pid, int16_t value){
@@ -163,8 +170,13 @@ void bus_rx_data(const uint8_t* data, uint16_t size){
 
 void bus_rx_error(const char* reason){
   debug << "rx error: " << reason << ".";
+  bus_rx_buf.reset();
   bus.reset();
-  bus.sendReset();
+  // bus.sendReset();
+}
+
+void bus_set_input_channel(uint8_t ch){
+  bus.setInputChannel(ch);
 }
 
 #endif /* USE_UART */
