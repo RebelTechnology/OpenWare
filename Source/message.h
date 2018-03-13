@@ -45,7 +45,11 @@ extern Debug debug;
 
 template<class T>
 inline Debug &operator <<(Debug &obj, T arg)
+#ifdef OWL_PRISM
 { obj.print(arg); return obj; }
+#else
+{ return obj; }
+#endif
 
 void debugMessage(const char* msg, int);
 void debugMessage(const char* msg, int, int, int);

@@ -1,10 +1,8 @@
 #include "bus.h"
 #include "midi.h"
-#include "serial.h"
 #include "device.h"
 #include "message.h"
 #include "SerialBuffer.hpp"
-// #include "DigitalBusStreamReader.h"
 #include "DigitalBusReader.h"
 #include "cmsis_os.h"
 #include "errorhandlers.h"
@@ -21,7 +19,7 @@ SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
 SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
 // todo: store data in 32bit frame buffers
 bool DIGITAL_BUS_PROPAGATE_MIDI = 1;
-bool DIGITAL_BUS_ENABLE_BUS = 1;
+bool DIGITAL_BUS_ENABLE_BUS = 0;
 uint32_t bus_tx_packets = 0;
 uint32_t bus_rx_packets = 0;
 
@@ -69,14 +67,12 @@ extern "C" {
     UART_HandleTypeDef *huart = &BUS_HUART;
     /* Check that a Tx process is not already ongoing */
     if(huart->gState == HAL_UART_STATE_READY) 
+#ifdef OWL_PEDAL // no DMA available for UART4 tx!
+      HAL_UART_Transmit_IT(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
+#else
       HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
+#endif
   }
-
-  // void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-  //   rxbuf.incrementWriteHead(4);
-  //   __HAL_UART_FLUSH_DRREGISTER(huart);
-  //   serial_read(rxbuf.getWriteHead(), 4);
-  // }
 }
 
 uint8_t* bus_deviceid(){
@@ -94,32 +90,19 @@ void bus_setup(){
 
   /* Enable IDLE line detection */
   __HAL_UART_ENABLE_IT(huart, UART_IT_IDLE);
-  // USART_ITConfig(huart->Instance, UART_IT_IDLE, ENABLE);
     
   /* Enable Parity Error Interrupt */
   __HAL_UART_ENABLE_IT(huart, UART_IT_PE);
-  // USART_ITConfig(huart->Instance, UART_IT_PE, ENABLE);
 
   /* Enable Error Interrupt */
   __HAL_UART_ENABLE_IT(huart, UART_IT_ERR);
-  // USART_ITConfig(huart->Instance, UART_IT_ERR, ENABLE);
 
-    initiateBusRead();
-
-  // extern UART_HandleTypeDef BUS_HUART;
-  // UART_HandleTypeDef *huart = &BUS_HUART;
-  // SET_BIT(huart->Instance->CR1, USART_CR1_PEIE);
-  // /* Enable the UART Error Interrupt: (Frame error, noise error, overrun error) */
-  // // SET_BIT(huart->Instance->CR3, USART_CR3_EIE);
-  // /* Enable the UART Data Register not empty Interrupt */
-  // SET_BIT(huart->Instance->CR1, USART_CR1_RXNEIE);
-  // serial_read(rxbuf.getWriteHead(), 4);
+  initiateBusRead();
 }
 
 #define BUS_IDLE_INTERVAL 2197
 
 int bus_status(){
-  // bus.process();
   while(bus_rx_buf.available() >= 4){
     uint8_t frame[4];
     bus_rx_buf.pull(frame, 4);
@@ -131,10 +114,12 @@ int bus_status(){
   }
   initiateBusRead();
 
-  static uint32_t lastpolled = 0;
-  if(osKernelSysTick() > lastpolled + BUS_IDLE_INTERVAL){
-    bus.connected();
-    lastpolled = osKernelSysTick();
+  if(DIGITAL_BUS_ENABLE_BUS){
+    static uint32_t lastpolled = 0;
+    if(osKernelSysTick() > lastpolled + BUS_IDLE_INTERVAL){
+      bus.connected();
+      lastpolled = osKernelSysTick();
+    }
   }
   return bus.getStatus();
 }

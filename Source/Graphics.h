@@ -6,6 +6,7 @@
 #include "ScreenBuffer.h"
 
 #if defined OWL_RACK
+/* #include "PrismParameterController.hpp" */
 #include "BollardsParameterController.hpp"
 #elif defined OWL_MAGUS
 #include "MagusParameterController.hpp"

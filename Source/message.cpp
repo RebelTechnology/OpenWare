@@ -181,6 +181,7 @@ void assert_failed(const char* msg, const char* location, int line){
 // }
 
 Debug debug;
+#ifdef OWL_PRISM
 
 void Debug::print(char arg){
   if(getDebugMessage() != buffer)
@@ -217,3 +218,4 @@ void Debug::print(int arg){
   setDebugMessage(buffer);
 }
 
+#endif
