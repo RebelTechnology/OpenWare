@@ -12,7 +12,6 @@
 
 #define USE_CODEC
 #define USE_WM8731
-#define CODEC_SPI hspi1
 #define USE_USBD_FS
 
 #define BUS_HUART huart4
