@@ -12,6 +12,8 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 #include "message.h"
+#include "FlashStorage.h"
+#include "PatchRegistry.h"
 
 #ifdef OWL_MAGUS
 #include "purple-blue-cyan.h"
@@ -269,7 +271,9 @@ void setup(){
 #endif /* OWL_MAGUS */
   
   ledstatus = 0;
-  settings.init();
+  storage.init();
+  registry.init();
+  settings.init(); // settings need the registry to be initialised first
 #ifdef USE_CODEC
   codec.begin();
   // codec.set(0);

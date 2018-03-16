@@ -2,12 +2,16 @@
 // #include "eepromcontrol.h"
 #include "device.h"
 #include "MidiStatus.h"
+#include "PatchRegistry.h"
+#include <string.h>
 
-#define APPLICATION_SETTINGS_ADDR ADDR_FLASH_SECTOR_1
-#define APPLICATION_SETTINGS_SECTOR FLASH_Sector_1
+// #define APPLICATION_SETTINGS_ADDR ADDR_FLASH_SECTOR_1
+// #define APPLICATION_SETTINGS_SECTOR FLASH_Sector_1
+
+#define APPLICATION_SETTINGS_RESOURCE_INDEX 42
 
 void ApplicationSettings::init(){
-  checksum = sizeof(*this) ^ 0xffffffff;
+  checksum = sizeof(*this) ^ 0xf0f0f0f0;
   if(settingsInFlash())
     loadFromFlash();
   else
@@ -21,10 +25,8 @@ void ApplicationSettings::reset(){
   audio_bitdepth = AUDIO_BITDEPTH;
   audio_dataformat = AUDIO_DATAFORMAT;
   audio_blocksize = AUDIO_BLOCK_SIZE;
-  inputGainLeft = AUDIO_INPUT_GAIN_LEFT;
-  inputGainRight = AUDIO_INPUT_GAIN_RIGHT;
-  outputGainLeft = AUDIO_OUTPUT_GAIN_LEFT;
-  outputGainRight = AUDIO_OUTPUT_GAIN_RIGHT;
+  audio_input_gain = AUDIO_INPUT_GAIN;
+  audio_output_gain = AUDIO_OUTPUT_GAIN;
   program_index = DEFAULT_PROGRAM;
   program_change_button = true;
   input_offset = AUDIO_INPUT_OFFSET;
@@ -37,24 +39,26 @@ void ApplicationSettings::reset(){
 
 bool ApplicationSettings::settingsInFlash(){
   // return eeprom_read_word(APPLICATION_SETTINGS_ADDR) == checksum;
-  return false;
+  // return false;
+  return registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX) != NULL;
 }
 
 void ApplicationSettings::loadFromFlash(){
   // eeprom_read_block(APPLICATION_SETTINGS_ADDR, this, sizeof(*this));
+  ResourceHeader* resource = registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX);
+  uint8_t* data = (uint8_t*)resource + sizeof(ResourceHeader);
+  if(resource != NULL){
+    memcpy(this, data, sizeof(*this));
+  }
 }
 
 void ApplicationSettings::saveToFlash(){
-  // eeprom_unlock();
-  // //   if(eeprom_erase(APPLICATION_SETTINGS_ADDR) == 0)
-  // eeprom_erase_sector(APPLICATION_SETTINGS_SECTOR);
-  // eeprom_write_block(APPLICATION_SETTINGS_ADDR, this, sizeof(*this));
-  // eeprom_lock();
-}
-
-void ApplicationSettings::clearFlash(){
-  // eeprom_unlock();
-  // eeprom_erase_sector(APPLICATION_SETTINGS_SECTOR);
-  // //  eeprom_erase(APPLICATION_SETTINGS_ADDR);
-  // eeprom_lock();
+  uint16_t totalsize = sizeof(ResourceHeader) + sizeof(*this);
+  uint8_t buffer[totalsize];
+  ResourceHeader* resource = (ResourceHeader*)buffer;
+  resource->magic = 0XDADADEED;
+  resource->size = sizeof(*this);
+  strcpy(resource->name, "Settings");  
+  memcpy(buffer+sizeof(ResourceHeader), this, sizeof(*this));
+  registry.store(APPLICATION_SETTINGS_RESOURCE_INDEX, buffer, totalsize);
 }

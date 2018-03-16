@@ -5,8 +5,8 @@
 #define USE_DIGITALBUS
 #define USE_MIDI_CALLBACK
 
-#define MIDI_INPUT_CHANNEL           2
-#define MIDI_OUTPUT_CHANNEL          2
+#define MIDI_INPUT_CHANNEL           4
+#define MIDI_OUTPUT_CHANNEL          4
 
 #define USE_CODEC
 #define USE_WM8731
@@ -65,10 +65,8 @@
 #define ARM_CYCLES_PER_SAMPLE        3500 /* 168MHz / 48kHz */
 
 /* +0db in and out */
-#define AUDIO_INPUT_GAIN_LEFT        0x017
-#define AUDIO_INPUT_GAIN_RIGHT       0x017
-#define AUDIO_OUTPUT_GAIN_LEFT       0x079
-#define AUDIO_OUTPUT_GAIN_RIGHT      0x079 
+#define AUDIO_INPUT_GAIN             0x017
+#define AUDIO_OUTPUT_GAIN            0x079
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */
 #define AUDIO_OUTPUT_OFFSET          0x00001eec /* 0.1208 * 65535 */

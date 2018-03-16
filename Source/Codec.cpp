@@ -29,11 +29,6 @@ uint16_t Codec::getBlockSize(){
 
 void Codec::begin(){
   codec_init();
-#ifdef OWL_MICROLAB
-  codec_set_volume(127-18); // -18dB
-#else
-  codec_set_volume(127); // 0dB
-#endif
 }
 
 void Codec::reset(){
@@ -102,6 +97,7 @@ void Codec::stop(){
 }
 
 void Codec::start(){
+  setOutputGain(settings.audio_output_gain);
   blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
   HAL_StatusTypeDef ret;
   /* See STM32F405 Errata, I2S device limitations */
@@ -175,6 +171,7 @@ void Codec::stop(){
 }
 
 void Codec::start(){
+  setOutputGain(settings.audio_output_gain);
   blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
   HAL_StatusTypeDef ret;
   ret = HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t*)rxbuf, blocksize*4);

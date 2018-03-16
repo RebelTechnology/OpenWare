@@ -18,7 +18,11 @@ DigitalBusReader bus;
 static SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
 static SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
 // todo: store data in 32bit frame buffers
+#ifdef OWL_PRISM
+bool DIGITAL_BUS_PROPAGATE_MIDI = 0;
+#else
 bool DIGITAL_BUS_PROPAGATE_MIDI = 1;
+#endif
 bool DIGITAL_BUS_ENABLE_BUS = 0;
 uint32_t bus_tx_packets = 0;
 uint32_t bus_rx_packets = 0;

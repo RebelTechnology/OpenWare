@@ -8,6 +8,8 @@
 #include "errorhandlers.h"
 #include "Codec.h"
 #include "Owl.h"
+#include "FlashStorage.h"
+#include "PatchRegistry.h"
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
@@ -162,15 +164,16 @@ void MidiHandler::handleChannelPressure(uint8_t status, uint8_t value){
 void MidiHandler::handlePolyKeyPressure(uint8_t status, uint8_t note, uint8_t value){
 }
 
-// void MidiHandler::updateCodecSettings(){
-//   mididevice.setInputChannel(settings.midi_input_channel);  
-// #ifdef USE_USB_HOST
-//   midihost.setInputChannel(settings.midi_input_channel);
-// #endif
-// #ifdef USE_DIGITALBUS
-//   bus_set_input_channel(settings.midi_input_channel);
-// #endif
-// }
+void MidiHandler::updateCodecSettings(){
+  setInputChannel(settings.midi_input_channel);  
+#ifdef USE_USB_HOST
+  midihost.setInputChannel(settings.midi_input_channel);
+#endif
+#ifdef USE_DIGITALBUS
+  bus_set_input_channel(settings.midi_input_channel);
+#endif
+  codec.reset();
+}
 
 void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   if(size < 4)
@@ -192,7 +195,8 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     settings.audio_codec_bypass = value;
     codec.bypass(value);
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN, p, 2) == 0){
-    codec.setOutputGain(value);
+    settings.audio_output_gain = value;  
+    codec.setOutputGain(settings.audio_output_gain);
   }else if(strncmp(SYSEX_CONFIGURATION_PC_BUTTON, p, 2) == 0){
     settings.program_change_button = value;
   }else if(strncmp(SYSEX_CONFIGURATION_INPUT_OFFSET, p, 2) == 0){
@@ -211,6 +215,15 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     midi.setOutputChannel(settings.midi_output_channel);
   }
   // updateCodecSettings();
+}
+
+void MidiHandler::handleSettingsResetCommand(uint8_t* data, uint16_t size){
+  settings.reset();
+  updateCodecSettings();
+}
+
+void MidiHandler::handleSettingsStoreCommand(uint8_t* data, uint16_t size){
+  settings.saveToFlash();
 }
 
 void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
@@ -242,13 +255,17 @@ void MidiHandler::runProgram(){
 }
 
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
-  if(size == 5){
-    uint32_t sector = loader.decodeInt(data);
-    program.eraseFromFlash(sector);
-    loader.clear();
-  }else{
-    error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
-  }
+  storage.erase();
+  storage.init();
+  registry.init();
+  settings.init();
+  // if(size == 5){
+  //   uint32_t sector = loader.decodeInt(data);
+  //   program.eraseFromFlash(sector);
+  //   loader.clear();
+  // }else{
+  //   error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
+  // }
 }
 
 void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
@@ -306,6 +323,12 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     break;
   case SYSEX_FLASH_ERASE:
     handleFlashEraseCommand(data+4, size-5);
+    break;
+  case SYSEX_SETTINGS_RESET:
+    handleSettingsResetCommand(data+4, size-5);
+    break;
+  case SYSEX_SETTINGS_STORE:
+    handleSettingsStoreCommand(data+4, size-5);
     break;
   default:
     error(PROGRAM_ERROR, "Invalid SysEx Message");

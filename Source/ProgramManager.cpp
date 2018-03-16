@@ -470,7 +470,6 @@ ProgramManager::ProgramManager(){
 }
 
 void ProgramManager::startManager(){
-  registry.init();
   codec.start();
   // codec.pause();
   updateProgramVector(getProgramVector());

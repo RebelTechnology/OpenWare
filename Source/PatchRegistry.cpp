@@ -28,8 +28,6 @@ void PatchRegistry::init() {
   //   else
   //     registerPatch(def);
   // }
-
-  storage.init();
   for(int i=0; i<storage.getBlocksTotal(); ++i){
     StorageBlock block = storage.getBlock(i);
     if(block.verify() && block.getDataSize() > 4){
@@ -80,10 +78,12 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     if(block.verify()){
       debugMessage("Patch stored to flash");
       index = index - 1;
-      if(patchblocks[index].verify())
+      // if(patchblocks[index].verify())
 	patchblocks[index].setDeleted(); // delete old patch
       patchblocks[index] = block;
       patchCount = max(patchCount, index+1);
+    }else{
+      error(FLASH_ERROR, "failed to verify patch");
     }
   }else if(*magic == 0xDADADEED && index > MAX_NUMBER_OF_PATCHES &&
 	   index <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
@@ -93,9 +93,11 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     if(block.verify()){
       debugMessage("Resource stored to flash");
       index = index - 1 - MAX_NUMBER_OF_PATCHES;
-      if(resourceblocks[index].verify())
-	resourceblocks[index].setDeleted();
+      // if(resourceblocks[index].verify())
+        resourceblocks[index].setDeleted();
       resourceblocks[index] = block;
+    }else{
+      error(FLASH_ERROR, "failed to verify resource");
     }
   }else{
     error(PROGRAM_ERROR, "Invalid magic");

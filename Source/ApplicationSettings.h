@@ -10,10 +10,8 @@ public:
   uint8_t audio_bitdepth;
   uint8_t audio_dataformat;
   uint16_t audio_blocksize;
-  uint8_t inputGainLeft;
-  uint8_t inputGainRight;
-  uint8_t outputGainLeft;
-  uint8_t outputGainRight;
+  uint8_t audio_input_gain;
+  uint8_t audio_output_gain;
   bool audio_codec_swaplr;
   bool audio_codec_bypass;
   uint8_t program_index;
@@ -30,7 +28,6 @@ public:
   bool settingsInFlash();
   void loadFromFlash();
   void saveToFlash();
-  void clearFlash();
 };
 
 extern ApplicationSettings settings;
