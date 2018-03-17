@@ -74,9 +74,9 @@ void DigitalBusHandler::handleDiscover(uint8_t seq, uint32_t other){
     peers = seq;
     status = CONNECTED;
   }else{
-    if(DIGITAL_BUS_ENABLE_BUS && seq < 0x0f)      
+    if(settings.bus_enabled && seq < 0x0f)      
       sendDiscover(seq+1, other); // increment seq and pass it on
-    if(DIGITAL_BUS_ENABLE_BUS && peers == 0)
+    if(settings.bus_enabled && peers == 0)
       startDiscover();
   }
 }

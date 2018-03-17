@@ -8,6 +8,9 @@
 #define MIDI_INPUT_CHANNEL           4
 #define MIDI_OUTPUT_CHANNEL          4
 
+#define DIGITAL_BUS_ENABLED          0
+#define DIGITAL_BUS_FORWARD_MIDI     1
+
 #define USE_CODEC
 #define USE_WM8731
 #define USE_USBD_FS

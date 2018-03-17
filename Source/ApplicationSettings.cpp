@@ -29,6 +29,8 @@ void ApplicationSettings::reset(){
   audio_output_gain = AUDIO_OUTPUT_GAIN;
   program_index = DEFAULT_PROGRAM;
   program_change_button = true;
+  bus_enabled = DIGITAL_BUS_ENABLED;
+  bus_forward_midi = DIGITAL_BUS_FORWARD_MIDI;
   input_offset = AUDIO_INPUT_OFFSET;
   input_scalar = AUDIO_INPUT_SCALAR;
   output_offset = AUDIO_OUTPUT_OFFSET;

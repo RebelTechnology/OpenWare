@@ -16,6 +16,8 @@ public:
   bool audio_codec_bypass;
   uint8_t program_index;
   bool program_change_button;
+  bool bus_enabled;
+  bool bus_forward_midi;
   uint32_t input_offset;
   uint32_t input_scalar;
   uint32_t output_offset;

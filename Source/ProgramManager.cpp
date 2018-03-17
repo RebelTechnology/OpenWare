@@ -211,7 +211,7 @@ void onSetPatchParameter(uint8_t pid, int16_t value){
 // #endif
   setParameterValue(pid, value);
 #ifdef USE_DIGITALBUS
-  if(DIGITAL_BUS_ENABLE_BUS){
+  if(settings.bus_enabled){
     bus_tx_parameter(pid, value);
   }
 #endif

@@ -213,6 +213,10 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
     settings.midi_output_channel = max(-1, min(15, value));
     midi.setOutputChannel(settings.midi_output_channel);
+  }else if(strncmp(SYSEX_CONFIGURATION_BUS_ENABLE, p, 2) == 0){
+    settings.bus_enabled = value;
+  }else if(strncmp(SYSEX_CONFIGURATION_BUS_FORWARD_MIDI, p, 2) == 0){
+    settings.bus_forward_midi = value;
   }
   // updateCodecSettings();
 }

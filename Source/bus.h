@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
+#include "ApplicationSettings.h"
  extern "C" {
 #endif
 
@@ -13,10 +14,7 @@
 #define BUS_STATUS_ERROR       0xff
 
 #define BUS_CMD_CONFIGURE_IO   0x10
-
-   extern bool DIGITAL_BUS_PROPAGATE_MIDI;
-   extern bool DIGITAL_BUS_ENABLE_BUS;
-   
+  
    void bus_setup();
    int bus_status();
    uint8_t* bus_deviceid();
