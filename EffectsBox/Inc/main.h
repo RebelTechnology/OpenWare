@@ -101,6 +101,7 @@
 #define SW3_LED_GPIO_Port GPIOA
 #define SW1_BTN_Pin GPIO_PIN_4
 #define SW1_BTN_GPIO_Port GPIOA
+#define SW1_BTN_EXTI_IRQn EXTI4_IRQn
 #define OLED_CS_Pin GPIO_PIN_5
 #define OLED_CS_GPIO_Port GPIOA
 #define FLASH_MISO_Pin GPIO_PIN_6
@@ -115,8 +116,10 @@
 #define FLASH_WP_GPIO_Port GPIOB
 #define SW2_BTN_Pin GPIO_PIN_1
 #define SW2_BTN_GPIO_Port GPIOB
+#define SW2_BTN_EXTI_IRQn EXTI1_IRQn
 #define SW4_BTN_Pin GPIO_PIN_2
 #define SW4_BTN_GPIO_Port GPIOB
+#define SW4_BTN_EXTI_IRQn EXTI2_IRQn
 #define CS_CS_Pin GPIO_PIN_10
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
@@ -141,14 +144,18 @@
 #define CS_SDIN_GPIO_Port GPIOD
 #define SW6_BTN_Pin GPIO_PIN_7
 #define SW6_BTN_GPIO_Port GPIOD
+#define SW6_BTN_EXTI_IRQn EXTI9_5_IRQn
 #define SW7_BTN_Pin GPIO_PIN_9
 #define SW7_BTN_GPIO_Port GPIOG
+#define SW7_BTN_EXTI_IRQn EXTI9_5_IRQn
 #define SW6_LED_Pin GPIO_PIN_10
 #define SW6_LED_GPIO_Port GPIOG
 #define SW5_BTN_Pin GPIO_PIN_12
 #define SW5_BTN_GPIO_Port GPIOG
+#define SW5_BTN_EXTI_IRQn EXTI15_10_IRQn
 #define SW3_BTN_Pin GPIO_PIN_13
 #define SW3_BTN_GPIO_Port GPIOG
+#define SW3_BTN_EXTI_IRQn EXTI15_10_IRQn
 #define SW5_LED_Pin GPIO_PIN_14
 #define SW5_LED_GPIO_Port GPIOG
 #define FLASH_SCK_Pin GPIO_PIN_3
