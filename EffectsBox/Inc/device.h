@@ -38,6 +38,9 @@
 #define ENCODER_TIM1 htim4
 #define ENCODER_TIM2 htim2
 #define NOF_ENCODERS                 2
+#define NOF_ADC_VALUES               4
+#define NOF_PARAMETERS               40
+#define NOF_BUTTONS                  8
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
@@ -78,9 +81,6 @@
 #define CODEC_BUFFER_SIZE (4*CODEC_BLOCKSIZE)
 #define AUDIO_MAX_BLOCK_SIZE (CODEC_BUFFER_SIZE/4)
 
-#define NOF_ADC_VALUES               4
-#define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  4
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
 #define MAX_FACTORY_PATCHES          36
