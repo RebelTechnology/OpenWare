@@ -3,18 +3,6 @@
 #include "errorhandlers.h"
 #include "ApplicationSettings.h"
 
-#ifdef __cplusplus
- extern "C" {
-#endif
-   void codec_init();
-   void codec_write(uint8_t reg, uint8_t data);
-   void codec_bypass(int bypass);
-   void codec_mute(bool mute);
-   void codec_set_volume(int8_t volume);
-#ifdef __cplusplus
-}
-#endif
-
 static int32_t txbuf[CODEC_BUFFER_SIZE];
 static int32_t rxbuf[CODEC_BUFFER_SIZE];
 static uint16_t blocksize;
@@ -79,11 +67,15 @@ void Codec::bypass(bool doBypass){
 }
 
 void Codec::mute(bool doMute){
-  codec_mute(doMute);
+  codec_set_gain_out(0);
+}
+
+void Codec::setInputGain(int8_t value){
+  codec_set_gain_in(value);
 }
 
 void Codec::setOutputGain(int8_t value){
-  codec_set_volume(value);
+  codec_set_gain_out(value);
 }
 
 #ifdef USE_WM8731
@@ -97,6 +89,7 @@ void Codec::stop(){
 }
 
 void Codec::start(){
+  setInputGain(settings.audio_input_gain);
   setOutputGain(settings.audio_output_gain);
   blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
   HAL_StatusTypeDef ret;

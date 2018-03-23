@@ -3,6 +3,19 @@
 
 #include <stdint.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+  void codec_init();
+  void codec_bypass(int bypass);
+  void codec_set_gain_in(int8_t volume);
+  void codec_set_gain_out(int8_t volume);
+
+#ifdef __cplusplus
+}
+
 class Codec {
  public:
   void begin();
@@ -17,6 +30,7 @@ class Codec {
   void txrx();
   void set(uint32_t value);
   void ramp(uint32_t max);
+  void setInputGain(int8_t value);
   /* Set gain between 0 (mute) and 127 (max) */
   void setOutputGain(int8_t value);
   int32_t getMin();
@@ -26,4 +40,7 @@ class Codec {
 };
 
 extern Codec codec;
+   
+#endif
+
 #endif /* __Codec_h */
