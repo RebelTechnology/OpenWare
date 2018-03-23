@@ -33,6 +33,11 @@
 #define OLED_SPI hspi5
 #define OLED_DMA
 #define OLED_SOFT_CS
+
+#define USE_ENCODERS
+#define ENCODER_TIM1 htim4
+#define ENCODER_TIM2 htim2
+#define NOF_ENCODERS                 2
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
@@ -57,6 +62,12 @@
 #define OLED_HEIGHT			64
 #define OLED_BUFFER_SIZE        (OLED_WIDTH*OLED_HEIGHT/8)
 #endif
+
+#define DIGITAL_BUS_ENABLED          0
+#define DIGITAL_BUS_FORWARD_MIDI     0
+#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
+#define MIDI_OUTPUT_CHANNEL          0
+#define USE_MIDI_CALLBACK
 
 /* #define CS_CS_Pin CS_nCS_Pin */
 /* #define CS_CS_GPIO_Port CS_nCS_GPIO_Port */
@@ -96,10 +107,8 @@
 #define MIDI_OUTPUT_CHANNEL          0
 
 /* +0db in and out */
-#define AUDIO_INPUT_GAIN_LEFT        0x017
-#define AUDIO_INPUT_GAIN_RIGHT       0x017
-#define AUDIO_OUTPUT_GAIN_LEFT       0x079
-#define AUDIO_OUTPUT_GAIN_RIGHT      0x079 
+#define AUDIO_INPUT_GAIN             0x017
+#define AUDIO_OUTPUT_GAIN            0x079
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */
 #define AUDIO_OUTPUT_OFFSET          0x00001eec /* 0.1208 * 65535 */
