@@ -10,11 +10,8 @@ CPP_SRC += ApplicationSettings.cpp
 CPP_SRC += MidiHandler.cpp
 CPP_SRC += Codec.cpp
 CPP_SRC += MidiReader.cpp
-CPP_SRC += DigitalBusHandler.cpp       
 CPP_SRC += operators.cpp
-CPP_SRC += DigitalBusReader.cpp	      
 CPP_SRC += Owl.cpp
-CPP_SRC += DigitalBusStreamReader.cpp  
 CPP_SRC += PatchRegistry.cpp
 # CPP_SRC += FactoryPatches.cpp	      
 CPP_SRC += ProgramManager.cpp
@@ -23,6 +20,10 @@ CPP_SRC += ServiceCall.cpp
 CPP_SRC += message.cpp		      
 CPP_SRC += StorageBlock.cpp
 CPP_SRC += MidiController.cpp
+
+# CPP_SRC += DigitalBusHandler.cpp       
+# CPP_SRC += DigitalBusReader.cpp	      
+# CPP_SRC += DigitalBusStreamReader.cpp  
 
 # OpenWare/LibSource
 CPP_SRC += PatchProcessor.cpp

@@ -12,6 +12,8 @@
 #include "MagusParameterController.hpp"
 #elif defined OWL_PRISM
 #include "PrismParameterController.hpp"
+#elif defined OWL_EFFECTSBOX
+#include "EffectsBoxParameterController.hpp"
 #else
 #include "ParameterController.hpp"
 #endif

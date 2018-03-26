@@ -219,6 +219,20 @@ void setLED(uint8_t led, LEDcolour col){
   HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
   HAL_GPIO_WritePin(GPIOx,  GPIO_Pin,  (GPIO_PinState)LED_Colour);
 }
+
+void updateProgramSelector(uint8_t button, uint8_t led, uint8_t patch, bool value){  
+  setButtonValue(button, value);
+  if(value){
+    setLED(led, RED);
+  }else{
+    if(program.getProgramIndex() != patch){
+      program.loadProgram(patch);
+      for(int i=0; i<6; ++i)
+	setLED(i, NONE);
+    }
+    setLED(led, YELLOW);
+  }
+}
 #endif /* OWL_EFFECTSBOX */
 
 extern "C" {
@@ -233,32 +247,32 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #endif
 #ifdef OWL_EFFECTSBOX
   case SW1_BTN_Pin:
-    setButtonValue(BUTTON_A, !(SW1_BTN_GPIO_Port->IDR & SW1_BTN_Pin));
-    setLED(0, (LEDcolour)getButtonValue(BUTTON_A));
+    updateProgramSelector(BUTTON_A, 0, 1, !(SW1_BTN_GPIO_Port->IDR & SW1_BTN_Pin));
     break;
   case SW2_BTN_Pin:
-    setButtonValue(BUTTON_B, !(SW2_BTN_GPIO_Port->IDR & SW2_BTN_Pin));    
-    setLED(1, (LEDcolour)getButtonValue(BUTTON_A));
+    updateProgramSelector(BUTTON_B, 1, 2, !(SW2_BTN_GPIO_Port->IDR & SW2_BTN_Pin));    
     break;
   case SW3_BTN_Pin:
-    setButtonValue(BUTTON_C, !(SW3_BTN_GPIO_Port->IDR & SW3_BTN_Pin));    
-    setLED(2, (LEDcolour)getButtonValue(BUTTON_A));
+    updateProgramSelector(BUTTON_C, 2, 3, !(SW3_BTN_GPIO_Port->IDR & SW3_BTN_Pin));    
+    setLED(2, (LEDcolour)getButtonValue(BUTTON_C));
     break;
   case SW4_BTN_Pin:
-    setButtonValue(BUTTON_D, !(SW4_BTN_GPIO_Port->IDR & SW4_BTN_Pin));    
-    setLED(3, (LEDcolour)getButtonValue(BUTTON_A));
+    updateProgramSelector(BUTTON_D, 3, 4, !(SW4_BTN_GPIO_Port->IDR & SW4_BTN_Pin));    
     break;
   case SW5_BTN_Pin:
-    setButtonValue(BUTTON_E, !(SW5_BTN_GPIO_Port->IDR & SW5_BTN_Pin));    
-    setLED(4, (LEDcolour)getButtonValue(BUTTON_A));
+    updateProgramSelector(BUTTON_E, 4, 5, !(SW5_BTN_GPIO_Port->IDR & SW5_BTN_Pin));    
     break;
   case SW6_BTN_Pin:
-    setButtonValue(BUTTON_F, !(SW6_BTN_GPIO_Port->IDR & SW6_BTN_Pin));    
-    setLED(5, (LEDcolour)getButtonValue(BUTTON_A));
+    updateProgramSelector(BUTTON_F, 5, 6, !(SW6_BTN_GPIO_Port->IDR & SW6_BTN_Pin));    
     break;
   case SW7_BTN_Pin:
-    setButtonValue(PUSHBUTTON, !(SW7_BTN_GPIO_Port->IDR & SW7_BTN_Pin));
-    setLED(6, (LEDcolour)getButtonValue(PUSHBUTTON));
+    if((SW7_BTN_GPIO_Port->IDR & SW7_BTN_Pin)){
+      setButtonValue(PUSHBUTTON, false);
+      setLED(6, YELLOW);
+    }else{
+      setButtonValue(PUSHBUTTON, true);
+      setLED(6, RED);
+    }
     break;
 #endif /* OWL_EFFECTSBOX */
 #ifdef OWL_TESSERACT
@@ -573,6 +587,11 @@ void loop(void){
     graphics.params.updateValue(i, 0);
 #endif
 #endif /* OWL_PRISM */
+
+#ifdef OWL_EFFECTSBOX
+  int16_t encoders[2] = { getEncoderValue(0), getEncoderValue(1) };
+  graphics.params.updateEncoders(encoders, 2);
+#endif  
 
 #ifdef USE_RGB_LED
   uint32_t colour =
