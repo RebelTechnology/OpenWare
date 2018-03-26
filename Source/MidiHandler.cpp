@@ -165,13 +165,6 @@ void MidiHandler::handlePolyKeyPressure(uint8_t status, uint8_t note, uint8_t va
 }
 
 void MidiHandler::updateCodecSettings(){
-  setInputChannel(settings.midi_input_channel);  
-#ifdef USE_USB_HOST
-  midihost.setInputChannel(settings.midi_input_channel);
-#endif
-#ifdef USE_DIGITALBUS
-  bus_set_input_channel(settings.midi_input_channel);
-#endif
   codec.reset();
 }
 
@@ -211,15 +204,15 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
     settings.output_scalar = value;
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_INPUT_CHANNEL, p, 2) == 0){
-    settings.midi_input_channel = max(-1, min(15, value));
-    setInputChannel(settings.midi_input_channel);
+    midiSetInputChannel(max(-1, min(15, value)));
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
-    settings.midi_output_channel = max(-1, min(15, value));
-    midi.setOutputChannel(settings.midi_output_channel);
+    midiSetOutputChannel(max(-1, min(15, value)));
+#ifdef USE_DIGITALBUS
   }else if(strncmp(SYSEX_CONFIGURATION_BUS_ENABLE, p, 2) == 0){
     settings.bus_enabled = value;
   }else if(strncmp(SYSEX_CONFIGURATION_BUS_FORWARD_MIDI, p, 2) == 0){
     settings.bus_forward_midi = value;
+#endif
   }
   // updateCodecSettings();
 }
@@ -308,7 +301,7 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     return;
   if(data[2] != MIDI_SYSEX_OMNI_DEVICE && data[2] != (MIDI_SYSEX_OWL_DEVICE | channel))
     // not for us
-    return; // if channel == OMNI && data[2] == 0xff this message will also be processed
+    return;
   switch(data[3]){
   case SYSEX_CONFIGURATION_COMMAND:
     handleConfigurationCommand(data+4, size-5);

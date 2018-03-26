@@ -132,12 +132,14 @@ uint8_t getButtonValue(uint8_t ch){
 }
 
 void setButtonValue(uint8_t ch, uint8_t value){
-  timestamps[ch] = getSampleCounter();
-  stateChanged.set(ch);
+  if(ch < NOF_BUTTONS){
+    timestamps[ch] = getSampleCounter();
+    stateChanged.set(ch);
   // if(value)
   //   button_values |= (1<<ch);
   // else
   //   button_values &= ~(1<<ch);
+  }
   button_values &= ~((!value)<<ch);
   button_values |= (bool(value)<<ch);
 }

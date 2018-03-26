@@ -34,7 +34,7 @@ Graphics graphics;
 
 #if defined USE_RGB_LED
 #include "rainbow.h"
-#endif /* OWL_TESSERACT */
+#endif /* USE_RGB_LED */
 
 #ifdef USE_USB_HOST
 #include "usbh_core.h"
@@ -78,7 +78,6 @@ uint16_t getAnalogValue(uint8_t ch){
   else
 #endif
     return 0;
-
 }
 
 void setAnalogValue(uint8_t ch, uint16_t value){
@@ -88,6 +87,22 @@ void setAnalogValue(uint8_t ch, uint16_t value){
     dac_values[ch] = value;
   }
 #endif
+}
+
+void midiSetInputChannel(int8_t channel){
+  settings.midi_input_channel = channel;
+  mididevice.setInputChannel(channel);
+#ifdef USE_USB_HOST
+  midihost.setInputChannel(channel);
+#endif
+#ifdef USE_DIGITALBUS
+  bus_set_input_channel(channel);
+#endif
+}
+
+void midiSetOutputChannel(int8_t channel){
+  settings.midi_output_channel = channel;
+  midi.setOutputChannel(channel);
 }
 
 #ifdef USE_RGB_LED
@@ -158,6 +173,56 @@ void initLed(){
 }
 #endif /* USE_RGB_LED */
 
+#ifdef OWL_EFFECTSBOX
+// static uint8_t buttonstate = 0;
+// #define SW1_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW1_BTN_GPIO_Port,  SW1_BTN_Pin))
+// #define SW2_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW2_BTN_GPIO_Port,  SW2_BTN_Pin))
+// #define SW3_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW3_BTN_GPIO_Port,  SW3_BTN_Pin))
+// #define SW4_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW4_BTN_GPIO_Port,  SW4_BTN_Pin))
+// #define SW5_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW5_BTN_GPIO_Port,  SW5_BTN_Pin))
+// #define SW6_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW6_BTN_GPIO_Port,  SW6_BTN_Pin))
+// #define SW7_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW7_BTN_GPIO_Port,  SW7_BTN_Pin))
+// #define TSW1_Read()		(1-HAL_GPIO_ReadPin(TSW1_A_GPIO_Port,  TSW1_A_Pin)) | (1-HAL_GPIO_ReadPin(TSW1_B_GPIO_Port,  TSW1_B_Pin))<<1
+// #define TSW2_Read()		(1-HAL_GPIO_ReadPin(TSW2_A_GPIO_Port,  TSW2_A_Pin)) | (1-HAL_GPIO_ReadPin(TSW2_B_GPIO_Port,  TSW2_B_Pin))<<1
+typedef enum {
+	YELLOW, RED, NONE
+} LEDcolour;
+void setLED(uint8_t led, LEDcolour col){
+  GPIO_InitTypeDef GPIO_InitStruct;
+  GPIO_TypeDef* GPIOx; 
+  uint16_t GPIO_Pin;
+  uint8_t LED_Colour;
+	
+  // Get switch pin and port number
+  switch(led){
+  case 0: GPIOx = SW1_LED_GPIO_Port;	GPIO_Pin = SW1_LED_Pin; break;
+  case 1: GPIOx = SW2_LED_GPIO_Port;	GPIO_Pin = SW2_LED_Pin; break;
+  case 2: GPIOx = SW3_LED_GPIO_Port;	GPIO_Pin = SW3_LED_Pin; break;
+  case 3: GPIOx = SW4_LED_GPIO_Port;	GPIO_Pin = SW4_LED_Pin; break;
+  case 4: GPIOx = SW5_LED_GPIO_Port;	GPIO_Pin = SW5_LED_Pin; break;
+  case 5: GPIOx = SW6_LED_GPIO_Port;	GPIO_Pin = SW6_LED_Pin; break;
+  case 6: GPIOx = SW7_LED_GPIO_Port;	GPIO_Pin = SW7_LED_Pin; break;
+  }
+	
+  // Set pin number and direction
+  GPIO_InitStruct.Pin = GPIO_Pin;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	
+  // Set Output direction and LED colour
+  switch (col){
+  case YELLOW:	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP; LED_Colour = YELLOW; break;
+  case RED: 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP; LED_Colour = RED; break;
+  case NONE: 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;	break;
+  }
+  // Update Pin	
+  HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(GPIOx,  GPIO_Pin,  (GPIO_PinState)LED_Colour);
+}
+#endif /* OWL_EFFECTSBOX */
+
+extern "C" {
+  
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
 #ifdef PUSHBUTTON_Pin
@@ -166,6 +231,36 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     midi.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
     break;
 #endif
+#ifdef OWL_EFFECTSBOX
+  case SW1_BTN_Pin:
+    setButtonValue(BUTTON_A, !(SW1_BTN_GPIO_Port->IDR & SW1_BTN_Pin));
+    setLED(0, (LEDcolour)getButtonValue(BUTTON_A));
+    break;
+  case SW2_BTN_Pin:
+    setButtonValue(BUTTON_B, !(SW2_BTN_GPIO_Port->IDR & SW2_BTN_Pin));    
+    setLED(1, (LEDcolour)getButtonValue(BUTTON_A));
+    break;
+  case SW3_BTN_Pin:
+    setButtonValue(BUTTON_C, !(SW3_BTN_GPIO_Port->IDR & SW3_BTN_Pin));    
+    setLED(2, (LEDcolour)getButtonValue(BUTTON_A));
+    break;
+  case SW4_BTN_Pin:
+    setButtonValue(BUTTON_D, !(SW4_BTN_GPIO_Port->IDR & SW4_BTN_Pin));    
+    setLED(3, (LEDcolour)getButtonValue(BUTTON_A));
+    break;
+  case SW5_BTN_Pin:
+    setButtonValue(BUTTON_E, !(SW5_BTN_GPIO_Port->IDR & SW5_BTN_Pin));    
+    setLED(4, (LEDcolour)getButtonValue(BUTTON_A));
+    break;
+  case SW6_BTN_Pin:
+    setButtonValue(BUTTON_F, !(SW6_BTN_GPIO_Port->IDR & SW6_BTN_Pin));    
+    setLED(5, (LEDcolour)getButtonValue(BUTTON_A));
+    break;
+  case SW7_BTN_Pin:
+    setButtonValue(PUSHBUTTON, !(SW7_BTN_GPIO_Port->IDR & SW7_BTN_Pin));
+    setLED(6, (LEDcolour)getButtonValue(PUSHBUTTON));
+    break;
+#endif /* OWL_EFFECTSBOX */
 #ifdef OWL_TESSERACT
   case TOGGLE_A1_Pin:
     break;
@@ -227,6 +322,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     break;
 #endif    
   }
+}
 }
 
 #ifdef OWL_MAGUS
@@ -319,6 +415,9 @@ void setup(){
   extern TIM_HandleTypeDef htim1;
   HAL_TIM_Base_Start(&htim1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+  for(int i=0; i<7; ++i)
+    setLED(i, NONE);
 #endif /* OWL_EFFECTSBOX */
 
 #ifdef USE_RGB_LED
@@ -350,8 +449,8 @@ void setup(){
   program.loadProgram(1);
   program.startProgram(false);
 
-  midi.setOutputChannel(settings.midi_output_channel);
-  mididevice.setInputChannel(settings.midi_input_channel);
+  midiSetInputChannel(settings.midi_input_channel);
+  midiSetOutputChannel(settings.midi_output_channel);
 
   xLastWakeTime = xTaskGetTickCount();
   xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
@@ -398,6 +497,21 @@ void loop(void){
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
 #endif
   midi.push();
+
+#ifdef OWL_EFFECTSBOX
+  // uint8_t state =
+  //   (SW1_Read() << 0) |
+  //   (SW2_Read() << 1) |
+  //   (SW3_Read() << 2) |
+  //   (SW4_Read() << 3) |
+  //   (SW5_Read() << 4) |
+  //   (SW6_Read() << 5) |
+  //   (SW7_Read() << 6);
+  // if(state != buttonstate){
+  //   for(int i=0; i<7; ++i){
+  //   }
+  // }
+#endif /* OWL_EFFECTSBOX */
 
 #ifdef OWL_MAGUS
   if(updateMAX11300){

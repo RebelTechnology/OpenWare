@@ -62,7 +62,11 @@ enum PatchButtonId {
   BUTTON_B,
   BUTTON_C,
   BUTTON_D,
-  GATE_BUTTON,
+  BUTTON_E,
+  BUTTON_F,
+  BUTTON_G,
+  BUTTON_H,
+  GATE_BUTTON = 0x7f,
   MIDI_NOTE_BUTTON = 0x80 // values over 127 are mapped to note numbers
 };
 
