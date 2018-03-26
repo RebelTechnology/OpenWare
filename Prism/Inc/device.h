@@ -16,6 +16,8 @@
 
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
+#define MIDI_INPUT_CHANNEL           0
+#define MIDI_OUTPUT_CHANNEL          0
 
 #ifdef OWL_PRISM
 #define USE_USBD_HS
@@ -92,9 +94,6 @@
 #define IDLE_TASK_STACK_SIZE         (128/sizeof(portSTACK_TYPE))
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        3500 /* 168MHz / 48kHz */
-
-#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
-#define MIDI_OUTPUT_CHANNEL          0
 
 /* +0db in and out */
 #define AUDIO_INPUT_GAIN             0x017
