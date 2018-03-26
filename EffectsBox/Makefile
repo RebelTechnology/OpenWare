@@ -11,7 +11,7 @@ C_SRC += sdram.c
 C_SRC += cs4272.c
 C_SRC += ssd1309.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
-C_SRC += stm32f4xx_hal_timebase_TIM.c
+# C_SRC += stm32f4xx_hal_timebase_TIM.c
 
 include $(OPENWARE)/mcu/sources.mk
 
