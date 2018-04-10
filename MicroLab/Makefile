@@ -2,7 +2,7 @@ PROJECT = MicroLab
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-include $(OPENWARE)/mcu/STM32F439ZG.mk
+include $(OPENWARE)/mcu/STM32F427ZI.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))

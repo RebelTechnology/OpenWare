@@ -5,6 +5,9 @@
 #define OWL_MICROLAB
 #define USE_RGB_LED
 
+#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
+#define MIDI_OUTPUT_CHANNEL          0
+
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */
