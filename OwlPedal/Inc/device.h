@@ -5,8 +5,8 @@
 #define USE_DIGITALBUS
 #define USE_MIDI_CALLBACK
 
-#define MIDI_INPUT_CHANNEL           4
-#define MIDI_OUTPUT_CHANNEL          4
+#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
+#define MIDI_OUTPUT_CHANNEL          0
 
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     1
