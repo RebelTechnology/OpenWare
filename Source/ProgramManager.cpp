@@ -594,10 +594,10 @@ extern "C" {
   }
 #endif
   void vApplicationMallocFailedHook(void) {
-    // taskDISABLE_INTERRUPTS();
     program.exitProgram(false);
     error(PROGRAM_ERROR, "malloc failed");
-    for(;;);
+    HAL_Delay(5000);
+    assert_param(0);
   }
   void vApplicationIdleHook(void) {
   }
@@ -609,8 +609,8 @@ extern "C" {
        function is called if a stack overflow is detected. */
     program.exitProgram(false);
     error(PROGRAM_ERROR, "Stack overflow");
-    // taskDISABLE_INTERRUPTS();
-    for(;;);
+    HAL_Delay(5000);
+    assert_param(0);
   }
 }
 
