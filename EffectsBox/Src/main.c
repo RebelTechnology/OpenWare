@@ -185,12 +185,6 @@ int main(void)
     Error_Handler();
 
   SDRAM_Initialization_Sequence(&hsdram1);   
-
-  // Initialise
-  setup();
-
-  /* Flash_S25FL_init(&hspi1); */
-  /* OLED_init(&hspi5); */
 	
   /* USER CODE END 2 */
 
@@ -208,7 +202,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 768);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
