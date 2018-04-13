@@ -45,6 +45,11 @@ Graphics graphics;
 #include "bus.h"
 #endif /* USE_DIGITALBUS */
 
+#ifdef USE_ENCODERS
+extern TIM_HandleTypeDef ENCODER_TIM1;
+extern TIM_HandleTypeDef ENCODER_TIM2;
+#endif
+
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -213,7 +218,7 @@ void setLED(uint8_t led, LEDcolour col){
   switch (col){
   case YELLOW:	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP; LED_Colour = YELLOW; break;
   case RED: 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP; LED_Colour = RED; break;
-  case NONE: 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;	break;
+  case NONE: 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;	LED_Colour = 0; break;
   }
   // Update Pin	
   HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
@@ -363,7 +368,6 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
-  // SRAM_Init();
 #ifdef OWL_PEDAL
   /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
   // if (HAL_GetREVID() == 0x1001)
@@ -386,12 +390,7 @@ void setup(){
   settings.init(); // settings need the registry to be initialised first
 #ifdef USE_CODEC
   codec.begin();
-  // codec.set(0);
-#if defined OWL_MICROLAB || defined OWL_MINILAB // || defined OWL_MAGUS
-  codec.setOutputGain(127-9); // -9dB
-#else
-  codec.setOutputGain(127); // 0dB
-#endif
+  codec.set(0);
   codec.bypass(false);
 #endif /* USE_CODEC */
 
@@ -424,12 +423,10 @@ void setup(){
 #ifdef OWL_EFFECTSBOX
   extern TIM_HandleTypeDef htim11;
   HAL_TIM_Base_Start(&htim11);
-  HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
-	
+  HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1); // SW1-6 PWM
   extern TIM_HandleTypeDef htim1;
   HAL_TIM_Base_Start(&htim1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // SW7 PWM
   for(int i=0; i<7; ++i)
     setLED(i, NONE);
 #endif /* OWL_EFFECTSBOX */
@@ -440,8 +437,6 @@ void setup(){
 #endif /* USE_RGB_LED */
 
 #ifdef USE_ENCODERS
-  extern TIM_HandleTypeDef ENCODER_TIM1;
-  extern TIM_HandleTypeDef ENCODER_TIM2;
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
@@ -578,10 +573,11 @@ void loop(void){
 #endif /* OWL_MAGUS */
 
 #ifdef OWL_PRISM
-  int16_t encoders[2] = { getEncoderValue(0), getEncoderValue(1) };
+  int16_t encoders[NOF_ENCODERS] = {(int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1),
+				    (int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2) };
   graphics.params.updateEncoders(encoders, 2);
 #ifndef OWL_RACK
-  for(int i=0; i<2; ++i)
+  for(int i=0; i<NOF_ENCODERS; ++i)
     graphics.params.updateValue(i, getAnalogValue(i)-2048); // update two bipolar cv inputs
   for(int i=2; i<NOF_PARAMETERS; ++i)
     graphics.params.updateValue(i, 0);
@@ -589,8 +585,9 @@ void loop(void){
 #endif /* OWL_PRISM */
 
 #ifdef OWL_EFFECTSBOX
-  int16_t encoders[2] = { getEncoderValue(0), getEncoderValue(1) };
-  graphics.params.updateEncoders(encoders, 2);
+  int16_t encoders[NOF_ENCODERS] = {(int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1),
+  				    (int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2) };
+  graphics.params.updateEncoders(encoders, 6);
 #endif  
 
 #ifdef USE_RGB_LED
@@ -638,10 +635,8 @@ extern "C"{
   }
 #endif /* USE_USB_HOST */
 
-#ifdef USE_ENCODERS
+#if 0 // ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder){
-    extern TIM_HandleTypeDef ENCODER_TIM1;
-    extern TIM_HandleTypeDef ENCODER_TIM2;
     if(encoder == 0)
       return __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
     else // if(encoder == 1)

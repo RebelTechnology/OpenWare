@@ -33,7 +33,7 @@
 #define USE_SCREEN
 #define SSD1309
 #define OLED_SPI hspi5
-#define OLED_DMA
+/* #define OLED_DMA */
 #define OLED_SOFT_CS
 
 #define USE_ENCODERS
@@ -41,7 +41,7 @@
 #define ENCODER_TIM2 htim2
 #define NOF_ENCODERS                 2
 #define NOF_ADC_VALUES               4
-#define NOF_PARAMETERS               40
+#define NOF_PARAMETERS               20
 #define NOF_BUTTONS                  8
 #endif
 

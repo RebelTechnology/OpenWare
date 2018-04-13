@@ -61,8 +61,9 @@ uint16_t timestamps[NOF_BUTTONS];
 
 ProgramVector* getProgramVector() { return programVector; }
 
-static int16_t encoders[2] = {INT16_MAX/2, INT16_MAX/2};
-static int16_t deltas[2] = {0, 0};
+#if 0
+static int16_t encoders[NOF_ENCODERS] = {INT16_MAX/2, INT16_MAX/2};
+static int16_t deltas[NOF_ENCODERS] = {0, 0};
 void encoderChanged(uint8_t encoder, int16_t value){
   // // todo: debounce
   // // pass encoder change event to patch
@@ -78,6 +79,7 @@ void encoderChanged(uint8_t encoder, int16_t value){
   // if(getProgramVector()->encoderChangedCallback != NULL)
   //   getProgramVector()->encoderChangedCallback(encoder, delta, 0);
 }
+#endif
 
 PatchDefinition* getPatchDefinition(){
   return program.getPatchDefinition();

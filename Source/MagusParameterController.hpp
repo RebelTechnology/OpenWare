@@ -3,9 +3,7 @@
 
 #include "device.h"
 #include "basicmaths.h"
-#ifdef OWL_MAGUS
 #include "errorhandlers.h"
-#endif
 #include "ProgramVector.h"
 // #include "HAL_Encoders.h"
 #include "Owl.h"
@@ -70,8 +68,10 @@ public:
     selectedPid[5] = PARAMETER_G;
     mode = STANDARD;
 
+#ifdef OWL_MAGUS
     for(int i=0; i<20; ++i)
       setPortMode(i, PORT_UNI_INPUT);
+#endif
   }
  
   int16_t getEncoderValue(uint8_t eid){
@@ -267,10 +267,12 @@ public:
   void setName(uint8_t pid, const char* name){
     if(pid < SIZE){
       strncpy(names[pid], name, 11);
+#ifdef OWL_MAGUS
       if(names[pid][strnlen(names[pid], 11)-1] == '>')
 	setPortMode(pid, PORT_UNI_OUTPUT);
       else
 	setPortMode(pid, PORT_UNI_INPUT);
+#endif
     }
   }
 
