@@ -218,7 +218,7 @@ public:
   void setValue(uint8_t pid, int16_t value){
     user[pid] = value;
     // reset encoder value if associated through selectedPid to avoid skipping
-    for(int i=0; i<6; ++i)
+    for(int i=0; i<NOF_ENCODERS; ++i)
       if(selectedPid[i] == pid)
         setEncoderValue(i, value);
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
