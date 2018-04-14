@@ -588,6 +588,10 @@ void loop(void){
   int16_t encoders[NOF_ENCODERS] = {(int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1),
   				    (int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2) };
   graphics.params.updateEncoders(encoders, 6);
+  for(int i=0; i<NOF_ADC_VALUES; ++i)
+    graphics.params.updateValue(i, getAnalogValue(i));
+  // for(int i=NOF_ADC_VALUES; i<NOF_PARAMETERS; ++i)
+  //   graphics.params.updateValue(i, 0);
 #endif  
 
 #ifdef USE_RGB_LED
