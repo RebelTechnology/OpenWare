@@ -86,35 +86,22 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
 }
 #endif
 
-/* void OLED_writeDAT(const uint8_t* data, uint16_t length) */
 void oled_write(const uint8_t* data, uint16_t length)
 {
-	pCS_Clr();	// CS low
-	pDC_Set();	// DC high
-
 #ifdef OLED_DMA
-	// Send Data
-	HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length);
+  while(OLED_SPIInst->State != HAL_SPI_STATE_READY); // wait
+  pCS_Clr();	// CS low
+  pDC_Set();	// DC high
+  HAL_SPI_Transmit_DMA(OLED_SPIInst, (uint8_t*)data, length);
 #else
-	HAL_SPI_Transmit(OLED_SPIInst, (uint8_t*)data, length, 1000);
-	pCS_Set();	// CS high
+  pCS_Clr();	// CS low
+  pDC_Set();	// DC high
+  HAL_SPI_Transmit(OLED_SPIInst, (uint8_t*)data, length, 1000);
+  pCS_Set();	// CS high
 #endif
 }
 
-/* void OLED_Refresh(void) */
-/* { */
-/* 	// Write entire buffer to OLED */
-/* 	OLED_writeDAT(OLED_Buffer, 1024); */
-/* } */
-
-/* void OLED_ClearScreen(void) */
-/* { */
-/* 	// Clear contents of OLED buffer */
-/* 	memset(OLED_Buffer, 0, 1024); */
-/* } */
-
 // Configuration
-/* void OLED_Config(SPI_HandleTypeDef* spi, unsigned char* buffer){ */
 void oled_init(SPI_HandleTypeDef* spi){
 	OLED_SPIInst = spi;
 	// Initialisation

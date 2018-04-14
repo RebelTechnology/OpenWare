@@ -27,10 +27,11 @@ public:
   int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
   char names[SIZE][12];
   uint8_t selectedPid[NOF_ENCODERS];
-  enum ScreenMode {
+  enum DisplayMode {
     STANDARD, SELECTGLOBALPARAMETER, SELECTPROGRAM, ERROR
   };
-  ScreenMode mode;
+  DisplayMode displayMode;
+
   ParameterController(){
     reset();
   }
@@ -48,7 +49,7 @@ public:
     }
     selectedPid[0] = PARAMETER_A;
     selectedPid[1] = PARAMETER_B;
-    mode = STANDARD;
+    displayMode = STANDARD;
   }
  
   int16_t getEncoderValue(uint8_t eid){
@@ -140,7 +141,7 @@ public:
   void draw(ScreenBuffer& screen){
     screen.clear();
     screen.setTextWrap(false);
-    switch(mode){
+    switch(displayMode){
     case STANDARD:
       drawParameter(selectedPid[0], 34, screen);
       drawParameter(selectedPid[1], 54, screen);
@@ -187,7 +188,7 @@ public:
   }
   
   void updateEncoders(int16_t* data, uint8_t size){
-    mode = STANDARD;
+    displayMode = STANDARD;
     // update encoder 0 top left
     int16_t value = data[0];
     if(encoders[0] != value){
@@ -200,8 +201,8 @@ public:
       user[selectedPid[1]] = getEncoderValue(1);
       encoders[1] = value;
     }
-    if(mode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
-      mode = ERROR;
+    if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
+      displayMode = ERROR;
   }
 
   // called by MIDI cc and/or from patch
