@@ -102,8 +102,6 @@
 #define SW1_BTN_Pin GPIO_PIN_4
 #define SW1_BTN_GPIO_Port GPIOA
 #define SW1_BTN_EXTI_IRQn EXTI4_IRQn
-#define OLED_CS_Pin GPIO_PIN_5
-#define OLED_CS_GPIO_Port GPIOA
 #define FLASH_MISO_Pin GPIO_PIN_6
 #define FLASH_MISO_GPIO_Port GPIOA
 #define FLASH_MOSI_Pin GPIO_PIN_7
@@ -138,6 +136,8 @@
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
 #define SWCLK_GPIO_Port GPIOA
+#define OLED_CS_Pin GPIO_PIN_10
+#define OLED_CS_GPIO_Port GPIOC
 #define OLED_RST_Pin GPIO_PIN_11
 #define OLED_RST_GPIO_Port GPIOC
 #define CS_SDIN_Pin GPIO_PIN_6

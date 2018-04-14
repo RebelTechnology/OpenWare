@@ -40,7 +40,7 @@
 #define ENCODER_TIM1 htim4
 #define ENCODER_TIM2 htim2
 #define NOF_ENCODERS                 2
-#define NOF_ADC_VALUES               5
+#define NOF_ADC_VALUES               4
 #define NOF_PARAMETERS               20
 #define NOF_BUTTONS                  8
 #endif
