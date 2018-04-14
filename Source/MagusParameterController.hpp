@@ -11,6 +11,8 @@
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
+#define NOF_ENCODERS 6
+
 #define ENC_MULTIPLIER 6 // shift left by this many steps
 /*    
 screen 128 x 64, font 5x7
@@ -33,13 +35,13 @@ class ParameterController {
 public:
   char title[11] = "Magus";
   int16_t parameters[SIZE];
-  int16_t encoders[6]; // last seen encoder values
-  int16_t offsets[6]; // last seen encoder values
+  int16_t encoders[NOF_ENCODERS]; // last seen encoder values
+  int16_t offsets[NOF_ENCODERS]; // last seen encoder values
   int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
   char names[SIZE][12];
-  // char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
+  // char blocknames[4][NOF_ENCODERS] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   uint8_t selectedBlock;
-  uint8_t selectedPid[6];
+  uint8_t selectedPid[NOF_ENCODERS];
   enum ScreenMode {
     STANDARD, SELECTBLOCKPARAMETER, SELECTGLOBALPARAMETER, SELECTPROGRAM, ERROR
   };
@@ -55,7 +57,7 @@ public:
       user[i] = 0;
       parameters[i] = 0;
     }
-    for(int i=0; i<6; ++i){
+    for(int i=0; i<NOF_ENCODERS; ++i){
       // encoders[i] = 0;
       offsets[i] = 0;
     }
@@ -111,7 +113,7 @@ public:
     drawBlockValues(screen);
     int x = 0;
     int y = 63-8;
-    for(int i=2; i<6; ++i){
+    for(int i=2; i<NOF_ENCODERS; ++i){
       // screen.print(x+1, y, blocknames[i-1]);
       if(selectedBlock == i)
 	screen.drawHorizontalLine(x, y, 32, WHITE);
@@ -328,8 +330,8 @@ public:
       setErrorStatus(NO_ERROR);
     }
     encoders[1] = value;
-    // update encoders 2-6 bottom row
-    for(uint8_t i=2; i<6; ++i){
+    // update encoders 2-NOF_ENCODERS bottom row
+    for(uint8_t i=2; i<NOF_ENCODERS; ++i){
       value = data[i+1]; // +1 for buttons
       if(pressed&(1<<i)){
 	// update selected block parameter
@@ -356,7 +358,7 @@ public:
   void setValue(uint8_t pid, int16_t value){
     user[pid] = value;
     // reset encoder value if associated through selectedPid to avoid skipping
-    for(int i=0; i<6; ++i)
+    for(int i=0; i<NOF_ENCODERS; ++i)
       if(selectedPid[i] == pid)
         setEncoderValue(i, value);
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
