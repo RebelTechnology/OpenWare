@@ -11,25 +11,15 @@
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
-#define ENC_MULTIPLIER 6 // shift left by this many steps
+// #define ENC_MULTIPLIER 12 // shift left by this many steps
 /*    
 screen 128 x 64, font 5x7
-
-4 bottom encoders
-press once to toggle mode: update > select
-turn to scroll through 4 functions
-press again to select parameter: select > update
-
-
-todo:
-- update parameter / encoderChanged
-- select parameter
-- select global parameter
-- select preset mode
 */
 template<uint8_t SIZE>
 class ParameterController {
 public:
+  uint16_t ENC_MULTIPLIER = 2;
+
   char title[11] = "FX BOX";
   int16_t parameters[SIZE];
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
@@ -242,7 +232,6 @@ public:
 
   void encoderChanged(uint8_t encoder, int32_t delta){
   }
-
 
   void setCallback(void *callback){
     if(callback == NULL)
