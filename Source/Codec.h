@@ -31,6 +31,7 @@ class Codec {
   void set(uint32_t value);
   void ramp(uint32_t max);
   void setInputGain(int8_t value);
+  /* int8_t getOutputGain(); */
   /* Set gain between 0 (mute) and 127 (max) */
   void setOutputGain(int8_t value);
   int32_t getMin();

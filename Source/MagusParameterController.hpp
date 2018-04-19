@@ -11,6 +11,7 @@
 #include "PatchRegistry.h"
 #include "ApplicationSettings.h"
 #include "ProgramManager.h"
+#include "Codec.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -53,11 +54,14 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, VOLUME
+    PLAY, STATUS, PRESET, VOLUME, EXIT
   };
   ControlMode controlMode = PLAY;
 
-  const char controlModeNames[NOF_CONTROL_MODES][8] = { "Play", "Status", "Preset", "Volume" };
+  const char controlModeNames[NOF_CONTROL_MODES][12] = { "  Play   >",
+							 "< Status >",
+							 "< Preset >",
+							 "< Volume" };
 
   ParameterController(){
     reset();
@@ -191,13 +195,12 @@ public:
     }
   }
 
-  void drawStats(ScreenBuffer& screen){
+  void drawStatus(ScreenBuffer& screen){
+    int offset = 16;
     screen.setTextSize(1);
-    // screen.clear(86, 0, 128-86, 16);
-    // draw memory use
-    screen.print(80, 8, "mem");
+    // single row
+    screen.print(1, offset+8, "mem ");
     ProgramVector* pv = getProgramVector();
-    screen.setCursor(80, 17);
     int mem = (int)(pv->heap_bytes_used)/1024;
     if(mem > 999){
       screen.print(mem/1024);
@@ -207,8 +210,32 @@ public:
       screen.print("k");
     }
     // draw CPU load
-    screen.print(110, 8, "cpu");
-    screen.setCursor(110, 17);
+    screen.print(64, offset+8, "cpu ");
+    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
+    screen.print("%");
+  }
+  
+  void drawStats(ScreenBuffer& screen){
+    int offset = 0;
+    screen.setTextSize(1);
+    // screen.clear(86, 0, 128-86, 16);
+    // draw memory use
+
+    // two columns
+    screen.print(80, offset+8, "mem");
+    ProgramVector* pv = getProgramVector();
+    screen.setCursor(80, offset+17);
+    int mem = (int)(pv->heap_bytes_used)/1024;
+    if(mem > 999){
+      screen.print(mem/1024);
+      screen.print("M");
+    }else{
+      screen.print(mem);
+      screen.print("k");
+    }
+    // draw CPU load
+    screen.print(110, offset+8, "cpu");
+    screen.setCursor(110, offset+17);
     screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
     screen.print("%");
   }
@@ -260,20 +287,26 @@ public:
   }
 
   void drawControlMode(ScreenBuffer& screen){
-    drawTitle(controlModeNames[controlMode], screen);    
     switch(controlMode){
     case PLAY:
       // drawMessage("push to exit ->", screen);
+      drawTitle(controlModeNames[controlMode], screen);    
       break;
     case STATUS:
-      drawStats(screen);
+      drawTitle(controlModeNames[controlMode], screen);    
+      drawStatus(screen);
       drawMessage(46, screen);
       break;
     case PRESET:
+      drawTitle(controlModeNames[controlMode], screen);    
       drawPresetNames(selectedPid[1], screen);
       break;
     case VOLUME:
+      drawTitle(controlModeNames[controlMode], screen);    
       drawVolume(selectedPid[1], screen);
+      break;
+    case EXIT:
+      drawTitle("done", screen);
       break;
     }
     // todo!
@@ -358,6 +391,8 @@ public:
     case VOLUME:
       selectedPid[1] = settings.audio_output_gain; // todo: get current
       break;	
+    default:
+      break;
     }
   }
 
@@ -365,7 +400,7 @@ public:
     if(pressed){
       switch(controlMode){
       case PLAY:
-	displayMode = STANDARD;
+	controlMode = EXIT;
 	break;
       case STATUS:
 	setErrorStatus(NO_ERROR);
@@ -375,21 +410,26 @@ public:
 	settings.program_index = selectedPid[1];
 	program.loadProgram(settings.program_index);
 	program.resetProgram(false);
+	controlMode = EXIT;
 	break;
       case VOLUME:
 	settings.audio_output_gain = selectedPid[1];
-	displayMode = STANDARD;
-	// return to play
-	break;	
+	break;
+      default:
+	break;
       }
     }else{
-      int16_t delta = value - encoders[1];
-      if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
-	setControlMode(controlMode+1);
-      }else if(delta < 0 && controlMode > 0){
-	setControlMode(controlMode-1);
+      if(controlMode == EXIT){
+	displayMode = STANDARD;
+      }else{
+	int16_t delta = value - encoders[1];
+	if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
+	  setControlMode(controlMode+1);
+	}else if(delta < 0 && controlMode > 0){
+	  setControlMode(controlMode-1);
+	}
+	encoders[1] = value;
       }
-      encoders[1] = value;
     }
   }
 
@@ -397,9 +437,12 @@ public:
     switch(controlMode){
     case VOLUME:
       selectedPid[1] = min(127, value);
+      codec.setOutputGain(selectedPid[1]);
       break;
     case PRESET:
       selectedPid[1] = min(registry.getNumberOfPatches()-1, value);
+      break;
+    default:
       break;
     }
   }
@@ -410,13 +453,17 @@ public:
     // update encoder 1 top right
     int16_t value = data[2];
     if(displayMode == CONTROL){
-      selectControlMode(value, pressed&(1<<1));
+      selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
+      // selectControlMode(value, pressed&(1<<1));
       // use delta value from encoder 0 top left, store in selectedPid[1]
       int16_t delta = data[1] - encoders[0];
-      if(delta > 0)
+      if(delta > 0 && selectedPid[1] < 127)
 	setControlModeValue(selectedPid[1]+1);
       else if(delta < 0 && selectedPid[1] > 0)
 	setControlModeValue(selectedPid[1]-1);
+      encoders[0] = data[1];
+      return; // skip normal encoder processing
+      // todo: should update offsets so values aren't changed on exit
     }else if(pressed&(1<<1)){
       displayMode = CONTROL;
       controlMode = STATUS;
@@ -463,7 +510,7 @@ public:
 	  selectedBlock = i;
 	  user[selectedPid[i]] = getEncoderValue(i);
 	}
-	if(displayMode == SELECTBLOCKPARAMETER)
+	if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
 	  displayMode = STANDARD;
       }
       encoders[i] = value;
