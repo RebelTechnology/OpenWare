@@ -69,8 +69,8 @@
 #define FLASH_HOLD_GPIO_Port GPIOC
 #define FLASH_nCS_Pin GPIO_PIN_5
 #define FLASH_nCS_GPIO_Port GPIOC
-/* #define SW1_Pin GPIO_PIN_2 */
-/* #define SW1_GPIO_Port GPIOB */
+#define BOOT1_Pin GPIO_PIN_2
+#define BOOT1_GPIO_Port GPIOB
 #define SW1_Pin GPIO_PIN_2
 #define SW1_GPIO_Port GPIOE
 #define SW3_Pin GPIO_PIN_8
