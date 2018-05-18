@@ -166,9 +166,9 @@ void MidiHandler::handlePolyKeyPressure(uint8_t status, uint8_t note, uint8_t va
 
 void MidiHandler::updateCodecSettings(){
   setInputChannel(settings.midi_input_channel);  
-#ifdef USE_USB_HOST
-  midihost.setInputChannel(settings.midi_input_channel);
-#endif
+// #ifdef USE_USB_HOST
+//   midihost.setInputChannel(settings.midi_input_channel);
+// #endif
 #ifdef USE_DIGITALBUS
   bus_set_input_channel(settings.midi_input_channel);
 #endif

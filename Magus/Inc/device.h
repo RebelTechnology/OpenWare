@@ -9,6 +9,13 @@
 /* #define OWL_MODULAR */
 /* #define OWL_PEDAL */
 
+#define DIGITAL_BUS_ENABLED          0
+#define DIGITAL_BUS_FORWARD_MIDI     0
+#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
+#define MIDI_OUTPUT_CHANNEL          0
+#define AUDIO_INPUT_GAIN             0x017
+#define AUDIO_OUTPUT_GAIN            0x079
+
 #ifdef OWL_MAGUS
 /* #define USE_ADC */
 #define USE_MIDI_CALLBACK

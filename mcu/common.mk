@@ -6,8 +6,7 @@ BIN=$(BUILD)/$(PROJECT).bin
 CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
 
 # Tool path
-# TOOLROOT ?= ~/devel/OwlWare/Tools/gcc-arm-none-eabi-5_4-2016q3/bin/
-TOOLROOT ?= ~/devel/OwlWare/Tools/gcc-arm-none-eabi-7-2017-q4-major/bin/
+TOOLROOT ?= ~/bin/gcc-arm-none-eabi-7-2017-q4-major/bin/
 
 # Tools
 CC=$(TOOLROOT)arm-none-eabi-gcc
@@ -68,9 +67,6 @@ clean:
 
 debug: $(ELF)
 	@$(GDB) -ex "target extended localhost:4242" -ex "load $(ELF)" $(ELF)
-	# @echo "target extended localhost:4242" > gdbscript
-	# @echo "load $(ELF)" >> gdbscript
-	# @$(GDB) -x gdbscript $(ELF)
 
 flash:
 	@$(STFLASH) write $(BIN) $(MCU_ADDRESS)
