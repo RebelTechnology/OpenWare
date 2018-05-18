@@ -186,9 +186,6 @@ int main(void)
 
   SDRAM_Initialization_Sequence(&hsdram1);   
 
-  // Initialise
-  setup();
-
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -807,6 +804,8 @@ void StartDefaultTask(void const * argument)
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN 5 */
+  setup();
+
   /* Infinite loop */
   for(;;)
   {

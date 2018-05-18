@@ -10,7 +10,7 @@ C_SRC += cs4272.c seps114a.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferColour.cpp Graphics.cpp
 
 CPP_SRC += bus.cpp
-# CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp 
+CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp 
 
 include $(OPENWARE)/mcu/sources.mk
 

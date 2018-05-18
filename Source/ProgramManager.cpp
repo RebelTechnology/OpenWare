@@ -61,8 +61,9 @@ uint16_t timestamps[NOF_BUTTONS];
 
 ProgramVector* getProgramVector() { return programVector; }
 
-static int16_t encoders[2] = {INT16_MAX/2, INT16_MAX/2};
-static int16_t deltas[2] = {0, 0};
+#if 0
+static int16_t encoders[NOF_ENCODERS] = {INT16_MAX/2, INT16_MAX/2};
+static int16_t deltas[NOF_ENCODERS] = {0, 0};
 void encoderChanged(uint8_t encoder, int16_t value){
   // // todo: debounce
   // // pass encoder change event to patch
@@ -78,6 +79,7 @@ void encoderChanged(uint8_t encoder, int16_t value){
   // if(getProgramVector()->encoderChangedCallback != NULL)
   //   getProgramVector()->encoderChangedCallback(encoder, delta, 0);
 }
+#endif
 
 PatchDefinition* getPatchDefinition(){
   return program.getPatchDefinition();
@@ -132,12 +134,14 @@ uint8_t getButtonValue(uint8_t ch){
 }
 
 void setButtonValue(uint8_t ch, uint8_t value){
-  timestamps[ch] = getSampleCounter();
-  stateChanged.set(ch);
+  if(ch < NOF_BUTTONS){
+    timestamps[ch] = getSampleCounter();
+    stateChanged.set(ch);
   // if(value)
   //   button_values |= (1<<ch);
   // else
   //   button_values &= ~(1<<ch);
+  }
   button_values &= ~((!value)<<ch);
   button_values |= (bool(value)<<ch);
 }
@@ -592,10 +596,10 @@ extern "C" {
   }
 #endif
   void vApplicationMallocFailedHook(void) {
-    // taskDISABLE_INTERRUPTS();
     program.exitProgram(false);
     error(PROGRAM_ERROR, "malloc failed");
-    for(;;);
+    HAL_Delay(5000);
+    assert_param(0);
   }
   void vApplicationIdleHook(void) {
   }
@@ -607,8 +611,8 @@ extern "C" {
        function is called if a stack overflow is detected. */
     program.exitProgram(false);
     error(PROGRAM_ERROR, "Stack overflow");
-    // taskDISABLE_INTERRUPTS();
-    for(;;);
+    HAL_Delay(5000);
+    assert_param(0);
   }
 }
 

@@ -13,7 +13,7 @@ endif
 
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
-LDSCRIPT = $(OPENWARE)/mcu/STM32F427ZI.ld
+LDSCRIPT ?= $(OPENWARE)/mcu/STM32F427ZI.ld
 CPPFLAGS += --specs=nano.specs
 CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie

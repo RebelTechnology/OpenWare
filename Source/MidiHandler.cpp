@@ -176,7 +176,7 @@ void MidiHandler::updateCodecSettings(){
 }
 
 void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
-  if(size < 4)
+  if(size < 3) // size may be 3 or 4 depending on number of digits in value
     return;
   char* p = (char*)data;
   int32_t value = strtol(p+2, NULL, 16);
@@ -194,6 +194,9 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_BYPASS, p, 2) == 0){
     settings.audio_codec_bypass = value;
     codec.bypass(value);
+  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_INPUT_GAIN, p, 2) == 0){
+    settings.audio_input_gain = value;  
+    codec.setInputGain(settings.audio_input_gain);
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN, p, 2) == 0){
     settings.audio_output_gain = value;  
     codec.setOutputGain(settings.audio_output_gain);
@@ -208,15 +211,15 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
     settings.output_scalar = value;
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_INPUT_CHANNEL, p, 2) == 0){
-    settings.midi_input_channel = max(-1, min(15, value));
-    setInputChannel(settings.midi_input_channel);
+    midiSetInputChannel(max(-1, min(15, value)));
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
-    settings.midi_output_channel = max(-1, min(15, value));
-    midi.setOutputChannel(settings.midi_output_channel);
+    midiSetOutputChannel(max(-1, min(15, value)));
+#ifdef USE_DIGITALBUS
   }else if(strncmp(SYSEX_CONFIGURATION_BUS_ENABLE, p, 2) == 0){
     settings.bus_enabled = value;
   }else if(strncmp(SYSEX_CONFIGURATION_BUS_FORWARD_MIDI, p, 2) == 0){
     settings.bus_forward_midi = value;
+#endif
   }
   // updateCodecSettings();
 }
@@ -303,9 +306,9 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
   if(size < 5 || data[1] != MIDI_SYSEX_MANUFACTURER)     
     return;
-  if(data[2] != MIDI_SYSEX_DEVICE && data[2] != (MIDI_SYSEX_OWL_DEVICE | channel))
+  if(data[2] != MIDI_SYSEX_OMNI_DEVICE && data[2] != (MIDI_SYSEX_OWL_DEVICE | channel))
     // not for us
-    return; // if channel == OMNI && data[2] == 0xff this message will also be processed
+    return;
   switch(data[3]){
   case SYSEX_CONFIGURATION_COMMAND:
     handleConfigurationCommand(data+4, size-5);

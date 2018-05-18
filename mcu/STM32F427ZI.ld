@@ -12,8 +12,8 @@ RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 64K    /* total RAM is 112kb */
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
 EXTRAM (rwx)     : ORIGIN = 0xD0000000, LENGTH = 8M
-/* EXTRAM (rwx)     : ORIGIN = 0xD0400000, LENGTH = 4M */
-FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 2048K
+FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 384K
+STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 640K   /* Sector 7 */
 }
 
 /* Define output sections */

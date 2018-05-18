@@ -17,4 +17,7 @@ void loop(void)
 		EffectsBox_Main();	
 }
 
-void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram){}
+/* void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram){} */
+
+void error(int8_t code, const char* reason){}
+void midi_device_rx(uint8_t *buffer, uint32_t length){}

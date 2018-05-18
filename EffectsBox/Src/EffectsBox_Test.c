@@ -49,7 +49,7 @@ void setLED(uint8_t led, LEDcolour col)
 	switch (col){
 		case YELLOW:	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;	LED_Colour = LED_YEL; break;
 		case RED: 		GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP; LED_Colour = LED_RED; break;
-		case NONE: 		GPIO_InitStruct.Mode = GPIO_MODE_INPUT;														break;
+  	        case NONE: 		GPIO_InitStruct.Mode = GPIO_MODE_INPUT;	LED_Colour = 0;													break;
 	}
 	
 	// Update Pin	

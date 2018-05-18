@@ -9,6 +9,7 @@ CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += wm8731.c
 
 CPP_SRC += bus.cpp
+CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp 
 
 include $(OPENWARE)/mcu/sources.mk
 

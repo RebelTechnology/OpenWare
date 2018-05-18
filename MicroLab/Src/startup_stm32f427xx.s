@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file      startup_stm32f439xx.s
+  * @file      startup_stm32f427xx.s
   * @author    MCD Application Team
-  * @version   V2.6.0
-  * @date      04-November-2016
-  * @brief     STM32F439xx Devices vector table for GCC based toolchains. 
+  * @version   V2.6.1
+  * @date      14-February-2017 
+  * @brief     STM32F427xx Devices vector table for GCC based toolchains. 
   *            This module performs:
   *                - Set the initial SP
   *                - Set the initial PC == Reset_Handler,
@@ -16,7 +16,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -77,7 +77,7 @@ defined in linker script */
   .weak  Reset_Handler
   .type  Reset_Handler, %function
 Reset_Handler:  
-  ldr   sp, =_estack     /* set stack pointer */
+  ldr   sp, =_estack      /* set stack pointer */
 
 /* Copy the data segment initializers from flash to SRAM */  
   movs  r1, #0
@@ -137,9 +137,10 @@ Infinite_Loop:
 *******************************************************************************/
    .section  .isr_vector,"a",%progbits
   .type  g_pfnVectors, %object
-  .size  g_pfnVectors, .-g_pfnVectors 
-  
-  g_pfnVectors:
+  .size  g_pfnVectors, .-g_pfnVectors
+   
+   
+g_pfnVectors:
   .word  _estack
   .word  Reset_Handler
 
@@ -238,21 +239,18 @@ Infinite_Loop:
   .word     OTG_HS_WKUP_IRQHandler            /* USB OTG HS Wakeup through EXTI */                         
   .word     OTG_HS_IRQHandler                 /* USB OTG HS                   */                   
   .word     DCMI_IRQHandler                   /* DCMI                         */                   
-  .word     CRYP_IRQHandler                   /* CRYP crypto                  */                   
+  .word     0                                 /* Reserved                     */                   
   .word     HASH_RNG_IRQHandler               /* Hash and Rng                 */
   .word     FPU_IRQHandler                    /* FPU                          */
   .word     UART7_IRQHandler                  /* UART7                        */      
-  .word     UART8_IRQHandler                  /* UART8                        */
-  .word     SPI4_IRQHandler                   /* SPI4                         */
+  .word     UART8_IRQHandler                  /* UART8                         */
+  .word     SPI4_IRQHandler                   /* SPI4                          */
   .word     SPI5_IRQHandler                   /* SPI5 						  */
   .word     SPI6_IRQHandler                   /* SPI6						  */
   .word     SAI1_IRQHandler                   /* SAI1						  */
-  .word     LTDC_IRQHandler                   /* LTDC           		      */
-  .word     LTDC_ER_IRQHandler                /* LTDC error          	      */
-  .word     DMA2D_IRQHandler                  /* DMA2D                        */
-  
-  
- 
+  .word     0                                 /* Reserved					  */
+  .word     0                                 /* Reserved					  */
+  .word     DMA2D_IRQHandler                  /* DMA2D    					  */
 /*******************************************************************************
 *
 * Provide weak aliases for each Exception handler to the Default_Handler. 
@@ -523,10 +521,7 @@ Infinite_Loop:
                   
    .weak      DCMI_IRQHandler            
    .thumb_set DCMI_IRQHandler,Default_Handler
-   
-   .weak      CRYP_IRQHandler            
-   .thumb_set CRYP_IRQHandler,Default_Handler
-                                
+                                   
    .weak      HASH_RNG_IRQHandler                  
    .thumb_set HASH_RNG_IRQHandler,Default_Handler   
 
@@ -551,20 +546,8 @@ Infinite_Loop:
    .weak      SAI1_IRQHandler            
    .thumb_set SAI1_IRQHandler,Default_Handler
 
-   .weak      LTDC_IRQHandler            
-   .thumb_set LTDC_IRQHandler,Default_Handler
-
-   .weak      LTDC_ER_IRQHandler            
-   .thumb_set LTDC_ER_IRQHandler,Default_Handler
-
    .weak      DMA2D_IRQHandler            
    .thumb_set DMA2D_IRQHandler,Default_Handler
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/		
- 
-   
-   
-
- 
-
  

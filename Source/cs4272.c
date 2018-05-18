@@ -114,8 +114,11 @@ void codec_mute(bool mute){
   }
 }
 
+void codec_set_gain_in(int8_t level){
+}
+
 /* Set output gain between 0 (mute) and 127 (max) */
-void codec_set_volume(int8_t level){
+void codec_set_gain_out(int8_t level){
   /* The digital volume control allows the user to attenuate the signal in 1 dB increments from 0 to -127 dB.  */
   volume = 127-level;
   codec_write(CODEC_DAC_CHA_VOL_REG, volume);

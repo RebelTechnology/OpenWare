@@ -27,6 +27,9 @@ extern "C" {
   void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2);
 #endif
 
+  void midiSetInputChannel(int8_t channel);
+  void midiSetOutputChannel(int8_t channel);
+			   
 #ifdef OWL_MAGUS
 #define PORT_UNI_INPUT 1
 #define PORT_UNI_OUTPUT 2

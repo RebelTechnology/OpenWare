@@ -91,7 +91,8 @@ static int testMagic(){
 
 static int testButton(){
   // return false;
-  return !(SW1_GPIO_Port->IDR & SW1_Pin);
+  /* return !(SW1_GPIO_Port->IDR & SW1_Pin); */
+  return !(BOOT1_GPIO_Port->IDR & BOOT1_Pin);
 }
 
 /* USER CODE END PFP */
@@ -393,7 +394,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SW1_Pin SW3_Pin SW2_Pin */
-  GPIO_InitStruct.Pin = SW1_Pin;//|SW3_Pin|SW2_Pin;
+  GPIO_InitStruct.Pin = BOOT1_Pin;//SW1_Pin|SW3_Pin|SW2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
