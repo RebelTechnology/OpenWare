@@ -367,11 +367,6 @@ uint8_t getPortMode(uint8_t index){
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
-#ifdef OWL_CHIRP
-#undef errno
-int32_t __errno;
-#endif
-
 void setup(){
 
 #ifdef OWL_PEDAL
