@@ -23,6 +23,7 @@ OBJS += $(DRIVERS)/Src/stm32f4xx_hal_spi.o
 OBJS_UART = $(DRIVERS)/Src/stm32f4xx_hal_uart.o
 OBJS_DAC = $(DRIVERS)/Src/stm32f4xx_hal_dac.o
 OBJS_DAC += $(DRIVERS)/Src/stm32f4xx_hal_dac_ex.o
+OBJS_CRC += $(DRIVERS)/Src/stm32f4xx_hal_crc.o
 
 # required by OWL 2
 OBJS_SAI = $(DRIVERS)/Src/stm32f4xx_hal_sai.o
@@ -68,6 +69,7 @@ OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_bitreversal.o
 OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_rfft_fast_f32.o
 OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_rfft_fast_init_f32.o
 OBJS_DSP += $(DSPLIB)/CommonTables/arm_const_structs.o
+
 
 # OBJS += $(DSPLIB)/FilteringFunctions/arm_biquad_cascade_df1_init_f32.o
 # OBJS += $(DSPLIB)/FilteringFunctions/arm_biquad_cascade_df1_f32.o
