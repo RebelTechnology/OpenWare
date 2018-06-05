@@ -262,6 +262,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = MAGUS_HARDWARE;
 #elif defined OWL_EFFECTSBOX
   pv->hardware_version = EFFECTSBOX_HARDWARE;
+#elif defined OWL_CHIRP
+  pv->hardware_version = OWL_PEDAL_HARDWARE;
 #else
 #error "invalid configuration"
 #endif

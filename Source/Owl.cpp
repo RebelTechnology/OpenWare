@@ -367,7 +367,13 @@ uint8_t getPortMode(uint8_t index){
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
+#ifdef OWL_CHIRP
+#undef errno
+int32_t __errno;
+#endif
+
 void setup(){
+
 #ifdef OWL_PEDAL
   /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
   // if (HAL_GetREVID() == 0x1001)

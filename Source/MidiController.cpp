@@ -39,7 +39,7 @@
 #define HARDWARE_VERSION             "FX Box"
 #elif defined OWL_BOOT
 #define HARDWARE_VERSION             "OWL Boot"
-#else
+#elif !defined HARDWARE_VERSION
 #error "invalid configuration"
 #endif
 
