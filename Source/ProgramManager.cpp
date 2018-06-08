@@ -157,12 +157,19 @@ void updateParameters(){
 #elif defined USE_SCREEN
   // Player todo: route input CVs to parameters
 #else
+#ifdef ADC_A
   parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
+#endif
+#ifdef ADC_B
   parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
+#endif
+#ifdef ADC_C
   parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
+#endif
+#ifdef ADC_D
   parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
 #endif
-#if (NOF_ADC_VALUES > 4) && defined ADC_E
+#ifdef ADC_E
   parameter_values[4] = adc_values[ADC_E];
 #endif
   // parameter_values[0] = 4095-adc_values[0];
