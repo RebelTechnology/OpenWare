@@ -176,6 +176,7 @@ void updateParameters(){
   // parameter_values[1] = 4095-adc_values[1];
   // parameter_values[2] = 4095-adc_values[2];
   // parameter_values[3] = 4095-adc_values[3];
+#endif
 }
 #else
 void updateParameters(){
