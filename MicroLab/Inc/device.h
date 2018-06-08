@@ -8,6 +8,8 @@
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
 #define MIDI_OUTPUT_CHANNEL          0
 
+#define AUDIO_OUTPUT_GAIN            127
+
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */
@@ -71,7 +73,6 @@
 
 /* +0db in and out */
 #define AUDIO_INPUT_GAIN             0x017
-#define AUDIO_OUTPUT_GAIN            0x068
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */
 #define AUDIO_OUTPUT_OFFSET          0x00001eec /* 0.1208 * 65535 */
