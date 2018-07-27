@@ -1,4 +1,4 @@
-PROJECT = MicroLab
+PROJECT = Alchemist
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 

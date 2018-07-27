@@ -7,13 +7,13 @@ endif
 
 export OPENWARE CONFIG
 
-all: tesseract microlab minilab owlpedal player prism magus effectsbox #quadfm 
+all: tesseract alchemist minilab owlpedal player prism magus effectsbox #quadfm 
 
 tesseract:
 	@$(MAKE) -C Tesseract all
 
-microlab:
-	@$(MAKE) -C MicroLab all
+alchemist:
+	@$(MAKE) -C Alchemist all
 
 minilab:
 	@$(MAKE) -C MiniLab all
@@ -38,7 +38,7 @@ effectsbox:
 
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
-	@$(MAKE) -C MicroLab clean
+	@$(MAKE) -C Alchemist clean
 	@$(MAKE) -C OwlPedal clean
 	@$(MAKE) -C PlayerF7 clean
 	@$(MAKE) -C PrismF7 clean
