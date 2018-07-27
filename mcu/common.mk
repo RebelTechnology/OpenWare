@@ -6,7 +6,7 @@ BIN=$(BUILD)/$(PROJECT).bin
 CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
 
 # Tool path
-TOOLROOT ?= ~/bin/gcc-arm-none-eabi-7-2017-q4-major/bin/
+TOOLROOT ?= ~/bin/gcc-arm-none-eabi-7-2018-q2-update/bin/
 
 # Tools
 CC=$(TOOLROOT)arm-none-eabi-gcc
