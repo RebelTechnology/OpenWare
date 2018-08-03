@@ -68,11 +68,14 @@ clean:
 debug: $(ELF)
 	@$(GDB) -ex "target extended localhost:4242" -ex "load $(ELF)" $(ELF)
 
-flash:
+stflash:
 	@$(STFLASH) write $(BIN) $(MCU_ADDRESS)
 
 stlink:
 	@$(GDB) -ex "target extended localhost:4242" $(ELF)
+
+openocd: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "load" $(ELF)
 
 bin: $(BIN)
 	@echo Successfully built $(CONFIG) firmware in $(BIN)
