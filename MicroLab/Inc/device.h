@@ -5,6 +5,9 @@
 #define OWL_MICROLAB
 #define USE_RGB_LED
 
+#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
+#define MIDI_OUTPUT_CHANNEL          0
+
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
 /* #define OWL_PLAYER */
@@ -18,10 +21,6 @@
 #define ADC_B 3
 #define ADC_C 0
 #define ADC_D 1
-#define LED1 1
-#define LED2 2
-#define LED3 3
-#define LED4 4
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_HP_FILTER
@@ -38,18 +37,13 @@
 #define DEBUG_STACK
 #define DEBUG_STORAGE
 
-/* #define CS_CS_Pin CS_nCS_Pin */
-/* #define CS_CS_GPIO_Port CS_nCS_GPIO_Port */
-/* #define CS_RST_Pin CS_nRST_Pin */
-/* #define CS_RST_GPIO_Port CS_nRST_GPIO_Port */
-
 #define CODEC_BLOCKSIZE 256
 #define CODEC_BUFFER_SIZE (4*CODEC_BLOCKSIZE)
 #define AUDIO_MAX_BLOCK_SIZE (CODEC_BUFFER_SIZE/4)
 
 #define NOF_ADC_VALUES               4
 #define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  4
+#define NOF_BUTTONS                  3
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
 #define MAX_FACTORY_PATCHES          36
@@ -76,10 +70,8 @@
 #define MIDI_OUTPUT_CHANNEL          0
 
 /* +0db in and out */
-#define AUDIO_INPUT_GAIN_LEFT        0x017
-#define AUDIO_INPUT_GAIN_RIGHT       0x017
-#define AUDIO_OUTPUT_GAIN_LEFT       0x079
-#define AUDIO_OUTPUT_GAIN_RIGHT      0x079 
+#define AUDIO_INPUT_GAIN             0x017
+#define AUDIO_OUTPUT_GAIN            0x068
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */
 #define AUDIO_OUTPUT_OFFSET          0x00001eec /* 0.1208 * 65535 */

@@ -1,7 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : main.hpp
-  * Description        : This file contains the common defines of the application
+  * @file           : main.h
+  * @brief          : Header for main.c file.
+  *                   This file contains the common defines of the application.
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -45,12 +46,13 @@
   *
   ******************************************************************************
   */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
-  /* Includes ------------------------------------------------------------------*/
+#ifndef __MAIN_H__
+#define __MAIN_H__
 
 /* Includes ------------------------------------------------------------------*/
+
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -105,12 +107,12 @@
 #define FLASH_nCS_GPIO_Port GPIOC
 #define FLASH_WP_Pin GPIO_PIN_0
 #define FLASH_WP_GPIO_Port GPIOB
-#define TRIG_SW3_Pin GPIO_PIN_1
-#define TRIG_SW3_GPIO_Port GPIOB
-#define TRIG_SW3_EXTI_IRQn EXTI1_IRQn
-#define TRIG_SW4_Pin GPIO_PIN_2
-#define TRIG_SW4_GPIO_Port GPIOB
-#define TRIG_SW4_EXTI_IRQn EXTI2_IRQn
+#define SW3_Pin GPIO_PIN_1
+#define SW3_GPIO_Port GPIOB
+#define SW3_EXTI_IRQn EXTI1_IRQn
+#define SW4_Pin GPIO_PIN_2
+#define SW4_GPIO_Port GPIOB
+#define SW4_EXTI_IRQn EXTI2_IRQn
 #define CS_CS_Pin GPIO_PIN_10
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
@@ -127,16 +129,16 @@
 #define CS_SDIN_GPIO_Port GPIOD
 #define TRIG_OUT_Pin GPIO_PIN_9
 #define TRIG_OUT_GPIO_Port GPIOG
-#define TRIG_SW2_Pin GPIO_PIN_10
-#define TRIG_SW2_GPIO_Port GPIOG
-#define TRIG_SW2_EXTI_IRQn EXTI15_10_IRQn
+#define SW2_Pin GPIO_PIN_10
+#define SW2_GPIO_Port GPIOG
+#define SW2_EXTI_IRQn EXTI15_10_IRQn
 #define FLASH_SCK_Pin GPIO_PIN_3
 #define FLASH_SCK_GPIO_Port GPIOB
 #define PWM3_Pin GPIO_PIN_8
 #define PWM3_GPIO_Port GPIOB
-#define TRIG_SW1_Pin GPIO_PIN_9
-#define TRIG_SW1_GPIO_Port GPIOB
-#define TRIG_SW1_EXTI_IRQn EXTI9_5_IRQn
+#define SW1_Pin GPIO_PIN_9
+#define SW1_GPIO_Port GPIOB
+#define SW1_EXTI_IRQn EXTI9_5_IRQn
 
 /* ########################## Assert Selection ############################## */
 /**
@@ -159,13 +161,6 @@ void _Error_Handler(char *, int);
 }
 #endif
 
-/**
-  * @}
-  */ 
+#endif /* __MAIN_H__ */
 
-/**
-  * @}
-*/ 
-
-#endif /* __MAIN_H */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

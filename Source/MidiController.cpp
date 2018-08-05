@@ -36,7 +36,9 @@
 #elif defined OWL_MAGUS
 #define HARDWARE_VERSION             "Magus"
 #elif defined OWL_EFFECTSBOX
-#define HARDWARE_VERSION             "fxbox"
+#define HARDWARE_VERSION             "FX Box"
+#elif defined OWL_BOOT
+#define HARDWARE_VERSION             "OWL Boot"
 #else
 #error "invalid configuration"
 #endif
@@ -45,10 +47,6 @@
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
-}
-
-void MidiController::init(uint8_t ch){
-  channel = ch;
 }
 
 void MidiController::sendPatchParameterValues(){
@@ -351,7 +349,8 @@ void MidiController::sendSysEx(uint8_t* data, uint16_t size){
    * 0xF0 and trailing 0xF7.
    */
   if(midi_device_connected()){
-    uint8_t packet[4] = { USB_COMMAND_SYSEX, SYSEX, MIDI_SYSEX_MANUFACTURER, MIDI_SYSEX_DEVICE };
+    uint8_t packet[4] = { USB_COMMAND_SYSEX, SYSEX, MIDI_SYSEX_MANUFACTURER,
+			  uint8_t(MIDI_SYSEX_OWL_DEVICE | channel) };
     write(packet, sizeof(packet));
     int count = size/3;
     uint8_t* src = data;
@@ -392,18 +391,14 @@ void MidiController::write(uint8_t* data, uint16_t size){
 
 void MidiController::push(){
   int len = buffer.getContiguousReadCapacity();
-  while(len >= 4 && (!midi_device_connected() || midi_device_ready())
-#ifdef USE_USB_HOST
-	&& (!midi_host_connected() || midi_host_ready())
-#endif
-	){
-    if(midi_device_ready())
-      midi_device_tx(buffer.getReadHead(), 4);
+  while(len >= 4){
+    if(midi_device_ready()) // if not ready, packets will be missed
+      midi_device_tx(buffer.getReadHead(), len);
 #ifdef USE_USB_HOST
     if(midi_host_ready())
-      midi_host_tx(buffer.getReadHead(), 4);
+      midi_host_tx(buffer.getReadHead(), len);
 #endif
-    buffer.incrementReadHead(4);
+    buffer.incrementReadHead(len);
     len = buffer.getContiguousReadCapacity();
   }
 }

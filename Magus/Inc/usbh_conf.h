@@ -75,7 +75,7 @@
 #define USBH_MAX_NUM_CONFIGURATION      1 
  
 /*----------   -----------*/
-#define USBH_KEEP_CFG_DESCRIPTOR      0 
+#define USBH_KEEP_CFG_DESCRIPTOR      1 
  
 /*----------   -----------*/
 #define USBH_MAX_NUM_SUPPORTED_CLASS      1 

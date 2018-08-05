@@ -3,14 +3,13 @@
 
 #include <stdint.h>
 #include "device.h"
+#include "Codec.h"
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
-   void codec_init(SPI_HandleTypeDef*);
-   void codec_write(uint8_t reg, uint8_t data);
-   void codec_bypass(int bypass);
-   void codec_set_volume(int8_t volume);
+
+void codec_write(uint8_t reg, uint8_t data);
 
 #ifdef __cplusplus
 }

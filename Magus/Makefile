@@ -16,7 +16,6 @@ C_SRC += HAL_TLC5946.c
 C_SRC += HAL_Encoders.c
 # C_SRC += HAL_OLED.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
-S_SRC = startup_stm32f427xx.s
 
 include $(OPENWARE)/mcu/sources.mk
 

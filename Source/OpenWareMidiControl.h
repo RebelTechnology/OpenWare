@@ -2,7 +2,7 @@
 #define OPENWAREMIDICONTROL_H_INCLUDED
 
 #define MIDI_SYSEX_MANUFACTURER        0x7d     /* Educational or development use only */
-#define MIDI_SYSEX_DEVICE              0x52
+#define MIDI_SYSEX_OMNI_DEVICE         0x52
 #define MIDI_SYSEX_OWL_DEVICE          0x20     /* OWL Open Ware Laboratory */
 #define MIDI_SYSEX_VERSION             0x03     /* Revision */
 
@@ -62,6 +62,11 @@ enum PatchButtonId {
   BUTTON_B,
   BUTTON_C,
   BUTTON_D,
+  BUTTON_E,
+  BUTTON_F,
+  BUTTON_G,
+  BUTTON_H,
+  GATE_BUTTON = 0x7f,
   MIDI_NOTE_BUTTON = 0x80 // values over 127 are mapped to note numbers
 };
 
@@ -71,6 +76,7 @@ enum PatchButtonId {
 #define SYSEX_CONFIGURATION_AUDIO_BLOCKSIZE       "BS"
 #define SYSEX_CONFIGURATION_CODEC_SWAP            "SW"
 #define SYSEX_CONFIGURATION_CODEC_BYPASS          "BY"
+#define SYSEX_CONFIGURATION_CODEC_INPUT_GAIN      "IG"
 #define SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN     "OG"
 #define SYSEX_CONFIGURATION_PC_BUTTON             "PC"
 #define SYSEX_CONFIGURATION_INPUT_OFFSET          "IO"
@@ -79,17 +85,21 @@ enum PatchButtonId {
 #define SYSEX_CONFIGURATION_OUTPUT_SCALAR         "OS"
 #define SYSEX_CONFIGURATION_MIDI_INPUT_CHANNEL    "MI"
 #define SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL   "MO"
+#define SYSEX_CONFIGURATION_BUS_ENABLE            "BE"
+#define SYSEX_CONFIGURATION_BUS_FORWARD_MIDI      "BM"
 
 enum OpenWareMidiSysexCommand {
   SYSEX_PRESET_NAME_COMMAND       = 0x01,
   SYSEX_PARAMETER_NAME_COMMAND    = 0x02,
   SYSEX_CONFIGURATION_COMMAND     = 0x03,
-  SYSEX_DFU_COMMAND               = 0x7e,
+  SYSEX_BOOTLOADER_COMMAND        = 0x7e,
   SYSEX_FIRMWARE_UPLOAD           = 0x10,
   SYSEX_FIRMWARE_STORE            = 0x11,
   SYSEX_FIRMWARE_RUN              = 0x12,
   SYSEX_FIRMWARE_FLASH            = 0x13,
   SYSEX_FLASH_ERASE               = 0x14,
+  SYSEX_SETTINGS_RESET            = 0x15,
+  SYSEX_SETTINGS_STORE            = 0x16,
   SYSEX_FIRMWARE_VERSION          = 0x20,
   SYSEX_DEVICE_ID                 = 0x21,
   SYSEX_PROGRAM_MESSAGE           = 0x22,

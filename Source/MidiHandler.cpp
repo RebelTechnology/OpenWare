@@ -8,6 +8,18 @@
 #include "errorhandlers.h"
 #include "Codec.h"
 #include "Owl.h"
+#include "FlashStorage.h"
+#include "PatchRegistry.h"
+#ifdef USE_DIGITALBUS
+#include "bus.h"
+#endif
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
 
 static FirmwareLoader loader;
 
@@ -153,17 +165,11 @@ void MidiHandler::handlePolyKeyPressure(uint8_t status, uint8_t note, uint8_t va
 }
 
 void MidiHandler::updateCodecSettings(){
-  // codec.softMute(true);
-  // codec.stop();
-  // codec.init(settings);
-  // codec.start();
-  // program.resetProgram(true);
-  // midi_set_input_channel(settings.midi_input_channel);
-  // midi_set_output_channel(settings.midi_output_channel);
+  codec.reset();
 }
 
 void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
-  if(size < 4)
+  if(size < 3) // size may be 3 or 4 depending on number of digits in value
     return;
   char* p = (char*)data;
   int32_t value = strtol(p+2, NULL, 16);
@@ -181,8 +187,12 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_BYPASS, p, 2) == 0){
     settings.audio_codec_bypass = value;
     codec.bypass(value);
+  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_INPUT_GAIN, p, 2) == 0){
+    settings.audio_input_gain = value;  
+    codec.setInputGain(settings.audio_input_gain);
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN, p, 2) == 0){
-    codec.setOutputGain(value);
+    settings.audio_output_gain = value;  
+    codec.setOutputGain(settings.audio_output_gain);
   }else if(strncmp(SYSEX_CONFIGURATION_PC_BUTTON, p, 2) == 0){
     settings.program_change_button = value;
   }else if(strncmp(SYSEX_CONFIGURATION_INPUT_OFFSET, p, 2) == 0){
@@ -194,11 +204,26 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
     settings.output_scalar = value;
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_INPUT_CHANNEL, p, 2) == 0){
-    settings.midi_input_channel = value;
+    midiSetInputChannel(max(-1, min(15, value)));
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
-    settings.midi_output_channel = value;
+    midiSetOutputChannel(max(-1, min(15, value)));
+#ifdef USE_DIGITALBUS
+  }else if(strncmp(SYSEX_CONFIGURATION_BUS_ENABLE, p, 2) == 0){
+    settings.bus_enabled = value;
+  }else if(strncmp(SYSEX_CONFIGURATION_BUS_FORWARD_MIDI, p, 2) == 0){
+    settings.bus_forward_midi = value;
+#endif
   }
+  // updateCodecSettings();
+}
+
+void MidiHandler::handleSettingsResetCommand(uint8_t* data, uint16_t size){
+  settings.reset();
   updateCodecSettings();
+}
+
+void MidiHandler::handleSettingsStoreCommand(uint8_t* data, uint16_t size){
+  settings.saveToFlash();
 }
 
 void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
@@ -230,13 +255,17 @@ void MidiHandler::runProgram(){
 }
 
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
-  if(size == 5){
-    uint32_t sector = loader.decodeInt(data);
-    program.eraseFromFlash(sector);
-    loader.clear();
-  }else{
-    error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
-  }
+  storage.erase();
+  storage.init();
+  registry.init();
+  settings.init();
+  // if(size == 5){
+  //   uint32_t sector = loader.decodeInt(data);
+  //   program.eraseFromFlash(sector);
+  //   loader.clear();
+  // }else{
+  //   error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
+  // }
 }
 
 void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
@@ -270,16 +299,16 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
   if(size < 5 || data[1] != MIDI_SYSEX_MANUFACTURER)     
     return;
-  if(data[2] != MIDI_SYSEX_DEVICE && data[2] != (MIDI_SYSEX_OWL_DEVICE | channel))
+  if(data[2] != MIDI_SYSEX_OMNI_DEVICE && data[2] != (MIDI_SYSEX_OWL_DEVICE | channel))
     // not for us
-    return; // if channel == OMNI && data[2] == 0xff this message will also be processed
+    return;
   switch(data[3]){
   case SYSEX_CONFIGURATION_COMMAND:
     handleConfigurationCommand(data+4, size-5);
     break;
-  // case SYSEX_DFU_COMMAND:
-  //   jump_to_bootloader();
-  //   break;
+  case SYSEX_BOOTLOADER_COMMAND:
+    jump_to_bootloader();
+    break;
   case SYSEX_FIRMWARE_UPLOAD:
     handleFirmwareUploadCommand(data+1, size-2);
     break;
@@ -294,6 +323,12 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     break;
   case SYSEX_FLASH_ERASE:
     handleFlashEraseCommand(data+4, size-5);
+    break;
+  case SYSEX_SETTINGS_RESET:
+    handleSettingsResetCommand(data+4, size-5);
+    break;
+  case SYSEX_SETTINGS_STORE:
+    handleSettingsStoreCommand(data+4, size-5);
     break;
   default:
     error(PROGRAM_ERROR, "Invalid SysEx Message");

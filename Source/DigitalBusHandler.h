@@ -1,8 +1,8 @@
 #ifndef _DigitalBusHandler_h_
 #define _DigitalBusHandler_h_
 
-#include "MidiReader.h"
 #include "bus.h"
+#include "MidiReader.h"
 
 class DigitalBusHandler : public MidiReader {
 public:

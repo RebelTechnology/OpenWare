@@ -1,46 +1,59 @@
 #include "bus.h"
 #include "midi.h"
-#include "serial.h"
 #include "device.h"
 #include "message.h"
 #include "SerialBuffer.hpp"
-// #include "DigitalBusStreamReader.h"
 #include "DigitalBusReader.h"
 #include "cmsis_os.h"
 #include "errorhandlers.h"
 #include "basicmaths.h"
+#include "Owl.h"
 
 #ifdef USE_DIGITALBUS
 
 #define DIGITAL_BUS_BUFFER_SIZE 512
 
 // static uint8_t busframe[4];
-static DigitalBusReader bus;
-SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
-SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
+DigitalBusReader bus;
+static SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
+static SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
 // todo: store data in 32bit frame buffers
-bool DIGITAL_BUS_PROPAGATE_MIDI = 0;
-bool DIGITAL_BUS_ENABLE_BUS = 0;
 uint32_t bus_tx_packets = 0;
 uint32_t bus_rx_packets = 0;
 
 static void initiateBusRead(){
-  extern UART_HandleTypeDef huart1;
-  UART_HandleTypeDef *huart = &huart1;
+  extern UART_HandleTypeDef BUS_HUART;
+  UART_HandleTypeDef *huart = &BUS_HUART;
   /* Check that a Rx process is not already ongoing */
   if(huart->RxState == HAL_UART_STATE_READY){
     uint16_t size = min(bus_rx_buf.getCapacity()/2, bus_rx_buf.getContiguousWriteCapacity());
+    // keep at least half the buffer back, it will fill up while this half is processing
     HAL_UART_Receive_DMA(huart, bus_rx_buf.getWriteHead(), size);
+  }
+}
+
+static void initiateBusWrite(){
+  if(bus_tx_buf.notEmpty()){
+    /* Check that a tx process is not already ongoing */
+    extern UART_HandleTypeDef BUS_HUART;
+    UART_HandleTypeDef *huart = &BUS_HUART;
+    if(huart->gState == HAL_UART_STATE_READY) 
+#ifdef OWL_PEDAL // no DMA available for UART4 tx!
+      HAL_UART_Transmit_IT(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
+#else
+      HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
+#endif
   }
 }
 
 extern "C" {
   void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
+    // /* Disable TXEIE and TCIE interrupts */
+    // CLEAR_BIT(huart->Instance->CR1, (USART_CR1_TXEIE | USART_CR1_TCIE));
     int size = huart->TxXferSize; // - huart->TxXferCount;
     bus_tx_buf.incrementReadHead(size);
     bus_tx_packets += size/4;
-    if(bus_tx_buf.notEmpty())
-      HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
+    initiateBusWrite();
   }
   void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // what is the correct size if IDLE interrupts?
@@ -59,18 +72,7 @@ extern "C" {
 
   void serial_write(uint8_t* data, uint16_t size){
     bus_tx_buf.push(data, size);
-    extern UART_HandleTypeDef huart1;
-    UART_HandleTypeDef *huart = &huart1;
-    /* Check that a Tx process is not already ongoing */
-    if(huart->gState == HAL_UART_STATE_READY) 
-      HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
   }
-
-  // void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-  //   rxbuf.incrementWriteHead(4);
-  //   __HAL_UART_FLUSH_DRREGISTER(huart);
-  //   serial_read(rxbuf.getWriteHead(), 4);
-  // }
 }
 
 uint8_t* bus_deviceid(){
@@ -83,37 +85,25 @@ void bus_setup(){
   // serial_setup(USART_BAUDRATE);
   // bus.sendReset();
 
-  extern UART_HandleTypeDef huart1;
-  UART_HandleTypeDef *huart = &huart1;
+  extern UART_HandleTypeDef BUS_HUART;
+  UART_HandleTypeDef *huart = &BUS_HUART;
 
   /* Enable IDLE line detection */
   __HAL_UART_ENABLE_IT(huart, UART_IT_IDLE);
-  // USART_ITConfig(huart->Instance, UART_IT_IDLE, ENABLE);
     
   /* Enable Parity Error Interrupt */
   __HAL_UART_ENABLE_IT(huart, UART_IT_PE);
-  // USART_ITConfig(huart->Instance, UART_IT_PE, ENABLE);
 
   /* Enable Error Interrupt */
   __HAL_UART_ENABLE_IT(huart, UART_IT_ERR);
-  // USART_ITConfig(huart->Instance, UART_IT_ERR, ENABLE);
 
-    initiateBusRead();
-
-  // extern UART_HandleTypeDef huart1;
-  // UART_HandleTypeDef *huart = &huart1;
-  // SET_BIT(huart->Instance->CR1, USART_CR1_PEIE);
-  // /* Enable the UART Error Interrupt: (Frame error, noise error, overrun error) */
-  // // SET_BIT(huart->Instance->CR3, USART_CR3_EIE);
-  // /* Enable the UART Data Register not empty Interrupt */
-  // SET_BIT(huart->Instance->CR1, USART_CR1_RXNEIE);
-  // serial_read(rxbuf.getWriteHead(), 4);
+  initiateBusRead();
 }
 
 #define BUS_IDLE_INTERVAL 2197
 
 int bus_status(){
-  // bus.process();
+  // incoming data
   while(bus_rx_buf.available() >= 4){
     uint8_t frame[4];
     bus_rx_buf.pull(frame, 4);
@@ -125,12 +115,21 @@ int bus_status(){
   }
   initiateBusRead();
 
-  static uint32_t lastpolled = 0;
-  if(osKernelSysTick() > lastpolled + BUS_IDLE_INTERVAL){
-    bus.connected();
-    lastpolled = osKernelSysTick();
+  // outgoing data
+  initiateBusWrite();
+  
+  if(settings.bus_enabled){
+    static uint32_t lastpolled = 0;
+    if(osKernelSysTick() > lastpolled + BUS_IDLE_INTERVAL){
+      bus.connected();
+      lastpolled = osKernelSysTick();
+    }
   }
   return bus.getStatus();
+}
+
+void bus_tx_frame(uint8_t* data){
+  bus.sendFrame(data);
 }
 
 void bus_tx_parameter(uint8_t pid, int16_t value){
@@ -149,18 +148,16 @@ void bus_tx_message(const char* msg){
 }
 
 void bus_tx_error(const char* reason){
-  debug << "tx error: " << reason << ".";
-}
-
-void bus_tx_frame(uint8_t* data){
-  bus.sendFrame(data);
+  debug << "tx err[" << reason << "]";
+  bus_tx_buf.reset();
 }
 
 void bus_rx_parameter(uint8_t pid, int16_t value){
+  setParameterValue(pid, value);
   debug << "rx par[" << pid << "]";
 }
 void bus_rx_command(uint8_t cmd, int16_t data){
-  debug << "rx cmd[" << cmd << ".";
+  debug << "rx cmd[" << cmd << "]";
 }
 void bus_rx_message(const char* msg){
   debug << "rx msg[" << msg << "]";
@@ -171,8 +168,13 @@ void bus_rx_data(const uint8_t* data, uint16_t size){
 
 void bus_rx_error(const char* reason){
   debug << "rx error: " << reason << ".";
+  bus_rx_buf.reset();
   bus.reset();
-  bus.sendReset();
+  // bus.sendReset();
+}
+
+void bus_set_input_channel(uint8_t ch){
+  bus.setInputChannel(ch);
 }
 
 #endif /* USE_UART */

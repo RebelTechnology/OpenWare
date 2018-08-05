@@ -1,7 +1,6 @@
 #ifndef __PatchRegistry_h__
 #define __PatchRegistry_h__
 
-#include <string>
 #include "device.h"
 #include "PatchDefinition.hpp"
 #include "StorageBlock.h"

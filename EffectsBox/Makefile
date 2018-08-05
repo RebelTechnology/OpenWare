@@ -4,13 +4,18 @@ OPENWARE ?= $(BUILDROOT)/..
 
 include $(OPENWARE)/mcu/STM32F427ZI.mk
 
-C_SRC = freertos.c main.c
-C_SRC += stm32f4xx_hal_msp.c system_stm32f4xx.c
+C_SRC = main.c
+C_SRC += freertos.c
+C_SRC += stm32f4xx_hal_msp.c system_stm32f4xx.c stm32f4xx_it.c
 C_SRC += usbd_conf.c usbd_desc.c usb_device.c 
+
+# C_SRC += test.c EffectsBox_Test.c
+# C_SRC += HAL_OLED.c
+# C_SRC += usbd_midi.c usbd_midi_if.c
+
 C_SRC += sdram.c
 C_SRC += cs4272.c
 C_SRC += ssd1309.c
-S_SRC = startup_stm32f427xx.s
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
 
 include $(OPENWARE)/mcu/sources.mk

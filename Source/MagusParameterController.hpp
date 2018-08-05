@@ -3,17 +3,23 @@
 
 #include "device.h"
 #include "basicmaths.h"
-#ifdef OWL_MAGUS
 #include "errorhandlers.h"
-#endif
 #include "ProgramVector.h"
 // #include "HAL_Encoders.h"
 #include "Owl.h"
 #include "OpenWareMidiControl.h"
+#include "PatchRegistry.h"
+#include "ApplicationSettings.h"
+#include "ProgramManager.h"
+#include "Codec.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
+#define NOF_ENCODERS 6
+
 #define ENC_MULTIPLIER 6 // shift left by this many steps
+#define NOF_CONTROL_MODES 4
+
 /*    
 screen 128 x 64, font 5x7
 4 blocks, 32px per each, 3-4 letters each
@@ -35,17 +41,28 @@ class ParameterController {
 public:
   char title[11] = "Magus";
   int16_t parameters[SIZE];
-  int16_t encoders[6]; // last seen encoder values
-  int16_t offsets[6]; // last seen encoder values
+  int16_t encoders[NOF_ENCODERS]; // last seen encoder values
+  int16_t offsets[NOF_ENCODERS]; // last seen encoder values
   int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
   char names[SIZE][12];
-  // char blocknames[4][6] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
+  // char blocknames[4][NOF_ENCODERS] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   uint8_t selectedBlock;
-  uint8_t selectedPid[6];
-  enum ScreenMode {
-    STANDARD, SELECTBLOCKPARAMETER, SELECTGLOBALPARAMETER, SELECTPROGRAM, ERROR
+  uint8_t selectedPid[NOF_ENCODERS];
+  enum DisplayMode {
+    STANDARD, SELECTBLOCKPARAMETER, SELECTGLOBALPARAMETER, CONTROL, ERROR
   };
-  ScreenMode mode;
+  DisplayMode displayMode;
+  
+  enum ControlMode {
+    PLAY, STATUS, PRESET, VOLUME, EXIT
+  };
+  ControlMode controlMode = PLAY;
+
+  const char controlModeNames[NOF_CONTROL_MODES][12] = { "  Play   >",
+							 "< Status >",
+							 "< Preset >",
+							 "< Volume" };
+
   ParameterController(){
     reset();
   }
@@ -57,7 +74,7 @@ public:
       user[i] = 0;
       parameters[i] = 0;
     }
-    for(int i=0; i<6; ++i){
+    for(int i=0; i<NOF_ENCODERS; ++i){
       // encoders[i] = 0;
       offsets[i] = 0;
     }
@@ -68,7 +85,12 @@ public:
     selectedPid[3] = PARAMETER_C;
     selectedPid[4] = PARAMETER_E;
     selectedPid[5] = PARAMETER_G;
-    mode = STANDARD;
+    displayMode = STANDARD;
+
+#ifdef OWL_MAGUS
+    for(int i=0; i<20; ++i)
+      setPortMode(i, PORT_UNI_INPUT);
+#endif
   }
  
   int16_t getEncoderValue(uint8_t eid){
@@ -108,7 +130,7 @@ public:
     drawBlockValues(screen);
     int x = 0;
     int y = 63-8;
-    for(int i=2; i<6; ++i){
+    for(int i=2; i<NOF_ENCODERS; ++i){
       // screen.print(x+1, y, blocknames[i-1]);
       if(selectedBlock == i)
 	screen.drawHorizontalLine(x, y, 32, WHITE);
@@ -173,13 +195,12 @@ public:
     }
   }
 
-  void drawStats(ScreenBuffer& screen){
+  void drawStatus(ScreenBuffer& screen){
+    int offset = 16;
     screen.setTextSize(1);
-    // screen.clear(86, 0, 128-86, 16);
-    // draw memory use
-    screen.print(80, 8, "mem");
+    // single row
+    screen.print(1, offset+8, "mem ");
     ProgramVector* pv = getProgramVector();
-    screen.setCursor(80, 17);
     int mem = (int)(pv->heap_bytes_used)/1024;
     if(mem > 999){
       screen.print(mem/1024);
@@ -189,8 +210,32 @@ public:
       screen.print("k");
     }
     // draw CPU load
-    screen.print(110, 8, "cpu");
-    screen.setCursor(110, 17);
+    screen.print(64, offset+8, "cpu ");
+    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
+    screen.print("%");
+  }
+  
+  void drawStats(ScreenBuffer& screen){
+    int offset = 0;
+    screen.setTextSize(1);
+    // screen.clear(86, 0, 128-86, 16);
+    // draw memory use
+
+    // two columns
+    screen.print(80, offset+8, "mem");
+    ProgramVector* pv = getProgramVector();
+    screen.setCursor(80, offset+17);
+    int mem = (int)(pv->heap_bytes_used)/1024;
+    if(mem > 999){
+      screen.print(mem/1024);
+      screen.print("M");
+    }else{
+      screen.print(mem);
+      screen.print("k");
+    }
+    // draw CPU load
+    screen.print(110, offset+8, "cpu");
+    screen.setCursor(110, offset+17);
     screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
     screen.print("%");
   }
@@ -224,16 +269,58 @@ public:
     }    
   }
 
+  void drawPresetNames(uint8_t selected, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    selected = min(selected, registry.getNumberOfPatches()-1);
+    if(selected > 0)
+      screen.print(1, 24, registry.getPatchName(selected-1));
+    screen.print(1, 24+10, registry.getPatchName(selected));
+    if(selected+1 < (int)registry.getNumberOfPatches())
+      screen.print(1, 24+20, registry.getPatchName(selected+1));
+    screen.invert(0, 25, 128, 10);
+  }
+
+  void drawVolume(uint8_t selected, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    screen.print(1, 34, "Volume ");
+    screen.print((int)selected);
+  }
+
+  void drawControlMode(ScreenBuffer& screen){
+    switch(controlMode){
+    case PLAY:
+      // drawMessage("push to exit ->", screen);
+      drawTitle(controlModeNames[controlMode], screen);    
+      break;
+    case STATUS:
+      drawTitle(controlModeNames[controlMode], screen);    
+      drawStatus(screen);
+      drawMessage(46, screen);
+      break;
+    case PRESET:
+      drawTitle(controlModeNames[controlMode], screen);    
+      drawPresetNames(selectedPid[1], screen);
+      break;
+    case VOLUME:
+      drawTitle(controlModeNames[controlMode], screen);    
+      drawVolume(selectedPid[1], screen);
+      break;
+    case EXIT:
+      drawTitle("done", screen);
+      break;
+    }
+    // todo!
+    // select: Scope, VU Meter, Patch Stats, Set Volume, Show MIDI, Reset Patch, Select Patch...
+  }
+
   void draw(ScreenBuffer& screen){
     screen.clear();
     screen.setTextWrap(false);
-    switch(mode){
+    switch(displayMode){
     case STANDARD:
-
       // draw most recently changed parameter
       // drawParameter(selectedPid[selectedBlock], 44, screen);
       drawParameter(selectedPid[selectedBlock], 54, screen);
-
       // use callback to draw title and message
       drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       break;
@@ -245,12 +332,8 @@ public:
       drawTitle(screen);
       drawGlobalParameterNames(screen);
       break;
-    case SELECTPROGRAM:
-      drawTitle("Magus", screen);
-      drawStats(screen);
-      drawMessage(46, screen);
-      // todo!
-      // select: Scope, VU Meter, Patch Stats, Set Volume, Show MIDI, Reset Patch, Select Patch...
+    case CONTROL:
+      drawControlMode(screen);
       break;
     case ERROR:
       drawTitle("ERROR", screen);
@@ -264,10 +347,12 @@ public:
   void setName(uint8_t pid, const char* name){
     if(pid < SIZE){
       strncpy(names[pid], name, 11);
+#ifdef OWL_MAGUS
       if(names[pid][strnlen(names[pid], 11)-1] == '>')
 	setPortMode(pid, PORT_UNI_OUTPUT);
       else
 	setPortMode(pid, PORT_UNI_INPUT);
+#endif
     }
   }
 
@@ -293,16 +378,105 @@ public:
     selectedPid[0] = max(0, min(SIZE-1, pid));
     setEncoderValue(0, user[selectedPid[0]]);
   }
-  
+
+  void setControlMode(uint8_t value){
+    controlMode = (ControlMode)value;
+    switch(controlMode){
+    case PLAY:
+    case STATUS:
+      break;
+    case PRESET:
+      selectedPid[1] = settings.program_index;
+      break;
+    case VOLUME:
+      selectedPid[1] = settings.audio_output_gain; // todo: get current
+      break;	
+    default:
+      break;
+    }
+  }
+
+  void selectControlMode(int16_t value, bool pressed){
+    if(pressed){
+      switch(controlMode){
+      case PLAY:
+	controlMode = EXIT;
+	break;
+      case STATUS:
+	setErrorStatus(NO_ERROR);
+	break;
+      case PRESET:
+	// load preset
+	settings.program_index = selectedPid[1];
+	program.loadProgram(settings.program_index);
+	program.resetProgram(false);
+	controlMode = EXIT;
+	break;
+      case VOLUME:
+	settings.audio_output_gain = selectedPid[1];
+	break;
+      default:
+	break;
+      }
+    }else{
+      if(controlMode == EXIT){
+	displayMode = STANDARD;
+      }else{
+	int16_t delta = value - encoders[1];
+	if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
+	  setControlMode(controlMode+1);
+	}else if(delta < 0 && controlMode > 0){
+	  setControlMode(controlMode-1);
+	}
+	encoders[1] = value;
+      }
+    }
+  }
+
+  void setControlModeValue(uint8_t value){
+    switch(controlMode){
+    case VOLUME:
+      selectedPid[1] = min(127, value);
+      codec.setOutputGain(selectedPid[1]);
+      break;
+    case PRESET:
+      selectedPid[1] = min(registry.getNumberOfPatches()-1, value);
+      break;
+    default:
+      break;
+    }
+  }
+ 
   void updateEncoders(int16_t* data, uint8_t size){
     uint16_t pressed = data[0];
-    mode = STANDARD;
+
+    // update encoder 1 top right
+    int16_t value = data[2];
+    if(displayMode == CONTROL){
+      selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
+      // selectControlMode(value, pressed&(1<<1));
+      // use delta value from encoder 0 top left, store in selectedPid[1]
+      int16_t delta = data[1] - encoders[0];
+      if(delta > 0 && selectedPid[1] < 127)
+	setControlModeValue(selectedPid[1]+1);
+      else if(delta < 0 && selectedPid[1] > 0)
+	setControlModeValue(selectedPid[1]-1);
+      encoders[0] = data[1];
+      return; // skip normal encoder processing
+      // todo: should update offsets so values aren't changed on exit
+    }else if(pressed&(1<<1)){
+      displayMode = CONTROL;
+      controlMode = STATUS;
+      selectedPid[1] = 0;
+    }
+    encoders[1] = value;
+
     // update encoder 0 top left
-    int16_t value = data[1];
+    value = data[1];
     if(pressed&(1<<0)){
       // update selected global parameter
       // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
-      mode = SELECTGLOBALPARAMETER;
+      displayMode = SELECTGLOBALPARAMETER;
       int16_t delta = value - encoders[0];
       if(delta < 0)
 	selectGlobalParameter(selectedPid[0]-1);
@@ -314,22 +488,18 @@ public:
 	user[selectedPid[0]] = getEncoderValue(0);
 	selectedBlock = 0;
       }
+      if(displayMode == SELECTGLOBALPARAMETER)
+	displayMode = STANDARD;
     }
     encoders[0] = value;
-    // update encoder 1 top right
-    value = data[2];
-    if(pressed&(1<<1)){
-      mode = SELECTPROGRAM;
-      setErrorStatus(NO_ERROR);
-    }
-    encoders[1] = value;
+
     // update encoders 2-6 bottom row
-    for(uint8_t i=2; i<6; ++i){
+    for(uint8_t i=2; i<NOF_ENCODERS; ++i){
       value = data[i+1]; // +1 for buttons
       if(pressed&(1<<i)){
 	// update selected block parameter
 	selectedBlock = i;
-	mode = SELECTBLOCKPARAMETER;
+	displayMode = SELECTBLOCKPARAMETER;
 	int16_t delta = value - encoders[i];
 	if(delta < 0)
 	  selectBlockParameter(i, selectedPid[i]-1);
@@ -340,18 +510,20 @@ public:
 	  selectedBlock = i;
 	  user[selectedPid[i]] = getEncoderValue(i);
 	}
+	if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
+	  displayMode = STANDARD;
       }
       encoders[i] = value;
     }
-    if(mode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
-      mode = ERROR;
+    if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
+      displayMode = ERROR;    
   }
 
   // called by MIDI cc and/or from patch
   void setValue(uint8_t pid, int16_t value){
     user[pid] = value;
     // reset encoder value if associated through selectedPid to avoid skipping
-    for(int i=0; i<6; ++i)
+    for(int i=0; i<NOF_ENCODERS; ++i)
       if(selectedPid[i] == pid)
         setEncoderValue(i, value);
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs

@@ -47,13 +47,21 @@ bool StorageBlock::write(void* data, uint32_t size){
 }
 
 bool StorageBlock::setDeleted(){
-  eeprom_unlock();
-  bool status = eeprom_write_byte((uint32_t)header+3, 0xc0);
-  // FLASH_Status status = FLASH_ProgramByte((uint32_t)header, 0xc0);
-  eeprom_lock();
-  if(status != 0){
-    error(FLASH_ERROR, "Flash delete failed");
+  uint32_t size = getDataSize();
+  if(size){
+    eeprom_unlock();
+    bool status = eeprom_write_word((uint32_t)header, (0xc0<<24) | size);
+    eeprom_lock();
+    if(status != 0){
+      error(FLASH_ERROR, "Flash delete failed");
+      return false;
+    }
+    if(size != getDataSize() || !isDeleted()){
+      error(FLASH_ERROR, "Flash delete error");
+      return false;
+    }
+    return true;
+  }else{
     return false;
   }
-  return true;
 }

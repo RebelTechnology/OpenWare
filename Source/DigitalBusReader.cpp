@@ -13,7 +13,7 @@ bool DigitalBusReader::readBusFrame(uint8_t* frame){
   if(isMidiFrame(frame)){
     if(!readMidiFrame(frame))
       return rxError("Invalid MIDI message");
-    else if(DIGITAL_BUS_PROPAGATE_MIDI)
+    else if(settings.bus_forward_midi)
       sendFrame(frame); // warning: circular propagation!
   }else{
     uint8_t seq = frame[0]&0x0f;
@@ -25,14 +25,14 @@ bool DigitalBusReader::readBusFrame(uint8_t* frame){
       if(seq > peers)
 	return rxError("Invalid bus parameter");
       handleParameterChange(frame[1], (frame[2]<<8) | frame[3]);
-      if(DIGITAL_BUS_ENABLE_BUS && seq > 1)
+      if(settings.bus_enabled && seq > 1)
 	sendFrame(frame[0]-1, frame[1], frame[2], frame[3]);
       break;
     case OWL_COMMAND_COMMAND:
       if(seq > peers)
 	return rxError("Invalid bus command");
       handleCommand(frame[1], (frame[2]<<8) | frame[3]);
-      if(DIGITAL_BUS_ENABLE_BUS && seq > 1)
+      if(settings.bus_enabled && seq > 1)
 	sendFrame(frame[0]-1, frame[1], frame[2], frame[3]);
       break;
     case OWL_COMMAND_MESSAGE:
@@ -54,7 +54,7 @@ bool DigitalBusReader::readBusFrame(uint8_t* frame){
 	  handleMessage((const char*)buffer);
 	}
       }
-      if(DIGITAL_BUS_ENABLE_BUS && seq > 1)
+      if(settings.bus_enabled && seq > 1)
 	sendFrame(frame[0]-1, frame[1], frame[2], frame[3]);
       break;
     case OWL_COMMAND_DATA:
@@ -80,11 +80,11 @@ bool DigitalBusReader::readBusFrame(uint8_t* frame){
 	  pos = 0;
 	}
       }
-      if(DIGITAL_BUS_ENABLE_BUS && seq > 1)
+      if(settings.bus_enabled && seq > 1)
 	sendFrame(frame[0]-1, frame[1], frame[2], frame[3]);
       break;
     case OWL_COMMAND_RESET:
-      if(DIGITAL_BUS_ENABLE_BUS && peers > 1){
+      if(settings.bus_enabled && peers > 1){
 	reset();
 	sendReset();
       }else{

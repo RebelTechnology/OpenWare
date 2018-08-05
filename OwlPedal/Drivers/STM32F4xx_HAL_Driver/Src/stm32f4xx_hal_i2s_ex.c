@@ -674,10 +674,10 @@ HAL_StatusTypeDef HAL_I2SEx_TransmitReceive_DMA(I2S_HandleTypeDef *hi2s, uint16_
     hi2s->hdmarx->XferErrorCallback = I2SEx_TxRxDMAError;
 
     /* Set the I2S Tx DMA Half transfer complete callback */
-    hi2s->hdmatx->XferHalfCpltCallback  = I2SEx_TxRxDMAHalfCplt;
+    hi2s->hdmatx->XferHalfCpltCallback = NULL; // = I2SEx_TxRxDMAHalfCplt;
 
     /* Set the I2S Tx DMA transfer complete callback */
-    hi2s->hdmatx->XferCpltCallback  = I2SEx_TxRxDMACplt;
+    hi2s->hdmatx->XferCpltCallback = NULL; // = I2SEx_TxRxDMACplt;
 
     /* Set the I2S Tx DMA error callback */
     hi2s->hdmatx->XferErrorCallback = I2SEx_TxRxDMAError;

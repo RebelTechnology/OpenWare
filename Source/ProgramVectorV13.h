@@ -30,6 +30,7 @@
 #define CONFIGURATION_ERROR_STATUS   -30
 
 #define AUDIO_FORMAT_24B16          0x10
+#define AUDIO_FORMAT_24B24          0x18
 #define AUDIO_FORMAT_24B32          0x20
 
   typedef enum { 

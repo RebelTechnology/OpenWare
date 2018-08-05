@@ -12,7 +12,15 @@ RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 64K    /* total RAM is 112kb */
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
 EXTRAM (rwx)     : ORIGIN = 0x68000000, LENGTH = 1M
-FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 512K
+
+/* configured for no bootloader */
+FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 384K   /* Sector 0-5 */
+
+/* configured for new OwlBoot bootloader */
+/* FLASH (rx)       : ORIGIN = 0x08020000, LENGTH = 384K   /\* Sector 5-7 *\/ */
+/* configured for classic OWL bootloader */
+/* FLASH (rx)       : ORIGIN = 0x08008000, LENGTH = 352K   /\* Sector 2-6 *\/ */
+/* BOOTLOADER (r)   : ORIGIN = 0x08000000, LENGTH = 16K    /\* Sector 0 *\/ */
 }
 
 /* Define output sections */

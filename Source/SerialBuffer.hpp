@@ -16,9 +16,10 @@ public:
   void push(uint8_t* data, uint16_t len){
     uint8_t* dest = getWriteHead();
     uint16_t rem = size-writepos;
-    if(len > rem){
+    if(len >= rem){
       memcpy(dest, data, rem);
-      memcpy(buffer, data+rem, len-rem);      
+      // note that len-rem may be zero
+      memcpy(buffer, data+rem, len-rem);
       writepos = len-rem;
     }else{
       memcpy(dest, data, len);
@@ -28,9 +29,10 @@ public:
   void pull(uint8_t* data, uint16_t len){
     uint8_t* src = getReadHead();
     uint16_t rem = size-readpos;
-    if(len > rem){
+    if(len >= rem){
       memcpy(data, src, rem);
-      memcpy(data+rem, buffer, len-rem);      
+      // note that len-rem may be zero
+      memcpy(data+rem, buffer, len-rem);
       readpos = len-rem;
     }else{
       memcpy(data, src, len);

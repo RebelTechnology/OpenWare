@@ -12,6 +12,12 @@
 
 #define OWL_RACK
 #define USE_DIGITALBUS
+#define USE_MIDI_CALLBACK
+
+#define DIGITAL_BUS_ENABLED          0
+#define DIGITAL_BUS_FORWARD_MIDI     0
+#define MIDI_INPUT_CHANNEL           0
+#define MIDI_OUTPUT_CHANNEL          0
 
 #ifdef OWL_PRISM
 #define USE_USBD_HS
@@ -28,8 +34,12 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi2
+#define BUS_HUART huart1
 
-#ifndef OWL_RACK
+#ifdef OWL_RACK
+#define NOF_ADC_VALUES               0
+#else
+#define NOF_ADC_VALUES               2
 #define USE_ADC
 #define ADC_PERIPH hadc1
 #define ADC_A 0
@@ -66,7 +76,6 @@
 #define CODEC_BUFFER_SIZE (4*CODEC_BLOCKSIZE)
 #define AUDIO_MAX_BLOCK_SIZE (CODEC_BUFFER_SIZE/4)
 
-#define NOF_ADC_VALUES               2
 #define NOF_PARAMETERS               20
 #define NOF_BUTTONS                  5
 #define NOF_ENCODERS                 2
@@ -86,14 +95,9 @@
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        3500 /* 168MHz / 48kHz */
 
-#define MIDI_OMNI_CHANNEL            (-1)
-#define MIDI_OUTPUT_CHANNEL          0
-
 /* +0db in and out */
-#define AUDIO_INPUT_GAIN_LEFT        0x017
-#define AUDIO_INPUT_GAIN_RIGHT       0x017
-#define AUDIO_OUTPUT_GAIN_LEFT       0x079
-#define AUDIO_OUTPUT_GAIN_RIGHT      0x079 
+#define AUDIO_INPUT_GAIN             0x017
+#define AUDIO_OUTPUT_GAIN            0x079
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */
 #define AUDIO_OUTPUT_OFFSET          0x00001eec /* 0.1208 * 65535 */

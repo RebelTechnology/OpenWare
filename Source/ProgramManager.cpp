@@ -11,15 +11,14 @@
 #include "ServiceCall.h"
 #include "FlashStorage.h"
 #include "BitState.hpp"
-
+#ifdef USE_MIDI_CALLBACK
+#include "MidiReader.h"
+#endif /* USE_MIDI_CALLBACK */
 #ifdef USE_SCREEN
 #include "Graphics.h"
 #endif
-#if 0
-#define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
-#define SCREEN_TASK_PRIORITY 3
-static TaskHandle_t screenTask = NULL;
-/* makeFreeRtosPriority(osPriorityNormal) = 3 */
+#ifdef USE_DIGITALBUS
+#include "bus.h"
 #endif
 
 // FreeRTOS low priority numbers denote low priority tasks. 
@@ -62,8 +61,9 @@ uint16_t timestamps[NOF_BUTTONS];
 
 ProgramVector* getProgramVector() { return programVector; }
 
-static int16_t encoders[2] = {INT16_MAX/2, INT16_MAX/2};
-static int16_t deltas[2] = {0, 0};
+#if 0
+static int16_t encoders[NOF_ENCODERS] = {INT16_MAX/2, INT16_MAX/2};
+static int16_t deltas[NOF_ENCODERS] = {0, 0};
 void encoderChanged(uint8_t encoder, int16_t value){
   // // todo: debounce
   // // pass encoder change event to patch
@@ -79,6 +79,7 @@ void encoderChanged(uint8_t encoder, int16_t value){
   // if(getProgramVector()->encoderChangedCallback != NULL)
   //   getProgramVector()->encoderChangedCallback(encoder, delta, 0);
 }
+#endif
 
 PatchDefinition* getPatchDefinition(){
   return program.getPatchDefinition();
@@ -107,23 +108,24 @@ void onProgramStatus(ProgramVectorAudioStatus status){
   for(;;);
 }
 
-int16_t getParameterValue(uint8_t ch){
-  if(ch < NOF_PARAMETERS)
+int16_t getParameterValue(uint8_t pid){
+  if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    return graphics.params.parameters[ch];
+    return graphics.params.parameters[pid];
 #else
-    return parameter_values[ch];
+    return parameter_values[pid];
 #endif
   return 0;
 }
 
-void setParameterValue(uint8_t ch, int16_t value){
-  if(ch < NOF_PARAMETERS)
+void setParameterValue(uint8_t pid, int16_t value){
+  // called from program, MIDI, or (potentially) digital bus
+  if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    graphics.params.setValue(ch, value);
-  // graphics.params.parameters[ch] = value;
+    graphics.params.setValue(pid, value);
+  // graphics.params.parameters[pid] = value;
 #else
-    parameter_values[ch] = value;
+    parameter_values[pid] = value;
 #endif
 }
 
@@ -132,12 +134,14 @@ uint8_t getButtonValue(uint8_t ch){
 }
 
 void setButtonValue(uint8_t ch, uint8_t value){
-  timestamps[ch] = getSampleCounter();
-  stateChanged.set(ch);
+  if(ch < NOF_BUTTONS){
+    timestamps[ch] = getSampleCounter();
+    stateChanged.set(ch);
   // if(value)
   //   button_values |= (1<<ch);
   // else
   //   button_values &= ~(1<<ch);
+  }
   button_values &= ~((!value)<<ch);
   button_values |= (bool(value)<<ch);
 }
@@ -198,6 +202,8 @@ void onProgramReady(){
       bid = stateChanged.getFirstSetIndex();
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
+  // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+
 }
 
 // called from program
@@ -208,6 +214,11 @@ void onSetPatchParameter(uint8_t pid, int16_t value){
 //   parameter_values[ch] = value;
 // #endif
   setParameterValue(pid, value);
+#ifdef USE_DIGITALBUS
+  if(settings.bus_enabled){
+    bus_tx_parameter(pid, value);
+  }
+#endif
 }
 // called from program
 void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
@@ -300,6 +311,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16;
+  // pv->audio_format = AUDIO_FORMAT_24B24;
 #else
   pv->audio_format = AUDIO_FORMAT_24B32;
 #endif
@@ -389,9 +401,18 @@ void runManagerTask(void* p){
 	  staticVector.message = programVector->message;
 	}
 	programVector = &staticVector;
+	// clear callbacks
 #ifdef USE_SCREEN
 	graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
+#ifdef USE_MIDI_CALLBACK
+	extern MidiReader mididevice;
+	mididevice.setCallback(NULL);
+#ifdef USE_USB_HOST
+	extern MidiReader midihost;
+	midihost.setCallback(NULL);
+#endif /* USE_USB_HOST */
+#endif /* USE_MIDI_CALLBACK */
 	vTaskDelete(audioTask);
 	audioTask = NULL;
       }
@@ -453,7 +474,6 @@ ProgramManager::ProgramManager(){
 }
 
 void ProgramManager::startManager(){
-  registry.init();
   codec.start();
   // codec.pause();
   updateProgramVector(getProgramVector());
@@ -576,10 +596,10 @@ extern "C" {
   }
 #endif
   void vApplicationMallocFailedHook(void) {
-    // taskDISABLE_INTERRUPTS();
     program.exitProgram(false);
     error(PROGRAM_ERROR, "malloc failed");
-    for(;;);
+    HAL_Delay(5000);
+    assert_param(0);
   }
   void vApplicationIdleHook(void) {
   }
@@ -591,8 +611,8 @@ extern "C" {
        function is called if a stack overflow is detected. */
     program.exitProgram(false);
     error(PROGRAM_ERROR, "Stack overflow");
-    // taskDISABLE_INTERRUPTS();
-    for(;;);
+    HAL_Delay(5000);
+    assert_param(0);
   }
 }
 

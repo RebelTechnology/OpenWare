@@ -14,7 +14,9 @@ private:
   uint8_t channel;
   SerialBuffer<256> buffer;
 public:
-  void init(uint8_t channel);
+  void setOutputChannel(uint8_t ch){
+    channel = ch;
+  }
   void sendPc(uint8_t pc);
   void sendCc(uint8_t cc, uint8_t value);
   void sendPitchBend(uint16_t value);

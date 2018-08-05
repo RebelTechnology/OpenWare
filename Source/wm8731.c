@@ -30,7 +30,6 @@ void codec_init(){
     codec_write(i, wm8731_init_data[i]);
 
   // set WM8731_MS master mode
-  /* codec_write(DIGITAL_AUDIO_INTERFACE_FORMAT_REGISTER, WM8731_MS|WM8731_FORMAT_I2S|WM8731_IWL_24BIT); */
   codec_write(DIGITAL_AUDIO_INTERFACE_FORMAT_REGISTER, WM8731_MS|WM8731_FORMAT_I2S|WM8731_IWL_16BIT);
 
   // clear OSCPD and OUTPD and CLKOUTPD
@@ -49,7 +48,16 @@ void codec_bypass(int bypass){
   codec_write(ANALOGUE_AUDIO_PATH_CONTROL_REGISTER, value);
 }
 
-void codec_set_volume(int8_t level){
+/* Set input gain between 0 (mute) and 127 (max) */
+void codec_set_gain_in(int8_t level){
+  level = level >> 2;
+  uint16_t gain = (wm8731_init_data[LEFT_LINE_IN_REGISTER] & 0xe0) | (level & 0x1f);
+  codec_write(LEFT_LINE_IN_REGISTER, gain);
+  gain = (wm8731_init_data[RIGHT_LINE_IN_REGISTER] & 0xe0) | (level & 0x1f);
+  codec_write(RIGHT_LINE_IN_REGISTER, gain);
+}
+
+void codec_set_gain_out(int8_t level){
   uint16_t gain = (wm8731_init_data[LEFT_HEADPHONE_OUT_REGISTER] & 0x80) | (level & 0x7f);
   codec_write(LEFT_HEADPHONE_OUT_REGISTER, gain);
   gain = (wm8731_init_data[RIGHT_HEADPHONE_OUT_REGISTER] & 0x80) | (level & 0x7f);

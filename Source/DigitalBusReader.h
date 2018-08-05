@@ -3,7 +3,7 @@
 
 #include "DigitalBusHandler.h"
 
-/* #define DIGITAL_BUS_PROPAGATE_MIDI */
+/* #define settings.bus_forward_midi */
 /* #define DIGITAL_BUS_OUTPUT */
 
 class DigitalBusReader : public DigitalBusHandler {

@@ -12,6 +12,8 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 #include "message.h"
+#include "FlashStorage.h"
+#include "PatchRegistry.h"
 
 #ifdef OWL_MAGUS
 #include "purple-blue-cyan.h"
@@ -20,6 +22,9 @@
 #include "HAL_MAX11300.h"
 // #include "HAL_OLED.h"
 #include "HAL_Encoders.h"
+#define TLC5940_RED_DC 0x55
+#define TLC5940_GREEN_DC 0x55
+#define TLC5940_BLUE_DC 0x55
 #endif
 
 #ifdef USE_SCREEN
@@ -29,7 +34,7 @@ Graphics graphics;
 
 #if defined USE_RGB_LED
 #include "rainbow.h"
-#endif /* OWL_TESSERACT */
+#endif /* USE_RGB_LED */
 
 #ifdef USE_USB_HOST
 #include "usbh_core.h"
@@ -39,6 +44,11 @@ Graphics graphics;
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif /* USE_DIGITALBUS */
+
+#ifdef USE_ENCODERS
+extern TIM_HandleTypeDef ENCODER_TIM1;
+extern TIM_HandleTypeDef ENCODER_TIM2;
+#endif
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -73,7 +83,6 @@ uint16_t getAnalogValue(uint8_t ch){
   else
 #endif
     return 0;
-
 }
 
 void setAnalogValue(uint8_t ch, uint16_t value){
@@ -85,51 +94,26 @@ void setAnalogValue(uint8_t ch, uint16_t value){
 #endif
 }
 
-#ifdef OWL_MICROLAB_LED
-void setLed(uint8_t ch, uint16_t brightness){
-  // brightness should be a 10 bit value
-  brightness = brightness&0x3ff;
-  switch(ch){
-  case LED1:
-    // left
-    TIM2->CCR1 = brightness;
-    break;
-  case LED2:
-    // top
-    TIM4->CCR3 = brightness;
-    break;
-  case LED3:
-    // right
-    TIM3->CCR4 = brightness;
-    break;
-  case LED4:
-    // bottom
-    TIM5->CCR2 = brightness;
-    break;
-  }
+void midiSetInputChannel(int8_t channel){
+  settings.midi_input_channel = channel;
+  mididevice.setInputChannel(channel);
+#ifdef USE_USB_HOST
+  midihost.setInputChannel(channel);
+#endif
+#ifdef USE_DIGITALBUS
+  bus_set_input_channel(channel);
+#endif
 }
 
-void initLed(){
-  // Initialise RGB LED PWM timers
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
-  extern TIM_HandleTypeDef htim4;
-  extern TIM_HandleTypeDef htim5;
-  HAL_TIM_Base_Start(&htim2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  HAL_TIM_Base_Start(&htim4);
-  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-  HAL_TIM_Base_Start(&htim5);
-  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
+void midiSetOutputChannel(int8_t channel){
+  settings.midi_output_channel = channel;
+  midi.setOutputChannel(channel);
 }
-#endif /* OWL_MICROLAB_LED */
 
 #ifdef USE_RGB_LED
 void setLed(uint32_t rgb){
   // rgb should be a 3x 10 bit value
-#if defined OWL_TESSERACT
+#if defined OWL_TESSERACT || defined OWL_MICROLAB
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
@@ -137,10 +121,6 @@ void setLed(uint32_t rgb){
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM4->CCR3 = 1023 - ((rgb>>00)&0x3ff);
-#elif defined OWL_MICROLAB
-  TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
-  TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
-  TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
 #endif
 }
 
@@ -149,7 +129,7 @@ void setLed(int16_t red, int16_t green, int16_t blue){
   red = 1023-(red>>2);
   green = 1023-(green>>2);
   blue = 1023-(blue>>2);
-#if defined OWL_TESSERACT
+#if defined OWL_TESSERACT || defined OWL_MICROLAB
   TIM2->CCR1 = red;
   TIM3->CCR4 = green;
   TIM5->CCR2 = blue;
@@ -157,10 +137,6 @@ void setLed(int16_t red, int16_t green, int16_t blue){
   TIM2->CCR1 = red;
   TIM5->CCR2 = green;
   TIM4->CCR3 = blue;
-#elif defined OWL_MICROLAB
-  TIM2->CCR1 = red;
-  TIM3->CCR4 = green;
-  TIM5->CCR2 = blue;
 #endif
 }
 
@@ -175,7 +151,7 @@ void initLed(){
   // LED_B PB1/LGP6 TIM3_CH4
 
   // Initialise RGB LED PWM timers
-#if defined OWL_TESSERACT
+#if defined OWL_TESSERACT || defined OWL_MICROLAB
   extern TIM_HandleTypeDef htim2;
   extern TIM_HandleTypeDef htim3;
   extern TIM_HandleTypeDef htim5;
@@ -198,20 +174,74 @@ void initLed(){
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
   HAL_TIM_Base_Start(&htim4);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-#elif defined OWL_MICROLAB
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
-  extern TIM_HandleTypeDef htim5;
-  HAL_TIM_Base_Start(&htim2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_Base_Start(&htim5);
-  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
-  HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 #endif
 }
 #endif /* USE_RGB_LED */
 
+#ifdef OWL_EFFECTSBOX
+// static uint8_t buttonstate = 0;
+// #define SW1_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW1_BTN_GPIO_Port,  SW1_BTN_Pin))
+// #define SW2_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW2_BTN_GPIO_Port,  SW2_BTN_Pin))
+// #define SW3_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW3_BTN_GPIO_Port,  SW3_BTN_Pin))
+// #define SW4_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW4_BTN_GPIO_Port,  SW4_BTN_Pin))
+// #define SW5_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW5_BTN_GPIO_Port,  SW5_BTN_Pin))
+// #define SW6_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW6_BTN_GPIO_Port,  SW6_BTN_Pin))
+// #define SW7_Read()		(1-(uint8_t)HAL_GPIO_ReadPin(SW7_BTN_GPIO_Port,  SW7_BTN_Pin))
+// #define TSW1_Read()		(1-HAL_GPIO_ReadPin(TSW1_A_GPIO_Port,  TSW1_A_Pin)) | (1-HAL_GPIO_ReadPin(TSW1_B_GPIO_Port,  TSW1_B_Pin))<<1
+// #define TSW2_Read()		(1-HAL_GPIO_ReadPin(TSW2_A_GPIO_Port,  TSW2_A_Pin)) | (1-HAL_GPIO_ReadPin(TSW2_B_GPIO_Port,  TSW2_B_Pin))<<1
+typedef enum {
+	YELLOW, RED, NONE
+} LEDcolour;
+void setLED(uint8_t led, LEDcolour col){
+  GPIO_InitTypeDef GPIO_InitStruct;
+  GPIO_TypeDef* GPIOx; 
+  uint16_t GPIO_Pin;
+  uint8_t LED_Colour;
+	
+  // Get switch pin and port number
+  switch(led){
+  case 0: GPIOx = SW1_LED_GPIO_Port;	GPIO_Pin = SW1_LED_Pin; break;
+  case 1: GPIOx = SW2_LED_GPIO_Port;	GPIO_Pin = SW2_LED_Pin; break;
+  case 2: GPIOx = SW3_LED_GPIO_Port;	GPIO_Pin = SW3_LED_Pin; break;
+  case 3: GPIOx = SW4_LED_GPIO_Port;	GPIO_Pin = SW4_LED_Pin; break;
+  case 4: GPIOx = SW5_LED_GPIO_Port;	GPIO_Pin = SW5_LED_Pin; break;
+  case 5: GPIOx = SW6_LED_GPIO_Port;	GPIO_Pin = SW6_LED_Pin; break;
+  case 6: GPIOx = SW7_LED_GPIO_Port;	GPIO_Pin = SW7_LED_Pin; break;
+  }
+	
+  // Set pin number and direction
+  GPIO_InitStruct.Pin = GPIO_Pin;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	
+  // Set Output direction and LED colour
+  switch (col){
+  case YELLOW:	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP; LED_Colour = YELLOW; break;
+  case RED: 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP; LED_Colour = RED; break;
+  case NONE: 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;	LED_Colour = 0; break;
+  }
+  // Update Pin	
+  HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(GPIOx,  GPIO_Pin,  (GPIO_PinState)LED_Colour);
+}
+
+void updateProgramSelector(uint8_t button, uint8_t led, uint8_t patch, bool value){  
+  setButtonValue(button, value);
+  if(value){
+    setLED(led, RED);
+  }else{
+    if(program.getProgramIndex() != patch){
+      program.loadProgram(patch);
+      for(int i=0; i<6; ++i)
+	setLED(i, NONE);
+    }
+    setLED(led, YELLOW);
+  }
+}
+#endif /* OWL_EFFECTSBOX */
+
+extern "C" {
+  
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
 #ifdef PUSHBUTTON_Pin
@@ -220,6 +250,36 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     midi.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
     break;
 #endif
+#ifdef OWL_EFFECTSBOX
+  case SW1_BTN_Pin:
+    updateProgramSelector(BUTTON_A, 0, 1, !(SW1_BTN_GPIO_Port->IDR & SW1_BTN_Pin));
+    break;
+  case SW2_BTN_Pin:
+    updateProgramSelector(BUTTON_B, 1, 2, !(SW2_BTN_GPIO_Port->IDR & SW2_BTN_Pin));    
+    break;
+  case SW3_BTN_Pin:
+    updateProgramSelector(BUTTON_C, 2, 3, !(SW3_BTN_GPIO_Port->IDR & SW3_BTN_Pin));    
+    setLED(2, (LEDcolour)getButtonValue(BUTTON_C));
+    break;
+  case SW4_BTN_Pin:
+    updateProgramSelector(BUTTON_D, 3, 4, !(SW4_BTN_GPIO_Port->IDR & SW4_BTN_Pin));    
+    break;
+  case SW5_BTN_Pin:
+    updateProgramSelector(BUTTON_E, 4, 5, !(SW5_BTN_GPIO_Port->IDR & SW5_BTN_Pin));    
+    break;
+  case SW6_BTN_Pin:
+    updateProgramSelector(BUTTON_F, 5, 6, !(SW6_BTN_GPIO_Port->IDR & SW6_BTN_Pin));    
+    break;
+  case SW7_BTN_Pin:
+    if((SW7_BTN_GPIO_Port->IDR & SW7_BTN_Pin)){
+      setButtonValue(PUSHBUTTON, false);
+      setLED(6, YELLOW);
+    }else{
+      setButtonValue(PUSHBUTTON, true);
+      setLED(6, RED);
+    }
+    break;
+#endif /* OWL_EFFECTSBOX */
 #ifdef OWL_TESSERACT
   case TOGGLE_A1_Pin:
     break;
@@ -230,42 +290,26 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   case TOGGLE_B2_Pin:
     break;
 #endif
-#ifdef OWL_MINILAB
-  case TRIG_SW1_Pin:
-    setButtonValue(BUTTON_A, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
-    setButtonValue(PUSHBUTTON, !(TRIG_SW1_GPIO_Port->IDR & TRIG_SW1_Pin));
-    break;
-  case TRIG_SW2_Pin:
-    setButtonValue(BUTTON_B, !(TRIG_SW2_GPIO_Port->IDR & TRIG_SW2_Pin));
-    break;
-  case TRIG_SW3_Pin:
-    setButtonValue(BUTTON_C, !(TRIG_SW3_GPIO_Port->IDR & TRIG_SW3_Pin));
-    break;
-  case TRIG_SW4_Pin:
-    setButtonValue(BUTTON_D, !(TRIG_SW4_GPIO_Port->IDR & TRIG_SW4_Pin));
-    break;
-#endif
-#ifdef OWL_MICROLAB
+#if defined OWL_MINILAB || defined OWL_MICROLAB
   case SW1_Pin:
     setButtonValue(BUTTON_A, !(SW1_GPIO_Port->IDR & SW1_Pin));
     setButtonValue(PUSHBUTTON, !(SW1_GPIO_Port->IDR & SW1_Pin));
+    ledstatus ^= 0x000003ff;
     break;
   case SW2_Pin:
     setButtonValue(BUTTON_B, !(SW2_GPIO_Port->IDR & SW2_Pin));
     setParameterValue(PARAMETER_E, (SW2_GPIO_Port->IDR & SW2_Pin) == 0 ? 4095 : 0);
-    ledstatus = getButtonValue(BUTTON_B) ? 0xffc00 : 0;
+    ledstatus ^= 0x000ffc00; // getButtonValue(BUTTON_B) ? 0x000ffc00 : 0;
     break;
   case SW3_Pin:
     setButtonValue(BUTTON_C, !(SW3_GPIO_Port->IDR & SW3_Pin));
-    ledstatus = getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
+    ledstatus ^= 0x3ff00000; // getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
     break;
 #endif
-#ifdef OWL_MICROLAB_LED
-  case TRIG1_Pin:
-    setButtonValue(PUSHBUTTON, !(TRIG1_GPIO_Port->IDR & TRIG1_Pin));
-    break;
-  case TRIG2_Pin:
-    setParameterValue(PARAMETER_E, (TRIG2_GPIO_Port->IDR & TRIG2_Pin) == 0 ? 4095 : 0);
+#ifdef OWL_MINILAB
+  case SW4_Pin:
+    setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
+    ledstatus ^= 0x3ff003ff;
     break;
 #endif
 #ifdef OWL_PLAYERF7
@@ -297,27 +341,26 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     break;
 #endif    
   }
-#ifdef USE_RGB_LED
-  ledstatus = getButtonValue(PUSHBUTTON) ? 0x3ff : 0;
-#endif
+}
 }
 
 #ifdef OWL_MAGUS
-bool updateMAX11300 = false;
+static bool updateMAX11300 = false;
 // int16_t dynamicParameterValues[NOF_PARAMETERS];
-uint8_t portMode[20];
+static uint8_t portMode[20];
 void setPortMode(uint8_t index, uint8_t mode){
   if(index < 20){
     if(portMode[index] != mode){
       portMode[index] = mode;
       updateMAX11300 = true;
+      // MAX11300_setDACValue(index+1, 0);
     }
   }
 }
 uint8_t getPortMode(uint8_t index){
   if(index < 20)
     return portMode[index];
-  return 0;
+  return PORT_UNI_INPUT;
 }
 #endif
 
@@ -325,7 +368,6 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
-  // SRAM_Init();
 #ifdef OWL_PEDAL
   /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
   // if (HAL_GetREVID() == 0x1001)
@@ -343,16 +385,12 @@ void setup(){
 #endif /* OWL_MAGUS */
   
   ledstatus = 0;
-  settings.init();
+  storage.init();
+  registry.init();
+  settings.init(); // settings need the registry to be initialised first
 #ifdef USE_CODEC
-  extern SPI_HandleTypeDef CODEC_SPI;
-  codec.begin(&CODEC_SPI);
-  // codec.set(0);
-#if defined OWL_MICROLAB || defined OWL_MINILAB // || defined OWL_MAGUS
-  codec.setOutputGain(127-9); // -9dB
-#else
-  codec.setOutputGain(127); // 0dB
-#endif
+  codec.begin();
+  codec.set(0);
   codec.bypass(false);
 #endif /* USE_CODEC */
 
@@ -363,8 +401,8 @@ void setup(){
   // LEDs
   TLC5946_init(&hspi5);
   // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
-  TLC5946_setRGB_DC(0xaa, 0xaa, 0xaa);
-  TLC5946_setAll(0x1f, 0x1f, 0x1f);
+  TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
+  TLC5946_setAll(0x10, 0x10, 0x10);
   // Start LED Driver PWM
   extern TIM_HandleTypeDef htim3;
   HAL_TIM_Base_Start(&htim3);
@@ -374,28 +412,23 @@ void setup(){
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
   TLC5946_Refresh_DC();
+  TLC5946_Refresh_GS();
   // Encoders
   Encoders_init(&hspi5);
   // Pixi
   MAX11300_init(&hspi5);
   MAX11300_setDeviceControl(DCR_RESET);
-  HAL_Delay(1000);
-  MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
-  for(int i=0; i<20; ++i){
-    setPortMode(i, PORT_UNI_INPUT);
-    MAX11300_setDACValue(i, 0);
-    updateMAX11300 = true;
-  }
 #endif /* OWL_MAGUS */
 
 #ifdef OWL_EFFECTSBOX
   extern TIM_HandleTypeDef htim11;
   HAL_TIM_Base_Start(&htim11);
-  HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
-	
+  HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1); // SW1-6 PWM
   extern TIM_HandleTypeDef htim1;
   HAL_TIM_Base_Start(&htim1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // SW7 PWM
+  for(int i=0; i<7; ++i)
+    setLED(i, NONE);
 #endif /* OWL_EFFECTSBOX */
 
 #ifdef USE_RGB_LED
@@ -403,17 +436,7 @@ void setup(){
   setLed(1000, 1000, 1000);
 #endif /* USE_RGB_LED */
 
-#ifdef OWL_MICROLAB_LED
-  initLed();
-  setLed(LED1, 0);
-  setLed(LED2, 0);
-  setLed(LED3, 0);
-  setLed(LED4, 0);
-#endif /* OWL_MICROLAB_LED */
-
 #ifdef USE_ENCODERS
-  extern TIM_HandleTypeDef ENCODER_TIM1;
-  extern TIM_HandleTypeDef ENCODER_TIM2;
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
@@ -435,16 +458,15 @@ void setup(){
   program.loadProgram(1);
   program.startProgram(false);
 
-  midi.init(0);
+  midiSetInputChannel(settings.midi_input_channel);
+  midiSetOutputChannel(settings.midi_output_channel);
 
   xLastWakeTime = xTaskGetTickCount();
-  xFrequency = 14 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
-#ifdef OWL_PRISM
-  xFrequency = 20 / portTICK_PERIOD_MS;
-#endif
+  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 
 #ifdef USE_DIGITALBUS
   bus_setup();
+  bus_set_input_channel(settings.midi_input_channel);
 #endif /* USE_DIGITALBUS */
 }
 
@@ -482,11 +504,27 @@ void loop(void){
   vTaskDelay(xFrequency);
 #else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
-#endif  
+#endif
   midi.push();
+
+#ifdef OWL_EFFECTSBOX
+  // uint8_t state =
+  //   (SW1_Read() << 0) |
+  //   (SW2_Read() << 1) |
+  //   (SW3_Read() << 2) |
+  //   (SW4_Read() << 3) |
+  //   (SW5_Read() << 4) |
+  //   (SW6_Read() << 5) |
+  //   (SW7_Read() << 6);
+  // if(state != buttonstate){
+  //   for(int i=0; i<7; ++i){
+  //   }
+  // }
+#endif /* OWL_EFFECTSBOX */
 
 #ifdef OWL_MAGUS
   if(updateMAX11300){
+    MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
     for(int i=0; i<20; ++i){
       uint16_t mode;
       switch(portMode[i]){
@@ -511,38 +549,50 @@ void loop(void){
     if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
       uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, ledstatus ^ rainbowinputs[val&0x3ff]);
+      setLed(i, rainbowinputs[val&0x3ff]);
     }else{
       // DACs
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
-      MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
+      // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
       graphics.params.updateValue(i, 0);
       uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, ledstatus ^ rainbowoutputs[val&0x3ff]);
+      setLed(i, rainbowoutputs[val&0x3ff]);
+      MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
   }
-  for(int i=16; i<NOF_PARAMETERS; ++i)
-    if(getPortMode(i) == PORT_UNI_INPUT)
+  for(int i=16; i<20; ++i){
+    if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
-    else
+    }else{
       graphics.params.updateValue(i, 0);
-  MAX11300_bulkwriteDAC();
+      MAX11300_setDAC(i+1, graphics.params.parameters[i]);
+    }
+  }
+  // MAX11300_bulkwriteDAC();
 #endif /* OWL_MAGUS */
 
 #ifdef OWL_PRISM
-  int16_t encoders[2] = { getEncoderValue(0), getEncoderValue(1) };
+  int16_t encoders[NOF_ENCODERS] = {(int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1),
+				    (int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2) };
   graphics.params.updateEncoders(encoders, 2);
-#ifdef OWL_RACK
-  for(int i=0; i<NOF_PARAMETERS; ++i)
-    graphics.params.updateValue(i, 0);
-#else
-  for(int i=0; i<2; ++i)
+#ifndef OWL_RACK
+  for(int i=0; i<NOF_ENCODERS; ++i)
     graphics.params.updateValue(i, getAnalogValue(i)-2048); // update two bipolar cv inputs
   for(int i=2; i<NOF_PARAMETERS; ++i)
     graphics.params.updateValue(i, 0);
 #endif
 #endif /* OWL_PRISM */
+
+#ifdef OWL_EFFECTSBOX
+  int16_t encoders[NOF_ENCODERS] = {(int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1),
+  				    (int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2) };
+  graphics.params.updateEncoders(encoders, 6);
+  for(int i=0; i<NOF_ADC_VALUES; ++i)
+    graphics.params.updateValue(i, getAnalogValue(i));
+  // for(int i=NOF_ADC_VALUES; i<NOF_PARAMETERS; ++i)
+  //   graphics.params.updateValue(i, 0);
+#endif  
 
 #ifdef USE_RGB_LED
   uint32_t colour =
@@ -557,12 +607,6 @@ void loop(void){
   setLed(ledstatus ^ rainbow[colour]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
 #endif /* USE_RGB_LED */
-#ifdef OWL_MICROLAB_LED
-  setLed(LED1, adc_values[ADC_A]>>2);
-  setLed(LED2, adc_values[ADC_B]>>2);
-  setLed(LED3, adc_values[ADC_C]>>2);
-  setLed(LED4, adc_values[ADC_D]>>2);
-#endif /* OWL_MICROLAB */
 }
 
 extern "C"{
@@ -582,23 +626,21 @@ extern "C"{
 #ifdef USE_USB_HOST
   void midi_host_reset(void){
     midihost.reset();
-    ledstatus ^= 0x3ff00000;
+    ledstatus ^= 0x3ff003ff;
   }
   void midi_host_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4){
       if(!midihost.readMidiFrame(buffer+i)){
 	midihost.reset();
       }else{
-	ledstatus ^= 0x80000; // 0x20000000
+	ledstatus ^= 0x000ffc00;
       }
     }
   }
 #endif /* USE_USB_HOST */
 
-#ifdef USE_ENCODERS
+#if 0 // ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder){
-    extern TIM_HandleTypeDef ENCODER_TIM1;
-    extern TIM_HandleTypeDef ENCODER_TIM2;
     if(encoder == 0)
       return __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
     else // if(encoder == 1)
@@ -623,5 +665,58 @@ extern "C"{
       encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
   }
 #endif /* USE_ENCODERS */
+  
+}
 
+// __attribute__((naked))
+// void reboot(void){
+//   const uint32_t bootloaderMagicNumber = 0xDADAB007;
+//   /* This address is within the first 64k of memory.
+//    * The magic number must match what is in the bootloader */
+//   *((unsigned long *)0x2000FFF0) = bootloaderMagicNumber;
+//   NVIC_SystemReset();
+//   /* Shouldn't get here */
+//   while(1);
+// }
+
+
+/* Jump to the bootloader. We set a magic number in memory that our bootloader 
+ * startup code looks for. RAM is preserved across system reset, so when it 
+ * finds this magic number, it will go to the bootloader code 
+ * rather than the application code.
+ */
+void jump_to_bootloader(void){
+  /* Disable USB in advance: this will give the computer time to
+   * recognise it's been disconnected, so when the system bootloader
+   * comes online it will get re-enumerated.
+   */
+  // usb_deinit();
+  /* Blink LEDs */
+  // setLed(RED);
+  // for(uint8_t i = 0; i < 3; i++) {
+  //   volatile uint32_t delayCounter;
+  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
+  //   setLed(NONE);
+  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
+  //   setLed(RED);
+  // }
+
+  /* Disable all interrupts */
+  RCC->CIR = 0x00000000;
+  const uint32_t bootloaderMagicNumber = 0xDADAB007;
+  /* This address is within the first 64k of memory.
+   * The magic number must match what is in the bootloader */
+  *((unsigned long *)0x2000FFF0) = bootloaderMagicNumber;
+  NVIC_SystemReset();
+  /* Shouldn't get here */
+  while(1);
+}
+
+
+void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
+  uint8_t data[] = {port, status, d1, d2};
+  midi.write(data, 4);
+#ifdef USE_DIGITALBUS
+  bus_tx_frame(data);
+#endif /* USE_DIGITALBUS */
 }

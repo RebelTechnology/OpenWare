@@ -79,12 +79,6 @@
 #define ADC4_GPIO_Port GPIOC
 #define ADC5_Pin GPIO_PIN_2
 #define ADC5_GPIO_Port GPIOA
-#define FLASH_SCK_Pin GPIO_PIN_5
-#define FLASH_SCK_GPIO_Port GPIOA
-#define FLASH_MISO_Pin GPIO_PIN_6
-#define FLASH_MISO_GPIO_Port GPIOA
-#define FLASH_MOSI_Pin GPIO_PIN_7
-#define FLASH_MOSI_GPIO_Port GPIOA
 #define FLASH_nCS_Pin GPIO_PIN_5
 #define FLASH_nCS_GPIO_Port GPIOC
 #define I2C_SCK_Pin GPIO_PIN_10
