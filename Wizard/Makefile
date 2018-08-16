@@ -1,4 +1,4 @@
-PROJECT = MiniLab
+PROJECT = Wizard
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
