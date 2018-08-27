@@ -30,7 +30,7 @@ public:
   void sendPatchParameterName(PatchParameterId pid, const char* name);
   void sendPatchParameterValues();
   void sendPatchNames();
-  void sendPatchName(uint8_t index);
+  void sendPatchName(uint8_t index, const char* name);
   void sendDeviceInfo();
   void sendDeviceStats();
   void sendProgramStats();

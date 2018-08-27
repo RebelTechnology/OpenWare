@@ -12,8 +12,9 @@ extern "C" {
   void loop(void);
   void updateProgramVector(ProgramVector* pv);
 
-  uint16_t getAnalogValue(uint8_t index);
-  void setAnalogValue(uint8_t ch, uint16_t value);
+  int16_t getAnalogValue(uint8_t index);
+  void setAnalogValue(uint8_t ch, int16_t value);
+  void setGateValue(uint8_t bid, int16_t value);
 
   void setLed(uint8_t led, uint32_t rgb);
 

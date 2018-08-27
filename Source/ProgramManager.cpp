@@ -14,6 +14,7 @@
 #ifdef USE_MIDI_CALLBACK
 #include "MidiReader.h"
 #endif /* USE_MIDI_CALLBACK */
+#include "MidiController.h"
 #ifdef USE_SCREEN
 #include "Graphics.h"
 #endif
@@ -118,8 +119,8 @@ int16_t getParameterValue(uint8_t pid){
   return 0;
 }
 
+// called from program, MIDI, or (potentially) digital bus
 void setParameterValue(uint8_t pid, int16_t value){
-  // called from program, MIDI, or (potentially) digital bus
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
     graphics.params.setValue(pid, value);
@@ -193,11 +194,11 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
 #endif
-  if(ulNotifiedValue > 16){
-    // midi.sendProgramStats();
-    error(PROGRAM_ERROR, "CPU overrun");
-    program.exitProgram(false);
-  }
+  // if(ulNotifiedValue > 16){
+  //   // midi.sendProgramStats();
+  //   error(PROGRAM_ERROR, "CPU overrun");
+  //   program.exitProgram(false);
+  // }
   updateParameters();
   pv->buttons = button_values;
   // ready to run block again
@@ -222,15 +223,18 @@ void onSetPatchParameter(uint8_t pid, int16_t value){
 //   parameter_values[ch] = value;
 // #endif
   setParameterValue(pid, value);
+  setAnalogValue(pid, value);
 #ifdef USE_DIGITALBUS
   if(settings.bus_enabled){
     bus_tx_parameter(pid, value);
   }
 #endif
 }
+
 // called from program
 void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
   setButtonValue(bid, state);
+  setGateValue(bid, state);
 }
 
 // called from program
@@ -238,6 +242,7 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 #ifdef USE_SCREEN 
   graphics.params.setName(id, name);
 #endif /* USE_SCREEN */
+  midi.sendPatchParameterName((PatchParameterId)id, name);
 }
 
 // called from program
@@ -245,6 +250,7 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #if defined OWL_MAGUS || defined OWL_PRISM
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
+  midi.sendPatchName(0, name);
 }
 
 void updateProgramVector(ProgramVector* pv){

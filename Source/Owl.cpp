@@ -72,11 +72,11 @@ ApplicationSettings settings;
 uint16_t adc_values[NOF_ADC_VALUES];
 #endif
 #ifdef USE_DAC
-uint16_t dac_values[2];
+extern DAC_HandleTypeDef hdac;
 #endif
 uint32_t ledstatus;
 
-uint16_t getAnalogValue(uint8_t ch){
+int16_t getAnalogValue(uint8_t ch){
 #ifdef USE_ADC
   if(ch < NOF_ADC_VALUES)
     return adc_values[ch];
@@ -85,12 +85,23 @@ uint16_t getAnalogValue(uint8_t ch){
     return 0;
 }
 
-void setAnalogValue(uint8_t ch, uint16_t value){
+void setAnalogValue(uint8_t ch, int16_t value){
 #ifdef USE_DAC
-  if(ch < 2){
-    value &= 0xfff;
-    dac_values[ch] = value;
+  switch(ch){
+  case PARAMETER_A:
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
+    break;
+  case PARAMETER_B:
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+    break;
   }
+#endif
+}
+
+void setGateValue(uint8_t ch, int16_t value){
+#ifdef OWL_MINILAB
+  if(ch == BUTTON_D)
+    HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, value ? GPIO_PIN_RESET : GPIO_PIN_SET);
 #endif
 }
 
@@ -311,6 +322,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
     ledstatus ^= 0x3ff003ff;
     break;
+  case SW5_Pin:
+    setButtonValue(BUTTON_E, !(SW5_GPIO_Port->IDR & SW5_Pin));
+    ledstatus = 0;
+    break;
 #endif
 #ifdef OWL_PLAYERF7
   // sw1() pg14
@@ -368,6 +383,10 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
+
+#if defined OWL_MINILAB || defined OWL_MICROLAB
+  HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_SET);
+#endif
 
 #ifdef OWL_PEDAL
   /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
@@ -686,6 +705,7 @@ extern "C"{
  * finds this magic number, it will go to the bootloader code 
  * rather than the application code.
  */
+// __attribute__((naked))
 void jump_to_bootloader(void){
   /* Disable USB in advance: this will give the computer time to
    * recognise it's been disconnected, so when the system bootloader
@@ -708,6 +728,11 @@ void jump_to_bootloader(void){
   /* This address is within the first 64k of memory.
    * The magic number must match what is in the bootloader */
   *((unsigned long *)0x2000FFF0) = bootloaderMagicNumber;
+  /* todo:
+   * disable USB (host and device)
+   * then drive USB pins low for 1 second
+   * to allow disconnect
+   */
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
