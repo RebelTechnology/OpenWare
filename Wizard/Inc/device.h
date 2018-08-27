@@ -9,6 +9,12 @@
 /* #define OWL_MODULAR */
 /* #define OWL_PEDAL */
 
+
+#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
+#define MIDI_OUTPUT_CHANNEL          0
+
+#define AUDIO_OUTPUT_GAIN            127
+
 #ifdef OWL_MINILAB
 #define USE_MIDI_CALLBACK
 #define USE_RGB_LED
@@ -79,6 +85,7 @@
 #define MIDI_OUTPUT_CHANNEL          0
 
 /* +0db in and out */
+#define AUDIO_INPUT_GAIN             0x017
 #define AUDIO_INPUT_GAIN_LEFT        0x017
 #define AUDIO_INPUT_GAIN_RIGHT       0x017
 #define AUDIO_OUTPUT_GAIN_LEFT       0x079
