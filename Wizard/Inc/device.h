@@ -2,6 +2,7 @@
 #include "stm32f4xx_hal.h"
 
 #define OWL_MINILAB
+
 /* #define OWL_MICROLAB */
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
@@ -18,6 +19,7 @@
 #ifdef OWL_MINILAB
 #define USE_MIDI_CALLBACK
 #define USE_RGB_LED
+#define USE_DAC
 #define TRIG1_Pin GP7_Pin
 #define TRIG1_GPIO_Port GP7_GPIO_Port
 #define TRIG2_Pin GP8_Pin

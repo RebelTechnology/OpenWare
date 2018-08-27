@@ -71,6 +71,9 @@
 #define CS_SDA_GPIO_Port GPIOE
 #define EXTSPI_nCS_Pin GPIO_PIN_15
 #define EXTSPI_nCS_GPIO_Port GPIOC
+#define SW5_Pin GPIO_PIN_7
+#define SW5_GPIO_Port GPIOF
+#define SW5_EXTI_IRQn EXTI9_5_IRQn
 #define ADC5_Pin GPIO_PIN_9
 #define ADC5_GPIO_Port GPIOF
 #define ADC4_Pin GPIO_PIN_10
