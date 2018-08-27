@@ -100,8 +100,8 @@ void setAnalogValue(uint8_t ch, int16_t value){
 
 void setGateValue(uint8_t ch, int16_t value){
 #ifdef OWL_MINILAB
-  if(ch == BUTTON_D)
-    HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, value ? GPIO_PIN_RESET : GPIO_PIN_SET);
+  if(ch == BUTTON_A)
+    HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
 #endif
 }
 
@@ -309,7 +309,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     break;
   case SW2_Pin:
     setButtonValue(BUTTON_B, !(SW2_GPIO_Port->IDR & SW2_Pin));
-    setParameterValue(PARAMETER_E, (SW2_GPIO_Port->IDR & SW2_Pin) == 0 ? 4095 : 0);
+    // setParameterValue(PARAMETER_E, (SW2_GPIO_Port->IDR & SW2_Pin) == 0 ? 4095 : 0);
     ledstatus ^= 0x000ffc00; // getButtonValue(BUTTON_B) ? 0x000ffc00 : 0;
     break;
   case SW3_Pin:
@@ -317,16 +317,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     ledstatus ^= 0x3ff00000; // getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
     break;
 #endif
-#ifdef OWL_MINILAB
-  case SW4_Pin:
-    setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
-    ledstatus ^= 0x3ff003ff;
-    break;
-  case SW5_Pin:
-    setButtonValue(BUTTON_E, !(SW5_GPIO_Port->IDR & SW5_Pin));
-    ledstatus = 0;
-    break;
-#endif
+// #ifdef OWL_MINILAB
+//   case SW4_Pin:
+//     setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
+//     ledstatus ^= 0x3ff003ff;
+//     break;
+//   case SW5_Pin:
+//     setButtonValue(BUTTON_E, !(SW5_GPIO_Port->IDR & SW5_Pin));
+//     ledstatus = 0;
+//     break;
+// #endif
 #ifdef OWL_PLAYERF7
   // sw1() pg14
   // sw2() pb4
@@ -388,6 +388,13 @@ void setup(){
   HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_SET);
 #endif
 
+#ifdef USE_DAC
+  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
+  HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
+  setAnalogValue(PARAMETER_A, 0);
+  setAnalogValue(PARAMETER_B, 0);
+#endif
+  
 #ifdef OWL_PEDAL
   /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
   // if (HAL_GetREVID() == 0x1001)

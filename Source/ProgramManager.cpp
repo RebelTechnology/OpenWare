@@ -199,6 +199,13 @@ void onProgramReady(){
   //   error(PROGRAM_ERROR, "CPU overrun");
   //   program.exitProgram(false);
   // }
+#ifdef OWL_MINILAB
+  // poll buttons SW4 and SW5
+  if(getButtonValue(BUTTON_D) != !(SW4_GPIO_Port->IDR & SW4_Pin))
+    setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
+  if(getButtonValue(BUTTON_E) != !(SW5_GPIO_Port->IDR & SW5_Pin))
+    setButtonValue(BUTTON_E, !(SW5_GPIO_Port->IDR & SW5_Pin));
+#endif
   updateParameters();
   pv->buttons = button_values;
   // ready to run block again
@@ -549,6 +556,9 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
 // }
 
 void ProgramManager::loadProgram(uint8_t pid){
+#ifndef USE_SCREEN
+  memset(parameter_values, 0, sizeof(parameter_values));
+#endif  
   PatchDefinition* def = registry.getPatchDefinition(pid);
   if(def != NULL && def != patchdef && def->getProgramVector() != NULL){
     patchdef = def;
