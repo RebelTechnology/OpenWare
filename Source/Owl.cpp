@@ -427,27 +427,39 @@ void setup(){
   program.startManager();
 
 #ifdef OWL_MAGUS
-  extern SPI_HandleTypeDef hspi5;
-  // LEDs
-  TLC5946_init(&hspi5);
-  // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
-  TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
-  TLC5946_setAll(0x10, 0x10, 0x10);
-  // Start LED Driver PWM
-  extern TIM_HandleTypeDef htim3;
-  HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  // HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1);
-  extern TIM_HandleTypeDef htim1;
-  HAL_TIM_Base_Start_IT(&htim1);
-  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
-  TLC5946_Refresh_DC();
-  TLC5946_Refresh_GS();
-  // Encoders
-  Encoders_init(&hspi5);
-  // Pixi
-  MAX11300_init(&hspi5);
-  MAX11300_setDeviceControl(DCR_RESET);
+  {
+    extern SPI_HandleTypeDef TLC5946_SPI;
+    // LEDs
+    TLC5946_init(&TLC5946_SPI);
+    // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
+    TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
+    TLC5946_setAll(0x10, 0x10, 0x10);
+    // Start LED Driver PWM
+    extern TIM_HandleTypeDef htim3;
+    HAL_TIM_Base_Start(&htim3);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+
+    extern TIM_HandleTypeDef htim2;
+    HAL_TIM_Base_Start(&htim2);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+
+    // extern TIM_HandleTypeDef htim1;
+    // HAL_TIM_Base_Start_IT(&htim1);
+    // HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
+    TLC5946_Refresh_DC();
+    TLC5946_Refresh_GS();
+  }
+  {
+    // Encoders
+    extern SPI_HandleTypeDef ENCODERS_SPI;
+    Encoders_init(&ENCODERS_SPI);
+  }
+  {
+    // Pixi
+    extern SPI_HandleTypeDef MAX11300_SPI;
+    MAX11300_init(&MAX11300_SPI);
+    MAX11300_setDeviceControl(DCR_RESET);
+  }
 #endif /* OWL_MAGUS */
 
 #ifdef OWL_EFFECTSBOX
@@ -506,11 +518,11 @@ void setup(){
 }
 
 #ifdef OWL_MAGUS
-extern "C" {
-  void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
-    HAL_GPIO_TogglePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin);
-  }
-}
+// extern "C" {
+//   void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
+//     HAL_GPIO_TogglePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin);
+//   }
+// }
 
 void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
