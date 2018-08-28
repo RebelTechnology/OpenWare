@@ -1,8 +1,8 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
-/* #define OWL_MICROLAB_LED */
-#define OWL_MICROLAB
+/* #define OWL_ALCHEMIST_LED */
+#define OWL_ALCHEMIST
 #define USE_RGB_LED
 
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
@@ -16,7 +16,7 @@
 /* #define OWL_MODULAR */
 /* #define OWL_PEDAL */
 
-#ifdef OWL_MICROLAB
+#ifdef OWL_ALCHEMIST
 #define USE_ADC
 #define ADC_PERIPH hadc3
 #define ADC_A 2

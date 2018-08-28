@@ -1,7 +1,7 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
-#define OWL_MINILAB
+#define OWL_WIZARD
 
 /* #define OWL_MICROLAB */
 /* #define OWL_TESSERACT */
@@ -16,7 +16,7 @@
 
 #define AUDIO_OUTPUT_GAIN            127
 
-#ifdef OWL_MINILAB
+#ifdef OWL_WIZARD
 #define USE_MIDI_CALLBACK
 #define USE_RGB_LED
 #define USE_DAC

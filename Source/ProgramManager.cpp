@@ -199,7 +199,7 @@ void onProgramReady(){
   //   error(PROGRAM_ERROR, "CPU overrun");
   //   program.exitProgram(false);
   // }
-#ifdef OWL_MINILAB
+#ifdef OWL_WIZARD
   // poll buttons SW4 and SW5
   if(getButtonValue(BUTTON_D) != !(SW4_GPIO_Port->IDR & SW4_Pin)){
     setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
@@ -269,9 +269,9 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 void updateProgramVector(ProgramVector* pv){
 #if defined OWL_TESSERACT
   pv->hardware_version = TESSERACT_HARDWARE;
-#elif defined OWL_MICROLAB
+#elif defined OWL_ALCHEMIST
   pv->hardware_version = MICROLAB_HARDWARE;
-#elif defined OWL_MINILAB
+#elif defined OWL_WIZARD
   pv->hardware_version = MINILAB_HARDWARE;
 #elif defined OWL_RACK
   pv->hardware_version = OWL_RACK_HARDWARE;

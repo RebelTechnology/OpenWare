@@ -17,9 +17,9 @@
 
 #if defined OWL_TESSERACT
 #define HARDWARE_VERSION             "Tesseract"
-#elif defined OWL_MICROLAB
+#elif defined OWL_ALCHEMIST
 #define HARDWARE_VERSION             "MicroLab"
-#elif defined OWL_MINILAB
+#elif defined OWL_WIZARD
 #define HARDWARE_VERSION             "MiniLab"
 #elif defined OWL_RACK
 #define HARDWARE_VERSION             "OWL Rack"

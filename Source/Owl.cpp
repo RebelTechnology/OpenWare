@@ -102,7 +102,7 @@ void setAnalogValue(uint8_t ch, int16_t value){
 }
 
 void setGateValue(uint8_t ch, int16_t value){
-#ifdef OWL_MINILAB
+#ifdef OWL_WIZARD
   if(ch == BUTTON_F)
     HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
 #endif
@@ -127,11 +127,11 @@ void midiSetOutputChannel(int8_t channel){
 #ifdef USE_RGB_LED
 void setLed(uint32_t rgb){
   // rgb should be a 3x 10 bit value
-#if defined OWL_TESSERACT || defined OWL_MICROLAB
+#if defined OWL_TESSERACT || defined OWL_ALCHEMIST
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
-#elif defined OWL_MINILAB
+#elif defined OWL_WIZARD
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM4->CCR3 = 1023 - ((rgb>>00)&0x3ff);
@@ -143,11 +143,11 @@ void setLed(int16_t red, int16_t green, int16_t blue){
   red = 1023-(red>>2);
   green = 1023-(green>>2);
   blue = 1023-(blue>>2);
-#if defined OWL_TESSERACT || defined OWL_MICROLAB
+#if defined OWL_TESSERACT || defined OWL_ALCHEMIST
   TIM2->CCR1 = red;
   TIM3->CCR4 = green;
   TIM5->CCR2 = blue;
-#elif defined OWL_MINILAB
+#elif defined OWL_WIZARD
   TIM2->CCR1 = red;
   TIM5->CCR2 = green;
   TIM4->CCR3 = blue;
@@ -165,7 +165,7 @@ void initLed(){
   // LED_B PB1/LGP6 TIM3_CH4
 
   // Initialise RGB LED PWM timers
-#if defined OWL_TESSERACT || defined OWL_MICROLAB
+#if defined OWL_TESSERACT || defined OWL_ALCHEMIST
   extern TIM_HandleTypeDef htim2;
   extern TIM_HandleTypeDef htim3;
   extern TIM_HandleTypeDef htim5;
@@ -178,7 +178,7 @@ void initLed(){
   // Blue
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-#elif defined OWL_MINILAB
+#elif defined OWL_WIZARD
   extern TIM_HandleTypeDef htim2;
   extern TIM_HandleTypeDef htim5;
   extern TIM_HandleTypeDef htim4;
@@ -304,7 +304,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   case TOGGLE_B2_Pin:
     break;
 #endif
-#if defined OWL_MINILAB || defined OWL_MICROLAB
+#if defined OWL_WIZARD || defined OWL_ALCHEMIST
   case SW1_Pin:
     setButtonValue(BUTTON_A, !(SW1_GPIO_Port->IDR & SW1_Pin));
     setButtonValue(PUSHBUTTON, !(SW1_GPIO_Port->IDR & SW1_Pin));
@@ -320,7 +320,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     ledstatus ^= 0x3ff00000; // getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
     break;
 #endif
-// #ifdef OWL_MINILAB
+// #ifdef OWL_WIZARD
 //   case SW4_Pin:
 //     setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
 //     ledstatus ^= 0x3ff003ff;
@@ -387,7 +387,7 @@ static TickType_t xFrequency;
 
 void setup(){
 
-#if defined OWL_MINILAB || defined OWL_MICROLAB
+#if defined OWL_WIZARD || defined OWL_ALCHEMIST
   HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_SET);
 #endif
 
