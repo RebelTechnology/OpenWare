@@ -98,9 +98,9 @@ void MX_USB_DEVICE_Init(void)
   /* Init Device Library, add supported class and start the library. */
   USBD_Init(&hUsbDeviceHS, &HS_Desc, DEVICE_HS);
 
-  USBD_RegisterClass(&hUsbDeviceHS, &USBD_MIDI);
+  USBD_RegisterClass(&hUsbDeviceHS, &USBD_Midi_ClassDriver);
 
-  USBD_Midi_RegisterInterface(&hUsbDeviceHS, &USBD_MIDI_fops_HS);
+  USBD_Midi_RegisterInterface(&hUsbDeviceHS, &USBD_Midi_fops);
 
   USBD_Start(&hUsbDeviceHS);
 
