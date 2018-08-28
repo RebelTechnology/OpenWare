@@ -20,7 +20,7 @@ GDB=$(TOOLROOT)arm-none-eabi-gdb
 OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
-STFLASH ?= ~/bin/st-flash
+STFLASH ?= st-flash
 
 MCU_ADDRESS = 0x8000000
 # MCU_ADDRESS = 0x8020000
