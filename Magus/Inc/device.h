@@ -24,18 +24,20 @@
 #define SSD1309
 /* #define OLED_DMA */
 #define OLED_SOFT_CS
-#define OLED_SPI hspi5
+#define OLED_SPI hspi6
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
-/* #define USE_ENCODERS */
-/* #define ENCODER_TIM1 htim2 */
-/* #define ENCODER_TIM2 htim3 */
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
 #define USE_USBD_HS
 #define USE_USB_HOST
 #define USB_HOST_RX_BUFF_SIZE        256  /* Max Received data 64 bytes */
+
+#define TLC5946_SPI hspi6
+#define MAX11300_SPI hspi5
+#define ENCODERS_SPI hspi5
+
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)

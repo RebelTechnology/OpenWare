@@ -1,8 +1,8 @@
 /**
- ******************************************************************************
-  * @file            : USB_HOST
+  ******************************************************************************
+  * @file            : usb_host.c
   * @version         : v1.0_Cube
-  * @brief           :  This file implements the USB Host 
+  * @brief           : This file implements the USB Host
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -45,35 +45,48 @@
   * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
-*/
+  */
 
 /* Includes ------------------------------------------------------------------*/
 
 #include "usb_host.h"
 #include "usbh_core.h"
+
+/* USER CODE BEGIN Includes */
 #include "usbh_midi.h"
 #include "device.h"
 #include "errorhandlers.h"
+/* USER CODE END Includes */
 
-/* USB Host Core handle declaration */
-USBH_HandleTypeDef hUsbHostFS;
+/* USER CODE BEGIN PV */
+/* Private variables ---------------------------------------------------------*/
+
+/* USER CODE END PV */
+
+/* USER CODE BEGIN PFP */
+/* Private function prototypes -----------------------------------------------*/
+
+/* USER CODE END PFP */
+
+/* USB Host core handle declaration */
+USBH_HandleTypeDef hUsbHostHS;
 ApplicationTypeDef Appli_state = APPLICATION_IDLE;
 
-/**
-* -- Insert your variables declaration here --
-*/ 
+/*
+ * -- Insert your variables declaration here --
+ */
 /* USER CODE BEGIN 0 */
 uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE]; // MIDI reception buffer
 /* USER CODE END 0 */
 
 /*
-* user callback declaration
-*/ 
-static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id);
+ * user callback declaration
+ */
+static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
 
-/**
-* -- Insert your external function declaration here --
-*/ 
+/*
+ * -- Insert your external function declaration here --
+ */
 /* USER CODE BEGIN 1 */
 /*
  * Background task
@@ -85,31 +98,33 @@ void MX_USB_HOST_Process()
 }
 /* USER CODE END 1 */
 
-/* init function */                                        
+/**
+  * Init USB host library, add supported class and start the library
+  * @retval None
+  */
 void MX_USB_HOST_Init(void)
 {
   /* USER CODE BEGIN USB_HOST_Init_PreTreatment */
   
   /* USER CODE END USB_HOST_Init_PreTreatment */
   
-  /* Init Host Library,Add Supported Class and Start the library*/
-  USBH_Init(&hUsbHostFS, USBH_UserProcess, HOST_FS);
+  /* Init host Library, add supported class and start the library. */
+  USBH_Init(&hUsbHostHS, USBH_UserProcess, HOST_HS);
 
-  USBH_RegisterClass(&hUsbHostFS, USBH_MIDI_CLASS);
+  USBH_RegisterClass(&hUsbHostHS, USBH_MIDI_CLASS);
 
-  USBH_Start(&hUsbHostFS);
+  USBH_Start(&hUsbHostHS);
+
   /* USER CODE BEGIN USB_HOST_Init_PostTreatment */
   
   /* USER CODE END USB_HOST_Init_PostTreatment */
-
 }
 
 /*
  * user callback definition
-*/ 
+ */
 static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 {
-
   /* USER CODE BEGIN CALL_BACK_1 */
   switch(id){ 
   case HOST_USER_CONNECTION:
@@ -138,7 +153,6 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
   }
   /* USER CODE END CALL_BACK_1 */
 }
-        
 
 /**
   * @}

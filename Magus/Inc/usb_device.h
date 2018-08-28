@@ -79,7 +79,7 @@
   */
 
 /** USB device core handle. */
-extern USBD_HandleTypeDef hUsbDeviceHS;
+extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /**
   * @}

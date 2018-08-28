@@ -1,7 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : main.hpp
-  * Description        : This file contains the common defines of the application
+  * @file           : main.h
+  * @brief          : Header for main.c file.
+  *                   This file contains the common defines of the application.
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -45,12 +46,13 @@
   *
   ******************************************************************************
   */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
-  /* Includes ------------------------------------------------------------------*/
+#ifndef __MAIN_H__
+#define __MAIN_H__
 
 /* Includes ------------------------------------------------------------------*/
+
 /* USER CODE BEGIN Includes */
 
 /* #define MAGUS_USBH_MOD */
@@ -69,24 +71,24 @@
 #define CS_SCKE5_GPIO_Port GPIOE
 #define CS_MOSI_Pin GPIO_PIN_6
 #define CS_MOSI_GPIO_Port GPIOE
-#define EXTSPI_SCK_Pin GPIO_PIN_7
-#define EXTSPI_SCK_GPIO_Port GPIOF
-#define EXTSPI_MISO_Pin GPIO_PIN_8
-#define EXTSPI_MISO_GPIO_Port GPIOF
-#define EXTSPI_MOSI_Pin GPIO_PIN_9
-#define EXTSPI_MOSI_GPIO_Port GPIOF
+#define SPI_A_SCK_Pin GPIO_PIN_7
+#define SPI_A_SCK_GPIO_Port GPIOF
+#define SPI_A_MISO_Pin GPIO_PIN_8
+#define SPI_A_MISO_GPIO_Port GPIOF
+#define SPI_A_MOSI_Pin GPIO_PIN_9
+#define SPI_A_MOSI_GPIO_Port GPIOF
 #define OSC1_Pin GPIO_PIN_0
 #define OSC1_GPIO_Port GPIOH
 #define OSC2_Pin GPIO_PIN_1
 #define OSC2_GPIO_Port GPIOH
 #define OLED_DC_Pin GPIO_PIN_0
 #define OLED_DC_GPIO_Port GPIOA
-#define UART_MISO_Pin GPIO_PIN_1
-#define UART_MISO_GPIO_Port GPIOA
-#define USART_MOSI_Pin GPIO_PIN_2
-#define USART_MOSI_GPIO_Port GPIOA
-#define OLED_RST_Pin GPIO_PIN_3
+#define OLED_RST_Pin GPIO_PIN_1
 #define OLED_RST_GPIO_Port GPIOA
+#define UART_MOSI_Pin GPIO_PIN_2
+#define UART_MOSI_GPIO_Port GPIOA
+#define UART_MISO_Pin GPIO_PIN_3
+#define UART_MISO_GPIO_Port GPIOA
 #define OLED_CS_Pin GPIO_PIN_4
 #define OLED_CS_GPIO_Port GPIOA
 #define PIXI_nCS_Pin GPIO_PIN_5
@@ -109,27 +111,24 @@
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
 #define CS_RST_GPIO_Port GPIOB
-#ifdef MAGUS_USBH_MOD
 #define USB_HOST_PWR_EN_Pin GPIO_PIN_6
 #define USB_HOST_PWR_EN_GPIO_Port GPIOC
-#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_7
+#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_8
 #define USB_HOST_PWR_FAULT_GPIO_Port GPIOC
-#else
-#define USB_HOST_PWR_EN_Pin GPIO_PIN_9
-#define USB_HOST_PWR_EN_GPIO_Port GPIOA
-#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_6
-#define USB_HOST_PWR_FAULT_GPIO_Port GPIOC
-#endif
 #define SWDIO_Pin GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
 #define SWCLK_GPIO_Port GPIOA
+#define TLC_BLANK_Pin GPIO_PIN_15
+#define TLC_BLANK_GPIO_Port GPIOA
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
 #define ENC_nCS_Pin GPIO_PIN_9
 #define ENC_nCS_GPIO_Port GPIOG
-#define TLC_BLANK_Pin GPIO_PIN_10
-#define TLC_BLANK_GPIO_Port GPIOG
+#define SPI_B_CLK_Pin GPIO_PIN_13
+#define SPI_B_CLK_GPIO_Port GPIOG
+#define SPI_B_MOSI_Pin GPIO_PIN_14
+#define SPI_B_MOSI_GPIO_Port GPIOG
 #define FLASH_SCK_Pin GPIO_PIN_3
 #define FLASH_SCK_GPIO_Port GPIOB
 #define TLC_XLAT_Pin GPIO_PIN_8
@@ -158,13 +157,6 @@ void _Error_Handler(char *, int);
 }
 #endif
 
-/**
-  * @}
-  */ 
+#endif /* __MAIN_H__ */
 
-/**
-  * @}
-*/ 
-
-#endif /* __MAIN_H */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
