@@ -39,6 +39,9 @@ Graphics graphics;
 #ifdef USE_USB_HOST
 #include "usbh_core.h"
 #include "usbh_midi.h"
+extern "C"{
+void MX_USB_HOST_Process(void);
+}
 #endif /* USE_USB_HOST */
 
 #ifdef USE_DIGITALBUS
@@ -88,10 +91,10 @@ int16_t getAnalogValue(uint8_t ch){
 void setAnalogValue(uint8_t ch, int16_t value){
 #ifdef USE_DAC
   switch(ch){
-  case PARAMETER_A:
+  case PARAMETER_F:
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
-  case PARAMETER_B:
+  case PARAMETER_G:
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
   }
@@ -100,7 +103,7 @@ void setAnalogValue(uint8_t ch, int16_t value){
 
 void setGateValue(uint8_t ch, int16_t value){
 #ifdef OWL_MINILAB
-  if(ch == BUTTON_A)
+  if(ch == BUTTON_F)
     HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
 #endif
 }
@@ -495,6 +498,11 @@ void setup(){
   bus_setup();
   bus_set_input_channel(settings.midi_input_channel);
 #endif /* USE_DIGITALBUS */
+
+#ifdef USE_USB_HOST
+  // enable USB Host power
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+#endif
 }
 
 #ifdef OWL_MAGUS
@@ -519,6 +527,17 @@ int busstatus;
 #endif
 
 void loop(void){
+#ifdef USE_USB_HOST
+  if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
+    if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+      error(USB_ERROR, "USBH PWR Fault");
+    }
+  }else{
+    MX_USB_HOST_Process();
+  }
+#endif
+
 #ifdef USE_DIGITALBUS
   busstatus = bus_status();
 #endif
