@@ -387,7 +387,7 @@ static TickType_t xFrequency;
 
 void setup(){
 
-#if defined OWL_WIZARD || defined OWL_ALCHEMIST
+#ifdef OWL_WIZARD
   HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_SET);
 #endif
 
