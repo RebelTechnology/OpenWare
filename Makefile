@@ -39,6 +39,7 @@ effectsbox:
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
 	@$(MAKE) -C Alchemist clean
+	@$(MAKE) -C Wizard clean
 	@$(MAKE) -C OwlPedal clean
 	@$(MAKE) -C PlayerF7 clean
 	@$(MAKE) -C PrismF7 clean
