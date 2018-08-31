@@ -94,7 +94,7 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
 void MX_USB_HOST_Process() 
 {
   /* USB Host Background task */
-    USBH_Process(&hUsbHostFS); 						
+    USBH_Process(&USBH_HANDLE); 						
 }
 /* USER CODE END 1 */
 

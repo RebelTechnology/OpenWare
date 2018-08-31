@@ -100,7 +100,7 @@ void MX_USB_DEVICE_Init(void)
 
   USBD_RegisterClass(&hUsbDeviceFS, &USBD_Midi_ClassDriver);
 
-  USBD_AUDIO_RegisterInterface(&hUsbDeviceFS, &USBD_Midi_fops);
+  USBD_Midi_RegisterInterface(&hUsbDeviceFS, &USBD_Midi_fops);
 
   USBD_Start(&hUsbDeviceFS);
 

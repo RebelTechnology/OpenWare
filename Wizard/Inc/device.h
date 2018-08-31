@@ -38,6 +38,7 @@
 #define CODEC_SPI hspi4
 #define USE_USBD_HS
 #define USE_USB_HOST
+#define USBH_HANDLE hUsbHostFS
 #define USB_HOST_RX_BUFF_SIZE        256  /* Max Received data 64 bytes */
 #endif
 

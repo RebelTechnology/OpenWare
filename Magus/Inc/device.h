@@ -19,7 +19,6 @@
 #ifdef OWL_MAGUS
 /* #define USE_ADC */
 #define USE_MIDI_CALLBACK
-#define OWL2
 #define USE_SCREEN
 #define SSD1309
 /* #define OLED_DMA */
@@ -30,8 +29,9 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
-#define USE_USBD_HS
+#define USE_USBD_FS
 #define USE_USB_HOST
+#define USBH_HANDLE hUsbHostHS
 #define USB_HOST_RX_BUFF_SIZE        256  /* Max Received data 64 bytes */
 
 #define TLC5946_SPI hspi6

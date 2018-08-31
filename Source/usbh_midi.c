@@ -506,8 +506,8 @@ uint8_t midi_host_connected(void){
 
 uint8_t midi_host_ready(void){
   extern ApplicationTypeDef Appli_state;
-  extern USBH_HandleTypeDef hUsbHostFS; // defined in usb_host.c
-  MIDI_HandleTypeDef *MIDI_Handle =  hUsbHostFS.pActiveClass->pData;
+  extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
+  MIDI_HandleTypeDef *MIDI_Handle =  USBH_HANDLE.pActiveClass->pData;
   return Appli_state == APPLICATION_READY && MIDI_Handle->data_tx_state == MIDI_IDLE;
 }
 
@@ -519,8 +519,8 @@ void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
 }
 
 void midi_host_tx(uint8_t* buffer, uint32_t length){
-  extern USBH_HandleTypeDef hUsbHostFS; // defined in usb_host.c
-  USBH_MIDI_Transmit(&hUsbHostFS, buffer, length);
+  extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
+  USBH_MIDI_Transmit(&USBH_HANDLE, buffer, length);
 }
 
 void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost){
