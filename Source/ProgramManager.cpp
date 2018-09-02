@@ -22,6 +22,8 @@
 #include "bus.h"
 #endif
 
+#include "basicmaths.h"
+
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
@@ -86,6 +88,7 @@ PatchDefinition* getPatchDefinition(){
   return program.getPatchDefinition();
 }
 
+float envelope_delta = 0.99999f;
 void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   getProgramVector()->audio_input = rx;
   getProgramVector()->audio_output = tx;
@@ -95,6 +98,12 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
     BaseType_t yield;
     vTaskNotifyGiveFromISR(audioTask, &yield);
     portYIELD_FROM_ISR(yield);
+#ifdef FASCINATION_MACHINE
+    static float envelope = 0.0;
+    extern uint32_t ledstatus;
+    envelope = envelope*envelope_delta + (1.0f-envelope_delta)*abs(getProgramVector()->audio_output[0])*(1/2147483648.0f);
+    ledstatus = envelope*0x3ff00000;
+#endif
   }
 }
 

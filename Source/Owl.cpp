@@ -536,6 +536,15 @@ int busstatus;
 #endif
 
 void loop(void){
+#ifdef FASCINATION_MACHINE
+  static int output_gain = 0;
+  float gain = getParameterValue(PARAMETER_D)*127.0/4095;
+  if((gain - (int)gain) < 0.2 && (int)gain != output_gain){
+    output_gain = gain;
+    codec.setOutputGain(output_gain);
+  }
+#endif
+
 #ifdef USE_USB_HOST
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
     if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
