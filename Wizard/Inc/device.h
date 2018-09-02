@@ -3,6 +3,8 @@
 
 #define OWL_WIZARD
 
+#define FASCINATION_MACHINE
+
 /* #define OWL_MICROLAB */
 /* #define OWL_TESSERACT */
 /* #define OWL_QUADFM */
