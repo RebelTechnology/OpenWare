@@ -42,13 +42,13 @@ StorageBlock FlashStorage::append(void* data, uint32_t size){
   if(last.isFree()){
     last.write(data, size);
     if(count < STORAGE_MAX_BLOCKS)
-      blocks[count++] = createBlock((uint32_t)last.getData(), last.getBlockSize());
+      blocks[count++] = createBlock((uint32_t)last.getBlock(), last.getBlockSize());
     return last;
   }else{
     if(last.isValidSize()){
       if(count < STORAGE_MAX_BLOCKS){
 	// create a new block
-	blocks[count++] = createBlock((uint32_t)last.getData(), last.getBlockSize());
+	blocks[count++] = createBlock((uint32_t)last.getBlock(), last.getBlockSize());
 	return append(data, size);
       }else{
 	error(FLASH_ERROR, "No more blocks available");
@@ -123,6 +123,7 @@ void FlashStorage::defrag(void* buffer, uint32_t size){
 }
 
 StorageBlock FlashStorage::createBlock(uint32_t page, uint32_t offset){
+  // offset = (offset + (4 - 1)) & -4;  // Round up to 4-byte boundary
   if(page+offset+4 >= EEPROM_PAGE_END || page < EEPROM_PAGE_BEGIN){
     error(FLASH_ERROR, "Block out of bounds");
     return StorageBlock();

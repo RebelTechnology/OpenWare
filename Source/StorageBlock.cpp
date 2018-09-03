@@ -8,9 +8,10 @@
 StorageBlock::StorageBlock() : header(nullptr){} // (uint32_t*)EEPROM_PAGE_BEGIN
 
 uint32_t StorageBlock::getBlockSize(){
-  uint32_t size = getDataSize() + 4;
-  while(size & 0x03)
-    size++; // pad to 4 bytes
+  uint32_t size = 4 + getDataSize();
+  // size = (size + (32 - 1)) & -32;  // Round up to 32-byte boundary
+  // size = (size + (8 - 1)) & -8;  // Round up to 8-byte boundary
+  size = (size + (4 - 1)) & -4;  // Round up to 4-byte boundary
   return size;
 }
 
@@ -24,12 +25,11 @@ bool StorageBlock::verify(){
 }
 
 bool StorageBlock::write(void* data, uint32_t size){
-  if((uint32_t)header+4+size >= EEPROM_PAGE_END)
+  if((uint32_t)header+4+size > EEPROM_PAGE_END)
     return false;
   eeprom_unlock();
-  eeprom_write_word((uint32_t)header, 0xcfffffff); // mark as used (no size)
-  eeprom_write_block((uint32_t)header+4, data, size);
-  bool status = eeprom_write_word((uint32_t)header, 0xcf000000 | size); // set magick and size
+  int status = eeprom_write_word((uint32_t)getBlock(), 0xcf000000 | size); // set magick and size
+  status = status || eeprom_write_block((uint32_t)getData(), data, size);
   eeprom_lock();
   if(status != 0){
     error(FLASH_ERROR, "Flash write failed");
@@ -50,7 +50,7 @@ bool StorageBlock::setDeleted(){
   uint32_t size = getDataSize();
   if(size){
     eeprom_unlock();
-    bool status = eeprom_write_word((uint32_t)header, (0xc0<<24) | size);
+    bool status = eeprom_write_word((uint32_t)header, 0xc0000000 | size);
     eeprom_lock();
     if(status != 0){
       error(FLASH_ERROR, "Flash delete failed");
