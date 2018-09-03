@@ -88,22 +88,22 @@ PatchDefinition* getPatchDefinition(){
   return program.getPatchDefinition();
 }
 
-float envelope_delta = 0.99999f;
+float envelope_delta = 0.999995f;
 void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   getProgramVector()->audio_input = rx;
   getProgramVector()->audio_output = tx;
   getProgramVector()->audio_blocksize = size;
   // vTaskSuspend(screenTask);
+#ifdef FASCINATION_MACHINE
+  static float envelope = 0.0;
+  extern uint32_t ledstatus;
+  envelope = envelope*envelope_delta + (1.0f-envelope_delta)*abs(getProgramVector()->audio_output[0])*(1/2147483648.0f);
+  ledstatus = envelope*0x3ff00000;
+#endif
   if(audioTask != NULL){
     BaseType_t yield;
     vTaskNotifyGiveFromISR(audioTask, &yield);
     portYIELD_FROM_ISR(yield);
-#ifdef FASCINATION_MACHINE
-    static float envelope = 0.0;
-    extern uint32_t ledstatus;
-    envelope = envelope*envelope_delta + (1.0f-envelope_delta)*abs(getProgramVector()->audio_output[0])*(1/2147483648.0f);
-    ledstatus = envelope*0x3ff00000;
-#endif
   }
 }
 
@@ -449,6 +449,7 @@ void runManagerTask(void* p){
 	midihost.setCallback(NULL);
 #endif /* USE_USB_HOST */
 #endif /* USE_MIDI_CALLBACK */
+	codec.set(0);
 	vTaskDelete(audioTask);
 	audioTask = NULL;
       }
@@ -571,14 +572,14 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
 // }
 
 void ProgramManager::loadProgram(uint8_t pid){
-#ifndef USE_SCREEN
-  memset(parameter_values, 0, sizeof(parameter_values));
-#endif  
   PatchDefinition* def = registry.getPatchDefinition(pid);
   if(def != NULL && def != patchdef && def->getProgramVector() != NULL){
     patchdef = def;
     // updateProgramIndex(pid);
     patchindex = pid;
+#ifndef USE_SCREEN
+    memset(parameter_values, 0, sizeof(parameter_values));
+#endif  
   }
   // patchdef = &dynamo;
 }

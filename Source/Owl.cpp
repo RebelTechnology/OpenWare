@@ -538,11 +538,34 @@ int busstatus;
 void loop(void){
 #ifdef FASCINATION_MACHINE
   static int output_gain = 0;
-  float gain = getParameterValue(PARAMETER_D)*127.0/4095;
-  if((gain - (int)gain) < 0.2 && (int)gain != output_gain){
+  int gain = getParameterValue(PARAMETER_D)*255/4095;
+  if(abs(gain - output_gain) > 1){
     output_gain = gain;
-    codec.setOutputGain(output_gain);
+    codec.setOutputGain(output_gain/2);    
   }
+  // float gain = getParameterValue(PARAMETER_D)*127.0/4095;
+  // if((gain - (int)gain) < 0.2 && (int)gain != output_gain){
+  //   output_gain = gain;
+  //   codec.setOutputGain(output_gain);
+  // }
+  static int patch_index = 0;
+  int patch = getParameterValue(PARAMETER_E)*10/4095;
+  if(abs(patch - patch_index) > 1){
+    patch_index = patch;
+    patch = patch/2 + 1;
+    // if(program.getProgramIndex() != patch){
+      program.loadProgram(patch);
+      program.resetProgram(false);
+    // }
+  }
+  // float patch = getParameterValue(PARAMETER_E)*5.0/4095+1;
+  // if((patch - (int)patch) < 0.2 && (int)patch != patch_index){
+  //   patch_index = patch;
+  //   if(program.getProgramIndex() != patch_index){
+  //     program.loadProgram(patch_index);
+  //     program.resetProgram(false);
+  //   }
+  // }
 #endif
 
 #ifdef USE_USB_HOST
