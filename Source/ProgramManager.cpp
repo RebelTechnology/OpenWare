@@ -88,17 +88,16 @@ PatchDefinition* getPatchDefinition(){
   return program.getPatchDefinition();
 }
 
-float envelope_delta = 0.999995f;
+float audio_envelope_lambda = 0.999995f;
+float audio_envelope = 0.0;
 void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   getProgramVector()->audio_input = rx;
   getProgramVector()->audio_output = tx;
   getProgramVector()->audio_blocksize = size;
   // vTaskSuspend(screenTask);
 #ifdef FASCINATION_MACHINE
-  static float envelope = 0.0;
   extern uint32_t ledstatus;
-  envelope = envelope*envelope_delta + (1.0f-envelope_delta)*abs(getProgramVector()->audio_output[0])*(1/2147483648.0f);
-  ledstatus = envelope*0x3ff00000;
+  audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(getProgramVector()->audio_output[0])*(1.0f/INT16_MAX);
 #endif
   if(audioTask != NULL){
     BaseType_t yield;

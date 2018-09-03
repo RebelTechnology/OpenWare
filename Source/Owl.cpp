@@ -690,6 +690,10 @@ void loop(void){
 #ifdef ADC_E
   colour += (adc_values[ADC_E]>>3);
 #endif
+#ifdef FASCINATION_MACHINE
+  extern float audio_envelope;
+  colour = colour*(1+audio_envelope);
+#endif
   colour &= 0x3ff;
   setLed(ledstatus ^ rainbow[colour]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
