@@ -4,6 +4,14 @@
 #include "device.h"
 #include "ProgramVector.h"
 
+#define RED_COLOUR    0x3ff00000
+#define GREEN_COLOUR  0x000ffc00
+#define BLUE_COLOUR   0x000003ff
+#define WHITE_COLOUR  0x3fffffff
+#define YELLOW_COLOUR 0x3ffffc00
+#define CYAN_COLOUR   0x000fffff
+#define NO_COLOUR     0x00000000
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,8 +23,6 @@ extern "C" {
   int16_t getAnalogValue(uint8_t index);
   void setAnalogValue(uint8_t ch, int16_t value);
   void setGateValue(uint8_t bid, int16_t value);
-
-  void setLed(uint8_t led, uint32_t rgb);
 
 #ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder);

@@ -125,12 +125,12 @@ void midiSetOutputChannel(int8_t channel){
 }
 
 #ifdef USE_RGB_LED
-void setLed(uint32_t rgb){
+void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
 #if defined OWL_TESSERACT || defined OWL_ALCHEMIST
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
-  TIM5->CCR2 = 1023 - ((rgb>>00)&0x3ff);
+  TIM2->CCR2 = 1023 - ((rgb>>00)&0x3ff);
 #elif defined OWL_WIZARD
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>10)&0x3ff);
@@ -138,43 +138,16 @@ void setLed(uint32_t rgb){
 #endif
 }
 
-void setLed(int16_t red, int16_t green, int16_t blue){
-  // parameters should be 0-4095
-  red = 1023-(red>>2);
-  green = 1023-(green>>2);
-  blue = 1023-(blue>>2);
-#if defined OWL_TESSERACT || defined OWL_ALCHEMIST
-  TIM2->CCR1 = red;
-  TIM3->CCR4 = green;
-  TIM5->CCR2 = blue;
-#elif defined OWL_WIZARD
-  TIM2->CCR1 = red;
-  TIM5->CCR2 = green;
-  TIM4->CCR3 = blue;
-#endif
-}
-
 void initLed(){
-  // MiniLab
-  // PWM1: TIM2_CH1
-  // PWM2: TIM5_CH2
-  // PWM3: TIM4_CH3
-  // Tesseract and MicroLab
-  // LED_R PA0/LGP1 TIM2_CH1
-  // LED_G PA1/LGP2 TIM5_CH2
-  // LED_B PB1/LGP6 TIM3_CH4
-
   // Initialise RGB LED PWM timers
 #if defined OWL_TESSERACT || defined OWL_ALCHEMIST
   extern TIM_HandleTypeDef htim2;
   extern TIM_HandleTypeDef htim3;
-  extern TIM_HandleTypeDef htim5;
   // Red
   HAL_TIM_Base_Start(&htim2);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   // Green
-  HAL_TIM_Base_Start(&htim5);
-  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
   // Blue
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
@@ -472,7 +445,7 @@ void setup(){
 
 #ifdef USE_RGB_LED
   initLed();
-  setLed(1000, 1000, 1000);
+  setLed(0, NO_COLOUR);
 #endif /* USE_RGB_LED */
 
 #ifdef USE_ENCODERS
@@ -695,7 +668,7 @@ void loop(void){
   colour = colour*(1+audio_envelope);
 #endif
   colour &= 0x3ff;
-  setLed(ledstatus ^ rainbow[colour]);
+  setLed(0, ledstatus ^ rainbow[colour]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
 #endif /* USE_RGB_LED */
 }
