@@ -89,8 +89,6 @@
 #define PWM1_GPIO_Port GPIOA
 #define PWM2_Pin GPIO_PIN_1
 #define PWM2_GPIO_Port GPIOA
-#define FLASH_SCK_Pin GPIO_PIN_5
-#define FLASH_SCK_GPIO_Port GPIOA
 #define FLASH_MISO_Pin GPIO_PIN_6
 #define FLASH_MISO_GPIO_Port GPIOA
 #define FLASH_MOSI_Pin GPIO_PIN_7
@@ -110,6 +108,8 @@
 #define CS_nRST_GPIO_Port GPIOB
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
+#define FLASH_SCK_Pin GPIO_PIN_3
+#define FLASH_SCK_GPIO_Port GPIOB
 #define SW3_Pin GPIO_PIN_8
 #define SW3_GPIO_Port GPIOB
 #define SW3_EXTI_IRQn EXTI9_5_IRQn
