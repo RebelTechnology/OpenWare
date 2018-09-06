@@ -2,6 +2,7 @@ PROJECT = Alchemist
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
+LDSCRIPT = flash.ld
 include $(OPENWARE)/mcu/STM32F427ZI.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))

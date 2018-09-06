@@ -116,7 +116,6 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 void setup(void);
 void loop(void);
-void MX_USB_HOST_Process(void);
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 
 /* USER CODE END PFP */

@@ -2,6 +2,7 @@ PROJECT = Wizard
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
+LDSCRIPT = flash.ld
 include $(OPENWARE)/mcu/STM32F427ZI.mk
 
 # C_SRC = $(filter-out usbd_audio_if.c $(notdir $(wildcard Src/*.c)))
