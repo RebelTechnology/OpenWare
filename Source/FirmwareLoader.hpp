@@ -64,59 +64,68 @@ public:
     return result;
   }
 
+  int32_t beginFirmwareUpload(uint8_t* data, uint16_t length, uint16_t offset){
+    clear();
+    setErrorStatus(NO_ERROR);
+    // first package
+    if(length < 3+5+5)
+      return setError("Invalid SysEx package");
+    // stop running program and free its memory
+    program.exitProgram(true);
+    // program.loadProgram(2); // load progress bar
+    // program.resetProgram(true);
+    // get firmware data size (decoded)
+    size = decodeInt(data+offset);
+    offset += 5; // it takes five 7-bit values to encode four bytes
+    // allocate memory
+    if(size > MAX_SYSEX_FIRMWARE_SIZE)
+      return setError("SysEx too big");
+#if 0
+    static uint8_t static_buffer[1024*12]; // todo remove!
+    buffer = static_buffer; 
+#elif defined OWL_PRISM // required by Prism (no ext mem)
+    extern char _PATCHRAM;
+    buffer = (uint8_t*)&_PATCHRAM; 
+#else
+    extern char _EXTRAM; // defined in link script
+    buffer = (uint8_t*)&_EXTRAM;
+#endif
+    return 0;
+  }
+
+  int32_t receiveFirmwarePackage(uint8_t* data, uint16_t length, uint16_t offset){
+    int len = sysex_to_data(data+offset, buffer+index, length-offset);
+    index += len;
+    return 0;
+  }
+
+  int32_t finishFirmwareUpload(uint8_t* data, uint16_t length, uint16_t offset){
+    // last package: package index and checksum
+    // check crc
+    crc = crc32(buffer, size, 0);
+    // get checksum: last 4 bytes of buffer
+    uint32_t checksum = decodeInt(data+length-5);
+    if(crc != checksum)
+      return setError("Invalid SysEx checksum");
+    ready = true;
+    return index;
+  }
+
   int32_t handleFirmwareUpload(uint8_t* data, uint16_t length){
     uint16_t offset = 3;
     uint16_t idx = decodeInt(data+offset);
     offset += 5;
-    if(idx == 0){
-      clear();
-      setErrorStatus(NO_ERROR);
-      // first package
-      if(length < 3+5+5)
-	return setError("Invalid SysEx package");
-      // stop running program and free its memory
-      program.exitProgram(true);
-      // program.loadProgram(2); // load progress bar
-      // program.resetProgram(true);
-
-      // get firmware data size (decoded)
-      size = decodeInt(data+offset);
-      offset += 5; // it takes five 7-bit values to encode four bytes
-      // allocate memory
-      if(size > MAX_SYSEX_FIRMWARE_SIZE)
-	return setError("SysEx too big");
-#if 0
-      static uint8_t static_buffer[1024*12]; // todo remove!
-      buffer = static_buffer; 
-#elif defined OWL_PRISM // required by Prism (no ext mem)
-      extern char _PATCHRAM;
-      buffer = (uint8_t*)&_PATCHRAM; 
-#else
-      extern char _EXTRAM; // defined in link script
-      buffer = (uint8_t*)&_EXTRAM;
-#endif
-      return 0;
-    }
+    if(idx == 0)
+      return beginFirmwareUpload(data, length, offset);
     if(++packageIndex != idx)
       return setError("SysEx package out of sequence"); // out of sequence package
     int len = floor((length-offset)*7/8.0f);
     // wait for program to exit before writing to buffer
-    if(index+len <= size){
+    if(index+len <= size)
       // mid package
-      len = sysex_to_data(data+offset, buffer+index, length-offset);
-      index += len;
-      return 0;
-    }else if(index == size){
-      // last package: package index and checksum
-      // check crc
-      crc = crc32(buffer, size, 0);
-      // get checksum: last 4 bytes of buffer
-      uint32_t checksum = decodeInt(data+length-5);
-      if(crc != checksum)
-	return setError("Invalid SysEx checksum");
-      ready = true;
-      return index;
-    }
+      return receiveFirmwarePackage(data, length, offset);
+    else if(index == size)
+      return finishFirmwareUpload(data, length, offset);
     return setError("Invalid SysEx size"); // wrong size
   }
 };

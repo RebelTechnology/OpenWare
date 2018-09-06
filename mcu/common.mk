@@ -23,7 +23,7 @@ SIZE=$(TOOLROOT)arm-none-eabi-size
 STFLASH ?= st-flash
 
 MCU_ADDRESS = 0x8000000
-# MCU_ADDRESS = 0x8020000
+# MCU_ADDRESS = 0x8010000
 
 # Set up search path
 vpath %.s $(BUILDROOT)/Src

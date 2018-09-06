@@ -30,3 +30,6 @@ OBJS += $(OBJS_USBD)
 OBJS += $(OBJS_UART)
 
 include $(OPENWARE)/mcu/f4.mk
+
+flash:
+	/home/mars/bin/st-flash write $(BIN) 0x08000000
