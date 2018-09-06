@@ -10,7 +10,7 @@
 
 static MidiReader mididevice;
 MidiController midi;
-static FirmwareLoader loader;
+FirmwareLoader loader;
 ProgramManager program;
 
 MidiHandler::MidiHandler(){}
@@ -19,66 +19,103 @@ void ProgramManager::exitProgram(bool isr){}
 void setParameterValue(uint8_t ch, int16_t value){}
 void MidiReader::reset(){}
 
+#define FIRMWARE_SECTOR 0xff
+
+const char* message = NULL;
+void setMessage(const char* msg){
+  message = msg;
+}
+void sendMessage(){
+  if(getErrorStatus() != NO_ERROR)
+    message = getErrorMessage() == NULL ? "Error" : getErrorMessage();
+  if(message != NULL){
+    char buffer[64];
+    buffer[0] = SYSEX_PROGRAM_MESSAGE;
+    char* p = &buffer[1];
+    p = stpncpy(p, message, 62);
+    midi.sendSysEx((uint8_t*)buffer, p-buffer);
+    message = NULL;
+  }
+}
+
 void ProgramManager::eraseFromFlash(uint8_t sector){
   eeprom_erase_sector(sector);
-  // FLASH_EraseInitTypeDef init;
-  // init.TypeErase = FLASH_TYPEERASE_SECTORS;
-  // init.Banks = FLASH_BANK_1;
-  // init.Sector = sector;
-  // init.NbSectors = 1;
-  // init.VoltageRange = FLASH_VOLTAGE_RANGE_4;
-  // HAL_StatusTypeDef ret = HAL_FLASHEx_Erase(&init, SectorError);
-  // if(ret != HAL_OK)
-  //   error(FLASH_ERROR, "Flash erase failed");
 }
 
 void ProgramManager::saveToFlash(uint8_t sector, void* data, uint32_t length){
-  if(sector == -1 && length <= 3*128*1024){
+  if(sector == FIRMWARE_SECTOR && length <= (64+3*128)*1024){
     eeprom_unlock();
-    eeprom_erase_sector(FLASH_SECTOR_5);
-    if(length > 128*1024){
-      eeprom_erase_sector(FLASH_SECTOR_6);
-      if(length > 2*128*1024){
-	eeprom_erase_sector(FLASH_SECTOR_7);
+    eeprom_erase_sector(FLASH_SECTOR_4);
+    if(length > 64*1024){
+      eeprom_erase_sector(FLASH_SECTOR_5);
+      if(length > (64+128)*1024){
+	eeprom_erase_sector(FLASH_SECTOR_6);
+	if(length > (64+2*128)*1024){
+	  eeprom_erase_sector(FLASH_SECTOR_7);
+	}
       }
     }
-    eeprom_write_block(ADDR_FLASH_SECTOR_5, data, length);
+    eeprom_write_block(ADDR_FLASH_SECTOR_4, data, length);
     eeprom_lock();
+  }else{
+    error(RUNTIME_ERROR, "Firmware too big");
   }
 }
 
 extern "C" {
 
-  void error(int8_t code, const char* reason){
-    // todo!
+  volatile int8_t errorcode = NO_ERROR;
+  static char* errormessage = NULL;
+  int8_t getErrorStatus(){
+    return errorcode;
   }
-  void setErrorStatus(int8_t err){}
-  void setErrorMessage(int8_t err, const char* msg){}
+
+  void setErrorStatus(int8_t err){
+    errorcode = err;
+    if(err == NO_ERROR)
+      errormessage = NULL;
+  }
+
+  void error(int8_t err, const char* msg){
+    setErrorStatus(err);
+    errormessage = (char*)msg;
+  }
+
+  const char* getErrorMessage(){
+    return errormessage;
+  }
+
   bool midi_error(const char* str){
     error(PROGRAM_ERROR, str);
     return false;
   }
 
   void setup(){    
-    midi.init(0);
+    midi.setOutputChannel(MIDI_OUTPUT_CHANNEL);
+    mididevice.setInputChannel(MIDI_INPUT_CHANNEL);
     midi.sendFirmwareVersion();
+    setMessage("OWL Bootloader ready");
   }
 
   void loop(void){
     midi.push();
     // wait for interrupts
   }
+
 }
 
 void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
   int32_t ret = loader.handleFirmwareUpload(data, size);
   if(ret > 0){
+    setMessage("Firmware upload complete");
     // firmware upload complete: wait for run or store
     // setLed(NONE); todo!
   }else if(ret == 0){
+    setMessage("Firmware upload in progress");
     // toggleLed(); todo!
-  }// else error
-  // TODO: set screen to LOADING mode if available
+  }else{
+    error(RUNTIME_ERROR, "Firmware upload error");
+  }
   // setParameterValue(PARAMETER_A, loader.index*4095/loader.size);
 }
 
@@ -96,7 +133,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t checksum = loader.decodeInt(data);
     if(checksum == loader.getChecksum()){
-      program.saveToFlash(-1, loader.getData(), loader.getSize());
+      program.saveToFlash(FIRMWARE_SECTOR, loader.getData(), loader.getSize());
       loader.clear();
     }else{
       error(PROGRAM_ERROR, "Invalid FLASH checksum");
@@ -107,25 +144,15 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
 }
 
 void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
-  if(loader.isReady() && size == 5){
-    uint32_t slot = loader.decodeInt(data);
-    if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
-      program.saveToFlash(slot, loader.getData(), loader.getSize());
-      loader.clear();
-    }else{
-      error(PROGRAM_ERROR, "Invalid program slot");
-    }
-  }else{
-    error(PROGRAM_ERROR, "No program to store");
-  }
+  error(RUNTIME_ERROR, "Patch STORE not implemented");
 }
 
 void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
   if(size < 5 || data[1] != MIDI_SYSEX_MANUFACTURER)     
     return;
-  if(data[2] != MIDI_SYSEX_DEVICE && data[2] != (MIDI_SYSEX_OWL_DEVICE | channel))
+  if(data[2] != MIDI_SYSEX_OMNI_DEVICE && data[2] != (MIDI_SYSEX_OWL_DEVICE | channel))
     // not for us
-    return; // if channel == OMNI && data[2] == 0xff this message will also be processed
+    return;
   switch(data[3]){
   // case SYSEX_CONFIGURATION_COMMAND:
   //   handleConfigurationCommand(data+4, size-5);
@@ -217,8 +244,36 @@ bool MidiReader::readMidiFrame(uint8_t* frame){
       buffer[pos++] = frame[3];
     }
     break;
+  case USB_COMMAND_CONTROL_CHANGE:
+    if((frame[1]&0xf0) != CONTROL_CHANGE)
+      return false;
+    handleControlChange(frame[1], frame[2], frame[3]);
+    break;
   }
   return true;
+}
+
+void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value){
+  // if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
+  //   return;
+  switch(cc){
+  case REQUEST_SETTINGS:
+    switch(value){
+    case 0:
+      sendMessage();
+      break;
+    case SYSEX_FIRMWARE_VERSION:
+      midi.sendFirmwareVersion();
+      break;
+    case SYSEX_DEVICE_ID:
+      midi.sendDeviceId();
+      break;
+    case SYSEX_PROGRAM_MESSAGE:
+      sendMessage();
+      break;
+    }
+    break;
+  }
 }
 
 void midi_device_rx(uint8_t *buffer, uint32_t length){

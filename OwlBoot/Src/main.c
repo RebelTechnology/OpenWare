@@ -1,3 +1,4 @@
+
 /**
   ******************************************************************************
   * @file           : main.c
@@ -51,13 +52,12 @@
 #include "usb_device.h"
 
 /* USER CODE BEGIN Includes */
+#include "eepromcontrol.h"
 
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
-
-UART_HandleTypeDef huart2;
 
 SDRAM_HandleTypeDef hsdram1;
 
@@ -71,7 +71,6 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_FMC_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -81,8 +80,7 @@ void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void loop(void);
 
 typedef  void (*pFunction)(void);
-#define ADDR_FLASH_SECTOR_5     ((uint32_t)0x08020000) /* Base @ of Sector 5, 128 Kbyte */
-#define APPLICATION_ADDRESS        ADDR_FLASH_SECTOR_5// (uint32_t)0x08020000 // was: 0x08008000
+#define APPLICATION_ADDRESS        ADDR_FLASH_SECTOR_4
 const uint32_t bootloaderMagicNumber = 0xDADAB007;
 
 static int testMagic(){
@@ -93,6 +91,14 @@ static int testButton(){
   // return false;
   /* return !(SW1_GPIO_Port->IDR & SW1_Pin); */
   return !(BOOT1_GPIO_Port->IDR & BOOT1_Pin);
+}
+
+static int testNoProgram(){
+  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x20000000;
+  /* Check Vector Table: Test if valid stack pointer is programmed at APPLICATION_ADDRESS */
+  // if(((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) == 0x20000000){
+  // setLed(GREEN);
+  // }
 }
 
 /* USER CODE END PFP */
@@ -128,22 +134,14 @@ int main(void)
 
   MX_GPIO_Init();
   
-  if(testButton() || testMagic()){
-    MX_FMC_Init();
-    MX_SPI1_Init();
-    MX_USART2_UART_Init();
-    MX_USB_DEVICE_Init();
-    SDRAM_Initialization_Sequence(&hsdram1);
+  if(testButton() || testMagic() || testNoProgram()){
+    // we're going to boot
   }else{
     // jump to application code
 
     /* Disable all interrupts */
     RCC->CIR = 0x00000000;
 
-    /* Check Vector Table: Test if valid stack pointer is programmed at APPLICATION_ADDRESS */
-    // if(((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) == 0x20000000){
-    // setLed(GREEN);
-    // }
     /* Jump to user application */
     uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
     pFunction jumpToApplication = (pFunction) JumpAddress;
@@ -156,7 +154,13 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_FMC_Init();
+  MX_SPI1_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+
+  SDRAM_Initialization_Sequence(&hsdram1);   
 
   // Initialise
   setup();
@@ -167,9 +171,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-  /* USER CODE END WHILE */
     loop();
+  /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
 
@@ -253,25 +256,6 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   hspi1.Init.CRCPolynomial = 10;
   if (HAL_SPI_Init(&hspi1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-}
-
-/* USART2 init function */
-static void MX_USART2_UART_Init(void)
-{
-
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -368,12 +352,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA0 PA1 PA2 PA4 
-                           PA8 PA9 PA10 PA11 
-                           PA12 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_4 
-                          |GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11 
-                          |GPIO_PIN_12|GPIO_PIN_15;
+  /*Configure GPIO pins : PA0 PA1 PA2 PA3 
+                           PA4 PA8 PA9 PA10 
+                           PA11 PA12 PA15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3 
+                          |GPIO_PIN_4|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10 
+                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -393,16 +377,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SW1_Pin SW3_Pin SW2_Pin */
-  GPIO_InitStruct.Pin = BOOT1_Pin;//SW1_Pin|SW3_Pin|SW2_Pin;
+  /*Configure GPIO pin : BOOT1_Pin */
+  GPIO_InitStruct.Pin = BOOT1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(BOOT1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD11 PD12 PD13 PD2 
-                           PD3 PD4 PD6 PD7 */
+                           PD3 PD4 PD5 PD6 
+                           PD7 */
   GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_2 
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_6|GPIO_PIN_7;
+                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6 
+                          |GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
@@ -416,6 +402,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : SW3_Pin SW2_Pin */
+  GPIO_InitStruct.Pin = SW3_Pin|SW2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 
@@ -432,10 +424,11 @@ static void MX_GPIO_Init(void)
 void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  while(1)
-  {
-  }
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -450,8 +443,11 @@ void _Error_Handler(char *file, int line)
 void assert_failed(uint8_t* file, uint32_t line)
 { 
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

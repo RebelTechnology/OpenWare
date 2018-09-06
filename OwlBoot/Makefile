@@ -2,6 +2,7 @@ PROJECT = OwlBoot
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
+LDSCRIPT = STM32F427ZI-boot.ld
 include $(OPENWARE)/mcu/STM32F427ZI.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
