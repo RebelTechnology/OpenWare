@@ -115,6 +115,7 @@ extern "C" {
   }
 
   void setup(){
+    *bootloaderMagicAddress = 0;
     led_green();
     midi.setOutputChannel(MIDI_OUTPUT_CHANNEL);
     mididevice.setInputChannel(MIDI_INPUT_CHANNEL);
@@ -181,7 +182,6 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
 }
 
 void jump_to_bootloader(void){
-  // USBD_DeInit();
 #ifdef USE_USB_HOST
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
 #endif
