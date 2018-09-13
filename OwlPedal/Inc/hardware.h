@@ -4,7 +4,6 @@
 #define OWL_PEDAL
 #define OWL_RACK
 #define USE_DIGITALBUS
-#define USE_MIDI_CALLBACK
 
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
 #define MIDI_OUTPUT_CHANNEL          0

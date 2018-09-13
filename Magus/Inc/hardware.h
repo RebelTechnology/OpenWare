@@ -3,7 +3,6 @@
 
 #define OWL_MAGUS
 
-#define USE_MIDI_CALLBACK
 #define USE_SCREEN
 #define SSD1309
 /* #define OLED_DMA */

@@ -2,9 +2,8 @@
 #include "stm32f4xx_hal.h"
 
 #define OWL_WIZARD
-#define FASCINATION_MACHINE
+/* #define FASCINATION_MACHINE */
 
-#define USE_MIDI_CALLBACK
 #define USE_RGB_LED
 #define USE_DAC
 #define TRIG1_Pin GP7_Pin

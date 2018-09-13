@@ -5,7 +5,6 @@
 #define OWL_RACK
 
 #define USE_DIGITALBUS
-#define USE_MIDI_CALLBACK
 
 #define USE_USBD_HS
 #define USE_SCREEN
