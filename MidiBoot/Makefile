@@ -29,8 +29,10 @@ OBJS += $(OBJS_UART)
 
 include $(OPENWARE)/Hardware/f4.mk
 
-flash:
-	/home/mars/bin/st-flash write $(BIN) 0x08000000
+.PHONY: clean deploy unlock
+
+unlock:
+	openocd -f openocd.cfg -c "init" -c "halt" -c "flash protect 0 0 1 off" -c "flash info 0" -c "exit"
 
 deploy:
 	openocd -f openocd.cfg -c "program Build/MidiBoot.elf verify" -c "flash protect 0 0 1 on" -c "exit"
