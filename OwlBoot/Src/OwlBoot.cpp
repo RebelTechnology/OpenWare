@@ -20,6 +20,28 @@ void setParameterValue(uint8_t ch, int16_t value){}
 void MidiReader::reset(){}
 
 #define FIRMWARE_SECTOR 0xff
+const uint32_t bootloaderMagicNumber = 0xDADAB007;
+uint32_t* bootloaderMagicAddress = (uint32_t*)0x2000FFF0;
+
+void led_off(){
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+}
+
+void led_green(){
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+}
+
+void led_red(){
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+}
+
+void led_toggle(){
+  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+  HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+}
 
 const char* message = NULL;
 void setMessage(const char* msg){
@@ -74,6 +96,8 @@ extern "C" {
     errorcode = err;
     if(err == NO_ERROR)
       errormessage = NULL;
+    else
+      led_red();
   }
 
   void error(int8_t err, const char* msg){
@@ -90,11 +114,18 @@ extern "C" {
     return false;
   }
 
-  void setup(){    
+  void setup(){
+    led_green();
     midi.setOutputChannel(MIDI_OUTPUT_CHANNEL);
     mididevice.setInputChannel(MIDI_INPUT_CHANNEL);
     midi.sendFirmwareVersion();
     setMessage("OWL Bootloader ready");
+    for(int i=0; i<3; i++){
+      HAL_Delay(600);
+      led_red();
+      HAL_Delay(600);
+      led_green();
+    }
   }
 
   void loop(void){
@@ -110,8 +141,10 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
     setMessage("Firmware upload complete");
     // firmware upload complete: wait for run or store
     // setLed(NONE); todo!
+    led_green();
   }else if(ret == 0){
     setMessage("Firmware upload in progress");
+    led_toggle();
     // toggleLed(); todo!
   }else{
     error(RUNTIME_ERROR, "Firmware upload error");
@@ -144,7 +177,27 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
 }
 
 void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
-  error(RUNTIME_ERROR, "Patch STORE not implemented");
+  error(RUNTIME_ERROR, "Invalid STORE command");
+}
+
+void jump_to_bootloader(void){
+  // USBD_DeInit();
+#ifdef USE_USB_HOST
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+#endif
+  *bootloaderMagicAddress = bootloaderMagicNumber;
+  /* Disable all interrupts */
+  RCC->CIR = 0x00000000;
+  NVIC_SystemReset();
+  /* Shouldn't get here */
+  while(1);
+}
+
+void device_reset(){
+  *bootloaderMagicAddress = 0;
+  NVIC_SystemReset();
+  /* Shouldn't get here */
+  while(1);
 }
 
 void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
@@ -157,9 +210,12 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
   // case SYSEX_CONFIGURATION_COMMAND:
   //   handleConfigurationCommand(data+4, size-5);
   //   break;
-  // case SYSEX_DFU_COMMAND:
-  //   jump_to_bootloader();
-  //   break;
+  case SYSEX_DEVICE_RESET_COMMAND:
+    device_reset();
+    break;
+  case SYSEX_BOOTLOADER_COMMAND:
+    jump_to_bootloader();
+    break;
   case SYSEX_FIRMWARE_UPLOAD:
     handleFirmwareUploadCommand(data+1, size-2);
     break;

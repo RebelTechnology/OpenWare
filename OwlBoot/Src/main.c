@@ -81,24 +81,20 @@ void loop(void);
 
 typedef  void (*pFunction)(void);
 #define APPLICATION_ADDRESS        ADDR_FLASH_SECTOR_4
-const uint32_t bootloaderMagicNumber = 0xDADAB007;
 
 static int testMagic(){
-  return *((unsigned long*)0x2000FFF0) == bootloaderMagicNumber;
+  const uint32_t bootloaderMagicNumber = 0xDADAB007;
+  const uint32_t* bootloaderMagicAddress = (uint32_t*)0x2000FFF0;
+  return *bootloaderMagicAddress == bootloaderMagicNumber;
 }
 
 static int testButton(){
-  // return false;
-  /* return !(SW1_GPIO_Port->IDR & SW1_Pin); */
   return !(BOOT1_GPIO_Port->IDR & BOOT1_Pin);
 }
 
 static int testNoProgram(){
   return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x20000000;
   /* Check Vector Table: Test if valid stack pointer is programmed at APPLICATION_ADDRESS */
-  // if(((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) == 0x20000000){
-  // setLed(GREEN);
-  // }
 }
 
 /* USER CODE END PFP */
@@ -322,6 +318,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, LED1_Pin|LED2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, FLASH_HOLD_Pin|FLASH_nCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PE2 PE3 PE4 PE5 
@@ -352,12 +351,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA0 PA1 PA2 PA3 
-                           PA4 PA8 PA9 PA10 
-                           PA11 PA12 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3 
-                          |GPIO_PIN_4|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10 
-                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_15;
+  /*Configure GPIO pins : LED1_Pin LED2_Pin */
+  GPIO_InitStruct.Pin = LED1_Pin|LED2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA2 PA3 PA4 PA8 
+                           PA9 PA10 PA11 PA12 
+                           PA15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_8 
+                          |GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12 
+                          |GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
