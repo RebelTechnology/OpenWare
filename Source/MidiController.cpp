@@ -38,12 +38,12 @@
 #elif defined OWL_EFFECTSBOX
 #define HARDWARE_VERSION             "FX Box"
 #elif defined OWL_BOOT
-#define HARDWARE_VERSION             "OWL Boot"
+#define HARDWARE_VERSION             "OWL MIDI Boot"
 #elif !defined HARDWARE_VERSION
 #error "invalid configuration"
 #endif
 
-#define FIRMWARE_VERSION "v20pre"
+#define FIRMWARE_VERSION "v20"
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
