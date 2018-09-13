@@ -2,7 +2,7 @@ PROJECT = EffectsBox
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-include $(OPENWARE)/mcu/STM32F427ZI.mk
+include $(OPENWARE)/Hardware/owl2.mk
 
 C_SRC = main.c
 C_SRC += freertos.c
@@ -18,7 +18,7 @@ C_SRC += cs4272.c
 C_SRC += ssd1309.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
 
-include $(OPENWARE)/mcu/sources.mk
+include $(OPENWARE)/Hardware/sources.mk
 
 OBJS = $(C_SRC:%.c=Build/%.o)
 OBJS += $(CPP_SRC:%.cpp=Build/%.o)
@@ -30,4 +30,4 @@ OBJS += $(OBJS_USBD)
 OBJS += $(OBJS_DSP)
 OBJS += $(OBJS_OS)
 
-include $(OPENWARE)/mcu/f4.mk
+include $(OPENWARE)/Hardware/f4.mk

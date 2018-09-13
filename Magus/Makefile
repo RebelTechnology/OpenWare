@@ -2,7 +2,7 @@ PROJECT = Magus
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-include $(OPENWARE)/mcu/STM32F427ZI.mk
+include $(OPENWARE)/Hardware/owl2.mk
 
 C_SRC = $(filter-out test.c,$(notdir $(wildcard Src/*.c)))
 # C_SRC = $(notdir $(wildcard Src/*.c))
@@ -17,7 +17,7 @@ C_SRC += HAL_Encoders.c
 # C_SRC += HAL_OLED.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
 
-include $(OPENWARE)/mcu/sources.mk
+include $(OPENWARE)/Hardware/sources.mk
 
 OBJS = $(C_SRC:%.c=Build/%.o)
 OBJS += $(CPP_SRC:%.cpp=Build/%.o)
@@ -32,4 +32,4 @@ OBJS += $(OBJS_DSP)
 OBJS += $(OBJS_OS)
 OBJS += $(OBJS_UART)
 
-include $(OPENWARE)/mcu/f4.mk
+include $(OPENWARE)/Hardware/f4.mk

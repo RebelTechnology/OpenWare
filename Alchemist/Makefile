@@ -2,15 +2,14 @@ PROJECT = Alchemist
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-LDSCRIPT = flash.ld
-include $(OPENWARE)/mcu/STM32F427ZI.mk
+include $(OPENWARE)/Hardware/owl2.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += sdram.c
 C_SRC += cs4272.c
 
-include $(OPENWARE)/mcu/sources.mk
+include $(OPENWARE)/Hardware/sources.mk
 
 OBJS = $(C_SRC:%.c=Build/%.o)
 OBJS += $(CPP_SRC:%.cpp=Build/%.o)
@@ -23,4 +22,4 @@ OBJS += $(OBJS_DSP)
 OBJS += $(OBJS_OS)
 OBJS += $(OBJS_UART)
 
-include $(OPENWARE)/mcu/f4.mk
+include $(OPENWARE)/Hardware/f4.mk

@@ -30,5 +30,5 @@ CFLAGS += $(ARCH_FLAGS) $(INC_FLAGS) $(DEF_FLAGS)
 CXXFLAGS += $(ARCH_FLAGS) $(INC_FLAGS) $(DEF_FLAGS)
 LDFLAGS += -T$(LDSCRIPT) $(ARCH_FLAGS)
 
-include $(OPENWARE)/mcu/f7-libs.mk
-include $(OPENWARE)/mcu/common.mk
+include $(OPENWARE)/Hardware/f7-libs.mk
+include $(OPENWARE)/Hardware/common.mk

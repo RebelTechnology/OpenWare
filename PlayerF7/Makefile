@@ -2,7 +2,7 @@ PROJECT = Player
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-include $(OPENWARE)/mcu/STM32F746ZG.mk
+-include $(OPENWARE)/Hardware/STM32F746ZG.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
@@ -11,7 +11,7 @@ C_SRC += cs4272.c ssd1309.c
 C_SRC += usbh_midi.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
 
-include $(OPENWARE)/mcu/sources.mk
+include $(OPENWARE)/Hardware/sources.mk
 
 OBJS = $(C_SRC:%.c=Build/%.o)
 OBJS += $(CPP_SRC:%.cpp=Build/%.o)
@@ -28,4 +28,4 @@ OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
 OBJS += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
 # OBJS += $(USB_HOST_FILE)/Class/AUDIO/Src/usbh_audio.o
 
-include $(OPENWARE)/mcu/f7.mk
+include $(OPENWARE)/Hardware/f7.mk
