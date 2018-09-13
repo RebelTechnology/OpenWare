@@ -7,7 +7,7 @@ endif
 
 export OPENWARE CONFIG
 
-all: alchemist wizard magus tesseract prism effectsbox owlpedal player #quadfm 
+all: alchemist wizard magus tesseract prism effectsbox owlpedal player #quadfm owlboot
 
 tesseract:
 	@$(MAKE) -C Tesseract all
