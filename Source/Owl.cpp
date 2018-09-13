@@ -70,6 +70,8 @@ MidiController midi;
 MidiReader midihost;
 #endif /* USE_USB_HOST */
 ApplicationSettings settings;
+const uint32_t bootloaderMagicNumber = 0xDADAB007;
+uint32_t* bootloaderMagicAddress = (uint32_t*)0x2000FFF0;
 
 #ifdef USE_ADC
 uint16_t adc_values[NOF_ADC_VALUES];
@@ -732,56 +734,24 @@ extern "C"{
   
 }
 
-// __attribute__((naked))
-// void reboot(void){
-//   const uint32_t bootloaderMagicNumber = 0xDADAB007;
-//   /* This address is within the first 64k of memory.
-//    * The magic number must match what is in the bootloader */
-//   *((unsigned long *)0x2000FFF0) = bootloaderMagicNumber;
-//   NVIC_SystemReset();
-//   /* Shouldn't get here */
-//   while(1);
-// }
-
-
-/* Jump to the bootloader. We set a magic number in memory that our bootloader 
- * startup code looks for. RAM is preserved across system reset, so when it 
- * finds this magic number, it will go to the bootloader code 
- * rather than the application code.
- */
-// __attribute__((naked))
 void jump_to_bootloader(void){
-  /* Disable USB in advance: this will give the computer time to
-   * recognise it's been disconnected, so when the system bootloader
-   * comes online it will get re-enumerated.
-   */
-  // usb_deinit();
-  /* Blink LEDs */
-  // setLed(RED);
-  // for(uint8_t i = 0; i < 3; i++) {
-  //   volatile uint32_t delayCounter;
-  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
-  //   setLed(NONE);
-  //   for(delayCounter = 0; delayCounter < 2000000; delayCounter++);
-  //   setLed(RED);
-  // }
-
+#ifdef USE_USB_HOST
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+#endif
+  *bootloaderMagicAddress = bootloaderMagicNumber;
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
-  const uint32_t bootloaderMagicNumber = 0xDADAB007;
-  /* This address is within the first 64k of memory.
-   * The magic number must match what is in the bootloader */
-  *((unsigned long *)0x2000FFF0) = bootloaderMagicNumber;
-  /* todo:
-   * disable USB (host and device)
-   * then drive USB pins low for 1 second
-   * to allow disconnect
-   */
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
 }
 
+void device_reset(){
+  *bootloaderMagicAddress = 0;
+  NVIC_SystemReset();
+  /* Shouldn't get here */
+  while(1);
+}
 
 void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
   uint8_t data[] = {port, status, d1, d2};

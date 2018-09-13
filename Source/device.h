@@ -20,6 +20,7 @@ extern "C" {
 #define AUDIO_OUTPUT_GAIN            127
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
+#define USE_MIDI_CALLBACK
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
 #define EEPROM_PAGE_SIZE             (128*1024)
