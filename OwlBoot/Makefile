@@ -33,3 +33,6 @@ include $(OPENWARE)/mcu/f4.mk
 
 flash:
 	/home/mars/bin/st-flash write $(BIN) 0x08000000
+
+deploy:
+	openocd -f openocd.cfg -c "program Build/OwlBoot.elf verify" -c "flash protect 0 0 1 on" -c "exit"
