@@ -99,9 +99,9 @@
 #define FLASH_nCS_GPIO_Port GPIOC
 #define PWM3_Pin GPIO_PIN_1
 #define PWM3_GPIO_Port GPIOB
-#define SW1_Pin GPIO_PIN_2
-#define SW1_GPIO_Port GPIOB
-#define SW1_EXTI_IRQn EXTI2_IRQn
+#define SW2_Pin GPIO_PIN_2
+#define SW2_GPIO_Port GPIOB
+#define SW2_EXTI_IRQn EXTI2_IRQn
 #define CS_nCS_Pin GPIO_PIN_10
 #define CS_nCS_GPIO_Port GPIOB
 #define CS_nRST_Pin GPIO_PIN_11
@@ -113,9 +113,9 @@
 #define SW3_Pin GPIO_PIN_8
 #define SW3_GPIO_Port GPIOB
 #define SW3_EXTI_IRQn EXTI9_5_IRQn
-#define SW2_Pin GPIO_PIN_9
-#define SW2_GPIO_Port GPIOB
-#define SW2_EXTI_IRQn EXTI9_5_IRQn
+#define SW1_Pin GPIO_PIN_9
+#define SW1_GPIO_Port GPIOB
+#define SW1_EXTI_IRQn EXTI9_5_IRQn
 
 /* ########################## Assert Selection ############################## */
 /**
