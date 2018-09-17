@@ -295,7 +295,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     ledstatus ^= 0x3ff00000; // getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
     break;
 #endif
-// #ifdef OWL_WIZARD
+// #ifdef OWL_WIZARD // done in ProgramManager::onProgramReady()
 //   case SW4_Pin:
 //     setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
 //     ledstatus ^= 0x3ff003ff;
@@ -510,10 +510,66 @@ void setLed(uint8_t led, uint32_t rgb){
 int busstatus;
 #endif
 
+#ifdef OWL_ALCHEMIST
+bool isModeButtonPressed(){
+  return HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
+}
+int getGainSelectionValue(){
+  return adc_values[ADC_C]*127*3/4095;
+}
+int getPatchSelectionValue(){
+  return adc_values[ADC_D]*(registry.getNumberOfPatches()-1)*3/4095;
+}
+#endif
+
 void loop(void){
+#ifdef OWL_ALCHEMIST
+  enum OperationMode {
+    STARTUP,
+    RUNNING,
+    CONFIGURATION,
+    ERROR,
+  };
+  static OperationMode mode = STARTUP;
+  static int patchselect = 0;
+  static int gainselect = 0;
+  switch(mode){
+  case STARTUP:
+    mode = RUNNING;
+    break;
+  case RUNNING:
+    if(isModeButtonPressed()){
+      patchselect = getPatchSelectionValue();
+      gainselect = getGainSelectionValue();
+      mode = CONFIGURATION;
+    }
+    break;
+  case CONFIGURATION:
+    if(isModeButtonPressed()){
+      int value = getPatchSelectionValue();
+      if(abs(patchselect - value) > 2){
+	patchselect = value;
+	value = value/3 + 1;
+	program.loadProgram(value);
+	program.resetProgram(false);	
+      }
+      value = getGainSelectionValue();
+      if(abs(gainselect - value) > 2){
+	gainselect = value;
+	value = value/3;
+	codec.setOutputGain(value);    
+      }      
+    }else{
+      mode = RUNNING;
+    }
+    break;
+  case ERROR:
+    break;
+  }
+#endif
 #ifdef FASCINATION_MACHINE
   static int output_gain = 0;
-  int gain = getParameterValue(PARAMETER_D)*255/4095;
+  int gain = adc_values[ADC_D]*255/4095;
   if(abs(gain - output_gain) > 1){
     output_gain = gain;
     codec.setOutputGain(output_gain/2);    
@@ -524,7 +580,7 @@ void loop(void){
   //   codec.setOutputGain(output_gain);
   // }
   static int patch_index = 0;
-  int patch = getParameterValue(PARAMETER_E)*10/4095;
+  int patch = adc_values[ADC_E]*10/4095;
   if(abs(patch - patch_index) > 1){
     patch_index = patch;
     patch = patch/2 + 1;
@@ -670,7 +726,7 @@ void loop(void){
   colour = colour*(1+audio_envelope);
 #endif
   colour &= 0x3ff;
-  setLed(0, ledstatus ^ rainbow[colour]);
+  setLed(0, ledstatus | rainbow[colour]);
   // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
 #endif /* USE_RGB_LED */
 }
