@@ -271,7 +271,7 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #if defined OWL_MAGUS || defined OWL_PRISM
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
-  midi.sendPatchName(0, name);
+  midi.sendPatchName(program.getProgramIndex(), name);
 }
 
 void updateProgramVector(ProgramVector* pv){
@@ -555,32 +555,36 @@ void ProgramManager::resetProgram(bool isr){
     notifyManager(STOP_PROGRAM_NOTIFICATION|START_PROGRAM_NOTIFICATION);
 }
 
+void ProgramManager::updateProgramIndex(uint8_t index){
+  patchindex = index;
+  // if(settings.program_index != index){
+    // settings.program_index = index;
+  midi.sendPc(index);
+  midi.sendPatchName(index, registry.getPatchName(index));
+}
+
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
-  patchindex = 0;
   dynamo.load(address, length);
   if(dynamo.getProgramVector() != NULL){
     patchdef = &dynamo;
     registry.setDynamicPatchDefinition(patchdef);
-    // updateProgramIndex(0);
+    updateProgramIndex(0);
   }else{
     registry.setDynamicPatchDefinition(NULL);
   }
 }
 
-// void ProgramManager::saveProgramToFlash(uint8_t sector, void* address, uint32_t length){
-// }
-
 void ProgramManager::loadProgram(uint8_t pid){
-  PatchDefinition* def = registry.getPatchDefinition(pid);
-  if(def != NULL && def != patchdef && def->getProgramVector() != NULL){
-    patchdef = def;
-    // updateProgramIndex(pid);
-    patchindex = pid;
+  if(patchindex != pid){
+    PatchDefinition* def = registry.getPatchDefinition(pid);
+    if(def != NULL && def->getProgramVector() != NULL){
+      patchdef = def;
+      updateProgramIndex(pid);
 #ifndef USE_SCREEN
-    memset(parameter_values, 0, sizeof(parameter_values));
+      memset(parameter_values, 0, sizeof(parameter_values));
 #endif  
+    }
   }
-  // patchdef = &dynamo;
 }
 
 #ifdef DEBUG_STACK

@@ -67,6 +67,8 @@ public:
   PatchDefinition* getPatchDefinition(){
     return patchdef;
   }
+private:
+  void updateProgramIndex(uint8_t index);
 };
 
 extern ProgramManager program;

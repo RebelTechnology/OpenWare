@@ -129,7 +129,7 @@ void midiSetOutputChannel(int8_t channel){
 #ifdef USE_RGB_LED
 void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
-#if defined OWL_TESSERACT || defined OWL_ALCHEMIST
+#if defined OWL_TESSERACT
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM2->CCR2 = 1023 - ((rgb>>00)&0x3ff);
@@ -137,6 +137,10 @@ void setLed(uint8_t led, uint32_t rgb){
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM5->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM4->CCR3 = 1023 - ((rgb>>00)&0x3ff);
+#elif defined OWL_ALCHEMIST
+  TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
+  TIM2->CCR2 = 1023 - ((rgb>>10)&0x3ff);
+  TIM3->CCR4 = 1023 - ((rgb>>00)&0x3ff);
 #endif
 }
 
@@ -515,12 +519,32 @@ bool isModeButtonPressed(){
   return HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
 }
 int getGainSelectionValue(){
-  return adc_values[ADC_C]*127*3/4095;
+  return adc_values[ADC_C]*128*4/4096;
 }
 int getPatchSelectionValue(){
-  return adc_values[ADC_D]*(registry.getNumberOfPatches()-1)*3/4095;
+  return adc_values[ADC_D]*(registry.getNumberOfPatches()-1)*4/4095;
 }
 #endif
+
+#ifdef USE_RGB_LED
+void updateLed(){
+  uint32_t colour =
+    (adc_values[ADC_A]>>3)+
+    (adc_values[ADC_B]>>3)+
+    (adc_values[ADC_C]>>3)+
+    (adc_values[ADC_D]>>3);
+#ifdef ADC_E
+  colour += (adc_values[ADC_E]>>3);
+#endif
+#ifdef FASCINATION_MACHINE
+  extern float audio_envelope;
+  colour = colour*(1+audio_envelope);
+#endif
+  colour &= 0x3ff;
+  setLed(0, ledstatus | rainbow[colour]);
+  // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
+}
+#endif /*USE_RGB_LED */
 
 void loop(void){
 #ifdef OWL_ALCHEMIST
@@ -542,23 +566,30 @@ void loop(void){
       patchselect = getPatchSelectionValue();
       gainselect = getGainSelectionValue();
       mode = CONFIGURATION;
+      setLed(0, NO_COLOUR);
+    }else{
+      updateLed();
     }
     break;
   case CONFIGURATION:
     if(isModeButtonPressed()){
       int value = getPatchSelectionValue();
-      if(abs(patchselect - value) > 2){
+      if(abs(patchselect - value) > 1){
 	patchselect = value;
-	value = value/3 + 1;
-	program.loadProgram(value);
-	program.resetProgram(false);	
+	value = max(1, min((int)registry.getNumberOfPatches()-1, value/4 + 1));
+	if(program.getProgramIndex() != value){
+	  program.loadProgram(value);
+	  program.resetProgram(false);
+	  setLed(0, value & 0x01 ? BLUE_COLOUR : GREEN_COLOUR);
+	}
       }
       value = getGainSelectionValue();
       if(abs(gainselect - value) > 2){
 	gainselect = value;
-	value = value/3;
+	value = max(0, min(127, value/4));
 	codec.setOutputGain(value);    
-      }      
+	setLed(0, value & 0x01 ? YELLOW_COLOUR : CYAN_COLOUR);
+      }
     }else{
       mode = RUNNING;
     }
@@ -711,24 +742,6 @@ void loop(void){
   // for(int i=NOF_ADC_VALUES; i<NOF_PARAMETERS; ++i)
   //   graphics.params.updateValue(i, 0);
 #endif  
-
-#ifdef USE_RGB_LED
-  uint32_t colour =
-    (adc_values[ADC_A]>>3)+
-    (adc_values[ADC_B]>>3)+
-    (adc_values[ADC_C]>>3)+
-    (adc_values[ADC_D]>>3);
-#ifdef ADC_E
-  colour += (adc_values[ADC_E]>>3);
-#endif
-#ifdef FASCINATION_MACHINE
-  extern float audio_envelope;
-  colour = colour*(1+audio_envelope);
-#endif
-  colour &= 0x3ff;
-  setLed(0, ledstatus | rainbow[colour]);
-  // setLed(4095-adc_values[0], 4095-adc_values[1], 4095-adc_values[2]);
-#endif /* USE_RGB_LED */
 }
 
 extern "C"{

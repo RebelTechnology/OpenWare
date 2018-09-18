@@ -6,14 +6,10 @@
 #include "MidiHandler.h"
 #include "device.h"
 
-#ifndef MIDI_MAX_MESSAGE_SIZE
-#define MIDI_MAX_MESSAGE_SIZE 256 // also used for bus messages and bus data
-#endif
-
 class MidiReader : public MidiHandler {
 protected:
-  uint8_t buffer[MIDI_MAX_MESSAGE_SIZE];
-  static const unsigned int size = MIDI_MAX_MESSAGE_SIZE;
+  uint8_t buffer[MIDI_INPUT_BUFFER_SIZE];
+  static constexpr unsigned int size = MIDI_INPUT_BUFFER_SIZE;
   unsigned int pos;
   void (*midiCallback)(uint8_t port, uint8_t status, uint8_t, uint8_t);
 public:

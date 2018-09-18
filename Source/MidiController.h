@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "device.h"
 #include "OpenWareMidiControl.h"
 #include "SerialBuffer.hpp"
 
@@ -12,7 +13,7 @@ extern MidiController midi;
 class MidiController {
 private:
   uint8_t channel;
-  SerialBuffer<256> buffer;
+  SerialBuffer<MIDI_OUTPUT_BUFFER_SIZE> buffer;
 public:
   void setOutputChannel(uint8_t ch){
     channel = ch;
