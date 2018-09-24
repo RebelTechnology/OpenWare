@@ -52,8 +52,7 @@
 #include "usb_device.h"
 
 /* USER CODE BEGIN Includes */
-#include "eepromcontrol.h"
-
+#include "hardware.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -80,7 +79,6 @@ void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void loop(void);
 
 typedef  void (*pFunction)(void);
-#define APPLICATION_ADDRESS        ADDR_FLASH_SECTOR_4
 
 static int testMagic(){
   const uint32_t bootloaderMagicNumber = 0xDADAB007;
@@ -89,7 +87,11 @@ static int testMagic(){
 }
 
 static int testButton(){
+#ifdef USE_BOOT1_PIN
   return !(BOOT1_GPIO_Port->IDR & BOOT1_Pin);
+#else
+  return 0;
+#endif
 }
 
 static int testNoProgram(){
