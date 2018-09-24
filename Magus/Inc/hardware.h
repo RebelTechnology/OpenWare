@@ -26,4 +26,5 @@
 #define NOF_ADC_VALUES               0
 #define NOF_PARAMETERS               20
 #define NOF_BUTTONS                  0
+#undef USE_DAC
 
