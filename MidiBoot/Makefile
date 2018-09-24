@@ -32,7 +32,10 @@ include $(OPENWARE)/Hardware/f4.mk
 .PHONY: clean deploy unlock
 
 unlock:
-	openocd -f openocd.cfg -c "init" -c "halt" -c "flash protect 0 0 1 off" -c "flash info 0" -c "exit"
+	openocd -f openocd.cfg -c "init" -c "halt" -c "flash protect 0 0 11 off" -c "flash info 0" -c "exit"
+
+erase:
+	openocd -f openocd.cfg -c "init" -c "halt" -c "stm32f2x mass_erase 0" -c "flash info 0" -c "exit"
 
 deploy:
-	openocd -f openocd.cfg -c "program Build/MidiBoot.elf verify" -c "flash protect 0 0 1 on" -c "exit"
+	openocd -f openocd.cfg -c "program Build/MidiBoot.elf verify" -c "flash protect 0 0 1 on" -c "reset" -c "exit"
