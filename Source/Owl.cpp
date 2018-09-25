@@ -365,17 +365,6 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
-
-#ifdef OWL_WIZARD
-  HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_SET);
-#endif
-
-#ifdef USE_DAC
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
-  setAnalogValue(PARAMETER_A, 0);
-  setAnalogValue(PARAMETER_B, 0);
-#endif
   
 #ifdef OWL_PEDAL
   /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
@@ -386,12 +375,24 @@ void setup(){
   // }
 #endif
 
+#ifdef OWL_WIZARD
+  HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_SET);
+#endif
+
 #ifdef USE_SCREEN
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
 #endif
 #ifdef OWL_MAGUS
-  HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET); // LEDs off
+  HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
+  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Encoders off
 #endif /* OWL_MAGUS */
+
+#ifdef USE_DAC
+  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
+  HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
+  setAnalogValue(PARAMETER_A, 0);
+  setAnalogValue(PARAMETER_B, 0);
+#endif
   
   ledstatus = 0;
   storage.init();
@@ -408,22 +409,28 @@ void setup(){
 #ifdef OWL_MAGUS
   {
     extern SPI_HandleTypeDef TLC5946_SPI;
+
     // LEDs
     TLC5946_init(&TLC5946_SPI);
     // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
     TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
     TLC5946_setAll(0x10, 0x10, 0x10);
-    // Start LED Driver PWM
-    extern TIM_HandleTypeDef htim3;
-    HAL_TIM_Base_Start(&htim3);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 
+    HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
+
+    TLC5946_Refresh_DC();
+    TLC5946_Refresh_GS();
+    HAL_Delay(100);
+
+    // Start BLANK PWM
     extern TIM_HandleTypeDef htim2;
     HAL_TIM_Base_Start(&htim2);
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 
-    TLC5946_Refresh_DC();
-    TLC5946_Refresh_GS();
+    // Start LED Driver PWM : GSCLK
+    extern TIM_HandleTypeDef htim3;
+    HAL_TIM_Base_Start(&htim3);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
   }
   {
     // Encoders
@@ -505,10 +512,6 @@ void setLed(uint8_t led, uint32_t rgb){
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
 }
 #endif
-
-#define LED_RED   (0x3ff<<20)
-#define LED_GREEN (0x3ff<<10)
-#define LED_BLUE  (0x3ff<<00)
 
 #ifdef USE_DIGITALBUS
 int busstatus;
@@ -694,7 +697,7 @@ void loop(void){
   // graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
   graphics.params.updateEncoders(Encoders_get(), 7);
   MAX11300_bulkreadADC();
-  for(int i=0; i<16; ++i){
+  for(int i=0; i<8; ++i){
     if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
       uint16_t val = graphics.params.parameters[i]>>2;
