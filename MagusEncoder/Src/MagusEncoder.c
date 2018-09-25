@@ -8,10 +8,12 @@ extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 
 // Variables
-uint8_t bSwitch_ENC[7], bSwitch_ENC_Prev[7];
-uint8_t seqA[7] = "", seqB[7] = "";
+uint8_t bSwitch_ENC[7];
+uint8_t bSwitch_ENC_Prev[7];
+uint8_t seqA[7];
+uint8_t seqB[7];
 
-uint16_t rgENC_Data[7] = {0,0,0,0,0,0,0};
+uint16_t rgENC_Data[7];
 
 void Encoders_Init (void)
 {
@@ -122,6 +124,7 @@ void Encoders_Main (void)
 void send_SPI(void)
 {	
 	// Send data
-	HAL_SPI_Transmit(&hspi1, (uint8_t*)&rgENC_Data, 14, 100);
+  /* HAL_SPI_Transmit(&hspi1, (uint8_t*)&rgENC_Data, 14, 100); */
+  HAL_SPI_Transmit_DMA(&hspi1, (uint8_t*)&rgENC_Data, 14);
 }
 
