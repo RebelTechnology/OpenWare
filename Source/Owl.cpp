@@ -105,7 +105,7 @@ void setAnalogValue(uint8_t ch, int16_t value){
 
 void setGateValue(uint8_t ch, int16_t value){
 #ifdef OWL_WIZARD
-  if(ch == BUTTON_F)
+  if(ch == BUTTON_F || ch == PUSHBUTTON)
     HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
 #endif
 }
@@ -134,9 +134,9 @@ void setLed(uint8_t led, uint32_t rgb){
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM2->CCR2 = 1023 - ((rgb>>00)&0x3ff);
 #elif defined OWL_WIZARD
-  TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
-  TIM5->CCR2 = 1023 - ((rgb>>10)&0x3ff);
-  TIM4->CCR3 = 1023 - ((rgb>>00)&0x3ff);
+  TIM5->CCR2 = 1023 - ((rgb>>20)&0x3ff);
+  TIM4->CCR3 = 1023 - ((rgb>>10)&0x3ff);
+  TIM2->CCR1 = 1023 - ((rgb>>00)&0x3ff);
 #elif defined OWL_ALCHEMIST
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM2->CCR2 = 1023 - ((rgb>>10)&0x3ff);
@@ -376,7 +376,7 @@ void setup(){
 #endif
 
 #ifdef OWL_WIZARD
-  HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_RESET); // Trigger out off
 #endif
 
 #ifdef USE_SCREEN

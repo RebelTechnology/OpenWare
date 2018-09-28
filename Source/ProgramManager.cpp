@@ -254,7 +254,7 @@ void onSetPatchParameter(uint8_t pid, int16_t value){
 
 // called from program
 void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
-  setButtonValue(bid, state);
+  // setButtonValue(bid, state); // Patch should update program vector. This may cause feedback loop?
   setGateValue(bid, state);
 }
 

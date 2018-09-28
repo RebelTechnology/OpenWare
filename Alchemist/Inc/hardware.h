@@ -25,4 +25,4 @@
 
 #define NOF_ADC_VALUES               4
 #define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  5
+#define NOF_BUTTONS                  (2+4)
