@@ -121,10 +121,10 @@
 #define SWCLK_GPIO_Port GPIOA
 #define TLC_BLANK_Pin GPIO_PIN_15
 #define TLC_BLANK_GPIO_Port GPIOA
+#define ENC_NRST_Pin GPIO_PIN_10
+#define ENC_NRST_GPIO_Port GPIOC
 #define TLC_XLAT_Pin GPIO_PIN_11
 #define TLC_XLAT_GPIO_Port GPIOC
-#define ENC_NRST_Pin GPIO_PIN_12
-#define ENC_NRST_GPIO_Port GPIOC
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
 #define ENC_nCS_Pin GPIO_PIN_9
