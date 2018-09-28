@@ -214,11 +214,11 @@ void onProgramReady(){
     extern uint32_t ledstatus;
     ledstatus ^= 0x3ff003ff;
   }
-  if(getButtonValue(BUTTON_E) != !(SW5_GPIO_Port->IDR & SW5_Pin)){
-    setButtonValue(BUTTON_E, !(SW5_GPIO_Port->IDR & SW5_Pin));
-    extern uint32_t ledstatus;
-    ledstatus = 0;
-  }
+  // if(getButtonValue(BUTTON_E) != !(SW5_GPIO_Port->IDR & SW5_Pin)){
+  //   setButtonValue(BUTTON_E, !(SW5_GPIO_Port->IDR & SW5_Pin));
+  //   extern uint32_t ledstatus;
+  //   ledstatus = 0;
+  // }
 #endif
   updateParameters();
   pv->buttons = button_values;

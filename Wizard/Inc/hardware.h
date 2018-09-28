@@ -4,6 +4,12 @@
 #define OWL_WIZARD
 /* #define FASCINATION_MACHINE */
 
+#define USE_MODE_BUTTON
+#define MODE_BUTTON_PIN SW5_Pin
+#define MODE_BUTTON_PORT SW5_GPIO_Port
+#define MODE_BUTTON_GAIN ADC_D
+#define MODE_BUTTON_PATCH ADC_E
+
 #define USE_RGB_LED
 #define USE_DAC
 #define TRIG1_Pin GP7_Pin

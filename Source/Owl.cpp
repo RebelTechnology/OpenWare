@@ -384,7 +384,7 @@ void setup(){
 #endif
 #ifdef OWL_MAGUS
   HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
-  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Encoders off
+  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Reset encoders 
 #endif /* OWL_MAGUS */
 
 #ifdef USE_DAC
@@ -517,15 +517,15 @@ void setLed(uint8_t led, uint32_t rgb){
 int busstatus;
 #endif
 
-#ifdef OWL_ALCHEMIST
+#ifdef USE_MODE_BUTTON
 bool isModeButtonPressed(){
-  return HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
+  return HAL_GPIO_ReadPin(MODE_BUTTON_PORT, MODE_BUTTON_PIN) == GPIO_PIN_RESET;
 }
 int getGainSelectionValue(){
-  return adc_values[ADC_C]*128*4/4096;
+  return adc_values[MODE_BUTTON_GAIN]*128*4/4096;
 }
 int getPatchSelectionValue(){
-  return adc_values[ADC_D]*(registry.getNumberOfPatches()-1)*4/4095;
+  return adc_values[MODE_BUTTON_PATCH]*(registry.getNumberOfPatches()-1)*4/4095;
 }
 #endif
 
@@ -550,7 +550,7 @@ void updateLed(){
 #endif /*USE_RGB_LED */
 
 void loop(void){
-#ifdef OWL_ALCHEMIST
+#ifdef USE_MODE_BUTTON
   enum OperationMode {
     STARTUP,
     RUNNING,
@@ -600,7 +600,8 @@ void loop(void){
   case ERROR:
     break;
   }
-#endif
+#endif /* USE_MODE_BUTTON */
+
 #ifdef FASCINATION_MACHINE
   static int output_gain = 0;
   int gain = adc_values[ADC_D]*255/4095;
@@ -608,29 +609,16 @@ void loop(void){
     output_gain = gain;
     codec.setOutputGain(output_gain/2);    
   }
-  // float gain = getParameterValue(PARAMETER_D)*127.0/4095;
-  // if((gain - (int)gain) < 0.2 && (int)gain != output_gain){
-  //   output_gain = gain;
-  //   codec.setOutputGain(output_gain);
-  // }
   static int patch_index = 0;
   int patch = adc_values[ADC_E]*10/4095;
   if(abs(patch - patch_index) > 1){
     patch_index = patch;
     patch = patch/2 + 1;
-    // if(program.getProgramIndex() != patch){
+    if(program.getProgramIndex() != patch){
       program.loadProgram(patch);
       program.resetProgram(false);
-    // }
+    }
   }
-  // float patch = getParameterValue(PARAMETER_E)*5.0/4095+1;
-  // if((patch - (int)patch) < 0.2 && (int)patch != patch_index){
-  //   patch_index = patch;
-  //   if(program.getProgramIndex() != patch_index){
-  //     program.loadProgram(patch_index);
-  //     program.resetProgram(false);
-  //   }
-  // }
 #endif
 
 #ifdef USE_USB_HOST
@@ -697,7 +685,7 @@ void loop(void){
   // graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
   graphics.params.updateEncoders(Encoders_get(), 7);
   MAX11300_bulkreadADC();
-  for(int i=0; i<8; ++i){
+  for(int i=0; i<16; ++i){
     if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
       uint16_t val = graphics.params.parameters[i]>>2;

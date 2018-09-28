@@ -507,8 +507,12 @@ uint8_t midi_host_connected(void){
 uint8_t midi_host_ready(void){
   extern ApplicationTypeDef Appli_state;
   extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
-  MIDI_HandleTypeDef *MIDI_Handle =  USBH_HANDLE.pActiveClass->pData;
-  return Appli_state == APPLICATION_READY && MIDI_Handle->data_tx_state == MIDI_IDLE;
+  USBH_ClassTypeDef* activeClass = USBH_HANDLE.pActiveClass;
+  if(Appli_state == APPLICATION_READY && activeClass != NULL && activeClass->pData){
+    MIDI_HandleTypeDef *MIDI_Handle = activeClass->pData;
+    return MIDI_Handle->data_tx_state == MIDI_IDLE;
+  }
+  return 0;
 }
 
 void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
