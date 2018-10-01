@@ -16,6 +16,23 @@ C_SRC += crc32.c
 C_SRC += eepromcontrol.c
 # S_SRC = startup_openboot.s
 
+ifndef PLATFORM
+PLATFORM = Alchemist
+endif
+
+ifeq ($(PLATFORM),Magus)
+C_SRC += $(notdir $(wildcard usbd-fs/*.c))
+CPPFLAGS += -Iusbd-fs
+CPPFLAGS += -DOWL_MAGUS
+vpath %.c usbd-fs
+else
+CPPFLAGS += -Iusbd-hs
+C_SRC += $(notdir $(wildcard usbd-hs/*.c))
+vpath %.c usbd-hs
+endif
+
+
+
 # CPP_SRC += MidiReader.cpp
 CPP_SRC += MidiController.cpp
 

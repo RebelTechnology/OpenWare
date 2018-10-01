@@ -3,8 +3,17 @@
 
 #define OWL_BOOT
 
+/* #define OWL_MAGUS */
+
+#ifdef OWL_MAGUS
+/* Magus */
+#define USE_USBD_FS
+#undef USE_BOOT1_PIN
+#else
+/* Alchemist and Wizard */
 #define USE_USBD_HS
 #define USE_BOOT1_PIN
+#endif
 
 #define APPLICATION_ADDRESS 0x08010000
 

@@ -1,11 +1,16 @@
 /**
   ******************************************************************************
-  * @file           : USB_DEVICE  
+  * @file           : usbd_desc.h
   * @version        : v1.0_Cube
-  * @brief          : This file implements the USB Device 
+  * @brief          : Header for usbd_desc.c file.
   ******************************************************************************
+  * This notice applies to any and all portions of this file
+  * that are not between comment pairs USER CODE BEGIN and
+  * USER CODE END. Other portions of this file, whether 
+  * inserted by the user or by software development tools
+  * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -40,52 +45,112 @@
   * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
-*/
+  */
+
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __USBD_DESC__H__
+#define __USBD_DESC__H__
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "usbd_def.h"
 
-#include "device.h"
-#include "usb_device.h"
-#include "usbd_core.h"
-#include "usbd_desc.h"
-#include "usbd_midi.h"
-#include "usbd_midi_if.h"
+/* USER CODE BEGIN INCLUDE */
 
-/* USB Device Core handle declaration */
-#ifdef USE_USBD_HS
-USBD_HandleTypeDef hUsbDeviceHS;
-#else
-USBD_HandleTypeDef hUsbDeviceFS;
-#endif
+/* USER CODE END INCLUDE */
 
-/* init function */				        
-void MX_USB_DEVICE_Init(void)
-{
-  /* Init Device Library,Add Supported Class and Start the library*/
-#ifdef USE_USBD_HS
-  USBD_Init(&hUsbDeviceHS, &HS_Desc, DEVICE_HS);
+/** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
+  * @{
+  */
 
-  USBD_RegisterClass(&hUsbDeviceHS, &USBD_Midi_ClassDriver);
+/** @defgroup USBD_DESC USBD_DESC
+  * @brief Usb device descriptors module.
+  * @{
+  */
 
-  USBD_Midi_RegisterInterface(&hUsbDeviceHS, &USBD_Midi_fops);
+/** @defgroup USBD_DESC_Exported_Defines USBD_DESC_Exported_Defines
+  * @brief Defines.
+  * @{
+  */
 
-  USBD_Start(&hUsbDeviceHS);
-#else
-  USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS);
+/* USER CODE BEGIN EXPORTED_DEFINES */
 
-  USBD_RegisterClass(&hUsbDeviceFS, &USBD_Midi_ClassDriver);
+/* USER CODE END EXPORTED_DEFINES */
 
-  USBD_Midi_RegisterInterface(&hUsbDeviceFS, &USBD_Midi_fops);
+/**
+  * @}
+  */
 
-  USBD_Start(&hUsbDeviceFS);  
-#endif
+/** @defgroup USBD_DESC_Exported_TypesDefinitions USBD_DESC_Exported_TypesDefinitions
+  * @brief Types.
+  * @{
+  */
+
+/* USER CODE BEGIN EXPORTED_TYPES */
+
+/* USER CODE END EXPORTED_TYPES */
+
+/**
+  * @}
+  */
+
+/** @defgroup USBD_DESC_Exported_Macros USBD_DESC_Exported_Macros
+  * @brief Aliases.
+  * @{
+  */
+
+/* USER CODE BEGIN EXPORTED_MACRO */
+
+/* USER CODE END EXPORTED_MACRO */
+
+/**
+  * @}
+  */
+
+/** @defgroup USBD_DESC_Exported_Variables USBD_DESC_Exported_Variables
+  * @brief Public variables.
+  * @{
+  */
+
+/** Descriptor for the Usb device. */
+extern USBD_DescriptorsTypeDef FS_Desc;
+
+/* USER CODE BEGIN EXPORTED_VARIABLES */
+
+/* USER CODE END EXPORTED_VARIABLES */
+
+/**
+  * @}
+  */
+
+/** @defgroup USBD_DESC_Exported_FunctionsPrototype USBD_DESC_Exported_FunctionsPrototype
+  * @brief Public functions declaration.
+  * @{
+  */
+
+/* USER CODE BEGIN EXPORTED_FUNCTIONS */
+
+/* USER CODE END EXPORTED_FUNCTIONS */
+
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
+
+#ifdef __cplusplus
 }
-/**
-  * @}
-  */
+#endif
 
-/**
-  * @}
-  */
+#endif /* __USBD_DESC__H__ */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

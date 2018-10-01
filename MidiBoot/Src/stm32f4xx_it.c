@@ -31,16 +31,20 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
+#include "device.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx.h"
 #include "stm32f4xx_it.h"
 
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+#ifdef USE_USBD_FS
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+#else
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
+#endif
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
@@ -94,6 +98,21 @@ void SysTick_Handler(void)
 /* please refer to the startup file (startup_stm32f4xx.s).                    */
 /******************************************************************************/
 
+#ifdef USE_USBD_FS
+/**
+* @brief This function handles USB On The Go FS global interrupt.
+*/
+void OTG_FS_IRQHandler(void)
+{
+  /* USER CODE BEGIN OTG_FS_IRQn 0 */
+
+  /* USER CODE END OTG_FS_IRQn 0 */
+  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
+  /* USER CODE BEGIN OTG_FS_IRQn 1 */
+
+  /* USER CODE END OTG_FS_IRQn 1 */
+}
+#else /* USE_USBD_FS */
 /**
 * @brief This function handles USB On The Go HS global interrupt.
 */
@@ -107,7 +126,7 @@ void OTG_HS_IRQHandler(void)
 
   /* USER CODE END OTG_HS_IRQn 1 */
 }
-
+#endif /* USE_USBD_FS */
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
