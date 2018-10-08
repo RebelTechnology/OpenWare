@@ -27,16 +27,14 @@
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
-#define AUDIO_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
 #define AUDIO_TASK_PRIORITY  4
 
 // #define MANAGER_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_PRIORITY  (AUDIO_TASK_PRIORITY | portPRIVILEGE_BIT)
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
 #define FLASH_TASK_PRIORITY 5
-#define FLASH_TASK_STACK_SIZE (512/sizeof(portSTACK_TYPE))
 
-const uint32_t PROGRAMSTACK_SIZE = 8*1024; // size in bytes
+const uint32_t PROGRAMSTACK_SIZE = PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE); // size in bytes
 
 #define START_PROGRAM_NOTIFICATION  0x01
 #define STOP_PROGRAM_NOTIFICATION   0x02
@@ -629,15 +627,6 @@ uint8_t ProgramManager::getProgramIndex(){
 }
 
 extern "C" {
-#if 0 // defined in Project/Src/freertos.c
-  static StaticTask_t xIdleTaskTCBBuffer;// CCM;
-  static StackType_t xIdleStack[IDLE_TASK_STACK_SIZE];// CCM;
-  void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize) {
-    *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
-    *ppxIdleTaskStackBuffer = &xIdleStack[0];
-    *pulIdleTaskStackSize = IDLE_TASK_STACK_SIZE;
-  }
-#endif
   void vApplicationMallocFailedHook(void) {
     program.exitProgram(false);
     error(PROGRAM_ERROR, "malloc failed");

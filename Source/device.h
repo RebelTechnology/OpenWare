@@ -61,8 +61,6 @@ extern "C" {
 #define PROGRAM_TASK_STACK_SIZE          (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE          (512/sizeof(portSTACK_TYPE))
 #define FLASH_TASK_STACK_SIZE            (512/sizeof(portSTACK_TYPE))
-#define PC_TASK_STACK_SIZE               (512/sizeof(portSTACK_TYPE))
-#define IDLE_TASK_STACK_SIZE         (128/sizeof(portSTACK_TYPE))
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        3500 /* 168MHz / 48kHz */
 

@@ -43,7 +43,7 @@
 #error "invalid configuration"
 #endif
 
-#define FIRMWARE_VERSION "v20"
+#define FIRMWARE_VERSION "v20.1"
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
