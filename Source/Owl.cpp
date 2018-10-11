@@ -549,32 +549,41 @@ void updateLed(){
 }
 #endif /*USE_RGB_LED */
 
+enum OperationMode {
+  INITIALISING_MODE,
+  LOADING_PATCH_MODE,
+  RUNNING_PATCH_MODE,
+  CONFIGURATION_MODE,
+  ERROR_MODE,
+};
+
+static volatile OperationMode operation_mode = INITIALISING_MODE;
+
 void loop(void){
 #ifdef USE_MODE_BUTTON
-  enum OperationMode {
-    STARTUP,
-    RUNNING,
-    CONFIGURATION,
-    ERROR,
-  };
-  static OperationMode mode = STARTUP;
   static int patchselect = 0;
   static int gainselect = 0;
-  switch(mode){
-  case STARTUP:
-    mode = RUNNING;
+  switch(operation_mode){
+  case INITIALISING_MODE:
+    operation_mode = RUNNING_PATCH_MODE;
     break;
-  case RUNNING:
+  case LOADING_PATCH_MODE:
+    break;
+  case RUNNING_PATCH_MODE:
     if(isModeButtonPressed()){
       patchselect = getPatchSelectionValue();
       gainselect = getGainSelectionValue();
-      mode = CONFIGURATION;
+      operation_mode = CONFIGURATION_MODE;
       setLed(0, NO_COLOUR);
+#ifdef USE_USB_HOST
+      // enable USB Host power in case it has been switched off
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+#endif
     }else{
       updateLed();
     }
     break;
-  case CONFIGURATION:
+  case CONFIGURATION_MODE:
     if(isModeButtonPressed()){
       int value = getPatchSelectionValue();
       if(abs(patchselect - value) > 1){
@@ -594,10 +603,10 @@ void loop(void){
 	setLed(0, value & 0x01 ? YELLOW_COLOUR : CYAN_COLOUR);
       }
     }else{
-      mode = RUNNING;
+      operation_mode = RUNNING_PATCH_MODE;
     }
     break;
-  case ERROR:
+  case ERROR_MODE:
     break;
   }
 #endif /* USE_MODE_BUTTON */

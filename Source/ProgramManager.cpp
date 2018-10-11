@@ -21,6 +21,9 @@
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
+#ifdef USE_USB_HOST
+#include "usbh_midi.h"
+#endif /* USE_USB_HOST */
 
 #include "basicmaths.h"
 
@@ -218,9 +221,9 @@ void onProgramReady(){
   //   ledstatus = 0;
   // }
 #endif
+
   updateParameters();
   pv->buttons = button_values;
-  // ready to run block again
   if(pv->buttonChangedCallback != NULL && stateChanged.getState()){
     int bid = stateChanged.getFirstSetIndex();
     do{
@@ -231,7 +234,9 @@ void onProgramReady(){
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
   // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-
+#ifdef USE_USB_HOST
+  midi_host_push();
+#endif
 }
 
 // called from program
@@ -628,8 +633,8 @@ uint8_t ProgramManager::getProgramIndex(){
 
 extern "C" {
   void vApplicationMallocFailedHook(void) {
-    program.exitProgram(false);
     error(PROGRAM_ERROR, "malloc failed");
+    program.exitProgram(false);
     HAL_Delay(5000);
     assert_param(0);
   }
@@ -641,8 +646,8 @@ extern "C" {
     /* Run time stack overflow checking is performed if
        configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
        function is called if a stack overflow is detected. */
-    program.exitProgram(false);
     error(PROGRAM_ERROR, "Stack overflow");
+    program.exitProgram(false);
     HAL_Delay(5000);
     assert_param(0);
   }
