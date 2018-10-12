@@ -3,6 +3,7 @@
 
 /* #define OWL_ALCHEMIST_LED */
 #define OWL_ALCHEMIST
+#define HARDWARE_VERSION             "Alchemist"
 
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW3_Pin

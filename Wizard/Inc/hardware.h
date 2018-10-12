@@ -2,6 +2,7 @@
 #include "stm32f4xx_hal.h"
 
 #define OWL_WIZARD
+#define HARDWARE_VERSION             "Wizard"
 /* #define FASCINATION_MACHINE */
 
 #define USE_MODE_BUTTON

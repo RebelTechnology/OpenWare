@@ -4,6 +4,8 @@
 #define OWL_PRISM
 #define OWL_RACK
 
+#define HARDWARE_VERSION             "Prism"
+
 #define USE_DIGITALBUS
 
 #define USE_USBD_HS

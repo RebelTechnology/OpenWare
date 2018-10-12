@@ -5,6 +5,8 @@
 /* #define OWL_TESSERACT_REV4 // SWO mapped to toggle */
 
 #define OWL_TESSERACT
+#define HARDWARE_VERSION             "Tesseract"
+
 #define USE_RGB_LED
 #define USE_ADC
 #define ADC_PERIPH hadc3

@@ -3,16 +3,7 @@
 
 #include "hardware.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* void led_init(); */
-/* void led_set(uint8_t led, uint32_t rgb); */
-
-#ifdef __cplusplus
-}
-#endif
+#define FIRMWARE_VERSION "v20.2"
 
 #define MIDI_OMNI_CHANNEL            (-1)
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL

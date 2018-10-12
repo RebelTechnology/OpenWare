@@ -2,6 +2,7 @@
 #include "stm32f4xx_hal.h"
 
 #define OWL_MAGUS
+#define HARDWARE_VERSION             "Magus"
 
 #define USE_SCREEN
 #define SSD1309

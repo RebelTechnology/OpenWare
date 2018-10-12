@@ -199,7 +199,8 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
-  uint32_t ulNotifiedValue = ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
+  // uint32_t ulNotifiedValue =
+  ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
 #endif
