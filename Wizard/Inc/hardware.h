@@ -3,6 +3,7 @@
 
 #define OWL_WIZARD
 /* #define FASCINATION_MACHINE */
+#define CODEC_LR_SWAP
 
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW5_Pin

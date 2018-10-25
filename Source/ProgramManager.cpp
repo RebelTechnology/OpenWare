@@ -396,6 +396,7 @@ void runAudioTask(void* p){
       updateProgramVector(pv);
       programVector = pv;
       setErrorStatus(NO_ERROR);
+      setOperationMode(RUN_MODE);
       // setLed(GREEN);
       // codec.softMute(false);
       // codec.resume();

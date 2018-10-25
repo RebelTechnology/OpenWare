@@ -16,6 +16,16 @@
 extern "C" {
 #endif
 
+  enum OperationMode {
+    STARTUP_MODE,
+    LOAD_MODE,
+    RUN_MODE,
+    CONFIGURE_MODE,
+    ERROR_MODE
+  };
+
+  void setOperationMode(OperationMode mode);
+
   void setup(void);
   void loop(void);
   void updateProgramVector(ProgramVector* pv);

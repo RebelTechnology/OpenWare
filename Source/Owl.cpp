@@ -346,6 +346,7 @@ static bool updateMAX11300 = false;
 // int16_t dynamicParameterValues[NOF_PARAMETERS];
 static uint8_t portMode[20];
 void setPortMode(uint8_t index, uint8_t mode){
+  // todo: select range automatically based on output value
   if(index < 20){
     if(portMode[index] != mode){
       portMode[index] = mode;
@@ -549,32 +550,36 @@ void updateLed(){
 }
 #endif /*USE_RGB_LED */
 
+static volatile OperationMode operationMode = STARTUP_MODE;
+void setOperationMode(OperationMode mode){
+  setLed(0, YELLOW_COLOUR);
+  operationMode = mode;
+}
+
 void loop(void){
 #ifdef USE_MODE_BUTTON
-  enum OperationMode {
-    STARTUP,
-    RUNNING,
-    CONFIGURATION,
-    ERROR,
-  };
-  static OperationMode mode = STARTUP;
   static int patchselect = 0;
   static int gainselect = 0;
-  switch(mode){
-  case STARTUP:
-    mode = RUNNING;
+  switch(operationMode){
+  case STARTUP_MODE:
+    operationMode = RUN_MODE;
     break;
-  case RUNNING:
+  case LOAD_MODE:
+    setLed(0, getParameterValue(PARAMETER_A)*BLUE_COLOUR/4095);
+    break;
+  case RUN_MODE:
     if(isModeButtonPressed()){
       patchselect = getPatchSelectionValue();
       gainselect = getGainSelectionValue();
-      mode = CONFIGURATION;
+      operationMode = CONFIGURE_MODE;
       setLed(0, NO_COLOUR);
+    }else if(getErrorStatus() != NO_ERROR){
+      operationMode = ERROR_MODE;
     }else{
       updateLed();
     }
     break;
-  case CONFIGURATION:
+  case CONFIGURE_MODE:
     if(isModeButtonPressed()){
       int value = getPatchSelectionValue();
       if(abs(patchselect - value) > 1){
@@ -594,10 +599,13 @@ void loop(void){
 	setLed(0, value & 0x01 ? YELLOW_COLOUR : CYAN_COLOUR);
       }
     }else{
-      mode = RUNNING;
+      operationMode = RUN_MODE;
     }
     break;
-  case ERROR:
+  case ERROR_MODE:
+    setLed(0, RED_COLOUR);
+    if(isModeButtonPressed())
+      program.resetProgram(false); // runAudioTask() changes to RUN_MODE
     break;
   }
 #endif /* USE_MODE_BUTTON */

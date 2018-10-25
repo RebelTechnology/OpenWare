@@ -85,11 +85,15 @@ void codec_init(){
 
   codec_write(CODEC_MODE_CTRL1_REG, (1<<3) | (1<<5) | 1); // i2s mode for DAC and ADC
 
-  /* codec_write(CODEC_DAC_VOL_REG, */
-  /* 	      CODEC_DAC_VOL_CHB_CHA | */
-  /* 	      CODEC_DAC_VOL_SOFT_RAMP(0) | */
-  /* 	      CODEC_DAC_ZERO_CROSS | */
-  /* 	      CODEC_DAC_VOL_ATAPI_DEFAULT); */
+  codec_write(CODEC_DAC_VOL_REG,
+  	      CODEC_DAC_VOL_CHB_CHA |
+  	      CODEC_DAC_SOFT_RAMP |
+  	      CODEC_DAC_ZERO_CROSS |
+#ifdef CODEC_LR_SWAP
+  	      CODEC_DAC_VOL_ATAPI_SWAP);
+#else
+              CODEC_DAC_VOL_ATAPI_DEFAULT);
+#endif
 
   codec_reset();
 

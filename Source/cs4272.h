@@ -35,7 +35,8 @@ void codec_write(uint8_t reg, uint8_t data);
 #define CODEC_DAC_VOL_REG						(uint8_t)0x03
 #define CODEC_DAC_VOL_SOFT_RAMP(x)					(uint8_t)(((x) & 0x03) << 4)
 #define CODEC_DAC_VOL_ATAPI(x)						(uint8_t)(((x) & 0x0F) << 0)
-#define CODEC_DAC_VOL_ATAPI_DEFAULT                                     
+#define CODEC_DAC_VOL_ATAPI_DEFAULT                                     (uint8_t)((1<<3)|(1<<0))
+#define CODEC_DAC_VOL_ATAPI_SWAP                                        (uint8_t)((1<<2)|(1<<1))
 #define CODEC_DAC_VOL_CHB_CHA						(uint8_t)(1<<6)
 #define CODEC_DAC_SOFT_RAMP						(uint8_t)(1<<5)
 #define CODEC_DAC_ZERO_CROSS						(uint8_t)(1<<4)
