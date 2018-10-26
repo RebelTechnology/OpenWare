@@ -24,8 +24,6 @@ extern "C" {
     ERROR_MODE
   };
 
-  void setOperationMode(OperationMode mode);
-
   void setup(void);
   void loop(void);
   void updateProgramVector(ProgramVector* pv);
@@ -33,6 +31,9 @@ extern "C" {
   int16_t getAnalogValue(uint8_t index);
   void setAnalogValue(uint8_t ch, int16_t value);
   void setGateValue(uint8_t bid, int16_t value);
+
+  void setOperationMode(OperationMode mode);
+  void setLed(uint8_t led, uint32_t rgb);
 
 #ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder);

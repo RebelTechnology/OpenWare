@@ -126,6 +126,14 @@ void midiSetOutputChannel(int8_t channel){
   midi.setOutputChannel(channel);
 }
 
+#ifdef OWL_PEDAL
+void setLed(uint8_t led, uint32_t rgb){
+  if(led == 0){
+    // todo
+  }
+}
+#endif /* OWL_PEDAL */
+
 #ifdef USE_RGB_LED
 void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
