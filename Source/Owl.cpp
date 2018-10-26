@@ -126,15 +126,6 @@ void midiSetOutputChannel(int8_t channel){
   midi.setOutputChannel(channel);
 }
 
-#ifdef OWL_PEDAL
-void setLed(uint8_t led, uint32_t rgb){
-  if(led == 0){
-    // todo
-  }
-}
-#endif /* OWL_PEDAL */
-
-#ifdef USE_RGB_LED
 void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
 #if defined OWL_TESSERACT
@@ -149,6 +140,10 @@ void setLed(uint8_t led, uint32_t rgb){
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM2->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>00)&0x3ff);
+#elif defined OWL_MAGUS
+  TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+#elif defined OWL_PEDAL
+  // todo!
 #endif
 }
 
@@ -177,7 +172,6 @@ void initLed(){
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
 #endif
 }
-#endif /* USE_RGB_LED */
 
 #ifdef OWL_EFFECTSBOX
 // static uint8_t buttonstate = 0;
@@ -508,19 +502,6 @@ void setup(){
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 #endif
 }
-
-#ifdef OWL_MAGUS
-// extern "C" {
-//   void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
-//     HAL_GPIO_TogglePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin);
-//   }
-// }
-
-void setLed(uint8_t led, uint32_t rgb){
-  // rgb should be a 3x 10 bit value
-  TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
-}
-#endif
 
 #ifdef USE_DIGITALBUS
 int busstatus;
