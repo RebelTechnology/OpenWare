@@ -3,6 +3,15 @@
 
 #define OWL_PEDAL
 #define OWL_RACK
+
+#if defined OWL_RACK
+#define HARDWARE_VERSION             "OWL Rack"
+#elif defined OWL_MODULAR
+#define HARDWARE_VERSION             "OWL Modular"
+#elif defined OWL_PEDAL
+#define HARDWARE_VERSION             "OWL Pedal"
+#endif
+
 #define USE_DIGITALBUS
 
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL

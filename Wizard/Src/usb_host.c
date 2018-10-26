@@ -76,7 +76,6 @@ ApplicationTypeDef Appli_state = APPLICATION_IDLE;
  * -- Insert your variables declaration here --
  */
 /* USER CODE BEGIN 0 */
-uint8_t USB_HOST_RX_BUFFER[USB_HOST_RX_BUFF_SIZE]; // MIDI reception buffer
 /* USER CODE END 0 */
 
 /*
@@ -134,7 +133,7 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
     break;
   case HOST_USER_CLASS_ACTIVE:
     if(Appli_state == APPLICATION_START){
-      USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE);
+      midi_host_begin();
       Appli_state = APPLICATION_READY;
     }
     break;

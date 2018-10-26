@@ -2,6 +2,7 @@
 #include "stm32f4xx_hal.h"
 
 #define OWL_BOOT
+#define HARDWARE_VERSION             "OWL MIDI Boot"
 
 /* #define OWL_MAGUS */
 

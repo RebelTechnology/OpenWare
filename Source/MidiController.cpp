@@ -15,36 +15,6 @@
 #include "Owl.h"
 #include <math.h> /* for ceilf */
 
-#if defined OWL_TESSERACT
-#define HARDWARE_VERSION             "Tesseract"
-#elif defined OWL_ALCHEMIST
-#define HARDWARE_VERSION             "Alchemist"
-#elif defined OWL_WIZARD
-#define HARDWARE_VERSION             "Wizard"
-#elif defined OWL_RACK
-#define HARDWARE_VERSION             "OWL Rack"
-#elif defined OWL_MODULAR
-#define HARDWARE_VERSION             "OWL Modular"
-#elif defined OWL_PEDAL
-#define HARDWARE_VERSION             "OWL Pedal"
-#elif defined OWL_PLAYERF7
-#define HARDWARE_VERSION             "Genius"
-#elif defined OWL_PRISMF7
-#define HARDWARE_VERSION             "PrismF7"
-#elif defined OWL_PRISM
-#define HARDWARE_VERSION             "Prism"
-#elif defined OWL_MAGUS
-#define HARDWARE_VERSION             "Magus"
-#elif defined OWL_EFFECTSBOX
-#define HARDWARE_VERSION             "FX Box"
-#elif defined OWL_BOOT
-#define HARDWARE_VERSION             "OWL MIDI Boot"
-#elif !defined HARDWARE_VERSION
-#error "invalid configuration"
-#endif
-
-#define FIRMWARE_VERSION "v20.1"
-
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
 }

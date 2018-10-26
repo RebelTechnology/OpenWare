@@ -9,7 +9,7 @@ C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += sdram.c
 C_SRC += cs4272.c
-C_SRC += usbh_midi.c
+CPP_SRC += usbh_midi.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
 

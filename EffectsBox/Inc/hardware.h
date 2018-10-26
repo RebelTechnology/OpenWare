@@ -5,6 +5,7 @@
 /* #define OWL_MICROLAB */
 
 #define OWL_EFFECTSBOX
+#define HARDWARE_VERSION             "FX Box"
 
 /* #define USE_RGB_LED */
 
