@@ -17,7 +17,7 @@ midiboot: ## build MidiBoot project
 tesseract: ## build Tesseract project
 	@$(MAKE) -C Tesseract all
 
-alchemist: ## build Alchemsit project
+alchemist: ## build Alchemist project
 	@$(MAKE) -C Alchemist all
 
 wizard: ## build Wizard project
