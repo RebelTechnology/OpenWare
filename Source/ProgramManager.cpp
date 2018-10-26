@@ -279,31 +279,7 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 }
 
 void updateProgramVector(ProgramVector* pv){
-#if defined OWL_TESSERACT
-  pv->hardware_version = TESSERACT_HARDWARE;
-#elif defined OWL_ALCHEMIST
-  pv->hardware_version = MICROLAB_HARDWARE;
-#elif defined OWL_WIZARD
-  pv->hardware_version = MINILAB_HARDWARE;
-#elif defined OWL_RACK
-  pv->hardware_version = OWL_RACK_HARDWARE;
-#elif defined OWL_PEDAL
-  pv->hardware_version = OWL_PEDAL_HARDWARE;
-#elif defined OWL_MODULAR
-  pv->hardware_version = OWL_MODULAR_HARDWARE;
-#elif defined OWL_PLAYERF7
-  pv->hardware_version = PLAYER_HARDWARE;
-#elif defined OWL_PRISMF7
-  pv->hardware_version = PRISM_HARDWARE;
-#elif defined OWL_PRISM
-  pv->hardware_version = PRISM_HARDWARE;
-#elif defined OWL_MAGUS
-  pv->hardware_version = MAGUS_HARDWARE;
-#elif defined OWL_EFFECTSBOX
-  pv->hardware_version = EFFECTSBOX_HARDWARE;
-#else
-#error "invalid configuration"
-#endif
+  pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
 #ifdef USE_SCREEN
   pv->parameters_size = graphics.params.getSize();

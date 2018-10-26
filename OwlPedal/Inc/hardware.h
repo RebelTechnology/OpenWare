@@ -7,10 +7,13 @@
 #if defined OWL_RACK
 #define USE_DIGITALBUS
 #define BUS_HUART huart4
+#define HARDWARE_ID                  OWL_RACK_HARDWARE
 #define HARDWARE_VERSION             "OWL Rack"
 #elif defined OWL_MODULAR
+#define HARDWARE_ID                  OWL_MODULAR_HARDWARE
 #define HARDWARE_VERSION             "OWL Modular"
 #elif defined OWL_PEDAL
+#define HARDWARE_ID                  OWL_PEDAL_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal"
 #endif
 

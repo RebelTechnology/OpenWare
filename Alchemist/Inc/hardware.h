@@ -3,6 +3,7 @@
 
 /* #define OWL_ALCHEMIST_LED */
 #define OWL_ALCHEMIST
+#define HARDWARE_ID                  ALCHEMIST_HARDWARE
 #define HARDWARE_VERSION             "Alchemist"
 
 #define USE_MODE_BUTTON

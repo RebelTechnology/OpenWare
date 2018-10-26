@@ -3,6 +3,8 @@
 #include "stm32f4xx_hal_flash_ex.h"
 
 #define OWL_QUADFM
+#define HARDWARE_ID                  QUADFM_HARDWARE
+#define HARDWARE_VERSION             "Quad FM"
 
 #define ADC_A 1
 #define ADC_B 3

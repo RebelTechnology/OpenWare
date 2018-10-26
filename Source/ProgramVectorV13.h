@@ -16,8 +16,8 @@
 #define PRISM_HARDWARE              0x14
 #define PLAYER_HARDWARE             0x15
 #define TESSERACT_HARDWARE          0x16
-#define MICROLAB_HARDWARE           0x17
-#define MINILAB_HARDWARE            0x18
+#define ALCHEMIST_HARDWARE          0x17
+#define WIZARD_HARDWARE             0x18
 #define MAGUS_HARDWARE              0x19
 #define EFFECTSBOX_HARDWARE         0x1a
 

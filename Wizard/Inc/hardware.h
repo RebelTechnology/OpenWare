@@ -2,6 +2,7 @@
 #include "stm32f4xx_hal.h"
 
 #define OWL_WIZARD
+#define HARDWARE_ID                  WIZARD_HARDWARE
 #define HARDWARE_VERSION             "Wizard"
 /* #define FASCINATION_MACHINE */
 #define CODEC_LR_SWAP

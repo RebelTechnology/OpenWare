@@ -4,6 +4,7 @@
 #include "stm32f7xx_hal_flash_ex.h"
 
 #define OWL_PRISMF7
+#define HARDWARE_ID                  PRISM_HARDWARE
 #define HARDWARE_VERSION             "PrismF7"
 
 #define OWL_ARCH_F7

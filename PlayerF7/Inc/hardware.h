@@ -5,6 +5,7 @@
 
 #define OWL_PLAYERF7
 
+#define HARDWARE_ID                  PLAYER_HARDWARE
 #define HARDWARE_VERSION             "Genius"
 
 #define OWL_ARCH_F7
