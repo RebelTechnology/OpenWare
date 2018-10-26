@@ -2,9 +2,11 @@
 #include "stm32f4xx_hal.h"
 
 #define OWL_PEDAL
-#define OWL_RACK
+/* #define OWL_RACK */
 
 #if defined OWL_RACK
+#define USE_DIGITALBUS
+#define BUS_HUART huart4
 #define HARDWARE_VERSION             "OWL Rack"
 #elif defined OWL_MODULAR
 #define HARDWARE_VERSION             "OWL Modular"
@@ -12,19 +14,11 @@
 #define HARDWARE_VERSION             "OWL Pedal"
 #endif
 
-#define USE_DIGITALBUS
-
-#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
-#define MIDI_OUTPUT_CHANNEL          0
-
-#define DIGITAL_BUS_ENABLED          0
-#define DIGITAL_BUS_FORWARD_MIDI     1
 
 #define USE_CODEC
 #define USE_WM8731
 #define USE_USBD_FS
 
-#define BUS_HUART huart4
 
 #ifdef OWL_RACK
 #define NOF_ADC_VALUES               0
@@ -37,6 +31,16 @@
 #define ADC_C 2
 #define ADC_D 3
 #endif
+
+#define NOF_PARAMETERS               40
+#define NOF_BUTTONS                  6
+
+#if 0
+#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
+#define MIDI_OUTPUT_CHANNEL          0
+
+#define DIGITAL_BUS_ENABLED          0
+#define DIGITAL_BUS_FORWARD_MIDI     1
 
 /* +0db in and out */
 #define AUDIO_INPUT_GAIN             0x017
@@ -55,3 +59,5 @@
 #define AUDIO_CODEC_MASTER           true
 #define AUDIO_CHANNELS               2
 #define AUDIO_SAMPLINGRATE           48000
+
+#endif
