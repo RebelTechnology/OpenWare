@@ -61,7 +61,21 @@ void sendMessage(){
 }
 
 void ProgramManager::eraseFromFlash(uint8_t sector){
-  eeprom_erase_sector(sector);
+  eeprom_unlock();
+  if(sector == 0xff){
+    eeprom_erase_sector(FLASH_SECTOR_7);
+    eeprom_erase_sector(FLASH_SECTOR_8);
+    eeprom_erase_sector(FLASH_SECTOR_9);
+    eeprom_erase_sector(FLASH_SECTOR_10);
+    eeprom_erase_sector(FLASH_SECTOR_11);
+    setMessage("Erased patch storage");
+    led_green();
+  }else{
+    eeprom_erase_sector(sector);
+    setMessage("Erased flash sector");
+    led_green();
+  }
+  eeprom_lock();
 }
 
 void ProgramManager::saveToFlash(uint8_t sector, void* data, uint32_t length){
@@ -72,9 +86,6 @@ void ProgramManager::saveToFlash(uint8_t sector, void* data, uint32_t length){
       eeprom_erase_sector(FLASH_SECTOR_5);
       if(length > (64+128)*1024){
 	eeprom_erase_sector(FLASH_SECTOR_6);
-	if(length > (64+2*128)*1024){
-	  eeprom_erase_sector(FLASH_SECTOR_7);
-	}
       }
     }
     eeprom_write_block(ADDR_FLASH_SECTOR_4, data, length);
@@ -120,7 +131,7 @@ extern "C" {
     midi.setOutputChannel(MIDI_OUTPUT_CHANNEL);
     mididevice.setInputChannel(MIDI_INPUT_CHANNEL);
     midi.sendFirmwareVersion();
-    setMessage("OWL Bootloader ready");
+    setMessage("OWL bootloader ready");
     for(int i=0; i<3; i++){
       HAL_Delay(600);
       led_red();
@@ -157,7 +168,8 @@ void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
   if(size == 5){
     uint32_t sector = loader.decodeInt(data);
     program.eraseFromFlash(sector);
-    loader.clear();
+  }else if(size == 0){
+    program.eraseFromFlash(0xff);
   }else{
     error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
   }
@@ -317,7 +329,6 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     switch(value){
     case 0:
       sendMessage();
-      break;
     case SYSEX_FIRMWARE_VERSION:
       midi.sendFirmwareVersion();
       break;

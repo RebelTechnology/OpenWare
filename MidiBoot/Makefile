@@ -14,6 +14,7 @@ C_SRC += sdram.c
 C_SRC += sysex.c
 C_SRC += crc32.c
 C_SRC += eepromcontrol.c
+C_SRC += message.c
 # S_SRC = startup_openboot.s
 
 ifndef PLATFORM
@@ -47,6 +48,9 @@ OBJS += $(OBJS_UART)
 include $(OPENWARE)/Hardware/f4.mk
 
 .PHONY: clean deploy unlock erase upload lock
+
+info:
+	openocd -f openocd.cfg -c "init" -c "flash info 0" -c "exit"
 
 unlock:
 	openocd -f openocd.cfg -c "init" -c "halt" -c "flash protect 0 0 11 off" -c "flash info 0" -c "exit"
