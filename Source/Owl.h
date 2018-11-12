@@ -67,7 +67,7 @@ extern "C" {
   void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
 
   void jump_to_bootloader(void);  
-  void device_reset(void);  
+  void device_reset(void);
 
 #ifdef __cplusplus
 }

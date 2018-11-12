@@ -38,7 +38,6 @@ public:
   void sendStatus();
   void sendFirmwareVersion();
   void sendDeviceId();
-  void sendSelfTest();
   void sendProgramMessage();
 
   void write(uint8_t* data, uint16_t size);

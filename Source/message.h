@@ -32,6 +32,8 @@
 #ifdef __cplusplus
 }
 
+   char* msg_itoa(int val, int base, int pad);
+
 class Debug {
 private:
   uint8_t pos = 0;

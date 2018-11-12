@@ -228,38 +228,16 @@ void MidiController::sendConfigurationSetting(const char* name, uint32_t value){
 }
 
 void MidiController::sendDeviceId(){
-  // uint32_t* deviceId = getDeviceId();
-  // char buffer[32];
-  // buffer[0] = SYSEX_DEVICE_ID;
-  // char* p = &buffer[1];
-  // p = stpcpy(p, msg_itoa(deviceId[0], 16, 8));
-  // p = stpcpy(p, ":");
-  // p = stpcpy(p, msg_itoa(deviceId[1], 16, 8));
-  // p = stpcpy(p, ":");
-  // p = stpcpy(p, msg_itoa(deviceId[2], 16, 8));
-  // sendSysEx((uint8_t*)buffer, p-buffer);
-}
-
-void MidiController::sendSelfTest(){
-  // this code somehow leads to a HardFault once the interrupt has completed
-  // uint8_t buffer[2];
-  // buffer[0] = SYSEX_SELFTEST;
-  // bool hse = isClockExternal();
-  // bool mem = SRAM_TestMemory();
-  // bool epr = settings.settingsInFlash();
-  // buffer[1] = (hse << 2) | ( mem << 1) | epr;
-  // // buffer[1] = (hse << 2) | ( SRAM_TestMemory() << 1) | settings.settingsInFlash();
-  // sendSysEx(buffer, sizeof(buffer));
-
-  // untested
-  // int error = errno;
-  // if(error != 0){
-  //   buffer[2] = error;
-  //   buffer[3] = error >> 7;
-  //   sendSysEx(buffer, 4);
-  // }else{
-  //   sendSysEx(buffer, 2);
-  // }
+  uint32_t* deviceId = (uint32_t*)UID_BASE;
+  char buffer[32];
+  buffer[0] = SYSEX_DEVICE_ID;
+  char* p = &buffer[1];
+  p = stpcpy(p, msg_itoa(deviceId[0], 16, 8));
+  p = stpcpy(p, ":");
+  p = stpcpy(p, msg_itoa(deviceId[1], 16, 8));
+  p = stpcpy(p, ":");
+  p = stpcpy(p, msg_itoa(deviceId[2], 16, 8));
+  sendSysEx((uint8_t*)buffer, p-buffer);
 }
 
 void MidiController::sendPc(uint8_t pc){
