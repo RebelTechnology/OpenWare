@@ -60,7 +60,7 @@ void sendMessage(){
   }
 }
 
-void ProgramManager::eraseFromFlash(uint8_t sector){
+void eraseFromFlash(uint8_t sector){
   eeprom_unlock();
   if(sector == 0xff){
     eeprom_erase_sector(FLASH_SECTOR_7);
@@ -78,7 +78,7 @@ void ProgramManager::eraseFromFlash(uint8_t sector){
   eeprom_lock();
 }
 
-void ProgramManager::saveToFlash(uint8_t sector, void* data, uint32_t length){
+void saveToFlash(uint8_t sector, void* data, uint32_t length){
   if(sector == FIRMWARE_SECTOR && length <= (64+3*128)*1024){
     eeprom_unlock();
     eeprom_erase_sector(FLASH_SECTOR_4);
@@ -167,9 +167,9 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
   if(size == 5){
     uint32_t sector = loader.decodeInt(data);
-    program.eraseFromFlash(sector);
+    eraseFromFlash(sector);
   }else if(size == 0){
-    program.eraseFromFlash(0xff);
+    eraseFromFlash(0xff);
   }else{
     error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
   }
@@ -179,7 +179,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t checksum = loader.decodeInt(data);
     if(checksum == loader.getChecksum()){
-      program.saveToFlash(FIRMWARE_SECTOR, loader.getData(), loader.getSize());
+      saveToFlash(FIRMWARE_SECTOR, loader.getData(), loader.getSize());
       loader.clear();
     }else{
       error(PROGRAM_ERROR, "Invalid FLASH checksum");
