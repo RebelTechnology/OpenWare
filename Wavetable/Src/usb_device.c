@@ -51,19 +51,19 @@
 #include "usbd_midi_if.h"
 
 /* USB Device Core handle declaration */
-USBD_HandleTypeDef hUsbDeviceHS;
+USBD_HandleTypeDef hUsbDeviceFS;
 
 /* init function */				        
 void MX_USB_DEVICE_Init(void)
 {
   /* Init Device Library,Add Supported Class and Start the library*/
-  USBD_Init(&hUsbDeviceHS, &HS_Desc, DEVICE_HS);
+  USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS);
 
-  USBD_RegisterClass(&hUsbDeviceHS, &USBD_Midi_ClassDriver);
+  USBD_RegisterClass(&hUsbDeviceFS, &USBD_Midi_ClassDriver);
 
-  USBD_Midi_RegisterInterface(&hUsbDeviceHS, &USBD_Midi_fops);
+  USBD_Midi_RegisterInterface(&hUsbDeviceFS, &USBD_Midi_fops);
 
-  USBD_Start(&hUsbDeviceHS);
+  USBD_Start(&hUsbDeviceFS);
 
 }
 /**

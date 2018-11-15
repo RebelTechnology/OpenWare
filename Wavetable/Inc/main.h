@@ -71,12 +71,12 @@
 #define CS_SDA_GPIO_Port GPIOE
 #define EXTSPI_nCS_Pin GPIO_PIN_15
 #define EXTSPI_nCS_GPIO_Port GPIOC
-#define EXTSPI_SCK_Pin GPIO_PIN_7
-#define EXTSPI_SCK_GPIO_Port GPIOF
-#define EXTSPI_MISO_Pin GPIO_PIN_8
-#define EXTSPI_MISO_GPIO_Port GPIOF
-#define EXTSPI_MOSI_Pin GPIO_PIN_9
-#define EXTSPI_MOSI_GPIO_Port GPIOF
+#define ADC6_Pin GPIO_PIN_7
+#define ADC6_GPIO_Port GPIOF
+#define ADC7_Pin GPIO_PIN_8
+#define ADC7_GPIO_Port GPIOF
+#define ADC8_Pin GPIO_PIN_9
+#define ADC8_GPIO_Port GPIOF
 #define ADC4_Pin GPIO_PIN_10
 #define ADC4_GPIO_Port GPIOF
 #define ADC3_Pin GPIO_PIN_1
@@ -95,6 +95,8 @@
 #define TOGGLE_A2_Pin GPIO_PIN_4
 #define TOGGLE_A2_GPIO_Port GPIOA
 #define TOGGLE_A2_EXTI_IRQn EXTI4_IRQn
+#define ADC5_Pin GPIO_PIN_5
+#define ADC5_GPIO_Port GPIOA
 #define FLASH_MISO_Pin GPIO_PIN_6
 #define FLASH_MISO_GPIO_Port GPIOA
 #define FLASH_MOSI_Pin GPIO_PIN_7
@@ -114,15 +116,9 @@
 #define CS_nCS_GPIO_Port GPIOB
 #define CS_nRST_Pin GPIO_PIN_11
 #define CS_nRST_GPIO_Port GPIOB
-#ifdef OWL_TESSERACT_REV4
 #define TOGGLE_B1_Pin GPIO_PIN_12
 #define TOGGLE_B1_GPIO_Port GPIOC
 #define TOGGLE_B1_EXTI_IRQn EXTI15_10_IRQn
-#else
-#define TOGGLE_B1_Pin GPIO_PIN_12
-#define TOGGLE_B1_GPIO_Port GPIOC
-#define TOGGLE_B1_EXTI_IRQn EXTI15_10_IRQn
-#endif
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
 #define TOGGLE_B2_Pin GPIO_PIN_9
