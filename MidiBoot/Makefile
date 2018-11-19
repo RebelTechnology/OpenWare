@@ -21,18 +21,21 @@ ifndef PLATFORM
 PLATFORM = Alchemist
 endif
 
+C_SRC += usbd_desc.c usbd_conf.c
+
 ifeq ($(PLATFORM),Magus)
-C_SRC += $(notdir $(wildcard usbd-fs/*.c))
-CPPFLAGS += -Iusbd-fs
-CPPFLAGS += -DOWL_MAGUS
-vpath %.c usbd-fs
-else
-CPPFLAGS += -Iusbd-hs
-C_SRC += $(notdir $(wildcard usbd-hs/*.c))
-vpath %.c usbd-hs
+  CPPFLAGS += -Iusbd-fs -DOWL_MAGUS
+  vpath %.c usbd-fs
+else ifeq ($(PLATFORM),Wizard)
+  CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST
+  vpath %.c usbd-hs
+else ifeq ($(PLATFORM),Alchemist)
+  CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST
+  vpath %.c usbd-hs
+else ifeq ($(PLATFORM),Rack)
+  CPPFLAGS += -Iusbd-hs -DOWL_RACK
+  vpath %.c usbd-hs
 endif
-
-
 
 # CPP_SRC += MidiReader.cpp
 CPP_SRC += MidiController.cpp
