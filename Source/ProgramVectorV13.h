@@ -20,6 +20,7 @@
 #define WIZARD_HARDWARE             0x18
 #define MAGUS_HARDWARE              0x19
 #define EFFECTSBOX_HARDWARE         0x1a
+#define WAVETABLE_HARDWARE          0x1b
 
 #define PROGRAM_VECTOR_CHECKSUM_V11 0x40
 #define PROGRAM_VECTOR_CHECKSUM_V12 0x50

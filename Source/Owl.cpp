@@ -476,13 +476,24 @@ void setup(){
   graphics.begin(&OLED_SPI);
 #endif /* USE_SCREEN */
 
+#ifdef OWL_WAVETABLE
+  extern ADC_HandleTypeDef hadc1;
+  extern ADC_HandleTypeDef hadc3;
+  HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_values, 4);
+  if(ret != HAL_OK)
+    error(CONFIG_ERROR, "ADC1 Start failed");
+  ret = HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(adc_values+4), 4);
+  if(ret != HAL_OK)
+    error(CONFIG_ERROR, "ADC3 Start failed");
+#else
 #ifdef USE_ADC
   extern ADC_HandleTypeDef ADC_PERIPH;
   HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES);
   if(ret != HAL_OK)
     error(CONFIG_ERROR, "ADC Start failed");
 #endif /* USE_ADC */
-
+#endif
+  
   program.loadProgram(1);
   program.startProgram(false);
 
