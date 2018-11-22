@@ -155,3 +155,43 @@ uart / bus IDLE interrupts
 USB stuff
 
 -----------------------------------------------------------------
+
+Alchemist / Wizard Reset loop
+presets:
+Fascination I to V
+Granular Delay
+Granular Delay
+Granular Delay
+FmDronePoly
+DroneBox
+
+Granular Delay and DroneBox both cause reset cycle when stored in patch slot 1
+
+flash erase not working? needs unlocking?
+
+-----------------------------------------------------------------
+
+# reset
+amidi -p "hw:1,0,0" -S f07d527df7
+
+# reset to bootloader
+amidi -p "hw:1,0,0" -S f07d527ef7
+
+# erase flash storage sectors
+amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d52140000000009f7f07d52140000000010f7
+
+# flash Wizard firmware
+amidi -p hw:2 -s Wizard.syx
+
+start 60000 ends 67220
+
+-----------------------------------------------------------------
+
+#define VECT_TAB_OFFSET  0x00008000
+
+cd MidiBoot
+make PLATFORM=Alchemist CONFIG=Release clean all
+
+-----------------------------------------------------------------
+
+-----------------------------------------------------------------

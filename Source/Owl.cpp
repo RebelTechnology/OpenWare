@@ -806,6 +806,7 @@ void jump_to_bootloader(void){
 #ifdef USE_USB_HOST
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
 #endif
+  // *((unsigned long *)0x2000FFF0) = 0xaeaaefaf ^ 0x00f00b44ff;
   *bootloaderMagicAddress = bootloaderMagicNumber;
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
