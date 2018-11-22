@@ -1,9 +1,6 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
-#define OWL_PEDAL
-/* #define OWL_RACK */
-
 #if defined OWL_RACK
 #define USE_DIGITALBUS
 #define BUS_HUART huart4

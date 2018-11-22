@@ -8,7 +8,16 @@ C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += wm8731.c
 
-# CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
+ifndef PLATFORM
+PLATFORM = Pedal
+endif
+
+ifeq ($(PLATFORM),Pedal)
+  CPPFLAGS += -DOWL_PEDAL
+else ifeq ($(PLATFORM),Rack)
+  CPPFLAGS += -IOWL_PEDAL -DOWL_RACK
+  CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
+endif
 
 include $(OPENWARE)/Hardware/sources.mk
 
