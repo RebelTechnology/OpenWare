@@ -5,12 +5,19 @@
 
 #define FIRMWARE_VERSION "v20.2"
 
-#define MIDI_OMNI_CHANNEL            (-1)
-#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
-#define MIDI_OUTPUT_CHANNEL          0
 #define AUDIO_OUTPUT_GAIN            112
+
+#define MIDI_OMNI_CHANNEL            (-1)
+#ifndef MIDI_INPUT_CHANNEL
+#define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
+#endif
+#ifndef MIDI_OUTPUT_CHANNEL
+#define MIDI_OUTPUT_CHANNEL          0
+#endif
+#ifndef DIGITAL_BUS_ENABLED
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
+#endif
 #define USE_MIDI_CALLBACK
 #define MIDI_OUTPUT_BUFFER_SIZE      1024
 #define MIDI_INPUT_BUFFER_SIZE       256

@@ -22,6 +22,7 @@ uint32_t bus_tx_packets = 0;
 uint32_t bus_rx_packets = 0;
 
 static void initiateBusRead(){
+#ifndef OWL_RACK // currently we suppress all returning messages
   extern UART_HandleTypeDef BUS_HUART;
   UART_HandleTypeDef *huart = &BUS_HUART;
   /* Check that a Rx process is not already ongoing */
@@ -30,6 +31,7 @@ static void initiateBusRead(){
     // keep at least half the buffer back, it will fill up while this half is processing
     HAL_UART_Receive_DMA(huart, bus_rx_buf.getWriteHead(), size);
   }
+#endif
 }
 
 static void initiateBusWrite(){

@@ -822,6 +822,7 @@ void device_reset(){
   while(1);
 }
 
+// called from patch program: Patch::sendMidi(MidiMessage)
 void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
   uint8_t data[] = {port, status, d1, d2};
   midi.write(data, 4);
