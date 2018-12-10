@@ -8,6 +8,9 @@
 #define HARDWARE_VERSION             "Prism"
 
 #define USE_DIGITALBUS
+#define DIGITAL_BUS_ENABLED          0
+#define DIGITAL_BUS_FORWARD_MIDI     0
+#define MIDI_INPUT_CHANNEL           0
 
 #define USE_USBD_HS
 #define USE_SCREEN
