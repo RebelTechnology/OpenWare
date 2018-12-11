@@ -14,11 +14,11 @@
 #define HARDWARE_VERSION             "OWL Pedal"
 #endif
 
+#define OWLBOOT_MAGIC                (0xF00B4400)
 
 #define USE_CODEC
 #define USE_WM8731
 #define USE_USBD_FS
-
 
 #ifdef OWL_RACK
 #define NOF_ADC_VALUES               0
