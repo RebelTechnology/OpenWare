@@ -3,8 +3,6 @@
 #include "errorhandlers.h"
 #include "ApplicationSettings.h"
 
-static int32_t txbuf[CODEC_BUFFER_SIZE];
-static int32_t rxbuf[CODEC_BUFFER_SIZE];
 static uint16_t blocksize;
 
 uint16_t Codec::getBlockSize(){
@@ -24,61 +22,10 @@ void Codec::reset(){
   start();
 }
 
-void Codec::ramp(uint32_t max){
-  uint32_t incr = max/CODEC_BUFFER_SIZE;
-  for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
-    txbuf[i] = i*incr;
-}
-
-void Codec::clear(){
-  set(0);
-}
-
-int32_t Codec::getMin(){
-  int32_t min = txbuf[0];
-  for(int i=1; i<CODEC_BUFFER_SIZE; ++i)
-    if(txbuf[i] < min)
-      min = txbuf[i];
-  return min;
-}
-
-int32_t Codec::getMax(){
-  int32_t max = txbuf[0];
-  for(int i=1; i<CODEC_BUFFER_SIZE; ++i)
-    if(txbuf[i] > max)
-      max = txbuf[i];
-  return max;
-}
-
-float Codec::getAvg(){
-  float avg = 0;
-  for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
-    avg += txbuf[i];
-  return avg / CODEC_BUFFER_SIZE;
-}
-
-void Codec::set(uint32_t value){
-  for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
-    txbuf[i] = value;
-}
-
-void Codec::bypass(bool doBypass){
-  codec_bypass(doBypass);
-}
-
-void Codec::mute(bool doMute){
-  codec_set_gain_out(0);
-}
-
-void Codec::setInputGain(int8_t value){
-  codec_set_gain_in(value);
-}
-
-void Codec::setOutputGain(int8_t value){
-  codec_set_gain_out(value);
-}
-
 #ifdef USE_WM8731
+static int16_t txbuf[CODEC_BUFFER_SIZE];
+static int16_t rxbuf[CODEC_BUFFER_SIZE];
+
 extern "C" {
   extern I2S_HandleTypeDef hi2s2;
   extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
@@ -103,7 +50,7 @@ void Codec::start(){
   // configuration phase, the Size parameter means the number of 16-bit data length
   // in the transaction and when a 24-bit data frame or a 32-bit data frame is selected
   // the Size parameter means the number of 16-bit data length.
-  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, blocksize*4);
+  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)txbuf, (uint16_t*)rxbuf, blocksize*2);
   ASSERT(ret == HAL_OK, "Failed to start I2S DMA");
 }
 
@@ -116,14 +63,13 @@ void Codec::resume(){
 }
 
 extern "C"{
-
   
   void HAL_I2SEx_TxRxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
-    audioCallback(rxbuf, txbuf, blocksize);
+    audioCallback((int32_t*)rxbuf, (int32_t*)txbuf, blocksize);
   }
 
   void HAL_I2SEx_TxRxCpltCallback(I2S_HandleTypeDef *hi2s){
-    audioCallback(rxbuf+blocksize*2, txbuf+blocksize*2, blocksize);
+    audioCallback((int32_t*)(rxbuf+blocksize*2), (int32_t*)(txbuf+blocksize*2), blocksize);
   }
 
   // void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
@@ -148,6 +94,9 @@ extern "C"{
 #endif /* USE_WM8731 */
 
 #ifdef USE_CS4271
+static int32_t txbuf[CODEC_BUFFER_SIZE];
+static int32_t rxbuf[CODEC_BUFFER_SIZE];
+
 extern "C" {
 SAI_HandleTypeDef hsai_BlockA1;
 SAI_HandleTypeDef hsai_BlockB1;
@@ -204,3 +153,58 @@ void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
 
 }
 #endif /* USE_CS4271 */
+
+
+void Codec::ramp(uint32_t max){
+  uint32_t incr = max/CODEC_BUFFER_SIZE;
+  for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
+    txbuf[i] = i*incr;
+}
+
+void Codec::clear(){
+  set(0);
+}
+
+int32_t Codec::getMin(){
+  int32_t min = txbuf[0];
+  for(int i=1; i<CODEC_BUFFER_SIZE; ++i)
+    if(txbuf[i] < min)
+      min = txbuf[i];
+  return min;
+}
+
+int32_t Codec::getMax(){
+  int32_t max = txbuf[0];
+  for(int i=1; i<CODEC_BUFFER_SIZE; ++i)
+    if(txbuf[i] > max)
+      max = txbuf[i];
+  return max;
+}
+
+float Codec::getAvg(){
+  float avg = 0;
+  for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
+    avg += txbuf[i];
+  return avg / CODEC_BUFFER_SIZE;
+}
+
+void Codec::set(uint32_t value){
+  for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
+    txbuf[i] = value;
+}
+
+void Codec::bypass(bool doBypass){
+  codec_bypass(doBypass);
+}
+
+void Codec::mute(bool doMute){
+  codec_set_gain_out(0);
+}
+
+void Codec::setInputGain(int8_t value){
+  codec_set_gain_in(value);
+}
+
+void Codec::setOutputGain(int8_t value){
+  codec_set_gain_out(value);
+}

@@ -67,10 +67,10 @@
 #define PUSHBUTTON_EXTI_IRQn EXTI2_IRQn
 #define LED_RED_Pin GPIO_PIN_3
 #define LED_RED_GPIO_Port GPIOE
-#define LED_GREEN_Pin GPIO_PIN_5
-#define LED_GREEN_GPIO_Port GPIOE
 #define BYPASS_Pin GPIO_PIN_4
 #define BYPASS_GPIO_Port GPIOE
+#define LED_GREEN_Pin GPIO_PIN_5
+#define LED_GREEN_GPIO_Port GPIOE
 #define ADC1_Pin GPIO_PIN_0
 #define ADC1_GPIO_Port GPIOC
 #define ADC2_Pin GPIO_PIN_1
@@ -81,6 +81,8 @@
 #define ADC4_GPIO_Port GPIOC
 #define ADC5_Pin GPIO_PIN_2
 #define ADC5_GPIO_Port GPIOA
+#define EXPRESSION_PEDAL_TIP_Pin GPIO_PIN_3
+#define EXPRESSION_PEDAL_TIP_GPIO_Port GPIOA
 #define FLASH_nCS_Pin GPIO_PIN_5
 #define FLASH_nCS_GPIO_Port GPIOC
 #define I2C_SCK_Pin GPIO_PIN_10

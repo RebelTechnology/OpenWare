@@ -5,7 +5,12 @@
 
 #define FIRMWARE_VERSION "v20.2"
 
+#ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
+#endif
+#ifndef AUDIO_INPUT_GAIN
+#define AUDIO_INPUT_GAIN             92
+#endif
 
 #define MIDI_OMNI_CHANNEL            (-1)
 #ifndef MIDI_INPUT_CHANNEL
@@ -22,6 +27,10 @@
 #define MIDI_OUTPUT_BUFFER_SIZE      1024
 #define MIDI_INPUT_BUFFER_SIZE       256
 
+#ifndef OWLBOOT_MAGIC
+#define OWLBOOT_MAGIC                (0xDADAB007)
+#endif
+
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
 #define EEPROM_PAGE_SIZE             (128*1024)
 #define EEPROM_PAGE_END              ((uint32_t)0x08100000)
@@ -32,21 +41,21 @@
 #define DEBUG_STORAGE
 
 #ifdef SSD1331
-#define OLED_WIDTH			96
-#define OLED_HEIGHT			64
-#define OLED_BUFFER_SIZE        (OLED_WIDTH*OLED_HEIGHT/8)
+#define OLED_WIDTH		     96
+#define OLED_HEIGHT		     64
+#define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT/8)
 #elif defined SEPS114A
-#define OLED_WIDTH			96
-#define OLED_HEIGHT			96
-#define OLED_BUFFER_SIZE        (OLED_WIDTH*OLED_HEIGHT*sizeof(uint16_t))
+#define OLED_WIDTH		     96
+#define OLED_HEIGHT		     96
+#define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT*sizeof(uint16_t))
 #elif defined SSD1309
-#define OLED_WIDTH			128
-#define OLED_HEIGHT			64
-#define OLED_BUFFER_SIZE        (OLED_WIDTH*OLED_HEIGHT/8)
+#define OLED_WIDTH		     128
+#define OLED_HEIGHT	             64
+#define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT/8)
 #endif
 
-#define CODEC_BLOCKSIZE 256
-#define CODEC_BUFFER_SIZE (4*CODEC_BLOCKSIZE)
+#define CODEC_BLOCKSIZE              256
+#define CODEC_BUFFER_SIZE            (4*CODEC_BLOCKSIZE)
 
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
@@ -56,14 +65,13 @@
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
 
-#define PROGRAM_TASK_STACK_SIZE          (4*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_STACK_SIZE          (512/sizeof(portSTACK_TYPE))
-#define FLASH_TASK_STACK_SIZE            (512/sizeof(portSTACK_TYPE))
+#define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
+#define MANAGER_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+#define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        3500 /* 168MHz / 48kHz */
 
 /* +0db in and out */
-#define AUDIO_INPUT_GAIN             0x017
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */
 #define AUDIO_OUTPUT_OFFSET          0x00001eec /* 0.1208 * 65535 */

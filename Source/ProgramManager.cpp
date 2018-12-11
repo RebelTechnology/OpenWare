@@ -89,8 +89,6 @@ PatchDefinition* getPatchDefinition(){
   return program.getPatchDefinition();
 }
 
-float audio_envelope_lambda = 0.999995f;
-float audio_envelope = 0.0;
 void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   getProgramVector()->audio_input = rx;
   getProgramVector()->audio_output = tx;
@@ -98,6 +96,8 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   // vTaskSuspend(screenTask);
 #ifdef FASCINATION_MACHINE
   extern uint32_t ledstatus;
+  static float audio_envelope_lambda = 0.999995f;
+  static float audio_envelope = 0.0;
   audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(getProgramVector()->audio_output[0])*(1.0f/INT16_MAX);
 #endif
   if(audioTask != NULL){
@@ -345,7 +345,37 @@ void updateProgramVector(ProgramVector* pv){
   pv->message = NULL;
 }
 
-volatile int flashSectorToWrite;
+// #include "eepromcontrol.h"
+// extern "C" {
+//   /*
+//    * re-program firmware: this entire function and all subroutines must run from RAM
+//    * (don't make this static!)
+//    */
+//   __attribute__ ((section (".coderam")))
+//   void flashFirmware(uint8_t* source, uint32_t size){
+//     __disable_irq(); // Disable ALL interrupts. Can only be executed in Privileged modes.
+//     eeprom_unlock();
+//     if(size > (16+16+64+128)*1024){
+//       eeprom_erase_sector(ADDR_FLASH_SECTOR_6);
+//     }
+//     if(size > (16+16+64)*1024){
+//       eeprom_erase_sector(ADDR_FLASH_SECTOR_5);
+//     }
+//     if(size > (16+16)*1024){
+//       eeprom_erase_sector(ADDR_FLASH_SECTOR_4);
+//     }
+//     if(size > 16*1024){
+//       eeprom_erase_sector(ADDR_FLASH_SECTOR_3);
+//     }
+//     eeprom_erase_sector(ADDR_FLASH_SECTOR_2);
+//     eeprom_write_block(ADDR_FLASH_SECTOR_2, source, size);
+//     eeprom_lock();
+//     eeprom_wait();
+//     NVIC_SystemReset(); // (static inline)
+//   }
+// }
+
+volatile uint8_t flashSectorToWrite;
 volatile void* flashAddressToWrite;
 volatile uint32_t flashSizeToWrite;
 void programFlashTask(void* p){
@@ -353,7 +383,7 @@ void programFlashTask(void* p){
   uint32_t size = flashSizeToWrite;
   uint8_t* source = (uint8_t*)flashAddressToWrite;
   if(index == 0xff && size < MAX_SYSEX_FIRMWARE_SIZE){
-    // flashFirmware(source, size); TODO
+    // flashFirmware(source, size); 
     error(PROGRAM_ERROR, "Flash firmware TODO");
   }else{
     registry.store(index, source, size);
@@ -365,6 +395,7 @@ void programFlashTask(void* p){
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
+
 
 void eraseFlashTask(void* p){
   int sector = flashSectorToWrite;

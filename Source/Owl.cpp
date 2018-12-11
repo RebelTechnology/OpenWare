@@ -70,8 +70,7 @@ MidiController midi;
 MidiReader midihost;
 #endif /* USE_USB_HOST */
 ApplicationSettings settings;
-const uint32_t bootloaderMagicNumber = 0xDADAB007;
-uint32_t* bootloaderMagicAddress = (uint32_t*)0x2000FFF0;
+#define OWLBOOT_ADDRESS ((uint32_t*)0x2000FFF0)
 
 #ifdef USE_ADC
 uint16_t adc_values[NOF_ADC_VALUES];
@@ -140,6 +139,14 @@ void setLed(uint8_t led, uint32_t rgb){
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM2->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>00)&0x3ff);
+#elif defined OWL_PEDAL || defined OWL_MODULAR
+  if(rgb == RED_COLOUR){
+    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+  }else if(rgb == GREEN_COLOUR){
+    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+  }
 #elif defined OWL_MAGUS
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
 #elif defined OWL_PEDAL
@@ -376,6 +383,9 @@ void setup(){
   //   /* Enable the Flash prefetch */
   //   __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
   // }
+  // enable expression pedal reference voltage
+  HAL_GPIO_WritePin(EXPRESSION_PEDAL_TIP_GPIO_Port, EXPRESSION_PEDAL_TIP_Pin, GPIO_PIN_SET);
+  // todo: on OWL Modular the ADC should read Exp pin PA2 instead of PA3
 #endif
 
 #ifdef OWL_WIZARD
@@ -806,8 +816,7 @@ void jump_to_bootloader(void){
 #ifdef USE_USB_HOST
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
 #endif
-  // *((unsigned long *)0x2000FFF0) = 0xaeaaefaf ^ 0x00f00b44ff;
-  *bootloaderMagicAddress = bootloaderMagicNumber;
+  *OWLBOOT_ADDRESS = OWLBOOT_MAGIC;
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
   NVIC_SystemReset();
@@ -816,7 +825,7 @@ void jump_to_bootloader(void){
 }
 
 void device_reset(){
-  *bootloaderMagicAddress = 0;
+  *OWLBOOT_ADDRESS = 0;
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
