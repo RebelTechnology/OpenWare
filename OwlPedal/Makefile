@@ -14,6 +14,8 @@ endif
 
 ifeq ($(PLATFORM),Pedal)
   CPPFLAGS += -DOWL_PEDAL
+else ifeq ($(PLATFORM),Modular)
+  CPPFLAGS += -DOWL_MODULAR
 else ifeq ($(PLATFORM),Rack)
   CPPFLAGS += -IOWL_PEDAL -DOWL_RACK
   CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
@@ -33,3 +35,8 @@ OBJS += $(OBJS_OS)
 OBJS += $(OBJS_UART)
 
 include $(OPENWARE)/Hardware/f4.mk
+
+DFUCMD = dfu-util -d 0483:df11 -c 1 -i 0 -a 0 -R
+dfu: bin
+	@echo Flashing OWL $(PLATFORM) $(CONFIG) firmware
+	$(DFUCMD) -s 0x8008000:leave -D $(BIN)
