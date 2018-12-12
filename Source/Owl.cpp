@@ -277,6 +277,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     break;
   }
 #endif
+#ifdef OWL_MODULAR
+  case PUSH_GATE_IN_Pin: {
+    bool isSet = !(PUSH_GATE_IN_GPIO_Port->IDR & PUSH_GATE_IN_Pin);
+    setButtonValue(PUSHBUTTON, isSet);
+    setLed(0, isSet ? RED_COLOUR : GREEN_COLOUR);
+    break;
+  }
+#endif
 #ifdef OWL_EFFECTSBOX
   case SW1_BTN_Pin:
     updateProgramSelector(BUTTON_A, 0, 1, !(SW1_BTN_GPIO_Port->IDR & SW1_BTN_Pin));

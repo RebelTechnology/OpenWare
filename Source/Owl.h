@@ -16,13 +16,13 @@
 extern "C" {
 #endif
 
-  enum OperationMode {
+  typedef enum {
     STARTUP_MODE,
     LOAD_MODE,
     RUN_MODE,
     CONFIGURE_MODE,
     ERROR_MODE
-  };
+  } OperationMode;
 
   void setup(void);
   void loop(void);

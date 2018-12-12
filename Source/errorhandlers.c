@@ -1,5 +1,6 @@
 #include "errorhandlers.h"
 #include "device.h"
+#include "Owl.h"
 
 volatile int8_t errorcode = 0;
 const char* errormsg = 0;
@@ -7,6 +8,10 @@ const char* errormsg = 0;
 void error(int8_t code, const char* reason){
   setErrorMessage(code, reason);
   /* assert_param(0); */
+#if defined OWL_PEDAL || defined OWL_MODULAR
+  if(code != NO_ERROR)
+    setLed(0, RED_COLOUR);
+#endif
 }
 
 int8_t getErrorStatus(){
