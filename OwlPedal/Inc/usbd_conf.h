@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "main.h"
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal.h"
 
