@@ -165,13 +165,6 @@ void MidiHandler::handlePolyKeyPressure(uint8_t status, uint8_t note, uint8_t va
 }
 
 void MidiHandler::updateCodecSettings(){
-  setInputChannel(settings.midi_input_channel);  
-// #ifdef USE_USB_HOST
-//   midihost.setInputChannel(settings.midi_input_channel);
-// #endif
-#ifdef USE_DIGITALBUS
-  bus_set_input_channel(settings.midi_input_channel);
-#endif
   codec.reset();
   program.resetProgram(true);
 }
@@ -185,8 +178,7 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     settings.audio_samplingrate = value;
   }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_BLOCKSIZE, p, 2) == 0){
     settings.audio_blocksize = value;
-    codec.reset();
-    program.resetProgram(true);
+    updateCodecSettings();
   }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_BITDEPTH, p, 2) == 0){
     settings.audio_bitdepth = value;
   }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_DATAFORMAT, p, 2) == 0){
@@ -214,7 +206,6 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     settings.output_scalar = value;
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_INPUT_CHANNEL, p, 2) == 0){
     midiSetInputChannel(max(-1, min(15, value)));
-    updateCodecSettings();
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
     midiSetOutputChannel(max(-1, min(15, value)));
 #ifdef USE_DIGITALBUS

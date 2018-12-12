@@ -109,7 +109,7 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
 
 /* called by the program when an error or anomaly has occured */
 void onProgramStatus(ProgramVectorAudioStatus status){
-  // setLed(RED);
+  setLed(0, RED_COLOUR);
   program.exitProgram(false);
   char msg[] = "Err xx";
   msg[4] = '0'+(status/10);
@@ -245,7 +245,6 @@ void onProgramReady(){
       bid = stateChanged.getFirstSetIndex();
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
-  // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 #ifdef USE_USB_HOST
   midi_host_push();
 #endif
@@ -421,7 +420,7 @@ void runAudioTask(void* p){
       programVector = pv;
       setErrorStatus(NO_ERROR);
       setOperationMode(RUN_MODE);
-      // setLed(GREEN);
+      setLed(0, GREEN_COLOUR);
       // codec.softMute(false);
       // codec.resume();
       def->run();
@@ -429,8 +428,6 @@ void runAudioTask(void* p){
     }else{
       error(PROGRAM_ERROR, "Invalid program");
     }
-    // setLed(RED);
-    // program.exitProgram(false);
     audioTask = NULL;
     vTaskDelete(NULL);
     for(;;);
