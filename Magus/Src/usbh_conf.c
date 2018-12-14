@@ -49,6 +49,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_core.h"
+#include "usbh_platform.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -64,7 +65,7 @@
 /* USER CODE END PV */
 
                 HCD_HandleTypeDef hhcd_USB_OTG_HS;
-void _Error_Handler(char * file, int line);
+void Error_Handler(void);
 
 /* USER CODE BEGIN 0 */
 /* USER CODE END 0 */
@@ -222,7 +223,7 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
   hhcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
   if (HAL_HCD_Init(&hhcd_USB_OTG_HS) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler( );
   }
 
   USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG_HS));
@@ -559,29 +560,13 @@ USBH_URBStateTypeDef USBH_LL_GetURBState(USBH_HandleTypeDef *phost, uint8_t pipe
   */
 USBH_StatusTypeDef USBH_LL_DriverVBUS(USBH_HandleTypeDef *phost, uint8_t state)
 {
+  if (phost->id == HOST_HS) {
+    MX_DriverVbusHS(state);
+  }
 
   /* USER CODE BEGIN 0 */
   /* USER CODE END 0*/
 
-  if (phost->id == HOST_HS)
-  {
-    if (state == 0)
-    {
-      /* Drive high Charge pump */
-      /* ToDo: Add IOE driver control */
-      /* USER CODE BEGIN DRIVE_HIGH_CHARGE_FOR_HS */
-
-      /* USER CODE END DRIVE_HIGH_CHARGE_FOR_HS */
-    }
-    else
-    {
-      /* Drive low Charge pump */
-      /* ToDo: Add IOE driver control */
-      /* USER CODE BEGIN DRIVE_LOW_CHARGE_FOR_HS */
-
-      /* USER CODE END DRIVE_LOW_CHARGE_FOR_HS */
-    }
-  }
   HAL_Delay(200);
   return USBH_OK;
 }

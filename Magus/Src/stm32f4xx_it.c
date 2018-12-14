@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    stm32f4xx_it.c
@@ -30,12 +31,42 @@
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx.h"
+#include "main.h"
 #include "stm32f4xx_it.h"
 #include "cmsis_os.h"
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+/* USER CODE END Includes */
 
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN TD */
+
+/* USER CODE END TD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+ 
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 #include "HAL_Encoders.h"
 
@@ -52,14 +83,16 @@ extern DMA_HandleTypeDef hdma_spi5_tx;
 extern DMA_HandleTypeDef hdma_spi6_tx;
 extern SPI_HandleTypeDef hspi5;
 extern SPI_HandleTypeDef hspi6;
+/* USER CODE BEGIN EV */
+
+/* USER CODE END EV */
 
 /******************************************************************************/
-/*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
+/*           Cortex-M4 Processor Interruption and Exception Handlers          */ 
 /******************************************************************************/
-
 /**
-* @brief This function handles System tick timer.
-*/
+  * @brief This function handles System tick timer.
+  */
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
@@ -80,8 +113,8 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-* @brief This function handles DMA2 stream1 global interrupt.
-*/
+  * @brief This function handles DMA2 stream1 global interrupt.
+  */
 void DMA2_Stream1_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Stream1_IRQn 0 */
@@ -94,8 +127,8 @@ void DMA2_Stream1_IRQHandler(void)
 }
 
 /**
-* @brief This function handles DMA2 stream4 global interrupt.
-*/
+  * @brief This function handles DMA2 stream4 global interrupt.
+  */
 void DMA2_Stream4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Stream4_IRQn 0 */
@@ -108,8 +141,8 @@ void DMA2_Stream4_IRQHandler(void)
 }
 
 /**
-* @brief This function handles USB On The Go FS global interrupt.
-*/
+  * @brief This function handles USB On The Go FS global interrupt.
+  */
 void OTG_FS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
@@ -122,8 +155,8 @@ void OTG_FS_IRQHandler(void)
 }
 
 /**
-* @brief This function handles DMA2 stream5 global interrupt.
-*/
+  * @brief This function handles DMA2 stream5 global interrupt.
+  */
 void DMA2_Stream5_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Stream5_IRQn 0 */
@@ -136,8 +169,8 @@ void DMA2_Stream5_IRQHandler(void)
 }
 
 /**
-* @brief This function handles DMA2 stream6 global interrupt.
-*/
+  * @brief This function handles DMA2 stream6 global interrupt.
+  */
 void DMA2_Stream6_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Stream6_IRQn 0 */
@@ -150,8 +183,8 @@ void DMA2_Stream6_IRQHandler(void)
 }
 
 /**
-* @brief This function handles USB On The Go HS global interrupt.
-*/
+  * @brief This function handles USB On The Go HS global interrupt.
+  */
 void OTG_HS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_HS_IRQn 0 */
@@ -164,8 +197,8 @@ void OTG_HS_IRQHandler(void)
 }
 
 /**
-* @brief This function handles SPI5 global interrupt.
-*/
+  * @brief This function handles SPI5 global interrupt.
+  */
 void SPI5_IRQHandler(void)
 {
   /* USER CODE BEGIN SPI5_IRQn 0 */
@@ -178,8 +211,8 @@ void SPI5_IRQHandler(void)
 }
 
 /**
-* @brief This function handles SPI6 global interrupt.
-*/
+  * @brief This function handles SPI6 global interrupt.
+  */
 void SPI6_IRQHandler(void)
 {
   /* USER CODE BEGIN SPI6_IRQn 0 */
@@ -192,8 +225,8 @@ void SPI6_IRQHandler(void)
 }
 
 /**
-* @brief This function handles SAI1 global interrupt.
-*/
+  * @brief This function handles SAI1 global interrupt.
+  */
 void SAI1_IRQHandler(void)
 {
   /* USER CODE BEGIN SAI1_IRQn 0 */

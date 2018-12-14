@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /*
     FreeRTOS V9.0.0 - Copyright (C) 2016 Real Time Engineers Ltd.
     All rights reserved
@@ -66,6 +67,7 @@
 
     1 tab == 4 spaces!
 */
+/* USER CODE END Header */
 
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
@@ -95,7 +97,6 @@
 /* Ensure stdint is only used by the compiler, and not the assembler. */
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
     #include <stdint.h>
-    #include "main.h" 
     extern uint32_t SystemCoreClock;
 #endif
 
@@ -158,7 +159,7 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
-/* USER CODE BEGIN 1 */   
+/* USER CODE BEGIN 1 */
 #define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );} 
 /* USER CODE END 1 */
 
@@ -167,7 +168,7 @@ standard names. */
 #define vPortSVCHandler    SVC_Handler
 #define xPortPendSVHandler PendSV_Handler
 
-/* IMPORTANT: This define MUST be commented when used with STM32Cube firmware, 
+/* IMPORTANT: This define is commented when used with STM32Cube firmware, when timebase is systick,
               to prevent overwriting SysTick_Handler defined within STM32Cube HAL */
 /* #define xPortSysTickHandler SysTick_Handler */
 
