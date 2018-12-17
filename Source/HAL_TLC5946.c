@@ -1,5 +1,6 @@
 #include "HAL_TLC5946.h"
 #include <string.h>
+#include "main.h"
 
 // #define TLC_CONTINUOUS
 #define TLC_DEVICES 	3
