@@ -33,3 +33,6 @@ OBJS += $(OBJS_OS)
 OBJS += $(OBJS_UART)
 
 include $(OPENWARE)/Hardware/f4.mk
+
+flash:
+	openocd -f openocd.cfg -c "program Build/Magus.elf verify reset exit"
