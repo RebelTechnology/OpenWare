@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -96,7 +96,7 @@
 #define USBD_MANUFACTURER_STRING     "Rebel Technology"
 #define USBD_PID_HS     0xDADA
 #define USBD_PRODUCT_STRING_HS     "OWL-MIDI"
-#define USBD_SERIALNUMBER_STRING_HS     "00000000010D"
+#define USBD_SERIALNUMBER_STRING_HS     "00000000001A"
 #define USBD_CONFIGURATION_STRING_HS     "AUDIO Config"
 #define USBD_INTERFACE_STRING_HS     "AUDIO Interface"
 
