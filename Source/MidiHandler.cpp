@@ -6,7 +6,9 @@
 #include "FirmwareLoader.hpp"
 #include "ApplicationSettings.h"
 #include "errorhandlers.h"
+#ifdef USE_CODEC
 #include "Codec.h"
+#endif
 #include "Owl.h"
 #include "FlashStorage.h"
 #include "PatchRegistry.h"
@@ -62,9 +64,11 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   if(channel != MIDI_OMNI_CHANNEL && channel != getChannel(status))
     return;
   switch(cc){
+#ifdef USE_CODEC
   case MIDI_CC_VOLUME:
     codec.setOutputGain(value);
     break;
+#endif
   case PATCH_PARAMETER_A:
     setParameterValue(PARAMETER_A, value<<5); // scale from 7bit to 12bit value
     break;
@@ -165,7 +169,9 @@ void MidiHandler::handlePolyKeyPressure(uint8_t status, uint8_t note, uint8_t va
 }
 
 void MidiHandler::updateCodecSettings(){
+#ifdef USE_CODEC
   codec.reset();
+#endif
   program.resetProgram(true);
 }
 
@@ -183,6 +189,7 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     settings.audio_bitdepth = value;
   }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_DATAFORMAT, p, 2) == 0){
     settings.audio_dataformat = value;
+#ifdef USE_CODEC
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_SWAP, p, 2) == 0){
     settings.audio_codec_swaplr = value;
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_BYPASS, p, 2) == 0){
@@ -194,6 +201,7 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN, p, 2) == 0){
     settings.audio_output_gain = value;  
     codec.setOutputGain(settings.audio_output_gain);
+#endif
   }else if(strncmp(SYSEX_CONFIGURATION_PC_BUTTON, p, 2) == 0){
     settings.program_change_button = value;
   }else if(strncmp(SYSEX_CONFIGURATION_INPUT_OFFSET, p, 2) == 0){
