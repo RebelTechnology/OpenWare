@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include "device.h"
 #include "Owl.h"
+#ifdef USE_CODEC
 #include "Codec.h"
+#endif
 #include "MidiReader.h"
 #include "MidiController.h"
 #include "ProgramVector.h"
@@ -63,7 +65,9 @@ extern TIM_HandleTypeDef ENCODER_TIM2;
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+#ifdef USE_CODEC
 Codec codec;
+#endif
 MidiReader mididevice;
 MidiController midi;
 #ifdef USE_USB_HOST
@@ -255,10 +259,49 @@ void updateProgramSelector(uint8_t button, uint8_t led, uint8_t patch, bool valu
 }
 #endif /* OWL_EFFECTSBOX */
 
+#ifdef OWL_BIOSIGNALS
+
+#define MAX_CHANNELS 4
+
+#include "ads1298.h"
+#include "ads.h"
+int32_t samples[MAX_CHANNELS];
+
+volatile bool continuous = false;
+// volatile bool doFilter = true;
+// volatile bool pretty = false;
+void startContinuous(){
+  ads_send_command(ADS1298::RDATAC);
+  ads_send_command(ADS1298::START);
+  continuous = true;
+  setLed(0, BLUE_COLOUR);
+}
+void stopContinuous(){
+  ads_send_command(ADS1298::STOP);
+  ads_send_command(ADS1298::SDATAC);
+  continuous = false;
+  setLed(0, NO_COLOUR);
+}
+#endif
+
 extern "C" {
-  
+
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
+#ifdef OWL_BIOSIGNALS
+  case ADC_DRDY_Pin: {
+    // toggleLed();
+    if(continuous){
+      ads_sample(samples, MAX_CHANNELS);
+      // if(doFilter)
+      // 	filter();
+      // if(pretty)
+      // 	sendSerial();
+      // else
+      // 	sendSarcduino();
+    }    
+  }    
+#endif
 #ifdef PUSHBUTTON_Pin
   case PUSHBUTTON_Pin: {
     bool isSet = !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin);

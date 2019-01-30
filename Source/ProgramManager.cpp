@@ -7,7 +7,9 @@
 #include "ProgramVector.h"
 #include "DynamicPatchDefinition.hpp"
 #include "errorhandlers.h"
+#ifdef USE_CODEC
 #include "Codec.h"
+#endif
 #include "ServiceCall.h"
 #include "FlashStorage.h"
 #include "BitState.hpp"
@@ -299,7 +301,11 @@ void updateProgramVector(ProgramVector* pv){
   pv->parameters = parameter_values;
 #endif
   pv->audio_samplingrate = 48000;
+#ifdef USE_CODEC
   pv->audio_blocksize = codec.getBlockSize();
+#else
+  pv->audio_blocksize = CODEC_BLOCKSIZE;
+#endif
   pv->buttons = button_values;
   pv->registerPatch = onRegisterPatch;
   pv->registerPatchParameter = onRegisterPatchParameter;
@@ -468,7 +474,9 @@ void runManagerTask(void* p){
 	midihost.setCallback(NULL);
 #endif /* USE_USB_HOST */
 #endif /* USE_MIDI_CALLBACK */
+#ifdef USE_CODEC
 	codec.set(0);
+#endif
 	vTaskDelete(audioTask);
 	audioTask = NULL;
       }
@@ -530,8 +538,10 @@ ProgramManager::ProgramManager(){
 }
 
 void ProgramManager::startManager(){
+#ifdef USE_CODEC
   codec.start();
   // codec.pause();
+#endif
   updateProgramVector(getProgramVector());
 // #ifdef USE_SCREEN
 //   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
