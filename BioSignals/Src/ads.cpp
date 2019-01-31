@@ -30,6 +30,7 @@ volatile bool ads_continuous = false;
 #define SYSTEM_MS_TICKS		(SystemCoreClock / 1000) // cycles per millisecond
 
 void delay_us(uint32_t uSec){
+  uSec += 10;
   while(uSec--)
     asm("NOP");
   // volatile uint32_t DWT_START = DWT->CYCCNT;
@@ -131,9 +132,9 @@ void ads_drdy(){
 }
 
 void ads_setup(){
-  ADS_RESET_HI();
-  HAL_Delay(1);
   ADS_RESET_LO();
+  HAL_Delay(10);
+  ADS_RESET_HI();
   spi_cs(true);
 
   HAL_Delay(500); //wait for the ads129n to be ready - it can take a while to charge caps
@@ -167,7 +168,9 @@ void ads_setup(){
   defaultConfig();
   rldConfig();
   // 500sps
-  ads_write_reg(ADS1298::CONFIG1, ADS1298::HIGH_RES_500_SPS | ADS1298::CONFIG1_const);
+  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_500_SPS | ADS1298::CONFIG1_const);
+  stopContinuous();
+  ads_status = isDRDY();
   startContinuous();
 }
 
@@ -189,35 +192,24 @@ void ads_sample(int32_t* samples, size_t len){
 
 void ads_send_command(int cmd){
   spi_cs(false); // chip enable
-  // clearPin(SPI_PORT, SPI_CS_PIN);
-  // digitalWrite(IPIN_CS, LOW);
   spi_transfer(cmd);
-  // SPI.transfer(cmd);
   delay_us(1);
   spi_cs(true); // chip disable
-  // setPin(SPI_PORT, SPI_CS_PIN);
-  // digitalWrite(IPIN_CS, HIGH);
 }
 
 void ads_write_reg(int reg, int val){
   //see pages 40,43 of datasheet - 
   spi_cs(false); // chip enable
-  // clearPin(SPI_PORT, SPI_CS_PIN);
-  // digitalWrite(IPIN_CS, LOW);
   spi_transfer(ADS1298::WREG | reg);
   spi_transfer(0);	// number of registers to be read/written – 1
   spi_transfer(val);
   delay_us(1);
   spi_cs(true); // chip disable
-  // setPin(SPI_PORT, SPI_CS_PIN);
-  // digitalWrite(IPIN_CS, HIGH);
 }
 
 int ads_read_reg(int reg){
   int out = 0;
   spi_cs(false); // chip enable
-  // clearPin(SPI_PORT, SPI_CS_PIN);
-  // digitalWrite(IPIN_CS, LOW);
   spi_transfer(ADS1298::RREG | reg);
   delay_us(5);
   spi_transfer(0);	// number of registers to be read/written – 1
@@ -225,8 +217,6 @@ int ads_read_reg(int reg){
   out = spi_transfer(0);
   delay_us(1);
   spi_cs(true); // chip disable
-  // setPin(SPI_PORT, SPI_CS_PIN);
-  // digitalWrite(IPIN_CS, HIGH);
   return(out);
 }
 
