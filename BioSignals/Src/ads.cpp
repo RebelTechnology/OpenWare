@@ -5,6 +5,7 @@
 // #include "delay.h"
 #include "ads1298.h"
 #include "main.h"
+#include "errorhandlers.h"
 
 
 #define ADS_CS_LO()	HAL_GPIO_WritePin(ADC_NCS_GPIO_Port, ADC_NCS_Pin, GPIO_PIN_RESET);
@@ -26,7 +27,7 @@ volatile bool ads_continuous = false;
 
 // #include "stm32f4xx_ll_iwdg.h"
 // #define KICK_WDT() LL_IWDG_ReloadCounter()
-// #define SYSTEM_US_TICKS		(SystemCoreClock / 1000000)//cycles per microsecon
+// #define SYSTEM_US_TICKS		(SystemCoreClock / 1000000)//cycles per microsecond
 #define SYSTEM_MS_TICKS		(SystemCoreClock / 1000) // cycles per millisecond
 
 void delay_us(uint32_t uSec){
@@ -180,9 +181,27 @@ int ads_read_single_sample(){
   return (spi_transfer(0) << 24) | (spi_transfer(0) << 16) | (spi_transfer(0) << 8);
 }
 
+static uint8_t ads_rx_buffer[3*(MAX_CHANNELS+1)];
+extern "C" {
+  // void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
+  // }
+  // void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
+  // }
+  void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi){
+    spi_cs(true); // chip disable
+    ads_status = (ads_rx_buffer[0]<<24) | (ads_rx_buffer[1]<<16) | (ads_rx_buffer[2]<<8);
+    for(size_t i=1; i<=MAX_CHANNELS; ++i)
+      ads_samples[i] = (ads_rx_buffer[i*3+0]<<24) | (ads_rx_buffer[i*3+1]<<16) | (ads_rx_buffer[i*3+2]<<8);
+  }
+  void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
+    error(RUNTIME_ERROR, "ADS SPI Error");
+  }
+};
+
 void ads_sample(int32_t* samples, size_t len){
   spi_cs(false); // chip enable
   // 24-bits status header plus 24 bits per channel
+
   ads_status = (uint32_t)ads_read_single_sample()>>8;
   ads_timestamp = (int)(DWT->CYCCNT / SYSTEM_MS_TICKS);
   for(size_t i=0; i<len; ++i)
@@ -190,9 +209,9 @@ void ads_sample(int32_t* samples, size_t len){
   spi_cs(true); // chip disable
 
   // extern SPI_HandleTypeDef ADS_HSPI;
-  // uint8_t rx[5*len];
-  // HAL_SPI_Receive_DMA(&ADS_HSPI, &rx, 4, ADS_SPI_TIMEOUT);
-  // return rx;
+  // while(ADS_HSPI.State != HAL_SPI_STATE_READY); // spin
+  // HAL_SPI_Receive_DMA(&ADS_HSPI, ads_rx_buffer, sizeof ads_rx_buffer);
+
 }
 
 void ads_send_command(int cmd){
