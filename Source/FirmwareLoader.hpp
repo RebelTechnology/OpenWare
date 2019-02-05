@@ -83,7 +83,7 @@ public:
 #if 0
     static uint8_t static_buffer[1024*12]; // todo remove!
     buffer = static_buffer; 
-#elif defined OWL_PRISM // required by Prism (no ext mem)
+#elif defined OWL_PRISM || defined OWL_BIOSIGNALS // required by Prism (no ext mem)
     extern char _PATCHRAM;
     buffer = (uint8_t*)&_PATCHRAM; 
 #else

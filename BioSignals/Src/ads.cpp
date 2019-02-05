@@ -15,7 +15,8 @@
 
 #define ADS_HSPI hspi1
 #define ADS_SPI_TIMEOUT 800
-#define MAX_CHANNELS 4
+#define ADS_BLOCK_CPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS*2)
+#define ADS_BLOCK_HALFCPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS)
 
 uint32_t ads_status = 0;
 int ads_timestamp;
@@ -44,7 +45,8 @@ void delay_us(uint32_t uSec){
   // }
 }
 
-int32_t ads_samples[MAX_CHANNELS];
+int32_t ads_samples[ADS_MAX_CHANNELS*ADS_BLOCKSIZE*2];
+static size_t ads_sample_pos;
 
 uint8_t spi_transfer(uint8_t tx){
   extern SPI_HandleTypeDef ADS_HSPI;
@@ -92,7 +94,7 @@ void defaultConfig(){
   // set sample rate
   ads_write_reg(ADS1298::CONFIG1, ADS1298::HIGH_RES_500_SPS | ADS1298::CONFIG1_const);
 
-  for(int i = 0; i < MAX_CHANNELS; ++i) {
+  for(int i = 0; i < ADS_MAX_CHANNELS; ++i) {
     ads_write_reg(ADS1298::CH1SET + i, ADS1298::ELECTRODE_INPUT | ADS1298::GAIN_12X); //report this channel with x12 gain
     //ads_write_reg(ADS1298::CH1SET + i, ADS1298::SHORTED); //disable this channel
   }
@@ -100,19 +102,21 @@ void defaultConfig(){
   setSTART(false);
 }
 
-void setGain(int gain){
+void ads_set_gain(int gain){
   int value = ADS1298::ELECTRODE_INPUT | gain;
-  for(int i = 0; i < MAX_CHANNELS; ++i)
+  for(int i = 0; i < ADS_MAX_CHANNELS; ++i)
     ads_write_reg(ADS1298::CH1SET + i, value);
 }
 
-void startContinuous(){
+void ads_start_continuous(){
   ads_send_command(ADS1298::RDATAC);
   ads_send_command(ADS1298::START);
   ads_continuous = true;
+  ads_sample_pos = 0;
   // setLed(0, BLUE_COLOUR);
 }
-void stopContinuous(){
+
+void ads_stop_continuous(){
   ads_send_command(ADS1298::STOP);
   ads_send_command(ADS1298::SDATAC);
   ads_continuous = false;
@@ -122,7 +126,7 @@ void stopContinuous(){
 void ads_drdy(){
     // toggleLed();
     if(ads_continuous){
-      ads_sample(ads_samples, MAX_CHANNELS);
+      ads_sample(ads_samples, ADS_MAX_CHANNELS);
       // if(doFilter)
       // 	filter();
       // if(pretty)
@@ -170,9 +174,9 @@ void ads_setup(){
   rldConfig();
   // 500sps
   ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_500_SPS | ADS1298::CONFIG1_const);
-  stopContinuous();
+  ads_stop_continuous();
   ads_status = isDRDY();
-  startContinuous();
+  // ads_start_continuous();
 }
 
 int ads_read_single_sample(){
@@ -181,7 +185,7 @@ int ads_read_single_sample(){
   return (spi_transfer(0) << 24) | (spi_transfer(0) << 16) | (spi_transfer(0) << 8);
 }
 
-static uint8_t ads_rx_buffer[3*(MAX_CHANNELS+1)];
+static uint8_t ads_rx_buffer[3*(ADS_MAX_CHANNELS+1)];
 extern "C" {
   // void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
   // }
@@ -190,8 +194,8 @@ extern "C" {
   void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi){
     spi_cs(true); // chip disable
     ads_status = (ads_rx_buffer[0]<<24) | (ads_rx_buffer[1]<<16) | (ads_rx_buffer[2]<<8);
-    for(size_t i=1; i<=MAX_CHANNELS; ++i)
-      ads_samples[i] = (ads_rx_buffer[i*3+0]<<24) | (ads_rx_buffer[i*3+1]<<16) | (ads_rx_buffer[i*3+2]<<8);
+    for(size_t i=1; i<=ADS_MAX_CHANNELS; ++i)
+      ads_samples[ads_sample_pos++] = (ads_rx_buffer[i*3+0]<<24) | (ads_rx_buffer[i*3+1]<<16) | (ads_rx_buffer[i*3+2]<<8);
   }
   void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
     error(RUNTIME_ERROR, "ADS SPI Error");
@@ -200,17 +204,24 @@ extern "C" {
 
 void ads_sample(int32_t* samples, size_t len){
   spi_cs(false); // chip enable
+  
   // 24-bits status header plus 24 bits per channel
-
   ads_status = (uint32_t)ads_read_single_sample()>>8;
   ads_timestamp = (int)(DWT->CYCCNT / SYSTEM_MS_TICKS);
   for(size_t i=0; i<len; ++i)
-    samples[i] = ads_read_single_sample();
+    samples[ads_sample_pos++] = ads_read_single_sample();
   spi_cs(true); // chip disable
 
   // extern SPI_HandleTypeDef ADS_HSPI;
   // while(ADS_HSPI.State != HAL_SPI_STATE_READY); // spin
   // HAL_SPI_Receive_DMA(&ADS_HSPI, ads_rx_buffer, sizeof ads_rx_buffer);
+
+  if(ads_sample_pos == ADS_BLOCK_HALFCPLT){
+    ads_rx_callback(ads_samples, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
+  }else if(ads_sample_pos >= ADS_BLOCK_CPLT){
+    ads_rx_callback(ads_samples+ADS_BLOCK_HALFCPLT, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
+    ads_sample_pos = 0;
+  }
 
 }
 

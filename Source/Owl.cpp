@@ -34,6 +34,10 @@
 Graphics graphics;
 #endif /* USE_SCREEN */
 
+#ifdef OWL_BIOSIGNALS
+#include "ads.h"
+#endif
+
 #if defined USE_RGB_LED
 #include "rainbow.h"
 #endif /* USE_RGB_LED */
@@ -259,47 +263,13 @@ void updateProgramSelector(uint8_t button, uint8_t led, uint8_t patch, bool valu
 }
 #endif /* OWL_EFFECTSBOX */
 
-#ifdef OWL_BIOSIGNALS
-
-#define MAX_CHANNELS 4
-
-#include "ads1298.h"
-#include "ads.h"
-int32_t samples[MAX_CHANNELS];
-
-volatile bool continuous = false;
-// volatile bool doFilter = true;
-// volatile bool pretty = false;
-void startContinuous(){
-  ads_send_command(ADS1298::RDATAC);
-  ads_send_command(ADS1298::START);
-  continuous = true;
-  setLed(0, BLUE_COLOUR);
-}
-void stopContinuous(){
-  ads_send_command(ADS1298::STOP);
-  ads_send_command(ADS1298::SDATAC);
-  continuous = false;
-  setLed(0, NO_COLOUR);
-}
-#endif
-
 extern "C" {
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
 #ifdef OWL_BIOSIGNALS
   case ADC_DRDY_Pin: {
-    // toggleLed();
-    if(continuous){
-      ads_sample(samples, MAX_CHANNELS);
-      // if(doFilter)
-      // 	filter();
-      // if(pretty)
-      // 	sendSerial();
-      // else
-      // 	sendSarcduino();
-    }    
+    ads_drdy();
   }    
 #endif
 #ifdef PUSHBUTTON_Pin
@@ -451,7 +421,12 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
-  
+
+#ifdef OWL_BIOSIGNALS
+  // ads_setup();
+  setLed(0, BLUE_COLOUR);
+#endif
+
 #ifdef OWL_PEDAL
   /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
   // if (HAL_GetREVID() == 0x1001)

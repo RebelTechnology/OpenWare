@@ -5,6 +5,9 @@
 #define HARDWARE_ID                  ALCHEMIST_HARDWARE
 #define HARDWARE_VERSION             "BioSignals"
 
+#define USE_CODEC
+#define USE_ADS1294
+
 /* #define USE_RGB_LED */
 /* #define USE_ADC */
 /* #define ADC_PERIPH hadc3 */

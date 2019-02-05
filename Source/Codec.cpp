@@ -5,7 +5,6 @@
 
 static uint16_t blocksize;
 static int32_t txbuf[CODEC_BUFFER_SIZE];
-static int32_t rxbuf[CODEC_BUFFER_SIZE];
 
 uint16_t Codec::getBlockSize(){
   return blocksize;
@@ -78,7 +77,44 @@ void Codec::setOutputGain(int8_t value){
   codec_set_gain_out(value);
 }
 
+#ifdef USE_ADS1294
+#include "ads.h"
+
+void codec_init(){
+  blocksize = ADS_BLOCKSIZE;
+  ads_setup();
+}
+
+void codec_bypass(int bypass){}
+
+void codec_set_gain_in(int8_t volume){
+  ads_set_gain(volume);
+}
+
+void codec_set_gain_out(int8_t volume){
+  ads_set_gain(volume);
+}
+
+void Codec::start(){
+  ads_start_continuous();
+}
+
+void Codec::stop(){
+  ads_stop_continuous();
+}
+
+extern "C" {
+  extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
+}
+
+void ads_rx_callback(int32_t* samples, size_t channels, size_t blocksize){
+  audioCallback(samples, txbuf, blocksize);
+}
+
+#endif
+
 #ifdef USE_WM8731
+static int32_t rxbuf[CODEC_BUFFER_SIZE];
 
 extern "C" {
   extern I2S_HandleTypeDef hi2s2;
@@ -134,6 +170,7 @@ extern "C"{
 #endif /* USE_WM8731 */
 
 #ifdef USE_CS4271
+static int32_t rxbuf[CODEC_BUFFER_SIZE];
 
 extern "C" {
 SAI_HandleTypeDef hsai_BlockA1;
