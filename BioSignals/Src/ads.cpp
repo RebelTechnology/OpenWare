@@ -188,6 +188,11 @@ void ads_sample(int32_t* samples, size_t len){
   for(size_t i=0; i<len; ++i)
     samples[i] = ads_read_single_sample();
   spi_cs(true); // chip disable
+
+  // extern SPI_HandleTypeDef ADS_HSPI;
+  // uint8_t rx[5*len];
+  // HAL_SPI_Receive_DMA(&ADS_HSPI, &rx, 4, ADS_SPI_TIMEOUT);
+  // return rx;
 }
 
 void ads_send_command(int cmd){
@@ -201,7 +206,9 @@ void ads_write_reg(int reg, int val){
   //see pages 40,43 of datasheet - 
   spi_cs(false); // chip enable
   spi_transfer(ADS1298::WREG | reg);
+  delay_us(1);
   spi_transfer(0);	// number of registers to be read/written – 1
+  delay_us(1);
   spi_transfer(val);
   delay_us(1);
   spi_cs(true); // chip disable
@@ -211,9 +218,9 @@ int ads_read_reg(int reg){
   int out = 0;
   spi_cs(false); // chip enable
   spi_transfer(ADS1298::RREG | reg);
-  delay_us(5);
+  delay_us(1);
   spi_transfer(0);	// number of registers to be read/written – 1
-  delay_us(5);
+  delay_us(1);
   out = spi_transfer(0);
   delay_us(1);
   spi_cs(true); // chip disable
