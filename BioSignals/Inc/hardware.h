@@ -7,6 +7,14 @@
 
 #define USE_CODEC
 #define USE_ADS1294
+#define USE_USB_AUDIO
+
+/* USB audio settings */
+#define AUDIO_BITS_PER_SAMPLE       16
+#define AUDIO_BYTES_PER_SAMPLE       (AUDIO_BITS_PER_SAMPLE/8)
+#define USB_AUDIO_CHANNELS 4
+#define ADC_CHANNEL_OFFSET 0
+#define ADC_RIGHTSHIFT 16
 
 /* #define USE_RGB_LED */
 /* #define USE_ADC */

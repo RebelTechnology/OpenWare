@@ -172,11 +172,12 @@ void ads_setup(){
   // Gain: 12x
   defaultConfig();
   rldConfig();
-  // 500sps
-  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_500_SPS | ADS1298::CONFIG1_const);
+  // sample rate
+  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_4k_SPS | ADS1298::CONFIG1_const);
   ads_stop_continuous();
   ads_status = isDRDY();
   // ads_start_continuous();
+  ads_set_gain(ADS1298::GAIN_8X);
 }
 
 int ads_read_single_sample(){

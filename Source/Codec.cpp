@@ -80,6 +80,55 @@ void Codec::setOutputGain(int8_t value){
 #ifdef USE_ADS1294
 #include "ads.h"
 
+#ifdef USE_USB_AUDIO
+#include "usbd_audio.h"
+#include "RingBuffer.hpp"
+#define AUDIO_RINGBUFFER_SIZE 512
+typedef int16_t audio_t;
+static audio_t audio_ringbuffer_data[AUDIO_RINGBUFFER_SIZE];
+static RingBuffer<audio_t> audio_ringbuffer(audio_ringbuffer_data, AUDIO_RINGBUFFER_SIZE);
+volatile static size_t adc_underflow = 0;
+
+void fill_buffer(uint8_t* buffer, size_t len){
+  len /= (AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS);
+  audio_t* dst = (audio_t*)buffer;
+  size_t available;
+  for(size_t i=0; i<len; ++i){
+    memcpy(dst, audio_ringbuffer.getReadHead(), ADS_MAX_CHANNELS*sizeof(audio_t));
+    available = audio_ringbuffer.getReadSpace();
+    if(available > ADS_MAX_CHANNELS)
+      audio_ringbuffer.incrementReadHead(ADS_MAX_CHANNELS);
+    else
+      adc_underflow++;
+    dst += ADS_MAX_CHANNELS;
+  }
+}
+
+void usbd_audio_gain_callback(uint8_t gain){
+  ads_set_gain(gain-24);
+}
+
+void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+  fill_buffer(haudio->buffer, AUDIO_IN_PACKET_SIZE);
+  usbd_audio_write(pdev, haudio->buffer, AUDIO_IN_PACKET_SIZE);
+}
+
+void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+ // set read head at half a ringbuffer distance from write head
+    size_t pos = audio_ringbuffer.getWritePos() / ADS_MAX_CHANNELS;
+    size_t len = audio_ringbuffer.getSize() / ADS_MAX_CHANNELS;
+    pos = (pos + len/2) % len;
+    pos *= ADS_MAX_CHANNELS;
+    audio_ringbuffer.setReadPos(pos);
+  usbd_initiate_tx(pdev, haudio);
+}
+
+void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+  usbd_initiate_tx(pdev, haudio);
+}
+
+#endif // USE_USB_AUDIO
+
 void codec_init(){
   blocksize = ADS_BLOCKSIZE;
   ads_setup();
@@ -109,9 +158,30 @@ extern "C" {
 
 void ads_rx_callback(int32_t* samples, size_t channels, size_t blocksize){
   audioCallback(samples, txbuf, blocksize);
+#ifdef USE_USB_AUDIO
+  size_t len = channels*blocksize;
+  audio_t* dst;
+  for(size_t i=0; i<len; i+=ADS_MAX_CHANNELS){
+    dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame
+    // transfer up to 4 channels adc data into ringbuffer
+#if ADS_MAX_CHANNELS > 0
+    *dst++ = samples[i+ADC_CHANNEL_OFFSET+0]>>ADC_RIGHTSHIFT;
+#if ADS_MAX_CHANNELS > 1
+    *dst++ = samples[i+ADC_CHANNEL_OFFSET+1]>>ADC_RIGHTSHIFT;
+#if ADS_MAX_CHANNELS > 2
+    *dst++ = samples[i+ADC_CHANNEL_OFFSET+2]>>ADC_RIGHTSHIFT;
+#if ADS_MAX_CHANNELS > 3
+    *dst++ = samples[i+ADC_CHANNEL_OFFSET+3]>>ADC_RIGHTSHIFT;
+#endif
+#endif
+#endif
+#endif
+    audio_ringbuffer.incrementWriteHead(ADS_MAX_CHANNELS);
+  }
+#endif
 }
 
-#endif
+#endif // USE_ADS1294
 
 #ifdef USE_WM8731
 static int32_t rxbuf[CODEC_BUFFER_SIZE];
