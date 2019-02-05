@@ -17,6 +17,7 @@
 #define ADS_SPI_TIMEOUT 800
 #define ADS_BLOCK_CPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS*2)
 #define ADS_BLOCK_HALFCPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS)
+// #define USE_ADS_DMA // stops DRDY after 6 times
 
 uint32_t ads_status = 0;
 int ads_timestamp;
@@ -207,15 +208,18 @@ void ads_sample(int32_t* samples, size_t len){
   spi_cs(false); // chip enable
   
   // 24-bits status header plus 24 bits per channel
+
+#ifdef USE_ADS_DMA
+  extern SPI_HandleTypeDef ADS_HSPI;
+  while(ADS_HSPI.State != HAL_SPI_STATE_READY); // spin
+  HAL_SPI_Receive_DMA(&ADS_HSPI, ads_rx_buffer, sizeof ads_rx_buffer);
+#else
   ads_status = (uint32_t)ads_read_single_sample()>>8;
   ads_timestamp = (int)(DWT->CYCCNT / SYSTEM_MS_TICKS);
   for(size_t i=0; i<len; ++i)
     samples[ads_sample_pos++] = ads_read_single_sample();
   spi_cs(true); // chip disable
-
-  // extern SPI_HandleTypeDef ADS_HSPI;
-  // while(ADS_HSPI.State != HAL_SPI_STATE_READY); // spin
-  // HAL_SPI_Receive_DMA(&ADS_HSPI, ads_rx_buffer, sizeof ads_rx_buffer);
+#endif
 
   if(ads_sample_pos == ADS_BLOCK_HALFCPLT){
     ads_rx_callback(ads_samples, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
