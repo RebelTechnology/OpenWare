@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : usbd_desc.h
+  * @file           : usbd_desc.c
   * @version        : v1.0_Cube
   * @brief          : Header for usbd_conf.c file.
   ******************************************************************************
@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -47,8 +47,8 @@
   ******************************************************************************
   */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USBD_DESC__H__
-#define __USBD_DESC__H__
+#ifndef __USBD_DESC__C__
+#define __USBD_DESC__C__
 
 #ifdef __cplusplus
  extern "C" {
@@ -150,6 +150,6 @@ extern USBD_DescriptorsTypeDef HS_Desc;
 }
 #endif
 
-#endif /* __USBD_DESC__H__ */
+#endif /* __USBD_DESC__C__ */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
