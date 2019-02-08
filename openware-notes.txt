@@ -194,4 +194,7 @@ make PLATFORM=Alchemist CONFIG=Release clean all
 
 -----------------------------------------------------------------
 
+FirmwareSender -in Build/Alchemist.bin -flash `crc32 Build/Alchemist.bin` -save Alchemist.syx
+FirmwareSender -in Build/Wizard.bin -flash `crc32 Build/Wizard.bin` -save Wizard.syx
+
 -----------------------------------------------------------------
