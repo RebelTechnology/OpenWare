@@ -922,6 +922,10 @@ void jump_to_bootloader(void){
 
 void device_reset(){
   *OWLBOOT_ADDRESS = 0;
+#ifdef USE_BKPSRAM
+  extern RTC_HandleTypeDef hrtc;
+  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
+#endif
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
