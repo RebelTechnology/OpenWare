@@ -6,7 +6,7 @@
 #include "ads1298.h"
 #include "main.h"
 #include "errorhandlers.h"
-
+#include <string.h>
 
 #define ADS_CS_LO()	HAL_GPIO_WritePin(ADC_NCS_GPIO_Port, ADC_NCS_Pin, GPIO_PIN_RESET);
 #define ADS_CS_HI()	HAL_GPIO_WritePin(ADC_NCS_GPIO_Port, ADC_NCS_Pin, GPIO_PIN_SET);
@@ -14,10 +14,11 @@
 #define ADS_RESET_HI()	HAL_GPIO_WritePin(ADC_RESET_GPIO_Port, ADC_RESET_Pin, GPIO_PIN_SET);
 
 #define ADS_HSPI hspi1
+extern SPI_HandleTypeDef ADS_HSPI;
 #define ADS_SPI_TIMEOUT 800
 #define ADS_BLOCK_CPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS*2)
 #define ADS_BLOCK_HALFCPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS)
-// #define USE_ADS_DMA // stops DRDY after 6 times
+#define USE_ADS_DMA // stops DRDY after 6 times
 
 uint32_t ads_status = 0;
 int ads_timestamp;
@@ -50,7 +51,6 @@ int32_t ads_samples[ADS_MAX_CHANNELS*ADS_BLOCKSIZE*2];
 static size_t ads_sample_pos;
 
 uint8_t spi_transfer(uint8_t tx){
-  extern SPI_HandleTypeDef ADS_HSPI;
   uint8_t rx;
   HAL_SPI_TransmitReceive(&ADS_HSPI, &tx, &rx, 1, ADS_SPI_TIMEOUT);
   return rx;
@@ -187,17 +187,31 @@ int ads_read_single_sample(){
   return (spi_transfer(0) << 24) | (spi_transfer(0) << 16) | (spi_transfer(0) << 8);
 }
 
+// 24-bits status header plus 24 bits per channel
 static uint8_t ads_rx_buffer[3*(ADS_MAX_CHANNELS+1)];
+void ads_process_samples(){
+  ads_status = (ads_rx_buffer[0]<<24) | (ads_rx_buffer[1]<<16) | (ads_rx_buffer[2]<<8);
+  for(size_t i=1; i<=ADS_MAX_CHANNELS; ++i)
+    ads_samples[ads_sample_pos++] = (ads_rx_buffer[i*3+0]<<24) | (ads_rx_buffer[i*3+1]<<16) | (ads_rx_buffer[i*3+2]<<8);
+
+  if(ads_sample_pos == ADS_BLOCK_HALFCPLT){
+    ads_rx_callback(ads_samples, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
+  }else if(ads_sample_pos == ADS_BLOCK_CPLT){
+    ads_rx_callback(ads_samples+ADS_BLOCK_HALFCPLT, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
+    ads_sample_pos = 0;
+  }
+}
+
 extern "C" {
   // void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
   // }
-  // void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
-  // }
+  void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
+    spi_cs(true); // chip disable
+    ads_process_samples();
+  }
   void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi){
     spi_cs(true); // chip disable
-    ads_status = (ads_rx_buffer[0]<<24) | (ads_rx_buffer[1]<<16) | (ads_rx_buffer[2]<<8);
-    for(size_t i=1; i<=ADS_MAX_CHANNELS; ++i)
-      ads_samples[ads_sample_pos++] = (ads_rx_buffer[i*3+0]<<24) | (ads_rx_buffer[i*3+1]<<16) | (ads_rx_buffer[i*3+2]<<8);
+    ads_process_samples();
   }
   void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
     error(RUNTIME_ERROR, "ADS SPI Error");
@@ -207,26 +221,21 @@ extern "C" {
 void ads_sample(int32_t* samples, size_t len){
   spi_cs(false); // chip enable
   
-  // 24-bits status header plus 24 bits per channel
+  memset(ads_rx_buffer, 0, sizeof ads_rx_buffer);
 
 #ifdef USE_ADS_DMA
-  extern SPI_HandleTypeDef ADS_HSPI;
   while(ADS_HSPI.State != HAL_SPI_STATE_READY); // spin
-  HAL_SPI_Receive_DMA(&ADS_HSPI, ads_rx_buffer, sizeof ads_rx_buffer);
+  HAL_SPI_TransmitReceive_DMA(&ADS_HSPI, ads_rx_buffer, ads_rx_buffer, sizeof ads_rx_buffer);
 #else
-  ads_status = (uint32_t)ads_read_single_sample()>>8;
-  ads_timestamp = (int)(DWT->CYCCNT / SYSTEM_MS_TICKS);
-  for(size_t i=0; i<len; ++i)
-    samples[ads_sample_pos++] = ads_read_single_sample();
+  HAL_SPI_TransmitReceive(&ADS_HSPI, ads_rx_buffer, ads_rx_buffer, sizeof ads_rx_buffer, ADS_SPI_TIMEOUT);
+  ads_process_samples();
+  
+  // ads_status = (uint32_t)ads_read_single_sample()>>8;
+  // ads_timestamp = (int)(DWT->CYCCNT / SYSTEM_MS_TICKS);
+  // for(size_t i=0; i<len; ++i)
+  //   samples[ads_sample_pos++] = ads_read_single_sample();
   spi_cs(true); // chip disable
 #endif
-
-  if(ads_sample_pos == ADS_BLOCK_HALFCPLT){
-    ads_rx_callback(ads_samples, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
-  }else if(ads_sample_pos >= ADS_BLOCK_CPLT){
-    ads_rx_callback(ads_samples+ADS_BLOCK_HALFCPLT, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
-    ads_sample_pos = 0;
-  }
 
 }
 
