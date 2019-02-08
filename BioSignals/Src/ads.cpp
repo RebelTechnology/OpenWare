@@ -171,13 +171,14 @@ void ads_setup(){
   // Right leg drive: On
   // Gain: 12x
   defaultConfig();
-  rldConfig();
+  if(ads_status == 0xfff)
+    rldConfig();
   // sample rate
-  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_4k_SPS | ADS1298::CONFIG1_const);
+  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_16k_SPS | ADS1298::CONFIG1_const);
   ads_stop_continuous();
   ads_status = isDRDY();
   // ads_start_continuous();
-  ads_set_gain(ADS1298::GAIN_8X);
+  ads_set_gain(ADS1298::GAIN_12X);
 }
 
 int ads_read_single_sample(){
