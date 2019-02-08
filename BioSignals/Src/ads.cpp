@@ -18,7 +18,7 @@ extern SPI_HandleTypeDef ADS_HSPI;
 #define ADS_SPI_TIMEOUT 800
 #define ADS_BLOCK_CPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS*2)
 #define ADS_BLOCK_HALFCPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS)
-#define USE_ADS_DMA // stops DRDY after 6 times
+#define USE_ADS_DMA
 
 uint32_t ads_status = 0;
 int ads_timestamp;
@@ -30,11 +30,11 @@ volatile bool ads_continuous = false;
 
 // #include "stm32f4xx_ll_iwdg.h"
 // #define KICK_WDT() LL_IWDG_ReloadCounter()
-// #define SYSTEM_US_TICKS		(SystemCoreClock / 1000000)//cycles per microsecond
+#define SYSTEM_US_TICKS		(SystemCoreClock / 1000000)//cycles per microsecond
 #define SYSTEM_MS_TICKS		(SystemCoreClock / 1000) // cycles per millisecond
 
 void delay_us(uint32_t uSec){
-  uSec += 10;
+  uSec *= SYSTEM_US_TICKS;
   while(uSec--)
     asm("NOP");
   // volatile uint32_t DWT_START = DWT->CYCCNT;
@@ -164,7 +164,6 @@ void ads_setup(){
   default: 
     ads_maxChannels = 0;
   }
-
   // default config:
   // Continuous sampling: Off
   // Sampling rate: 500sps
@@ -189,11 +188,24 @@ int ads_read_single_sample(){
 
 // 24-bits status header plus 24 bits per channel
 static uint8_t ads_rx_buffer[3*(ADS_MAX_CHANNELS+1)];
+
+// #include "RingBuffer.hpp"
+// typedef int16_t audio_t;
+// extern RingBuffer<audio_t> audio_ringbuffer;
+// void ads_process_samples(){
+//   audio_t* dst = audio_ringbuffer.getWriteHead();
+//   // transfer 4 channels 16 bit adc data into ringbuffer
+//   *dst++ = (ads_rx_buffer[1*3+0]<<8) | (ads_rx_buffer[1*3+1]);
+//   *dst++ = (ads_rx_buffer[2*3+0]<<8) | (ads_rx_buffer[2*3+1]);
+//   *dst++ = (ads_rx_buffer[3*3+0]<<8) | (ads_rx_buffer[3*3+1]);
+//   *dst++ = (ads_rx_buffer[4*3+0]<<8) | (ads_rx_buffer[4*3+1]);
+//   audio_ringbuffer.incrementWriteHead(4);
+// }
+
 void ads_process_samples(){
   ads_status = (ads_rx_buffer[0]<<24) | (ads_rx_buffer[1]<<16) | (ads_rx_buffer[2]<<8);
   for(size_t i=1; i<=ADS_MAX_CHANNELS; ++i)
     ads_samples[ads_sample_pos++] = (ads_rx_buffer[i*3+0]<<24) | (ads_rx_buffer[i*3+1]<<16) | (ads_rx_buffer[i*3+2]<<8);
-
   if(ads_sample_pos == ADS_BLOCK_HALFCPLT){
     ads_rx_callback(ads_samples, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
   }else if(ads_sample_pos == ADS_BLOCK_CPLT){
@@ -222,21 +234,19 @@ void ads_sample(int32_t* samples, size_t len){
   spi_cs(false); // chip enable
   
   memset(ads_rx_buffer, 0, sizeof ads_rx_buffer);
-
 #ifdef USE_ADS_DMA
   while(ADS_HSPI.State != HAL_SPI_STATE_READY); // spin
+  // if(ADS_HSPI.State == HAL_SPI_STATE_READY)
   HAL_SPI_TransmitReceive_DMA(&ADS_HSPI, ads_rx_buffer, ads_rx_buffer, sizeof ads_rx_buffer);
 #else
   HAL_SPI_TransmitReceive(&ADS_HSPI, ads_rx_buffer, ads_rx_buffer, sizeof ads_rx_buffer, ADS_SPI_TIMEOUT);
   ads_process_samples();
-  
   // ads_status = (uint32_t)ads_read_single_sample()>>8;
   // ads_timestamp = (int)(DWT->CYCCNT / SYSTEM_MS_TICKS);
   // for(size_t i=0; i<len; ++i)
   //   samples[ads_sample_pos++] = ads_read_single_sample();
   spi_cs(true); // chip disable
 #endif
-
 }
 
 void ads_send_command(int cmd){
@@ -250,11 +260,11 @@ void ads_write_reg(int reg, int val){
   //see pages 40,43 of datasheet - 
   spi_cs(false); // chip enable
   spi_transfer(ADS1298::WREG | reg);
-  delay_us(1);
+  delay_us(2);
   spi_transfer(0);	// number of registers to be read/written – 1
-  delay_us(1);
+  delay_us(2);
   spi_transfer(val);
-  delay_us(1);
+  delay_us(2);
   spi_cs(true); // chip disable
 }
 
@@ -262,11 +272,11 @@ int ads_read_reg(int reg){
   int out = 0;
   spi_cs(false); // chip enable
   spi_transfer(ADS1298::RREG | reg);
-  delay_us(1);
+  delay_us(2);
   spi_transfer(0);	// number of registers to be read/written – 1
-  delay_us(1);
+  delay_us(2);
   out = spi_transfer(0);
-  delay_us(1);
+  delay_us(2);
   spi_cs(true); // chip disable
   return(out);
 }
