@@ -12,7 +12,7 @@ SPI_HandleTypeDef* Encoders_SPIConfig;
 
 static int16_t rgENC_Values[7];
 
-static uint16_t NOP_CNT = 200;
+static uint16_t NOP_CNT = 250; // doesn't work in Release build
 
 //_____ Functions _____________________________________________________________________________________________________
 // Port and Chip Setup
