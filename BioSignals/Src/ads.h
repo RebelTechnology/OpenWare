@@ -1,11 +1,10 @@
 #ifndef __ADS_H
 #define __ADS_H
 
+#include "device.h"
+
 #include <stdint.h>
 #include <stddef.h>
-
-#define ADS_MAX_CHANNELS 4
-#define ADS_BLOCKSIZE 256
 
 #ifdef __cplusplus
  extern "C" {

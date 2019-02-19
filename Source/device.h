@@ -24,7 +24,7 @@
 #define DIGITAL_BUS_FORWARD_MIDI     0
 #endif
 #define USE_MIDI_CALLBACK
-#define MIDI_OUTPUT_BUFFER_SIZE      1024
+#define MIDI_OUTPUT_BUFFER_SIZE      512
 #define MIDI_INPUT_BUFFER_SIZE       256
 
 #ifndef OWLBOOT_MAGIC
@@ -54,7 +54,7 @@
 #define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT/8)
 #endif
 
-#define CODEC_BLOCKSIZE              256
+#define CODEC_BLOCKSIZE              128
 #define CODEC_BUFFER_SIZE            (4*CODEC_BLOCKSIZE)
 
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
@@ -82,8 +82,8 @@
 #define AUDIO_BITDEPTH               24    /* bits per sample */
 #define AUDIO_DATAFORMAT             24
 #define AUDIO_CODEC_MASTER           true
-#define AUDIO_CHANNELS               2
-#define AUDIO_SAMPLINGRATE           48000
+#define AUDIO_CHANNELS               4
+#define AUDIO_SAMPLINGRATE           16000
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 

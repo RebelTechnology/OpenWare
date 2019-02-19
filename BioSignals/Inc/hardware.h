@@ -9,12 +9,15 @@
 #define USE_ADS1294
 #define USE_USB_AUDIO
 
+#define ADS_MAX_CHANNELS 4
+#define ADS_BLOCKSIZE               CODEC_BLOCKSIZE
+
 /* USB audio settings */
-#define AUDIO_BITS_PER_SAMPLE       16
+#define AUDIO_BITS_PER_SAMPLE        32
 #define AUDIO_BYTES_PER_SAMPLE       (AUDIO_BITS_PER_SAMPLE/8)
 #define USB_AUDIO_CHANNELS 4
 #define ADC_CHANNEL_OFFSET 0
-#define ADC_RIGHTSHIFT 16
+#define ADC_RIGHTSHIFT 0
 
 /* #define USE_RGB_LED */
 /* #define USE_ADC */
@@ -30,5 +33,5 @@
 #define USE_USBD_HS
 
 #define NOF_ADC_VALUES               0
-#define NOF_PARAMETERS               40
+#define NOF_PARAMETERS               5
 #define NOF_BUTTONS                  (2+1)

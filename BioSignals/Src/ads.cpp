@@ -77,8 +77,8 @@ void rldConfig(){
   // ads_write_reg(ADS1298::CONFIG3, ADS1298::RLDREF_INT | ADS1298::PD_RLD | ADS1298::PD_REFBUF | ADS1298::VREF_4V | ADS1298::CONFIG3_const);
   ads_write_reg(ADS1298::CONFIG3, ADS1298::PD_REFBUF | ADS1298::CONFIG3_const | ADS1298::RLDREF_INT | ADS1298::PD_RLD); // use default 2.4v reference with buffer enabled
   HAL_Delay(150);
-  ads_write_reg(ADS1298::RLD_SENSP, 0x01); // only use channel IN1P and IN1N
-  ads_write_reg(ADS1298::RLD_SENSN, 0x01); // for the RLD Measurement
+  // ads_write_reg(ADS1298::RLD_SENSP, 0x01); // only use channel IN1P and IN1N
+  // ads_write_reg(ADS1298::RLD_SENSN, 0x01); // for the RLD Measurement
 }
 
 void defaultConfig(){
@@ -171,14 +171,15 @@ void ads_setup(){
   // Right leg drive: On
   // Gain: 12x
   defaultConfig();
-  if(ads_status == 0xfff)
+  // if(ads_status == 0xfff)
     rldConfig();
   // sample rate
   ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_16k_SPS | ADS1298::CONFIG1_const);
   ads_stop_continuous();
   ads_status = isDRDY();
   // ads_start_continuous();
-  ads_set_gain(ADS1298::GAIN_12X);
+  // ads_set_gain(ADS1298::GAIN_12X);
+  ads_set_gain(ADS1298::GAIN_4X);
 }
 
 int ads_read_single_sample(){

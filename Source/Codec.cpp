@@ -83,8 +83,8 @@ void Codec::setOutputGain(int8_t value){
 #ifdef USE_USB_AUDIO
 #include "usbd_audio.h"
 #include "RingBuffer.hpp"
-#define AUDIO_RINGBUFFER_SIZE 2048
-typedef int16_t audio_t;
+#define AUDIO_RINGBUFFER_SIZE (CODEC_BLOCKSIZE*ADS_MAX_CHANNELS*3)
+typedef int32_t audio_t;
 static audio_t audio_ringbuffer_data[AUDIO_RINGBUFFER_SIZE];
 RingBuffer<audio_t> audio_ringbuffer(audio_ringbuffer_data, AUDIO_RINGBUFFER_SIZE);
 volatile static size_t adc_underflow = 0;
