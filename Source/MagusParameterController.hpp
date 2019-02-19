@@ -120,7 +120,7 @@ public:
 #endif
     screen.setTextSize(1);
     screen.print(x, y, names[pid]);
-    // 6px high by up to 128px long rectangle
+    // 6px high by up to 64px long rectangle
     y -= 7;
     x += 64;
     screen.drawRectangle(x, y, max(1, min(64, parameters[pid]/64)), 6, WHITE);
@@ -414,6 +414,7 @@ public:
 	break;
       case VOLUME:
 	settings.audio_output_gain = selectedPid[1];
+	controlMode = EXIT;
 	break;
       default:
 	break;
@@ -454,6 +455,8 @@ public:
     int16_t value = data[2];
     if(displayMode == CONTROL){
       selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
+      if(pressed&0x3c) // exit status mode if any other encoder is pressed
+	controlMode = EXIT;	
       // selectControlMode(value, pressed&(1<<1));
       // use delta value from encoder 0 top left, store in selectedPid[1]
       int16_t delta = data[1] - encoders[0];
