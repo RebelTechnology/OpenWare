@@ -18,7 +18,7 @@ static uint16_t NOP_CNT = 250; // doesn't work in Release build
 // Port and Chip Setup
 void Encoders_readAll(void)
 { 
-	uint16_t x  = NOP_CNT;
+	volatile uint16_t x  = NOP_CNT;
 	
 	pbarCS(0);
 	while(--x){__NOP();} // TODO: microsecond delay using CYCCNT
@@ -29,7 +29,7 @@ void Encoders_readAll(void)
 
 void Encoders_readSwitches(void)
 { 
-	uint16_t x  = NOP_CNT;
+	volatile uint16_t x  = NOP_CNT;
 	
 	pbarCS(0);
 	while(--x){__NOP();}
