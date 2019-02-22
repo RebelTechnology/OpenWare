@@ -170,13 +170,12 @@ void kx122_drdy(){
 	
 #ifdef SPI_POLL
 #ifdef SPI_TR_FUNCT
-  HAL_SPI_TransmitReceive(&KX122_HSPI, kx122_buffer+1, kx122_buffer+1, 7, 10);
+  HAL_SPI_TransmitReceive(&KX122_HSPI, kx122_buffer, kx122_buffer, 7, 10);
 #else
   HAL_SPI_Transmit(&KX122_HSPI, kx122_buffer+1,   1, 1);
   HAL_SPI_Receive(&KX122_HSPI,  kx122_buffer+2, 6, 1);
-#endif	
-  ACCEL_CS_HI();	
-  kx122_rx_callback(kx122_buffer, 3);
+#endif
+  kx122_cplt();
 #else
 #ifdef SPI_TR_FUNCT
   HAL_SPI_TransmitReceive_IT(&KX122_HSPI, kx122_buffer, kx122_buffer, 7);
