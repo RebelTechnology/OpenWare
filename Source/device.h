@@ -54,7 +54,7 @@
 #define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT/8)
 #endif
 
-#define CODEC_BLOCKSIZE              128
+#define CODEC_BLOCKSIZE              32
 #define CODEC_BUFFER_SIZE            (4*CODEC_BLOCKSIZE)
 
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6

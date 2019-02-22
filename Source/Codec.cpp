@@ -83,11 +83,16 @@ void Codec::setOutputGain(int8_t value){
 #ifdef USE_USB_AUDIO
 #include "usbd_audio.h"
 #include "RingBuffer.hpp"
-#define AUDIO_RINGBUFFER_SIZE (CODEC_BLOCKSIZE*ADS_MAX_CHANNELS*3)
 typedef int32_t audio_t;
 static audio_t audio_ringbuffer_data[AUDIO_RINGBUFFER_SIZE];
 RingBuffer<audio_t> audio_ringbuffer(audio_ringbuffer_data, AUDIO_RINGBUFFER_SIZE);
 volatile static size_t adc_underflow = 0;
+
+#ifdef USE_KX122
+#include "kx122.h"
+static audio_t kx122_ringbuffer_data[KX122_RINGBUFFER_SIZE];
+RingBuffer<audio_t> kx122_ringbuffer(kx122_ringbuffer_data, AUDIO_RINGBUFFER_SIZE);
+#endif
 
 void fill_buffer(uint8_t* buffer, size_t len){
   len /= (AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS);
@@ -154,7 +159,32 @@ void Codec::stop(){
 
 extern "C" {
   extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
+  extern void kx122_rx_callback(int16_t* data, size_t len);
 }
+
+#ifdef USE_KX122
+void kx122_rx_callback(int16_t* data, size_t len){
+  len /= KX122_TOTAL_CHANNELS;
+  audio_t* dst;
+  for(size_t i=0; i<len; i++){
+    // transfer 3 channels of accelerometer data into ringbuffer
+    dst = kx122_ringbuffer.getWriteHead();
+#if KX122_ACTIVE_CHANNELS > 0
+    *dst++ = (*data++) << KX122_LEFTSHIFT;
+#if KX122_ACTIVE_CHANNELS > 1
+    *dst++ = (*data++) << KX122_LEFTSHIFT;
+#if KX122_ACTIVE_CHANNELS > 2
+    *dst++ = (*data++) << KX122_LEFTSHIFT;
+#endif
+#endif
+#endif
+    if(kx122_ringbuffer.getWriteSpace() >= KX122_ACTIVE_CHANNELS)
+      kx122_ringbuffer.incrementWriteHead(KX122_ACTIVE_CHANNELS);
+    // else
+    //   kx122_overflow++;
+  }  
+}
+#endif
 
 void ads_rx_callback(int32_t* samples, size_t channels, size_t blocksize){
   audioCallback(samples, txbuf, blocksize);
@@ -176,10 +206,61 @@ void ads_rx_callback(int32_t* samples, size_t channels, size_t blocksize){
 #endif
 #endif
 #endif
-    audio_ringbuffer.incrementWriteHead(ADS_MAX_CHANNELS);
+
+#ifdef USE_KX122
+    // add 3ch accelerometer data
+    size_t available = kx122_ringbuffer.getReadSpace();
+    if(available > KX122_RINGBUFFER_OVER_LIMIT){
+      // too many frames in kx122_ringbuffer
+      memcpy(dst, kx122_ringbuffer.getReadHead(), KX122_ACTIVE_CHANNELS*sizeof(audio_t));
+      dst += KX122_TOTAL_CHANNELS;
+      kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS*2); // skip a frame
+      // kx122_overflow++;
+    }else{
+      memcpy(dst, kx122_ringbuffer.getReadHead(), KX122_ACTIVE_CHANNELS*sizeof(audio_t));
+      dst += KX122_TOTAL_CHANNELS;
+      kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS);
+      if(available >= KX122_RINGBUFFER_UNDER_LIMIT){
+	kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS); // normal increment
+      }else{
+	// not enough frames in kx122_ringbuffer
+	// don't increment read head
+	// kx122_underflow++;
+      }
+    }
+#endif
+    audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
   }
 #endif
 }
+
+extern "C" {
+  // void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
+  // }
+  extern SPI_HandleTypeDef ADS_HSPI;
+  extern SPI_HandleTypeDef KX122_HSPI;
+  void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
+    if(hspi == &ADS_HSPI)
+      ads_cplt();
+    else if(hspi == &KX122_HSPI)
+      kx122_cplt();
+  }
+  void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi){
+    if(hspi == &ADS_HSPI)
+      ads_cplt();
+    else if(hspi == &KX122_HSPI)
+      kx122_cplt();
+  }
+  void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
+    if(hspi == &ADS_HSPI)
+      error(RUNTIME_ERROR, "ADS SPI Error");
+    else if(hspi == &KX122_HSPI)
+      error(RUNTIME_ERROR, "KX122 SPI Error");
+    else
+      error(RUNTIME_ERROR, "SPI Error");
+  }
+
+};
 
 #endif // USE_ADS1294
 

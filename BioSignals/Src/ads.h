@@ -17,6 +17,7 @@ int ads_read_reg(int reg);
 int ads_read_single_sample();
 void ads_sample(int32_t* samples, size_t len);
 void ads_drdy();
+void ads_cplt();
 
 void ads_set_gain(int gain);
 void ads_start_continuous();

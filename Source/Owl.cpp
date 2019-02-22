@@ -36,6 +36,7 @@ Graphics graphics;
 
 #ifdef OWL_BIOSIGNALS
 #include "ads.h"
+#include "kx122.h"
 #endif
 
 #if defined USE_RGB_LED
@@ -270,7 +271,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 #ifdef OWL_BIOSIGNALS
   case ADC_DRDY_Pin: {
     ads_drdy();
-  }    
+  }
+  case ACC_INT1_Pin: {
+    kx122_drdy();
+  }
 #endif
 #ifdef PUSHBUTTON_Pin
   case PUSHBUTTON_Pin: {
