@@ -179,7 +179,7 @@ void ads_setup(){
   ads_status = isDRDY();
   // ads_start_continuous();
   // ads_set_gain(ADS1298::GAIN_12X);
-  ads_set_gain(ADS1298::GAIN_4X);
+  ads_set_gain(ADS1298::GAIN_12X);
 }
 
 int ads_read_single_sample(){
