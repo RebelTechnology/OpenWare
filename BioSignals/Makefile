@@ -21,3 +21,6 @@ OBJS += $(OBJS_UART)
 OBJS += $(OBJS_I2S)
 
 include $(OPENWARE)/Hardware/f4.mk
+
+flash:
+	openocd -f openocd.cfg -c "program Build/$(PROJECT).elf verify reset exit"
