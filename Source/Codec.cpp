@@ -99,13 +99,13 @@ void fill_buffer(uint8_t* buffer, size_t len){
   audio_t* dst = (audio_t*)buffer;
   size_t available;
   for(size_t i=0; i<len; ++i){
-    memcpy(dst, audio_ringbuffer.getReadHead(), ADS_MAX_CHANNELS*sizeof(audio_t));
+    memcpy(dst, audio_ringbuffer.getReadHead(), USB_AUDIO_CHANNELS*sizeof(audio_t));
     available = audio_ringbuffer.getReadSpace();
-    if(available > ADS_MAX_CHANNELS)
-      audio_ringbuffer.incrementReadHead(ADS_MAX_CHANNELS);
+    if(available > USB_AUDIO_CHANNELS)
+      audio_ringbuffer.incrementReadHead(USB_AUDIO_CHANNELS);
     else
       adc_underflow++;
-    dst += ADS_MAX_CHANNELS;
+    dst += USB_AUDIO_CHANNELS;
   }
 }
 
@@ -119,12 +119,12 @@ void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio
 }
 
 void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
- // set read head at half a ringbuffer distance from write head
-    size_t pos = audio_ringbuffer.getWritePos() / ADS_MAX_CHANNELS;
-    size_t len = audio_ringbuffer.getSize() / ADS_MAX_CHANNELS;
-    pos = (pos + len/2) % len;
-    pos *= ADS_MAX_CHANNELS;
-    audio_ringbuffer.setReadPos(pos);
+  // set read head at half a ringbuffer distance from write head
+  size_t pos = audio_ringbuffer.getWritePos() / USB_AUDIO_CHANNELS;
+  size_t len = audio_ringbuffer.getSize() / USB_AUDIO_CHANNELS;
+  pos = (pos + len/2) % len;
+  pos *= USB_AUDIO_CHANNELS;
+  audio_ringbuffer.setReadPos(pos);
   usbd_initiate_tx(pdev, haudio);
 }
 
@@ -138,7 +138,7 @@ void codec_init(){
   blocksize = ADS_BLOCKSIZE;
   ads_setup();
 #ifdef USE_KX122
-  kx122_init();
+  kx122_setup();
 #endif
 }
 
@@ -162,7 +162,9 @@ void Codec::stop(){
 
 extern "C" {
   extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
+#ifdef USE_KX122
   extern void kx122_rx_callback(int16_t* data, size_t len);
+#endif
 }
 
 #ifdef USE_KX122
@@ -239,24 +241,32 @@ extern "C" {
   // void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
   // }
   extern SPI_HandleTypeDef ADS_HSPI;
+#ifdef USE_KX122
   extern SPI_HandleTypeDef KX122_HSPI;
+#endif
   void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
     if(hspi == &ADS_HSPI)
       ads_cplt();
+#ifdef USE_KX122
     else if(hspi == &KX122_HSPI)
       kx122_cplt();
+#endif
   }
   void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi){
     if(hspi == &ADS_HSPI)
       ads_cplt();
+#ifdef USE_KX122
     else if(hspi == &KX122_HSPI)
       kx122_cplt();
+#endif
   }
   void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
     if(hspi == &ADS_HSPI)
       error(RUNTIME_ERROR, "ADS SPI Error");
+#ifdef USE_KX122
     else if(hspi == &KX122_HSPI)
       error(RUNTIME_ERROR, "KX122 SPI Error");
+#endif
     else
       error(RUNTIME_ERROR, "SPI Error");
   }
