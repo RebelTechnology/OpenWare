@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-  void kx122_init();
+  void kx122_setup();
   void kx122_rx_callback(int16_t* data, size_t len);
   void kx122_set_range(uint8_t range);
   void kx122_drdy();

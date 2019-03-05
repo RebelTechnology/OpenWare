@@ -79,7 +79,7 @@ static void KX122_setReg(uint8_t address, uint8_t data)
   ACCEL_CS_HI();
 }
 
-void kx122_init(void)
+void kx122_setup(void)
 {   
   // Check if accelerometer is present
   if(KX122_readReg(REG_COTR) == COTR){

@@ -27,6 +27,12 @@ volatile bool ads_continuous = false;
 // volatile bool doFilter = true;
 // volatile bool pretty = false;
 
+int32_t ads_samples[ADS_MAX_CHANNELS*ADS_BLOCKSIZE*2] CCM;
+static size_t ads_sample_pos;
+
+// 24-bits status header plus 24 bits per channel used for DMA
+static uint8_t ads_rx_buffer[3*(ADS_MAX_CHANNELS+1)];
+
 // #include "stm32f4xx_ll_iwdg.h"
 // #define KICK_WDT() LL_IWDG_ReloadCounter()
 #define SYSTEM_US_TICKS		(SystemCoreClock / 1000000)//cycles per microsecond
@@ -45,9 +51,6 @@ void delay_us(uint32_t uSec){
   //   KICK_WDT();
   // }
 }
-
-int32_t ads_samples[ADS_MAX_CHANNELS*ADS_BLOCKSIZE*2];
-static size_t ads_sample_pos;
 
 uint8_t spi_transfer(uint8_t tx){
   uint8_t rx;
@@ -173,9 +176,6 @@ int ads_read_single_sample(){
   // convert 24bit to 32bit signed
   return (spi_transfer(0) << 24) | (spi_transfer(0) << 16) | (spi_transfer(0) << 8);
 }
-
-// 24-bits status header plus 24 bits per channel
-static uint8_t ads_rx_buffer[3*(ADS_MAX_CHANNELS+1)];
 
 // #include "RingBuffer.hpp"
 // typedef int16_t audio_t;
