@@ -427,7 +427,6 @@ static TickType_t xFrequency;
 void setup(){
 
 #ifdef OWL_BIOSIGNALS
-  // ads_setup();
   setLed(0, BLUE_COLOUR);
 #endif
 

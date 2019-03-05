@@ -13,7 +13,6 @@
 #define ADS_RESET_LO()	HAL_GPIO_WritePin(ADC_RESET_GPIO_Port, ADC_RESET_Pin, GPIO_PIN_RESET);
 #define ADS_RESET_HI()	HAL_GPIO_WritePin(ADC_RESET_GPIO_Port, ADC_RESET_Pin, GPIO_PIN_SET);
 
-#define ADS_HSPI hspi1
 extern SPI_HandleTypeDef ADS_HSPI;
 #define ADS_SPI_TIMEOUT 800
 #define ADS_BLOCK_CPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS*2)
@@ -124,19 +123,6 @@ void ads_stop_continuous(){
   // setLed(0, NO_COLOUR);
 }
 
-void ads_drdy(){
-    // toggleLed();
-    if(ads_continuous){
-      ads_sample(ads_samples, ADS_MAX_CHANNELS);
-      // if(doFilter)
-      // 	filter();
-      // if(pretty)
-      // 	sendSerial();
-      // else
-      // 	sendSarcduino();
-    }    
-}
-
 void ads_setup(){
   ADS_RESET_LO();
   HAL_Delay(10);
@@ -179,7 +165,7 @@ void ads_setup(){
   ads_status = isDRDY();
   // ads_start_continuous();
   // ads_set_gain(ADS1298::GAIN_12X);
-  ads_set_gain(ADS1298::GAIN_12X);
+  ads_set_gain(ADS1298::GAIN_4X);
 }
 
 int ads_read_single_sample(){
@@ -215,22 +201,6 @@ void ads_process_samples(){
     ads_sample_pos = 0;
   }
 }
-
-extern "C" {
-  // void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
-  // }
-  void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
-    spi_cs(true); // chip disable
-    ads_process_samples();
-  }
-  void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi){
-    spi_cs(true); // chip disable
-    ads_process_samples();
-  }
-  void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
-    error(RUNTIME_ERROR, "ADS SPI Error");
-  }
-};
 
 void ads_sample(int32_t* samples, size_t len){
   spi_cs(false); // chip enable
@@ -283,3 +253,20 @@ int ads_read_reg(int reg){
   return(out);
 }
 
+void ads_cplt(){
+  spi_cs(true); // chip disable
+  ads_process_samples();
+}
+
+void ads_drdy(){
+    // toggleLed();
+    if(ads_continuous){
+      ads_sample(ads_samples, ADS_MAX_CHANNELS);
+      // if(doFilter)
+      // 	filter();
+      // if(pretty)
+      // 	sendSerial();
+      // else
+      // 	sendSarcduino();
+    }    
+}

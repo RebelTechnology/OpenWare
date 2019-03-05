@@ -129,8 +129,8 @@ SECTIONS
   /* Example: int foo __attribute__ ((section (".ccmdata"))); */
   .ccmdata (NOLOAD) :
   {
-    /* *(.ccmdata) */
-    /* . = ALIGN(8); */
+    *(.ccmdata)
+    . = ALIGN(8);
     PROVIDE (_CCMRAM = .);
   } >CCMRAM
   _CCMRAM_END = ORIGIN(CCMRAM) + LENGTH(CCMRAM);

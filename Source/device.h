@@ -87,4 +87,6 @@
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 
+#define CCM                          __attribute__ ((section (".ccmdata")))
+
 #endif /* __DEVICE_H__ */

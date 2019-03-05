@@ -84,13 +84,13 @@ void Codec::setOutputGain(int8_t value){
 #include "usbd_audio.h"
 #include "RingBuffer.hpp"
 typedef int32_t audio_t;
-static audio_t audio_ringbuffer_data[AUDIO_RINGBUFFER_SIZE];
+static audio_t audio_ringbuffer_data[AUDIO_RINGBUFFER_SIZE] CCM;
 RingBuffer<audio_t> audio_ringbuffer(audio_ringbuffer_data, AUDIO_RINGBUFFER_SIZE);
 volatile static size_t adc_underflow = 0;
 
 #ifdef USE_KX122
 #include "kx122.h"
-static audio_t kx122_ringbuffer_data[KX122_RINGBUFFER_SIZE];
+static audio_t kx122_ringbuffer_data[KX122_RINGBUFFER_SIZE] CCM;
 RingBuffer<audio_t> kx122_ringbuffer(kx122_ringbuffer_data, AUDIO_RINGBUFFER_SIZE);
 #endif
 
@@ -137,6 +137,9 @@ void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleType
 void codec_init(){
   blocksize = ADS_BLOCKSIZE;
   ads_setup();
+#ifdef USE_KX122
+  kx122_init();
+#endif
 }
 
 void codec_bypass(int bypass){}
@@ -209,16 +212,14 @@ void ads_rx_callback(int32_t* samples, size_t channels, size_t blocksize){
 
 #ifdef USE_KX122
     // add 3ch accelerometer data
+    memcpy(dst, kx122_ringbuffer.getReadHead(), KX122_ACTIVE_CHANNELS*sizeof(audio_t));
+    dst += KX122_TOTAL_CHANNELS;
     size_t available = kx122_ringbuffer.getReadSpace();
     if(available > KX122_RINGBUFFER_OVER_LIMIT){
       // too many frames in kx122_ringbuffer
-      memcpy(dst, kx122_ringbuffer.getReadHead(), KX122_ACTIVE_CHANNELS*sizeof(audio_t));
-      dst += KX122_TOTAL_CHANNELS;
       kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS*2); // skip a frame
       // kx122_overflow++;
     }else{
-      memcpy(dst, kx122_ringbuffer.getReadHead(), KX122_ACTIVE_CHANNELS*sizeof(audio_t));
-      dst += KX122_TOTAL_CHANNELS;
       kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS);
       if(available >= KX122_RINGBUFFER_UNDER_LIMIT){
 	kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS); // normal increment
