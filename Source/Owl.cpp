@@ -801,7 +801,7 @@ void loop(void){
   MAX11300_bulkreadADC();
   for(int i=0; i<16; ++i){
     if(getPortMode(i) == PORT_UNI_INPUT){
-      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+      // graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
       uint16_t val = graphics.params.parameters[i]>>2;
       setLed(i, rainbowinputs[val&0x3ff]);
     }else{
@@ -809,7 +809,8 @@ void loop(void){
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
       // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
-      graphics.params.updateValue(i, 0);
+
+      // graphics.params.updateValue(i, 0);
       uint16_t val = graphics.params.parameters[i]>>2;
       setLed(i, rainbowoutputs[val&0x3ff]);
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
@@ -817,9 +818,9 @@ void loop(void){
   }
   for(int i=16; i<20; ++i){
     if(getPortMode(i) == PORT_UNI_INPUT){
-      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+      // graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
     }else{
-      graphics.params.updateValue(i, 0);
+      // graphics.params.updateValue(i, 0);
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
   }
