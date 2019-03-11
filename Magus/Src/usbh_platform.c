@@ -63,19 +63,19 @@
   */
 void MX_DriverVbusHS(uint8_t state)
 { 
-  uint8_t data = state; 
-  /* USER CODE BEGIN PREPARE_GPIO_DATA_VBUS_HS */
-  if(state == 0)
-  {
-    /* Drive high Charge pump */ 	     
-    data = GPIO_PIN_SET;
-  }
-  else
-  {
-    /* Drive low Charge pump */
-    data = GPIO_PIN_RESET;
-  }
-  /* USER CODE END PREPARE_GPIO_DATA_VBUS_HS */
+  /* uint8_t data = state;  */
+  /* /\* USER CODE BEGIN PREPARE_GPIO_DATA_VBUS_HS *\/ */
+  /* if(state == 0) */
+  /* { */
+  /*   /\* Drive high Charge pump *\/ 	      */
+  /*   data = GPIO_PIN_SET; */
+  /* } */
+  /* else */
+  /* { */
+  /*   /\* Drive low Charge pump *\/ */
+  /*   data = GPIO_PIN_RESET; */
+  /* } */
+  /* /\* USER CODE END PREPARE_GPIO_DATA_VBUS_HS *\/ */
   /* HAL_GPIO_WritePin(GPIOC,GPIO_PIN_6,(GPIO_PinState)data); */
 }
 

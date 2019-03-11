@@ -24,9 +24,9 @@
 #include "HAL_MAX11300.h"
 // #include "HAL_OLED.h"
 #include "HAL_Encoders.h"
-#define TLC5940_RED_DC 0x55
-#define TLC5940_GREEN_DC 0x55
-#define TLC5940_BLUE_DC 0x55
+#define TLC5940_RED_DC 63
+#define TLC5940_GREEN_DC 63
+#define TLC5940_BLUE_DC 63
 #endif
 
 #ifdef USE_SCREEN
@@ -510,11 +510,11 @@ void setup(){
     TLC5946_init(&TLC5946_SPI);
     // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
     TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
-    TLC5946_setAll(0x10, 0x10, 0x10);
+    TLC5946_setAll(0, 0, 0);
 
     HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
 
-    TLC5946_Refresh_DC();
+    // TLC5946_Refresh_DC();
     TLC5946_Refresh_GS();
     HAL_Delay(100);
 
