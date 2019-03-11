@@ -179,60 +179,15 @@ void TLC5946_setRGB(uint8_t LED_ID, uint16_t val_R, uint16_t val_G, uint16_t val
 	TLC5946_SetOutput_GS(1, rgLED_B[LED_ID-1], val_B);
 }
 
-void TLC5946_sendAll_DC(uint8_t value){
-  uint8_t firstByte = value << 2 | value >> 4;
-  uint8_t secondByte = value << 4 | value >> 2;
-  uint8_t thirdByte = value << 6 | value;
-  /* uint8_t data[12]; // prepare 12 bytes DC data */
-  uint8_t* data = rgDCbuf[0];
-  for(size_t i = 0; i < 12; i+=3) {
-    *data++ = firstByte;
-    *data++ = secondByte;
-    *data++ = thirdByte;
-    /* data[i+0] = firstByte; */
-    /* data[i+1] = secondByte; */
-    /* data[i+2] = thirdByte; */
-  }	
-  // Update Dot Correction
-  HAL_SPI_Transmit(TLC5946_SPIConfig, data, sizeof data, 100);
-}
-
 void TLC5946_setRGB_DC(uint16_t val_R, uint16_t val_G, uint16_t val_B)
 {
- 
-  pMODE(Mode_DC);
-  pXLAT(0);
-
-  TLC5946_sendAll_DC(val_R);
-  TLC5946_sendAll_DC(val_B);
-  TLC5946_sendAll_DC(val_G);
+	uint8_t x;
 	
-	// Latch pulse
-	pXLAT(1);
-
-  /* for (size_t tlc = 0; tlc < NUM_TLCS * 12; i += 3) { */
-
-  /*   6 12 18 24 30 36 42 48 */
-  /*     48/8=6 */
-  /*     48/6=8 */
-  /* 
-     aaaaaabb bbbbcccc ccdddddd
-   */
-
-  /* for (TLC_CHANNEL_TYPE i = 0; i < NUM_TLCS * 12; i += 3) { */
-  /*   tlc_shift8(firstByte); */
-  /*   tlc_shift8(secondByte); */
-  /*   tlc_shift8(thirdByte); */
-  /* } */
-  /* pulse_pin(XLAT_PORT, XLAT_PIN); */
-
-  /* uint8_t x; */
+	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(0, x, val_R);}
+	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(2, x, val_G);}
+	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(1, x, val_B);}
 	
-  /* for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(0, x, val_R);} */
-  /* for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(2, x, val_G);} */
-  /* for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(1, x, val_B);} */
-  
-  /* TLC5946_Refresh_DC(); */
+	TLC5946_Refresh_DC();
 }
 
 void TLC5946_setAll(uint16_t val_R, uint16_t val_G, uint16_t val_B){

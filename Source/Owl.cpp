@@ -24,9 +24,9 @@
 #include "HAL_MAX11300.h"
 // #include "HAL_OLED.h"
 #include "HAL_Encoders.h"
-#define TLC5940_RED_DC 63
-#define TLC5940_GREEN_DC 63
-#define TLC5940_BLUE_DC 63
+#define TLC5940_RED_DC 0x55
+#define TLC5940_GREEN_DC 0x55
+#define TLC5940_BLUE_DC 0x55
 #endif
 
 #ifdef USE_SCREEN
@@ -510,11 +510,11 @@ void setup(){
     TLC5946_init(&TLC5946_SPI);
     // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
     TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
-    TLC5946_setAll(0, 0, 0);
+    TLC5946_setAll(0x10, 0x10, 0x10);
 
     HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
 
-    // TLC5946_Refresh_DC();
+    TLC5946_Refresh_DC();
     TLC5946_Refresh_GS();
     HAL_Delay(100);
 
@@ -801,7 +801,7 @@ void loop(void){
   MAX11300_bulkreadADC();
   for(int i=0; i<16; ++i){
     if(getPortMode(i) == PORT_UNI_INPUT){
-      // graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
       uint16_t val = graphics.params.parameters[i]>>2;
       setLed(i, rainbowinputs[val&0x3ff]);
     }else{
@@ -809,8 +809,7 @@ void loop(void){
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
       // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
-
-      // graphics.params.updateValue(i, 0);
+      graphics.params.updateValue(i, 0);
       uint16_t val = graphics.params.parameters[i]>>2;
       setLed(i, rainbowoutputs[val&0x3ff]);
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
@@ -818,9 +817,9 @@ void loop(void){
   }
   for(int i=16; i<20; ++i){
     if(getPortMode(i) == PORT_UNI_INPUT){
-      // graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
     }else{
-      // graphics.params.updateValue(i, 0);
+      graphics.params.updateValue(i, 0);
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
   }

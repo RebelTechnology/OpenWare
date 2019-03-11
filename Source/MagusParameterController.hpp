@@ -13,8 +13,6 @@
 #include "ProgramManager.h"
 #include "Codec.h"
 
-#include "HAL_MAX11300.h"
-
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #define NOF_ENCODERS 6
@@ -46,7 +44,6 @@ public:
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t offsets[NOF_ENCODERS]; // last seen encoder values
   int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
-  int16_t dynamic[SIZE]; // program set values (ie patch outputs)
   char names[SIZE][12];
   // char blocknames[4][NOF_ENCODERS] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   uint8_t selectedBlock;
@@ -75,7 +72,6 @@ public:
       strcpy(names[i], "Parameter ");
       names[i][9] = 'A'+i;
       user[i] = 0;
-      dynamic[i] = 0;
       parameters[i] = 0;
     }
     for(int i=0; i<NOF_ENCODERS; ++i){
@@ -352,12 +348,10 @@ public:
     if(pid < SIZE){
       strncpy(names[pid], name, 11);
 #ifdef OWL_MAGUS
-      if(names[pid][strnlen(names[pid], 11)-1] == '>'){
+      if(names[pid][strnlen(names[pid], 11)-1] == '>')
 	setPortMode(pid, PORT_UNI_OUTPUT);
-	setValue(pid, 4095/2); // set output gain by default to 50%
-      }else{
+      else
 	setPortMode(pid, PORT_UNI_INPUT);
-      }
 #endif
     }
   }
@@ -528,51 +522,31 @@ public:
       displayMode = ERROR;    
   }
 
-  // called from patch
-  void setDynamicValue(uint8_t pid, int16_t value){
-    if(pid < SIZE)
-      dynamic[pid] = value;
-  }
-
-  // Called by MIDI cc or bus. For outputs, this sets the scale factor.
+  // called by MIDI cc and/or from patch
   void setValue(uint8_t pid, int16_t value){
-    if(pid < SIZE)
-      user[pid] = value;
+    user[pid] = value;
     // reset encoder value if associated through selectedPid to avoid skipping
     for(int i=0; i<NOF_ENCODERS; ++i)
       if(selectedPid[i] == pid)
         setEncoderValue(i, value);
+    // TODO: store values set from patch somewhere and multiply with user[] value for outputs
+    // graphics.params.updateOutput(i, getOutputValue(i));
   }
 
-  // // @param value is the modulation ADC value
-  // void updateValue(uint8_t pid, int16_t value){
-  //   // smoothing at apprx 50Hz
-  //   parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
-  // }
+  // @param value is the modulation ADC value
+  void updateValue(uint8_t pid, int16_t value){
+    // smoothing at apprx 50Hz
+    parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
+  }
 
-  // void updateOutput(uint8_t pid, int16_t value){
-  //   parameters[pid] = max(0, min(4095, (((parameters[pid] + (user[pid]*value))>>12)>>1)));
-  // }
+  void updateOutput(uint8_t pid, int16_t value){
+    parameters[pid] = max(0, min(4095, (((parameters[pid] + (user[pid]*value))>>12)>>1)));
+  }
 
-
-  // called at block rate
-  void updateParameters(){
-    // todo: add/scale all values then smooth iir
-    int16_t value;
-    for(int i=0; i<20; ++i){
-      if(getPortMode(i) == PORT_UNI_INPUT){
-	value = MAX11300_getADCValue(i+1) + user[i];
-	// updateValue(i, MAX11300_getADCValue(i+1));
-      }else{
-	value = (int32_t(user[i]) * int32_t(dynamic[i])) >> 12;
-      }
-      // void updateValues(uint16_t* data, uint8_t size){
+  // void updateValues(uint16_t* data, uint8_t size){
     // for(int i=0; i<16; ++i)
     //   parameters[selectedPid[i]] = encoders[i] + data[i];
   // }
-      parameters[i] = (parameters[i]*3 + value) >> 2; // IIR smooth with lambda = 0.75
-    }
-  }
 
   void encoderChanged(uint8_t encoder, int32_t delta){
   }

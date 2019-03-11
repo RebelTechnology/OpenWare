@@ -103,9 +103,6 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   static float audio_envelope = 0.0;
   audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(getProgramVector()->audio_output[0])*(1.0f/INT16_MAX);
 #endif
-#ifdef USE_SCREEN
-  graphics.params.updateParameters();
-#endif
   if(audioTask != NULL){
     BaseType_t yield;
     vTaskNotifyGiveFromISR(audioTask, &yield);
@@ -134,7 +131,7 @@ int16_t getParameterValue(uint8_t pid){
   return 0;
 }
 
-// called from MIDI, or (potentially) digital bus
+// called from program, MIDI, or (potentially) digital bus
 void setParameterValue(uint8_t pid, int16_t value){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
@@ -258,11 +255,12 @@ void onProgramReady(){
 
 // called from program
 void onSetPatchParameter(uint8_t pid, int16_t value){
-#ifdef USE_SCREEN
-  graphics.params.setDynamicValue(pid, value);
-#else
+// #ifdef USE_SCREEN
+//   graphics.params.setDynamicValue(ch, value);
+// #else
+//   parameter_values[ch] = value;
+// #endif
   setParameterValue(pid, value);
-#endif
   setAnalogValue(pid, value);
 #ifdef USE_DIGITALBUS
   if(settings.bus_enabled){
