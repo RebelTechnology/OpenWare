@@ -9,7 +9,7 @@
 #define USE_ADS1294
 #define USE_USB_AUDIO
 
-/* #define USE_KX122 */
+#define USE_KX122
 #define KX122_LEFTSHIFT               16
 #define KX122_ACTIVE_CHANNELS         3
 /* #define KX122_AUDIO_FREQ              25600 */
@@ -31,14 +31,17 @@
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       32
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define USB_AUDIO_CHANNELS          4
 #define ADC_CHANNEL_OFFSET          0
 #define ADC_RIGHTSHIFT              0
 
-#if defined USE_KX122 && USB_AUDIO_CHANNELS != (ADS_MAX_CHANNELS + KX122_ACTIVE_CHANNELS)
-#error "Invalid channel configuration"
-#elif USB_AUDIO_CHANNELS != ADS_MAX_CHANNELS
-#error "Invalid channel configuration"
+#if defined USE_KX122 && defined USE_CODEC
+#define USB_AUDIO_CHANNELS          (ADS_MAX_CHANNELS + KX122_ACTIVE_CHANNELS)
+#elif defined USE_CODEC
+#define USB_AUDIO_CHANNELS          ADS_MAX_CHANNELS
+#elif defined USE_KX122
+#define USB_AUDIO_CHANNELS          KX122_ACTIVE_CHANNELS
+#else
+#error "Invalid configuration"
 #endif
 
 /* #define USE_RGB_LED */
