@@ -9,7 +9,7 @@
 #define USE_ADS1294
 #define USE_USB_AUDIO
 
-#define USE_KX122
+/* #define USE_KX122 */
 #define KX122_LEFTSHIFT               16
 #define KX122_ACTIVE_CHANNELS         3
 /* #define KX122_AUDIO_FREQ              25600 */
