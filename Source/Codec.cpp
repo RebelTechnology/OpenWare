@@ -91,7 +91,7 @@ volatile static size_t adc_underflow = 0;
 #ifdef USE_KX122
 #include "kx122.h"
 static audio_t kx122_ringbuffer_data[KX122_RINGBUFFER_SIZE] CCM;
-RingBuffer<audio_t> kx122_ringbuffer(kx122_ringbuffer_data, AUDIO_RINGBUFFER_SIZE);
+RingBuffer<audio_t> kx122_ringbuffer(kx122_ringbuffer_data, KX122_RINGBUFFER_SIZE);
 #endif
 
 void fill_buffer(uint8_t* buffer, size_t len){
