@@ -39,6 +39,7 @@ Graphics graphics;
 #ifdef USE_KX122
 #include "kx122.h"
 #endif
+uint8_t ucHeap[ configTOTAL_HEAP_SIZE] CCM;
 #endif
 
 #if defined USE_RGB_LED

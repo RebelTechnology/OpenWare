@@ -88,10 +88,11 @@ static audio_t audio_ringbuffer_data[AUDIO_RINGBUFFER_SIZE] CCM;
 RingBuffer<audio_t> audio_ringbuffer(audio_ringbuffer_data, AUDIO_RINGBUFFER_SIZE);
 volatile static size_t adc_underflow = 0;
 
+static int32_t ads_samples[ADS_MAX_CHANNELS] CCM;
+
 #ifdef USE_KX122
 #include "kx122.h"
-static audio_t kx122_ringbuffer_data[KX122_RINGBUFFER_SIZE] CCM;
-RingBuffer<audio_t> kx122_ringbuffer(kx122_ringbuffer_data, KX122_RINGBUFFER_SIZE);
+static int32_t kx122_samples[KX122_TOTAL_CHANNELS] CCM;
 #endif
 
 void fill_buffer(uint8_t* buffer, size_t len){
@@ -136,9 +137,14 @@ void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleType
 
 void codec_init(){
   blocksize = ADS_BLOCKSIZE;
-  ads_setup();
+
+  extern TIM_HandleTypeDef htim8;
+  HAL_TIM_Base_Start_IT(&htim8);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
+  
+  ads_setup(ads_samples);
 #ifdef USE_KX122
-  kx122_setup();
+  kx122_setup(kx122_samples);
 #endif
 }
 
@@ -160,82 +166,107 @@ void Codec::stop(){
   ads_stop_continuous();
 }
 
-extern "C" {
-  extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
+extern "C"{
+  void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+    extern TIM_HandleTypeDef htim8;
+    if (htim == &htim8){
+      // sample all channels
+      audio_t* dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame      
+      memcpy(dst, ads_samples, ADS_ACTIVE_CHANNELS*sizeof(audio_t));
+      dst += ADS_ACTIVE_CHANNELS;
 #ifdef USE_KX122
-  extern void kx122_rx_callback(int16_t* data, size_t len);
+      memcpy(dst, kx122_samples, KX122_ACTIVE_CHANNELS*sizeof(audio_t));
+      dst += KX122_ACTIVE_CHANNELS;
 #endif
-}
+      audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
+    // size_t available = audio_ringbuffer.getReadSpace();
+    // if(available > AUDIO_RINGBUFFER_OVER_LIMIT){
+    //   // adjust timer period
+    // }else if(available < AUDIO_RINGBUFFER_UNDER_LIMIT){
+    //   // adjust timer period
+    // }
 
-#ifdef USE_KX122
-void kx122_rx_callback(int16_t* data, size_t len){
-  len /= KX122_TOTAL_CHANNELS;
-  audio_t* dst;
-  for(size_t i=0; i<len; i++){
-    // transfer 3 channels of accelerometer data into ringbuffer
-    dst = kx122_ringbuffer.getWriteHead();
-#if KX122_ACTIVE_CHANNELS > 0
-    *dst++ = (*data++) << KX122_LEFTSHIFT;
-#if KX122_ACTIVE_CHANNELS > 1
-    *dst++ = (*data++) << KX122_LEFTSHIFT;
-#if KX122_ACTIVE_CHANNELS > 2
-    *dst++ = (*data++) << KX122_LEFTSHIFT;
-#endif
-#endif
-#endif
-    if(kx122_ringbuffer.getWriteSpace() >= KX122_ACTIVE_CHANNELS)
-      kx122_ringbuffer.incrementWriteHead(KX122_ACTIVE_CHANNELS);
-    // else
-    //   kx122_overflow++;
-  }  
-}
-#endif
-
-void ads_rx_callback(int32_t* samples, size_t channels, size_t blocksize){
-  audioCallback(samples, txbuf, blocksize);
-#ifdef USE_USB_AUDIO
-  size_t len = channels*blocksize;
-  audio_t* dst;
-  for(size_t i=0; i<len; i+=ADS_MAX_CHANNELS){
-    dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame
-    // transfer up to 4 channels adc data into ringbuffer
-#if ADS_MAX_CHANNELS > 0
-    *dst++ = samples[i+ADC_CHANNEL_OFFSET+0]>>ADC_RIGHTSHIFT;
-#if ADS_MAX_CHANNELS > 1
-    *dst++ = samples[i+ADC_CHANNEL_OFFSET+1]>>ADC_RIGHTSHIFT;
-#if ADS_MAX_CHANNELS > 2
-    *dst++ = samples[i+ADC_CHANNEL_OFFSET+2]>>ADC_RIGHTSHIFT;
-#if ADS_MAX_CHANNELS > 3
-    *dst++ = samples[i+ADC_CHANNEL_OFFSET+3]>>ADC_RIGHTSHIFT;
-#endif
-#endif
-#endif
-#endif
-
-#ifdef USE_KX122
-    // add 3ch accelerometer data
-    memcpy(dst, kx122_ringbuffer.getReadHead(), KX122_ACTIVE_CHANNELS*sizeof(audio_t));
-    dst += KX122_TOTAL_CHANNELS;
-    size_t available = kx122_ringbuffer.getReadSpace();
-    if(available > KX122_RINGBUFFER_OVER_LIMIT){
-      // too many frames in kx122_ringbuffer
-      kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS*2); // skip a frame
-      // kx122_overflow++;
-    }else{
-      kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS);
-      if(available >= KX122_RINGBUFFER_UNDER_LIMIT){
-	kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS); // normal increment
-      }else{
-	// not enough frames in kx122_ringbuffer
-	// don't increment read head
-	// kx122_underflow++;
-      }
+    // todo: copy into double buffer and call audioCallback() when half/full
     }
-#endif
-    audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
   }
-#endif
 }
+
+// extern "C" {
+//   extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
+// #ifdef USE_KX122
+//   extern void kx122_rx_callback(int16_t* data, size_t len);
+// #endif
+// }
+
+// #ifdef USE_KX122
+// void kx122_rx_callback(int16_t* data, size_t len){
+//   len /= KX122_TOTAL_CHANNELS;
+//   audio_t* dst;
+//   for(size_t i=0; i<len; i++){
+//     // transfer 3 channels of accelerometer data into ringbuffer
+//     dst = kx122_ringbuffer.getWriteHead();
+// #if KX122_ACTIVE_CHANNELS > 0
+//     *dst++ = (*data++) << KX122_LEFTSHIFT;
+// #if KX122_ACTIVE_CHANNELS > 1
+//     *dst++ = (*data++) << KX122_LEFTSHIFT;
+// #if KX122_ACTIVE_CHANNELS > 2
+//     *dst++ = (*data++) << KX122_LEFTSHIFT;
+// #endif
+// #endif
+// #endif
+//     if(kx122_ringbuffer.getWriteSpace() >= KX122_ACTIVE_CHANNELS)
+//       kx122_ringbuffer.incrementWriteHead(KX122_ACTIVE_CHANNELS);
+//     // else
+//     //   kx122_overflow++;
+//   }  
+// }
+// #endif
+
+// void ads_rx_callback(int32_t* samples, size_t channels, size_t blocksize){
+//   audioCallback(samples, txbuf, blocksize);
+// #ifdef USE_USB_AUDIO
+//   size_t len = channels*blocksize;
+//   audio_t* dst;
+//   for(size_t i=0; i<len; i+=ADS_MAX_CHANNELS){
+//     dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame
+//     // transfer up to 4 channels adc data into ringbuffer
+// #if ADS_MAX_CHANNELS > 0
+//     *dst++ = samples[i+ADC_CHANNEL_OFFSET+0]>>ADC_RIGHTSHIFT;
+// #if ADS_MAX_CHANNELS > 1
+//     *dst++ = samples[i+ADC_CHANNEL_OFFSET+1]>>ADC_RIGHTSHIFT;
+// #if ADS_MAX_CHANNELS > 2
+//     *dst++ = samples[i+ADC_CHANNEL_OFFSET+2]>>ADC_RIGHTSHIFT;
+// #if ADS_MAX_CHANNELS > 3
+//     *dst++ = samples[i+ADC_CHANNEL_OFFSET+3]>>ADC_RIGHTSHIFT;
+// #endif
+// #endif
+// #endif
+// #endif
+
+// #ifdef USE_KX122
+//     // add 3ch accelerometer data
+//     memcpy(dst, kx122_ringbuffer.getReadHead(), KX122_ACTIVE_CHANNELS*sizeof(audio_t));
+//     dst += KX122_TOTAL_CHANNELS;
+//     size_t available = kx122_ringbuffer.getReadSpace();
+//     if(available > KX122_RINGBUFFER_OVER_LIMIT){
+//       // too many frames in kx122_ringbuffer
+//       kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS*2); // skip a frame
+//       // kx122_overflow++;
+//     }else{
+//       kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS);
+//       if(available >= KX122_RINGBUFFER_UNDER_LIMIT){
+// 	kx122_ringbuffer.incrementReadHead(KX122_ACTIVE_CHANNELS); // normal increment
+//       }else{
+// 	// not enough frames in kx122_ringbuffer
+// 	// don't increment read head
+// 	// kx122_underflow++;
+//       }
+//     }
+// #endif
+//     audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
+//   }
+// #endif
+// }
 
 extern "C" {
   // void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
