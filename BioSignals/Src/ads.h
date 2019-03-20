@@ -10,7 +10,7 @@
  extern "C" {
 #endif
 
-void ads_setup();
+void ads_setup(int32_t* samples);
 void ads_send_command(int cmd);
 void ads_write_reg(int reg, int val);
 int ads_read_reg(int reg);
@@ -23,7 +23,7 @@ void ads_set_gain(int gain);
 void ads_start_continuous();
 void ads_stop_continuous();
 
-void ads_rx_callback(int32_t* samples, size_t channels, size_t blocksize);
+/* void ads_rx_callback(int32_t* samples, size_t channels, size_t blocksize); */
 
 #ifdef __cplusplus
 }

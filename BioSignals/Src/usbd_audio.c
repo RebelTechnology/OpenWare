@@ -65,6 +65,7 @@
 #include "usbd_audio.h"
 #include "usbd_desc.h"
 #include "usbd_ctlreq.h"
+#include "device.h"
 
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
@@ -153,7 +154,7 @@ static void AUDIO_REQ_SetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
   * @{
   */ 
 
-USBD_AUDIO_HandleTypeDef usbd_audio_handle;
+USBD_AUDIO_HandleTypeDef usbd_audio_handle CCM;
 
 USBD_ClassTypeDef  USBD_AUDIO =
 {

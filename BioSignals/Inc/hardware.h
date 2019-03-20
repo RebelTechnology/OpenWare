@@ -10,7 +10,7 @@
 #define USE_USB_AUDIO
 
 /* #define USE_KX122 */
-#define KX122_LEFTSHIFT               16
+/* #define KX122_LEFTSHIFT               16 */
 #define KX122_ACTIVE_CHANNELS         3
 /* #define KX122_AUDIO_FREQ              25600 */
 #define KX122_AUDIO_FREQ              12800
@@ -24,6 +24,7 @@
 #define KX122_HSPI                    hspi3
 
 #define ADS_MAX_CHANNELS            4
+#define ADS_ACTIVE_CHANNELS         4
 #define ADS_BLOCKSIZE               CODEC_BLOCKSIZE
 #define ADS_HSPI                    hspi1
 #define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*12)
@@ -31,13 +32,15 @@
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       32
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define ADC_CHANNEL_OFFSET          0
-#define ADC_RIGHTSHIFT              0
+/* #define ADC_CHANNEL_OFFSET          0 */
+/* #define ADC_RIGHTSHIFT              0 */
+
+#define USBD_AUDIO_FREQ     48000
 
 #if defined USE_KX122 && defined USE_CODEC
-#define USB_AUDIO_CHANNELS          (ADS_MAX_CHANNELS + KX122_ACTIVE_CHANNELS)
+#define USB_AUDIO_CHANNELS          (ADS_ACTIVE_CHANNELS + KX122_ACTIVE_CHANNELS)
 #elif defined USE_CODEC
-#define USB_AUDIO_CHANNELS          ADS_MAX_CHANNELS
+#define USB_AUDIO_CHANNELS          ADS_ACTIVE_CHANNELS
 #elif defined USE_KX122
 #define USB_AUDIO_CHANNELS          KX122_ACTIVE_CHANNELS
 #else

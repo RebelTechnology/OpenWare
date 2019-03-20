@@ -12,6 +12,7 @@
 /* extern DMA_HandleTypeDef hdma_spi4_rx; */
 
 extern SPI_HandleTypeDef KX122_HSPI;
+static int32_t* kx122_samples;
 
 #define  COTR							0x55
 
@@ -79,8 +80,9 @@ static void KX122_setReg(uint8_t address, uint8_t data)
   ACCEL_CS_HI();
 }
 
-void kx122_setup(void)
-{   
+void kx122_setup(int32_t* samples)
+{
+  kx122_samples = samples;
   // Check if accelerometer is present
   if(KX122_readReg(REG_COTR) == COTR){
     KX122_setReg(REG_CTRL_REG1,	0x60);	// Standby, High resolution, interrupt on, +/-2g, tap off, wakeup off, tilt off
@@ -131,34 +133,31 @@ void kx122_set_range(uint8_t range){
   KX122_setReg(REG_CTRL_REG1, reg);
 }
 
-uint16_t KX122_readAxis (uint8_t axis)
-{
-	uint16_t usiResult = 0;
-				
-	switch(axis)
-	{
-		case X_Axis:
-			usiResult  = KX122_readReg(REG_XOUT_H)<<8;
-			usiResult |= KX122_readReg(REG_XOUT_L);
-			break;
-				
-		case Y_Axis: 
-			usiResult  = KX122_readReg(REG_YOUT_H)<<8;
-			usiResult |= KX122_readReg(REG_YOUT_L);
-			break;
-				
-		case Z_Axis: 
-			usiResult  = KX122_readReg(REG_ZOUT_H)<<8;
-			usiResult |= KX122_readReg(REG_ZOUT_L);
-			break;
-	}     
-	
-	return usiResult;
+uint16_t KX122_readAxis (uint8_t axis){
+  uint16_t usiResult = 0;
+  switch(axis){
+  case X_Axis:
+    usiResult  = KX122_readReg(REG_XOUT_H)<<8;
+    usiResult |= KX122_readReg(REG_XOUT_L);
+    break;
+  case Y_Axis: 
+    usiResult  = KX122_readReg(REG_YOUT_H)<<8;
+    usiResult |= KX122_readReg(REG_YOUT_L);
+    break;
+  case Z_Axis: 
+    usiResult  = KX122_readReg(REG_ZOUT_H)<<8;
+    usiResult |= KX122_readReg(REG_ZOUT_L);
+    break;
+  }     	
+  return usiResult;
 }
 
 void kx122_cplt(){
   ACCEL_CS_HI();
-  kx122_rx_callback((int16_t*)(kx122_buffer+1), 3);
+  kx122_samples[0] = (kx122_buffer[1]<<24) | (kx122_buffer[2]<<16);
+  kx122_samples[1] = (kx122_buffer[3]<<24) | (kx122_buffer[4]<<16);
+  kx122_samples[2] = (kx122_buffer[5]<<24) | (kx122_buffer[6]<<16);
+  /* kx122_rx_callback((int16_t*)(kx122_buffer+1), 3); */
 }
 
 void kx122_drdy(){
