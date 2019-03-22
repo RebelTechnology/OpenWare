@@ -544,7 +544,8 @@ static void MX_TIM8_Init(void)
   htim8.Instance = TIM8;
   htim8.Init.Prescaler = 3;
   htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim8.Init.Period = 871;
+  /* htim8.Init.Period = 871; // 48kHz */
+  htim8.Init.Period = 2613; // 16kHz?
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
   if (HAL_TIM_PWM_Init(&htim8) != HAL_OK)

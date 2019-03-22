@@ -27,7 +27,7 @@
 #define ADS_ACTIVE_CHANNELS         4
 #define ADS_BLOCKSIZE               CODEC_BLOCKSIZE
 #define ADS_HSPI                    hspi1
-#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*12)
+#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*24)
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       32
@@ -35,7 +35,7 @@
 /* #define ADC_CHANNEL_OFFSET          0 */
 /* #define ADC_RIGHTSHIFT              0 */
 
-#define USBD_AUDIO_FREQ     48000
+#define USBD_AUDIO_FREQ     16000
 
 #if defined USE_KX122 && defined USE_CODEC
 #define USB_AUDIO_CHANNELS          (ADS_ACTIVE_CHANNELS + KX122_ACTIVE_CHANNELS)
