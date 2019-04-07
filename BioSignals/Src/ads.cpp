@@ -99,7 +99,7 @@ void defaultConfig(){
   ads_write_reg(ADS1298::CONFIG1, ADS1298::HIGH_RES_500_SPS | ADS1298::CONFIG1_const);
 
   for(int i = 0; i < ADS_MAX_CHANNELS; ++i) {
-    ads_write_reg(ADS1298::CH1SET + i, ADS1298::ELECTRODE_INPUT | ADS1298::GAIN_12X); //report this channel with x12 gain
+    ads_write_reg(ADS1298::CH1SET + i, ADS1298::ELECTRODE_INPUT | ADS1298::GAIN_1X); //report this channel with x12 gain
     //ads_write_reg(ADS1298::CH1SET + i, ADS1298::SHORTED); //disable this channel
   }
   // When using the START opcode to begin conversions, hold the START pin low.
@@ -165,12 +165,39 @@ void ads_setup(int32_t* samples){
   // if(ads_status == 0xfff)
     rldConfig();
   // sample rate
+#if ADS_AUDIO_FREQ == 32000
+  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_32k_SPS | ADS1298::CONFIG1_const);
+#elif ADS_AUDIO_FREQ == 16000
   ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_16k_SPS | ADS1298::CONFIG1_const);
+#elif ADS_AUDIO_FREQ == 8000
+  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_8k_SPS | ADS1298::CONFIG1_const);
+#elif ADS_AUDIO_FREQ == 4000
+  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_4k_SPS | ADS1298::CONFIG1_const);
+#elif ADS_AUDIO_FREQ == 2000
+  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_2k_SPS | ADS1298::CONFIG1_const);
+#elif ADS_AUDIO_FREQ == 1000
+  ads_write_reg(ADS1298::CONFIG1, ADS1298::DAISY_EN | ADS1298::CLK_EN | ADS1298::HIGH_RES_1k_SPS | ADS1298::CONFIG1_const);
+#else
+#error "Invalid ADS_AUDIO_FREQ configuration"
+#endif
   ads_stop_continuous();
   ads_status = isDRDY();
   // ads_start_continuous();
-  // ads_set_gain(ADS1298::GAIN_12X);
+#if ADS_GAIN == 12
+  ads_set_gain(ADS1298::GAIN_12X);
+#elif ADS_GAIN == 8
+  ads_set_gain(ADS1298::GAIN_8X);
+#elif ADS_GAIN == 4
   ads_set_gain(ADS1298::GAIN_4X);
+#elif ADS_GAIN == 2
+  ads_set_gain(ADS1298::GAIN_2X);
+#elif ADS_GAIN == 1
+  ads_set_gain(ADS1298::GAIN_1X);
+#else
+#error "Invalid ADS_GAIN configuration"
+#endif
+
+  // startContinuous() called by codec
 }
 
 int ads_read_single_sample(){

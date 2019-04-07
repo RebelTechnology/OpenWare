@@ -176,6 +176,17 @@ void setLed(uint8_t led, uint32_t rgb){
   }
 #elif defined OWL_MAGUS
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+#elif defined OWL_BIOSIGNALS
+  if(led == 0){
+    TIM1->CCR3 = 1023 - ((rgb>>20)&0x3ff);
+    TIM1->CCR2 = 1023 - ((rgb>>10)&0x3ff);
+    TIM1->CCR1 = 1023 - ((rgb>>00)&0x3ff);
+  }else if(led == 1){
+    if(rgb == NO_COLOUR)
+      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+    else
+      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+  }
 #endif
 }
 
@@ -202,6 +213,12 @@ void initLed(){
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
   HAL_TIM_Base_Start(&htim4);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+#elif defined OWL_BIOSIGNALS
+  extern TIM_HandleTypeDef htim1;
+  HAL_TIM_Base_Start(&htim1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 #endif
 }
 
@@ -432,7 +449,11 @@ static TickType_t xFrequency;
 void setup(){
 
 #ifdef OWL_BIOSIGNALS
-  setLed(0, BLUE_COLOUR);
+#ifdef USE_LED
+  initLed();
+  setLed(0, GREEN_COLOUR);
+#endif
+  setLed(1, NO_COLOUR);
 #endif
 
 #ifdef OWL_PEDAL

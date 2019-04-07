@@ -9,7 +9,7 @@
 #define USE_ADS1294
 #define USE_USB_AUDIO
 
-/* #define USE_KX122 */
+#define USE_KX122
 /* #define KX122_LEFTSHIFT               16 */
 #define KX122_ACTIVE_CHANNELS         3
 /* #define KX122_AUDIO_FREQ              25600 */
@@ -23,6 +23,8 @@
 #define KX122_RINGBUFFER_UNDER_LIMIT  (KX122_RINGBUFFER_SIZE/3)
 #define KX122_HSPI                    hspi3
 
+#define ADS_AUDIO_FREQ              8000
+#define ADS_GAIN                    1
 #define ADS_MAX_CHANNELS            4
 #define ADS_ACTIVE_CHANNELS         4
 #define ADS_BLOCKSIZE               CODEC_BLOCKSIZE
@@ -35,7 +37,9 @@
 /* #define ADC_CHANNEL_OFFSET          0 */
 /* #define ADC_RIGHTSHIFT              0 */
 
-#define USBD_AUDIO_FREQ     16000
+#define USBD_AUDIO_FREQ             16000
+
+#define TIM8_PERIOD                 (871*48000/USBD_AUDIO_FREQ) /* experimentally determined */
 
 #if defined USE_KX122 && defined USE_CODEC
 #define USB_AUDIO_CHANNELS          (ADS_ACTIVE_CHANNELS + KX122_ACTIVE_CHANNELS)
@@ -47,17 +51,8 @@
 #error "Invalid configuration"
 #endif
 
-/* #define USE_RGB_LED */
-/* #define USE_ADC */
-/* #define ADC_PERIPH hadc3 */
-/* #define ADC_A 2 */
-/* #define ADC_B 3 */
-/* #define ADC_C 0 */
-/* #define ADC_D 1 */
-/* #define USE_CODEC */
-/* #define USE_CS4271 */
-/* #define CODEC_HP_FILTER */
-/* #define CODEC_SPI hspi4 */
+/* #define USE_LED */
+
 #define USE_USBD_HS
 
 #define NOF_ADC_VALUES               0
