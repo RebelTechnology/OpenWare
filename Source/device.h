@@ -54,9 +54,6 @@
 #define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT/8)
 #endif
 
-#define CODEC_BLOCKSIZE              32
-#define CODEC_BUFFER_SIZE            (4*CODEC_BLOCKSIZE)
-
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
 #define MAX_FACTORY_PATCHES          36
@@ -65,11 +62,9 @@
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
 
-#define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
-#define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
-#define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
-#define ARM_CYCLES_PER_SAMPLE        3500 /* 168MHz / 48kHz */
+#define CODEC_CHANNELS               4
+#define CODEC_BLOCKSIZE              128
+#define CODEC_BUFFER_SIZE            (2*CODEC_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
@@ -82,10 +77,16 @@
 #define AUDIO_BITDEPTH               24    /* bits per sample */
 #define AUDIO_DATAFORMAT             24
 #define AUDIO_CODEC_MASTER           true
-#define AUDIO_CHANNELS               4
-#define AUDIO_SAMPLINGRATE           16000
+#define AUDIO_CHANNELS               CODEC_CHANNELS
+#define AUDIO_SAMPLINGRATE           USBD_AUDIO_FREQ
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
+
+#define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
+#define MANAGER_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+#define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
+#define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+#define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
