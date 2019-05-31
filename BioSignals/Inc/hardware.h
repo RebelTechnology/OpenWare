@@ -13,8 +13,8 @@
 /* #define KX122_LEFTSHIFT               16 */
 #define KX122_ACTIVE_CHANNELS         3
 /* #define KX122_AUDIO_FREQ              25600 */
-#define KX122_AUDIO_FREQ              12800
-/* #define KX122_AUDIO_FREQ              6400 */
+/* #define KX122_AUDIO_FREQ              12800 */
+#define KX122_AUDIO_FREQ              6400
 #define KX122_TOTAL_CHANNELS          3 /* Always 3 */
 #define KX122_BLOCKSIZE               1 /* Always 1 */
 #define KX122_BUFFER_SIZE             (KX122_TOTAL_CHANNELS*KX122_BLOCKSIZE)
@@ -27,9 +27,8 @@
 #define ADS_GAIN                    1
 #define ADS_MAX_CHANNELS            4
 #define ADS_ACTIVE_CHANNELS         4
-#define ADS_BLOCKSIZE               CODEC_BLOCKSIZE
 #define ADS_HSPI                    hspi1
-#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*24)
+#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*4)
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       32

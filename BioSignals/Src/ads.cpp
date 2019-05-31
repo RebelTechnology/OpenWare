@@ -15,8 +15,6 @@
 
 extern SPI_HandleTypeDef ADS_HSPI;
 #define ADS_SPI_TIMEOUT 800
-#define ADS_BLOCK_CPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS*2)
-#define ADS_BLOCK_HALFCPLT (ADS_BLOCKSIZE*ADS_MAX_CHANNELS)
 #define USE_ADS_DMA
 
 static uint32_t ads_status = 0;
@@ -28,8 +26,6 @@ volatile bool ads_continuous = false;
 // volatile bool pretty = false;
 
 static int32_t* ads_samples;
-// int32_t ads_samples[ADS_MAX_CHANNELS*ADS_BLOCKSIZE*2] CCM;
-// static size_t ads_sample_pos;
 
 // 24-bits status header plus 24 bits per channel used for DMA
 static uint8_t ads_rx_buffer[3*(ADS_MAX_CHANNELS+1)];
@@ -225,15 +221,6 @@ void ads_process_samples(){
   ads_samples[1] = (ads_rx_buffer[6]<<24) | (ads_rx_buffer[7]<<16) | (ads_rx_buffer[8]<<8);
   ads_samples[2] = (ads_rx_buffer[9]<<24) | (ads_rx_buffer[10]<<16) | (ads_rx_buffer[11]<<8);
   ads_samples[3] = (ads_rx_buffer[12]<<24) | (ads_rx_buffer[13]<<16) | (ads_rx_buffer[14]<<8);
-
-  // for(size_t i=1; i<=ADS_MAX_CHANNELS; ++i)
-  //   ads_samples[ads_sample_pos++] = (ads_rx_buffer[i*3+0]<<24) | (ads_rx_buffer[i*3+1]<<16) | (ads_rx_buffer[i*3+2]<<8);
-  // if(ads_sample_pos == ADS_BLOCK_HALFCPLT){
-  //   ads_rx_callback(ads_samples, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
-  // }else if(ads_sample_pos == ADS_BLOCK_CPLT){
-  //   ads_rx_callback(ads_samples+ADS_BLOCK_HALFCPLT, ADS_MAX_CHANNELS, ADS_BLOCKSIZE);
-  //   ads_sample_pos = 0;
-  // }
 }
 
 void ads_sample(int32_t* samples, size_t len){
