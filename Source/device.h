@@ -62,9 +62,8 @@
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
 
-#define CODEC_CHANNELS               4
 #define CODEC_BLOCKSIZE              128
-#define CODEC_BUFFER_SIZE            (2*CODEC_CHANNELS*CODEC_BLOCKSIZE)
+#define CODEC_BUFFER_SIZE            (2*USB_AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
@@ -77,7 +76,7 @@
 #define AUDIO_BITDEPTH               24    /* bits per sample */
 #define AUDIO_DATAFORMAT             24
 #define AUDIO_CODEC_MASTER           true
-#define AUDIO_CHANNELS               CODEC_CHANNELS
+#define AUDIO_CHANNELS               USB_AUDIO_CHANNELS
 #define AUDIO_SAMPLINGRATE           USBD_AUDIO_FREQ
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
