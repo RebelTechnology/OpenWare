@@ -8,6 +8,7 @@
 #define USE_CODEC
 #define USE_ADS1294
 #define USE_USB_AUDIO
+#define AUDIO_BYPASS
 
 #define USE_KX122
 /* #define KX122_LEFTSHIFT               16 */
@@ -36,7 +37,7 @@
 /* #define ADC_CHANNEL_OFFSET          0 */
 /* #define ADC_RIGHTSHIFT              0 */
 
-#define USBD_AUDIO_FREQ             16000
+#define USBD_AUDIO_FREQ             8000
 
 #define TIM8_PERIOD                 (871*48000/USBD_AUDIO_FREQ) /* experimentally determined */
 
