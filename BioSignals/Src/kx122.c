@@ -5,21 +5,16 @@
 #include "stm32f4xx_hal.h"
 
 #define SPI_POLL
-#define SPI_TR_FUNCT
-
-/* extern SPI_HandleTypeDef hspi4; */
-/* extern DMA_HandleTypeDef hdma_sai1_b; */
-/* extern DMA_HandleTypeDef hdma_spi4_rx; */
 
 extern SPI_HandleTypeDef KX122_HSPI;
 static int32_t* kx122_samples;
 
-#define  COTR							0x55
+#define  COTR		  0x55
 
 #define REG_XHP_L         0x00
 #define REG_XHP_H         0x01
-#define REG_YHP_L        	0x02
-#define REG_YHP_H        	0x03
+#define REG_YHP_L         0x02
+#define REG_YHP_H         0x03
 #define REG_ZHP_L         0x04
 #define REG_ZHP_H         0x05
 #define REG_XOUT_L        0x06
@@ -29,24 +24,24 @@ static int32_t* kx122_samples;
 #define REG_ZOUT_L        0x0A
 #define REG_ZOUT_H        0x0B
 
-#define REG_COTR					0x0C
+#define REG_COTR	  0x0C
 #define REG_WHO_AM_I      0x0D
 
-#define	REG_INS2					0x13
-#define	REG_STATUS				0x15
-#define REG_INT_REL				0x17
+#define	REG_INS2	  0x13
+#define	REG_STATUS	  0x15
+#define REG_INT_REL	  0x17
 #define REG_CTRL_REG1     0x18
 #define REG_CTRL_REG2     0x19
 #define REG_CTRL_REG3     0x1A
-#define REG_CTRL_OD				0x1B
-#define REG_INC1					0x1C
-#define REG_INC2					0x1D
-#define REG_INC3					0x1E
-#define REG_INC4					0x1F
-#define REG_INC5					0x20
-#define REG_INC6					0x21
+#define REG_CTRL_OD	  0x1B
+#define REG_INC1	  0x1C
+#define REG_INC2	  0x1D
+#define REG_INC3	  0x1E
+#define REG_INC4	  0x1F
+#define REG_INC5	  0x20
+#define REG_INC6	  0x21
 
-#define REG_TDTRC					0x24
+#define REG_TDTRC	  0x24
 
 #define X_Axis  1
 #define Y_Axis  2
@@ -133,80 +128,21 @@ void kx122_set_range(uint8_t range){
   KX122_setReg(REG_CTRL_REG1, reg);
 }
 
-uint16_t KX122_readAxis (uint8_t axis){
-  uint16_t usiResult = 0;
-  switch(axis){
-  case X_Axis:
-    usiResult  = KX122_readReg(REG_XOUT_H)<<8;
-    usiResult |= KX122_readReg(REG_XOUT_L);
-    break;
-  case Y_Axis: 
-    usiResult  = KX122_readReg(REG_YOUT_H)<<8;
-    usiResult |= KX122_readReg(REG_YOUT_L);
-    break;
-  case Z_Axis: 
-    usiResult  = KX122_readReg(REG_ZOUT_H)<<8;
-    usiResult |= KX122_readReg(REG_ZOUT_L);
-    break;
-  }     	
-  return usiResult;
-}
-
 void kx122_cplt(){
   ACCEL_CS_HI();
   kx122_samples[0] = (kx122_buffer[1]<<16) | (kx122_buffer[2]<<24);
   kx122_samples[1] = (kx122_buffer[3]<<16) | (kx122_buffer[4]<<24);
   kx122_samples[2] = (kx122_buffer[5]<<16) | (kx122_buffer[6]<<24);
-  /* kx122_rx_callback((int16_t*)(kx122_buffer+1), 3); */
 }
 
 void kx122_drdy(){
-/* void KX122_readAllAxes(void){	 */
-  /* uint8_t rgTxData[8] = { 0x06 | (1<<7), 0x00}; */
-	
   ACCEL_CS_LO();
   kx122_buffer[0] = 0x06 | (1<<7);
 	
 #ifdef SPI_POLL
-#ifdef SPI_TR_FUNCT
   HAL_SPI_TransmitReceive(&KX122_HSPI, kx122_buffer, kx122_buffer, 7, 10);
-#else
-  HAL_SPI_Transmit(&KX122_HSPI, kx122_buffer+1,   1, 1);
-  HAL_SPI_Receive(&KX122_HSPI,  kx122_buffer+2, 6, 1);
-#endif
   kx122_cplt();
 #else
-#ifdef SPI_TR_FUNCT
   HAL_SPI_TransmitReceive_IT(&KX122_HSPI, kx122_buffer, kx122_buffer, 7);
-#else
-  HAL_SPI_Transmit(&KX122_HSPI, kx122_buffer+1, 1, 1);
-  HAL_SPI_Receive_IT(&KX122_HSPI, kx122_buffer+2, 6);
-#endif
-		
 #endif
 }
-
-/* void HAL_GPIO_EXTI_Callback(uint16_t pin) */
-/* { */
-/*   // Determine source of interrupt */
-/*   switch (pin) */
-/*     { */
-/*     case KX122_INT1_Pin: */
-/*       // Read Accelerometer */
-/*       /\* kx122_buffer[0] = KX122_readAxis(X_Axis); *\/ */
-/*       /\* kx122_buffer[0] = KX122_readAxis(Y_Axis); *\/ */
-/*       /\* kx122_buffer[0] = KX122_readAxis(Z_Axis); *\/ */
-/*       /\* kx122_rx_callback(kx122_buffer, 3); *\/ */
-		
-/*       KX122_readAllAxes(); */
-/*       break; */
-		
-/*     case KX122_INT2_Pin: */
-/*       __NOP(); */
-/*       break; */
-	
-/*     case BLE_IRQ_Pin: */
-/*       __NOP(); */
-/*       break;	 */
-/*     } */
-/* } */
