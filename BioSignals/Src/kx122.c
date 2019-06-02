@@ -154,9 +154,9 @@ uint16_t KX122_readAxis (uint8_t axis){
 
 void kx122_cplt(){
   ACCEL_CS_HI();
-  kx122_samples[0] = (kx122_buffer[1]<<24) | (kx122_buffer[2]<<16);
-  kx122_samples[1] = (kx122_buffer[3]<<24) | (kx122_buffer[4]<<16);
-  kx122_samples[2] = (kx122_buffer[5]<<24) | (kx122_buffer[6]<<16);
+  kx122_samples[0] = (kx122_buffer[1]<<16) | (kx122_buffer[2]<<24);
+  kx122_samples[1] = (kx122_buffer[3]<<16) | (kx122_buffer[4]<<24);
+  kx122_samples[2] = (kx122_buffer[5]<<16) | (kx122_buffer[6]<<24);
   /* kx122_rx_callback((int16_t*)(kx122_buffer+1), 3); */
 }
 
