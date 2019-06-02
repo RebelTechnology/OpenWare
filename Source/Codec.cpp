@@ -3,7 +3,7 @@
 #include "errorhandlers.h"
 #include "ApplicationSettings.h"
 
-static uint16_t blocksize;
+static uint16_t blocksize = 0;
 static int32_t txbuf[CODEC_BUFFER_SIZE];
 
 uint16_t Codec::getBlockSize(){
@@ -84,9 +84,9 @@ extern "C" {
   extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
 }
 
-static size_t rxindex;
-static size_t rxhalf;
-static size_t rxfull;
+static size_t rxindex = 0;
+static size_t rxhalf = 0;
+static size_t rxfull = 0;
 
 #ifdef USE_USB_AUDIO
 #include "usbd_audio.h"
