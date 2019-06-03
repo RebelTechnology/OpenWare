@@ -4,7 +4,8 @@
 #include "message.h"
 #include "stm32f4xx_hal.h"
 
-#define SPI_POLL
+/* #define SPI_IT */
+#define SPI_DMA
 
 extern SPI_HandleTypeDef KX122_HSPI;
 static int32_t* kx122_samples;
@@ -139,10 +140,12 @@ void kx122_drdy(){
   ACCEL_CS_LO();
   kx122_buffer[0] = 0x06 | (1<<7);
 	
-#ifdef SPI_POLL
+#ifdef SPI_IT
+  HAL_SPI_TransmitReceive_IT(&KX122_HSPI, kx122_buffer, kx122_buffer, 7);
+#elif defined SPI_DMA
+  HAL_SPI_TransmitReceive_DMA(&KX122_HSPI, kx122_buffer, kx122_buffer, 7);
+#else
   HAL_SPI_TransmitReceive(&KX122_HSPI, kx122_buffer, kx122_buffer, 7, 10);
   kx122_cplt();
-#else
-  HAL_SPI_TransmitReceive_IT(&KX122_HSPI, kx122_buffer, kx122_buffer, 7);
 #endif
 }
