@@ -174,289 +174,140 @@ USBD_ClassTypeDef  USBD_AUDIO =
   USBD_AUDIO_GetDeviceQualifierDesc,
 };
 
-#define USB_AUDIO_MIC
-
 /* USB AUDIO device Configuration Descriptor */
 __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALIGN_END =
 {
-#ifdef USB_AUDIO_MIC
   /////////////////////// MICROPHONE //////////////////////////
-        /* USB Microphone Configuration Descriptor */
-        0x09,//sizeof(USB_CFG_DSC),    // Size of this descriptor in bytes
-        USB_DESC_TYPE_CONFIGURATION,                // CONFIGURATION descriptor type (0x02)
-        LOBYTE(USB_AUDIO_CONFIG_DESC_SIZ),       /* wTotalLength  109 bytes*/
-        HIBYTE(USB_AUDIO_CONFIG_DESC_SIZ),
-        2,                      // bNumInterfaces Number of interfaces in this cfg
-        1,                      // bConfigurationValue Index value of this configuration
-        0,                      // iConfiguration Configuration string index
-        0x80,                   // bmAttributes, see usb_device.h
-	50,                     // Max power consumption (2X mA) */
-	/* 0xC0,                     /\* bmAttributes  BUS Powred*\/ */
-        /* 0x32,                     // Max power consumption (100mA) */
+  /* USB Microphone Configuration Descriptor */
+  0x09,//sizeof(USB_CFG_DSC),    // Size of this descriptor in bytes
+  USB_DESC_TYPE_CONFIGURATION,                // CONFIGURATION descriptor type (0x02)
+  LOBYTE(USB_AUDIO_CONFIG_DESC_SIZ),       /* wTotalLength  109 bytes*/
+  HIBYTE(USB_AUDIO_CONFIG_DESC_SIZ),
+  2,                      // bNumInterfaces Number of interfaces in this cfg
+  1,                      // bConfigurationValue Index value of this configuration
+  0,                      // iConfiguration Configuration string index
+  0x80,                   // bmAttributes, see usb_device.h
+  50,                     // Max power consumption (2X mA) */
+  /* 0xC0,                     /\* bmAttributes  BUS Powred*\/ */
+  /* 0x32,                     // Max power consumption (100mA) */
  
-        /* USB Microphone Standard AC Interface Descriptor  */
-        0x09,//sizeof(USB_INTF_DSC),   // Size of this descriptor in bytes
-        USB_DESC_TYPE_INTERFACE, // INTERFACE descriptor type
-        0x00,                          // bInterfaceNumber Interface Number
-        0x00,                          // bAlternateSetting Alternate Setting Number
-        0x00,                          // bNumEndpoints Number of endpoints in this i/f
-        USB_DEVICE_CLASS_AUDIO,        // bInterfaceClass Class code
-        AUDIO_SUBCLASS_AUDIOCONTROL,   // bInterfaceSubclass Subclass code
-        0x00,                          // bInterfaceProtocol Protocol code
-        0x00,                          // iInterface Interface string index 
+  /* USB Microphone Standard AC Interface Descriptor  */
+  0x09,//sizeof(USB_INTF_DSC),   // Size of this descriptor in bytes
+  USB_DESC_TYPE_INTERFACE, // INTERFACE descriptor type
+  0x00,                          // bInterfaceNumber Interface Number
+  0x00,                          // bAlternateSetting Alternate Setting Number
+  0x00,                          // bNumEndpoints Number of endpoints in this i/f
+  USB_DEVICE_CLASS_AUDIO,        // bInterfaceClass Class code 0x01
+  AUDIO_SUBCLASS_AUDIOCONTROL,   // bInterfaceSubclass Subclass code 0x01
+  0x00,                          // bInterfaceProtocol Protocol code
+  0x00,                          // iInterface Interface string index 
  
-        /* USB Microphone Class-specific AC Interface Descriptor  (CODE == 9)*/
-        0x09,                         // Size of this descriptor, in bytes.
-        AUDIO_INTERFACE_DESCRIPTOR_TYPE, // bDescriptorType CS_INTERFACE Descriptor Type 0x24
-        AUDIO_CONTROL_HEADER,         // bDescriptorSubtype HEADER descriptor subtype 0x01
-        0x00,0x01,                    // bcdADC Audio Device compliant to the USB Audio specification version 1.00
-        0x1E,0x00,                    // wTotalLength Total number of bytes returned for the class-specific AudioControl interface descriptor.
-                                      // Includes the combined length of this descriptor header and all Unit and Terminal descriptors.
-        0x01,                         // bInCollection The number of AudioStreaming interfaces in the Audio Interface Collection to which this AudioControl interface belongs bInCollection
-        0x01,                         // baInterfaceNr AudioStreaming interface 1 belongs to this AudioControl interface. baInterfaceNr
+  /* USB Microphone Class-specific AC Interface Descriptor  (CODE == 9)*/
+  0x09,                         // Size of this descriptor, in bytes.
+  AUDIO_INTERFACE_DESCRIPTOR_TYPE, // bDescriptorType CS_INTERFACE Descriptor Type 0x24
+  AUDIO_CONTROL_HEADER,         // bDescriptorSubtype HEADER descriptor subtype 0x01
+  0x00,0x01,                    // bcdADC Audio Device compliant to the USB Audio specification version 1.00
+  0x1E,0x00,                    // wTotalLength Total number of bytes returned for the class-specific AudioControl interface descriptor.
+  // Includes the combined length of this descriptor header and all Unit and Terminal descriptors.
+  0x01,                         // bInCollection The number of AudioStreaming interfaces in the Audio Interface Collection to which this AudioControl interface belongs bInCollection
+  0x01,                         // baInterfaceNr AudioStreaming interface 1 belongs to this AudioControl interface. baInterfaceNr
   
-        /*USB Microphone Input Terminal Descriptor */
-        0x0C,                         // Size of the descriptor, in bytes
-        AUDIO_INTERFACE_DESCRIPTOR_TYPE, // bDescriptorType CS_INTERFACE Descriptor Type
-        AUDIO_CONTROL_INPUT_TERMINAL,    // bDescriptorSubtype INPUT_TERMINAL descriptor subtype
-        0x01,                         // bTerminalID ID of this Terminal.
-        0x01,0x02,                    // wTerminalType Terminal is Microphone (0x01,0x02) wTerminalType
-        0x00,                         // bAssocTerminal No association
-        USB_AUDIO_CHANNELS,               // bNrChannels 
-        0x00,0x00,                    // wChannelConfig Mono sets no position bits 
-        0x00,                         // iChannelNames Unused
-        0x00,                         // iTerminal Unused
+  /*USB Microphone Input Terminal Descriptor */
+  0x0C,                         // Size of the descriptor, in bytes
+  AUDIO_INTERFACE_DESCRIPTOR_TYPE, // bDescriptorType CS_INTERFACE Descriptor Type
+  AUDIO_CONTROL_INPUT_TERMINAL,    // bDescriptorSubtype INPUT_TERMINAL descriptor subtype
+  0x01,                         // bTerminalID ID of this Terminal.
+  0x01,0x02,                    // wTerminalType Terminal is Microphone (0x01,0x02) wTerminalType
+  0x00,                         // bAssocTerminal No association
+  USB_AUDIO_CHANNELS,               // bNrChannels 
+  0x00,0x00,                    // wChannelConfig Mono sets no position bits 
+  0x00,                         // iChannelNames Unused
+  0x00,                         // iTerminal Unused
 
-        /* USB Microphone Output Terminal Descriptor */
-        0x09,                            // Size of the descriptor, in bytes (bLength)
-        AUDIO_INTERFACE_DESCRIPTOR_TYPE, // CS_INTERFACE Descriptor Type (bDescriptorType)
-        AUDIO_CONTROL_OUTPUT_TERMINAL,   // OUTPUT_TERMINAL descriptor subtype (bDescriptorSubtype)
-        0x02,                            // ID of this Terminal. (bTerminalID)
-        0x01, 0x01,                      // USB Streaming. wTerminalType
-        0x00,                            // unused         (bAssocTerminal)
-        0x01,                            // From Input Terminal.(bSourceID)
-        0x00,                            // unused  (iTerminal)
+  /* USB Microphone Output Terminal Descriptor */
+  0x09,                            // Size of the descriptor, in bytes (bLength)
+  AUDIO_INTERFACE_DESCRIPTOR_TYPE, // CS_INTERFACE Descriptor Type (bDescriptorType)
+  AUDIO_CONTROL_OUTPUT_TERMINAL,   // OUTPUT_TERMINAL descriptor subtype (bDescriptorSubtype)
+  0x02,                            // ID of this Terminal. (bTerminalID)
+  0x01, 0x01,                      // USB Streaming. wTerminalType
+  0x00,                            // unused         (bAssocTerminal)
+  0x01,                            // From Input Terminal.(bSourceID)
+  0x00,                            // unused  (iTerminal)
 	  
-	/* USB Microphone Audio Feature Unit Descriptor */
-	/* 0x0c,                                 /\* bLength *\/ */
-	/* AUDIO_INTERFACE_DESCRIPTOR_TYPE,      /\* bDescriptorType *\/ */
-	/* AUDIO_CONTROL_FEATURE_UNIT,           /\* bDescriptorSubtype *\/ */
-	/* AUDIO_IN_STREAMING_CTRL,              /\* bUnitID *\/ */
-	/* 0x01,                                 /\* bSourceID *\/ */
-	/* 0x01,                                 /\* bControlSize *\/ */
-	/* AUDIO_CONTROL_VOLUME,                 /\* bmaControls(0) *\/ */
-	/* /\* AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME,                 /\\* bmaControls(0) *\\/ *\/ */
-	/* 0,                 /\* bmaControls(1) *\/ */
-	/* 0,                 /\* bmaControls(2) *\/ */
-	/* 0,                 /\* bmaControls(3) *\/ */
-	/* 0,                 /\* bmaControls(4) *\/ */
-	/* 0x00,                                 /\* iFeature *\/ */
+  /* USB Microphone Audio Feature Unit Descriptor */
+  /* 0x0c,                                 /\* bLength *\/ */
+  /* AUDIO_INTERFACE_DESCRIPTOR_TYPE,      /\* bDescriptorType *\/ */
+  /* AUDIO_CONTROL_FEATURE_UNIT,           /\* bDescriptorSubtype *\/ */
+  /* AUDIO_IN_STREAMING_CTRL,              /\* bUnitID *\/ */
+  /* 0x01,                                 /\* bSourceID *\/ */
+  /* 0x01,                                 /\* bControlSize *\/ */
+  /* AUDIO_CONTROL_VOLUME,                 /\* bmaControls(0) *\/ */
+  /* /\* AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME,                 /\\* bmaControls(0) *\\/ *\/ */
+  /* 0,                 /\* bmaControls(1) *\/ */
+  /* 0,                 /\* bmaControls(2) *\/ */
+  /* 0,                 /\* bmaControls(3) *\/ */
+  /* 0,                 /\* bmaControls(4) *\/ */
+  /* 0x00,                                 /\* iFeature *\/ */
  
-        /* USB Microphone Standard AS Interface Descriptor (Alt. Set. 0) (CODE == 3)*/ //zero-bandwidth interface
-        0x09,                         // Size of the descriptor, in bytes (bLength)
-        USB_DESC_TYPE_INTERFACE,    // INTERFACE descriptor type (bDescriptorType) 0x04
-        0x01, // Index of this interface. (bInterfaceNumber) ?????????? (3<) (1<<) (1<M)
-        0x00,                         // Index of this alternate setting. (bAlternateSetting)
-        0x00,                         // 0 endpoints.   (bNumEndpoints)
-        USB_DEVICE_CLASS_AUDIO,       // AUDIO (bInterfaceClass)
-        AUDIO_SUBCLASS_AUDIOSTREAMING, // AUDIO_STREAMING (bInterfaceSubclass)
-        0x00,                         // Unused. (bInterfaceProtocol)
-        0x00,                         // Unused. (iInterface)
+  /* USB Microphone Standard AS Interface Descriptor (Alt. Set. 0) (CODE == 3)*/ //zero-bandwidth interface
+  0x09,                         // Size of the descriptor, in bytes (bLength)
+  USB_DESC_TYPE_INTERFACE,    // INTERFACE descriptor type (bDescriptorType) 0x04
+  0x01, // Index of this interface. (bInterfaceNumber) ?????????? (3<) (1<<) (1<M)
+  0x00,                         // Index of this alternate setting. (bAlternateSetting)
+  0x00,                         // 0 endpoints.   (bNumEndpoints)
+  USB_DEVICE_CLASS_AUDIO,       // AUDIO (bInterfaceClass)
+  AUDIO_SUBCLASS_AUDIOSTREAMING, // AUDIO_STREAMING (bInterfaceSubclass)
+  0x00,                         // Unused. (bInterfaceProtocol)
+  0x00,                         // Unused. (iInterface)
  
-        /* USB Microphone Standard AS Interface Descriptor (Alt. Set. 1) (CODE == 4)*/
-        0x09,                         // Size of the descriptor, in bytes (bLength)
-        USB_DESC_TYPE_INTERFACE,     // INTERFACE descriptor type (bDescriptorType)
-        0x01, // Index of this interface. (bInterfaceNumber)
-        0x01,                         // Index of this alternate setting. (bAlternateSetting)
-        0x01,                         // 1 endpoint (bNumEndpoints)
-        USB_DEVICE_CLASS_AUDIO,       // AUDIO (bInterfaceClass)
-        AUDIO_SUBCLASS_AUDIOSTREAMING,   // AUDIO_STREAMING (bInterfaceSubclass)
-        0x00,                         // Unused. (bInterfaceProtocol)
-        0x00,                         // Unused. (iInterface)
+  /* USB Microphone Standard AS Interface Descriptor (Alt. Set. 1) (CODE == 4)*/
+  0x09,                         // Size of the descriptor, in bytes (bLength)
+  USB_DESC_TYPE_INTERFACE,     // INTERFACE descriptor type (bDescriptorType)
+  0x01, // Index of this interface. (bInterfaceNumber)
+  0x01,                         // Index of this alternate setting. (bAlternateSetting)
+  0x01,                         // 1 endpoint (bNumEndpoints)
+  USB_DEVICE_CLASS_AUDIO,       // AUDIO (bInterfaceClass)
+  AUDIO_SUBCLASS_AUDIOSTREAMING,   // AUDIO_STREAMING (bInterfaceSubclass)
+  0x00,                         // Unused. (bInterfaceProtocol)
+  0x00,                         // Unused. (iInterface)
  
-        /*  USB Microphone Class-specific AS General Interface Descriptor (CODE == 5)*/
-        0x07,                         // Size of the descriptor, in bytes (bLength)
-        AUDIO_INTERFACE_DESCRIPTOR_TYPE, // CS_INTERFACE Descriptor Type (bDescriptorType) 0x24
-        AUDIO_STREAMING_GENERAL,         // GENERAL subtype (bDescriptorSubtype) 0x01
-        0x02,             // Unit ID of the Output Terminal.(bTerminalLink)
-        0x00,                         // Interface delay. (bDelay)
-        0x01,0x00,                    // PCM Format (wFormatTag) The document 'USB Audio Data formats' contains tag definitions
+  /*  USB Microphone Class-specific AS General Interface Descriptor (CODE == 5)*/
+  0x07,                         // Size of the descriptor, in bytes (bLength)
+  AUDIO_INTERFACE_DESCRIPTOR_TYPE, // CS_INTERFACE Descriptor Type (bDescriptorType) 0x24
+  AUDIO_STREAMING_GENERAL,         // GENERAL subtype (bDescriptorSubtype) 0x01
+  0x02,             // Unit ID of the Output Terminal.(bTerminalLink)
+  0x00,                         // Interface delay. (bDelay)
+  0x01,0x00,                    // PCM Format (wFormatTag) The document 'USB Audio Data formats' contains tag definitions
  
-        /*  USB Microphone Type I Format Type Descriptor (CODE == 6)*/
-        0x0B,                        // Size of the descriptor, in bytes (bLength)
-        AUDIO_INTERFACE_DESCRIPTOR_TYPE,// CS_INTERFACE Descriptor Type (bDescriptorType) 0x24
-        AUDIO_STREAMING_FORMAT_TYPE,   // FORMAT_TYPE subtype. (bDescriptorSubtype) 0x02
-        0x01,                        // FORMAT_TYPE_I. (bFormatType)
-        USB_AUDIO_CHANNELS,              // Audio channels.(bNrChannels)
-        AUDIO_BYTES_PER_SAMPLE,       // Two bytes per audio subframe.(bSubFrameSize)
-        AUDIO_BITS_PER_SAMPLE,       // 16 bits per sample.(bBitResolution)
-        0x01,                        // One frequency supported. (bSamFreqType)
-	AUDIO_SAMPLE_FREQ(USBD_AUDIO_FREQ),         /* Audio sampling frequency coded on 3 bytes */
- 
-        /*  USB Microphone Standard Endpoint Descriptor (CODE == 8)*/ //Standard AS Isochronous Audio Data Endpoint Descriptor
-        0x09,                       // Size of the descriptor, in bytes (bLength)
-        0x05,                       // ENDPOINT descriptor (bDescriptorType)
-        AUDIO_IN_EP,                    // IN Endpoint 1. (bEndpointAddress)
-	USBD_EP_TYPE_ISOC,                    /* bmAttributes (1) */
-	AUDIO_PACKET_SZE(USBD_AUDIO_FREQ),    /* wMaxPacketSize in Bytes (Freq(Samples)*2(Stereo)*2(HalfWord)) */
-        0x01,                       // Polling interval 1kHz. (bInterval)
-        0x00,                       // Unused. (bRefresh)
-        0x00,                       // Unused. (bSynchAddress)
- 
-        /* USB Microphone Class-specific Isoc. Audio Data Endpoint Descriptor (CODE == 7) OK - */
-        0x07,                       // Size of the descriptor, in bytes (bLength)
-        AUDIO_ENDPOINT_DESCRIPTOR_TYPE,    // CS_ENDPOINT Descriptor Type (bDescriptorType) 0x25
-        AUDIO_ENDPOINT_GENERAL,            // GENERAL subtype. (bDescriptorSubtype) 0x01
-        0x00,                              // No sampling frequency control, no pitch control, no packet padding.(bmAttributes)
-        0x00,                              // Unused. (bLockDelayUnits)
-        0x00,0x00,                         // Unused. (wLockDelay
- 
-#else
-
-  /* Configuration 1 */
-  0x09,                                 /* bLength */
-  USB_DESC_TYPE_CONFIGURATION,          /* bDescriptorType */
-  LOBYTE(USB_AUDIO_CONFIG_DESC_SIZ),    /* wTotalLength  109 bytes*/
-  HIBYTE(USB_AUDIO_CONFIG_DESC_SIZ),      
-  0x02,                                 /* bNumInterfaces */
-  0x01,                                 /* bConfigurationValue */
-  0x00,                                 /* iConfiguration */
-  0xC0,                                 /* bmAttributes  BUS Powred*/
-  0x32,                                 /* bMaxPower = 100 mA*/
-  /* 09 byte*/
-  
-  /* USB Speaker Standard interface descriptor */
-  AUDIO_INTERFACE_DESC_SIZE,            /* bLength */
-  USB_DESC_TYPE_INTERFACE,              /* bDescriptorType */
-  0x00,                                 /* bInterfaceNumber */
-  0x00,                                 /* bAlternateSetting */
-  0x00,                                 /* bNumEndpoints */
-  USB_DEVICE_CLASS_AUDIO,               /* bInterfaceClass */
-  AUDIO_SUBCLASS_AUDIOCONTROL,          /* bInterfaceSubClass */
-  AUDIO_PROTOCOL_UNDEFINED,             /* bInterfaceProtocol */
-  0x00,                                 /* iInterface */
-  /* 09 byte*/
-  
-  /* USB Speaker Class-specific AC Interface Descriptor */
-  AUDIO_INTERFACE_DESC_SIZE,            /* bLength */
-  AUDIO_INTERFACE_DESCRIPTOR_TYPE,      /* bDescriptorType */
-  AUDIO_CONTROL_HEADER,                 /* bDescriptorSubtype */
-  0x00,          /* 1.00 */             /* bcdADC */
-  0x01,
-  0x27,                                 /* wTotalLength = 39*/
-  0x00,
-  0x01,                                 /* bInCollection */
-  0x01,                                 /* baInterfaceNr */
-  /* 09 byte*/
-  
-  /* USB Speaker Input Terminal Descriptor */
-  AUDIO_INPUT_TERMINAL_DESC_SIZE,       /* bLength */
-  AUDIO_INTERFACE_DESCRIPTOR_TYPE,      /* bDescriptorType */
-  AUDIO_CONTROL_INPUT_TERMINAL,         /* bDescriptorSubtype */
-  0x01,                                 /* bTerminalID */
-  0x01,                                 /* wTerminalType AUDIO_TERMINAL_USB_STREAMING   0x0101 */
-  0x01,
-  0x00,                                 /* bAssocTerminal */
-  0x01,                                 /* bNrChannels */
-  0x00,                                 /* wChannelConfig 0x0000  Mono */
-  0x00,
-  0x00,                                 /* iChannelNames */
-  0x00,                                 /* iTerminal */
-  /* 12 byte*/
-  
-  /* USB Speaker Audio Feature Unit Descriptor */
-  0x09,                                 /* bLength */
-  AUDIO_INTERFACE_DESCRIPTOR_TYPE,      /* bDescriptorType */
-  AUDIO_CONTROL_FEATURE_UNIT,           /* bDescriptorSubtype */
-  AUDIO_OUT_STREAMING_CTRL,             /* bUnitID */
-  0x01,                                 /* bSourceID */
-  0x01,                                 /* bControlSize */
-  AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME, /* bmaControls(0) */
-  0,                                    /* bmaControls(1) */
-  0x00,                                 /* iTerminal */
-  /* 09 byte*/
-  
-  /*USB Speaker Output Terminal Descriptor */
-  0x09,      /* bLength */
-  AUDIO_INTERFACE_DESCRIPTOR_TYPE,      /* bDescriptorType */
-  AUDIO_CONTROL_OUTPUT_TERMINAL,        /* bDescriptorSubtype */
-  0x03,                                 /* bTerminalID */
-  0x01,                                 /* wTerminalType  0x0301*/
-  0x03,
-  0x00,                                 /* bAssocTerminal */
-  0x02,                                 /* bSourceID */
-  0x00,                                 /* iTerminal */
-  /* 09 byte*/
-  
-  /* USB Speaker Standard AS Interface Descriptor - Audio Streaming Zero Bandwith */
-  /* Interface 1, Alternate Setting 0                                             */
-  AUDIO_INTERFACE_DESC_SIZE,  /* bLength */
-  USB_DESC_TYPE_INTERFACE,        /* bDescriptorType */
-  0x01,                                 /* bInterfaceNumber */
-  0x00,                                 /* bAlternateSetting */
-  0x00,                                 /* bNumEndpoints */
-  USB_DEVICE_CLASS_AUDIO,               /* bInterfaceClass */
-  AUDIO_SUBCLASS_AUDIOSTREAMING,        /* bInterfaceSubClass */
-  AUDIO_PROTOCOL_UNDEFINED,             /* bInterfaceProtocol */
-  0x00,                                 /* iInterface */
-  /* 09 byte*/
-  
-  /* USB Speaker Standard AS Interface Descriptor - Audio Streaming Operational */
-  /* Interface 1, Alternate Setting 1                                           */
-  AUDIO_INTERFACE_DESC_SIZE,  /* bLength */
-  USB_DESC_TYPE_INTERFACE,        /* bDescriptorType */
-  0x01,                                 /* bInterfaceNumber */
-  0x01,                                 /* bAlternateSetting */
-  0x01,                                 /* bNumEndpoints */
-  USB_DEVICE_CLASS_AUDIO,               /* bInterfaceClass */
-  AUDIO_SUBCLASS_AUDIOSTREAMING,        /* bInterfaceSubClass */
-  AUDIO_PROTOCOL_UNDEFINED,             /* bInterfaceProtocol */
-  0x00,                                 /* iInterface */
-  /* 09 byte*/
-  
-  /* USB Speaker Audio Streaming Interface Descriptor */
-  AUDIO_STREAMING_INTERFACE_DESC_SIZE,  /* bLength */
-  AUDIO_INTERFACE_DESCRIPTOR_TYPE,      /* bDescriptorType */
-  AUDIO_STREAMING_GENERAL,              /* bDescriptorSubtype */
-  0x01,                                 /* bTerminalLink */
-  0x01,                                 /* bDelay */
-  0x01,                                 /* wFormatTag AUDIO_FORMAT_PCM  0x0001*/
-  0x00,
-  /* 07 byte*/
-  
-  /* USB Speaker Audio Type III Format Interface Descriptor */
-  0x0B,                                 /* bLength */
-  AUDIO_INTERFACE_DESCRIPTOR_TYPE,      /* bDescriptorType */
-  AUDIO_STREAMING_FORMAT_TYPE,          /* bDescriptorSubtype */
-  AUDIO_FORMAT_TYPE_III,                /* bFormatType */ 
-  0x02,                                 /* bNrChannels */
-  0x02,                                 /* bSubFrameSize :  2 Bytes per frame (16bits) */
-  16,                                   /* bBitResolution (16-bits per sample) */ 
-  0x01,                                 /* bSamFreqType only one frequency supported */ 
+  /*  USB Microphone Type I Format Type Descriptor (CODE == 6)*/
+  0x0B,                        // Size of the descriptor, in bytes (bLength)
+  AUDIO_INTERFACE_DESCRIPTOR_TYPE,// CS_INTERFACE Descriptor Type (bDescriptorType) 0x24
+  AUDIO_STREAMING_FORMAT_TYPE,   // FORMAT_TYPE subtype. (bDescriptorSubtype) 0x02
+  0x01,                        // FORMAT_TYPE_I. (bFormatType)
+  USB_AUDIO_CHANNELS,              // Audio channels.(bNrChannels)
+  AUDIO_BYTES_PER_SAMPLE,       // Two bytes per audio subframe.(bSubFrameSize)
+  AUDIO_BITS_PER_SAMPLE,       // 16 bits per sample.(bBitResolution)
+  0x01,                        // One frequency supported. (bSamFreqType)
   AUDIO_SAMPLE_FREQ(USBD_AUDIO_FREQ),         /* Audio sampling frequency coded on 3 bytes */
-  /* 11 byte*/
-  
-  /* Endpoint 1 - Standard Descriptor */
-  AUDIO_STANDARD_ENDPOINT_DESC_SIZE,    /* bLength */
-  USB_DESC_TYPE_ENDPOINT,               /* bDescriptorType */
-  AUDIO_OUT_EP,                         /* bEndpointAddress 1 out endpoint*/
-  USBD_EP_TYPE_ISOC,                    /* bmAttributes */
+ 
+  /*  USB Microphone Standard Endpoint Descriptor (CODE == 8)*/ //Standard AS Isochronous Audio Data Endpoint Descriptor
+  0x09,                       // Size of the descriptor, in bytes (bLength)
+  0x05,                       // ENDPOINT descriptor (bDescriptorType)
+  AUDIO_IN_EP,                    // IN Endpoint 1. (bEndpointAddress)
+  USBD_EP_TYPE_ISOC,                    /* bmAttributes (1) */
   AUDIO_PACKET_SZE(USBD_AUDIO_FREQ),    /* wMaxPacketSize in Bytes (Freq(Samples)*2(Stereo)*2(HalfWord)) */
-  0x01,                                 /* bInterval */
-  0x00,                                 /* bRefresh */
-  0x00,                                 /* bSynchAddress */
-  /* 09 byte*/
-  
-  /* Endpoint - Audio Streaming Descriptor*/
-  AUDIO_STREAMING_ENDPOINT_DESC_SIZE,   /* bLength */
-  AUDIO_ENDPOINT_DESCRIPTOR_TYPE,       /* bDescriptorType */
-  AUDIO_ENDPOINT_GENERAL,               /* bDescriptor */
-  0x00,                                 /* bmAttributes */
-  0x00,                                 /* bLockDelayUnits */
-  0x00,                                 /* wLockDelay */
-  0x00,
-  /* 07 byte*/
-#endif
+  0x01,                       // Polling interval 1kHz. (bInterval)
+  0x00,                       // Unused. (bRefresh)
+  0x00,                       // Unused. (bSynchAddress)
+ 
+  /* USB Microphone Class-specific Isoc. Audio Data Endpoint Descriptor (CODE == 7) OK - */
+  0x07,                       // Size of the descriptor, in bytes (bLength)
+  AUDIO_ENDPOINT_DESCRIPTOR_TYPE,    // CS_ENDPOINT Descriptor Type (bDescriptorType) 0x25
+  AUDIO_ENDPOINT_GENERAL,            // GENERAL subtype. (bDescriptorSubtype) 0x01
+  0x00,                              // No sampling frequency control, no pitch control, no packet padding.(bmAttributes)
+  0x00,                              // Unused. (bLockDelayUnits)
+  0x00,0x00,                         // Unused. (wLockDelay
+ 
 } ;
 
 /* USB Standard Device Descriptor */
