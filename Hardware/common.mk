@@ -1,6 +1,7 @@
 # Name of executables
 ELF=$(BUILD)/$(PROJECT).elf
 BIN=$(BUILD)/$(PROJECT).bin
+HEX=$(BUILD)/$(PROJECT).hex
 
 # Flags
 CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
@@ -58,6 +59,9 @@ $(BUILD)/%.s: %.cpp
 $(BUILD)/%.bin: $(BUILD)/%.elf
 	@$(OBJCOPY) -O binary $< $@
 
+$(BUILD)/%.hex : $(BUILD)/%.elf
+	@$(OBJCOPY) -O ihex $< $@
+
 clean:
 	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) gdbscript
 
@@ -70,7 +74,7 @@ stlink:
 openocd: $(ELF)
 	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "load" $(ELF)
 
-bin: $(BIN)
+bin: $(BIN) $(HEX)
 	@echo Successfully built $(CONFIG) firmware in $(BIN)
 
 map : $(OBJS) $(LDSCRIPT)

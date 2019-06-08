@@ -172,10 +172,10 @@ flash erase not working? needs unlocking?
 -----------------------------------------------------------------
 
 # reset
-amidi -p "hw:1,0,0" -S f07d527df7
+amidi -p hw:2 -S f07d527df7
 
 # reset to bootloader
-amidi -p "hw:1,0,0" -S f07d527ef7
+amidi -p hw:2 -S f07d527ef7
 
 # erase flash storage sectors
 amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d52140000000009f7f07d52140000000010f7
@@ -193,5 +193,8 @@ cd MidiBoot
 make PLATFORM=Alchemist CONFIG=Release clean all
 
 -----------------------------------------------------------------
+
+FirmwareSender -in Build/Alchemist.bin -flash `crc32 Build/Alchemist.bin` -save Alchemist.syx
+FirmwareSender -in Build/Wizard.bin -flash `crc32 Build/Wizard.bin` -save Wizard.syx
 
 -----------------------------------------------------------------

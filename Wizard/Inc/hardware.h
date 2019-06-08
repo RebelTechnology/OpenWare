@@ -13,6 +13,8 @@
 #define MODE_BUTTON_GAIN ADC_D
 #define MODE_BUTTON_PATCH ADC_E
 
+#define USE_BKPSRAM
+
 #define USE_RGB_LED
 #define USE_DAC
 #define TRIG1_Pin GP7_Pin

@@ -12,6 +12,8 @@
 #define MODE_BUTTON_GAIN ADC_C
 #define MODE_BUTTON_PATCH ADC_D
 
+#define USE_BKPSRAM
+
 #define USE_RGB_LED
 #define USE_ADC
 #define ADC_PERIPH hadc3

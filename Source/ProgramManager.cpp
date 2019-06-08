@@ -6,6 +6,7 @@
 #include "ProgramManager.h"
 #include "ProgramVector.h"
 #include "DynamicPatchDefinition.hpp"
+#include "ApplicationSettings.h"
 #include "errorhandlers.h"
 #ifdef USE_CODEC
 #include "Codec.h"
@@ -587,10 +588,16 @@ void ProgramManager::resetProgram(bool isr){
 
 void ProgramManager::updateProgramIndex(uint8_t index){
   patchindex = index;
-  // if(settings.program_index != index){
-    // settings.program_index = index;
+  settings.program_index = index;
   midi.sendPc(index);
   midi.sendPatchName(index, registry.getPatchName(index));
+#ifdef USE_BKPSRAM
+  extern RTC_HandleTypeDef hrtc;
+  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
+  // RTC->BKP1R = index;
+// uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
+  // *bkpsram_addr = index;
+#endif
 }
 
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){

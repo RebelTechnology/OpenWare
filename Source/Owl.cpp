@@ -456,6 +456,14 @@ void setup(){
   setLed(1, NO_COLOUR);
 #endif
 
+#ifdef USE_BKPSRAM
+  // __HAL_RCC_PWR_CLK_ENABLE();
+  HAL_PWR_EnableBkUpAccess();
+  // __HAL_RCC_RTC_CLKPRESCALER(RCC_RTCCLKSOURCE_LSI);
+  // __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
+  // __HAL_RCC_RTC_ENABLE();
+#endif
+  
 #ifdef OWL_PEDAL
   /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
   // if (HAL_GetREVID() == 0x1001)
@@ -584,8 +592,21 @@ void setup(){
 #endif /* USE_ADC */
 #endif
   
-  program.loadProgram(1);
-  program.startProgram(false);
+#ifdef USE_BKPSRAM
+  extern RTC_HandleTypeDef hrtc;
+  uint8_t lastprogram = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
+  // uint8_t lastprogram = RTC->BKP1R;
+  // uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
+  // uint8_t lastprogram = *bkpsram_addr;
+#else    
+  uint8_t lastprogram = 0;
+#endif
+  if(lastprogram == settings.program_index){
+    error(CONFIG_ERROR, "Preventing reset program from starting");
+  }else{
+    program.loadProgram(settings.program_index);
+    program.startProgram(false);
+  }
 
   midiSetInputChannel(settings.midi_input_channel);
   midiSetOutputChannel(settings.midi_output_channel);
@@ -906,6 +927,10 @@ void jump_to_bootloader(void){
 
 void device_reset(){
   *OWLBOOT_ADDRESS = 0;
+#ifdef USE_BKPSRAM
+  extern RTC_HandleTypeDef hrtc;
+  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
+#endif
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);

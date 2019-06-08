@@ -14,4 +14,4 @@ OBJS += $(S_SRC:%.s=Build/%.o)
 include $(OPENWARE)/Hardware/f0.mk
 
 flash:
-	openocd -f openocd.cfg -c "program Build/MagusEncoder.elf verify reset exit"
+	openocd -f openocd.cfg -c "program Build/$(PROJECT).elf verify reset exit"
