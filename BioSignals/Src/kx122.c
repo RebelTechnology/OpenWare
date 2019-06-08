@@ -5,7 +5,8 @@
 #include "stm32f4xx_hal.h"
 
 /* #define SPI_IT */
-#define SPI_DMA
+
+/* #define SPI_DMA */
 
 extern SPI_HandleTypeDef KX122_HSPI;
 static int32_t* kx122_samples;

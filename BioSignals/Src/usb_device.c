@@ -48,7 +48,6 @@
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_audio.h"
-#include "usbd_audio_if.h"
 
 /* USB Device Core handle declaration */
 USBD_HandleTypeDef hUsbDeviceHS;
@@ -61,7 +60,7 @@ void MX_USB_DEVICE_Init(void)
 
   USBD_RegisterClass(&hUsbDeviceHS, &USBD_AUDIO);
 
-  USBD_AUDIO_RegisterInterface(&hUsbDeviceHS, &USBD_AUDIO_fops_HS);
+  USBD_AUDIO_RegisterInterface(&hUsbDeviceHS, NULL);
 
   USBD_Start(&hUsbDeviceHS);
 

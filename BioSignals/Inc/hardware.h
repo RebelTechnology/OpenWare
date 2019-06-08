@@ -10,7 +10,7 @@
 #define USE_USB_AUDIO
 #define AUDIO_BYPASS
 
-#define USE_KX122
+/* #define USE_KX122 */
 #define KX122_ACTIVE_CHANNELS         3
 /* #define KX122_AUDIO_FREQ              25600 */
 /* #define KX122_AUDIO_FREQ              12800 */

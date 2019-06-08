@@ -46,14 +46,20 @@
   * @{
   */ 
 
+#define MIDI_EPIN_ADDR                 0x81
+#define MIDI_EPIN_SIZE                 0x10
+
+#define MIDI_OUT_EP                    0x01
+#define MIDI_IN_EP                     0x81
+#define MIDI_DATA_IN_PACKET_SIZE       0x40
+#define MIDI_DATA_OUT_PACKET_SIZE      0x40
 
 /** @defgroup USBD_AUDIO_Exported_Defines
   * @{
   */ 
 #define AUDIO_OUT_EP                                  0x01
 #define AUDIO_IN_EP                                   0x81
-#define USB_AUDIO_CONFIG_DESC_SIZ                     100
-/* #define USB_AUDIO_CONFIG_DESC_SIZ                     112 */
+#define USB_AUDIO_CONFIG_DESC_SIZ                     192
 #define AUDIO_INTERFACE_DESC_SIZE                     9
 #define USB_AUDIO_DESC_SIZ                            0x09
 #define AUDIO_STANDARD_ENDPOINT_DESC_SIZE             0x09
