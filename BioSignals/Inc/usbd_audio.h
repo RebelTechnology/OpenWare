@@ -46,6 +46,9 @@
   * @{
   */ 
 
+#define USE_USBD_MIDI
+
+
 #define MIDI_EPIN_ADDR                 0x81
 #define MIDI_EPIN_SIZE                 0x10
 
@@ -127,6 +130,8 @@
 #define AUDIO_TOTAL_BUF_SIZE                          ((uint32_t)(AUDIO_OUT_PACKET * AUDIO_OUT_PACKET_NUM))
 /* Total size of the IN (i.e. microphopne) transfer buffer */
 #define AUDIO_IN_TOTAL_BUF_SIZE                       ((uint32_t)(AUDIO_IN_PACKET_SIZE * AUDIO_IN_PACKET_NUM))
+
+#define MIDI_BUF_SIZE                                 64
     
     /* Audio Commands enumeration */
 typedef enum
@@ -167,7 +172,8 @@ USBD_AUDIO_ControlTypeDef;
 typedef struct
 {
   __IO uint32_t             alt_setting; 
-  uint8_t                   buffer[AUDIO_TOTAL_BUF_SIZE];
+  uint8_t                   audio_out_buffer[AUDIO_TOTAL_BUF_SIZE];
+  uint8_t                   midi_in_buffer[MIDI_BUF_SIZE];
   AUDIO_OffsetTypeDef       offset;
   uint8_t                    rd_enable;  
   uint16_t                   rd_ptr;  

@@ -198,3 +198,172 @@ FirmwareSender -in Build/Alchemist.bin -flash `crc32 Build/Alchemist.bin` -save 
 FirmwareSender -in Build/Wizard.bin -flash `crc32 Build/Wizard.bin` -save Wizard.syx
 
 -----------------------------------------------------------------
+
+USB AUDIO + MIDI device descriptor
+
+https://eleccelerator.com/usbdescreqparser/
+
+0902c000040100803209040000000101000009240100011e0001010c2402010102000400000000092403020101000100090401000001020000090401010101020000072401020001000b24020104042001401f00090581018000010000072501000000000904020000010100000924010001090001010904030002010300000724010001410006240201010006240202020009240301030102010009240302040101010009050102400000000005250101010905810240000000000525010103
+
+CONFIGURATION DESCRIPTOR
+    bLength: 9
+    bDescriptorType: 0x02 (CONFIGURATION)
+    wTotalLength: 192
+    bNumInterfaces: 4
+    bConfigurationValue: 1
+    iConfiguration: 0
+    Configuration bmAttributes: 0x80  NOT SELF-POWERED  NO REMOTE-WAKEUP
+        1... .... = Must be 1: Must be 1 for USB 1.1 and higher
+        .0.. .... = Self-Powered: This device is powered from the USB bus
+        ..0. .... = Remote Wakeup: This device does NOT support remote wakeup
+    bMaxPower: 50  (100mA)
+INTERFACE DESCRIPTOR (0.0): class Audio
+    bLength: 9
+    bDescriptorType: 0x04 (INTERFACE)
+    bInterfaceNumber: 0
+    bAlternateSetting: 0
+    bNumEndpoints: 0
+    bInterfaceClass: Audio (0x01)
+    bInterfaceSubClass: 0x01
+    bInterfaceProtocol: 0x00
+    iInterface: 0
+Class-specific Audio Control Interface Descriptor: Header Descriptor
+    bLength: 9
+    bDescriptorType: 0x24 (audio class interface)
+    Subtype: Header Descriptor (0x01)
+    Version: 1.00
+    Total length: 30
+    Total number of interfaces: 1
+    Interface number: 1
+Class-specific Audio Control Interface Descriptor: Input terminal descriptor
+    bLength: 12
+    bDescriptorType: 0x24 (audio class interface)
+    Subtype: Input terminal descriptor (0x02)
+    Terminal ID: 1
+    Terminal Type: Microphone (0x0201)
+    Assoc Terminal: 0
+    Number Channels: 4
+    Channel Config: 0x0000
+    Channel Names: 0
+    Terminal: 0
+Class-specific Audio Control Interface Descriptor: Output terminal descriptor
+    bLength: 9
+    bDescriptorType: 0x24 (audio class interface)
+    Subtype: Output terminal descriptor (0x03)
+    Terminal ID: 2
+    Terminal Type: USB Streaming (0x0101)
+    Assoc Terminal: 0
+    Source ID: 1
+    Terminal: 0
+INTERFACE DESCRIPTOR (1.0): class Audio
+    bLength: 9
+    bDescriptorType: 0x04 (INTERFACE)
+    bInterfaceNumber: 1
+    bAlternateSetting: 0
+    bNumEndpoints: 0
+    bInterfaceClass: Audio (0x01)
+    bInterfaceSubClass: 0x02
+    bInterfaceProtocol: 0x00
+    iInterface: 0
+INTERFACE DESCRIPTOR (1.1): class Audio
+    bLength: 9
+    bDescriptorType: 0x04 (INTERFACE)
+    bInterfaceNumber: 1
+    bAlternateSetting: 1
+    bNumEndpoints: 1
+    bInterfaceClass: Audio (0x01)
+    bInterfaceSubClass: 0x02
+    bInterfaceProtocol: 0x00
+    iInterface: 0
+Class-specific Audio Streaming Interface Descriptor: General AS Descriptor
+    bLength: 7
+    bDescriptorType: 0x24 (audio class interface)
+    Subtype: General AS Descriptor (0x01)
+    Terminal ID: 2
+    Interface delay in frames: 0
+    Format: 0x0001
+Class-specific Audio Streaming Interface Descriptor: Format type descriptor
+    bLength: 11
+    bDescriptorType: 0x24 (audio class interface)
+    Subtype: Format type descriptor (0x02)
+    FormatType: 1
+    Number Channels: 4
+    Subframe Size: 4
+    Bit Resolution: 32
+    Samples Frequence Type: 1
+    Samples Frequence: 8000
+ENDPOINT DESCRIPTOR
+    bLength: 9
+    bDescriptorType: 0x05 (ENDPOINT)
+    bEndpointAddress: 0x81  IN  Endpoint:1
+    bmAttributes: 0x01
+    wMaxPacketSize: 128
+    bInterval: 1
+Class-specific Audio Streaming Endpoint Descriptor
+    bLength: 7
+    bDescriptorType: 0x25 (audio class endpoint)
+    Subtype: 0x01
+INTERFACE DESCRIPTOR (2.0): class Audio
+    bLength: 9
+    bDescriptorType: 0x04 (INTERFACE)
+    bInterfaceNumber: 2
+    bAlternateSetting: 0
+    bNumEndpoints: 0
+    bInterfaceClass: Audio (0x01)
+    bInterfaceSubClass: 0x01
+    bInterfaceProtocol: 0x00
+    iInterface: 0
+Class-specific Audio Control Interface Descriptor: Header Descriptor
+    bLength: 9
+    bDescriptorType: 0x24 (audio class interface)
+    Subtype: Header Descriptor (0x01)
+    Version: 1.00
+    Total length: 9
+    Total number of interfaces: 1
+    Interface number: 1
+INTERFACE DESCRIPTOR (3.0): class Audio
+    bLength: 9
+    bDescriptorType: 0x04 (INTERFACE)
+    bInterfaceNumber: 3
+    bAlternateSetting: 0
+    bNumEndpoints: 2
+    bInterfaceClass: Audio (0x01)
+    bInterfaceSubClass: 0x03
+    bInterfaceProtocol: 0x00
+    iInterface: 0
+UNKNOWN DESCRIPTOR
+    bLength: 7
+    bDescriptorType: 0x24 (unknown)
+UNKNOWN DESCRIPTOR
+    bLength: 6
+    bDescriptorType: 0x24 (unknown)
+UNKNOWN DESCRIPTOR
+    bLength: 6
+    bDescriptorType: 0x24 (unknown)
+UNKNOWN DESCRIPTOR
+    bLength: 9
+    bDescriptorType: 0x24 (unknown)
+UNKNOWN DESCRIPTOR
+    bLength: 9
+    bDescriptorType: 0x24 (unknown)
+ENDPOINT DESCRIPTOR
+    bLength: 9
+    bDescriptorType: 0x05 (ENDPOINT)
+    bEndpointAddress: 0x01  OUT  Endpoint:1
+    bmAttributes: 0x02
+    wMaxPacketSize: 64
+    bInterval: 0
+UNKNOWN DESCRIPTOR
+    bLength: 5
+    bDescriptorType: 0x25 (unknown)
+ENDPOINT DESCRIPTOR
+    bLength: 9
+    bDescriptorType: 0x05 (ENDPOINT)
+    bEndpointAddress: 0x81  IN  Endpoint:1
+    bmAttributes: 0x02
+    wMaxPacketSize: 64
+    bInterval: 0
+UNKNOWN DESCRIPTOR
+    bLength: 5
+    bDescriptorType: 0x25 (unknown)
+

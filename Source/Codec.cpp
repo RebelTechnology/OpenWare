@@ -123,8 +123,8 @@ void usbd_audio_gain_callback(uint8_t gain){
 }
 
 void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  fill_buffer(haudio->buffer, AUDIO_IN_PACKET_SIZE);
-  usbd_audio_write(pdev, haudio->buffer, AUDIO_IN_PACKET_SIZE);
+  fill_buffer(haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
+  usbd_audio_write(pdev, haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
 }
 
 void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){

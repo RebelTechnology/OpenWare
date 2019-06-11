@@ -486,12 +486,6 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
                                uint8_t cfgidx)
 {
   USBD_AUDIO_HandleTypeDef   *haudio;
-  
-  /* /\* Open EP OUT *\/ */
-  /* USBD_LL_OpenEP(pdev, */
-  /*                AUDIO_OUT_EP, */
-  /*                USBD_EP_TYPE_ISOC, */
-  /*                AUDIO_OUT_PACKET); */
 
     USBD_StatusTypeDef rv;
 
@@ -530,7 +524,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     /* Prepare Out endpoint to receive 1st packet */
     USBD_LL_PrepareReceive(pdev,
                            AUDIO_OUT_EP,
-                           haudio->buffer,
+                           haudio->audio_out_buffer,
                            AUDIO_OUT_PACKET);
 
     /* I'm not sure why this needs to be here, but if it is not, USBD_AUDIO_DataIn
@@ -541,6 +535,29 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     /* 							 AUDIO_CMD_START); */
     usbd_audio_start_callback(pdev, haudio);
 
+#ifdef USE_USBD_MIDI
+    /* Open the in EP */
+    USBD_LL_OpenEP(pdev,
+		   MIDI_IN_EP,
+		   USBD_EP_TYPE_BULK,
+		   MIDI_DATA_IN_PACKET_SIZE
+		   );
+
+    /* Open the out EP */
+    USBD_LL_OpenEP(pdev,
+		   MIDI_OUT_EP,
+		   USBD_EP_TYPE_BULK,
+		   MIDI_DATA_OUT_PACKET_SIZE
+		   );
+
+    /* Prepare Out endpoint to receive next packet */
+    USBD_LL_PrepareReceive(pdev,
+			   MIDI_OUT_EP,
+			   haudio->midi_in_buffer,
+			   MIDI_DATA_OUT_PACKET_SIZE);
+
+#endif
+    
     return USBD_OK;
 }
 
@@ -849,7 +866,7 @@ static uint8_t  USBD_AUDIO_IsoOutIncomplete (USBD_HandleTypeDef *pdev, uint8_t e
   * @retval status
   */
 static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, 
-                              uint8_t epnum)
+				    uint8_t epnum)
 {
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
@@ -885,9 +902,20 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
     /* Prepare Out endpoint to receive next audio packet */
     USBD_LL_PrepareReceive(pdev,
                            AUDIO_OUT_EP,
-                           &haudio->buffer[haudio->wr_ptr], 
+                           &haudio->audio_out_buffer[haudio->wr_ptr], 
                            AUDIO_OUT_PACKET);  
       
+#ifdef USE_USBD_MIDI
+  }else if(epnum == MIDI_OUT_EP){
+    /* Forward data to midi callback */
+    uint32_t len = USBD_LL_GetRxDataSize (pdev, epnum);
+    midi_device_rx(haudio->midi_in_buffer, len);
+    /* Prepare Out endpoint to receive next packet */
+    USBD_LL_PrepareReceive(pdev,
+			   MIDI_OUT_EP,
+			   haudio->midi_in_buffer,
+			   MIDI_DATA_OUT_PACKET_SIZE);
+#endif
   }
   
   return USBD_OK;
