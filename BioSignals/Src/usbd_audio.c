@@ -303,8 +303,8 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /*  USB Microphone Standard Endpoint Descriptor (CODE == 8)*/ //Standard AS Isochronous Audio Data Endpoint Descriptor
   0x09,                       // Size of the descriptor, in bytes (bLength)
   0x05,                       // ENDPOINT descriptor (bDescriptorType)
-  AUDIO_IN_EP,                    // IN Endpoint 1. (bEndpointAddress)
-  USBD_EP_TYPE_ISOC,                    /* bmAttributes (1) */
+  AUDIO_IN_EP,                    // IN Endpoint 1. (bEndpointAddress) 0x81
+  USBD_EP_TYPE_ISOC,                    /* bmAttributes (1) 0x01 */ 
   AUDIO_PACKET_SZE(USBD_AUDIO_FREQ),    /* wMaxPacketSize in Bytes (Freq(Samples)*2(Stereo)*2(HalfWord)) */
   0x01,                       // Polling interval 1kHz. (bInterval)
   0x00,                       // Unused. (bRefresh)
@@ -413,7 +413,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /* MIDI Adapter Standard Bulk OUT Endpoint Descriptor */
   0x09,                                 /* bLength */
   0x05,                                 /* bDescriptorType */
-  MIDI_OUT_EP,                          /* bEndpointAddress */
+  MIDI_OUT_EP,                          /* bEndpointAddress 0x02 */
   0x02,                                 /* bmAttributes */
   0x40,					/* wMaxPacketSize */
   0x00,                                 /* wMaxPacketSize */
@@ -433,7 +433,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /* MIDI Adapter Standard Bulk IN Endpoint Descriptor */
   0x09,                                 /* bLength */
   0x05,                                 /* bDescriptorType */
-  MIDI_IN_EP,                           /* bEndpointAddress */
+  MIDI_IN_EP,                           /* bEndpointAddress 0x82 */
   0x02,                                 /* bmAttributes */
   0x40,					/* wMaxPacketSize */
   0x00,                                 /* wMaxPacketSize */
