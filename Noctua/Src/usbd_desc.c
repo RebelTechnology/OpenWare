@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2019 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -186,7 +186,6 @@ __ALIGN_BEGIN uint8_t USBD_FS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
 #else
   0x00,                       /*bcdUSB */
 #endif /* (USBD_LPM_ENABLED == 1) */
-
   0x02,
   0x00,                       /*bDeviceClass*/
   0x00,                       /*bDeviceSubClass*/
@@ -204,6 +203,7 @@ __ALIGN_BEGIN uint8_t USBD_FS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
   USBD_MAX_NUM_CONFIGURATION  /*bNumConfigurations*/
 };
 
+/* USB_DeviceDescriptor */
 /** BOS descriptor. */
 #if (USBD_LPM_ENABLED == 1)
 #if defined ( __ICCARM__ ) /* IAR Compiler */
@@ -215,12 +215,12 @@ __ALIGN_BEGIN uint8_t USBD_FS_BOSDesc[USB_SIZ_BOS_DESC] __ALIGN_END =
   USB_DESC_TYPE_BOS,
   0xC,
   0x0,
-  0x1,  /* 1 device capability */
-        /* device capability */
+  0x1,  /* 1 device capability*/
+        /* device capability*/
   0x7,
   USB_DEVICE_CAPABITY_TYPE,
   0x2,
-  0x2,  /*LPM capability bit set */
+  0x2,  /* LPM capability bit set*/
   0x0,
   0x0,
   0x0
@@ -290,9 +290,9 @@ uint8_t * USBD_FS_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 
 /**
   * @brief  Return the product string descriptor
-  * @param  speed : current device speed
-  * @param  length : pointer to data length variable
-  * @retval pointer to descriptor buffer
+  * @param  speed : Current device speed
+  * @param  length : Pointer to data length variable
+  * @retval Pointer to descriptor buffer
   */
 uint8_t * USBD_FS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {

@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2019 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -103,13 +103,13 @@
 #define USBH_MAX_NUM_INTERFACES      10
  
 /*----------   -----------*/
-#define USBH_MAX_NUM_CONFIGURATION      4
+#define USBH_MAX_NUM_CONFIGURATION      1
  
 /*----------   -----------*/
 #define USBH_KEEP_CFG_DESCRIPTOR      1
  
 /*----------   -----------*/
-#define USBH_MAX_NUM_SUPPORTED_CLASS      4
+#define USBH_MAX_NUM_SUPPORTED_CLASS      1
  
 /*----------   -----------*/
 #define USBH_MAX_SIZE_CONFIGURATION      512
