@@ -32,7 +32,15 @@
 #define CODEC_HP_FILTER
 #define CODEC_SPI hspi2
 #define USE_USBD_FS
+#define USE_USB_HOST
+#define USBH_HANDLE hUsbHostHS
+#define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 
+#define USB_HOST_PWR_EN_GPIO_Port GPIOB
+#define USB_HOST_PWR_EN_Pin GPIO_PIN_0 // PB0 is unused
+#define USB_HOST_PWR_FAULT_GPIO_Port GPIOB
+#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_1 // PB1 is unused
+  
 #define NOF_ADC_VALUES               8
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (2+4)
