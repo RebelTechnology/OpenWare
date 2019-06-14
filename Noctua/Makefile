@@ -6,7 +6,7 @@ include $(OPENWARE)/Hardware/owl2.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
-# C_SRC += pcm1865a.c
+C_SRC += pcm3168a.c
 
 include $(OPENWARE)/Hardware/sources.mk
 
