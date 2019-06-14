@@ -203,167 +203,19 @@ USB AUDIO + MIDI device descriptor
 
 https://eleccelerator.com/usbdescreqparser/
 
-0902c000040100803209040000000101000009240100011e0001010c2402010102000400000000092403020101000100090401000001020000090401010101020000072401020001000b24020104042001401f00090581018000010000072501000000000904020000010100000924010001090001010904030002010300000724010001410006240201010006240202020009240301030102010009240302040101010009050102400000000005250101010905810240000000000525010103
+4ch BioSignals w/o MIDI:
 
-CONFIGURATION DESCRIPTOR
-    bLength: 9
-    bDescriptorType: 0x02 (CONFIGURATION)
-    wTotalLength: 192
-    bNumInterfaces: 4
-    bConfigurationValue: 1
-    iConfiguration: 0
-    Configuration bmAttributes: 0x80  NOT SELF-POWERED  NO REMOTE-WAKEUP
-        1... .... = Must be 1: Must be 1 for USB 1.1 and higher
-        .0.. .... = Self-Powered: This device is powered from the USB bus
-        ..0. .... = Remote Wakeup: This device does NOT support remote wakeup
-    bMaxPower: 50  (100mA)
-INTERFACE DESCRIPTOR (0.0): class Audio
-    bLength: 9
-    bDescriptorType: 0x04 (INTERFACE)
-    bInterfaceNumber: 0
-    bAlternateSetting: 0
-    bNumEndpoints: 0
-    bInterfaceClass: Audio (0x01)
-    bInterfaceSubClass: 0x01
-    bInterfaceProtocol: 0x00
-    iInterface: 0
-Class-specific Audio Control Interface Descriptor: Header Descriptor
-    bLength: 9
-    bDescriptorType: 0x24 (audio class interface)
-    Subtype: Header Descriptor (0x01)
-    Version: 1.00
-    Total length: 30
-    Total number of interfaces: 1
-    Interface number: 1
-Class-specific Audio Control Interface Descriptor: Input terminal descriptor
-    bLength: 12
-    bDescriptorType: 0x24 (audio class interface)
-    Subtype: Input terminal descriptor (0x02)
-    Terminal ID: 1
-    Terminal Type: Microphone (0x0201)
-    Assoc Terminal: 0
-    Number Channels: 4
-    Channel Config: 0x0000
-    Channel Names: 0
-    Terminal: 0
-Class-specific Audio Control Interface Descriptor: Output terminal descriptor
-    bLength: 9
-    bDescriptorType: 0x24 (audio class interface)
-    Subtype: Output terminal descriptor (0x03)
-    Terminal ID: 2
-    Terminal Type: USB Streaming (0x0101)
-    Assoc Terminal: 0
-    Source ID: 1
-    Terminal: 0
-INTERFACE DESCRIPTOR (1.0): class Audio
-    bLength: 9
-    bDescriptorType: 0x04 (INTERFACE)
-    bInterfaceNumber: 1
-    bAlternateSetting: 0
-    bNumEndpoints: 0
-    bInterfaceClass: Audio (0x01)
-    bInterfaceSubClass: 0x02
-    bInterfaceProtocol: 0x00
-    iInterface: 0
-INTERFACE DESCRIPTOR (1.1): class Audio
-    bLength: 9
-    bDescriptorType: 0x04 (INTERFACE)
-    bInterfaceNumber: 1
-    bAlternateSetting: 1
-    bNumEndpoints: 1
-    bInterfaceClass: Audio (0x01)
-    bInterfaceSubClass: 0x02
-    bInterfaceProtocol: 0x00
-    iInterface: 0
-Class-specific Audio Streaming Interface Descriptor: General AS Descriptor
-    bLength: 7
-    bDescriptorType: 0x24 (audio class interface)
-    Subtype: General AS Descriptor (0x01)
-    Terminal ID: 2
-    Interface delay in frames: 0
-    Format: 0x0001
-Class-specific Audio Streaming Interface Descriptor: Format type descriptor
-    bLength: 11
-    bDescriptorType: 0x24 (audio class interface)
-    Subtype: Format type descriptor (0x02)
-    FormatType: 1
-    Number Channels: 4
-    Subframe Size: 4
-    Bit Resolution: 32
-    Samples Frequence Type: 1
-    Samples Frequence: 8000
-ENDPOINT DESCRIPTOR
-    bLength: 9
-    bDescriptorType: 0x05 (ENDPOINT)
-    bEndpointAddress: 0x81  IN  Endpoint:1
-    bmAttributes: 0x01
-    wMaxPacketSize: 128
-    bInterval: 1
-Class-specific Audio Streaming Endpoint Descriptor
-    bLength: 7
-    bDescriptorType: 0x25 (audio class endpoint)
-    Subtype: 0x01
-INTERFACE DESCRIPTOR (2.0): class Audio
-    bLength: 9
-    bDescriptorType: 0x04 (INTERFACE)
-    bInterfaceNumber: 2
-    bAlternateSetting: 0
-    bNumEndpoints: 0
-    bInterfaceClass: Audio (0x01)
-    bInterfaceSubClass: 0x01
-    bInterfaceProtocol: 0x00
-    iInterface: 0
-Class-specific Audio Control Interface Descriptor: Header Descriptor
-    bLength: 9
-    bDescriptorType: 0x24 (audio class interface)
-    Subtype: Header Descriptor (0x01)
-    Version: 1.00
-    Total length: 9
-    Total number of interfaces: 1
-    Interface number: 1
-INTERFACE DESCRIPTOR (3.0): class Audio
-    bLength: 9
-    bDescriptorType: 0x04 (INTERFACE)
-    bInterfaceNumber: 3
-    bAlternateSetting: 0
-    bNumEndpoints: 2
-    bInterfaceClass: Audio (0x01)
-    bInterfaceSubClass: 0x03
-    bInterfaceProtocol: 0x00
-    iInterface: 0
-UNKNOWN DESCRIPTOR
-    bLength: 7
-    bDescriptorType: 0x24 (unknown)
-UNKNOWN DESCRIPTOR
-    bLength: 6
-    bDescriptorType: 0x24 (unknown)
-UNKNOWN DESCRIPTOR
-    bLength: 6
-    bDescriptorType: 0x24 (unknown)
-UNKNOWN DESCRIPTOR
-    bLength: 9
-    bDescriptorType: 0x24 (unknown)
-UNKNOWN DESCRIPTOR
-    bLength: 9
-    bDescriptorType: 0x24 (unknown)
-ENDPOINT DESCRIPTOR
-    bLength: 9
-    bDescriptorType: 0x05 (ENDPOINT)
-    bEndpointAddress: 0x01  OUT  Endpoint:1
-    bmAttributes: 0x02
-    wMaxPacketSize: 64
-    bInterval: 0
-UNKNOWN DESCRIPTOR
-    bLength: 5
-    bDescriptorType: 0x25 (unknown)
-ENDPOINT DESCRIPTOR
-    bLength: 9
-    bDescriptorType: 0x05 (ENDPOINT)
-    bEndpointAddress: 0x81  IN  Endpoint:1
-    bmAttributes: 0x02
-    wMaxPacketSize: 64
-    bInterval: 0
-UNKNOWN DESCRIPTOR
-    bLength: 5
-    bDescriptorType: 0x25 (unknown)
+09026400020100803209040000000101000009240100011e0001010c2402010102000700000000092403020101000100090401000001020000090401010101020000072401020001000b24020107042001401f0009058101e00001000007250100000000
+
+Focusrite Scarlett
+0902600106010980fa080b00030100200009040000000101200309240100020865000008240a290307000a08240b2801290308112402020101002804000000000e0000060c240314010300022800000011240201010200280200000000120000001224060b01000000000000000000000000000c2403160101000b280000070904010000010220040904010102010220041024010200010100000004000000000e0624020104180705010d9001010825010000020800070581110400040904020000010220050904020101010220051024011600010100000002000000001206240201041807058225c8000108250100000208000904030000010100000924010001090001010904040002010300000724010001410006240201010006240202020c09240301030102010009240302040101010b090502020002000000052501010109058302000200000005250101030904050001ff01100d07058403400008
+
+WireShark
+[Expert Info (Error/Malformed): Malformed Packet (Exception occurred)]
+
+https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/how-to-retrieve-information-about-a-usb-device
+MS USB hardware verifier
+
+https://www.usb.org/usb2tools
+http://www.testusb.com/Ch8ck.html
 
