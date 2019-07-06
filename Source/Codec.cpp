@@ -3,6 +3,10 @@
 #include "errorhandlers.h"
 #include "ApplicationSettings.h"
 
+extern "C" {
+  extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
+}
+
 static uint16_t blocksize = 0;
 static int32_t txbuf[CODEC_BUFFER_SIZE];
 
@@ -77,12 +81,21 @@ void Codec::setOutputGain(int8_t value){
   codec_set_gain_out(value);
 }
 
+#ifdef USE_PCM3168A
+#include "pcm3168a.h"
+
+void Codec::start(){
+}
+
+void Codec::stop(){
+}
+
+
+#endif /* USE_PCM3168A */
+
+
 #ifdef USE_ADS1294
 #include "ads.h"
-
-extern "C" {
-  extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
-}
 
 static size_t rxindex = 0;
 static size_t rxhalf = 0;
@@ -266,7 +279,6 @@ static int32_t rxbuf[CODEC_BUFFER_SIZE];
 
 extern "C" {
   extern I2S_HandleTypeDef hi2s2;
-  extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
 }
 
 void Codec::stop(){
@@ -359,8 +371,6 @@ extern "C" {
 
 // void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 // }
-
-extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
 
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
   audioCallback(rxbuf+blocksize*2, txbuf+blocksize*2, blocksize);

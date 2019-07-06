@@ -44,6 +44,10 @@ OBJS_I2S += $(DRIVERS)/Src/stm32f4xx_hal_i2s_ex.o
 OBJS_I2S += $(DRIVERS)/Src/stm32f4xx_hal_i2c.o
 OBJS_I2S += $(DRIVERS)/Src/stm32f4xx_hal_i2c_ex.o
 
+# required by Noctua
+OBJS_I2C = $(DRIVERS)/Src/stm32f4xx_hal_i2c.o
+OBJS_I2C += $(DRIVERS)/Src/stm32f4xx_hal_i2c_ex.o
+
 ### USB Device Library ###
 OBJS_USBD = $(DRIVERS)/Src/stm32f4xx_hal_pcd.o
 OBJS_USBD += $(DRIVERS)/Src/stm32f4xx_hal_pcd_ex.o
