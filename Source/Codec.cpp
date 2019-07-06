@@ -197,6 +197,7 @@ extern "C"{
       // sample all channels
 
 #ifdef AUDIO_BYPASS
+      // write directly to usb buffer
       audio_t* dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame
 #else
       audio_t* dst = txbuf + rxindex;

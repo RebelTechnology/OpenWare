@@ -65,6 +65,10 @@
 #define CODEC_BLOCKSIZE              128
 #define CODEC_BUFFER_SIZE            (2*USB_AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
+#ifndef USBD_AUDIO_FREQ
+#define USBD_AUDIO_FREQ              48000
+#endif
+
 /* +0db in and out */
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */

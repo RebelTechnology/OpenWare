@@ -35,6 +35,9 @@ else ifeq ($(PLATFORM),Alchemist)
 else ifeq ($(PLATFORM),Rack)
   CPPFLAGS += -Iusbd-hs -DOWL_RACK
   vpath %.c usbd-hs
+else ifeq ($(PLATFORM),BioSignals)
+  CPPFLAGS += -Iusbd-hs -DOWL_BIOSIGNALS
+  vpath %.c usbd-hs
 endif
 
 # CPP_SRC += MidiReader.cpp
