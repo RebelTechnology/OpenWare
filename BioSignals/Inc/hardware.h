@@ -8,6 +8,8 @@
 #define USE_CODEC
 #define USE_ADS1294
 #define USE_USB_AUDIO
+#define USE_USBD_MIDI
+#define USE_USBD_AUDIO_IN // microphone
 #define AUDIO_BYPASS
 
 /* #define USE_KX122 */

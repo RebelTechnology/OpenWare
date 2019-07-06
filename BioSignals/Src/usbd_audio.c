@@ -66,6 +66,8 @@
 #include "usbd_desc.h"
 #include "usbd_ctlreq.h"
 #include "device.h"
+#include "midi.h"
+#include "message.h"
 
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
@@ -489,13 +491,17 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 
     USBD_StatusTypeDef rv;
 
-  /* rv = USBD_LL_OpenEP(pdev, */
-  /* 		      AUDIO_OUT_EP, */
-  /* 		      USBD_EP_TYPE_ISOC, */
-  /* 		      AUDIO_OUT_PACKET); */
-  /* if(rv != USBD_OK )  */
-  /*   USBD_ErrLog("Open of OUT streaming endpoint failed. error %d\n", rv); */
+#ifdef USE_USBD_AUDIO_OUT
+    /* Open OUT (i.e. speaker) Endpoint */
+    rv = USBD_LL_OpenEP(pdev,
+			AUDIO_OUT_EP,
+			USBD_EP_TYPE_ISOC,
+			AUDIO_OUT_PACKET);
+    if(rv != USBD_OK )
+      USBD_ErrLog("Open of OUT streaming endpoint failed. error %d\n", rv);
+#endif
 
+#ifdef USE_USBD_AUDIO_IN
   /* Open IN (i.e. microphone) Endpoint */
     rv = USBD_LL_OpenEP(pdev,
 			AUDIO_IN_EP,
@@ -503,9 +509,10 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 			AUDIO_IN_PACKET_SIZE);
     if(rv != USBD_OK ) 
       USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
+#endif
 
-  /* /\* Allocate Audio structure *\/ */
-  /* pdev->pClassData = USBD_malloc(sizeof (USBD_AUDIO_HandleTypeDef)); */
+    /* Assign Audio structure */
+    /* pdev->pClassData = USBD_malloc(sizeof (USBD_AUDIO_HandleTypeDef)); */
     pdev->pClassData = &usbd_audio_handle;
   
     haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
@@ -521,12 +528,14 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     /*   return USBD_FAIL; */
     /* } */
     
+#ifdef USE_USBD_AUDIO_OUT
     /* Prepare Out endpoint to receive 1st packet */
     USBD_LL_PrepareReceive(pdev,
                            AUDIO_OUT_EP,
                            haudio->audio_out_buffer,
                            AUDIO_OUT_PACKET);
-
+#endif
+    
     /* I'm not sure why this needs to be here, but if it is not, USBD_AUDIO_DataIn
      * doesn't get called */
     /* ringbuffer.read(mic_data, AUDIO_IN_PACKET_SIZE, true); */
@@ -572,22 +581,28 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
                                  uint8_t cfgidx)
 {
 
-  /* /\* Close EP OUT *\/ */
-  /* USBD_LL_CloseEP(pdev, */
-  /*             AUDIO_OUT_EP); */
+#ifdef USE_USBD_AUDIO_OUT
+  /* Close EP OUT */
+  USBD_LL_CloseEP(pdev, AUDIO_OUT_EP);		  
+#endif
 
+#ifdef USE_USBD_AUDIO_IN
   /* Close EP IN */
-  USBD_LL_CloseEP(pdev,
-		  AUDIO_IN_EP);
+  USBD_LL_CloseEP(pdev, AUDIO_IN_EP);
+#endif
 
+#ifdef USE_USBD_MIDI
+  USBD_LL_CloseEP(pdev, MIDI_IN_EP);
+  USBD_LL_CloseEP(pdev, MIDI_OUT_EP);
+#endif
+  
   /* DeInit  physical Interface components */
-  if(pdev->pClassData != NULL)
-  {
-   /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->DeInit(0); */
+  if(pdev->pClassData != NULL){
+    /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->DeInit(0); */
     /* USBD_free(pdev->pClassData); */
     pdev->pClassData = NULL;
   }
-  
+
   return USBD_OK;
 }
 
@@ -680,6 +695,8 @@ static uint8_t  *USBD_AUDIO_GetCfgDesc (uint16_t *length)
   return USBD_AUDIO_CfgDesc;
 }
 
+static volatile int midi_tx_lock = 0;
+
 /**
   * @brief  USBD_AUDIO_DataIn
   *         handle data IN Stage
@@ -688,17 +705,16 @@ static uint8_t  *USBD_AUDIO_GetCfgDesc (uint16_t *length)
   * @retval status
   */
 static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev, 
-                              uint8_t epnum)
+				   uint8_t epnum)
 {
-  /* audio_tx_lock = 0; */
-  /* USBD_DbgLog("DataIn\n"); */
-  
-  if(epnum != (AUDIO_IN_EP & ~0x80))
-    return USBD_OK;
-
-  USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
-
-  usbd_audio_data_in_callback(pdev, haudio);
+#ifdef USE_USBD_AUDIO_IN
+  if(epnum == (AUDIO_IN_EP & ~0x80)){
+    USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
+    usbd_audio_data_in_callback(pdev, haudio);
+  }else if(epnum == (MIDI_IN_EP & ~0x80)){
+    midi_tx_lock = 0;
+  }
+#endif
   return USBD_OK;
 }
 
@@ -713,9 +729,9 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
 
-
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR){
     USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
+    debugMessage("SET_CUR");
     if (haudio->control.unit == AUDIO_OUT_STREAMING_CTRL)
     {
       usbd_audio_gain_callback(haudio->control.data[0]);
@@ -731,8 +747,10 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
       haudio->control.len = 0;
     }
   }else if (haudio->control.cmd == AUDIO_REQ_GET_CUR){
+    debugMessage("GET_CUR");
     USBD_DbgLog("GET_CUR %d\n", haudio->control.unit);
   }else{
+    debugMessage("Control CMD");
     USBD_DbgLog("Control CMD %d\n", haudio->control.cmd);
   }
 
@@ -748,6 +766,7 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 {
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
+  debugMessage("EP0 TxReady");
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR)
   {/* In this driver, to simplify code, only SET_CUR request is managed */
     USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
@@ -827,8 +846,10 @@ void  USBD_AUDIO_Sync (USBD_HandleTypeDef *pdev, AUDIO_OffsetTypeDef offset)
     /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(&haudio->buffer[0], */
     /*                                                      AUDIO_TOTAL_BUF_SIZE/2 - shift, */
     /*                                                      AUDIO_CMD_PLAY);  */
+    debugMessage("usb audio offset full");
+    /* debugMessage(msg_itoa(shift, 10)); */
     usbd_audio_data_in_callback(pdev, haudio);
-      haudio->offset = AUDIO_OFFSET_NONE;           
+    haudio->offset = AUDIO_OFFSET_NONE;           
   }
 }
 
@@ -906,7 +927,7 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
 #ifdef USE_USBD_MIDI
   }else if(epnum == MIDI_OUT_EP){
     /* Forward data to midi callback */
-    uint32_t len = USBD_LL_GetRxDataSize (pdev, epnum);
+    uint32_t len = USBD_LL_GetRxDataSize(pdev, epnum);
     midi_device_rx(haudio->midi_in_buffer, len);
     /* Prepare Out endpoint to receive next packet */
     USBD_LL_PrepareReceive(pdev,
@@ -1000,13 +1021,36 @@ void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len) {
   }
 }
 
-/**
-  * @}
-  */ 
+#ifdef USE_USBD_HS
+void midi_device_tx(uint8_t* buf, uint32_t len) {
+  extern USBD_HandleTypeDef hUsbDeviceHS;
+  if(hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED){
+    /* while(midi_tx_lock); */
+    midi_tx_lock = 1;
+    USBD_LL_Transmit(&hUsbDeviceHS, MIDI_IN_EP, buf, len);
+  }
+}
+uint8_t midi_device_connected(void){
+  extern USBD_HandleTypeDef hUsbDeviceHS;
+  return hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED;
+}
+#endif /* USE_USBD_HS */
 
+#ifdef USE_USBD_FS
+void midi_device_tx(uint8_t* buf, uint32_t len) {
+  extern USBD_HandleTypeDef hUsbDeviceFS;
+  if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED){
+    /* while(midi_tx_lock); */
+    midi_tx_lock = 1;
+    USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, buf, len);
+  }
+}
+uint8_t midi_device_connected(void){
+  extern USBD_HandleTypeDef hUsbDeviceFS;
+  return hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED;
+}
+#endif /* USE_USBD_FS */
 
-/**
-  * @}
-  */ 
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+uint8_t midi_device_ready(void){
+  return midi_tx_lock == 0;
+}

@@ -46,8 +46,6 @@
   * @{
   */ 
 
-#define USE_USBD_MIDI
-
 #define MIDI_OUT_EP                    0x02
 #define MIDI_IN_EP                     0x82
 #define MIDI_DATA_IN_PACKET_SIZE       0x40
