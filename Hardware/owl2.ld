@@ -119,6 +119,7 @@ SECTIONS
   {
     . = ALIGN(4);
     PROVIDE ( _end = . );
+    PROVIDE ( end = . );
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(4);

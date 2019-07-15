@@ -36,7 +36,7 @@ all: bin
 
 # Build executable 
 $(ELF) : $(OBJS) $(LDSCRIPT)
-	@$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 # compile and generate dependency info
 $(BUILD)/%.o: %.c

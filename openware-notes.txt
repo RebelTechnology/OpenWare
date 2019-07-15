@@ -219,3 +219,29 @@ MS USB hardware verifier
 https://www.usb.org/usb2tools
 http://www.testusb.com/Ch8ck.html
 
+
+-----------------------------------------------------------------
+
+enable semihosting:
+* remove C_SRC += libnosys_gnu.c in sources.mk
+* add `end` symbol to linker
+* add in main.c:
+int main(void)
+ {
+   /* USER CODE BEGIN 1 */
+   initialise_monitor_handles(); // remove when not semi-hosting
+
+Makefile owl2.mk:
+-CPPFLAGS += --specs=nano.specs
++LDLIBS += -lc -lm
++LDLIBS += -lrdimon
++# CPPFLAGS += -specs=rdimon.specs
++LDFLAGS += --specs=nano.specs
+-CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
+
+* use openocd
+* enable semi hosting in gdb:
+debug: $(ELF)
+       @$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
+
+-----------------------------------------------------------------

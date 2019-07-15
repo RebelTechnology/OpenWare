@@ -535,29 +535,23 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
                            haudio->audio_out_buffer,
                            AUDIO_OUT_PACKET);
 #endif
-    
-    /* I'm not sure why this needs to be here, but if it is not, USBD_AUDIO_DataIn
-     * doesn't get called */
-    /* ringbuffer.read(mic_data, AUDIO_IN_PACKET_SIZE, true); */
-    /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(haudio->buffer, */
-    /* 							 AUDIO_IN_PACKET_SIZE/2, */
-    /* 							 AUDIO_CMD_START); */
-    usbd_audio_start_callback(pdev, haudio);
 
 #ifdef USE_USBD_MIDI
     /* Open the in EP */
-    USBD_LL_OpenEP(pdev,
-		   MIDI_IN_EP,
-		   USBD_EP_TYPE_BULK,
-		   MIDI_DATA_IN_PACKET_SIZE
-		   );
+    rv = USBD_LL_OpenEP(pdev,
+			MIDI_IN_EP,
+			USBD_EP_TYPE_BULK,
+			MIDI_DATA_IN_PACKET_SIZE);
+    if(rv != USBD_OK ) 
+      USBD_ErrLog("Open of IN MIDI endpoint failed. error %d\n", rv);
 
     /* Open the out EP */
-    USBD_LL_OpenEP(pdev,
-		   MIDI_OUT_EP,
-		   USBD_EP_TYPE_BULK,
-		   MIDI_DATA_OUT_PACKET_SIZE
-		   );
+    rv = USBD_LL_OpenEP(pdev,
+			MIDI_OUT_EP,
+			USBD_EP_TYPE_BULK,
+			MIDI_DATA_OUT_PACKET_SIZE);			
+    if(rv != USBD_OK ) 
+      USBD_ErrLog("Open of OUT MIDI endpoint failed. error %d\n", rv);
 
     /* Prepare Out endpoint to receive next packet */
     USBD_LL_PrepareReceive(pdev,
@@ -566,6 +560,14 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 			   MIDI_DATA_OUT_PACKET_SIZE);
 
 #endif
+    
+    /* I'm not sure why this needs to be here, but if it is not, USBD_AUDIO_DataIn
+     * doesn't get called */
+    /* ringbuffer.read(mic_data, AUDIO_IN_PACKET_SIZE, true); */
+    /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(haudio->buffer, */
+    /* 							 AUDIO_IN_PACKET_SIZE/2, */
+    /* 							 AUDIO_CMD_START); */
+    usbd_audio_start_callback(pdev, haudio);
     
     return USBD_OK;
 }

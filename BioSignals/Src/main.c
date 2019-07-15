@@ -106,6 +106,7 @@ void StartDefaultTask(void const * argument);
 
 void setup();
 void loop(void);
+void initialise_monitor_handles(void);
 
 /* USER CODE END PFP */
 
@@ -121,7 +122,7 @@ void loop(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  initialise_monitor_handles(); // remove when not semi-hosting
   /* USER CODE END 1 */
   
 
