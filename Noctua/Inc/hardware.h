@@ -7,6 +7,9 @@
 
 #define USBD_AUDIO_FREQ 48000
 #define USB_AUDIO_CHANNELS 4
+/* #define USE_USB_AUDIO */
+/* #define USE_USBD_MIDI */
+/* #define USE_USBD_AUDIO_IN // microphone */
 
 /* #define USE_MODE_BUTTON */
 /* #define MODE_BUTTON_PIN SW3_Pin */
