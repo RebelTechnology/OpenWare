@@ -566,6 +566,12 @@ void HAL_HCD_IRQHandler(HCD_HandleTypeDef *hhcd)
 #endif /* USE_HAL_HCD_REGISTER_CALLBACKS */
 
       __HAL_HCD_CLEAR_FLAG(hhcd, USB_OTG_GINTSTS_SOF);
+
+      // Added hack to re-enable the NAK interrupt because leaving it off is bad
+      for (i = 0U; i < hhcd->Init.Host_channels; i++)
+      {
+	USBx_HC(i)->HCINTMSK |= USB_OTG_HCINT_NAK;
+      }
     }
 
     /* Handle Host channel Interrupt */
@@ -1319,6 +1325,8 @@ static void HCD_HC_IN_IRQHandler(HCD_HandleTypeDef *hhcd, uint8_t chnum)
       /* ... */
     }
     __HAL_HCD_CLEAR_HC_INT(ch_num, USB_OTG_HCINT_NAK);
+    // Hack to disable the NAK interrupt completely (it'll be re-enabled in SOF)
+    USBx_HC(chnum)->HCINTMSK &= ~USB_OTG_HCINT_NAK;
   }
   else
   {
