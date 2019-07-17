@@ -84,12 +84,64 @@ void Codec::setOutputGain(int8_t value){
 #ifdef USE_PCM3168A
 #include "pcm3168a.h"
 
-void Codec::start(){
+static int32_t rxbuf[CODEC_BUFFER_SIZE];
+
+extern "C" {
+SAI_HandleTypeDef hsai_BlockA1;
+SAI_HandleTypeDef hsai_BlockB1;
+}
+
+
+void Codec::txrx(){
+  HAL_SAI_DMAStop(&hsai_BlockA1);
+  HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)rxbuf, blocksize*4);
 }
 
 void Codec::stop(){
+  HAL_SAI_DMAStop(&hsai_BlockA1);
+  HAL_SAI_DMAStop(&hsai_BlockB1);
+  // codec_reset();
 }
 
+void Codec::start(){
+  codec_init();
+  // setOutputGain(settings.audio_output_gain);
+  blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
+  HAL_StatusTypeDef ret;
+  ret = HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t*)rxbuf, blocksize*4);
+  ASSERT(ret == HAL_OK, "Failed to start SAI RX DMA");
+  ret = HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)txbuf, blocksize*4);
+  ASSERT(ret == HAL_OK, "Failed to start SAI TX DMA");
+}
+
+void Codec::pause(){
+  HAL_SAI_DMAPause(&hsai_BlockB1);
+  HAL_SAI_DMAPause(&hsai_BlockA1);
+}
+
+void Codec::resume(){
+  HAL_SAI_DMAResume(&hsai_BlockB1);
+  HAL_SAI_DMAResume(&hsai_BlockA1);
+}
+
+extern "C" {
+
+// void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
+// }
+
+void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
+  audioCallback(rxbuf+blocksize*2, txbuf+blocksize*2, blocksize);
+}
+
+void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
+  audioCallback(rxbuf, txbuf, blocksize);
+}
+
+void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
+  error(CONFIG_ERROR, "SAI DMA Error");
+}
+
+}
 
 #endif /* USE_PCM3168A */
 

@@ -8,6 +8,8 @@ C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += pcm3168a.c
 CPP_SRC += usbh_midi.cpp
+C_SRC += usbd_midi.c
+C_SRC += usbd_midi_if.c
 
 include $(OPENWARE)/Hardware/sources.mk
 
