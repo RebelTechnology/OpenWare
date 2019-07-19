@@ -16,6 +16,10 @@
   #define USE_USBD_HS
   #define USE_BOOT1_PIN
   #define APPLICATION_ADDRESS 0x08010000
+#elif defined OWL_NOCTUA
+  #define HARDWARE_VERSION    "OWL Noctua Boot"
+  #define USE_USBD_FS
+  #define APPLICATION_ADDRESS 0x08010000
 #elif defined OWL_WAVETABLE
   #define HARDWARE_VERSION    "OWL WaveTable Boot"
   #define USE_USBD_FS

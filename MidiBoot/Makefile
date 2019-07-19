@@ -27,7 +27,7 @@ ifeq ($(PLATFORM),Magus)
   CPPFLAGS += -Iusbd-fs -DOWL_MAGUS
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Wizard)
-  CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST
+  CPPFLAGS += -Iusbd-hs -DOWL_WIZARD
   vpath %.c usbd-hs
 else ifeq ($(PLATFORM),Alchemist)
   CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST
@@ -35,6 +35,9 @@ else ifeq ($(PLATFORM),Alchemist)
 else ifeq ($(PLATFORM),Rack)
   CPPFLAGS += -Iusbd-hs -DOWL_RACK
   vpath %.c usbd-hs
+else ifeq ($(PLATFORM),Noctua)
+  CPPFLAGS += -Iusbd-fs -DOWL_NOCTUA
+  vpath %.c usbd-fs
 else ifeq ($(PLATFORM),BioSignals)
   CPPFLAGS += -Iusbd-hs -DOWL_BIOSIGNALS
   vpath %.c usbd-hs
