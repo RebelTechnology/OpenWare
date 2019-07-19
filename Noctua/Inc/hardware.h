@@ -35,7 +35,7 @@
 #define CODEC_HP_FILTER
 #define CODEC_SPI hspi2
 #define USE_USBD_FS
-#define USE_USB_HOST
+/* #define USE_USB_HOST */
 #define USBH_HANDLE hUsbHostHS
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 

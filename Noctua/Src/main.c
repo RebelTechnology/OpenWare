@@ -1125,7 +1125,9 @@ void StartDefaultTask(void const * argument)
   MX_USB_DEVICE_Init();
 
   /* init code for USB_HOST */
+#ifdef USE_USB_HOST
   MX_USB_HOST_Init();
+#endif
 
   /* USER CODE BEGIN 5 */
   setup();
