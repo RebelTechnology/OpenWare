@@ -23,7 +23,18 @@
 #define AUDIO_SAMPLE_FREQ(frq)  (uint8_t)(frq), (uint8_t)((frq >> 8)), (uint8_t)((frq >> 16))
 #define AUDIO_PACKET_SZE(frq)   (uint8_t)(((frq * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE)/1000) & 0xFF), \
     (uint8_t)((((frq * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE)/1000) >> 8) & 0xFF)
-                                         
+
+
+#define MIDI_OUT_EP                    0x02
+#define MIDI_IN_EP                     0x82
+#define MIDI_DATA_IN_PACKET_SIZE       0x40
+#define MIDI_DATA_OUT_PACKET_SIZE      0x40
+
+#define AUDIO_OUT_EP                                  0x01
+#define AUDIO_IN_EP                                   0x81
+#define USB_AUDIO_CONFIG_DESC_SIZ                     174
+#define USB_AUDIO_DESC_SIZ                            0x09
+
 
 static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev, 
                                uint8_t cfgidx);
@@ -792,42 +803,35 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   
-  if (epnum == AUDIO_OUT_EP)
-  {
+#ifdef USE_USBD_AUDIO_IN
+  if (epnum == AUDIO_OUT_EP){
     /* Increment the Buffer pointer or roll it back when all buffers are full */
-    
     haudio->wr_ptr += AUDIO_OUT_PACKET;
-    
-    if (haudio->wr_ptr == AUDIO_TOTAL_BUF_SIZE)
-    {/* All buffers are full: roll back */
+    if (haudio->wr_ptr == AUDIO_TOTAL_BUF_SIZE){
+      /* All buffers are full: roll back */
       haudio->wr_ptr = 0;
-      
-      if(haudio->offset == AUDIO_OFFSET_UNKNOWN)
-      {
+      if(haudio->offset == AUDIO_OFFSET_UNKNOWN){
         /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(&haudio->buffer[0], */
         /*                                                      AUDIO_TOTAL_BUF_SIZE/2, */
         /*                                                      AUDIO_CMD_START); */
 	usbd_audio_start_callback(pdev, haudio);
-          haudio->offset = AUDIO_OFFSET_NONE;
+	haudio->offset = AUDIO_OFFSET_NONE;
       }
     }
-    
-    if(haudio->rd_enable == 0)
-    {
+    if(haudio->rd_enable == 0){
       if (haudio->wr_ptr == (AUDIO_TOTAL_BUF_SIZE / 2))
-      {
         haudio->rd_enable = 1; 
-      }
     }
-    
     /* Prepare Out endpoint to receive next audio packet */
     USBD_LL_PrepareReceive(pdev,
                            AUDIO_OUT_EP,
                            &haudio->audio_out_buffer[haudio->wr_ptr], 
-                           AUDIO_OUT_PACKET);  
-      
+                           AUDIO_OUT_PACKET);
+  }
+#endif /* USE_USBD_AUDIO_IN */
+
 #ifdef USE_USBD_MIDI
-  }else if(epnum == MIDI_OUT_EP){
+  if(epnum == MIDI_OUT_EP){
     /* Forward data to midi callback */
     uint32_t len = USBD_LL_GetRxDataSize(pdev, epnum);
     midi_device_rx(haudio->midi_in_buffer, len);
@@ -915,11 +919,14 @@ uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev,
 }
 
 void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len) {
+#ifdef USE_USBD_AUDIO_IN
   if(pdev->dev_state == USBD_STATE_CONFIGURED){
     USBD_LL_Transmit(pdev, AUDIO_IN_EP, buf, len);
   }
+#endif
 }
 
+#ifdef USE_USBD_MIDI
 #ifdef USE_USBD_HS
 void midi_device_tx(uint8_t* buf, uint32_t len) {
   extern USBD_HandleTypeDef hUsbDeviceHS;
@@ -949,6 +956,7 @@ uint8_t midi_device_connected(void){
   return hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED;
 }
 #endif /* USE_USBD_FS */
+#endif /* USE_USBD_MIDI */
 
 uint8_t midi_device_ready(void){
   return midi_tx_lock == 0;
