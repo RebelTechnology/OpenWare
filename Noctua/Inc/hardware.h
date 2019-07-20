@@ -20,7 +20,7 @@
 /* #define USE_BKPSRAM enable to prevent reset loops */ 
 
 /* #define USE_RGB_LED */
-#define USE_ADC
+/* #define USE_ADC */
 #define ADC_PERIPH hadc1
 #define ADC_A 0
 #define ADC_B 1
