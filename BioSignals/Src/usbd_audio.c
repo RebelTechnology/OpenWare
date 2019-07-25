@@ -24,15 +24,15 @@
 #define AUDIO_PACKET_SZE(frq)   (uint8_t)(((frq * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE)/1000) & 0xFF), \
     (uint8_t)((((frq * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE)/1000) >> 8) & 0xFF)
 
-/* #define USB_AUDIO_CONFIG_DESC_SIZ      101 */
 /* #define MIDI_OUT_EP                    0x01 */
 /* #define MIDI_IN_EP                     0x81 */
+#define USB_AUDIO_CONFIG_DESC_SIZ      101
 
-#define AUDIO_OUT_EP                   0x01
-#define AUDIO_IN_EP                    0x81
-#define MIDI_OUT_EP                    0x02
-#define MIDI_IN_EP                     0x82
-#define USB_AUDIO_CONFIG_DESC_SIZ      174
+#define AUDIO_OUT_EP                   0x02
+#define AUDIO_IN_EP                    0x82
+#define MIDI_OUT_EP                    0x01
+#define MIDI_IN_EP                     0x81
+/* #define USB_AUDIO_CONFIG_DESC_SIZ      174 */
 
 #define MIDI_DATA_IN_PACKET_SIZE       0x40
 #define MIDI_DATA_OUT_PACKET_SIZE      0x40
@@ -92,7 +92,7 @@ USBD_ClassTypeDef  USBD_AUDIO =
 /* USB AUDIO device Configuration Descriptor */
 __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALIGN_END =
 {
-#if 1
+#if 0
     /* USB Microphone Configuration Descriptor */
   0x09,//sizeof(USB_CFG_DSC),    // Size of this descriptor in bytes
   USB_DESC_TYPE_CONFIGURATION,                // CONFIGURATION descriptor type (0x02)
@@ -222,7 +222,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /*  USB Microphone Standard Endpoint Descriptor (CODE == 8)*/ //Standard AS Isochronous Audio Data Endpoint Descriptor
   0x09,                       // Size of the descriptor, in bytes (bLength)
   0x05,                       // ENDPOINT descriptor (bDescriptorType)
-  AUDIO_IN_EP,                    // IN Endpoint 1. (bEndpointAddress) 0x81
+  AUDIO_IN_EP,                    // IN Endpoint 1. (bEndpointAddress)
   USBD_EP_TYPE_ISOC,                    /* bmAttributes (1) 0x01 */ 
   AUDIO_PACKET_SZE(USBD_AUDIO_FREQ),    /* wMaxPacketSize in Bytes (Freq(Samples)*2(Stereo)*2(HalfWord)) */
   0x01,                       // Polling interval 1kHz. (bInterval)
@@ -643,7 +643,10 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
   if(epnum == (AUDIO_IN_EP & ~0x80)){
     USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
     usbd_audio_data_in_callback(pdev, haudio);
-  }else if(epnum == (MIDI_IN_EP & ~0x80)){
+  }
+#endif
+#ifdef USE_USBD_MIDI
+  if(epnum == (MIDI_IN_EP & ~0x80)){
     midi_tx_lock = 0;
   }
 #endif
@@ -945,20 +948,23 @@ void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len) {
 #endif
 }
 
-#ifdef USE_USBD_MIDI
 void midi_device_tx(uint8_t* buf, uint32_t len) {
+#ifdef USE_USBD_MIDI
   extern USBD_HandleTypeDef USBD_HANDLE;
   if(USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED){
     /* while(midi_tx_lock); */
     midi_tx_lock = 1;
-    /* USBD_LL_Transmit(&USBD_HANDLE, MIDI_IN_EP, buf, len); */
+    USBD_LL_Transmit(&USBD_HANDLE, MIDI_IN_EP, buf, len);
   }
+#endif /* USE_USBD_MIDI */
 }
+
 uint8_t midi_device_connected(void){
+#ifdef USE_USBD_MIDI
   extern USBD_HandleTypeDef USBD_HANDLE;
   return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED;
-}
 #endif /* USE_USBD_MIDI */
+}
 
 uint8_t midi_device_ready(void){
   return midi_tx_lock == 0;
