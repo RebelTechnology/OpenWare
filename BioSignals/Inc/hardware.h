@@ -9,7 +9,7 @@
 #define USE_ADS1294
 #define USE_USB_AUDIO
 #define USE_USBD_MIDI
-/* #define USE_USBD_AUDIO_IN // microphone */
+#define USE_USBD_AUDIO_IN // microphone
 /* #define USE_USBD_AUDIO_OUT // speaker */
 #define USBD_HANDLE hUsbDeviceHS
 #define AUDIO_BYPASS

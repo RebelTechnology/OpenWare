@@ -26,13 +26,13 @@
 
 /* #define MIDI_OUT_EP                    0x01 */
 /* #define MIDI_IN_EP                     0x81 */
-#define USB_AUDIO_CONFIG_DESC_SIZ      101
+/* #define USB_AUDIO_CONFIG_DESC_SIZ      101 */
 
 #define AUDIO_OUT_EP                   0x02
 #define AUDIO_IN_EP                    0x82
 #define MIDI_OUT_EP                    0x01
 #define MIDI_IN_EP                     0x81
-/* #define USB_AUDIO_CONFIG_DESC_SIZ      174 */
+#define USB_AUDIO_CONFIG_DESC_SIZ      174
 
 #define MIDI_DATA_IN_PACKET_SIZE       0x40
 #define MIDI_DATA_OUT_PACKET_SIZE      0x40
@@ -92,7 +92,7 @@ USBD_ClassTypeDef  USBD_AUDIO =
 /* USB AUDIO device Configuration Descriptor */
 __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALIGN_END =
 {
-#if 0
+#if 1
     /* USB Microphone Configuration Descriptor */
   0x09,//sizeof(USB_CFG_DSC),    // Size of this descriptor in bytes
   USB_DESC_TYPE_CONFIGURATION,                // CONFIGURATION descriptor type (0x02)
