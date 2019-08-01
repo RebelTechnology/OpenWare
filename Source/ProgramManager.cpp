@@ -301,7 +301,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->parameters_size = NOF_PARAMETERS;
   pv->parameters = parameter_values;
 #endif
-  pv->audio_samplingrate = 48000;
+  pv->audio_samplingrate = AUDIO_SAMPLINGRATE;
 #ifdef USE_CODEC
   pv->audio_blocksize = codec.getBlockSize();
 #else
