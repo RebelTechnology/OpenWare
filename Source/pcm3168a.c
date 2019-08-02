@@ -11,6 +11,8 @@ static uint8_t volume;
 
 #define setCS()    setPin(ADC_NCS_GPIO_Port, ADC_NCS_Pin)
 #define clearCS()  clearPin(ADC_NCS_GPIO_Port, ADC_NCS_Pin)
+/* #define setCS()    HAL_GPIO_WritePin(ADC_NCS_GPIO_Port, ADC_NCS_Pin, GPIO_PIN_SET); */
+/* #define clearCS()  HAL_GPIO_WritePin(ADC_NCS_GPIO_Port, ADC_NCS_Pin, GPIO_PIN_RESET); */
 
 void codec_write(uint8_t reg, uint8_t data){
  /*  All single write/read operations through the serial control port use 16-bit data words. */
@@ -50,9 +52,11 @@ void codec_reset(){
 
 void codec_init(){
   clearPin(ADC_RESET_GPIO_Port, ADC_RESET_Pin);
+  /* HAL_GPIO_WritePin(ADC_RESET_GPIO_Port, ADC_RESET_Pin, GPIO_PIN_RESET); */
   delay(10); // 100nS minimum
   setCS();
   setPin(ADC_RESET_GPIO_Port, ADC_RESET_Pin);
+  /* HAL_GPIO_WritePin(ADC_RESET_GPIO_Port, ADC_RESET_Pin, GPIO_PIN_SET); */
 
   /* Register: DAC Control 1 */
   codec_write(65, 0b00000110); // 24-bit I2S mode TDM format

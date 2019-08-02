@@ -6,7 +6,7 @@
 #define HARDWARE_VERSION             "Noctua"
 
 #define USBD_AUDIO_FREQ 48000
-#define USB_AUDIO_CHANNELS 4
+#define USB_AUDIO_CHANNELS 8
 /* #define USE_USB_AUDIO */
 /* #define USE_USBD_MIDI */
 /* #define USE_USBD_AUDIO_IN // microphone */

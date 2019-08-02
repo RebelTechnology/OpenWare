@@ -108,9 +108,9 @@ void Codec::start(){
   // setOutputGain(settings.audio_output_gain);
   blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
   HAL_StatusTypeDef ret;
-  ret = HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t*)rxbuf, blocksize*4);
+  ret = HAL_SAI_Receive_DMA(&hsai_BlockA1, (uint8_t*)rxbuf, blocksize*4);
   ASSERT(ret == HAL_OK, "Failed to start SAI RX DMA");
-  ret = HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)txbuf, blocksize*4);
+  ret = HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)txbuf, blocksize*4);
   ASSERT(ret == HAL_OK, "Failed to start SAI TX DMA");
 }
 
@@ -130,7 +130,7 @@ extern "C" {
 // }
 
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
-  audioCallback(rxbuf+blocksize*2, txbuf+blocksize*2, blocksize);
+  audioCallback(rxbuf+blocksize*AUDIO_CHANNELS, txbuf+blocksize*AUDIO_CHANNELS, blocksize);
 }
 
 void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
