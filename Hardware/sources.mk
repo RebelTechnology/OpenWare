@@ -32,7 +32,7 @@ CPP_SRC += StompBox.cpp
 C_SRC += basicmaths.c
 
 # Libraries
-# C_SRC += libnosys_gnu.c
+C_SRC += libnosys_gnu.c
 
 # C_SRC += font.c
 # C_SRC += gpio.c
