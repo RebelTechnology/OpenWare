@@ -100,13 +100,16 @@
 /*---------- -----------*/
 #define USBD_SUPPORT_USER_STRING     0
 /*---------- -----------*/
+#ifdef DEBUG
+#define USBD_DEBUG_LEVEL     3
+#else
 #define USBD_DEBUG_LEVEL     0
+#endif
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     0
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1
 /*---------- -----------*/
-/* #define USBD_AUDIO_FREQ     22100 */
 
 /****************************************/
 /* #define for FS and HS identification */
