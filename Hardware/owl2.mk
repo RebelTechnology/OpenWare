@@ -16,15 +16,20 @@ LDFLAGS += -Wl,--gc-sections
 LDSCRIPT ?= $(OPENWARE)/Hardware/owl2.ld
 LDLIBS += -lc -lm
 LDLIBS += -lrdimon
-# CPPFLAGS += -specs=rdimon.specs
+LDFLAGS += -specs=rdimon.specs
+CPPFLAGS += -specs=rdimon.specs
 LDFLAGS += --specs=nano.specs
-CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
+CPPFLAGS += --specs=nano.specs
+# CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
 CPPFLAGS += -fdata-sections
 CPPFLAGS += -ffunction-sections
 #CPPFLAGS +=  -mno-unaligned-access
 #CPPFLAGS  += -fno-omit-frame-pointer
-# CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
+# CPPFLAGS += -nostdlib -nostartfiles
+# LDFLAGS += -nostdlib -nostartfiles
+CPPFLAGS += -fno-builtin -ffreestanding
+LDFLAGS += -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16

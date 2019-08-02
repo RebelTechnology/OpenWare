@@ -122,7 +122,11 @@ void initialise_monitor_handles(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+#ifdef DEBUG
+#error
   initialise_monitor_handles(); // remove when not semi-hosting
+  printf("yo %d\n", 1);
+#endif
   /* USER CODE END 1 */
   
 

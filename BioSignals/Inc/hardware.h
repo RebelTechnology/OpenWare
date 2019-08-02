@@ -10,7 +10,9 @@
 #define USE_USB_AUDIO
 #define USE_USBD_MIDI
 #define USE_USBD_AUDIO_IN // microphone
-#define AUDIO_BYPASS
+/* #define USE_USBD_AUDIO_OUT // speaker */
+#define USBD_HANDLE hUsbDeviceHS
+/* #define AUDIO_BYPASS */
 
 /* #define USE_KX122 */
 #define KX122_ACTIVE_CHANNELS         3
@@ -23,7 +25,7 @@
 #define ADS_AUDIO_FREQ              8000
 #define ADS_GAIN                    4
 #define ADS_MAX_CHANNELS            4
-#define ADS_ACTIVE_CHANNELS         4
+#define ADS_ACTIVE_CHANNELS         2
 #define ADS_HSPI                    hspi1
 
 #define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*4)
@@ -46,8 +48,6 @@
 #endif
 
 /* #define USE_LED */
-
-#define USE_USBD_HS
 
 #define NOF_ADC_VALUES               0
 #define NOF_PARAMETERS               5

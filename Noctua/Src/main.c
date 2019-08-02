@@ -68,6 +68,7 @@ void StartDefaultTask(void const * argument);
 
 void setup();
 void loop(void);
+void initialise_monitor_handles(void);
 
 /* USER CODE END PFP */
 
@@ -83,7 +84,10 @@ void defaultTask1(void *argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+#ifdef DEBUG
+  initialise_monitor_handles(); // remove when not semi-hosting
+  printf("showtime");
+#endif
   /* USER CODE END 1 */
   
 
