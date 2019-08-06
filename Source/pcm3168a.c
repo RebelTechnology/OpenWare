@@ -22,7 +22,7 @@ void codec_write(uint8_t reg, uint8_t data){
   /* to the register specified by ADR[6:0], or the data read from the register specified by ADR[6:0]. */
   clearCS();
   uint8_t buf[2];
-  buf[0] = 0b10000000 & reg; // bit 0 is low to write
+  buf[0] = 0b00000000 | (reg & 0x7f); // ADR7 is low to write
   buf[1] = data;
   /* i2c_write(CODEC_ADDR,2,buf); */
   extern SPI_HandleTypeDef CODEC_SPI;
@@ -34,7 +34,7 @@ void codec_write(uint8_t reg, uint8_t data){
 uint8_t codec_read(uint8_t reg){
   clearCS();
   uint8_t buf[2];
-  buf[0] = 0b10000000 & reg; // bit 0 is low to write
+  buf[0] = 0b10000000 | (reg & 0x7f); // ADR7 is high to read
   buf[1] = 0;
   extern SPI_HandleTypeDef CODEC_SPI;
   HAL_SPI_TransmitReceive(&CODEC_SPI, buf, buf, 2, ADC_TIMEOUT);
@@ -49,6 +49,10 @@ void codec_reset(){
 /* power-down state. The fade-in sequence is supported in the resume process, but pop-noise may be generated. Returning */
 /* the SRST bit to 1 is unneccesary; it is automatically set to 1 after triggering a system reset. */
 }
+
+uint32_t pcm3168a_dz;
+uint32_t pcm3168a_adc_ovf;
+uint32_t pcm3168a_check;
 
 void codec_init(){
   clearPin(ADC_RESET_GPIO_Port, ADC_RESET_Pin);
@@ -99,6 +103,10 @@ void codec_init(){
 /* target value is performed by increment or decrement with s-curve response and time set by ATSPAD. */
 
   /* codec_reset(); */
+
+  pcm3168a_dz = codec_read(69); // DAC Zero flag
+  pcm3168a_adc_ovf = codec_read(86); // ADC Overflow
+  pcm3168a_check = codec_read(81); // check write success
 }
 
 void codec_bypass(int bypass){
