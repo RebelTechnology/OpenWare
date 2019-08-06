@@ -106,11 +106,11 @@ void Codec::stop(){
 void Codec::start(){
   codec_init();
   // setOutputGain(settings.audio_output_gain);
-  blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
+  blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   HAL_StatusTypeDef ret;
-  ret = HAL_SAI_Receive_DMA(&hsai_BlockA1, (uint8_t*)rxbuf, blocksize*4);
+  ret = HAL_SAI_Receive_DMA(&hsai_BlockA1, (uint8_t*)rxbuf, blocksize*AUDIO_CHANNELS*2);
   ASSERT(ret == HAL_OK, "Failed to start SAI RX DMA");
-  ret = HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)txbuf, blocksize*4);
+  ret = HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)txbuf, blocksize*AUDIO_CHANNELS*2);
   ASSERT(ret == HAL_OK, "Failed to start SAI TX DMA");
 }
 
