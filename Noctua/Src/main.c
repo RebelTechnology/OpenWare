@@ -499,22 +499,20 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint32_t led_convert(uint8_t data)
-{
-  uint32_t out=0;
-  for(uint8_t mask = 0x80; mask; mask >>= 1)  
-  {
-    out=out<<3;
-    if (data & mask)
-    {
-      out = out | 0B110;//Bit high
-    }
-    else
-    {
-      out = out | 0B100;// bit low
-    }
-  }
+
+uint32_t led_convert(uint8_t data) {
+  uint32_t out = 0;
+  for(uint8_t mask = 0x80; mask; mask >>= 1)
+    out = (out<<3) | (data & mask ? 0B110 : 0B100);
   return out;
+}
+
+static uint32_t led_tx[92]; // 2 + leds*3 (GRB), each colour has 8 triple-bits
+void set_led(uint16_t index, uint8_t red, uint8_t green, uint8_t blue){
+  uint32_t* led = led_tx+index*3+1;
+  led[0] = led_convert(green);
+  led[1] = led_convert(red);
+  led[2] = led_convert(blue);
 }
 
 /* USER CODE END 4 */
@@ -534,7 +532,6 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN 5 */
   setup();
 
-  static uint32_t led_tx[92];
   led_tx[0] = 0;
   led_tx[91] = 0;
   uint8_t counter = 0;
