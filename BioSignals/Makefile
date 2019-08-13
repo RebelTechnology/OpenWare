@@ -6,6 +6,7 @@ include $(OPENWARE)/Hardware/owl2.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
+C_SRC += ble_midi.c
 
 include $(OPENWARE)/Hardware/sources.mk
 

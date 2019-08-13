@@ -5,6 +5,8 @@
 #define HARDWARE_ID                  ALCHEMIST_HARDWARE
 #define HARDWARE_VERSION             "BioSignals"
 
+#define USE_BLE_MIDI
+
 #define USE_CODEC
 #define USE_ADS1294
 #define USE_USB_AUDIO

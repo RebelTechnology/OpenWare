@@ -123,7 +123,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 #ifdef DEBUG
-#error
+#warning "Compiling with semihosting"
   initialise_monitor_handles(); // remove when not semi-hosting
   printf("yo %d\n", 1);
 #endif
