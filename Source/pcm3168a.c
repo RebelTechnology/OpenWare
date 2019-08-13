@@ -63,8 +63,8 @@ void codec_init(){
   /* HAL_GPIO_WritePin(ADC_RESET_GPIO_Port, ADC_RESET_Pin, GPIO_PIN_SET); */
 
   /* Register: DAC Control 1 */
-  codec_write(65, 0b00000110); // 24-bit I2S mode TDM format
-  /* codec_write(65, 0b00000111); // 24-bit left-justified mode TDM format */
+  codec_write(65, 0b10000110); // Power Save Disable, Slave mode, 24-bit I2S mode TDM format
+  /* codec_write(65, 0b10000111); // 24-bit left-justified mode TDM format */
 
   /* Register: DAC Output Phase */
   /* codec_write(67, 0xff); // phase invert all DAC channels */
@@ -77,9 +77,11 @@ void codec_init(){
 /* 0.5-dB steps, and also can be set to infinite attenuation (mute). The attenuation level change from current value to target */
 /* value is performed by incrementing or decrementing with s-curve responses and a time set by ATSPDA. */
 
+  /* Data formats, see Table 11 p.33 */
+
   /* Register: ADC Control 1 */
-  codec_write(81, 0b00000110); // 24-bit I2S mode TDM format
-  /* codec_write(81, 0b00000111); // 24-bit left-justified mode TDM format */
+  codec_write(81, 0b00000110); // Slave mode 24-bit I2S mode TDM format 
+  /* codec_write(81, 0b00000111); // Slave mode 24-bit left-justified mode TDM format */
 
 #ifndef CODEC_HP_FILTER
   /* Register: ADC Control 2 */
