@@ -14,6 +14,9 @@
 #include "FlashStorage.h"
 #include "Owl.h"
 #include <math.h> /* for ceilf */
+#ifdef USE_BLE_MIDI
+#include "ble_midi.h"
+#endif /* USE_BLE_MIDI */
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
@@ -340,12 +343,15 @@ void MidiController::push(){
   int len = buffer.getContiguousReadCapacity();
   while(len >= 4){
     if(midi_device_ready()) // if not ready, packets will be missed
-      midi_device_tx(buffer.getReadHead(), len);
+      midi_device_tx(buffer.getReadHead(), 4);
 #ifdef USE_USB_HOST
     if(midi_host_ready())
-      midi_host_tx(buffer.getReadHead(), len);
-#endif
-    buffer.incrementReadHead(len);
+      midi_host_tx(buffer.getReadHead(), 4);
+#endif /* USE_USB_HOST */
+#ifdef USE_BLE_MIDI
+    ble_tx(buffer.getReadHead(), 4);
+#endif /* USE_BLE_MIDI */
+    buffer.incrementReadHead(4);
     len = buffer.getContiguousReadCapacity();
   }
 }

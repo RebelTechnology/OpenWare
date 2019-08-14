@@ -39,6 +39,9 @@ Graphics graphics;
 #ifdef USE_KX122
 #include "kx122.h"
 #endif
+#ifdef USE_BLE_MIDI
+#include "ble_midi.h"
+#endif
 uint8_t ucHeap[ configTOTAL_HEAP_SIZE] CCM;
 #endif
 
@@ -449,6 +452,9 @@ static TickType_t xFrequency;
 void setup(){
 
 #ifdef OWL_BIOSIGNALS
+#ifdef USE_BLE_MIDI
+  ble_init();
+#endif
 #ifdef USE_LED
   initLed();
   setLed(0, GREEN_COLOUR);
