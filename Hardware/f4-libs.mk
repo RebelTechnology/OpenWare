@@ -93,7 +93,8 @@ OBJS_DSP += $(DSPLIB)/CommonTables/arm_const_structs.o
 # OBJS += $(DSPLIB)/SupportFunctions/arm_q15_to_float.o
 
 ### FreeRTOS ###
-OBJS_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os2.o
+OBJS_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.o
+# OBJS_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os2.o
 # OBJS_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.o
 OBJS_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.o
 OBJS_OS += $(FREERTOS_DIR)/tasks.o

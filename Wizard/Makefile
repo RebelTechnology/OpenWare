@@ -13,6 +13,18 @@ CPP_SRC += usbh_midi.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
 
+ifndef PLATFORM
+PLATFORM = Wizard
+endif
+
+ifeq ($(PLATFORM),EuroWizard)
+  CPPFLAGS += -Iusbd-fs -DOWL_WIZARD
+  vpath %.c usbd-fs
+else ifeq ($(PLATFORM),Wizard)
+  CPPFLAGS += -Iusbd-hs -DOWL_WIZARD
+  vpath %.c usbd-hs
+endif
+
 OBJS = $(C_SRC:%.c=Build/%.o)
 OBJS += $(CPP_SRC:%.cpp=Build/%.o)
 OBJS += $(S_SRC:%.s=Build/%.o)
