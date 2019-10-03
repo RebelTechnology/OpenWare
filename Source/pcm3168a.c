@@ -50,9 +50,9 @@ void codec_reset(){
 /* the SRST bit to 1 is unneccesary; it is automatically set to 1 after triggering a system reset. */
 }
 
-uint32_t pcm3168a_dz;
-uint32_t pcm3168a_adc_ovf;
-uint32_t pcm3168a_check;
+uint32_t pcm3168a_dz = 0;
+uint32_t pcm3168a_adc_ovf = 0;
+uint32_t pcm3168a_check = 0;
 
 void codec_init(){
   clearPin(ADC_RESET_GPIO_Port, ADC_RESET_Pin);
@@ -98,6 +98,7 @@ void codec_init(){
 /*   ADC Overflow flag (read-only) */
 /* These bits indicate the status information of an overflow detect circuit for each ADC channel; these bits are read only. 1 */
 /* means an overflow has been detected in the past, and reading this register resets all OVF bits. */
+  /* codec_read(86); */
 
   /* 87-94 ADC Attenuation control */
 /*   Each ADC channel has a digital attenuator function with 20-dB gain. The attenuation level can be set from 20 dB to –100 */
