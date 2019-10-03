@@ -365,6 +365,7 @@ static void MX_SPI4_Init(void)
   */
 static void MX_DMA_Init(void) 
 {
+
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
 
@@ -526,6 +527,9 @@ void set_led(uint16_t index, uint8_t red, uint8_t green, uint8_t blue){
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
+    
+    
+                 
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
 
