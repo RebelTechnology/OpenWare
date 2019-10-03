@@ -10,6 +10,9 @@ CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += sdram.c
 C_SRC += cs4272.c
 CPP_SRC += usbh_midi.cpp
+C_SRC += usb_device.c
+C_SRC += usbd_conf.c
+C_SRC += usbd_desc.c
 
 include $(OPENWARE)/Hardware/sources.mk
 
@@ -18,10 +21,10 @@ PLATFORM = Wizard
 endif
 
 ifeq ($(PLATFORM),EuroWizard)
-  CPPFLAGS += -Iusbd-fs -DOWL_WIZARD
+  CPPFLAGS += -Iusbd-fs -DOWL_WIZARD -DOWL_USBD_FS
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Wizard)
-  CPPFLAGS += -Iusbd-hs -DOWL_WIZARD
+  CPPFLAGS += -Iusbd-hs -DOWL_WIZARD -DOWL_USBD_HS
   vpath %.c usbd-hs
 endif
 

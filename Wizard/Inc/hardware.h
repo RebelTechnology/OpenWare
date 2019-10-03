@@ -7,6 +7,14 @@
 /* #define FASCINATION_MACHINE */
 #define CODEC_LR_SWAP
 
+#ifdef OWL_USBD_HS
+#define USE_USBD_HS
+#define USBH_HANDLE hUsbHostFS
+#else
+#define USE_USBD_FS
+#define USBH_HANDLE hUsbHostHS
+#endif
+
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW5_Pin
 #define MODE_BUTTON_PORT SW5_GPIO_Port
@@ -32,9 +40,7 @@
 #define USE_CS4271
 #define CODEC_HP_FILTER
 #define CODEC_SPI hspi4
-#define USE_USBD_HS
 #define USE_USB_HOST
-#define USBH_HANDLE hUsbHostFS
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 
 #define NOF_ADC_VALUES               5
