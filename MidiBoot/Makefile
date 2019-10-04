@@ -26,12 +26,15 @@ C_SRC += usbd_desc.c usbd_conf.c
 ifeq ($(PLATFORM),Magus)
   CPPFLAGS += -Iusbd-fs -DOWL_MAGUS
   vpath %.c usbd-fs
-else ifeq ($(PLATFORM),Wizard)
-  CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST
-  vpath %.c usbd-hs
 else ifeq ($(PLATFORM),Alchemist)
-  CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST
+  CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST -DUSE_USBD_HS
   vpath %.c usbd-hs
+else ifeq ($(PLATFORM),Wizard)
+  CPPFLAGS += -Iusbd-hs -DOWL_WIZARD -DUSE_USBD_HS
+  vpath %.c usbd-hs
+else ifeq ($(PLATFORM),EuroWizard)
+  CPPFLAGS += -Iusbd-fs -DOWL_ALCHEMIST -DUSE_USBD_FS
+  vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Rack)
   CPPFLAGS += -Iusbd-hs -DOWL_RACK
   vpath %.c usbd-hs
