@@ -342,10 +342,16 @@ void updateProgramVector(ProgramVector* pv){
 #endif
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
-  pv->audio_format = AUDIO_FORMAT_24B16;
-  // pv->audio_format = AUDIO_FORMAT_24B24;
+  pv->audio_format = AUDIO_FORMAT_24B16_2X;
+  // pv->audio_format = AUDIO_FORMAT_24B24_2X;
+#elif defined OWL_BIOSIGNALS
+#if USB_AUDIO_CHANNELS == 4
+  pv->audio_format = AUDIO_FORMAT_24B32_4X;
+#elif USB_AUDIO_CHANNELS > 4
+  pv->audio_format = AUDIO_FORMAT_24B32_8X;
+#endif
 #else
-  pv->audio_format = AUDIO_FORMAT_24B32;
+  pv->audio_format = AUDIO_FORMAT_24B32_2X;
 #endif
 #endif /* PROGRAM_VECTOR_V13 */
   pv->message = NULL;

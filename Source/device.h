@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v20.7"
+#define FIRMWARE_VERSION "v20.8"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -62,7 +62,7 @@
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
 
-#define CODEC_BLOCKSIZE              128
+#define CODEC_BLOCKSIZE              64
 #define CODEC_BUFFER_SIZE            (2*USB_AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 #ifndef USBD_AUDIO_FREQ

@@ -27,7 +27,7 @@
 #define ADS_AUDIO_FREQ              8000
 #define ADS_GAIN                    4
 #define ADS_MAX_CHANNELS            4
-#define ADS_ACTIVE_CHANNELS         2
+#define ADS_ACTIVE_CHANNELS         4
 #define ADS_HSPI                    hspi1
 
 #define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*4)
