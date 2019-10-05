@@ -8,12 +8,10 @@
   #define APPLICATION_ADDRESS 0x08010000
 #elif defined OWL_ALCHEMIST
   #define HARDWARE_VERSION    "OWL Alchemist Boot"
-  #define USE_USBD_HS
   #define USE_BOOT1_PIN
   #define APPLICATION_ADDRESS 0x08010000
 #elif defined OWL_WIZARD
   #define HARDWARE_VERSION    "OWL Wizard Boot"
-  #define USE_USBD_HS
   #define USE_BOOT1_PIN
   #define APPLICATION_ADDRESS 0x08010000
 #elif defined OWL_WAVETABLE
