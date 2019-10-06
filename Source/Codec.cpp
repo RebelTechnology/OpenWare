@@ -97,6 +97,7 @@ void Codec::stop(){
 #ifdef USE_ADS1294
 #include "ads.h"
 
+static int32_t rxbuf[CODEC_BUFFER_SIZE];
 static size_t rxindex = 0;
 static size_t rxhalf = 0;
 static size_t rxfull = 0;
@@ -200,7 +201,7 @@ extern "C"{
       // write directly to usb buffer
       audio_t* dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame
 #else
-      audio_t* dst = txbuf + rxindex;
+      audio_t* dst = rxbuf + rxindex;
 #endif
       memcpy(dst, ads_samples, ADS_ACTIVE_CHANNELS*sizeof(audio_t));
       dst += ADS_ACTIVE_CHANNELS;
@@ -213,18 +214,12 @@ extern "C"{
 #else
       rxindex += USB_AUDIO_CHANNELS;
       if(rxindex == rxhalf){
-	audioCallback(txbuf, txbuf, blocksize); // trigger audio processing block
+	audioCallback(rxbuf, txbuf, blocksize); // trigger audio processing block
 	audio_ringbuffer.write(txbuf+rxhalf, blocksize*USB_AUDIO_CHANNELS); // copy back previous block
-	// dst = audio_ringbuffer.getWriteHead();
-	// memcpy(dst, txbuf+rxhalf, blocksize*USB_AUDIO_CHANNELS*sizeof(audio_t));
-	// audio_ringbuffer.incrementWriteHead(blocksize*USB_AUDIO_CHANNELS);
       }else if(rxindex >= rxfull){
 	rxindex = 0;
-	audioCallback(txbuf+rxhalf, txbuf+rxhalf, blocksize);
+	audioCallback(rxbuf+rxhalf, txbuf+rxhalf, blocksize);
 	audio_ringbuffer.write(txbuf, blocksize*USB_AUDIO_CHANNELS);
-	// dst = audio_ringbuffer.getWriteHead();
-	// memcpy(dst, txbuf, blocksize*USB_AUDIO_CHANNELS*sizeof(audio_t));
-	// audio_ringbuffer.incrementWriteHead(blocksize*USB_AUDIO_CHANNELS);
       }
 #endif
     // size_t available = audio_ringbuffer.getReadSpace();
