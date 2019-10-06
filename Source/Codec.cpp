@@ -23,6 +23,7 @@ void Codec::begin(){
 }
 
 void Codec::reset(){
+  // todo: this is called when blocksize is changed
   stop();
   start();
 }
