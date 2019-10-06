@@ -167,23 +167,53 @@ void setLed(uint8_t led, uint32_t rgb){
   TIM2->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>00)&0x3ff);
 #elif defined OWL_PEDAL || defined OWL_MODULAR
-  if(rgb == RED_COLOUR){
+  switch(rgb){
+  case RED_COLOUR:
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-  }else if(rgb == GREEN_COLOUR){
+    break;
+  case GREEN_COLOUR:
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-  }else if(rgb == NO_COLOUR){
+    break;
+  case YELLOW_COLOUR:
+    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+    break;
+  case NO_COLOUR:
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+    break;
   }
 #elif defined OWL_MAGUS
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
 #elif defined OWL_BIOSIGNALS
   if(led == 0){
-    TIM1->CCR3 = 1023 - ((rgb>>20)&0x3ff);
-    TIM1->CCR2 = 1023 - ((rgb>>10)&0x3ff);
-    TIM1->CCR1 = 1023 - ((rgb>>00)&0x3ff);
+#ifdef USE_LED_PWM
+    rgb &= COLOUR_LEVEL5; // turn down intensity
+    TIM1->CCR1 = 1023 - ((rgb>>20)&0x3ff); // red
+    TIM1->CCR3 = 1023 - ((rgb>>10)&0x3ff); // green
+    TIM1->CCR2 = 1023 - ((rgb>>00)&0x3ff); // blue
+#else
+    switch(rgb){ // sinking current
+    case RED_COLOUR:
+      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+      break;
+    case GREEN_COLOUR:
+      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+      break;
+    case YELLOW_COLOUR:
+      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+      break;
+    case NO_COLOUR:
+      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+      break;
+    }
+#endif      
   }else if(led == 1){
     if(rgb == NO_COLOUR)
       HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
@@ -217,11 +247,21 @@ void initLed(){
   HAL_TIM_Base_Start(&htim4);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
 #elif defined OWL_BIOSIGNALS
+#ifdef USE_LED_PWM
   extern TIM_HandleTypeDef htim1;
   HAL_TIM_Base_Start(&htim1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+#else
+  /*Configure GPIO pin : LED_GREEN_Pin, LED_RED_Pin */
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitStruct.Pin = LED_GREEN_Pin | LED_RED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED_GREEN_GPIO_Port, &GPIO_InitStruct);
+#endif
 #endif
 }
 

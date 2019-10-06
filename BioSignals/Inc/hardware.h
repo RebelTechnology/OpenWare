@@ -7,6 +7,14 @@
 
 #define USE_BLE_MIDI
 
+#define USE_LED
+/* #define USE_LED_PWM */
+
+#define LED_RED_Pin RGB_3_Pin
+#define LED_RED_GPIO_Port RGB_3_GPIO_Port
+#define LED_GREEN_Pin RGB_1_Pin
+#define LED_GREEN_GPIO_Port RGB_1_GPIO_Port
+
 #define USE_CODEC
 #define USE_ADS1294
 #define USE_USB_AUDIO
@@ -48,8 +56,6 @@
 #else
 #error "Invalid configuration"
 #endif
-
-/* #define USE_LED */
 
 #define NOF_ADC_VALUES               0
 #define NOF_PARAMETERS               5
