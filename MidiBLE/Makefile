@@ -246,7 +246,6 @@ stlink:
 
 flash: # $(BUILD_DIR)/$(TARGET).bin
 	openocd -f openocd.cfg -c "program $(BUILD_DIR)/$(TARGET).elf verify reset exit"
-	# openocd -f openocd.cfg -c "program $(BUILD_DIR)/$(TARGET).bin reset exit 0x8000000"
 
 #######################################
 # clean up

@@ -117,13 +117,14 @@ APP_Status PER_APP_Advertise(void)
   
   uint8_t local_name[] =
   {
-    AD_TYPE_COMPLETE_LOCAL_NAME, 	'O','W','L','-','B','i','o','S','i','g','n','a','l','s'
+    AD_TYPE_COMPLETE_LOCAL_NAME, 	'O','W','L','-','B','i','o','S','i','g','n','a','l','s',
+    '-','P','0','0','0'
   };
 
   uint8_t manuf_data[] = {
 		AD_TYPE_16_BIT_SERV_UUID,			0x00,
 		AD_TYPE_TX_POWER_LEVEL,				0x07,
-		AD_TYPE_COMPLETE_LOCAL_NAME, 	'O','W','L','-','B','i','o','S','i','g','n','a','l','s'
+		AD_TYPE_COMPLETE_LOCAL_NAME, 	'R','e','b','e','l',' ','T','e','c','h','n','o','l','o','g','y'
 	};
 	
 	// Add scan response data
