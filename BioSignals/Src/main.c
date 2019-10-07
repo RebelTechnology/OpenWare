@@ -130,7 +130,6 @@ int main(void)
 #ifdef DEBUG
 #warning "Compiling with semihosting"
   initialise_monitor_handles(); // remove when not semi-hosting
-  printf("yo %d\n", 1);
 #endif
   /* USER CODE END 1 */
   

@@ -2,12 +2,11 @@
 #include "stm32f4xx_hal.h"
 
 #define OWL_BIOSIGNALS
-#define HARDWARE_ID                  ALCHEMIST_HARDWARE
+#define HARDWARE_ID                  BIOSIGNALS_HARDWARE
 #define HARDWARE_VERSION             "BioSignals"
 
-/* #define USE_BLE_MIDI */
+#define USE_BLE_MIDI
 #define USE_BKPSRAM
-
 #define USE_LED
 /* #define USE_LED_PWM */
 
