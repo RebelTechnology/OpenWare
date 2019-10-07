@@ -20,6 +20,7 @@ OBJS += $(OBJS_DSP)
 OBJS += $(OBJS_OS)
 OBJS += $(OBJS_UART)
 OBJS += $(OBJS_I2S)
+OBJS += $(OBJS_RTC)
 
 include $(OPENWARE)/Hardware/f4.mk
 
