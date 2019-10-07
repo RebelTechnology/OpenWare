@@ -497,7 +497,7 @@ void setup(){
 #endif
 #ifdef USE_LED
   initLed();
-  setLed(0, GREEN_COLOUR);
+  setLed(0, YELLOW_COLOUR);
 #endif
   setLed(1, NO_COLOUR);
 #endif
@@ -649,8 +649,14 @@ void setup(){
 #endif
   if(lastprogram == settings.program_index){
     error(CONFIG_ERROR, "Preventing reset program from starting");
+#ifdef USE_BKPSRAM
+    // reset for next time
+    extern RTC_HandleTypeDef hrtc;
+    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
+#endif
   }else{
     program.loadProgram(settings.program_index);
+    HAL_Delay(200);
     program.startProgram(false);
   }
 

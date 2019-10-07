@@ -158,40 +158,12 @@ void MidiController::sendStatus(){
   buffer[0] = SYSEX_PROGRAM_STATS;
   char* p = &buffer[1];
   uint8_t err = getErrorStatus();
-  switch(err & 0xf0){
-  case NO_ERROR:
+  if(err == NO_ERROR){
     sendProgramStats();
     return;
-    break;
-  case MEM_ERROR:
-    p = stpcpy(p, (const char*)"Memory Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case BUS_ERROR:
-    p = stpcpy(p, (const char*)"Bus Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case USAGE_ERROR:
-    p = stpcpy(p, (const char*)"Usage Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case NMI_ERROR:
-    p = stpcpy(p, (const char*)"NMI Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case HARDFAULT_ERROR:
-    p = stpcpy(p, (const char*)"HardFault Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case PROGRAM_ERROR:
-    p = stpcpy(p, (const char*)"Program Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  default:
-    p = stpcpy(p, (const char*)"Unknown Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
   }
+  p = stpcpy(p, (const char*)"Error 0x");
+  p = stpcpy(p, msg_itoa(err, 16));
   const char* msg = getErrorMessage();
   if(err != NO_ERROR && msg != NULL){
   // if(msg != NULL){
