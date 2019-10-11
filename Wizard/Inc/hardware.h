@@ -23,6 +23,21 @@
 
 #define USE_BKPSRAM
 
+#ifdef OWL_EUROWIZARD
+#define ADC_A 0
+#define ADC_B 1
+#define ADC_C 2
+#define ADC_D 3
+#define ADC_E 4
+#define AUDIO_OUTPUT_GAIN            127
+#else
+#define ADC_A 2
+#define ADC_B 1
+#define ADC_C 0
+#define ADC_D 4
+#define ADC_E 3
+#endif
+
 #define USE_RGB_LED
 #define USE_DAC
 #define TRIG1_Pin GP7_Pin
@@ -31,11 +46,6 @@
 #define TRIG2_GPIO_Port GP8_GPIO_Port
 #define USE_ADC
 #define ADC_PERIPH hadc3
-#define ADC_A 2
-#define ADC_B 1
-#define ADC_C 0
-#define ADC_D 4
-#define ADC_E 3
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_HP_FILTER

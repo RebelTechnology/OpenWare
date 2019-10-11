@@ -498,6 +498,8 @@ void setup(){
   codec.begin();
   codec.set(0);
   codec.bypass(false);
+  codec.setInputGain(settings.audio_input_gain);
+  codec.setOutputGain(settings.audio_output_gain);
 #endif /* USE_CODEC */
 
   program.startManager();

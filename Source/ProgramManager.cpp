@@ -167,6 +167,12 @@ void updateParameters(){
   parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
   parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
   parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
+#elif defined OWL_EUROWIZARD
+  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
+  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
+  parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_E])>>2;
 #elif defined OWL_WAVETABLE
   parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
   parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;

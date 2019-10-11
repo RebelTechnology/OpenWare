@@ -21,10 +21,10 @@ PLATFORM = Wizard
 endif
 
 ifeq ($(PLATFORM),EuroWizard)
-  CPPFLAGS += -Iusbd-fs -DOWL_WIZARD -DOWL_USBD_FS
+  CPPFLAGS += -Iusbd-fs -DOWL_USBD_FS -DOWL_EUROWIZARD
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Wizard)
-  CPPFLAGS += -Iusbd-hs -DOWL_WIZARD -DOWL_USBD_HS
+  CPPFLAGS += -Iusbd-hs -DOWL_USBD_HS
   vpath %.c usbd-hs
 endif
 
@@ -43,3 +43,12 @@ OBJS += $(OBJS_UART)
 OBJS += $(OBJS_RTC)
 
 include $(OPENWARE)/Hardware/f4.mk
+
+flash:
+	openocd -f $(OPENWARE)/Hardware/stm32f4.cfg -c "program Build/$(PROJECT).elf verify reset exit"
+
+debug: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
+
+attach: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" $(ELF)
