@@ -666,7 +666,6 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
 
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR){
     USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
-    debugMessage("SET_CUR");
     if (haudio->control.unit == AUDIO_OUT_STREAMING_CTRL)
     {
       usbd_audio_gain_callback(haudio->control.data[0]);
@@ -682,10 +681,8 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
       haudio->control.len = 0;
     }
   }else if (haudio->control.cmd == AUDIO_REQ_GET_CUR){
-    debugMessage("GET_CUR");
     USBD_DbgLog("GET_CUR %d\n", haudio->control.unit);
   }else{
-    debugMessage("Control CMD");
     USBD_DbgLog("Control CMD %d\n", haudio->control.cmd);
   }
 
@@ -701,7 +698,6 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 {
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
-  debugMessage("EP0 TxReady");
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR)
   {/* In this driver, to simplify code, only SET_CUR request is managed */
     USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
@@ -781,8 +777,7 @@ void  USBD_AUDIO_Sync (USBD_HandleTypeDef *pdev, AUDIO_OffsetTypeDef offset)
     /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(&haudio->buffer[0], */
     /*                                                      AUDIO_TOTAL_BUF_SIZE/2 - shift, */
     /*                                                      AUDIO_CMD_PLAY);  */
-    debugMessage("usb audio offset full");
-    /* debugMessage(msg_itoa(shift, 10)); */
+    USBD_DbgLog("AUDIO_OFFSET_FULL %d\n", shift);
     usbd_audio_data_in_callback(pdev, haudio);
     haudio->offset = AUDIO_OFFSET_NONE;           
   }
