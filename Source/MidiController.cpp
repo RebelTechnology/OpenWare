@@ -308,22 +308,26 @@ void MidiController::sendSysEx(uint8_t* data, uint16_t size){
 }
 
 void MidiController::write(uint8_t* data, uint16_t size){
-  buffer.push(data, size);
+  if(buffer.getWriteCapacity() >= size)
+    buffer.push(data, size);
+  else
+    error(RUNTIME_ERROR, "usb tx overflow");
 }
 
 void MidiController::push(){
-  int len = buffer.getContiguousReadCapacity();
+  size_t len = buffer.getContiguousReadCapacity() & ~0x0003;
+  // round down to multiple of four
   while(len >= 4){
     if(midi_device_ready()) // if not ready, packets will be missed
-      midi_device_tx(buffer.getReadHead(), 4);
+      midi_device_tx(buffer.getReadHead(), len);
 #ifdef USE_USB_HOST
     if(midi_host_ready())
-      midi_host_tx(buffer.getReadHead(), 4);
+      midi_host_tx(buffer.getReadHead(), len);
 #endif /* USE_USB_HOST */
 #ifdef USE_BLE_MIDI
-    ble_tx(buffer.getReadHead(), 4);
+    ble_tx(buffer.getReadHead(), len);
 #endif /* USE_BLE_MIDI */
-    buffer.incrementReadHead(4);
-    len = buffer.getContiguousReadCapacity();
+    buffer.incrementReadHead(len);
+    len = buffer.getContiguousReadCapacity() & ~0x0003;
   }
 }
