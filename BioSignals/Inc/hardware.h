@@ -6,6 +6,7 @@
 #define HARDWARE_VERSION             "BioSignals"
 
 #define USE_BLE_MIDI
+#define BLE_SPI hspi2
 #define USE_BKPSRAM
 #define USE_LED
 /* #define USE_LED_PWM */
