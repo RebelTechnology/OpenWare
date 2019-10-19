@@ -100,7 +100,12 @@
 /*---------- -----------*/
 #define USBD_SUPPORT_USER_STRING     0
 /*---------- -----------*/
+#ifdef DEBUG
+#warning USBD_DEBUG_LEVEL 3 uses printf!
+#define USBD_DEBUG_LEVEL     3
+#else
 #define USBD_DEBUG_LEVEL     0
+#endif
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     0
 /*---------- -----------*/
