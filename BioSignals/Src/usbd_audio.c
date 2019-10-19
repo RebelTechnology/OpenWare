@@ -101,10 +101,10 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   4,                      // bNumInterfaces Number of interfaces in this cfg
   1,                      // bConfigurationValue Index value of this configuration
   0,                      // iConfiguration Configuration string index
-  0x80,                   // bmAttributes, see usb_device.h
-  50,                     // Max power consumption (2X mA) */
-  /* 0xC0,                     /\* bmAttributes  BUS Powred*\/ */
-  /* 0x32,                     // Max power consumption (100mA) */
+  /* 0x80,                   // bmAttributes, see usb_device.h */
+  /* 50,                     // Max power consumption (2X mA) *\/ */
+  0x80,                   // bmAttributes: BUS Powered
+  100,                    // bMaxPower in 2 mA increments
   /* 9 bytes */
  
   /* USB Microphone Standard AC Interface Descriptor  */
