@@ -1,0 +1,44 @@
+# C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_gpio.c
+# C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_rtc.c
+C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_spi.c
+# C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_dma.c
+# C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_flash.c
+# C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_adc.c
+# C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_i2c.c
+# C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_sysCtrl.c
+# C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_wdg.c
+# C_SOURCES += Library/BlueNRG1_Periph_Driver/src/misc.c
+# C_SOURCES += Library/SDK_Eval_BlueNRG1/src/LPS25HB.c
+# C_SOURCES += Library/SDK_Eval_BlueNRG1/src/LSM6DS3.c
+# C_SOURCES += Library/SDK_Eval_BlueNRG1/src/SDK_EVAL_Button.c
+# C_SOURCES += Library/SDK_Eval_BlueNRG1/src/SDK_EVAL_Com.c
+# C_SOURCES += Library/SDK_Eval_BlueNRG1/src/SDK_EVAL_Config.c
+# C_SOURCES += Library/SDK_Eval_BlueNRG1/src/SDK_EVAL_I2C.c
+# C_SOURCES += Library/SDK_Eval_BlueNRG1/src/SDK_EVAL_Led.c
+# C_SOURCES += Library/SDK_Eval_BlueNRG1/src/SDK_EVAL_SPI.c
+# ASM_SOURCES += Library/hal/src/context_switch.s
+# C_SOURCES += Library/CMSIS/Device/ST/BlueNRG1/Source/system_bluenrg1.c
+
+# C_SOURCES += Drivers/BSP/Components/lsm6dsl/LSM6DSL_ACC_GYRO_driver.c
+# C_SOURCES += Drivers/BSP/Components/lsm6dsl/LSM6DSL_ACC_GYRO_driver_HL.c
+C_SOURCES += Drivers/BSP/STEVAL-BLUEMIC1/steval_bluemic1.c
+# C_SOURCES += Drivers/BSP/STEVAL-BLUEMIC1/steval_bluemic1_accelero.c
+# C_SOURCES += Drivers/BSP/STEVAL-BLUEMIC1/steval_bluemic1_audio_in.c
+# C_SOURCES += Drivers/BSP/STEVAL-BLUEMIC1/steval_bluemic1_gyro.c
+C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_adc.c
+C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_dma.c
+C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_flash.c
+C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_gpio.c
+C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_i2c.c
+C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_mft.c
+C_SOURCES += Library/BlueNRG1_Periph_Driver/src/BlueNRG1_sysCtrl.c
+C_SOURCES += Library/BlueNRG1_Periph_Driver/src/misc.c
+C_SOURCES += Library/hal/src/clock.c
+C_SOURCES += Library/hal/src/osal.c
+C_SOURCES += Library/hal/src/sleep.c
+
+# C_SOURCES += Library/Bluetooth_LE/library/bluenrg1_stack_lib_atollic.lib
+# C_SOURCES += Middlewares/ST/BlueNRG-1_BlueVoice_Library/Lib/bluevoiceADPCM_BNRG1_100_Keil.lib
+C_SOURCES += Library/CMSIS/Device/ST/BlueNRG1/Source/system_bluenrg1.c
+ASM_SOURCES += Library/hal/src/context_switch.s
+
