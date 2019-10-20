@@ -1,4 +1,4 @@
-#include "inertial_app.h"
+#include "midi_app.h"
 #include "BlueNRG1_conf.h"
 #include "ble_const.h" 
  
@@ -11,11 +11,11 @@ uint16_t usiTimerVal;
 /**
  * @brief  This function is called to add Classification characteristics.
  * @param  service_handle: handle of the service
- * @retval INERTIAL_APP_Status: INERTIAL_APP_SUCCESS if the configuration is ok, INERTIAL_APP_ERROR otherwise.
+ * @retval MIDI_APP_Status: MIDI_APP_SUCCESS if the configuration is ok, MIDI_APP_ERROR otherwise.
  */
 
 // _____ Classification Handle _________________________________________________________________________________________________________
-SCUDO_APP_Status CLASSIFICATION_APP_add_char(uint16_t service_handle)
+MIDI_APP_Status CLASSIFICATION_APP_add_char(uint16_t service_handle)
 {      
   uint8_t ret = aci_gatt_add_char(service_handle,
                             UUID_TYPE_128, (Char_UUID_t *) Classification_char_uuid,
@@ -24,13 +24,13 @@ SCUDO_APP_Status CLASSIFICATION_APP_add_char(uint16_t service_handle)
                         
   if (ret != BLE_STATUS_SUCCESS)
   {
-    return SCUDO_APP_ERROR;
+    return MIDI_APP_ERROR;
   }
 
-  return SCUDO_APP_SUCCESS;
+  return MIDI_APP_SUCCESS;
 }
 
-SCUDO_APP_Status CLASSIFICATION_APP_DataUpdate(uint16_t service_handle, uint8_t value)
+MIDI_APP_Status CLASSIFICATION_APP_DataUpdate(uint16_t service_handle, uint8_t value)
 {  
 	uint8_t buff[1];  
 	
@@ -38,13 +38,13 @@ SCUDO_APP_Status CLASSIFICATION_APP_DataUpdate(uint16_t service_handle, uint8_t 
 	
 	if(aci_gatt_update_char_value(service_handle, ClassificationHandle, 0, sizeof buff, buff)==BLE_STATUS_INSUFFICIENT_RESOURCES)
 	{
-		return SCUDO_APP_ERROR;
+		return MIDI_APP_ERROR;
 	}
-	return SCUDO_APP_SUCCESS;	
+	return MIDI_APP_SUCCESS;	
 }
 
 // _____ Mode Handle ______________________________________________________________________________________________________________
-SCUDO_APP_Status MODE_APP_add_char(uint16_t service_handle)
+MIDI_APP_Status MODE_APP_add_char(uint16_t service_handle)
 {      
   uint8_t ret = aci_gatt_add_char(service_handle,
                             UUID_TYPE_128, (Char_UUID_t *) Mode_char_uuid,
@@ -53,23 +53,23 @@ SCUDO_APP_Status MODE_APP_add_char(uint16_t service_handle)
                         
   if (ret != BLE_STATUS_SUCCESS)
   {
-    return SCUDO_APP_ERROR;
+    return MIDI_APP_ERROR;
   }
 
-  return SCUDO_APP_SUCCESS;
+  return MIDI_APP_SUCCESS;
 }
 
 uint8_t MODE_APP_DataRead(uint16_t service_handle)
 {  
 	if(aci_gatt_read_char_value(service_handle, ModeHandle)==BLE_STATUS_INSUFFICIENT_RESOURCES)
 	{
-		return SCUDO_APP_ERROR;
+		return MIDI_APP_ERROR;
 	}
-	return SCUDO_APP_SUCCESS;	
+	return MIDI_APP_SUCCESS;	
 }
 
 // _____ MIDI Handle ______________________________________________________________________________________________________________
-SCUDO_APP_Status MIDI_APP_add_char(uint16_t service_handle)
+MIDI_APP_Status MIDI_APP_add_char(uint16_t service_handle)
 {      
   uint8_t ret = aci_gatt_add_char(service_handle,
                             UUID_TYPE_128, (Char_UUID_t *) MIDI_IO_char_uuid,
@@ -78,14 +78,14 @@ SCUDO_APP_Status MIDI_APP_add_char(uint16_t service_handle)
                         
   if (ret != BLE_STATUS_SUCCESS)
   {
-    return SCUDO_APP_ERROR;
+    return MIDI_APP_ERROR;
   }
 
-  return SCUDO_APP_SUCCESS;
+  return MIDI_APP_SUCCESS;
 }
 
 
-SCUDO_APP_Status MIDI_APP_DataUpdate(uint16_t service_handle, uint8_t channel, uint8_t note, uint8_t vector)
+MIDI_APP_Status MIDI_APP_DataUpdate(uint16_t service_handle, uint8_t channel, uint8_t note, uint8_t vector)
 {  
 	uint8_t rgBuff[5]; 
 	
@@ -102,12 +102,12 @@ SCUDO_APP_Status MIDI_APP_DataUpdate(uint16_t service_handle, uint8_t channel, u
 	// Update value
 	if(aci_gatt_update_char_value(service_handle, MidiHandle, 0, sizeof rgBuff, rgBuff)==BLE_STATUS_INSUFFICIENT_RESOURCES)
 	{
-		return SCUDO_APP_ERROR;
+		return MIDI_APP_ERROR;
 	}
-	return SCUDO_APP_SUCCESS;	
+	return MIDI_APP_SUCCESS;	
 }
 
-SCUDO_APP_Status MIDI_APP_Passthrough(uint16_t service_handle, uint8_t* data)
+MIDI_APP_Status MIDI_APP_Passthrough(uint16_t service_handle, uint8_t* data)
 {  
 	uint8_t rgBuff[5]; 
 	
@@ -122,12 +122,6 @@ SCUDO_APP_Status MIDI_APP_Passthrough(uint16_t service_handle, uint8_t* data)
 	tBleStatus ret;
 	ret = aci_gatt_update_char_value(service_handle, MidiHandle, 0, sizeof rgBuff, rgBuff);
 	if(ret == BLE_STATUS_INSUFFICIENT_RESOURCES)
-	  return SCUDO_APP_ERROR;
-	return SCUDO_APP_SUCCESS;	
+	  return MIDI_APP_ERROR;
+	return MIDI_APP_SUCCESS;	
 }
-
-
-
-
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -43,10 +43,18 @@
 /* Includes ------------------------------------------------------------------*/
 #include "peripheral_mngr_app.h"
 #include "BlueVoice_config.h"
-#include "steval_bluemic1.h"
-#include "steval_bluemic1_audio_in.h"
+/* #include "steval_bluemic1.h" */
+/* #include "steval_bluemic1_audio_in.h" */
+#include "BlueNRG1.h"
+#include "BlueNRG1_conf.h"
 #include "sleep.h"
 #include "clock.h"
+
+#define MODE_PIN        GPIO_Pin_4
+#define SPI_NCS_PIN     GPIO_Pin_1
+#define SPI_CLK_PIN     GPIO_Pin_0
+#define SPI_MOSI_PIN    GPIO_Pin_3
+#define SPI_MISO_PIN    GPIO_Pin_2
 
 /* Private variables ---------------------------------------------------------*/ 
 volatile uint32_t lSystickCounter=0;

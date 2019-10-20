@@ -284,7 +284,7 @@ void aci_gatt_tx_pool_available_event(uint16_t Connection_Handle,
                                       uint16_t Available_Buffers)
 {       
   /* It allows to notify when at least 2 GATT TX buffers are available */
-  tx_buffer_full = 0;
+  /* tx_buffer_full = 0; */
 } 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

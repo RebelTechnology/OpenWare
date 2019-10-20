@@ -46,8 +46,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "BlueNRG1_it.h"
 #include "BlueNRG1_conf.h"
-#include "steval_bluemic1.h"
-#include "steval_bluemic1_audio_in.h"
+/* #include "steval_bluemic1.h" */
+/* #include "steval_bluemic1_audio_in.h" */
 #include "peripheral_mngr_app.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -131,7 +131,7 @@ void SVC_Handler(void)
   */
 void SysTick_Handler(void)
 {
-	usiTimerVal++;
+  usiTimerVal++;
   lSystickCounter++;
   /* BluevoiceADPCM_BNRG1_IncTick(); */
 }
@@ -155,13 +155,13 @@ void DMA_Handler(void)
   /* Check DMA Half Transfer Complete interrupt */
   if(DMA_GetFlagStatus(DMA_FLAG_HT0)) {      
     DMA_ClearFlag(DMA_FLAG_HT0);
-    HT_IT_Callback();
+    /* HT_IT_Callback(); */
   }
     
   /* Check DMA Transfer Complete interrupt */
   if(DMA_GetFlagStatus(DMA_FLAG_TC0)) {      
     DMA_ClearFlag(DMA_FLAG_TC0);
-    TC_IT_Callback();
+    /* TC_IT_Callback(); */
   }
 }
 
@@ -173,14 +173,14 @@ void DMA_Handler(void)
 void GPIO_Handler(void)
 {
   /* If BUTTON_1 is pressed */
-  if(BSP_PB_GetITPendingBit(BUTTON_USER) == SET)
-  {
-    BSP_PB_ClearITPendingBit(BUTTON_USER);
-    if(APP_PER_state==APP_STATUS_CONNECTED)
-    {   
-      BV_APP_StartStop_ctrl();
-    }
-  }
+  /* if(BSP_PB_GetITPendingBit(BUTTON_USER) == SET) */
+  /* { */
+  /*   BSP_PB_ClearITPendingBit(BUTTON_USER); */
+  /*   if(APP_PER_state==APP_STATUS_CONNECTED) */
+  /*   {    */
+  /*     BV_APP_StartStop_ctrl(); */
+  /*   } */
+  /* } */
 }
 
 /**

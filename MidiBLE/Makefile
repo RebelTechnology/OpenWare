@@ -33,7 +33,6 @@ endif
 C_SOURCES =
 
 C_SOURCES += $(wildcard src/*.c)
-# C_SOURCES += src/inertial_app.c src/main.c src/BlueNRG1_it.c
 C_SOURCES += $(wildcard Application/*.c)
 
 # C++ sources
@@ -121,32 +120,6 @@ C_INCLUDES += -IDrivers/BSP/STEVAL-BLUEMIC1
 C_INCLUDES += -IDrivers/BSP/Components/Common/
 C_INCLUDES += -IDrivers/BSP/Components/lsm6dsl
 
-# C_INCLUDES += -ILibrary/STM32L/Middlewares/ST/STM32_BlueNRG1/HAL/inc
-# -ILibrary/STM32L/Middlewares/ST/STM32_BlueNRG1/SimpleBlueNRG1_HCI/includes \
-# -ILibrary/STM32L/Middlewares/ST/STM32_BlueNRG1/SimpleBlueNRG1_HCI \
-# -ILibrary/STM32L/Drivers/CMSIS/Device/ST/STM32L1xx/Include \
-# -ILibrary/STM32L/Drivers/BSP/STM32L1xx_Nucleo/inc \
-# -ILibrary/STM32L/Drivers/BSP/STM32L1xx_BlueNRG1/inc \
-# -ILibrary/STM32L/Drivers/STM32L1xx_HAL_Driver/Inc \
-# -ILibrary/STM32L/Middlewares/ST/STM32_BlueNRG1/STM32L1xx_HAL_BlueNRG1_Drivers/inc \
-# -Iinc \
-# -IApplication \
-# -ILibrary/hal/inc \
-# -ILibrary/CMSIS/Include \
-# -ILibrary/Bluetooth_LE/inc \
-# -ILibrary/BlueNRG1_Periph_Driver/inc \
-# -ILibrary/CMSIS/Device/ST/BlueNRG1/Include \
-# -ILibrary/STM32L/Drivers/STM32L1xx_HAL_Driver/Inc/ \
-# -ILibrary/STM32L/Drivers/CMSIS/Device/ST/STM32L1xx/Include/ \
-# -ILibrary/STM32L/Middlewares/ST/STM32_BlueNRG1/SimpleBlueNRG1_HCI/includes \
-# -ILibrary/STM32L/Middlewares/ST/STM32_BlueNRG1/HAL/inc \
-# -ILibrary/CMSIS/Device/ST/BlueNRG1/Include \
-# -ILibrary/SDK_Eval_BlueNRG1/inc/
-
-
-# -ILibrary/STM32L/Drivers/BSP/STM32L1xx_Nucleo/inc/
-
-
 # compile gcc flags
 CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding -nodefaultlibs
 # CPPFLAGS += -mtune=cortex-m7
@@ -181,7 +154,6 @@ LDSCRIPT = BlueNRG1.ld
 # libraries
 LIBS = -lc -lm -lnosys
 LIBS += Library/Bluetooth_LE/library/libbluenrg1_stack_lib_atollic.a
-# LIBS += Middlewares/ST/BlueNRG-1_BlueVoice_Library/Lib/libbluevoiceADPCM_BNRG1_100_Atollic.a
 
 LIBDIR = 
 LDFLAGS = $(MCU) -specs=nosys.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
