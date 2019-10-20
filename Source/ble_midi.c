@@ -22,7 +22,17 @@ void ble_init(){
 }
 
 void ble_tx(uint8_t* data, size_t len){
+#ifdef USE_BLE_MIDI
   BLE_CS_LO();
-  HAL_SPI_Transmit(&BLE_SPI, data, len, 100);
+  uint8_t rxbuf[len];
+  rxbuf[0] = 0;
+  HAL_SPI_TransmitReceive(&BLE_SPI, data, rxbuf, len, 100);
   BLE_CS_HI();
+
+  if(rxbuf[0] == 0x20){ // status connected
+    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+  }else{
+    HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+  }
+#endif
 }
