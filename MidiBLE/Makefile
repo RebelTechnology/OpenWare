@@ -109,16 +109,9 @@ AS_INCLUDES =
 C_INCLUDES =  -Iinc
 C_INCLUDES += -ILibrary/hal/inc
 C_INCLUDES += -ILibrary/CMSIS/Include
-# C_INCLUDES += -ILibrary/SDK_Eval_BlueNRG1/inc
 C_INCLUDES += -ILibrary/BlueNRG1_Periph_Driver/inc
-# C_INCLUDES += -ILibrary/CMSIS/Device/ST/BlueNRG1/Include
-C_INCLUDES += -ILibrary/Bluetooth_LE/inc
-C_INCLUDES += -IMiddlewares/ST/BlueNRG-1_BlueVoice_Library/Inc
 C_INCLUDES += -ILibrary/CMSIS/Device/ST/BlueNRG1/Include
-
-C_INCLUDES += -IDrivers/BSP/STEVAL-BLUEMIC1
-C_INCLUDES += -IDrivers/BSP/Components/Common/
-C_INCLUDES += -IDrivers/BSP/Components/lsm6dsl
+C_INCLUDES += -ILibrary/Bluetooth_LE/inc
 
 # compile gcc flags
 CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding -nodefaultlibs

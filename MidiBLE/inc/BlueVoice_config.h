@@ -1,6 +1,7 @@
 #ifndef _BLUEVOICE_CONFIG_H_
 #define _BLUEVOICE_CONFIG_H_
 
+#include <stddef.h>
 #include "compiler.h"
 
 

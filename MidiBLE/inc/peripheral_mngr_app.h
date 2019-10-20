@@ -48,9 +48,9 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "bluenrg1_stack.h"
-#include "bluevoice_adpcm_bnrg1.h"
-#include "bluevoice_app.h"
 #include "midi_app.h"
+#include "ble_const.h" 
+#include "bluenrg1_api.h"
 
 /** @addtogroup BLUEMIC_1_APP BLUEMIC_1_APP
  * @{
