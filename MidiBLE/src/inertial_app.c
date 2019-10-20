@@ -114,9 +114,9 @@ SCUDO_APP_Status MIDI_APP_Passthrough(uint16_t service_handle, uint8_t* data)
 	// Build Tx packet
 	rgBuff[0] = 0x80 | ((usiTimerVal >> 7) & 0x3F);
 	rgBuff[1] = 0x80 | (usiTimerVal & 0x007F);
-	rgBuff[2] = data[0];
-	rgBuff[3] = data[1];
-	rgBuff[4] = data[2];
+	rgBuff[2] = data[1];
+	rgBuff[3] = data[2];
+	rgBuff[4] = data[3];
 	
 	// Update value
 	tBleStatus ret;

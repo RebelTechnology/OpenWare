@@ -120,41 +120,35 @@ APP_Status PER_APP_Advertise(void)
     AD_TYPE_COMPLETE_LOCAL_NAME, 	'O','W','L','-','B','i','o','S','i','g','n','a','l','s',
     '-','P','0','0','0'
   };
-
-  /* uint8_t manuf_data[] = { */
-  /* 		AD_TYPE_16_BIT_SERV_UUID,			0x00, */
-  /* 		AD_TYPE_TX_POWER_LEVEL,				0x07, */
-  /* 		AD_TYPE_COMPLETE_LOCAL_NAME, 	'R','e','b','e','l',' ','T','e','c','h','n','o','l','o','g','y' */
-  /* 	}; */
-  /* const uint8_t manuf_data[] = {4, AD_TYPE_MANUFACTURER_SPECIFIC_DATA, 0x05, 0x02, 0x01}; */
-/* #define NAME_WEAR 'B', 'V', 'B', 'N', 'R', 'G', '1' */
-#define NAME_WEAR 'O', 'W', 'L', '-', 'B', 'I', 'O'
-  uint8_t manuf_data[20] = {
-  2,0x0A,0x00,
-  8,0x09,NAME_WEAR, /* Complete Name */
-  7,0xFF,0x01,      /* SKD version */
-         0x00,
-         0x48,      /* AudioSync+AudioData */
-         0xC0,      /* Acc+Gyr */
-         0x00,
-         0x00
-  };
 	
   // Add scan response data
-  uint8_t midi_scan_rsp[]	= {0x11,AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST,MIDI_SERVICE_UUID};
-  ret = hci_le_set_scan_response_data(sizeof midi_scan_rsp, midi_scan_rsp);
+  uint8_t midi_scan_rsp[] = {
+    0x11, AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST, MIDI_SERVICE_UUID
+  };
+  ret = hci_le_set_scan_response_data(sizeof(midi_scan_rsp), midi_scan_rsp);
 		
   // Configure GAP
-  ret = aci_gap_set_discoverable(ADV_IND, 0x20,0x50, PUBLIC_ADDR, NO_WHITE_LIST_USE, sizeof(local_name), local_name, 0, NULL, 0, 0);
+  ret |= aci_gap_set_discoverable(ADV_IND, 0x20,0x50, PUBLIC_ADDR, NO_WHITE_LIST_USE, sizeof(local_name), local_name, 0, NULL, 0, 0);
 
   // Send advertising data
-  ret = aci_gap_update_adv_data(sizeof manuf_data, manuf_data);
+/* #define NAME_WEAR 'O', 'W', 'L', '-', 'B', 'I', 'O' */
+/*   uint8_t manuf_data[20] = { */
+/*   2,0x0A,0x00, /\* AD_TYPE_TX_POWER_LEVEL *\/ */
+/*   8,0x09,NAME_WEAR, /\* Complete Name *\/ */
+/*   7,0xFF,0x01,      /\* SKD version *\/ */
+/*          0x00, */
+/*          0x48,      /\* AudioSync+AudioData *\/ */
+/*          0xC0,      /\* Acc+Gyr *\/ */
+/*          0x00, */
+/*          0x00 */
+/*   }; */
+  /* uint8_t manuf_data[] = { */
+  /*   8, AD_TYPE_SHORTENED_LOCAL_NAME, 'O', 'W', 'L', '-', 'B', 'I', 'O' */
+  /* }; */ // not sure why this returns a 0x41 BLE_STATUS_FAILED
+  /* ret |= aci_gap_update_adv_data(sizeof(manuf_data), manuf_data); */
 
   if (ret != BLE_STATUS_SUCCESS)
-  {
-    return APP_ERROR;
-  }
-  
+    return APP_ERROR;  
   return APP_SUCCESS;
 }
 

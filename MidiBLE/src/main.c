@@ -63,17 +63,22 @@ void readSpiPacket(){
   // Delay
   /* while(delay--){} */
 			
-  uint8_t rgData[3];
-					
-  uint8_t first = SPI_ReceiveData(); // skip first char
+  uint8_t rxbuf[4];
+  uint8_t txbuf[4] = {0x01, 0x02, 0x03, 0x04};
+
+  rxbuf[0]= SPI_ReceiveData();
+  SPI_SendData(txbuf[0]);
   while (SPI_GetFlagStatus(SPI_FLAG_RNE) == RESET && timeout--){}
-  rgData[0] = SPI_ReceiveData();
+  rxbuf[1] = SPI_ReceiveData();
+  SPI_SendData(txbuf[1]);
   while (SPI_GetFlagStatus(SPI_FLAG_RNE) == RESET && timeout--){}
-  rgData[1] = SPI_ReceiveData();
+  rxbuf[2] = SPI_ReceiveData();
+  SPI_SendData(txbuf[2]);
   while (SPI_GetFlagStatus(SPI_FLAG_RNE) == RESET && timeout--){}
-  rgData[2] = SPI_ReceiveData();
+  rxbuf[3] = SPI_ReceiveData();
+  SPI_SendData(txbuf[3]);
   if(timeout)
-    MIDI_APP_Passthrough(MidiServiceHandle, rgData);
+    MIDI_APP_Passthrough(MidiServiceHandle, rxbuf);
   else
     SPI_ClearRXFIFO();
 }
@@ -87,8 +92,8 @@ int main(void)
   /* System initialization function */
   SystemInit();
 	
-	// Initialise peripherals
-	init();
+  // Initialise peripherals
+  init();
 
   /* BlueNRG-1 stack init */
   BlueNRG_Stack_Initialization(&BlueNRG_Stack_Init_params);
