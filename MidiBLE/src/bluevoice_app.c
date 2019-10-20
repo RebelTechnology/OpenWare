@@ -65,8 +65,6 @@ void TC_IT_Callback(void)
 /** @defgroup BLUEVOICE_APP_Private_Defines BLUEVOICE_APP_Private_Defines
  * @{
  */
-/* #define NAME_WEAR 'O', 'W', 'L', '-', 'B', 'L', 'E'  */
-/* #define NAME_WEAR "OWL-BLE" */
 #define PCM_SAMPLES_PER_MS                              (AUDIO_SAMPLING_FREQUENCY/1000)
 /**
   * @}

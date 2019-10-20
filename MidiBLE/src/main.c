@@ -57,6 +57,26 @@ extern uint16_t MidiServiceHandle;
 void init(void);
 /* Private functions ---------------------------------------------------------*/
 
+void readSpiPacket(){
+  uint16_t delay = 100, timeout = 10000;
+			
+  // Delay
+  /* while(delay--){} */
+			
+  uint8_t rgData[3];
+					
+  uint8_t first = SPI_ReceiveData(); // skip first char
+  while (SPI_GetFlagStatus(SPI_FLAG_RNE) == RESET && timeout--){}
+  rgData[0] = SPI_ReceiveData();
+  while (SPI_GetFlagStatus(SPI_FLAG_RNE) == RESET && timeout--){}
+  rgData[1] = SPI_ReceiveData();
+  while (SPI_GetFlagStatus(SPI_FLAG_RNE) == RESET && timeout--){}
+  rgData[2] = SPI_ReceiveData();
+  if(timeout)
+    MIDI_APP_Passthrough(MidiServiceHandle, rgData);
+  else
+    SPI_ClearRXFIFO();
+}
 /**
   * @brief  Main program.
   * @param  None
@@ -92,47 +112,30 @@ int main(void)
   { 
     /* BLE Stack Tick */
     BTLE_StackTick();
- 
-    /* Application Tick */
-    APP_Tick();
 		
-		// Process any new data
+    // Process any new data
     if(SPI_GetFlagStatus(SPI_FLAG_RNE) == SET)
-		{						
-			uint16_t delay = 100, timeout = 10000;
-			
-			// Delay
-			while(delay--){}
-			
-			uint8_t rgData[3] = "";
-					
-			SPI_ReceiveData();	while (SPI_GetFlagStatus(SPI_FLAG_RNE) == RESET && timeout--){};
-			rgData[0] = SPI_ReceiveData(); 	while (SPI_GetFlagStatus(SPI_FLAG_RNE) == RESET && timeout--){};	
-			rgData[1] = SPI_ReceiveData();	while (SPI_GetFlagStatus(SPI_FLAG_RNE) == RESET && timeout--){};
-			rgData[2] = SPI_ReceiveData();	
-
-			MIDI_APP_Passthrough(MidiServiceHandle, rgData);
-		}
+      readSpiPacket();
   }
 }
 
 void init(void)
 {
-	GPIO_InitType GPIO_InitStructure;
-	SPI_InitType SPI_InitStructure;
+  GPIO_InitType GPIO_InitStructure;
+  SPI_InitType SPI_InitStructure;
 	
-	 /* SysTick initialization 1ms */  
+  /* SysTick initialization 1ms */  
   Clock_Init(); 
 	
-	// Enable SPI and GPIO clocks
+  // Enable SPI and GPIO clocks
   SysCtrl_PeripheralClockCmd(CLOCK_PERIPH_GPIO | CLOCK_PERIPH_SPI, ENABLE);   
    
-	// Configure Mode pin
-	GPIO_InitStructure.GPIO_Pin = MODE_PIN;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Output;
-	GPIO_InitStructure.GPIO_Pull = ENABLE;
-	GPIO_InitStructure.GPIO_HighPwr = ENABLE;
-	GPIO_Init(&GPIO_InitStructure);
+  // Configure Mode pin
+  GPIO_InitStructure.GPIO_Pin = MODE_PIN;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Output;
+  GPIO_InitStructure.GPIO_Pull = ENABLE;
+  GPIO_InitStructure.GPIO_HighPwr = ENABLE;
+  GPIO_Init(&GPIO_InitStructure);
   
   // Configure SPI pins
   GPIO_StructInit(&GPIO_InitStructure);
@@ -152,7 +155,7 @@ void init(void)
   
   GPIO_InitStructure.GPIO_Pin = SPI_NCS_PIN;
   GPIO_InitStructure.GPIO_Mode = Serial0_Mode;
-	GPIO_InitStructure.GPIO_Pull = ENABLE;
+  GPIO_InitStructure.GPIO_Pull = ENABLE;
   GPIO_Init(&GPIO_InitStructure);
   	
   // Configure SPI in slave mode
@@ -161,7 +164,8 @@ void init(void)
   SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
   SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
   SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
-  SPI_InitStructure.SPI_BaudRate = 1000000;
+  /* SPI_InitStructure.SPI_BaudRate = 1000000; */
+  SPI_InitStructure.SPI_BaudRate = 656250; // 656.25Kbps
   SPI_Init(&SPI_InitStructure);
 
   /* Clear RX and TX FIFO */
@@ -169,8 +173,8 @@ void init(void)
   SPI_ClearRXFIFO();
   
   /* Enable SPI functionality */
-  SPI_Cmd(ENABLE);  
-	SPI_SlaveModeOutputCmd(ENABLE);
+  SPI_Cmd(ENABLE);
+  SPI_SlaveModeOutputCmd(ENABLE);
 }
 
 #ifdef  USE_FULL_ASSERT

@@ -58,7 +58,6 @@ uint8_t PERIPHERAL_BDADDR[] 								= {0x55, 0x11, 0x07, 0x01, 0x16, 0xE2};
 static const uint8_t midi_service_uuid[16] 	= {0x00,0xC7,0xC4,0x4E,0xE3,0x6C, 0x51,0xA7, 0x33,0x4B, 0xE8,0xED, 0x5A,0x0E,0xB8,0x03};
 
 volatile uint8_t APP_PER_state = APP_STATUS_ADVERTISEMENT;
-volatile uint8_t AccGryro_DataReady = 0;
 
 uint16_t usiMidiTest, usiPrescaler;
 
@@ -73,8 +72,9 @@ APP_Status PER_APP_Init_BLE(void)
   
   aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, PERIPHERAL_BDADDR);
   
-	// Set radio power level
-  aci_hal_set_tx_power_level(1, 7);
+  // Set radio power level
+  aci_hal_set_tx_power_level(1, 7); // max power?
+  // When the system starts up or reboots, the default TX power level will be used, which is the maximum value of 8dBm
   
   // GATT init
   aci_gatt_init();
@@ -83,7 +83,7 @@ APP_Status PER_APP_Init_BLE(void)
   aci_gap_init(GAP_PERIPHERAL_ROLE, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
 
   // Set authentication requirements
-  aci_gap_set_authentication_requirement(MITM_PROTECTION_REQUIRED, OOB_AUTH_DATA_ABSENT, NULL, 7, 16, USE_FIXED_PIN_FOR_PAIRING, 123456, BONDING);
+  aci_gap_set_authentication_requirement(MITM_PROTECTION_REQUIRED, OOB_AUTH_DATA_ABSENT, NULL, 7, 16, USE_FIXED_PIN_FOR_PAIRING, 111111, BONDING);
                                
   return APP_SUCCESS;
 }
@@ -121,17 +121,30 @@ APP_Status PER_APP_Advertise(void)
     '-','P','0','0','0'
   };
 
-  uint8_t manuf_data[] = {
-		AD_TYPE_16_BIT_SERV_UUID,			0x00,
-		AD_TYPE_TX_POWER_LEVEL,				0x07,
-		AD_TYPE_COMPLETE_LOCAL_NAME, 	'R','e','b','e','l',' ','T','e','c','h','n','o','l','o','g','y'
-	};
+  /* uint8_t manuf_data[] = { */
+  /* 		AD_TYPE_16_BIT_SERV_UUID,			0x00, */
+  /* 		AD_TYPE_TX_POWER_LEVEL,				0x07, */
+  /* 		AD_TYPE_COMPLETE_LOCAL_NAME, 	'R','e','b','e','l',' ','T','e','c','h','n','o','l','o','g','y' */
+  /* 	}; */
+  /* const uint8_t manuf_data[] = {4, AD_TYPE_MANUFACTURER_SPECIFIC_DATA, 0x05, 0x02, 0x01}; */
+/* #define NAME_WEAR 'B', 'V', 'B', 'N', 'R', 'G', '1' */
+#define NAME_WEAR 'O', 'W', 'L', '-', 'B', 'I', 'O'
+  uint8_t manuf_data[20] = {
+  2,0x0A,0x00,
+  8,0x09,NAME_WEAR, /* Complete Name */
+  7,0xFF,0x01,      /* SKD version */
+         0x00,
+         0x48,      /* AudioSync+AudioData */
+         0xC0,      /* Acc+Gyr */
+         0x00,
+         0x00
+  };
 	
-	// Add scan response data
+  // Add scan response data
   uint8_t midi_scan_rsp[]	= {0x11,AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST,MIDI_SERVICE_UUID};
   ret = hci_le_set_scan_response_data(sizeof midi_scan_rsp, midi_scan_rsp);
 		
-	// Configure GAP
+  // Configure GAP
   ret = aci_gap_set_discoverable(ADV_IND, 0x20,0x50, PUBLIC_ADDR, NO_WHITE_LIST_USE, sizeof(local_name), local_name, 0, NULL, 0, 0);
 
   // Send advertising data
@@ -144,47 +157,6 @@ APP_Status PER_APP_Advertise(void)
   
   return APP_SUCCESS;
 }
-
-void APP_Tick(void)
-{
-  switch (APP_PER_state)
-  {
-		case APP_STATUS_ADVERTISEMENT:
-    {
-			break;
-    }
-    
-		case APP_STATUS_CONNECTED:
-    {   	
-			//if (!usiPrescaler) {usiMidiTest++; MIDI_APP_DataUpdate(MidiServiceHandle, 1, usiMidiTest, usiMidiTest*2); usiPrescaler=1000;}
-			//else							 {usiPrescaler--;}
-			break;
-    } 
-  } 
-}
-
-
-/**
- * @brief  Error handler.
- * @param  None.
- * @retval None.
- */
-void PER_APP_Error_Handler(void)
-{
-	/* main(); */
-	
-  while(1)
-  {
-  }
-}    
-
-/**
- * @}
- */
-
-/** @defgroup APP_MNGR_BlueNRG_Events APP_MNGR_BlueNRG_Events
- * @{
- */
 
 /*******************************************************************************
  * Function Name  : hci_le_connection_complete_event.
@@ -282,36 +254,36 @@ void aci_gatt_attribute_modified_event(uint16_t Connection_Handle,
                                        uint8_t  Attr_Data_Length,
                                        uint8_t  Attr_Data[])
 {
-  if((Attr_Handle == tx_handle.CharAudioHandle+2) || (Attr_Handle == tx_handle.CharAudioSyncHandle+2))
-  {
-    if(Attr_Data[0] == 0x01)
-    {   
-      if(!audio_streaming_active)
-      {
-        BV_APP_StartStop_ctrl();
-      }
+  /* if((Attr_Handle == tx_handle.CharAudioHandle+2) || (Attr_Handle == tx_handle.CharAudioSyncHandle+2)) */
+  /* { */
+  /*   if(Attr_Data[0] == 0x01) */
+  /*   {    */
+  /*     if(!audio_streaming_active) */
+  /*     { */
+  /*       BV_APP_StartStop_ctrl(); */
+  /*     } */
       
-      APP_PER_enabled = APP_BLUEVOICE_ENABLE;
-      /* BluevoiceADPCM_BNRG1_AttributeModified_CB(Attr_Handle, Attr_Data_Length, Attr_Data); */
-    }
-    else if(Attr_Data[0] == 0x00)
-    {
-      if(APP_PER_enabled == APP_BLUEVOICE_ENABLE)
-      {
-        APP_PER_enabled = APP_READY;
-        if(audio_streaming_active)
-        {
-          BV_APP_StartStop_ctrl();
-        }
-      }
-    }
-  }     
-  if(Attr_Handle == ClassificationHandle+2)
-  {
-  } 
-	if(Attr_Handle == MidiServiceHandle)
-  {
-	}
+  /*     APP_PER_enabled = APP_BLUEVOICE_ENABLE; */
+  /*     /\* BluevoiceADPCM_BNRG1_AttributeModified_CB(Attr_Handle, Attr_Data_Length, Attr_Data); *\/ */
+  /*   } */
+  /*   else if(Attr_Data[0] == 0x00) */
+  /*   { */
+  /*     if(APP_PER_enabled == APP_BLUEVOICE_ENABLE) */
+  /*     { */
+  /*       APP_PER_enabled = APP_READY; */
+  /*       if(audio_streaming_active) */
+  /*       { */
+  /*         BV_APP_StartStop_ctrl(); */
+  /*       } */
+  /*     } */
+  /*   } */
+  /* }      */
+  /* if(Attr_Handle == ClassificationHandle+2) */
+  /* { */
+  /* }  */
+  /* if(Attr_Handle == MidiServiceHandle) */
+  /* { */
+  /* } */
 }
 
 void aci_gatt_tx_pool_available_event(uint16_t Connection_Handle,

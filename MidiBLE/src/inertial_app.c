@@ -119,10 +119,10 @@ SCUDO_APP_Status MIDI_APP_Passthrough(uint16_t service_handle, uint8_t* data)
 	rgBuff[4] = data[2];
 	
 	// Update value
-	if(aci_gatt_update_char_value(service_handle, MidiHandle, 0, sizeof rgBuff, rgBuff)==BLE_STATUS_INSUFFICIENT_RESOURCES)
-	{
-		return SCUDO_APP_ERROR;
-	}
+	tBleStatus ret;
+	ret = aci_gatt_update_char_value(service_handle, MidiHandle, 0, sizeof rgBuff, rgBuff);
+	if(ret == BLE_STATUS_INSUFFICIENT_RESOURCES)
+	  return SCUDO_APP_ERROR;
 	return SCUDO_APP_SUCCESS;	
 }
 

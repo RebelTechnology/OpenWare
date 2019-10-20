@@ -197,8 +197,6 @@ void MFT1B_Handler(void)
     
     /** Clear MFT11 pending interrupt */
     MFT_ClearIT(MFT1, MFT_IT_TND);
-
-    AccGryro_DataReady = 1;
   }
 }
 
