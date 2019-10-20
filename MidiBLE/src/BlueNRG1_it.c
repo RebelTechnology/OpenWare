@@ -131,9 +131,8 @@ void SVC_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  usiTimerVal++;
+  usiTimerVal++; // used by outgoing MIDI messages
   lSystickCounter++;
-  /* BluevoiceADPCM_BNRG1_IncTick(); */
 }
 
 

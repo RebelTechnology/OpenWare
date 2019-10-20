@@ -57,9 +57,10 @@
 #define SPI_MISO_PIN    GPIO_Pin_2
 
 /* Private variables ---------------------------------------------------------*/ 
-volatile uint32_t lSystickCounter=0;
-uint8_t ucClassVector;
+volatile uint32_t lSystickCounter = 0;
 extern uint16_t MidiServiceHandle;
+extern uint16_t MidiHandle;
+extern volatile uint8_t APP_PER_state;
 
 /* Private function prototypes -----------------------------------------------*/
 void init(void);
@@ -70,9 +71,9 @@ void readSpiPacket(){
 			
   // Delay
   /* while(delay--){} */
-			
+
   uint8_t rxbuf[4];
-  uint8_t txbuf[4] = {0x01, 0x02, 0x03, 0x04};
+  uint8_t txbuf[4] = {APP_PER_state, APP_PER_state, APP_PER_state, APP_PER_state};
 
   rxbuf[0]= SPI_ReceiveData();
   SPI_SendData(txbuf[0]);
@@ -119,6 +120,10 @@ int main(void)
   
   /*Set module in advertise mode*/
   PER_APP_Advertise(); 
+
+  // todo: probably need to do something like this to read MIDI data
+  /* int ret = MODE_APP_DataRead(MidiServiceHandle); */
+  /* int ret = MODE_APP_DataRead(MidiHandle); */
 
   /* Infinite loop */
   while(1) 

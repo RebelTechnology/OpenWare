@@ -61,67 +61,44 @@ MIDI_APP_Status MODE_APP_add_char(uint16_t service_handle)
 
 uint8_t MODE_APP_DataRead(uint16_t service_handle)
 {  
-	if(aci_gatt_read_char_value(service_handle, ModeHandle)==BLE_STATUS_INSUFFICIENT_RESOURCES)
-	{
-		return MIDI_APP_ERROR;
-	}
-	return MIDI_APP_SUCCESS;	
+  if(aci_gatt_read_char_value(service_handle, ModeHandle)==BLE_STATUS_INSUFFICIENT_RESOURCES)
+    {
+      return MIDI_APP_ERROR;
+    }
+  return MIDI_APP_SUCCESS;	
 }
 
 // _____ MIDI Handle ______________________________________________________________________________________________________________
 MIDI_APP_Status MIDI_APP_add_char(uint16_t service_handle)
 {      
   uint8_t ret = aci_gatt_add_char(service_handle,
-                            UUID_TYPE_128, (Char_UUID_t *) MIDI_IO_char_uuid,
-                            5, CHAR_PROP_READ|CHAR_PROP_NOTIFY|CHAR_PROP_WRITE_WITHOUT_RESP, ATTR_PERMISSION_ENCRY_WRITE, GATT_NOTIFY_ATTRIBUTE_WRITE, 16, 1,
-                            (uint16_t*)&MidiHandle);
+				  UUID_TYPE_128, (Char_UUID_t *) MIDI_IO_char_uuid,
+				  5, CHAR_PROP_READ|CHAR_PROP_NOTIFY|CHAR_PROP_WRITE_WITHOUT_RESP, ATTR_PERMISSION_ENCRY_WRITE, GATT_NOTIFY_ATTRIBUTE_WRITE, 16, 1,
+				  (uint16_t*)&MidiHandle);
                         
   if (ret != BLE_STATUS_SUCCESS)
-  {
-    return MIDI_APP_ERROR;
-  }
+    {
+      return MIDI_APP_ERROR;
+    }
 
   return MIDI_APP_SUCCESS;
 }
 
-
-MIDI_APP_Status MIDI_APP_DataUpdate(uint16_t service_handle, uint8_t channel, uint8_t note, uint8_t vector)
-{  
-	uint8_t rgBuff[5]; 
-	
-	// Ensure channel is not 0
-	if (!channel) channel = 1;
-	
-	// Build Tx packet
-	rgBuff[0] = 0x80 | ((usiTimerVal >> 7) & 0x3F);
-	rgBuff[1] = 0x80 | (usiTimerVal & 0x007F);
-	rgBuff[2] = 0x90 | ((channel-1) & 0x0F);
-	rgBuff[3] = note   & 0x7F;
-	rgBuff[4] = vector & 0x7F;
-	
-	// Update value
-	if(aci_gatt_update_char_value(service_handle, MidiHandle, 0, sizeof rgBuff, rgBuff)==BLE_STATUS_INSUFFICIENT_RESOURCES)
-	{
-		return MIDI_APP_ERROR;
-	}
-	return MIDI_APP_SUCCESS;	
-}
-
 MIDI_APP_Status MIDI_APP_Passthrough(uint16_t service_handle, uint8_t* data)
 {  
-	uint8_t rgBuff[5]; 
+  uint8_t rgBuff[5]; 
 	
-	// Build Tx packet
-	rgBuff[0] = 0x80 | ((usiTimerVal >> 7) & 0x3F);
-	rgBuff[1] = 0x80 | (usiTimerVal & 0x007F);
-	rgBuff[2] = data[1];
-	rgBuff[3] = data[2];
-	rgBuff[4] = data[3];
+  // Build Tx packet
+  rgBuff[0] = 0x80 | ((usiTimerVal >> 7) & 0x3F);
+  rgBuff[1] = 0x80 | (usiTimerVal & 0x007F);
+  rgBuff[2] = data[1];
+  rgBuff[3] = data[2];
+  rgBuff[4] = data[3];
 	
-	// Update value
-	tBleStatus ret;
-	ret = aci_gatt_update_char_value(service_handle, MidiHandle, 0, sizeof rgBuff, rgBuff);
-	if(ret == BLE_STATUS_INSUFFICIENT_RESOURCES)
-	  return MIDI_APP_ERROR;
-	return MIDI_APP_SUCCESS;	
+  // Update value
+  tBleStatus ret;
+  ret = aci_gatt_update_char_value(service_handle, MidiHandle, 0, sizeof rgBuff, rgBuff);
+  if(ret == BLE_STATUS_INSUFFICIENT_RESOURCES)
+    return MIDI_APP_ERROR;
+  return MIDI_APP_SUCCESS;	
 }

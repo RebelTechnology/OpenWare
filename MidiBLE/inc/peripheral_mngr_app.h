@@ -52,21 +52,6 @@
 #include "ble_const.h" 
 #include "bluenrg1_api.h"
 
-/** @addtogroup BLUEMIC_1_APP BLUEMIC_1_APP
- * @{
- */
-
-/** @addtogroup BLUEMIC_1_APP_MNGR BLUEMIC_1_APP_MNGR
- * @{
- */
-
-/** @defgroup APP_MNGR_Exported_Types APP_MNGR_Exported_Types
-  * @{
-  */
-
-/**
- * @brief BlueMic-1 application status
- */
 typedef enum 
 {
   APP_SUCCESS = 0x00, /*!< APP Success.*/
@@ -77,24 +62,10 @@ typedef enum
   * @}
   */
 
-/** @defgroup APP_MNGR_Exported_Defines APP_MNGR_Exported_Defines
-  * @{
-  */
 #define APP_STATUS_ADVERTISEMENT                        (0x10)        /*!< BlueVoice Peripheral device is in advertisement mode.*/
 #define APP_STATUS_CONNECTED                            (0x20)        /*!< BlueVoice device is connected.*/
-/**
-  * @}
-  */
 
-/* Exported variables --------------------------------------------------------*/
-extern volatile uint8_t AccGryro_DataReady;
 extern volatile uint8_t APP_PER_state;
-
-/* Exported functions ------------------------------------------------------- */
-
-/** @defgroup APP_MNGR_Functions_Prototype APP_MNGR_Functions_Prototype
-  * @{
-  */
   
 /**
  * @brief  Process user input.
@@ -130,18 +101,6 @@ APP_Status PER_APP_Advertise(void);
  * @retval None.
  */
 void PER_APP_Error_Handler(void);
-
-/**
-  * @}
-  */
-  
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 #endif /* __PERIPHERAL_MNGR_APP_H */
 

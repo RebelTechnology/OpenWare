@@ -42,6 +42,7 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 #include "peripheral_mngr_app.h"
 	
 #define MIDI_SERVICE_UUID 			0x00,0xC7,0xC4,0x4E,0xE3,0x6C,0x51,0xA7,0x33,0x4B,0xE8,0xED,0x5A,0x0E,0xB8,0x03
@@ -49,7 +50,7 @@
 #define APP_BLUEVOICE_ENABLE    (0x01)
 #define APP_INERTIAL_ENABLE     (0x02)
 
-volatile uint16_t ServiceHandle;
+extern volatile uint16_t MidiHandle;
 volatile uint16_t MidiServiceHandle;
 volatile uint16_t conn_handle;
 volatile uint8_t  APP_PER_enabled = APP_READY;
@@ -59,17 +60,14 @@ static const uint8_t midi_service_uuid[16] 	= {0x00,0xC7,0xC4,0x4E,0xE3,0x6C, 0x
 
 volatile uint8_t APP_PER_state = APP_STATUS_ADVERTISEMENT;
 
-uint16_t usiMidiTest, usiPrescaler;
-
+static uint16_t service_handle, dev_name_char_handle, appearance_char_handle;
 /**
  * @brief  BlueNRG-1 Initialization.
  * @param  None.
  * @retval APP_Status: APP_SUCCESS if the configuration is ok, APP_ERROR otherwise.
  */
 APP_Status PER_APP_Init_BLE(void)
-{
-  uint16_t service_handle, dev_name_char_handle, appearance_char_handle;
-  
+{  
   aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, PERIPHERAL_BDADDR);
   
   // Set radio power level
@@ -97,12 +95,10 @@ APP_Status PER_APP_Service_Init(void)
 {
 
 	// Add  Midi service and handle
-	aci_gatt_add_service(UUID_TYPE_128,
-											(Service_UUID_t *) midi_service_uuid, PRIMARY_SERVICE, 10,
-											(uint16_t*)&MidiServiceHandle);  
-	
-  MIDI_APP_add_char(MidiServiceHandle);
-	
+  aci_gatt_add_service(UUID_TYPE_128,
+		       (Service_UUID_t *) midi_service_uuid, PRIMARY_SERVICE, 10,
+		       (uint16_t*)&MidiServiceHandle);
+  MIDI_APP_add_char(MidiServiceHandle);	
   return APP_SUCCESS;
 }
 
@@ -117,7 +113,8 @@ APP_Status PER_APP_Advertise(void)
   
   uint8_t local_name[] =
   {
-    AD_TYPE_COMPLETE_LOCAL_NAME, 	'O','W','L','-','B','i','o','S','i','g','n','a','l','s',
+    /* AD_TYPE_SHORTENED_LOCAL_NAME, 'O', 'W', 'L', '-', 'B', 'I', 'O' */
+    AD_TYPE_COMPLETE_LOCAL_NAME, 'O','W','L','-','B','i','o','S','i','g','n','a','l','s',
     '-','P','0','0','0'
   };
 	
@@ -145,6 +142,10 @@ APP_Status PER_APP_Advertise(void)
   /* uint8_t manuf_data[] = { */
   /*   8, AD_TYPE_SHORTENED_LOCAL_NAME, 'O', 'W', 'L', '-', 'B', 'I', 'O' */
   /* }; */ // not sure why this returns a 0x41 BLE_STATUS_FAILED
+  /* uint8_t manuf_data[] = { */
+  /*   20, AD_TYPE_COMPLETE_LOCAL_NAME, 'O','W','L','-','B','i','o','S','i','g','n','a','l','s', */
+  /*   '-','P','0','0','0' */
+  /* }; // not sure why this returns a 0x41 BLE_STATUS_FAILED */
   /* ret |= aci_gap_update_adv_data(sizeof(manuf_data), manuf_data); */
 
   if (ret != BLE_STATUS_SUCCESS)
@@ -170,9 +171,6 @@ void hci_le_connection_complete_event(uint8_t  Status,
                                       uint8_t  Master_Clock_Accuracy)
 
 { 
-  /* Connection completed */
-  //BluevoiceADPCM_BNRG1_ConnectionComplete_CB(Connection_Handle);
-   
   //BSP_LED_On(LED1);
 
   conn_handle = Connection_Handle;
@@ -180,28 +178,10 @@ void hci_le_connection_complete_event(uint8_t  Status,
                                                 9 	/* interval_min*/,
                                                 9 	/* interval_max */,
                                                 0   /* slave_latency */,
-                                                400 /*timeout_multiplier*/);
-  
-  
-  /* In order to use an iOS device as receiver, with the ST BlueMS app, please substitute the following function with the previous. */
-  /* With iOS only the 8kHz (as audio sampling frequency) version is available */
-//  int ret = aci_l2cap_connection_parameter_update_req(conn_handle,
-//                                                8 /* interval_min*/,
-//                                                17 /* interval_max */,
-//                                                0   /* slave_latency */,
-//                                                400 /*timeout_multiplier*/);
-  
-  /* In order to use an Android device version 4 as receiver, with audio sampling frequancy @16kHz, */
-  /* please substitute the following function with the previous. */
-//  int ret = aci_l2cap_connection_parameter_update_req(conn_handle,
-//                                                8 /* interval_min*/,
-//                                                8 /* interval_max */,
-//                                                0   /* slave_latency */,
-//                                                400 /*timeout_multiplier*/);
-  
+                                                400 /*timeout_multiplier*/);  
   if (ret != BLE_STATUS_SUCCESS)
   {
-    while (1);
+    while (1); // todo: replace with reset or reinit
   }
   
   APP_PER_state = APP_STATUS_CONNECTED;
@@ -242,6 +222,9 @@ void hci_disconnection_complete_event(uint8_t  Status,
  * Output         : See file bluenrg1_events.h
  * Return         : See file bluenrg1_events.h
  *******************************************************************************/
+uint16_t attr_handle = 0;
+uint8_t midi_handle_value_len = 0;
+uint8_t midi_handle_value[4] = {};
 void aci_gatt_attribute_modified_event(uint16_t Connection_Handle,
                                        uint16_t Attr_Handle,
                                        uint16_t Offset,
@@ -278,6 +261,16 @@ void aci_gatt_attribute_modified_event(uint16_t Connection_Handle,
   /* if(Attr_Handle == MidiServiceHandle) */
   /* { */
   /* } */
+
+  // todo: after MODE_APP_DataRead, need to catch data here
+  if(Attr_Handle == MidiHandle+2){
+    midi_handle_value_len = Attr_Data_Length;
+    if(Attr_Data_Length <= sizeof(midi_handle_value))
+      memcpy(midi_handle_value, Attr_Data, Attr_Data_Length);
+    else
+      memcpy(midi_handle_value, Attr_Data, sizeof(midi_handle_value));
+  }
+  attr_handle = Attr_Handle;
 }
 
 void aci_gatt_tx_pool_available_event(uint16_t Connection_Handle,
