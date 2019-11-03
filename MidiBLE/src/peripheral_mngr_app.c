@@ -81,7 +81,7 @@ APP_Status PER_APP_Init_BLE(void)
   aci_gap_init(GAP_PERIPHERAL_ROLE, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
 
   // Set authentication requirements
-  aci_gap_set_authentication_requirement(MITM_PROTECTION_REQUIRED, OOB_AUTH_DATA_ABSENT, NULL, 7, 16, USE_FIXED_PIN_FOR_PAIRING, 111111, BONDING);
+  aci_gap_set_authentication_requirement(MITM_PROTECTION_REQUIRED, OOB_AUTH_DATA_ABSENT, NULL, 7, 16, USE_FIXED_PIN_FOR_PAIRING, 123456, BONDING);
                                
   return APP_SUCCESS;
 }
@@ -115,7 +115,7 @@ APP_Status PER_APP_Advertise(void)
   {
     /* AD_TYPE_SHORTENED_LOCAL_NAME, 'O', 'W', 'L', '-', 'B', 'I', 'O' */
     AD_TYPE_COMPLETE_LOCAL_NAME, 'O','W','L','-','B','i','o','S','i','g','n','a','l','s',
-    '-','P','0','0','0'
+    '-','P','0','0','6'
   };
 	
   // Add scan response data
@@ -263,7 +263,7 @@ void aci_gatt_attribute_modified_event(uint16_t Connection_Handle,
   /* } */
 
   // todo: after MODE_APP_DataRead, need to catch data here
-  if(Attr_Handle == MidiHandle+2){
+  if(Attr_Handle == MidiServiceHandle+2){
     midi_handle_value_len = Attr_Data_Length;
     if(Attr_Data_Length <= sizeof(midi_handle_value))
       memcpy(midi_handle_value, Attr_Data, Attr_Data_Length);
