@@ -308,43 +308,57 @@ void MidiController::sendSysEx(uint8_t* data, uint16_t size){
 }
 
 void MidiController::write(uint8_t* data, uint16_t size){
+#ifdef USE_MIDI_TX_BUFFER
   if(buffer.getWriteCapacity() >= size)
     buffer.push(data, size);
   else
     error(RUNTIME_ERROR, "usb tx overflow");
+#else
+  if(midi_device_ready()) // if not ready, packets will be missed
+    midi_device_tx(data, size);
+#ifdef USE_USB_HOST
+  if(midi_host_ready())
+    midi_host_tx(data, size);
+#endif /* USE_USB_HOST */
+#ifdef USE_BLE_MIDI
+  ble_tx(data, size);
+#endif /* USE_BLE_MIDI */
+#endif
+}
+
+void MidiController::push(){
+#ifdef USE_MIDI_TX_BUFFER
+  size_t len = buffer.getContiguousReadCapacity() & ~0x0003;
+  // round down to multiple of four
+  while(len >= 4){
+    if(midi_device_ready()) // if not ready, packets will be missed
+      midi_device_tx(buffer.getReadHead(), len);
+#ifdef USE_USB_HOST
+    if(midi_host_ready())
+      midi_host_tx(buffer.getReadHead(), len);
+#endif /* USE_USB_HOST */
+#ifdef USE_BLE_MIDI
+    ble_tx(buffer.getReadHead(), len);
+#endif /* USE_BLE_MIDI */
+    buffer.incrementReadHead(len);
+    len = buffer.getContiguousReadCapacity() & ~0x0003;
+  }
+#endif
 }
 
 // void MidiController::push(){
-//   size_t len = buffer.getContiguousReadCapacity() & ~0x0003;
-//   // round down to multiple of four
+//   size_t len = buffer.getContiguousReadCapacity();
 //   while(len >= 4){
 //     if(midi_device_ready()) // if not ready, packets will be missed
-//       midi_device_tx(buffer.getReadHead(), len);
+//       midi_device_tx(buffer.getReadHead(), 4);
 // #ifdef USE_USB_HOST
 //     if(midi_host_ready())
-//       midi_host_tx(buffer.getReadHead(), len);
+//       midi_host_tx(buffer.getReadHead(), 4);
 // #endif /* USE_USB_HOST */
 // #ifdef USE_BLE_MIDI
-//     ble_tx(buffer.getReadHead(), len);
+//     ble_tx(buffer.getReadHead(), 4);
 // #endif /* USE_BLE_MIDI */
-//     buffer.incrementReadHead(len);
-//     len = buffer.getContiguousReadCapacity() & ~0x0003;
+//     buffer.incrementReadHead(4);
+//     len = buffer.getContiguousReadCapacity();
 //   }
 // }
-
-void MidiController::push(){
-  size_t len = buffer.getContiguousReadCapacity();
-  while(len >= 4){
-    if(midi_device_ready()) // if not ready, packets will be missed
-      midi_device_tx(buffer.getReadHead(), 4);
-#ifdef USE_USB_HOST
-    if(midi_host_ready())
-      midi_host_tx(buffer.getReadHead(), 4);
-#endif /* USE_USB_HOST */
-#ifdef USE_BLE_MIDI
-    ble_tx(buffer.getReadHead(), 4);
-#endif /* USE_BLE_MIDI */
-    buffer.incrementReadHead(4);
-    len = buffer.getContiguousReadCapacity();
-  }
-}

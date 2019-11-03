@@ -23,6 +23,7 @@
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
 #endif
+#define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
 #define MIDI_OUTPUT_BUFFER_SIZE      512
 #define MIDI_INPUT_BUFFER_SIZE       256
@@ -37,8 +38,8 @@
 #define STORAGE_MAX_BLOCKS           64
 
 #define DEBUG_DWT
-#define DEBUG_STACK
-#define DEBUG_STORAGE
+/* #define DEBUG_STACK */
+/* #define DEBUG_STORAGE */
 
 #ifdef SSD1331
 #define OLED_WIDTH		     96
