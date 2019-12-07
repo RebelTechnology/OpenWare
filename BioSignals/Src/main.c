@@ -129,7 +129,8 @@ int main(void)
   /* USER CODE BEGIN 1 */
 #ifdef DEBUG
 #warning "Compiling with semihosting"
-  initialise_monitor_handles(); // remove when not semi-hosting
+  if(CoreDebug->DHCSR & 0x01)
+    initialise_monitor_handles(); // remove when not semi-hosting
 #endif
   /* USER CODE END 1 */
   
@@ -820,13 +821,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 10, 0);
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 10, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 10, 0);
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 }

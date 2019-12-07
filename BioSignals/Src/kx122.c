@@ -11,8 +11,6 @@
 extern SPI_HandleTypeDef KX122_HSPI;
 static int32_t* kx122_samples;
 
-#define  COTR		  0x55
-
 #define REG_XHP_L         0x00
 #define REG_XHP_H         0x01
 #define REG_YHP_L         0x02
@@ -27,7 +25,7 @@ static int32_t* kx122_samples;
 #define REG_ZOUT_H        0x0B
 
 #define REG_COTR	  0x0C
-#define REG_WHO_AM_I      0x0D
+#define REG_WHO_AM_I      0x0F
 
 #define	REG_INS2	  0x13
 #define	REG_STATUS	  0x15
@@ -73,19 +71,23 @@ static void KX122_setReg(uint8_t address, uint8_t data)
     
   ACCEL_CS_LO();
   HAL_SPI_Transmit(&KX122_HSPI, &ucAddress, 1, 1000);
-  HAL_SPI_Transmit(&KX122_HSPI, &data, 		 1, 1000);
+  HAL_SPI_Transmit(&KX122_HSPI, &data, 	    1, 1000);
   ACCEL_CS_HI();
 }
 
 void kx122_setup(int32_t* samples)
 {
   kx122_samples = samples;
-  // Check if accelerometer is present
-  if(KX122_readReg(REG_COTR) == COTR){
-    KX122_setReg(REG_CTRL_REG1,	0x60);	// Standby, High resolution, interrupt on, +/-2g, tap off, wakeup off, tilt off
 
-    /* KX122_setReg(REG_CTRL_REG1,	0x68);	// Standby, High resolution, interrupt on, +/-4g, tap off, wakeup off, tilt off */
-    /* KX122_setReg(REG_CTRL_REG1,	0x70);	// Standby, High resolution, interrupt on, +/-8g, tap off, wakeup off, tilt off */
+  KX122_setReg(REG_CTRL_REG1,	0x00);	// Standby
+  HAL_Delay(1); // most Control register bits can only be set in standby mode
+  KX122_setReg(REG_CTRL_REG2, 0x40);	// Set COTC (changes COTR register value from 0x55 to 0xAA)
+  // Check if accelerometer is functional
+  if(KX122_readReg(REG_COTR) == 0xAA){
+    uint8_t ctrl1 = 0x60; // High resolution, interrupt on, +/-2g, tap off, wakeup off, tilt off
+    /* uint8_t ctrl1 = 0x68; // High resolution, interrupt on, +/-4g, tap off, wakeup off, tilt off */
+    /* uint8_t ctrl1 = 0x70; // High resolution, interrupt on, +/-8g, tap off, wakeup off, tilt off */
+    KX122_setReg(REG_CTRL_REG1, ctrl1); // Standby
     KX122_setReg(REG_CTRL_REG2, 0x00);	// Disable all tilt interrupts
     KX122_setReg(REG_CTRL_REG3, 0x98);	// Set to reset value
 #if KX122_AUDIO_FREQ == 25600
@@ -93,19 +95,29 @@ void kx122_setup(int32_t* samples)
 #elif KX122_AUDIO_FREQ == 12800
     KX122_setReg(REG_CTRL_OD,   0x0E);	// Acceleration output to 12.8kHz
 #elif KX122_AUDIO_FREQ == 6400
-    KX122_setReg(REG_CTRL_OD,   0x0D);	// Acceleration output to 6.4kHz
+    KX122_setReg(REG_CTRL_OD,   0x0D);	// Acceleration output to 6400kHz
 #elif KX122_AUDIO_FREQ == 3200
-    KX122_setReg(REG_CTRL_OD,   0x0C);	// Acceleration output to 3.2kHz
+    KX122_setReg(REG_CTRL_OD,   0x0C);	// Acceleration output to 3200Hz
+#elif KX122_AUDIO_FREQ == 1600
+    KX122_setReg(REG_CTRL_OD,   0x07);	// Acceleration output to 1600Hz
+#elif KX122_AUDIO_FREQ == 800
+    KX122_setReg(REG_CTRL_OD,   0x06);	// Acceleration output to 800Hz
+#elif KX122_AUDIO_FREQ == 100
+    KX122_setReg(REG_CTRL_OD,   0x03);	// Acceleration output to 100Hz
+#elif KX122_AUDIO_FREQ == 50
+    KX122_setReg(REG_CTRL_OD,   0x02);	// Acceleration output to 50Hz
+#elif KX122_AUDIO_FREQ == 25
+    KX122_setReg(REG_CTRL_OD,   0x01);	// Acceleration output to 25Hz
+#elif KX122_AUDIO_FREQ == 12.5
+    KX122_setReg(REG_CTRL_OD,   0x00);	// Acceleration output to 12.5Hz
 #else
 #error "Invalid configuration: missing sample rate KX122_AUDIO_FREQ"
 #endif
-    /* KX122_setReg(REG_CTRL_OD,   0x03);	// Acceleration output to 100Hz */
-    KX122_setReg(REG_TDTRC, 		0x00);	// Disable tap interrupts
-    KX122_setReg(REG_INC1, 			0x38);	// INT1 enabled, active high, single pulse
-    KX122_setReg(REG_INC4, 			0x10);	// DRDY on INT1
-    KX122_setReg(REG_INC5, 			0x01);	// Auto clear INT1 interrupt
-		
-    KX122_setReg(REG_CTRL_REG1,	0xE0);	// Set device running
+    KX122_setReg(REG_TDTRC, 0x00);	// Disable tap interrupts
+    KX122_setReg(REG_INC1,  0x38);	// INT1 enabled, active high, single pulse
+    KX122_setReg(REG_INC4,  0x10);	// DRDY on INT1
+    KX122_setReg(REG_INC5,  0x01);	// Auto clear INT1 interrupt		
+    KX122_setReg(REG_CTRL_REG1, 0x80|ctrl1);  // Run
   }else{
     error(CONFIG_ERROR, "Could not detect accelerometer");
   }

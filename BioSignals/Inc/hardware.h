@@ -25,11 +25,13 @@
 #define USBD_HANDLE hUsbDeviceHS
 /* #define AUDIO_BYPASS */
 
-/* #define USE_KX122 */
+#define USE_KX122
 #define KX122_ACTIVE_CHANNELS         3
 /* #define KX122_AUDIO_FREQ              25600 */
 /* #define KX122_AUDIO_FREQ              12800 */
-#define KX122_AUDIO_FREQ              6400
+/* #define KX122_AUDIO_FREQ              6400 */
+/* #define KX122_AUDIO_FREQ              3200 */
+#define KX122_AUDIO_FREQ              100
 #define KX122_TOTAL_CHANNELS          3 /* Always 3 */
 #define KX122_HSPI                    hspi3
 
