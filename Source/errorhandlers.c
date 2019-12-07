@@ -12,6 +12,11 @@ void error(int8_t code, const char* reason){
   if(code != NO_ERROR)
     setLed(0, RED_COLOUR);
 #endif
+#ifdef DEBUG
+  // assuming semihosting enabled
+  if(reason != NULL)
+    printf("%s\n", reason);
+#endif
 }
 
 int8_t getErrorStatus(){

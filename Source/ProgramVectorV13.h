@@ -34,8 +34,10 @@
 
 #define AUDIO_FORMAT_24B16_2X       0x10
 #define AUDIO_FORMAT_24B24_2X       0x18
-#define AUDIO_FORMAT_24B32_2X       0x20
+#define AUDIO_FORMAT_24B32          0x20
+#define AUDIO_FORMAT_24B32_2X       0x22
 #define AUDIO_FORMAT_24B32_4X       0x24
+#define AUDIO_FORMAT_24B32_8X       0x28
 
   typedef enum { 
     AUDIO_IDLE_STATUS = 0, 

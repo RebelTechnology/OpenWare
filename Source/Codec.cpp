@@ -223,12 +223,6 @@ extern "C"{
 	audio_ringbuffer.write(txbuf, blocksize*USB_AUDIO_CHANNELS);
       }
 #endif
-    // size_t available = audio_ringbuffer.getReadSpace();
-    // if(available > AUDIO_RINGBUFFER_OVER_LIMIT){
-    //   // adjust timer period
-    // }else if(available < AUDIO_RINGBUFFER_UNDER_LIMIT){
-    //   // adjust timer period
-    // }
     }
   }
 }
