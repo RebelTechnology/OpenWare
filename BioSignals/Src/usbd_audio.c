@@ -497,8 +497,10 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(haudio->buffer, */
     /* 							 AUDIO_IN_PACKET_SIZE/2, */
     /* 							 AUDIO_CMD_START); */
+#ifdef USE_USB_AUDIO
     usbd_audio_start_callback(pdev, haudio);
-    
+#endif
+
     return USBD_OK;
 }
 
@@ -661,9 +663,9 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
   */
 static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
 {
+#ifdef USE_USB_AUDIO
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
-
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR){
     USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
     if (haudio->control.unit == AUDIO_OUT_STREAMING_CTRL)
@@ -685,7 +687,7 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
   }else{
     USBD_DbgLog("Control CMD %d\n", haudio->control.cmd);
   }
-
+#endif
   return USBD_OK;
 }
 /**
@@ -696,6 +698,7 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
   */
 static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 {
+#ifdef USE_USB_AUDIO
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR)
@@ -709,6 +712,7 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
       haudio->control.len = 0;
     }
   }
+#endif
   return USBD_OK;
 }
 /**
@@ -958,9 +962,19 @@ uint8_t midi_device_connected(void){
 #ifdef USE_USBD_MIDI
   extern USBD_HandleTypeDef USBD_HANDLE;
   return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED;
+#else
+  return false;
 #endif /* USE_USBD_MIDI */
 }
 
 uint8_t midi_device_ready(void){
-  return midi_tx_lock == 0;
+  extern USBD_HandleTypeDef USBD_HANDLE;
+  /* return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED; */
+  /* return USBD_HANDLE.ep_in.status == USBD_OK; */
+  /* return midi_tx_lock == 0; */
+  /* USBD_HANDLE.ep_out.status == USBD_OK */
+
+  return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED &&
+    USBD_HANDLE.ep_in && USBD_HANDLE.ep_in->status == USBD_OK &&
+    midi_tx_lock == 0;
 }
