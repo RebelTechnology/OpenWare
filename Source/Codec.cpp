@@ -2,6 +2,7 @@
 #include "Codec.h"
 #include "errorhandlers.h"
 #include "ApplicationSettings.h"
+#include <cstring>
 
 extern "C" {
   extern void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
@@ -103,20 +104,21 @@ static size_t rxindex = 0;
 static size_t rxhalf = 0;
 static size_t rxfull = 0;
 
+
+typedef int32_t audio_t;
+static audio_t ads_samples[ADS_MAX_CHANNELS];
+#ifdef USE_KX122
+#include "kx122.h"
+static audio_t kx122_samples[KX122_TOTAL_CHANNELS];
+#endif
+
+
 #ifdef USE_USB_AUDIO
 #include "usbd_audio.h"
 #include "RingBuffer.hpp"
-typedef int32_t audio_t;
-static audio_t audio_ringbuffer_data[AUDIO_RINGBUFFER_SIZE] CCM;
+static audio_t audio_ringbuffer_data[AUDIO_RINGBUFFER_SIZE];
 RingBuffer<audio_t> audio_ringbuffer(audio_ringbuffer_data, AUDIO_RINGBUFFER_SIZE);
 volatile static size_t adc_underflow = 0;
-
-static int32_t ads_samples[ADS_MAX_CHANNELS] CCM;
-
-#ifdef USE_KX122
-#include "kx122.h"
-static int32_t kx122_samples[KX122_TOTAL_CHANNELS] CCM;
-#endif
 
 void fill_buffer(uint8_t* buffer, size_t len){
   len /= (AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS);
@@ -198,7 +200,7 @@ extern "C"{
     if (htim == &htim8){
       // sample all channels
 
-#ifdef AUDIO_BYPASS
+#if defined USE_USB_AUDIO && defined AUDIO_BYPASS
       // write directly to usb buffer
       audio_t* dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame
 #else
@@ -210,17 +212,21 @@ extern "C"{
       memcpy(dst, kx122_samples, KX122_ACTIVE_CHANNELS*sizeof(audio_t));
       dst += KX122_ACTIVE_CHANNELS;
 #endif
-#ifdef AUDIO_BYPASS
+#if defined USE_USB_AUDIO && defined AUDIO_BYPASS
       audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
 #else
       rxindex += USB_AUDIO_CHANNELS;
       if(rxindex == rxhalf){
 	audioCallback(rxbuf, txbuf, blocksize); // trigger audio processing block
+#ifdef USE_USB_AUDIO
 	audio_ringbuffer.write(txbuf+rxhalf, blocksize*USB_AUDIO_CHANNELS); // copy back previous block
+#endif
       }else if(rxindex >= rxfull){
 	rxindex = 0;
 	audioCallback(rxbuf+rxhalf, txbuf+rxhalf, blocksize);
+#ifdef USE_USB_AUDIO
 	audio_ringbuffer.write(txbuf, blocksize*USB_AUDIO_CHANNELS);
+#endif
       }
 #endif
     }
