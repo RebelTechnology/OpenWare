@@ -2,6 +2,10 @@
 #include "device.h"
 #include "Owl.h"
 
+#ifdef DEBUG
+#include <stdio.h>
+#endif
+
 volatile int8_t errorcode = 0;
 const char* errormsg = 0;
 
