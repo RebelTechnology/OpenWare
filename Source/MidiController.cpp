@@ -68,11 +68,11 @@ void MidiController::sendPatchParameterNames(){
 
 void MidiController::sendPatchParameterName(PatchParameterId pid, const char* name){
   uint8_t size = strnlen(name, 24);
-  uint8_t buffer[size+2];
-  buffer[0] = SYSEX_PARAMETER_NAME_COMMAND;
-  buffer[1] = pid;
-  memcpy(buffer+2, name, size);
-  sendSysEx(buffer, sizeof(buffer));
+  uint8_t buf[size+2];
+  buf[0] = SYSEX_PARAMETER_NAME_COMMAND;
+  buf[1] = pid;
+  memcpy(buf+2, name, size);
+  sendSysEx(buf, sizeof(buf));
 }
 
 void MidiController::sendPatchNames(){
@@ -84,11 +84,11 @@ void MidiController::sendPatchNames(){
 void MidiController::sendPatchName(uint8_t index, const char* name){
   if(name != NULL){
     uint8_t size = strnlen(name, 24);
-    uint8_t buffer[size+2];
-    buffer[0] = SYSEX_PRESET_NAME_COMMAND;
-    buffer[1] = index;
-    memcpy(buffer+2, name, size);
-    sendSysEx(buffer, sizeof(buffer));
+    uint8_t buf[size+2];
+    buf[0] = SYSEX_PRESET_NAME_COMMAND;
+    buf[1] = index;
+    memcpy(buf+2, name, size);
+    sendSysEx(buf, sizeof(buf));
   }
 }
 
@@ -101,11 +101,11 @@ void MidiController::sendDeviceInfo(){
 }
 
 void MidiController::sendDeviceStats(){
-  char buffer[80];
-  buffer[0] = SYSEX_DEVICE_STATS;
+  char buf[80];
+  buf[0] = SYSEX_DEVICE_STATS;
   char* p;
 #ifdef DEBUG_STACK
-  p = &buffer[1];
+  p = &buf[1];
   p = stpcpy(p, (const char*)"Program Stack ");
   p = stpcpy(p, msg_itoa(program.getProgramStackUsed(), 10));
   p = stpcpy(p, (const char*)"/");
@@ -114,10 +114,10 @@ void MidiController::sendDeviceStats(){
   p = stpcpy(p, msg_itoa(program.getManagerStackUsed(), 10));
   p = stpcpy(p, (const char*)"/");
   p = stpcpy(p, msg_itoa(program.getManagerStackAllocation(), 10));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 #endif /* DEBUG_STACK */
 #ifdef DEBUG_STORAGE
-  p = &buffer[1];
+  p = &buf[1];
   p = stpcpy(p, (const char*)"Storage used ");
   p = stpcpy(p, msg_itoa(storage.getTotalUsedSize(), 10));
   p = stpcpy(p, (const char*)" deleted ");
@@ -126,14 +126,14 @@ void MidiController::sendDeviceStats(){
   p = stpcpy(p, msg_itoa(storage.getFreeSize(), 10));
   p = stpcpy(p, (const char*)" total ");
   p = stpcpy(p, msg_itoa(storage.getTotalAllocatedSize(), 10));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 #endif /* DEBUG_STORAGE */
 }
 
 void MidiController::sendProgramStats(){
-  char buffer[64];
-  buffer[0] = SYSEX_PROGRAM_STATS;
-  char* p = &buffer[1];
+  char buf[64];
+  buf[0] = SYSEX_PROGRAM_STATS;
+  char* p = &buf[1];
 #ifdef DEBUG_DWT
   p = stpcpy(p, (const char*)"CPU: ");
   float percent = (program.getCyclesPerBlock()/getProgramVector()->audio_blocksize) / (float)ARM_CYCLES_PER_SAMPLE;
@@ -150,13 +150,13 @@ void MidiController::sendProgramStats(){
 #endif /* DEBUG_STACK */
   int mem = program.getHeapMemoryUsed();
   p = stpcpy(p, msg_itoa(mem, 10));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendStatus(){
-  char buffer[64];
-  buffer[0] = SYSEX_PROGRAM_STATS;
-  char* p = &buffer[1];
+  char buf[64];
+  buf[0] = SYSEX_PROGRAM_STATS;
+  char* p = &buf[1];
   uint8_t err = getErrorStatus();
   if(err == NO_ERROR){
     sendProgramStats();
@@ -170,49 +170,49 @@ void MidiController::sendStatus(){
     p = stpcpy(p, (const char*)" ");
     p = stpcpy(p, msg);
   }
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendProgramMessage(){
   ProgramVector* pv = getProgramVector();
   if(pv != NULL && pv->message != NULL){
-    char buffer[64];
-    buffer[0] = SYSEX_PROGRAM_MESSAGE;
-    char* p = &buffer[1];
+    char buf[64];
+    buf[0] = SYSEX_PROGRAM_MESSAGE;
+    char* p = &buf[1];
     p = stpncpy(p, pv->message, 62);
-    sendSysEx((uint8_t*)buffer, p-buffer);
+    sendSysEx((uint8_t*)buf, p-buf);
     pv->message = NULL;
   }
 }
 
 void MidiController::sendFirmwareVersion(){
-  char buffer[32];
-  buffer[0] = SYSEX_FIRMWARE_VERSION;
-  char* p = &buffer[1];
+  char buf[32];
+  buf[0] = SYSEX_FIRMWARE_VERSION;
+  char* p = &buf[1];
   p = stpcpy(p, getFirmwareVersion());
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendConfigurationSetting(const char* name, uint32_t value){
-  char buffer[16];
-  buffer[0] = SYSEX_CONFIGURATION_COMMAND;
-  char* p = &buffer[1];
+  char buf[16];
+  buf[0] = SYSEX_CONFIGURATION_COMMAND;
+  char* p = &buf[1];
   p = stpcpy(p, name);
   p = stpcpy(p, msg_itoa(value, 16));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendDeviceId(){
   uint32_t* deviceId = (uint32_t*)UID_BASE;
-  char buffer[32];
-  buffer[0] = SYSEX_DEVICE_ID;
-  char* p = &buffer[1];
+  char buf[32];
+  buf[0] = SYSEX_DEVICE_ID;
+  char* p = &buf[1];
   p = stpcpy(p, msg_itoa(deviceId[0], 16, 8));
   p = stpcpy(p, ":");
   p = stpcpy(p, msg_itoa(deviceId[1], 16, 8));
   p = stpcpy(p, ":");
   p = stpcpy(p, msg_itoa(deviceId[2], 16, 8));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendPc(uint8_t pc){
