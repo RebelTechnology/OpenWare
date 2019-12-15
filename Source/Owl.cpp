@@ -40,7 +40,6 @@ Graphics graphics;
 #include "kx122.h"
 #endif
 #include "ble_midi.h"
-uint8_t ucHeap[ configTOTAL_HEAP_SIZE] CCM;
 #endif
 
 #if defined USE_RGB_LED
@@ -633,28 +632,6 @@ void setup(){
     error(CONFIG_ERROR, "ADC Start failed");
 #endif /* USE_ADC */
 #endif
-  
-#ifdef USE_BKPSRAM
-  extern RTC_HandleTypeDef hrtc;
-  uint8_t lastprogram = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
-  // uint8_t lastprogram = RTC->BKP1R;
-  // uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
-  // uint8_t lastprogram = *bkpsram_addr;
-#else    
-  uint8_t lastprogram = 0;
-#endif
-  if(lastprogram == settings.program_index){
-    error(CONFIG_ERROR, "Preventing reset program from starting");
-#ifdef USE_BKPSRAM
-    // reset for next time
-    extern RTC_HandleTypeDef hrtc;
-    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
-#endif
-  }else{
-    program.loadProgram(settings.program_index);
-    HAL_Delay(200);
-    program.startProgram(false);
-  }
 
   midiSetInputChannel(settings.midi_input_channel);
   midiSetOutputChannel(settings.midi_output_channel);
