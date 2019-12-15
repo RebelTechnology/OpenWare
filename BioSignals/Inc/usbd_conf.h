@@ -38,9 +38,9 @@
 /* USER CODE BEGIN INCLUDE */
 #ifdef DEBUG
 #warning USBD_DEBUG_LEVEL 3 uses printf!
-#define _USBD_DEBUG_LEVEL     3
+#define DEBUG_LEVEL     3
 #else
-#define _USBD_DEBUG_LEVEL     0
+#define DEBUG_LEVEL     0
 #endif
 /* USER CODE END INCLUDE */
 
@@ -77,13 +77,13 @@
 /*---------- -----------*/
 #define USBD_SUPPORT_USER_STRING     0U
 /*---------- -----------*/
-#define USBD_DEBUG_LEVEL     _USBD_DEBUG_LEVEL
+#define USBD_DEBUG_LEVEL     DEBUG_LEVEL
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     0U
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
 /*---------- -----------*/
-#define USBD_AUDIO_FREQ     16000U
+#define USBD_AUDIO_FREQ     AUDIO_SAMPLINGRATE
 
 /****************************************/
 /* #define for FS and HS identification */
