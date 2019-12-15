@@ -46,9 +46,9 @@
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       32
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define USBD_AUDIO_FREQ             8000
+#define AUDIO_SAMPLINGRATE          8000
 
-#define TIM8_PERIOD                 (871*48000/USBD_AUDIO_FREQ) /* experimentally determined */
+#define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
 #if defined USE_KX122 && defined USE_CODEC
 #define USB_AUDIO_CHANNELS          (ADS_ACTIVE_CHANNELS + KX122_ACTIVE_CHANNELS)
@@ -59,6 +59,7 @@
 #else
 #error "Invalid configuration"
 #endif
+#define AUDIO_CHANNELS               USB_AUDIO_CHANNELS
 
 #define NOF_ADC_VALUES               0
 #define NOF_PARAMETERS               5

@@ -66,10 +66,6 @@
 #define CODEC_BLOCKSIZE              64
 #define CODEC_BUFFER_SIZE            (2*USB_AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
-#ifndef USBD_AUDIO_FREQ
-#define USBD_AUDIO_FREQ              48000
-#endif
-
 /* +0db in and out */
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */
@@ -77,12 +73,15 @@
 #define AUDIO_OUTPUT_SCALAR          0xfffb5bab /* -4.642 * 65535 */
 #define DEFAULT_PROGRAM              1
 #define BUTTON_PROGRAM_CHANGE
-#define AUDIO_PROTOCOL               I2S_PROTOCOL_PHILIPS
 #define AUDIO_BITDEPTH               24    /* bits per sample */
 #define AUDIO_DATAFORMAT             24
 #define AUDIO_CODEC_MASTER           true
-#define AUDIO_CHANNELS               USB_AUDIO_CHANNELS
-#define AUDIO_SAMPLINGRATE           USBD_AUDIO_FREQ
+#ifndef AUDIO_CHANNELS
+#define AUDIO_CHANNELS               2
+#endif
+#ifndef AUDIO_SAMPLINGRATE
+#define AUDIO_SAMPLINGRATE           48000
+#endif
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 
