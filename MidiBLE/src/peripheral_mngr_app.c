@@ -1,50 +1,11 @@
-/**
- ******************************************************************************
- * @file    peripheral_mngr_app.c
- * @author  Central Labs
- * @version V 1.0.0
- * @date    May-2017
- * @brief   This file contains definitions for the application manager.
- *******************************************************************************
- * @attention
- *
- * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
- *
- * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
- * You may not use this file except in compliance with the License.
- * You may obtain a copy of the License at:
- *
- *        http://www.st.com/software_license_agreement_liberty_v2
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *   1. Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright notice,
- *      this list of conditions and the following disclaimer in the documentation
- *      and/or other materials provided with the distribution.
- *   3. Neither the name of STMicroelectronics nor the names of its contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- ********************************************************************************
- */
-
 #include <stddef.h>
 #include <string.h>
 #include "peripheral_mngr_app.h"
-	
+
+// this is the unique ID we assign to the device
+#define BLE_DEVICE_ID '0','0','8'
+#define BLE_LOCAL_NAME 'O','W','L','-','B','i','o','S','i','g','n','a','l','s','-','P',BLE_DEVICE_ID
+
 #define MIDI_SERVICE_UUID 			0x00,0xC7,0xC4,0x4E,0xE3,0x6C,0x51,0xA7,0x33,0x4B,0xE8,0xED,0x5A,0x0E,0xB8,0x03
 #define APP_READY               (0x00)
 #define APP_BLUEVOICE_ENABLE    (0x01)
@@ -55,8 +16,33 @@ volatile uint16_t MidiServiceHandle;
 volatile uint16_t conn_handle;
 volatile uint8_t  APP_PER_enabled = APP_READY;
 
-uint8_t PERIPHERAL_BDADDR[] 								= {0x55, 0x11, 0x07, 0x01, 0x16, 0xE2}; 
-static const uint8_t midi_service_uuid[16] 	= {0x00,0xC7,0xC4,0x4E,0xE3,0x6C, 0x51,0xA7, 0x33,0x4B, 0xE8,0xED, 0x5A,0x0E,0xB8,0x03};
+/**
+ * Each Bluetooth device has a unique 48-bit Bluetooth device address (BD_ADDR). 
+ * The address shall be a 48-bit extended unique identifier (EUI-48) created in 
+ * accordance with "Universal address" of the IEEE 802-2014 standard.
+ * NAP: 2 MSB bytes.
+ * Abbreviated as Non-significant Address Part.
+ * Assigned by the IEEE (Institute of Electrical and Electronics Engineers).
+ * UAP: 1 byte.
+ * Abbreviated as Upper Address Part.
+ * Assigned by the IEEE (Institute of Electrical and Electronics Engineers).
+ * LAP: 3 LSB bytes.
+ * Abbreviated as Lower Address Part.
+ * It's transmitted with every packet as part of packet header.
+ * The LAP and the UAP make the significant address part (SAP) of the Bluetooth Address.
+ * The upper half of a Bluetooth Address (most-significant 24 bits) is so called 
+ * Organizationally Unique Identifier (OUI). It can be used to determine the manufacturer of a device
+ * (Bluetooth MAC Address Lookup form). OUI prefixes are assigned by the IEEE.
+ * The BD_ADDR may take any values except those that would have any of the 64 reserved LAP values for general and dedicated inquiries.
+ * 16-bit company identifier 0x0030 ST Microelectronics
+ */
+
+/* uint8_t PERIPHERAL_BDADDR[] = {0x55, 0x11, 0x07, 0x01, 0x16, 0xE2};  */
+uint8_t PERIPHERAL_BDADDR[] = {BLE_DEVICE_ID, 0x01, 0x16, 0xE2}; // reverse MAC address order
+
+
+static const uint8_t midi_service_uuid[16] 	= { MIDI_SERVICE_UUID };
+/* 0x00,0xC7,0xC4,0x4E,0xE3,0x6C, 0x51,0xA7, 0x33,0x4B, 0xE8,0xED, 0x5A,0x0E,0xB8,0x03}; */
 
 volatile uint8_t APP_PER_state = APP_STATUS_ADVERTISEMENT;
 
@@ -110,12 +96,10 @@ APP_Status PER_APP_Service_Init(void)
 APP_Status PER_APP_Advertise(void)
 {
   uint8_t ret = 0;
-  
   uint8_t local_name[] =
   {
-    /* AD_TYPE_SHORTENED_LOCAL_NAME, 'O', 'W', 'L', '-', 'B', 'I', 'O' */
-    AD_TYPE_COMPLETE_LOCAL_NAME, 'O','W','L','-','B','i','o','S','i','g','n','a','l','s',
-    '-','P','0','0','6'
+   /* AD_TYPE_SHORTENED_LOCAL_NAME, 'O','W','L','-','B','I','O', */
+   AD_TYPE_COMPLETE_LOCAL_NAME, BLE_LOCAL_NAME
   };
 	
   // Add scan response data
@@ -141,12 +125,16 @@ APP_Status PER_APP_Advertise(void)
 /*   }; */
   /* uint8_t manuf_data[] = { */
   /*   8, AD_TYPE_SHORTENED_LOCAL_NAME, 'O', 'W', 'L', '-', 'B', 'I', 'O' */
-  /* }; */ // not sure why this returns a 0x41 BLE_STATUS_FAILED
+  /* }; // not sure why this returns a 0x41 BLE_STATUS_FAILED */
   /* uint8_t manuf_data[] = { */
   /*   20, AD_TYPE_COMPLETE_LOCAL_NAME, 'O','W','L','-','B','i','o','S','i','g','n','a','l','s', */
   /*   '-','P','0','0','0' */
   /* }; // not sure why this returns a 0x41 BLE_STATUS_FAILED */
-  /* ret |= aci_gap_update_adv_data(sizeof(manuf_data), manuf_data); */
+  /* uint8_t manuf_data[] = { */
+  /*    /\* AD_TYPE_SHORTENED_LOCAL_NAME, 'O','W','L','-','B','I','O', *\/ */
+  /*    AD_TYPE_COMPLETE_LOCAL_NAME, BLE_LOCAL_NAME */
+  /* }; */
+  /* aci_gap_update_adv_data(sizeof(manuf_data), manuf_data); */
 
   if (ret != BLE_STATUS_SUCCESS)
     return APP_ERROR;  
