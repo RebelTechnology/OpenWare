@@ -106,7 +106,6 @@ void Codec::stop(){
 }
 
 void Codec::start(){
-  codec_init();
   // setOutputGain(settings.audio_output_gain);
   blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   HAL_StatusTypeDef ret;
@@ -217,10 +216,6 @@ void codec_init(){
   rxindex = 0;
   rxhalf = blocksize*USB_AUDIO_CHANNELS;
   rxfull = 2*rxhalf;
-
-  extern TIM_HandleTypeDef htim8;
-  HAL_TIM_Base_Start_IT(&htim8);
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
   
   ads_setup(ads_samples);
 #ifdef USE_KX122
@@ -240,6 +235,9 @@ void codec_set_gain_out(int8_t volume){
 
 void Codec::start(){
   ads_start_continuous();
+  extern TIM_HandleTypeDef htim8;
+  HAL_TIM_Base_Start_IT(&htim8);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
 }
 
 void Codec::stop(){

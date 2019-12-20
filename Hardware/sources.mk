@@ -26,10 +26,10 @@ CPP_SRC += MidiController.cpp
 # CPP_SRC += DigitalBusStreamReader.cpp  
 
 # OpenWare/LibSource
-CPP_SRC += PatchProcessor.cpp
-CPP_SRC += FloatArray.cpp
-CPP_SRC += StompBox.cpp
-C_SRC += basicmaths.c
+# CPP_SRC += PatchProcessor.cpp
+# CPP_SRC += FloatArray.cpp
+# CPP_SRC += StompBox.cpp
+# C_SRC += basicmaths.c
 
 # Libraries
 # C_SRC += libnosys_gnu.c

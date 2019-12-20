@@ -64,7 +64,7 @@
 #define MAX_NUMBER_OF_RESOURCES      12
 
 #define CODEC_BLOCKSIZE              64
-#define CODEC_BUFFER_SIZE            (2*USB_AUDIO_CHANNELS*CODEC_BLOCKSIZE)
+#define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */

@@ -62,6 +62,13 @@ void codec_init(){
   setPin(ADC_RESET_GPIO_Port, ADC_RESET_Pin);
   /* HAL_GPIO_WritePin(ADC_RESET_GPIO_Port, ADC_RESET_Pin, GPIO_PIN_SET); */
 
+  /* the internal reset is released after 3846 SCKI clock cycles from */
+  /* power-on if RST is kept high and SCKI is provided. */
+  for(int i=0; i<10000; ++i){
+    HAL_GPIO_TogglePin(SAI_MCLK_GPIO_Port, SAI_MCLK_Pin);
+    delay(1);
+  }
+
   /* Register: DAC Control 1 */
   codec_write(65, 0b10000110); // Power Save Disable, Slave mode, 24-bit I2S mode TDM format
   /* codec_write(65, 0b10000111); // 24-bit left-justified mode TDM format */
