@@ -89,7 +89,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 #ifdef DEBUG
   initialise_monitor_handles(); // remove when not semi-hosting
-  printf("showtime");
+  printf("showtime\n");
 #endif
   /* USER CODE END 1 */
   
@@ -231,8 +231,8 @@ static void MX_SAI1_Init(void)
   /* USER CODE END SAI1_Init 0 */
 
   /* USER CODE BEGIN SAI1_Init 1 */
-  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
-  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
+  /* hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS; */
+  /* hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS; */
 
   /* USER CODE END SAI1_Init 1 */
   hsai_BlockA1.Instance = SAI1_Block_A;
@@ -247,8 +247,8 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Init.ClockSource = SAI_CLKSOURCE_PLLSAI;
   hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_48K;
   hsai_BlockA1.FrameInit.FrameLength = 256;
-  hsai_BlockA1.FrameInit.ActiveFrameLength = 1;
-  hsai_BlockA1.FrameInit.FSDefinition = SAI_FS_STARTFRAME;
+  hsai_BlockA1.FrameInit.ActiveFrameLength = 128;
+  hsai_BlockA1.FrameInit.FSDefinition = SAI_FS_CHANNEL_IDENTIFICATION;
   hsai_BlockA1.FrameInit.FSPolarity = SAI_FS_ACTIVE_LOW;
   hsai_BlockA1.FrameInit.FSOffset = SAI_FS_FIRSTBIT;
   hsai_BlockA1.SlotInit.FirstBitOffset = 0;
@@ -268,8 +268,8 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_ENABLE;
   hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockB1.FrameInit.FrameLength = 256;
-  hsai_BlockB1.FrameInit.ActiveFrameLength = 1;
-  hsai_BlockB1.FrameInit.FSDefinition = SAI_FS_STARTFRAME;
+  hsai_BlockB1.FrameInit.ActiveFrameLength = 128;
+  hsai_BlockB1.FrameInit.FSDefinition = SAI_FS_CHANNEL_IDENTIFICATION;
   hsai_BlockB1.FrameInit.FSPolarity = SAI_FS_ACTIVE_LOW;
   hsai_BlockB1.FrameInit.FSOffset = SAI_FS_FIRSTBIT;
   hsai_BlockB1.SlotInit.FirstBitOffset = 0;
