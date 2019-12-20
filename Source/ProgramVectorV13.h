@@ -22,6 +22,7 @@
 #define EFFECTSBOX_HARDWARE         0x1a
 #define WAVETABLE_HARDWARE          0x1b
 #define NOCTUA_HARDWARE             0x1c
+#define BIOSIGNALS_HARDWARE         0x1d
 
 #define PROGRAM_VECTOR_CHECKSUM_V11 0x40
 #define PROGRAM_VECTOR_CHECKSUM_V12 0x50
@@ -31,9 +32,12 @@
 #define OUT_OF_MEMORY_ERROR_STATUS   -20
 #define CONFIGURATION_ERROR_STATUS   -30
 
-#define AUDIO_FORMAT_24B16          0x10
-#define AUDIO_FORMAT_24B24          0x18
+#define AUDIO_FORMAT_24B16_2X       0x10
+#define AUDIO_FORMAT_24B24_2X       0x18
 #define AUDIO_FORMAT_24B32          0x20
+#define AUDIO_FORMAT_24B32_2X       0x22
+#define AUDIO_FORMAT_24B32_4X       0x24
+#define AUDIO_FORMAT_24B32_8X       0x28
 
   typedef enum { 
     AUDIO_IDLE_STATUS = 0, 

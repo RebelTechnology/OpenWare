@@ -41,6 +41,9 @@ magus: ## build Magus project
 effectsbox: ## build EffectsBox project
 	@$(MAKE) -C EffectsBox all
 
+noctua: ## build Noctua project
+	@$(MAKE) -C Noctua all
+
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
 	@$(MAKE) -C Alchemist clean
@@ -52,6 +55,7 @@ clean: ## remove generated files
 	@$(MAKE) -C Magus clean
 	@$(MAKE) -C QuadFM clean
 	@$(MAKE) -C EffectsBox clean
+	@$(MAKE) -C Noctua clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile

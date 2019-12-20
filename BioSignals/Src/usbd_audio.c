@@ -69,7 +69,7 @@ static void AUDIO_REQ_GetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
 
 static void AUDIO_REQ_SetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 
-USBD_AUDIO_HandleTypeDef usbd_audio_handle CCM;
+USBD_AUDIO_HandleTypeDef usbd_audio_handle;
 
 USBD_ClassTypeDef  USBD_AUDIO =
 {
@@ -101,10 +101,10 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   4,                      // bNumInterfaces Number of interfaces in this cfg
   1,                      // bConfigurationValue Index value of this configuration
   0,                      // iConfiguration Configuration string index
-  0x80,                   // bmAttributes, see usb_device.h
-  50,                     // Max power consumption (2X mA) */
-  /* 0xC0,                     /\* bmAttributes  BUS Powred*\/ */
-  /* 0x32,                     // Max power consumption (100mA) */
+  /* 0x80,                   // bmAttributes, see usb_device.h */
+  /* 50,                     // Max power consumption (2X mA) *\/ */
+  0x80,                   // bmAttributes: BUS Powered
+  100,                    // bMaxPower in 2 mA increments
   /* 9 bytes */
  
   /* USB Microphone Standard AC Interface Descriptor  */
@@ -497,8 +497,10 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(haudio->buffer, */
     /* 							 AUDIO_IN_PACKET_SIZE/2, */
     /* 							 AUDIO_CMD_START); */
+#ifdef USE_USB_AUDIO
     usbd_audio_start_callback(pdev, haudio);
-    
+#endif
+
     return USBD_OK;
 }
 
@@ -661,12 +663,11 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
   */
 static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
 {
+#ifdef USE_USB_AUDIO
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
-
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR){
     USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
-    debugMessage("SET_CUR");
     if (haudio->control.unit == AUDIO_OUT_STREAMING_CTRL)
     {
       usbd_audio_gain_callback(haudio->control.data[0]);
@@ -682,13 +683,11 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
       haudio->control.len = 0;
     }
   }else if (haudio->control.cmd == AUDIO_REQ_GET_CUR){
-    debugMessage("GET_CUR");
     USBD_DbgLog("GET_CUR %d\n", haudio->control.unit);
   }else{
-    debugMessage("Control CMD");
     USBD_DbgLog("Control CMD %d\n", haudio->control.cmd);
   }
-
+#endif
   return USBD_OK;
 }
 /**
@@ -699,9 +698,9 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
   */
 static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 {
+#ifdef USE_USB_AUDIO
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
-  debugMessage("EP0 TxReady");
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR)
   {/* In this driver, to simplify code, only SET_CUR request is managed */
     USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
@@ -713,6 +712,7 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
       haudio->control.len = 0;
     }
   }
+#endif
   return USBD_OK;
 }
 /**
@@ -781,8 +781,7 @@ void  USBD_AUDIO_Sync (USBD_HandleTypeDef *pdev, AUDIO_OffsetTypeDef offset)
     /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(&haudio->buffer[0], */
     /*                                                      AUDIO_TOTAL_BUF_SIZE/2 - shift, */
     /*                                                      AUDIO_CMD_PLAY);  */
-    debugMessage("usb audio offset full");
-    /* debugMessage(msg_itoa(shift, 10)); */
+    USBD_DbgLog("AUDIO_OFFSET_FULL %d\n", shift);
     usbd_audio_data_in_callback(pdev, haudio);
     haudio->offset = AUDIO_OFFSET_NONE;           
   }
@@ -963,9 +962,19 @@ uint8_t midi_device_connected(void){
 #ifdef USE_USBD_MIDI
   extern USBD_HandleTypeDef USBD_HANDLE;
   return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED;
+#else
+  return false;
 #endif /* USE_USBD_MIDI */
 }
 
 uint8_t midi_device_ready(void){
-  return midi_tx_lock == 0;
+  extern USBD_HandleTypeDef USBD_HANDLE;
+  /* return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED; */
+  /* return USBD_HANDLE.ep_in.status == USBD_OK; */
+  /* return midi_tx_lock == 0; */
+  /* USBD_HANDLE.ep_out.status == USBD_OK */
+
+  return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED &&
+    USBD_HANDLE.ep_in && USBD_HANDLE.ep_in->status == USBD_OK &&
+    midi_tx_lock == 0;
 }

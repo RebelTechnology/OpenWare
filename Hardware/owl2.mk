@@ -11,6 +11,14 @@ ifeq ($(CONFIG),Release)
   CFLAGS   = -O2
 endif
 
+# compile with semihosting if Debug is selected
+ifeq ($(CONFIG),Debug)
+  LDLIBS += -lrdimon
+else
+  CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
+  C_SRC += libnosys_gnu.c
+endif
+
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
 LDSCRIPT ?= $(OPENWARE)/Hardware/owl2.ld
