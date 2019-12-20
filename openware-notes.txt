@@ -183,8 +183,6 @@ amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d5214000000000
 # flash Wizard firmware
 amidi -p hw:2 -s Wizard.syx
 
-start 60000 ends 67220
-
 -----------------------------------------------------------------
 
 #define VECT_TAB_OFFSET  0x00008000
@@ -243,5 +241,37 @@ Makefile owl2.mk:
 * enable semi hosting in gdb:
 debug: $(ELF)
        @$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
+
+-----------------------------------------------------------------
+
+To catch reset cycles due to buggy default patches
+#define USE_BKPSRAM
+
+in Cube, enable Timers/RTC clock source 
+
+define armex
+  printf "EXEC_RETURN (LR):\n",
+  info registers $lr
+    if ($lr & (0x4 == 0x4))
+      printf "Uses MSP 0x%x return.\n", $msp
+      set $armex_base = (uint32_t)$msp
+    else
+      printf "Uses PSP 0x%x return.\n", $psp
+      set $armex_base = (uint32_t)$psp
+    end
+
+    printf "xPSR            0x%x\n", *($armex_base+28)
+    printf "ReturnAddress   0x%x\n", *($armex_base+24)
+    printf "LR (R14)        0x%x\n", *($armex_base+20)
+    printf "R12             0x%x\n", *($armex_base+16)
+    printf "R3              0x%x\n", *($armex_base+12)
+    printf "R2              0x%x\n", *($armex_base+8)
+    printf "R1              0x%x\n", *($armex_base+4)
+    printf "R0              0x%x\n", *($armex_base)
+    printf "Return instruction:\n"
+    x/i *($armex_base+24)
+    printf "LR instruction:\n"
+    x/i *($armex_base+20)
+end
 
 -----------------------------------------------------------------

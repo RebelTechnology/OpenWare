@@ -145,7 +145,6 @@ void Error_Handler(void);
 #define ACC_INT1_EXTI_IRQn EXTI1_IRQn
 #define ACC_INT2_Pin GPIO_PIN_2
 #define ACC_INT2_GPIO_Port GPIOD
-#define ACC_INT2_EXTI_IRQn EXTI2_IRQn
 #define ADC_SPI_MISO_Pin GPIO_PIN_4
 #define ADC_SPI_MISO_GPIO_Port GPIOB
 #define GROVE_I2C_SCL_Pin GPIO_PIN_6

@@ -13,7 +13,9 @@ extern MidiController midi;
 class MidiController {
 private:
   uint8_t channel;
+#ifdef USE_MIDI_TX_BUFFER
   SerialBuffer<MIDI_OUTPUT_BUFFER_SIZE> buffer;
+#endif
 public:
   void setOutputChannel(uint8_t ch){
     channel = ch;

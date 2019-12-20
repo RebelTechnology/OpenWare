@@ -9,7 +9,7 @@ _Min_Stack_Size = 0x200; /* required amount of stack */
 MEMORY
 {
 RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
-PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 64K    /* total RAM is 112kb */
+PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 128K    /* total RAM is 192kb */
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
 EXTRAM (rwx)     : ORIGIN = 0xD0000000, LENGTH = 8M
 BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 64K    /* Sector 0 to 3 */
@@ -135,6 +135,7 @@ SECTIONS
     PROVIDE (_CCMRAM = .);
   } >CCMRAM
   _CCMRAM_END = ORIGIN(CCMRAM) + LENGTH(CCMRAM);
+  _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
 
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */
@@ -145,12 +146,14 @@ SECTIONS
     PROVIDE ( _EXTRAM = . );
   } >EXTRAM
   _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM);
+  _EXTRAM_SIZE = LENGTH(EXTRAM);
 
   .patchram (NOLOAD) :
   {
     PROVIDE (_PATCHRAM = .);
   } >PATCHRAM
   _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
+  _PATCHRAM_SIZE = LENGTH(PATCHRAM);
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

@@ -2,26 +2,12 @@
 #include <string.h> /* for memcpy */
 #include "device.h"
 
-#define EEPROM_SECTOR_MASK               ((uint32_t)0xFFFFFF07)
-
-int eeprom_get_status(){
-  if(__HAL_FLASH_GET_FLAG(FLASH_FLAG_BSY) != RESET)
-    return FLASH_FLAG_BSY;
-  return HAL_FLASH_GetError();
-  /* uint32_t status = HAL_FLASH_GetError(); */
-  /* if(status == HAL_FLASH_ERROR_NONE) */
-  /*   return HAL_FLASH_ERROR_NONE; */
-  /* else */
-  /*   return FLASH_ERROR_OPERATION; */
-}
-
 void eeprom_lock(){
   HAL_FLASH_Lock();
 }
 
 int eeprom_wait(){ 
-  /* FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE); */
-  return FLASH_WaitForLastOperation(HAL_MAX_DELAY);
+  return FLASH_WaitForLastOperation(5000);
 }
 
 int eeprom_erase_sector(uint32_t sector) {
@@ -39,7 +25,7 @@ int eeprom_erase_sector(uint32_t sector) {
 }
 
 int eeprom_write_word(uint32_t address, uint32_t data){
-  HAL_StatusTypeDef status =  HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
+  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
   return status;
 }
 
@@ -61,27 +47,6 @@ int eeprom_write_block(uint32_t address, void* data, uint32_t size){
 
 void eeprom_unlock(){
   HAL_FLASH_Unlock();
-}
-
-void* eeprom_read(uint32_t address){
-  while(eeprom_get_status() == FLASH_FLAG_BSY);
-  return (void*)address;
-}
-
-uint8_t eeprom_read_byte(uint32_t address){
-  while(eeprom_get_status() == FLASH_FLAG_BSY);
-  return *(uint8_t*)address;
-}
-
-uint32_t eeprom_read_word(uint32_t address){
-  while(eeprom_get_status() == FLASH_FLAG_BSY);
-  return *(uint32_t*)address;
-}
-
-int eeprom_read_block(uint32_t address, void* data, uint32_t size){
-  while(eeprom_get_status() == FLASH_FLAG_BSY);
-  memcpy(data, (const void*)address, size);
-  return eeprom_get_status();
 }
 
 int eeprom_erase(uint32_t address){

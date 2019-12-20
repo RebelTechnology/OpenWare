@@ -94,8 +94,11 @@ public:
   bool notEmpty(){
     return writepos != readpos;
   }
-  uint16_t available(){
+  uint16_t getReadCapacity(){
     return (writepos + size - readpos) % size;
+  }
+  uint16_t getWriteCapacity(){
+    return size - getReadCapacity();
   }
   uint16_t getContiguousWriteCapacity(){
     if(writepos < readpos)

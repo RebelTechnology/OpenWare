@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v20.6"
+#define FIRMWARE_VERSION "v20.9"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -23,6 +23,7 @@
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
 #endif
+#define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
 #define MIDI_OUTPUT_BUFFER_SIZE      512
 #define MIDI_INPUT_BUFFER_SIZE       256
@@ -37,8 +38,8 @@
 #define STORAGE_MAX_BLOCKS           64
 
 #define DEBUG_DWT
-#define DEBUG_STACK
-#define DEBUG_STORAGE
+/* #define DEBUG_STACK */
+/* #define DEBUG_STORAGE */
 
 #ifdef SSD1331
 #define OLED_WIDTH		     96
@@ -62,12 +63,8 @@
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
 
-#define CODEC_BLOCKSIZE              128
+#define CODEC_BLOCKSIZE              64
 #define CODEC_BUFFER_SIZE            (2*USB_AUDIO_CHANNELS*CODEC_BLOCKSIZE)
-
-#ifndef USBD_AUDIO_FREQ
-#define USBD_AUDIO_FREQ              48000
-#endif
 
 /* +0db in and out */
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
@@ -76,12 +73,15 @@
 #define AUDIO_OUTPUT_SCALAR          0xfffb5bab /* -4.642 * 65535 */
 #define DEFAULT_PROGRAM              1
 #define BUTTON_PROGRAM_CHANGE
-#define AUDIO_PROTOCOL               I2S_PROTOCOL_PHILIPS
 #define AUDIO_BITDEPTH               24    /* bits per sample */
 #define AUDIO_DATAFORMAT             24
 #define AUDIO_CODEC_MASTER           true
-#define AUDIO_CHANNELS               USB_AUDIO_CHANNELS
-#define AUDIO_SAMPLINGRATE           USBD_AUDIO_FREQ
+#ifndef AUDIO_CHANNELS
+#define AUDIO_CHANNELS               2
+#endif
+#ifndef AUDIO_SAMPLINGRATE
+#define AUDIO_SAMPLINGRATE           48000
+#endif
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 

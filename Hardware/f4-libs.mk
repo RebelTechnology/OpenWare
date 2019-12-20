@@ -55,6 +55,7 @@ OBJS_USBD += $(DRIVERS)/Src/stm32f4xx_ll_usb.o
 OBJS_USBD += $(USB_DEVICE_FILE)/Core/Src/usbd_core.o
 OBJS_USBD += $(USB_DEVICE_FILE)/Core/Src/usbd_ioreq.o
 OBJS_USBD += $(USB_DEVICE_FILE)/Core/Src/usbd_ctlreq.o
+# OBJS_USBD += $(USB_DEVICE_FILE)/Class/AUDIO/Src/usbd_audio.o
 
 ### USB Host Library ###
 OBJS_USBH = $(DRIVERS)/Src/stm32f4xx_hal_hcd.o
@@ -98,6 +99,7 @@ OBJS_DSP += $(DSPLIB)/CommonTables/arm_const_structs.o
 
 ### FreeRTOS ###
 OBJS_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.o
+# OBJS_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os2.o
 # OBJS_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.o
 OBJS_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.o
 OBJS_OS += $(FREERTOS_DIR)/tasks.o
