@@ -50,6 +50,7 @@ void codec_reset(){
 /* the SRST bit to 1 is unneccesary; it is automatically set to 1 after triggering a system reset. */
 }
 
+// todo: remove
 uint32_t pcm3168a_dz = 0;
 uint32_t pcm3168a_adc_ovf = 0;
 uint32_t pcm3168a_check = 0;
@@ -64,10 +65,15 @@ void codec_init(){
 
   /* the internal reset is released after 3846 SCKI clock cycles from */
   /* power-on if RST is kept high and SCKI is provided. */
-  for(int i=0; i<10000; ++i){
-    HAL_GPIO_TogglePin(SAI_MCLK_GPIO_Port, SAI_MCLK_Pin);
-    delay(1);
-  }
+  /* for(int i=0; i<10000; ++i){ */
+  /*   HAL_GPIO_TogglePin(SAI_MCLK_GPIO_Port, SAI_MCLK_Pin); */
+  /*   delay(1); */
+  /* } */
+  delay(10);
+
+  codec_write(64, 0b11000001); // Normal operation, Single rate
+  codec_write(65, 0b00000110); // Power Save Enable, Slave mode, 24-bit I2S mode TDM format
+  /* codec_write(65, 0b10000110); // Power Save Disable, Slave mode, 24-bit I2S mode TDM format */
 
   /* Register: DAC Control 1 */
   codec_write(65, 0b10000110); // Power Save Disable, Slave mode, 24-bit I2S mode TDM format
@@ -87,6 +93,7 @@ void codec_init(){
   /* Data formats, see Table 11 p.33 */
 
   /* Register: ADC Control 1 */
+  codec_write(80, 0b00000001); // Single rate mode
   codec_write(81, 0b00000110); // Slave mode 24-bit I2S mode TDM format 
   /* codec_write(81, 0b00000111); // Slave mode 24-bit left-justified mode TDM format */
 
@@ -124,7 +131,8 @@ void codec_bypass(int bypass){
 }
 
 void codec_mute(bool mute){  
-  // todo
+  /* Register 68: DAC Soft Mute Control */
+  codec_write(68, mute ? 0xff : 0x00);
 }
 
 void codec_set_gain_in(int8_t level){

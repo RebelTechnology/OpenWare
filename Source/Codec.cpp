@@ -93,10 +93,9 @@ SAI_HandleTypeDef hsai_BlockA1;
 SAI_HandleTypeDef hsai_BlockB1;
 }
 
-
 void Codec::txrx(){
   HAL_SAI_DMAStop(&hsai_BlockA1);
-  HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)rxbuf, blocksize*4);
+  HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)rxbuf, blocksize*AUDIO_CHANNELS*2);
 }
 
 void Codec::stop(){
