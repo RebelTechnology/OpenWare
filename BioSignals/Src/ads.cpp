@@ -202,19 +202,6 @@ int ads_read_single_sample(){
   return (spi_transfer(0) << 24) | (spi_transfer(0) << 16) | (spi_transfer(0) << 8);
 }
 
-// #include "RingBuffer.hpp"
-// typedef int16_t audio_t;
-// extern RingBuffer<audio_t> audio_ringbuffer;
-// void ads_process_samples(){
-//   audio_t* dst = audio_ringbuffer.getWriteHead();
-//   // transfer 4 channels 16 bit adc data into ringbuffer
-//   *dst++ = (ads_rx_buffer[1*3+0]<<8) | (ads_rx_buffer[1*3+1]);
-//   *dst++ = (ads_rx_buffer[2*3+0]<<8) | (ads_rx_buffer[2*3+1]);
-//   *dst++ = (ads_rx_buffer[3*3+0]<<8) | (ads_rx_buffer[3*3+1]);
-//   *dst++ = (ads_rx_buffer[4*3+0]<<8) | (ads_rx_buffer[4*3+1]);
-//   audio_ringbuffer.incrementWriteHead(4);
-// }
-
 void ads_process_samples(){
   ads_status = (ads_rx_buffer[0]<<24) | (ads_rx_buffer[1]<<16) | (ads_rx_buffer[2]<<8);
   ads_samples[0] = (ads_rx_buffer[3]<<24) | (ads_rx_buffer[4]<<16) | (ads_rx_buffer[5]<<8);
