@@ -37,36 +37,23 @@ public:
     return true;
   }
   void copy(){
-    extern char _PATCHRAM, _EXTRAM;
+    extern char _PATCHRAM, _PATCHRAM_SIZE;
     /* copy program to ram */
-    if((linkAddress == (uint32_t*)&_PATCHRAM && programSize <= 80*1024) ||
-       (linkAddress == (uint32_t*)&_EXTRAM && programSize <= 1024*1024)){
+    if((linkAddress == (uint32_t*)&_PATCHRAM && programSize <= (uint32_t)(&_PATCHRAM_SIZE))){
       memcpy((void*)linkAddress, (void*)programAddress, programSize);
-      // memmove((void*)linkAddress, (void*)programAddress, programSize);
-      if(programAddress == (uint32_t*)&_EXTRAM)
-	// avoid copying dynamic patch again after reset
-	programAddress = linkAddress; 
+      programAddress = linkAddress; 
     }else{
       programFunction = NULL;
     }
   }
   bool verify(){
-    // extern char _PATCHRAM, _EXTRAM, _CCMRAM;
     // check we've got an entry function
     if(programFunction == NULL)
       return false;
     // check magic
-    if((*(uint32_t*)programAddress & 0xffffff00) != 0xDADAC000)
-    // if(*(uint32_t*)programAddress != 0xDADAC0DE)
+    if((*(uint32_t*)programAddress & 0xffffff00) != 0xDADAC000) // was: != 0xDADAC0DE
       return false;
-    // sanity-check stack base address and size
-    // char* sb = (char*)stackBase;
-    // if((sb >= &_PATCHRAM && sb+stackSize <= (&_PATCHRAM+128*1024)) ||
-    //    (sb >= &_CCMRAM && sb+stackSize <= (&_CCMRAM+128*1024)) ||
-    //    (sb >= &_EXTRAM && sb+stackSize <= (&_EXTRAM+8*1024*1024)) ||
-    //    (sb == 0 && stackSize == 0))
-      return true;
-    // return false;
+    return true;
   }
   void run(){
     if(linkAddress != programAddress)

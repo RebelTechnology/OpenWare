@@ -36,7 +36,7 @@ all: bin
 
 # Build executable 
 $(ELF) : $(OBJS) $(LDSCRIPT)
-	@$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 # compile and generate dependency info
 $(BUILD)/%.o: %.c
@@ -75,7 +75,7 @@ openocd: $(ELF)
 	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "load" $(ELF)
 
 bin: $(BIN) $(HEX)
-	@echo Successfully built $(CONFIG) firmware in $(BIN)
+	@echo Built $(PROJECT) $(PLATFORM) $(CONFIG) firmware in $(BIN)
 
 map : $(OBJS) $(LDSCRIPT)
 	@$(LD) $(LDFLAGS) -Wl,-Map=$(ELF:.elf=.map) $(OBJS) $(LDLIBS)

@@ -38,6 +38,12 @@ else ifeq ($(PLATFORM),EuroWizard)
 else ifeq ($(PLATFORM),Rack)
   CPPFLAGS += -Iusbd-hs -DOWL_RACK
   vpath %.c usbd-hs
+else ifeq ($(PLATFORM),Noctua)
+  CPPFLAGS += -Iusbd-fs -DOWL_NOCTUA
+  vpath %.c usbd-fs
+else ifeq ($(PLATFORM),BioSignals)
+  CPPFLAGS += -Iusbd-hs -DOWL_BIOSIGNALS
+  vpath %.c usbd-hs
 endif
 
 # CPP_SRC += MidiReader.cpp

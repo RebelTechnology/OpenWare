@@ -115,6 +115,7 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   case REQUEST_SETTINGS:
     switch(value){
     case 0:
+    case 127:
       midi.sendDeviceInfo();
       break;
     case SYSEX_PRESET_NAME_COMMAND:

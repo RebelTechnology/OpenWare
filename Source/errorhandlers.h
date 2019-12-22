@@ -2,7 +2,7 @@
 #define __ERRORHANDLERS_H__
 #include <stdint.h>
 
-#define ASSERT(cond, msg) do{if(!(cond))setErrorMessage(PROGRAM_ERROR, msg);}while(0)
+#define ASSERT(cond, msg) do{if(!(cond))error(RUNTIME_ERROR, msg);}while(0)
 
 #ifdef __cplusplus
  extern "C" {

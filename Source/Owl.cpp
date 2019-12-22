@@ -34,6 +34,14 @@
 Graphics graphics;
 #endif /* USE_SCREEN */
 
+#ifdef OWL_BIOSIGNALS
+#include "ads.h"
+#ifdef USE_KX122
+#include "kx122.h"
+#endif
+#include "ble_midi.h"
+#endif
+
 #if defined USE_RGB_LED
 #include "rainbow.h"
 #endif /* USE_RGB_LED */
@@ -156,18 +164,59 @@ void setLed(uint8_t led, uint32_t rgb){
   TIM2->CCR2 = 1023 - ((rgb>>10)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>00)&0x3ff);
 #elif defined OWL_PEDAL || defined OWL_MODULAR
-  if(rgb == RED_COLOUR){
+  switch(rgb){
+  case RED_COLOUR:
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-  }else if(rgb == GREEN_COLOUR){
+    break;
+  case GREEN_COLOUR:
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-  }else if(rgb == NO_COLOUR){
+    break;
+  case YELLOW_COLOUR:
+    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+    break;
+  case NO_COLOUR:
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+    break;
   }
 #elif defined OWL_MAGUS
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+#elif defined OWL_BIOSIGNALS
+  if(led == 0){
+#ifdef USE_LED_PWM
+    rgb &= COLOUR_LEVEL5; // turn down intensity
+    TIM1->CCR1 = 1023 - ((rgb>>20)&0x3ff); // red
+    TIM1->CCR3 = 1023 - ((rgb>>10)&0x3ff); // green
+    TIM1->CCR2 = 1023 - ((rgb>>00)&0x3ff); // blue
+#else
+    switch(rgb){ // sinking current
+    case RED_COLOUR:
+      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+      break;
+    case GREEN_COLOUR:
+      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+      break;
+    case YELLOW_COLOUR:
+      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+      break;
+    case NO_COLOUR:
+      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+      break;
+    }
+#endif      
+  }else if(led == 1){
+    if(rgb == NO_COLOUR)
+      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+    else
+      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+  }
 #endif
 }
 
@@ -194,6 +243,22 @@ void initLed(){
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
   HAL_TIM_Base_Start(&htim4);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+#elif defined OWL_BIOSIGNALS
+#ifdef USE_LED_PWM
+  extern TIM_HandleTypeDef htim1;
+  HAL_TIM_Base_Start(&htim1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+#else
+  /*Configure GPIO pin : LED_GREEN_Pin, LED_RED_Pin */
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitStruct.Pin = LED_GREEN_Pin | LED_RED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED_GREEN_GPIO_Port, &GPIO_InitStruct);
+#endif
 #endif
 }
 
@@ -259,48 +324,19 @@ void updateProgramSelector(uint8_t button, uint8_t led, uint8_t patch, bool valu
 }
 #endif /* OWL_EFFECTSBOX */
 
-#ifdef OWL_BIOSIGNALS
-
-#define MAX_CHANNELS 4
-
-#include "ads1298.h"
-#include "ads.h"
-int32_t samples[MAX_CHANNELS];
-
-volatile bool continuous = false;
-// volatile bool doFilter = true;
-// volatile bool pretty = false;
-void startContinuous(){
-  ads_send_command(ADS1298::RDATAC);
-  ads_send_command(ADS1298::START);
-  continuous = true;
-  setLed(0, BLUE_COLOUR);
-}
-void stopContinuous(){
-  ads_send_command(ADS1298::STOP);
-  ads_send_command(ADS1298::SDATAC);
-  continuous = false;
-  setLed(0, NO_COLOUR);
-}
-#endif
-
 extern "C" {
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
 #ifdef OWL_BIOSIGNALS
   case ADC_DRDY_Pin: {
-    // toggleLed();
-    if(continuous){
-      ads_sample(samples, MAX_CHANNELS);
-      // if(doFilter)
-      // 	filter();
-      // if(pretty)
-      // 	sendSerial();
-      // else
-      // 	sendSarcduino();
-    }    
-  }    
+    ads_drdy();
+  }
+#ifdef USE_KX122
+  case ACC_INT1_Pin: {
+    kx122_drdy();
+  }
+#endif
 #endif
 #ifdef PUSHBUTTON_Pin
   case PUSHBUTTON_Pin: {
@@ -451,6 +487,16 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
+
+#ifdef OWL_BIOSIGNALS
+  ble_init();
+#ifdef USE_LED
+  initLed();
+  setLed(0, YELLOW_COLOUR);
+#endif
+  setLed(1, NO_COLOUR);
+#endif
+
 #ifdef USE_BKPSRAM
   // __HAL_RCC_PWR_CLK_ENABLE();
   HAL_PWR_EnableBkUpAccess();
@@ -495,7 +541,7 @@ void setup(){
   registry.init();
   settings.init(); // settings need the registry to be initialised first
 #ifdef USE_CODEC
-  codec.begin();
+  codec.init();
   codec.set(0);
   codec.bypass(false);
   codec.setInputGain(settings.audio_input_gain);
@@ -588,22 +634,6 @@ void setup(){
     error(CONFIG_ERROR, "ADC Start failed");
 #endif /* USE_ADC */
 #endif
-  
-#ifdef USE_BKPSRAM
-  extern RTC_HandleTypeDef hrtc;
-  uint8_t lastprogram = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
-  // uint8_t lastprogram = RTC->BKP1R;
-  // uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
-  // uint8_t lastprogram = *bkpsram_addr;
-#else    
-  uint8_t lastprogram = 0;
-#endif
-  if(lastprogram == settings.program_index){
-    error(CONFIG_ERROR, "Preventing reset program from starting");
-  }else{
-    program.loadProgram(settings.program_index);
-    program.startProgram(false);
-  }
 
   midiSetInputChannel(settings.midi_input_channel);
   midiSetOutputChannel(settings.midi_output_channel);

@@ -1,21 +1,22 @@
 #ifndef _SerialBuffer_hpp_
 #define _SerialBuffer_hpp_
 
+#include <stdint.h>
 #include <string.h> // for memcpy
 
-template<uint16_t size>
+template<size_t size, typename T = uint8_t>
 class SerialBuffer {
 private:
-  volatile uint16_t writepos = 0;
-  volatile uint16_t readpos = 0;
-  uint8_t buffer[size];
+  volatile size_t writepos = 0;
+  volatile size_t readpos = 0;
+  T buffer[size];
 public:
-  uint16_t getCapacity(){
+  size_t getCapacity(){
     return size;
   }
-  void push(uint8_t* data, uint16_t len){
-    uint8_t* dest = getWriteHead();
-    uint16_t rem = size-writepos;
+  void push(T* data, size_t len){
+    T* dest = getWriteHead();
+    size_t rem = size-writepos;
     if(len >= rem){
       memcpy(dest, data, rem);
       // note that len-rem may be zero
@@ -26,9 +27,9 @@ public:
       writepos += len;
     }
   }
-  void pull(uint8_t* data, uint16_t len){
-    uint8_t* src = getReadHead();
-    uint16_t rem = size-readpos;
+  void pull(T* data, size_t len){
+    T* src = getReadHead();
+    size_t rem = size-readpos;
     if(len >= rem){
       memcpy(data, src, rem);
       // note that len-rem may be zero
@@ -40,21 +41,21 @@ public:
     }
   }
 
-  void push(uint8_t c){
+  void push(T c){
     buffer[writepos++] = c;
     if(writepos >= size)
       writepos = 0;
   }
-  uint8_t pull(){
-    uint8_t c = buffer[readpos++];
+  T pull(){
+    T c = buffer[readpos++];
     if(readpos >= size)
       readpos = 0;
     return c;
   }
 
   void skipUntilLast(char c){
-    uint8_t* src = getReadHead();
-    uint16_t rem = size-readpos;
+    T* src = getReadHead();
+    size_t rem = size-readpos;
     for(int i=0; i<rem; ++i){
       if(src[i] != c){
 	readpos += i;
@@ -70,10 +71,10 @@ public:
     }
   }
 
-  uint8_t* getWriteHead(){
+  T* getWriteHead(){
     return buffer+writepos;
   }
-  void incrementWriteHead(uint16_t len){
+  void incrementWriteHead(size_t len){
     // ASSERT((writepos >= readpos && writepos+len <= size) ||
     // 	   (writepos < readpos && writepos+len <= readpos), "uart rx overflow");
     writepos += len;
@@ -81,10 +82,10 @@ public:
       writepos -= size;
   }
 
-  uint8_t* getReadHead(){
+  T* getReadHead(){
     return buffer+readpos;
   }
-  void incrementReadHead(uint16_t len){
+  void incrementReadHead(size_t len){
     // ASSERT((readpos >= writepos && readpos+len <= size) ||
     // 	   (readpos < writepos && readpos+len <= writepos), "uart rx underflow");
     readpos += len;
@@ -94,17 +95,20 @@ public:
   bool notEmpty(){
     return writepos != readpos;
   }
-  uint16_t available(){
+  size_t getReadCapacity(){
     return (writepos + size - readpos) % size;
   }
-  uint16_t getContiguousWriteCapacity(){
+  size_t getWriteCapacity(){
+    return size - getReadCapacity();
+  }
+  size_t getContiguousWriteCapacity(){
     if(writepos < readpos)
       return readpos - writepos;
     else
       return size - writepos;
     // return size-writepos;
   }
-  uint16_t getContiguousReadCapacity(){
+  size_t getContiguousReadCapacity(){
     if(writepos < readpos)
       return size - readpos;
     else
