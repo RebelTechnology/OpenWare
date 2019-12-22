@@ -44,6 +44,9 @@ effectsbox: ## build EffectsBox project
 noctua: ## build Noctua project
 	@$(MAKE) -C Noctua all
 
+biosignals: ## build BioSignals project
+	@$(MAKE) -C BioSignals all
+
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
 	@$(MAKE) -C Alchemist clean
@@ -56,6 +59,7 @@ clean: ## remove generated files
 	@$(MAKE) -C QuadFM clean
 	@$(MAKE) -C EffectsBox clean
 	@$(MAKE) -C Noctua clean
+	@$(MAKE) -C BioSignals clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile
