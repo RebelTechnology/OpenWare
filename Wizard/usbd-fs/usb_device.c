@@ -76,7 +76,7 @@ void MX_USB_DEVICE_Init(void)
   {
     Error_Handler();
   }
-  if (USBD_AUDIO_RegisterInterface(&hUsbDeviceFS, &USBD_Midi_fops) != USBD_OK)
+  if (USBD_Midi_RegisterInterface(&hUsbDeviceFS, &USBD_Midi_fops) != USBD_OK)
   {
     Error_Handler();
   }
