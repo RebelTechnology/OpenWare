@@ -1,20 +1,21 @@
 #ifndef _SerialBuffer_hpp_
 #define _SerialBuffer_hpp_
 
+#include <stdint.h>
 #include <string.h> // for memcpy
 
-template<uint16_t size>
+template<uint16_t size, typename T = uint8_t>
 class SerialBuffer {
 private:
   volatile uint16_t writepos = 0;
   volatile uint16_t readpos = 0;
-  uint8_t buffer[size];
+  T buffer[size];
 public:
   uint16_t getCapacity(){
     return size;
   }
-  void push(uint8_t* data, uint16_t len){
-    uint8_t* dest = getWriteHead();
+  void push(T* data, uint16_t len){
+    T* dest = getWriteHead();
     uint16_t rem = size-writepos;
     if(len >= rem){
       memcpy(dest, data, rem);
@@ -26,8 +27,8 @@ public:
       writepos += len;
     }
   }
-  void pull(uint8_t* data, uint16_t len){
-    uint8_t* src = getReadHead();
+  void pull(T* data, uint16_t len){
+    T* src = getReadHead();
     uint16_t rem = size-readpos;
     if(len >= rem){
       memcpy(data, src, rem);
@@ -40,20 +41,20 @@ public:
     }
   }
 
-  void push(uint8_t c){
+  void push(T c){
     buffer[writepos++] = c;
     if(writepos >= size)
       writepos = 0;
   }
-  uint8_t pull(){
-    uint8_t c = buffer[readpos++];
+  T pull(){
+    T c = buffer[readpos++];
     if(readpos >= size)
       readpos = 0;
     return c;
   }
 
   void skipUntilLast(char c){
-    uint8_t* src = getReadHead();
+    T* src = getReadHead();
     uint16_t rem = size-readpos;
     for(int i=0; i<rem; ++i){
       if(src[i] != c){
@@ -70,7 +71,7 @@ public:
     }
   }
 
-  uint8_t* getWriteHead(){
+  T* getWriteHead(){
     return buffer+writepos;
   }
   void incrementWriteHead(uint16_t len){
@@ -81,7 +82,7 @@ public:
       writepos -= size;
   }
 
-  uint8_t* getReadHead(){
+  T* getReadHead(){
     return buffer+readpos;
   }
   void incrementReadHead(uint16_t len){
