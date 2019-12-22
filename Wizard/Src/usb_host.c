@@ -32,7 +32,13 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+#ifdef OWL_USBD_FS
+#define HUSB_HOST hUsbHostHS
+#define HUSB_HOST_HSFS HOST_HS
+#else
+#define HUSB_HOST hUsbHostFS
+#define HUSB_HOST_HSFS HOST_FS
+#endif
 /* USER CODE END PV */
 
 /* USER CODE BEGIN PFP */
@@ -41,11 +47,7 @@
 /* USER CODE END PFP */
 
 /* USB Host core handle declaration */
-#ifdef OWL_USBD_FS
-USBH_HandleTypeDef hUsbHostHS;
-#else
-USBH_HandleTypeDef hUsbHostFS;
-#endif
+USBH_HandleTypeDef HUSB_HOST;
 ApplicationTypeDef Appli_state = APPLICATION_IDLE;
 
 /*
@@ -71,11 +73,7 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
 void MX_USB_HOST_Process() 
 {
   /* USB Host Background task */
-#ifdef OWL_USBD_FS
-    USBH_Process(&hUsbHostHS);
-#else
-    USBH_Process(&hUsbHostFS);
-#endif
+  USBH_Process(&HUSB_HOST);
 }
 
 /* USER CODE END 1 */
@@ -91,15 +89,15 @@ void MX_USB_HOST_Init(void)
   /* USER CODE END USB_HOST_Init_PreTreatment */
   
   /* Init host Library, add supported class and start the library. */
-  if (USBH_Init(&hUsbHostHS, USBH_UserProcess, HOST_HS) != USBH_OK)
+  if (USBH_Init(&HUSB_HOST, USBH_UserProcess, HUSB_HOST_HSFS) != USBH_OK)
   {
     Error_Handler();
   }
-  if (USBH_RegisterClass(&hUsbHostHS, USBH_MIDI_CLASS) != USBH_OK)
+  if (USBH_RegisterClass(&HUSB_HOST, USBH_MIDI_CLASS) != USBH_OK)
   {
     Error_Handler();
   }
-  if (USBH_Start(&hUsbHostHS) != USBH_OK)
+  if (USBH_Start(&HUSB_HOST) != USBH_OK)
   {
     Error_Handler();
   }
