@@ -7,8 +7,6 @@
 
 #define ADC_TIMEOUT       1000
 
-static uint8_t volume;
-
 #define setCS()    setPin(ADC_NCS_GPIO_Port, ADC_NCS_Pin)
 #define clearCS()  clearPin(ADC_NCS_GPIO_Port, ADC_NCS_Pin)
 /* #define setCS()    HAL_GPIO_WritePin(ADC_NCS_GPIO_Port, ADC_NCS_Pin, GPIO_PIN_SET); */
@@ -135,12 +133,21 @@ void codec_mute(bool mute){
   codec_write(68, mute ? 0xff : 0x00);
 }
 
+/**
+ * Adjustable from 127 = +20dB to -113 = -100dB in 0.5dB steps. Less than -113 is mute.
+ */
 void codec_set_gain_in(int8_t level){
-  // todo
+  /* Register 88: ADC Digital attenuation level setting */
+  uint8_t value = level+128;
+  codec_write(88, value); // 
 }
 
-/* Set output gain between 0 (mute) and 127 (max) */
+/**
+ * Adjustable from 127 = 0dB to -73 = -100dB in 0.5dB steps. Less than -73 is mute.
+ */
 void codec_set_gain_out(int8_t level){
-  // todo
+  /* Register 71: DAC Digital attenuation level setting */
+  uint8_t value = level+128;
+  codec_write(71, value); // 
 }
 

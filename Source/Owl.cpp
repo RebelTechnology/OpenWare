@@ -541,7 +541,7 @@ void setup(){
   registry.init();
   settings.init(); // settings need the registry to be initialised first
 #ifdef USE_CODEC
-  codec.begin();
+  codec.init();
   codec.set(0);
   codec.bypass(false);
 #endif /* USE_CODEC */
