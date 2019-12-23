@@ -604,6 +604,7 @@ static void HAL_FMC_MspInit(void){
     return;
   }
   FMC_Initialized = 1;
+
   /* Peripheral clock enable */
   __HAL_RCC_FMC_CLK_ENABLE();
   
@@ -912,7 +913,6 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 
 void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
 {
-
 /* SAI1 */
     if(hsai->Instance==SAI1_Block_A)
     {
