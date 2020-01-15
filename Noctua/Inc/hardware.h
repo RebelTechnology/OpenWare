@@ -5,7 +5,7 @@
 #define HARDWARE_ID                  NOCTUA_HARDWARE
 #define HARDWARE_VERSION             "Noctua"
 
-#define AUDIO_CHANNELS               8
+#define AUDIO_CHANNELS               3
 
 /* #define USE_USB_AUDIO */
 /* #define USE_USBD_MIDI */
@@ -38,7 +38,7 @@
 #define USE_USBD_MIDI
 #define USE_USBD_FS
 
-#define AUDIO_SAMPLINGRATE          16000
+#define AUDIO_SAMPLINGRATE          8000
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
 /* #define USE_PCM3168A */
