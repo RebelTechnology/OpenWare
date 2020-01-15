@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -105,7 +105,7 @@
   */
 
 /** Descriptor for the Usb device. */
-extern USBD_DescriptorsTypeDef HS_Desc;
+extern USBD_DescriptorsTypeDef FS_Desc;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 
