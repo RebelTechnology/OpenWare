@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -32,8 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "main.h"
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal.h"
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
 #ifdef DEBUG
@@ -42,10 +42,10 @@
 #else
 #define DEBUG_LEVEL     0
 #endif
+
 /* USER CODE END INCLUDE */
 
 /** @addtogroup USBD_OTG_DRIVER
-  * @brief Driver for Usb device.
   * @{
   */
 
@@ -74,8 +74,6 @@
 #define USBD_MAX_NUM_CONFIGURATION     1U
 /*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512U
-/*---------- -----------*/
-#define USBD_SUPPORT_USER_STRING     0U
 /*---------- -----------*/
 #define USBD_DEBUG_LEVEL     DEBUG_LEVEL
 /*---------- -----------*/
