@@ -31,10 +31,19 @@
 #define ADC_G 6
 #define ADC_H 7
 #define USE_CODEC
-#define USE_PCM3168A
+#define USE_IIS3DWB
+
+/* #define USE_USB_AUDIO */
+/* #define USE_USBD_AUDIO_IN // microphone */
+#define USE_USBD_MIDI
+#define USE_USBD_FS
+
+#define AUDIO_SAMPLINGRATE          16000
+#define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
+
+/* #define USE_PCM3168A */
 #define CODEC_HP_FILTER
 #define CODEC_SPI hspi2
-#define USE_USBD_FS
 /* #define USE_USB_HOST */
 #define USBH_HANDLE hUsbHostHS
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
