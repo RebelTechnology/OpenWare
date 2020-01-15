@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -88,7 +88,7 @@
   */
 
 /** AUDIO_IF Interface callback. */
-extern USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops_HS;
+extern USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops_FS;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 
@@ -107,13 +107,13 @@ extern USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops_HS;
   * @brief  Manages the DMA full transfer complete event.
   * @retval None
   */
-void TransferComplete_CallBack_HS(void);
+void TransferComplete_CallBack_FS(void);
 
 /**
   * @brief  Manages the DMA half transfer complete event.
   * @retval None
   */
-void HalfTransfer_CallBack_HS(void);
+void HalfTransfer_CallBack_FS(void);
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
 
