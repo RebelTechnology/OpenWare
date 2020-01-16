@@ -36,17 +36,17 @@
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       32
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define AUDIO_CHANNELS              4
+#define AUDIO_CHANNELS              8
 #define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*4)
 #define USB_AUDIO_CHANNELS          AUDIO_CHANNELS
 
-#define USE_USB_AUDIO
-#define USE_USBD_AUDIO_IN // microphone
+/* #define USE_USB_AUDIO */
+/* #define USE_USBD_AUDIO_IN // microphone */
 #define USE_USBD_MIDI
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 
-#define AUDIO_SAMPLINGRATE          8000
+#define AUDIO_SAMPLINGRATE          4000
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
 /* #define USE_PCM3168A */
