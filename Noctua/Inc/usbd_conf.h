@@ -36,7 +36,12 @@
 #include "stm32f4xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#ifdef DEBUG
+#warning USBD_DEBUG_LEVEL 3 uses printf!
+#define DEBUG_LEVEL     3
+#else
+#define DEBUG_LEVEL     0
+#endif
 /* USER CODE END INCLUDE */
 
 /** @addtogroup USBD_OTG_DRIVER
@@ -70,13 +75,13 @@
 /*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512U
 /*---------- -----------*/
-#define USBD_DEBUG_LEVEL     0U
+#define USBD_DEBUG_LEVEL     DEBUG_LEVEL
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     0U
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
 /*---------- -----------*/
-#define USBD_AUDIO_FREQ     48000U
+#define USBD_AUDIO_FREQ     AUDIO_SAMPLINGRATE
 
 /****************************************/
 /* #define for FS and HS identification */

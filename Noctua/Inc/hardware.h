@@ -4,8 +4,7 @@
 #define OWL_NOCTUA
 #define HARDWARE_ID                  NOCTUA_HARDWARE
 #define HARDWARE_VERSION             "Noctua"
-
-#define AUDIO_CHANNELS               3
+#undef USE_EXTERNAL_RAM
 
 /* #define USE_USB_AUDIO */
 /* #define USE_USBD_MIDI */
@@ -31,12 +30,21 @@
 #define ADC_G 6
 #define ADC_H 7
 #define USE_CODEC
-#define USE_IIS3DWB
+/* #define USE_IIS3DWB */
+#define USE_PCM3168A
 
-/* #define USE_USB_AUDIO */
-/* #define USE_USBD_AUDIO_IN // microphone */
+/* USB audio settings */
+#define AUDIO_BITS_PER_SAMPLE       32
+#define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
+#define AUDIO_CHANNELS              4
+#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*4)
+#define USB_AUDIO_CHANNELS          AUDIO_CHANNELS
+
+#define USE_USB_AUDIO
+#define USE_USBD_AUDIO_IN // microphone
 #define USE_USBD_MIDI
 #define USE_USBD_FS
+#define USBD_HANDLE hUsbDeviceFS
 
 #define AUDIO_SAMPLINGRATE          8000
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */

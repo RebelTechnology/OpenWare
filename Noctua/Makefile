@@ -2,15 +2,17 @@ PROJECT = Noctua
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
+LDSCRIPT = noctua.ld
 include $(OPENWARE)/Hardware/owl2.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += iis3dwb_reg.c
-# C_SRC += pcm3168a.c
+C_SRC += pcm3168a.c
 # CPP_SRC += usbh_midi.cpp
-C_SRC += usbd_midi.c
-C_SRC += usbd_midi_if.c
+# C_SRC += usbd_audio.c
+# C_SRC += usbd_midi.c
+# C_SRC += usbd_midi_if.c
 
 include $(OPENWARE)/Hardware/sources.mk
 
