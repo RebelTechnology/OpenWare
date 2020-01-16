@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -101,7 +101,7 @@
   * @{
   */
 
-extern USBD_HandleTypeDef hUsbDeviceHS;
+extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 
@@ -116,13 +116,13 @@ extern USBD_HandleTypeDef hUsbDeviceHS;
   * @{
   */
 
-static int8_t AUDIO_Init_HS(uint32_t AudioFreq, uint32_t Volume, uint32_t options);
-static int8_t AUDIO_DeInit_HS(uint32_t options);
-static int8_t AUDIO_AudioCmd_HS(uint8_t* pbuf, uint32_t size, uint8_t cmd);
-static int8_t AUDIO_VolumeCtl_HS(uint8_t vol);
-static int8_t AUDIO_MuteCtl_HS(uint8_t cmd);
-static int8_t AUDIO_PeriodicTC_HS(uint8_t cmd);
-static int8_t AUDIO_GetState_HS(void);
+static int8_t AUDIO_Init_FS(uint32_t AudioFreq, uint32_t Volume, uint32_t options);
+static int8_t AUDIO_DeInit_FS(uint32_t options);
+static int8_t AUDIO_AudioCmd_FS(uint8_t* pbuf, uint32_t size, uint8_t cmd);
+static int8_t AUDIO_VolumeCtl_FS(uint8_t vol);
+static int8_t AUDIO_MuteCtl_FS(uint8_t cmd);
+static int8_t AUDIO_PeriodicTC_FS(uint8_t cmd);
+static int8_t AUDIO_GetState_FS(void);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
 
@@ -132,42 +132,42 @@ static int8_t AUDIO_GetState_HS(void);
   * @}
   */
 
-USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops_HS =
+USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops_FS =
 {
-  AUDIO_Init_HS,
-  AUDIO_DeInit_HS,
-  AUDIO_AudioCmd_HS,
-  AUDIO_VolumeCtl_HS,
-  AUDIO_MuteCtl_HS,
-  AUDIO_PeriodicTC_HS,
-  AUDIO_GetState_HS
+  AUDIO_Init_FS,
+  AUDIO_DeInit_FS,
+  AUDIO_AudioCmd_FS,
+  AUDIO_VolumeCtl_FS,
+  AUDIO_MuteCtl_FS,
+  AUDIO_PeriodicTC_FS,
+  AUDIO_GetState_FS
 };
 
 /* Private functions ---------------------------------------------------------*/
 /**
-  * @brief  Initializes the AUDIO media low layer over the USB HS IP
+  * @brief  Initializes the AUDIO media low layer over USB FS IP
   * @param  AudioFreq: Audio frequency used to play the audio stream.
   * @param  Volume: Initial volume level (from 0 (Mute) to 100 (Max))
   * @param  options: Reserved for future use 
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t AUDIO_Init_HS(uint32_t AudioFreq, uint32_t Volume, uint32_t options)
+static int8_t AUDIO_Init_FS(uint32_t AudioFreq, uint32_t Volume, uint32_t options)
 {
-  /* USER CODE BEGIN 9 */
+  /* USER CODE BEGIN 0 */
   return (USBD_OK);
-  /* USER CODE END 9 */
+  /* USER CODE END 0 */
 }
 
 /**
-  * @brief  DeInitializes the AUDIO media low layer
+  * @brief  De-Initializes the AUDIO media low layer
   * @param  options: Reserved for future use
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t AUDIO_DeInit_HS(uint32_t options)
+static int8_t AUDIO_DeInit_FS(uint32_t options)
 {
-  /* USER CODE BEGIN 10 */
+  /* USER CODE BEGIN 1 */
   return (USBD_OK);
-  /* USER CODE END 10 */
+  /* USER CODE END 1 */
 }
 
 /**
@@ -177,19 +177,19 @@ static int8_t AUDIO_DeInit_HS(uint32_t options)
   * @param  cmd: Command opcode
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t AUDIO_AudioCmd_HS(uint8_t* pbuf, uint32_t size, uint8_t cmd)
+static int8_t AUDIO_AudioCmd_FS(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 {
-  /* USER CODE BEGIN 11 */
+  /* USER CODE BEGIN 2 */
   switch(cmd)
   {
     case AUDIO_CMD_START:
     break;
 
     case AUDIO_CMD_PLAY:
-    break;
+    break;	
   }
   return (USBD_OK);
-  /* USER CODE END 11 */
+  /* USER CODE END 2 */
 }
 
 /**
@@ -197,11 +197,11 @@ static int8_t AUDIO_AudioCmd_HS(uint8_t* pbuf, uint32_t size, uint8_t cmd)
   * @param  vol: volume level (0..100)
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t AUDIO_VolumeCtl_HS(uint8_t vol)
+static int8_t AUDIO_VolumeCtl_FS(uint8_t vol)
 {
-  /* USER CODE BEGIN 12 */
+  /* USER CODE BEGIN 3 */
   return (USBD_OK);
-  /* USER CODE END 12 */
+  /* USER CODE END 3 */
 }
 
 /**
@@ -209,56 +209,56 @@ static int8_t AUDIO_VolumeCtl_HS(uint8_t vol)
   * @param  cmd: command opcode
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t AUDIO_MuteCtl_HS(uint8_t cmd)
+static int8_t AUDIO_MuteCtl_FS(uint8_t cmd)
 {
-  /* USER CODE BEGIN 13 */
+  /* USER CODE BEGIN 4 */
   return (USBD_OK);
-  /* USER CODE END 13 */
+  /* USER CODE END 4 */
 }
 
 /**
-  * @brief  AUDIO_PeriodicTC_HS
-  * @param  cmd: command opcode
+  * @brief  AUDIO_PeriodicT_FS
+  * @param  cmd: Command opcode
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t AUDIO_PeriodicTC_HS(uint8_t cmd)
+static int8_t AUDIO_PeriodicTC_FS(uint8_t cmd)
 {
-  /* USER CODE BEGIN 14 */
+  /* USER CODE BEGIN 5 */
   return (USBD_OK);
-  /* USER CODE END 14 */
+  /* USER CODE END 5 */
 }
 
 /**
-  * @brief  Gets AUDIO state.
+  * @brief  Gets AUDIO State.
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t AUDIO_GetState_HS(void)
+static int8_t AUDIO_GetState_FS(void)
 {
-  /* USER CODE BEGIN 15 */
+  /* USER CODE BEGIN 6 */
   return (USBD_OK);
-  /* USER CODE END 15 */
+  /* USER CODE END 6 */
 }
 
 /**
   * @brief  Manages the DMA full transfer complete event.
   * @retval None
   */
-void TransferComplete_CallBack_HS(void)
+void TransferComplete_CallBack_FS(void)
 {
-  /* USER CODE BEGIN 16 */
-  USBD_AUDIO_Sync(&hUsbDeviceHS, AUDIO_OFFSET_FULL);
-  /* USER CODE END 16 */
+  /* USER CODE BEGIN 7 */
+  USBD_AUDIO_Sync(&hUsbDeviceFS, AUDIO_OFFSET_FULL);
+  /* USER CODE END 7 */
 }
 
 /**
   * @brief  Manages the DMA Half transfer complete event.
   * @retval None
   */
-void HalfTransfer_CallBack_HS(void)
+void HalfTransfer_CallBack_FS(void)
 {
-  /* USER CODE BEGIN 17 */
-  USBD_AUDIO_Sync(&hUsbDeviceHS, AUDIO_OFFSET_HALF);
-  /* USER CODE END 17 */
+  /* USER CODE BEGIN 8 */
+  USBD_AUDIO_Sync(&hUsbDeviceFS, AUDIO_OFFSET_HALF);
+  /* USER CODE END 8 */
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */

@@ -3,7 +3,7 @@
 
 #define OWL_BIOSIGNALS
 #define HARDWARE_ID                  BIOSIGNALS_HARDWARE
-#define HARDWARE_VERSION             "BioSignals"
+#define HARDWARE_VERSION             "AccelerometerTest"
 
 #define USE_BLE_MIDI
 #define BLE_SPI hspi2
@@ -25,15 +25,11 @@
 #define USBD_HANDLE hUsbDeviceHS
 /* #define AUDIO_BYPASS */
 
-/* #define USE_KX122 */
-#define KX122_ACTIVE_CHANNELS         3
-/* #define KX122_AUDIO_FREQ              25600 */
-/* #define KX122_AUDIO_FREQ              12800 */
-/* #define KX122_AUDIO_FREQ              6400 */
-/* #define KX122_AUDIO_FREQ              3200 */
-#define KX122_AUDIO_FREQ              100
-#define KX122_TOTAL_CHANNELS          3 /* Always 3 */
-#define KX122_HSPI                    hspi3
+#define IIS_AUDIO_FREQ              8000
+#define ADS_GAIN                    4
+#define ADS_MAX_CHANNELS            4
+#define ADS_ACTIVE_CHANNELS         4
+#define ADS_HSPI                    hspi1
 
 #define ADS_AUDIO_FREQ              8000
 #define ADS_GAIN                    4
@@ -46,7 +42,7 @@
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       32
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define AUDIO_SAMPLINGRATE          8000
+#define AUDIO_SAMPLINGRATE          5000
 
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
