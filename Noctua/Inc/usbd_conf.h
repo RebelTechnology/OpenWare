@@ -117,25 +117,25 @@
 /* DEBUG macros */
 
 #if (USBD_DEBUG_LEVEL > 0)
-#define USBD_UsrLog(...)    printf(__VA_ARGS__);\
-                            printf("\n");
+#define USBD_UsrLog(...)    do { printf(__VA_ARGS__);	\
+                            printf("\n"); } while(0)
 #else
 #define USBD_UsrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 1)
 
-#define USBD_ErrLog(...)    printf("ERROR: ") ;\
+#define USBD_ErrLog(...)    do { printf("ERROR: ") ;\
                             printf(__VA_ARGS__);\
-                            printf("\n");
+                            printf("\n"); } while(0)
 #else
 #define USBD_ErrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 2)
-#define USBD_DbgLog(...)    printf("DEBUG : ") ;\
+#define USBD_DbgLog(...)    do { printf("DEBUG : ") ;	\
                             printf(__VA_ARGS__);\
-                            printf("\n");
+                            printf("\n"); } while(0)
 #else
 #define USBD_DbgLog(...)
 #endif

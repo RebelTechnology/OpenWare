@@ -480,7 +480,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 			MIDI_OUT_EP,
 			USBD_EP_TYPE_BULK,
 			MIDI_DATA_OUT_PACKET_SIZE);			
-    if(rv != USBD_OK ) 
+    if(rv != USBD_OK )
       USBD_ErrLog("Open of OUT MIDI endpoint failed. error %d\n", rv);
 
     /* Prepare Out endpoint to receive next packet */
