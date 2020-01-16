@@ -46,7 +46,7 @@
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 
-#define AUDIO_SAMPLINGRATE          4000
+#define AUDIO_SAMPLINGRATE          8000
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
 /* #define USE_PCM3168A */
