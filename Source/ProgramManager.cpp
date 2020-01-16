@@ -27,6 +27,9 @@
 #ifdef USE_USB_HOST
 #include "usbh_midi.h"
 #endif /* USE_USB_HOST */
+#ifdef USE_USB_AUDIO
+extern void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t len);
+#endif
 
 #include "basicmaths.h"
 
@@ -220,8 +223,12 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
+#ifdef USE_USB_AUDIO
+  usbd_audio_fill_ringbuffer(pv->audio_output, pv->audio_blocksize);
+#endif		       
+  /* Block indefinitely */
   // uint32_t ulNotifiedValue =
-  ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
+  ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
 #endif
