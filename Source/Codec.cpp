@@ -20,7 +20,14 @@ volatile static size_t adc_underflow = 0;
 
 void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t blocksize){
   // assumes: USB datasize is 32 bits, and USB channel count is same as patch
-  audio_ringbuffer.push(buffer, blocksize*USB_AUDIO_CHANNELS);
+  while(blocksize--){
+    audio_t* dst = audio_ringbuffer.getWriteHead();
+    size_t ch = 0;
+    while(ch < USB_AUDIO_CHANNELS)
+      *dst++ = *buffer++;
+    buffer += AUDIO_CHANNELS - USB_AUDIO_CHANNELS;
+    audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
+  }
 }
 
 void usbd_audio_empty_ringbuffer(uint8_t* buffer, size_t len){
@@ -265,15 +272,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     rxindex += AUDIO_CHANNELS;
     if(rxindex == rxhalf){
       audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize); // trigger audio processing block
-#ifdef USE_USB_AUDIO
-      audio_ringbuffer.write(codec_txbuf+rxhalf, codec_blocksize*AUDIO_CHANNELS); // copy back previous block
-#endif
     }else if(rxindex >= rxfull){
       rxindex = 0;
       audioCallback(codec_rxbuf+rxhalf, codec_txbuf+rxhalf, codec_blocksize);
-#ifdef USE_USB_AUDIO
-      audio_ringbuffer.write(codec_txbuf, codec_blocksize*AUDIO_CHANNELS);
-#endif
     }
 #endif
   }

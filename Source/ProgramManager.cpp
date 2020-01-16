@@ -224,7 +224,8 @@ void onProgramReady(){
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
 #ifdef USE_USB_AUDIO
-  usbd_audio_fill_ringbuffer(pv->audio_output, pv->audio_blocksize);
+  // usbd_audio_fill_ringbuffer(pv->audio_output, pv->audio_blocksize);
+  usbd_audio_fill_ringbuffer(pv->audio_input, pv->audio_blocksize);
 #endif		       
   /* Block indefinitely */
   // uint32_t ulNotifiedValue =
