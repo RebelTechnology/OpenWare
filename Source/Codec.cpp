@@ -4,6 +4,66 @@
 #include "ApplicationSettings.h"
 #include <cstring>
 
+#if AUDIO_BITS_PER_SAMPLE == 32
+typedef int32_t audio_t;
+#elif AUDIO_BITS_PER_SAMPLE == 16
+typedef int16_t audio_t;
+#else
+#error Invalid AUDIO_BITS_PER_SAMPLE
+#endif
+
+#ifdef USE_USB_AUDIO
+#include "usbd_audio.h"
+#include "SerialBuffer.hpp"
+SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_ringbuffer;
+volatile static size_t adc_underflow = 0;
+
+void usbd_fill_buffer(uint8_t* buffer, size_t len){
+  len /= (AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS);
+  audio_t* dst = (audio_t*)buffer;
+  size_t available;
+  for(size_t i=0; i<len; ++i){
+    memcpy(dst, audio_ringbuffer.getReadHead(), USB_AUDIO_CHANNELS*sizeof(audio_t));
+    available = audio_ringbuffer.getReadCapacity();
+    if(available > USB_AUDIO_CHANNELS)
+      audio_ringbuffer.incrementReadHead(USB_AUDIO_CHANNELS);
+    else
+      adc_underflow++;
+    dst += USB_AUDIO_CHANNELS;
+  }
+}
+
+void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+  usbd_fill_buffer(haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
+  usbd_audio_write(pdev, haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
+}
+
+void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+  // set read head at half a ringbuffer distance from write head
+  size_t pos = audio_ringbuffer.getWriteIndex() / USB_AUDIO_CHANNELS;
+  size_t len = audio_ringbuffer.getCapacity() / USB_AUDIO_CHANNELS;
+  pos = (pos + len/2) % len;
+  pos *= USB_AUDIO_CHANNELS;
+  audio_ringbuffer.setReadIndex(pos);
+  usbd_initiate_tx(pdev, haudio);
+}
+
+void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+  usbd_initiate_tx(pdev, haudio);
+}
+
+void usbd_audio_gain_callback(uint8_t gain){
+  codec_set_gain_in(gain);
+}
+
+void usbd_audio_sync_callback(uint8_t shift){
+#ifdef DEBUG
+  printf("AUDIO SHIFT %d\n", shift);
+#endif
+  // todo: do something with the shift number
+}
+#endif // USE_USB_AUDIO
+
 extern "C" {
   uint16_t codec_blocksize = 0;
   int32_t codec_txbuf[CODEC_BUFFER_SIZE];
@@ -164,8 +224,6 @@ typedef union{
   int16_t i16bit[3];
   uint8_t u8bit[6];
 } axis3bit16_t;
-
-typedef int32_t audio_t;
 
 axis3bit16_t dev_data_raw_acceleration;
 iis3dwb_status_reg_t dev_status;
