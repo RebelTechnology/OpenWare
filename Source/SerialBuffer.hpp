@@ -70,7 +70,12 @@ public:
       }
     }
   }
-
+  size_t getWriteIndex(){
+    return writepos;
+  }
+  void setWriteIndex(size_t pos){
+    writepos = pos;
+  }
   T* getWriteHead(){
     return buffer+writepos;
   }
@@ -82,6 +87,12 @@ public:
       writepos -= size;
   }
 
+  size_t getReadIndex(){
+    return readpos;
+  }
+  void setReadIndex(size_t pos){
+    readpos = pos;
+  }
   T* getReadHead(){
     return buffer+readpos;
   }
