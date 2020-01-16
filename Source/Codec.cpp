@@ -18,7 +18,12 @@ typedef int16_t audio_t;
 SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_ringbuffer;
 volatile static size_t adc_underflow = 0;
 
-void usbd_fill_buffer(uint8_t* buffer, size_t len){
+void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t blocksize){
+  // assumes: USB datasize is 32 bits, and USB channel count is same as patch
+  audio_ringbuffer.push(buffer, blocksize*USB_AUDIO_CHANNELS);
+}
+
+void usbd_audio_empty_ringbuffer(uint8_t* buffer, size_t len){
   len /= (AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS);
   audio_t* dst = (audio_t*)buffer;
   size_t available;
@@ -34,7 +39,7 @@ void usbd_fill_buffer(uint8_t* buffer, size_t len){
 }
 
 void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  usbd_fill_buffer(haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
+  usbd_audio_empty_ringbuffer(haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
   usbd_audio_write(pdev, haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
 }
 
