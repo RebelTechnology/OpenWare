@@ -83,7 +83,7 @@ USBD_ClassTypeDef  USBD_AUDIO =
 
 #ifdef USE_USB_AUDIO
 #define USB_AUDIO_CONFIG_DESC_SIZ      174
-#define AUDIO_OUT_EP                   0x02
+#define AUDIO_OUT_EP                   0x02 // bInterfaceNumber
 #define AUDIO_IN_EP                    0x82
 #define MIDI_OUT_EP                    0x01
 #define MIDI_IN_EP                     0x81
@@ -180,7 +180,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /* USB Microphone Standard AS Interface Descriptor (Alt. Set. 0) (CODE == 3)*/ //zero-bandwidth interface
   0x09,                         // Size of the descriptor, in bytes (bLength)
   USB_DESC_TYPE_INTERFACE,      // INTERFACE descriptor type (bDescriptorType) 0x04
-  0x01,                         // Index of this interface. (bInterfaceNumber)
+  0x02,                         // Index of this interface. (bInterfaceNumber)
   0x00,                         // Index of this alternate setting. (bAlternateSetting)
   0x00,                         // 0 endpoints.   (bNumEndpoints)
   USB_DEVICE_CLASS_AUDIO,       // AUDIO (bInterfaceClass)
@@ -192,7 +192,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /* USB Microphone Standard AS Interface Descriptor (Alt. Set. 1) (CODE == 4)*/
   0x09,                         // Size of the descriptor, in bytes (bLength)
   USB_DESC_TYPE_INTERFACE,      // INTERFACE descriptor type (bDescriptorType) 0x04
-  0x01,                         // Index of this interface. (bInterfaceNumber)
+  0x02,                         // Index of this interface. (bInterfaceNumber)
   0x01,                         // Index of this alternate setting. (bAlternateSetting)
   0x01,                         // 1 endpoint (bNumEndpoints)
   USB_DEVICE_CLASS_AUDIO,       // AUDIO (bInterfaceClass)
@@ -258,7 +258,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /* Standard AC Interface Descriptor */
   0x09,                                 /* bLength */
   0x04,                                 /* bDescriptorType */
-  0x01,                                 /* bInterfaceNumber */
+  0x00,                                 /* bInterfaceNumber */
   0x00,                                 /* bAlternateSetting */
   0x00,                                 /* bNumEndpoints */
   0x01,                                 /* bInterfaceClass */
@@ -284,7 +284,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /* MIDI Adapter Standard MS Interface Descriptor */
   0x09,                                 /* bLength */
   0x04,                                 /* bDescriptorType */
-  0x02,                                 /* bInterfaceNumber */
+  0x01,                                 /* bInterfaceNumber */
   0x00,                                 /* bAlternateSetting */
   0x02,                                 /* bNumEndpoints */
   0x01,                                 /* bInterfaceClass */
