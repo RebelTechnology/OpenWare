@@ -159,6 +159,8 @@ typedef struct
 #ifdef USE_USBD_MIDI
   uint8_t                   midi_out_buffer[MIDI_BUF_SIZE];
 #endif
+  uint8_t                   tx_lock;
+  uint8_t                   audio_tx_active;
   AUDIO_OffsetTypeDef       offset;
   USBD_AUDIO_ControlTypeDef control;   
 }

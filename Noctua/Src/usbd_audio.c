@@ -59,6 +59,9 @@ static void AUDIO_REQ_GetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
 
 static void AUDIO_REQ_SetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 
+/* todo:
+   static uint8_t  USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,uint8_t as_interface_num,uint8_t new_alt); */
+
 USBD_AUDIO_HandleTypeDef usbd_audio_handle;
 
 USBD_ClassTypeDef  USBD_AUDIO =
@@ -91,7 +94,6 @@ USBD_ClassTypeDef  USBD_AUDIO =
 #define USB_AUDIO_CONFIG_DESC_SIZ      101
 #define MIDI_OUT_EP                    0x01
 #define MIDI_IN_EP                     0x81
-#define USB_AUDIO_CONFIG_DESC_SIZ      101
 #endif
 
 /* USB AUDIO device Configuration Descriptor */
@@ -509,21 +511,20 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 			   MIDI_DATA_OUT_PACKET_SIZE);
 
 #endif
-    
-    /* I'm not sure why this needs to be here, but if it is not, USBD_AUDIO_DataIn
-     * doesn't get called */
-    /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(haudio->buffer, */
-    /* 							 AUDIO_IN_PACKET_SIZE/2, */
-    /* 							 AUDIO_CMD_START); */
+
+    haudio->tx_lock = 0;
+    haudio->audio_tx_active = 0;
+
 #ifdef USE_USB_AUDIO
     usbd_audio_start_callback(pdev, haudio);
 #endif
+
 
     return USBD_OK;
 }
 
 /**
-  * @brief  USBD_AUDIO_Init
+  * @brief  USBD_AUDIO_DeInit
   *         DeInitialize the AUDIO layer
   * @param  pdev: device instance
   * @param  cfgidx: Configuration index
@@ -647,8 +648,6 @@ static uint8_t  *USBD_AUDIO_GetCfgDesc (uint16_t *length)
   return USBD_AUDIO_CfgDesc;
 }
 
-static volatile int midi_tx_lock = 0;
-
 /**
   * @brief  USBD_AUDIO_DataIn
   *         handle data IN Stage
@@ -659,15 +658,20 @@ static volatile int midi_tx_lock = 0;
 static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev, 
 				   uint8_t epnum)
 {
+  USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
 #ifdef USE_USBD_AUDIO_IN
   if(epnum == (AUDIO_IN_EP & ~0x80)){
-    USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
-    usbd_audio_data_in_callback(pdev, haudio);
+    haudio->tx_lock = 0;
   }
 #endif
 #ifdef USE_USBD_MIDI
   if(epnum == (MIDI_IN_EP & ~0x80)){
-    midi_tx_lock = 0;
+    haudio->tx_lock = 0;
+  }
+#endif
+#ifdef USE_USBD_AUDIO_IN
+  if(haudio->audio_tx_active){
+    usbd_audio_data_in_callback(pdev, haudio);
   }
 #endif
   return USBD_OK;
@@ -741,6 +745,7 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
   */
 static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
 {
+  /* SOF (Start of Frame) Every millisecond (12000 full-bandwidth bit times), the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
   return USBD_OK;
 }
 
@@ -795,7 +800,6 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
   
 #ifdef USE_USBD_AUDIO_OUT
   if (epnum == AUDIO_OUT_EP){
-    USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
     usbd_audio_data_out_callback(pdev, haudio);
     /* Prepare Out endpoint to receive next audio packet */
     USBD_LL_PrepareReceive(pdev,
@@ -895,8 +899,10 @@ uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev,
 
 void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len) {
 #ifdef USE_USBD_AUDIO_IN
-  if(pdev->dev_state == USBD_STATE_CONFIGURED && !midi_tx_lock){
-    midi_tx_lock = 1;
+  extern USBD_HandleTypeDef USBD_HANDLE;
+  USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
+  if(pdev->dev_state == USBD_STATE_CONFIGURED){
+    haudio->tx_lock = 1;
     USBD_LL_Transmit(pdev, AUDIO_IN_EP, buf, len);
   }
 #endif
@@ -905,9 +911,10 @@ void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len) {
 void midi_device_tx(uint8_t* buf, uint32_t len) {
 #ifdef USE_USBD_MIDI
   extern USBD_HandleTypeDef USBD_HANDLE;
-  if(USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED && !midi_tx_lock){
+  USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
+  if(USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED && !haudio->tx_lock){
     /* the call is non-blocking, and the DataIn callback of your USBD class is called with the endpoint number (excluding 0x80 bit) when the entire buffer has been transmitted over the endpoint */
-    midi_tx_lock = 1;
+    haudio->tx_lock = 1;
     USBD_LL_Transmit(&USBD_HANDLE, MIDI_IN_EP, buf, len);
   }
 #endif /* USE_USBD_MIDI */
@@ -924,11 +931,12 @@ uint8_t midi_device_connected(void){
 
 uint8_t midi_device_ready(void){
   extern USBD_HandleTypeDef USBD_HANDLE;
+  USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
   /* return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED; */
   /* return USBD_HANDLE.ep_in.status == USBD_OK; */
   /* return midi_tx_lock == 0; */
   /* USBD_HANDLE.ep_out.status == USBD_OK */
   return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED &&
     USBD_HANDLE.ep_in && USBD_HANDLE.ep_in->status == USBD_OK &&
-    midi_tx_lock == 0;
+    haudio->tx_lock == 0;
 }
