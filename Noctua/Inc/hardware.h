@@ -6,10 +6,6 @@
 #define HARDWARE_VERSION             "Noctua"
 #undef USE_EXTERNAL_RAM
 
-/* #define USE_USB_AUDIO */
-/* #define USE_USBD_MIDI */
-/* #define USE_USBD_AUDIO_IN // microphone */
-
 /* #define USE_MODE_BUTTON */
 /* #define MODE_BUTTON_PIN SW3_Pin */
 /* #define MODE_BUTTON_PORT SW3_GPIO_Port */
@@ -41,7 +37,8 @@
 #define USB_AUDIO_CHANNELS          4
 
 #define USE_USB_AUDIO
-#define USE_USBD_AUDIO_IN // microphone
+/* #define USE_USBD_AUDIO_OUT // speaker */
+#define USE_USBD_AUDIO_IN  // microphone
 #define USE_USBD_MIDI
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS

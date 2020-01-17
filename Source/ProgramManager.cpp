@@ -97,18 +97,23 @@ PatchDefinition* getPatchDefinition(){
 }
 
 void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
-  getProgramVector()->audio_input = rx;
-  getProgramVector()->audio_output = tx;
-  getProgramVector()->audio_blocksize = size;
-  // vTaskSuspend(screenTask);
+  ProgramVector* pv = getProgramVector();  
+  pv->audio_input = rx;
+  pv->audio_output = tx;
+  pv->audio_blocksize = size;
+#ifdef USE_USB_AUDIO
+  // todo: move to onProgramReady
+  usbd_audio_fill_ringbuffer(rx, size);
+#endif		       
 #ifdef FASCINATION_MACHINE
   extern uint32_t ledstatus;
   static float audio_envelope_lambda = 0.999995f;
   static float audio_envelope = 0.0;
-  audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(getProgramVector()->audio_output[0])*(1.0f/INT16_MAX);
+  audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(pv->audio_output[0])*(1.0f/INT16_MAX);
 #endif
   if(audioTask != NULL){
     BaseType_t yield;
+    // wake up audio task
     vTaskNotifyGiveFromISR(audioTask, &yield);
     portYIELD_FROM_ISR(yield);
   }
@@ -223,10 +228,9 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
-#ifdef USE_USB_AUDIO
-  // usbd_audio_fill_ringbuffer(pv->audio_output, pv->audio_blocksize);
-  usbd_audio_fill_ringbuffer(pv->audio_input, pv->audio_blocksize);
-#endif		       
+// #ifdef USE_USB_AUDIO
+//   usbd_audio_fill_ringbuffer(pv->audio_output, pv->audio_blocksize);
+// #endif		       
   /* Block indefinitely */
   // uint32_t ulNotifiedValue =
   ulTaskNotifyTake(pdTRUE, portMAX_DELAY);

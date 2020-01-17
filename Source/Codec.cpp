@@ -8,6 +8,8 @@
 typedef int32_t audio_t;
 #elif AUDIO_BITS_PER_SAMPLE == 16
 typedef int16_t audio_t;
+#elif AUDIO_BITS_PER_SAMPLE == 8
+typedef int8_t audio_t;
 #else
 #error Invalid AUDIO_BITS_PER_SAMPLE
 #endif
@@ -19,12 +21,11 @@ SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_ringbuffer;
 volatile static size_t adc_underflow = 0;
 
 void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t blocksize){
-  // assumes: USB datasize is 32 bits, and USB channel count is same as patch
   while(blocksize--){
     audio_t* dst = audio_ringbuffer.getWriteHead();
-    size_t ch = 0;
-    while(ch < USB_AUDIO_CHANNELS)
-      *dst++ = *buffer++;
+    size_t ch = USB_AUDIO_CHANNELS;
+    while(ch--)
+      *dst++ = *buffer++; // todo: shift, round, dither, 
     buffer += AUDIO_CHANNELS - USB_AUDIO_CHANNELS;
     audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
   }
@@ -46,8 +47,8 @@ void usbd_audio_empty_ringbuffer(uint8_t* buffer, size_t len){
 }
 
 void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  usbd_audio_empty_ringbuffer(haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
-  usbd_audio_write(pdev, haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
+  usbd_audio_empty_ringbuffer(haudio->audio_in_buffer, AUDIO_IN_PACKET_SIZE);
+  usbd_audio_write(pdev, haudio->audio_in_buffer, AUDIO_IN_PACKET_SIZE);
 }
 
 void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
@@ -58,6 +59,9 @@ void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDe
   pos *= USB_AUDIO_CHANNELS;
   audio_ringbuffer.setReadIndex(pos);
   usbd_initiate_tx(pdev, haudio);
+}
+
+void usbd_audio_data_out_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
 }
 
 void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){

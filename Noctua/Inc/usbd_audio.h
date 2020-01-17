@@ -102,10 +102,10 @@
     
 /* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
   that it is an even number and higher than 3 */
-#define AUDIO_OUT_PACKET_NUM                          6
+#define AUDIO_OUT_PACKET_NUM                          1
 #define AUDIO_IN_PACKET_NUM                           1
 /* Total size of the audio transfer buffer */
-#define AUDIO_TOTAL_BUF_SIZE                          ((uint32_t)(AUDIO_OUT_PACKET_SIZE * AUDIO_OUT_PACKET_NUM))
+#define AUDIO_OUT_TOTAL_BUF_SIZE                      ((uint32_t)(AUDIO_OUT_PACKET_SIZE * AUDIO_OUT_PACKET_NUM))
 /* Total size of the IN (i.e. microphopne) transfer buffer */
 #define AUDIO_IN_TOTAL_BUF_SIZE                       ((uint32_t)(AUDIO_IN_PACKET_SIZE * AUDIO_IN_PACKET_NUM))
 
@@ -150,16 +150,16 @@ USBD_AUDIO_ControlTypeDef;
 typedef struct
 {
   __IO uint32_t             alt_setting; 
-#ifdef USE_USB_AUDIO
-  uint8_t                   audio_out_buffer[AUDIO_TOTAL_BUF_SIZE];
+#ifdef USE_USBD_AUDIO_IN
+  uint8_t                   audio_in_buffer[AUDIO_IN_TOTAL_BUF_SIZE];
+#endif
+#ifdef USE_USBD_AUDIO_OUT
+  uint8_t                   audio_out_buffer[AUDIO_OUT_TOTAL_BUF_SIZE];
 #endif
 #ifdef USE_USBD_MIDI
-  uint8_t                   midi_in_buffer[MIDI_BUF_SIZE];
+  uint8_t                   midi_out_buffer[MIDI_BUF_SIZE];
 #endif
   AUDIO_OffsetTypeDef       offset;
-  uint8_t                    rd_enable;  
-  uint16_t                   rd_ptr;  
-  uint16_t                   wr_ptr;  
   USBD_AUDIO_ControlTypeDef control;   
 }
 USBD_AUDIO_HandleTypeDef; 
@@ -210,6 +210,7 @@ void  USBD_AUDIO_Sync (USBD_HandleTypeDef *pdev, AUDIO_OffsetTypeDef offset);
 
    void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio);
    void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio);
+   void usbd_audio_data_out_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio);
    void usbd_audio_gain_callback(uint8_t gain);
    void usbd_audio_sync_callback(uint8_t gain);
    void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len);
