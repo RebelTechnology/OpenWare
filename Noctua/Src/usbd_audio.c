@@ -515,10 +515,9 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     haudio->tx_lock = 0;
     haudio->audio_tx_active = 0;
 
-#ifdef USE_USB_AUDIO
-    usbd_audio_start_callback(pdev, haudio);
-#endif
-
+/* #ifdef USE_USB_AUDIO */
+/*     usbd_audio_start_callback(pdev, haudio); */
+/* #endif */
 
     return USBD_OK;
 }
@@ -648,6 +647,7 @@ static uint8_t  *USBD_AUDIO_GetCfgDesc (uint16_t *length)
   return USBD_AUDIO_CfgDesc;
 }
 
+int midi_tx_lock = 0;
 /**
   * @brief  USBD_AUDIO_DataIn
   *         handle data IN Stage
@@ -659,6 +659,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 				   uint8_t epnum)
 {
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
+  haudio->tx_lock = 0;
 #ifdef USE_USBD_AUDIO_IN
   if(epnum == (AUDIO_IN_EP & ~0x80)){
     haudio->tx_lock = 0;
@@ -667,6 +668,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 #ifdef USE_USBD_MIDI
   if(epnum == (MIDI_IN_EP & ~0x80)){
     haudio->tx_lock = 0;
+    midi_tx_lock--;
   }
 #endif
 #ifdef USE_USBD_AUDIO_IN
@@ -915,6 +917,7 @@ void midi_device_tx(uint8_t* buf, uint32_t len) {
   if(USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED && !haudio->tx_lock){
     /* the call is non-blocking, and the DataIn callback of your USBD class is called with the endpoint number (excluding 0x80 bit) when the entire buffer has been transmitted over the endpoint */
     haudio->tx_lock = 1;
+    midi_tx_lock++;
     USBD_LL_Transmit(&USBD_HANDLE, MIDI_IN_EP, buf, len);
   }
 #endif /* USE_USBD_MIDI */
@@ -934,9 +937,9 @@ uint8_t midi_device_ready(void){
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
   /* return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED; */
   /* return USBD_HANDLE.ep_in.status == USBD_OK; */
-  /* return midi_tx_lock == 0; */
   /* USBD_HANDLE.ep_out.status == USBD_OK */
-  return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED &&
-    USBD_HANDLE.ep_in && USBD_HANDLE.ep_in->status == USBD_OK &&
-    haudio->tx_lock == 0;
+  /* return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED && */
+  /*   USBD_HANDLE.ep_in && USBD_HANDLE.ep_in->status == USBD_OK && */
+  /*   haudio->tx_lock == 0; */
+  return haudio->tx_lock == 0;
 }

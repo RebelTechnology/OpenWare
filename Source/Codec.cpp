@@ -46,9 +46,11 @@ void usbd_audio_empty_ringbuffer(uint8_t* buffer, size_t len){
   }
 }
 
-void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+void usbd_start_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+#ifdef USE_USBD_AUDIO_IN
   usbd_audio_empty_ringbuffer(haudio->audio_in_buffer, AUDIO_IN_PACKET_SIZE);
   usbd_audio_write(pdev, haudio->audio_in_buffer, AUDIO_IN_PACKET_SIZE);
+#endif
 }
 
 void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
@@ -58,15 +60,15 @@ void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDe
   pos = (pos + len/2) % len;
   pos *= USB_AUDIO_CHANNELS;
   audio_ringbuffer.setReadIndex(pos);
-  // usbd_initiate_tx(pdev, haudio);
-  // haudio->tx_audio_active = 1;
+  usbd_start_tx(pdev, haudio);
+  haudio->audio_tx_active = 1;
 }
 
 void usbd_audio_data_out_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
 }
 
 void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  usbd_initiate_tx(pdev, haudio);
+  usbd_start_tx(pdev, haudio);
 }
 
 void usbd_audio_gain_callback(uint8_t gain){
