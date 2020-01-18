@@ -61,7 +61,6 @@ void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDe
   pos *= USB_AUDIO_CHANNELS;
   audio_ringbuffer.setReadIndex(pos);
   usbd_start_tx(pdev, haudio);
-  haudio->audio_tx_active = 1;
 }
 
 void usbd_audio_data_out_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
