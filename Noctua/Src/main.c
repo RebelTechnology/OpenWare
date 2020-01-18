@@ -92,6 +92,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 #ifdef DEBUG
+#warning DEBUG uses printf and semihosting!
   initialise_monitor_handles(); // remove when not semi-hosting
   printf("showtime\n");
 #endif

@@ -37,7 +37,6 @@
 
 /* USER CODE BEGIN INCLUDE */
 #ifdef DEBUG
-#warning USBD_DEBUG_LEVEL 3 uses printf!
 #define DEBUG_LEVEL     3
 #else
 #define DEBUG_LEVEL     0
