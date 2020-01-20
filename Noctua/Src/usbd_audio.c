@@ -78,13 +78,13 @@ USBD_ClassTypeDef  USBD_AUDIO =
 
 #ifdef USE_USB_AUDIO
 #define USB_AUDIO_CONFIG_DESC_SIZ      174
-#define AUDIO_RX_EP                    0x02
-#define AUDIO_TX_EP                    0x82
-#define MIDI_RX_EP                    0x01
-#define MIDI_TX_EP                     0x81
+#define AUDIO_RX_EP                    0x01
+#define AUDIO_TX_EP                    0x81
+#define MIDI_RX_EP                     0x02
+#define MIDI_TX_EP                     0x82
 #else
 #define USB_AUDIO_CONFIG_DESC_SIZ      101
-#define MIDI_RX_EP                    0x01
+#define MIDI_RX_EP                     0x01
 #define MIDI_TX_EP                     0x81
 #endif
 
@@ -460,7 +460,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     /*   return USBD_FAIL; */
     /* } */
 
-#if 0
+#if 1
 #ifdef USE_USBD_AUDIO_TX
     /* Open IN (i.e. microphone) Endpoint */
     rv = USBD_LL_OpenEP(pdev,
@@ -521,6 +521,11 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
                                  uint8_t cfgidx)
 {
 
+#ifdef USE_USBD_MIDI
+  USBD_LL_CloseEP(pdev, MIDI_TX_EP);
+  USBD_LL_CloseEP(pdev, MIDI_RX_EP);
+#endif
+
 #ifdef USE_USBD_AUDIO_RX
   /* Close EP OUT */
   USBD_LL_CloseEP(pdev, AUDIO_RX_EP);		  
@@ -531,11 +536,6 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
   USBD_LL_CloseEP(pdev, AUDIO_TX_EP);
 #endif
 
-#ifdef USE_USBD_MIDI
-  USBD_LL_CloseEP(pdev, MIDI_TX_EP);
-  USBD_LL_CloseEP(pdev, MIDI_RX_EP);
-#endif
-  
   /* DeInit  physical Interface components */
   if(pdev->pClassData != NULL){
     pdev->pClassData = NULL;
@@ -545,7 +545,7 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
 }
 
 void usbd_audio_select_alt(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio, uint8_t iface, uint8_t alt){
-#if 0
+#if 1
   haudio->alt_setting = alt;
 #else
   USBD_StatusTypeDef rv;
@@ -563,7 +563,6 @@ void usbd_audio_select_alt(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* h
 #endif
     }
     if(alt != 0){
-      haudio->alt_setting = alt;
 #ifdef USE_USBD_AUDIO_TX
       /* Open IN (i.e. microphone) Endpoint */
       rv = USBD_LL_OpenEP(pdev,
@@ -587,9 +586,12 @@ void usbd_audio_select_alt(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* h
       USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
 #endif
     }
-#endif
+    haudio->alt_setting = alt;
   }
+#endif
+#if 0 // DEBUG
   printf("iface %d alt %d\n", iface, alt);
+#endif
 }
 
 /**
@@ -694,10 +696,10 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 				   uint8_t epnum)
 {
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
-  haudio->tx_lock = 0;
+  /* haudio->tx_lock = 0; */
 #ifdef USE_USBD_AUDIO_TX
   if(epnum == (AUDIO_TX_EP & ~0x80)){
-    haudio->tx_lock = 0;
+    /* haudio->tx_lock = 0; */
   }
 #endif
 #ifdef USE_USBD_MIDI
@@ -937,10 +939,10 @@ void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len) {
 #ifdef USE_USBD_AUDIO_TX
   extern USBD_HandleTypeDef USBD_HANDLE;
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
-  /* if(pdev->dev_state == USBD_STATE_CONFIGURED && !haudio->tx_lock){ */
-  /*   haudio->tx_lock = 1; */
-  /*   USBD_LL_Transmit(pdev, AUDIO_TX_EP, buf, len); */
-  /* } */
+  if(pdev->dev_state == USBD_STATE_CONFIGURED){
+    /* haudio->tx_lock = 1; */
+    USBD_LL_Transmit(pdev, AUDIO_TX_EP, buf, len);
+  }
 #endif
 }
 
