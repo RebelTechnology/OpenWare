@@ -451,7 +451,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
     haudio->alt_setting = 0;
     haudio->offset = AUDIO_OFFSET_UNKNOWN;
-    haudio->tx_lock = 0;
+    haudio->midi_tx_lock = 0;
     haudio->audio_tx_active = 0;
     
     /* Initialize the Audio output Hardware layer */
@@ -469,8 +469,8 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 			AUDIO_TX_PACKET_SIZE);
     if(rv != USBD_OK)
       USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
-    usbd_audio_start_callback(pdev, haudio);
     haudio->audio_tx_active = 1;
+    usbd_audio_start_callback(pdev, haudio);
 #endif
 #ifdef USE_USBD_AUDIO_RX
     /* Open OUT (i.e. speaker) Endpoint */
@@ -571,8 +571,8 @@ void usbd_audio_select_alt(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* h
 			  AUDIO_TX_PACKET_SIZE);
       if(rv != USBD_OK)
 	USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
-      usbd_audio_start_callback(pdev, haudio);
       haudio->audio_tx_active = 1;
+      usbd_audio_start_callback(pdev, haudio);
 #endif
 #ifdef USE_USBD_AUDIO_RX
       /* Open OUT (i.e. speaker) Endpoint */
@@ -684,7 +684,6 @@ static uint8_t  *USBD_AUDIO_GetCfgDesc (uint16_t *length)
   return USBD_AUDIO_CfgDesc;
 }
 
-int midi_tx_lock = 0;
 /**
   * @brief  USBD_AUDIO_DataIn
   *         handle data IN Stage
@@ -696,21 +695,16 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 				   uint8_t epnum)
 {
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
-  /* haudio->tx_lock = 0; */
 #ifdef USE_USBD_AUDIO_TX
   if(epnum == (AUDIO_TX_EP & ~0x80)){
-    /* haudio->tx_lock = 0; */
+    if(haudio->audio_tx_active)
+      usbd_audio_tx_callback(pdev, haudio);
   }
 #endif
 #ifdef USE_USBD_MIDI
   if(epnum == (MIDI_TX_EP & ~0x80)){
-    haudio->tx_lock = 0;
-    midi_tx_lock--;
+    haudio->midi_tx_lock = 0;
   }
-#endif
-#ifdef USE_USBD_AUDIO_TX
-  if(haudio->audio_tx_active)
-    usbd_audio_tx_callback(pdev, haudio);
 #endif
   return USBD_OK;
 }
@@ -939,10 +933,8 @@ void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len) {
 #ifdef USE_USBD_AUDIO_TX
   extern USBD_HandleTypeDef USBD_HANDLE;
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
-  if(pdev->dev_state == USBD_STATE_CONFIGURED){
-    /* haudio->tx_lock = 1; */
+  if(pdev->dev_state == USBD_STATE_CONFIGURED) // && haudio->audio_tx_active)
     USBD_LL_Transmit(pdev, AUDIO_TX_EP, buf, len);
-  }
 #endif
 }
 
@@ -950,10 +942,9 @@ void midi_device_tx(uint8_t* buf, uint32_t len) {
 #ifdef USE_USBD_MIDI
   extern USBD_HandleTypeDef USBD_HANDLE;
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
-  if(USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED && !haudio->tx_lock){
+  if(USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED && !haudio->midi_tx_lock){
     /* the call is non-blocking, and the DataIn callback of your USBD class is called with the endpoint number (excluding 0x80 bit) when the entire buffer has been transmitted over the endpoint */
-    haudio->tx_lock = 1;
-    midi_tx_lock++;
+    haudio->midi_tx_lock = 1;
     USBD_LL_Transmit(&USBD_HANDLE, MIDI_TX_EP, buf, len);
   }
 #endif /* USE_USBD_MIDI */
@@ -974,8 +965,8 @@ uint8_t midi_device_ready(void){
   /* return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED; */
   /* return USBD_HANDLE.ep_in.status == USBD_OK; */
   /* USBD_HANDLE.ep_out.status == USBD_OK */
-  /* return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED && */
-  /*   USBD_HANDLE.ep_in && USBD_HANDLE.ep_in->status == USBD_OK && */
-  /*   haudio->tx_lock == 0; */
-  return haudio->tx_lock == 0;
+  return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED &&
+    /* USBD_HANDLE.ep_in && USBD_HANDLE.ep_in->status == USBD_OK && */
+    haudio->midi_tx_lock == 0;
+  /* return haudio->midi_tx_lock == 0; */
 }

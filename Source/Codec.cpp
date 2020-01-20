@@ -25,7 +25,7 @@ void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t blocksize){
     audio_t* dst = audio_ringbuffer.getWriteHead();
     size_t ch = USB_AUDIO_CHANNELS;
     while(ch--)
-      *dst++ = *buffer++; // todo: shift, round, dither, 
+      *dst++ = AUDIO_INT32_TO_SAMPLE(*buffer++); // shift, round, dither, clip, truncate, bitswap
     buffer += AUDIO_CHANNELS - USB_AUDIO_CHANNELS;
     audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
   }
@@ -403,10 +403,11 @@ void Codec::start(){
   setOutputGain(settings.audio_output_gain);
   codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   HAL_StatusTypeDef ret;
-  ret = HAL_SAI_Receive_DMA(&hsai_BlockA1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
-  ASSERT(ret == HAL_OK, "Failed to start SAI RX DMA");
+  // start slave first (Noctua)
   ret = HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
   ASSERT(ret == HAL_OK, "Failed to start SAI TX DMA");
+  ret = HAL_SAI_Receive_DMA(&hsai_BlockA1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  ASSERT(ret == HAL_OK, "Failed to start SAI RX DMA");
 }
 
 void Codec::pause(){

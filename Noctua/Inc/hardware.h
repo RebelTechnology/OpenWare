@@ -35,6 +35,7 @@
 #define AUDIO_CHANNELS              8
 #define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*4)
 #define USB_AUDIO_CHANNELS          4
+#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 
 #define USE_USB_AUDIO
 #define USE_USBD_AUDIO_TX  // microphone
