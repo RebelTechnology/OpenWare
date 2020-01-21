@@ -90,8 +90,11 @@
 
 #define AUDIO_ENDPOINT_GENERAL                        0x01
 
-#define AUDIO_REQ_GET_CUR                             0x81
 #define AUDIO_REQ_SET_CUR                             0x01
+#define AUDIO_REQ_GET_CUR                             0x81
+#define AUDIO_REQ_GET_MIN                             0x82
+#define AUDIO_REQ_GET_MAX                             0x83
+#define AUDIO_REQ_GET_RES                             0x84
 
 #define AUDIO_IN_STREAMING_CTRL                       0x03
 #define AUDIO_OUT_STREAMING_CTRL                      0x04
@@ -212,7 +215,7 @@ void  USBD_AUDIO_Sync (USBD_HandleTypeDef *pdev, AUDIO_OffsetTypeDef offset);
 
 
    void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio);
-   void usbd_audio_rx_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio);
+   void usbd_audio_rx_callback(uint8_t* data, size_t len);
    void usbd_audio_tx_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio);
    void usbd_audio_gain_callback(uint8_t gain);
    void usbd_audio_sync_callback(uint8_t gain);
