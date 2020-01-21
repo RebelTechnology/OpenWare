@@ -14,20 +14,28 @@ typedef int8_t audio_t;
 #error Invalid AUDIO_BITS_PER_SAMPLE
 #endif
 
+#include "SerialBuffer.hpp"
+SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer;
+
+extern "C" {
+  uint16_t codec_blocksize = 0;
+  int32_t codec_txbuf[CODEC_BUFFER_SIZE];
+  int32_t* codec_rxbuf;
+}
+
 #ifdef USE_USB_AUDIO
 #include "usbd_audio.h"
-#include "SerialBuffer.hpp"
-SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_ringbuffer;
 volatile static size_t adc_underflow = 0;
+SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_tx_buffer;
 
 void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t blocksize){
   while(blocksize--){
-    audio_t* dst = audio_ringbuffer.getWriteHead();
+    audio_t* dst = audio_tx_buffer.getWriteHead();
     size_t ch = USB_AUDIO_CHANNELS;
     while(ch--)
       *dst++ = AUDIO_INT32_TO_SAMPLE(*buffer++); // shift, round, dither, clip, truncate, bitswap
     buffer += AUDIO_CHANNELS - USB_AUDIO_CHANNELS;
-    audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
+    audio_tx_buffer.incrementWriteHead(USB_AUDIO_CHANNELS);
   }
 }
 
@@ -36,10 +44,10 @@ void usbd_audio_empty_ringbuffer(uint8_t* buffer, size_t len){
   audio_t* dst = (audio_t*)buffer;
   size_t available;
   for(size_t i=0; i<len; ++i){
-    memcpy(dst, audio_ringbuffer.getReadHead(), USB_AUDIO_CHANNELS*sizeof(audio_t));
-    available = audio_ringbuffer.getReadCapacity();
+    memcpy(dst, audio_tx_buffer.getReadHead(), USB_AUDIO_CHANNELS*sizeof(audio_t));
+    available = audio_tx_buffer.getReadCapacity();
     if(available > USB_AUDIO_CHANNELS)
-      audio_ringbuffer.incrementReadHead(USB_AUDIO_CHANNELS);
+      audio_tx_buffer.incrementReadHead(USB_AUDIO_CHANNELS);
     else
       adc_underflow++;
     dst += USB_AUDIO_CHANNELS;
@@ -55,15 +63,26 @@ void usbd_start_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
 
 void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
   // set read head at half a ringbuffer distance from write head
-  size_t pos = audio_ringbuffer.getWriteIndex() / USB_AUDIO_CHANNELS;
-  size_t len = audio_ringbuffer.getCapacity() / USB_AUDIO_CHANNELS;
+  size_t pos = audio_tx_buffer.getWriteIndex() / USB_AUDIO_CHANNELS;
+  size_t len = audio_tx_buffer.getCapacity() / USB_AUDIO_CHANNELS;
   pos = (pos + len/2) % len;
   pos *= USB_AUDIO_CHANNELS;
-  audio_ringbuffer.setReadIndex(pos);
+  audio_tx_buffer.setReadIndex(pos);
   usbd_start_tx(pdev, haudio);
 }
 
-void usbd_audio_rx_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+void usbd_audio_rx_callback(uint8_t* data, size_t len){
+  // copy audio to codec_txbuf
+  audio_t* src = (audio_t*)data;
+  size_t blocksize = len / (USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
+  while(blocksize--){
+    int32_t* dst = audio_rx_buffer.getWriteHead();
+    size_t ch = USB_AUDIO_CHANNELS;
+    while(ch--)
+      *dst++ = AUDIO_SAMPLE_TO_INT32(*src++);
+    dst += AUDIO_CHANNELS - USB_AUDIO_CHANNELS;
+    audio_rx_buffer.incrementWriteHead(USB_AUDIO_CHANNELS);
+  }
 }
 
 void usbd_audio_tx_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
@@ -82,12 +101,6 @@ void usbd_audio_sync_callback(uint8_t shift){
 }
 #endif // USE_USB_AUDIO
 
-extern "C" {
-  uint16_t codec_blocksize = 0;
-  int32_t codec_txbuf[CODEC_BUFFER_SIZE];
-  int32_t codec_rxbuf[CODEC_BUFFER_SIZE];
-}
-
 uint16_t Codec::getBlockSize(){
   return codec_blocksize;
 }
@@ -97,6 +110,7 @@ uint16_t Codec::getBlockSize(){
 #endif
 
 void Codec::init(){
+  codec_rxbuf = audio_rx_buffer.getReadHead();
   codec_init();
 }
 
@@ -161,129 +175,8 @@ void Codec::setOutputGain(int8_t value){
 }
 
 #ifdef USE_IIS3DWB
-
-#include "iis3dwb_reg.h"
-
 extern "C" {
-  stmdev_ctx_t dev_ctx;
-  uint8_t dev_xl_data[6];
-  extern SPI_HandleTypeDef hspi4;
-
-static int32_t platform_write(void *handle, uint8_t reg, uint8_t *bufp,
-                              uint16_t len);
-static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp,
-                             uint16_t len);
-
-#define CS_SPI4_GPIO_Port   GPIOD      // PD5
-#define CS_SPI4_Pin         GPIO_PIN_5 // PD5
-
-/*
- * @brief  Write generic device register (platform dependent)
- *
- * @param  handle    customizable argument. In this examples is used in
- *                   order to select the correct sensor bus handler.
- * @param  reg       register to write
- * @param  bufp      pointer to data to write in register reg
- * @param  len       number of consecutive register to write
- *
- */
-static int32_t platform_write(void *handle, uint8_t reg, uint8_t *bufp,
-                              uint16_t len) {
-  if (handle == &hspi4) {
-    /* Write multiple command */
-    reg |= 0x40;
-    HAL_GPIO_WritePin(CS_SPI4_GPIO_Port, CS_SPI4_Pin, GPIO_PIN_RESET);
-    HAL_SPI_Transmit((SPI_HandleTypeDef*)handle, &reg, 1, 1000);
-    HAL_SPI_Transmit((SPI_HandleTypeDef*)handle, bufp, len, 1000);
-    HAL_GPIO_WritePin(CS_SPI4_GPIO_Port, CS_SPI4_Pin, GPIO_PIN_SET);
-  }
-  return 0;
-}
-
-/*
- * @brief  Read generic device register (platform dependent)
- *
- * @param  handle    customizable argument. In this examples is used in
- *                   order to select the correct sensor bus handler.
- * @param  reg       register to read
- * @param  bufp      pointer to buffer that store the data read
- * @param  len       number of consecutive register to read
- *
- */
-static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp,
-                             uint16_t len)
-{
-  if (handle == &hspi4){
-    /* Read multiple command */
-    reg |= 0xC0;
-    HAL_GPIO_WritePin(CS_SPI4_GPIO_Port, CS_SPI4_Pin, GPIO_PIN_RESET);
-    HAL_SPI_Transmit((SPI_HandleTypeDef*)handle, &reg, 1, 1000);
-    HAL_SPI_Receive((SPI_HandleTypeDef*)handle, bufp, len, 1000);
-    HAL_GPIO_WritePin(CS_SPI4_GPIO_Port, CS_SPI4_Pin, GPIO_PIN_SET);
-  }
-  return 0;
-}
-
-  void codec_init(){
-    dev_ctx.write_reg = platform_write;
-    dev_ctx.read_reg = platform_read;
-    dev_ctx.handle = &hspi4;
-    iis3dwb_xl_full_scale_set(&dev_ctx, IIS3DWB_2g);
-    iis3dwb_xl_data_rate_set(&dev_ctx, IIS3DWB_XL_ODR_26k7Hz);
-    iis3dwb_xl_axis_selection_set(&dev_ctx, IIS3DWB_ENABLE_ALL);
-  }
-
-  void codec_bypass(int bypass){}
-  void codec_set_gain_in(int8_t volume){}
-  void codec_set_gain_out(int8_t volume){}
-}
-
-typedef union{
-  int16_t i16bit[3];
-  uint8_t u8bit[6];
-} axis3bit16_t;
-
-axis3bit16_t dev_data_raw_acceleration;
-iis3dwb_status_reg_t dev_status;
-
-void iis3dwb_read(){
-  iis3dwb_status_reg_get(&dev_ctx, &dev_status);
-  // if(dev_status.xlda)
-    iis3dwb_acceleration_raw_get(&dev_ctx, dev_data_raw_acceleration.u8bit);
-}
-
-static size_t rxindex = 0;
-static size_t rxhalf = 0;
-static size_t rxfull = 0;
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-  extern TIM_HandleTypeDef htim8;
-  if (htim == &htim8){
-    // sample all channels
-    iis3dwb_read();
-#if defined USE_USB_AUDIO && defined AUDIO_BYPASS
-    // write directly to usb buffer
-    audio_t* dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame
-#else
-    audio_t* dst = codec_rxbuf + rxindex;
-#endif
-    *dst++ = dev_data_raw_acceleration.i16bit[0];
-    *dst++ = dev_data_raw_acceleration.i16bit[1];
-    *dst++ = dev_data_raw_acceleration.i16bit[2];
-    // memcpy(dst, ads_samples, AUDIO_CHANNELS*sizeof(audio_t));
-    // dst += ADS_ACTIVE_CHANNELS;
-#if defined USE_USB_AUDIO && defined AUDIO_BYPASS
-    audio_ringbuffer.incrementWriteHead(AUDIO_CHANNELS);
-#else
-    rxindex += AUDIO_CHANNELS;
-    if(rxindex == rxhalf){
-      audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize); // trigger audio processing block
-    }else if(rxindex >= rxfull){
-      rxindex = 0;
-      audioCallback(codec_rxbuf+rxhalf, codec_txbuf+rxhalf, codec_blocksize);
-    }
-#endif
-  }
+  void iis3dwb_read();
 }
 
 void Codec::start(){
@@ -297,7 +190,6 @@ void Codec::stop(){
   extern TIM_HandleTypeDef htim8;
   HAL_TIM_Base_Stop(&htim8);
 }
-
 #endif
 
 #ifdef USE_ADS1294
