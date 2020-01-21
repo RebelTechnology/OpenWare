@@ -19,8 +19,8 @@ SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer;
 
 extern "C" {
   uint16_t codec_blocksize = 0;
-  int32_t codec_txbuf[CODEC_BUFFER_SIZE];
-  int32_t* codec_rxbuf;
+  int32_t codec_rxbuf[CODEC_BUFFER_SIZE];
+  int32_t* codec_txbuf; // todo: ensure buffer alignment
 }
 
 #ifdef USE_USB_AUDIO
@@ -62,8 +62,11 @@ void usbd_start_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
 }
 
 void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
+  audio_rx_buffer.setAll(0);
+  size_t pos = audio_rx_buffer.getReadIndex() == 0 ? audio_rx_buffer.getCapacity()/2 : 0;
+  audio_rx_buffer.setWriteIndex(pos); // todo: update write index from SAI callbacks and set this correctly
   // set read head at half a ringbuffer distance from write head
-  size_t pos = audio_tx_buffer.getWriteIndex() / USB_AUDIO_CHANNELS;
+  pos = audio_tx_buffer.getWriteIndex() / USB_AUDIO_CHANNELS;
   size_t len = audio_tx_buffer.getCapacity() / USB_AUDIO_CHANNELS;
   pos = (pos + len/2) % len;
   pos *= USB_AUDIO_CHANNELS;
@@ -72,7 +75,8 @@ void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDe
 }
 
 void usbd_audio_rx_callback(uint8_t* data, size_t len){
-  // copy audio to codec_txbuf
+#ifdef USE_USBD_AUDIO_RX
+  // copy audio to codec_txbuf aka audio_rx_buffer
   audio_t* src = (audio_t*)data;
   size_t blocksize = len / (USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
   while(blocksize--){
@@ -80,9 +84,11 @@ void usbd_audio_rx_callback(uint8_t* data, size_t len){
     size_t ch = USB_AUDIO_CHANNELS;
     while(ch--)
       *dst++ = AUDIO_SAMPLE_TO_INT32(*src++);
-    dst += AUDIO_CHANNELS - USB_AUDIO_CHANNELS;
-    audio_rx_buffer.incrementWriteHead(USB_AUDIO_CHANNELS);
+    // should we leave in place or zero out any remaining channels?
+    memset(dst, 0, (AUDIO_CHANNELS-USB_AUDIO_CHANNELS)*sizeof(int32_t));
+    audio_rx_buffer.incrementWriteHead(AUDIO_CHANNELS);
   }
+#endif
 }
 
 void usbd_audio_tx_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
@@ -110,7 +116,7 @@ uint16_t Codec::getBlockSize(){
 #endif
 
 void Codec::init(){
-  codec_rxbuf = audio_rx_buffer.getReadHead();
+  codec_txbuf = audio_rx_buffer.getReadHead();
   codec_init();
 }
 
@@ -272,9 +278,11 @@ extern "C" {
   SAI_HandleTypeDef hsai_BlockB1;
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+    audio_rx_buffer.setReadIndex(codec_blocksize*AUDIO_CHANNELS);
   }
   void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
+    audio_rx_buffer.setReadIndex(0);
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
     error(CONFIG_ERROR, "SAI DMA Error");
