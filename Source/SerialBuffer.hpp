@@ -131,6 +131,7 @@ public:
   void setAll(const T value){
     for(size_t i=0; i<size; ++i)
       buffer[i] = value;
+  }
 };
 
 #endif /* _SerialBuffer_hpp_ */
