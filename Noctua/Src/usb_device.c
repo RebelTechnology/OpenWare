@@ -25,11 +25,8 @@
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_audio.h"
-#include "usbd_audio_if.h"
 
 /* USER CODE BEGIN Includes */
-#include "usbd_midi.h"
-#include "usbd_midi_if.h"
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
@@ -78,7 +75,7 @@ void MX_USB_DEVICE_Init(void)
   {
     Error_Handler();
   }
-  if (USBD_AUDIO_RegisterInterface(&hUsbDeviceFS, &USBD_AUDIO_fops_FS) != USBD_OK)
+  if (USBD_AUDIO_RegisterInterface(&hUsbDeviceFS, NULL) != USBD_OK)
   {
     Error_Handler();
   }

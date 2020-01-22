@@ -603,7 +603,6 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     pdev->pClassData = &usbd_audio_handle;  
     haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
     haudio->alt_setting = 0;
-    haudio->offset = AUDIO_OFFSET_UNKNOWN;
     haudio->midi_tx_lock = 0;
     haudio->audio_tx_active = 0;
     
@@ -622,8 +621,9 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 			AUDIO_TX_PACKET_SIZE);
     if(rv != USBD_OK)
       USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
-    haudio->audio_tx_active = 1;
-    usbd_audio_start_callback(pdev, haudio);
+    /* haudio->audio_tx_active = 1; */
+    /* usbd_audio_tx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS); */
+    /* usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE); */
 #endif
 #ifdef USE_USBD_AUDIO_RX
     /* Open OUT (i.e. speaker) Endpoint */
@@ -635,6 +635,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
       USBD_ErrLog("Open of OUT streaming endpoint failed. error %d\n", rv);
     /* Prepare OUT endpoint to receive 1st packet */
     USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
+    /* usbd_audio_rx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS); */
 #endif
 #endif
 
@@ -698,49 +699,61 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
 }
 
 void usbd_audio_select_alt(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio, uint8_t iface, uint8_t alt){
-#if 1
+#if 0
   haudio->alt_setting = alt;
 #else
   USBD_StatusTypeDef rv;
-  if(haudio->alt_setting != alt){
+  /* if(haudio->alt_setting != alt){ */
     if(haudio->alt_setting != 0){
       // close previous
 #ifdef USE_USBD_AUDIO_TX
+      if(iface == AUDIO_TX_IF){
       /* Close EP IN */
-      USBD_LL_CloseEP(pdev, AUDIO_TX_EP);
+      /* USBD_LL_CloseEP(pdev, AUDIO_TX_EP); */
       haudio->audio_tx_active = 0;
+	usbd_audio_tx_stop_callback();
+      }
 #endif
 #ifdef USE_USBD_AUDIO_RX
-      /* Close EP OUT */
-      USBD_LL_CloseEP(pdev, AUDIO_RX_EP);
+      if(iface == AUDIO_RX_IF){
+	/* Close EP OUT */
+	/* USBD_LL_CloseEP(pdev, AUDIO_RX_EP); */
+	usbd_audio_rx_stop_callback();
+      }
 #endif
     }
     if(alt != 0){
 #ifdef USE_USBD_AUDIO_TX
-      /* Open IN (i.e. microphone) Endpoint */
-      rv = USBD_LL_OpenEP(pdev,
-			  AUDIO_TX_EP,
-			  USBD_EP_TYPE_ISOC,
-			  AUDIO_TX_PACKET_SIZE);
-      if(rv != USBD_OK)
-	USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
-      haudio->audio_tx_active = 1;
-      usbd_audio_start_callback(pdev, haudio);
+      if(iface == AUDIO_TX_IF){
+	/* Open IN (i.e. microphone) Endpoint */
+	/* rv = USBD_LL_OpenEP(pdev, */
+	/* 		    AUDIO_TX_EP, */
+	/* 		    USBD_EP_TYPE_ISOC, */
+	/* 		    AUDIO_TX_PACKET_SIZE); */
+	/* if(rv != USBD_OK) */
+	/*   USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv); */
+	haudio->audio_tx_active = 1;
+	usbd_audio_tx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
+	usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
+      }
 #endif
 #ifdef USE_USBD_AUDIO_RX
-      /* Open OUT (i.e. speaker) Endpoint */
-      rv = USBD_LL_OpenEP(pdev,
-			  AUDIO_RX_EP,
-			  USBD_EP_TYPE_ISOC,
-			  AUDIO_RX_PACKET_SIZE);
-      if(rv != USBD_OK)
-	USBD_ErrLog("Open of OUT streaming endpoint failed. error %d\n", rv);
-      /* Prepare OUT endpoint to receive 1st packet */
-      USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
+      if(iface == AUDIO_RX_IF){
+	/* Open OUT (i.e. speaker) Endpoint */
+	/* rv = USBD_LL_OpenEP(pdev, */
+	/* 		    AUDIO_RX_EP, */
+	/* 		    USBD_EP_TYPE_ISOC, */
+	/* 		    AUDIO_RX_PACKET_SIZE); */
+	/* if(rv != USBD_OK) */
+	/*   USBD_ErrLog("Open of OUT streaming endpoint failed. error %d\n", rv); */
+	usbd_audio_rx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
+	/* Prepare OUT endpoint to receive 1st packet */
+	/* USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE); */
+      }
 #endif
     }
     haudio->alt_setting = alt;
-  }
+  /* } */
 #endif
 #if 0 // DEBUG
   printf("iface %d alt %d\n", iface, alt);
@@ -903,7 +916,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 #ifdef USE_USBD_AUDIO_TX
   if(epnum == (AUDIO_TX_EP & ~0x80)){
     if(haudio->audio_tx_active)
-      usbd_audio_tx_callback(pdev, haudio);
+      usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
   }
 #endif
 #ifdef USE_USBD_MIDI
@@ -983,19 +996,9 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
 {
   /* SOF (Start of Frame) Every millisecond (12000 full-bandwidth bit times), the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
+  if(0)
+    usbd_audio_sync_callback(0);
   return USBD_OK;
-}
-
-/**
-  * @brief  USBD_AUDIO_Sync
-  *         handle Sync event
-  * @param  pdev: device instance
-  * @retval status
-  */
-void  USBD_AUDIO_Sync (USBD_HandleTypeDef *pdev, AUDIO_OffsetTypeDef offset)
-{
-  // never used, not called from anywhere, not in class type def?
-  usbd_audio_sync_callback(offset);
 }
 
 /**
@@ -1135,12 +1138,12 @@ uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev,
   return 0;
 }
 
-void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len) {
+void usbd_audio_write(uint8_t* buf, size_t len) {
 #ifdef USE_USBD_AUDIO_TX
   extern USBD_HandleTypeDef USBD_HANDLE;
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
-  if(pdev->dev_state == USBD_STATE_CONFIGURED) // && haudio->audio_tx_active)
-    USBD_LL_Transmit(pdev, AUDIO_TX_EP, buf, len);
+  if(USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED) // && haudio->audio_tx_active)
+    USBD_LL_Transmit(&USBD_HANDLE, AUDIO_TX_EP, buf, len);
 #endif
 }
 

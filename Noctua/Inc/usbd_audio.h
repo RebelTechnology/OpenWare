@@ -114,27 +114,6 @@
 
 #define MIDI_DATA_IN_PACKET_SIZE       0x40
 #define MIDI_DATA_OUT_PACKET_SIZE      0x40
-    
-    /* Audio Commands enumeration */
-typedef enum
-{
-  AUDIO_CMD_START = 1,
-  AUDIO_CMD_PLAY,
-  AUDIO_CMD_STOP,
-}AUDIO_CMD_TypeDef;
-
-
-typedef enum
-{
-  AUDIO_OFFSET_NONE = 0,
-  AUDIO_OFFSET_HALF,
-  AUDIO_OFFSET_FULL,  
-  AUDIO_OFFSET_UNKNOWN,    
-}
-AUDIO_OffsetTypeDef;
-/**
-  * @}
-  */ 
 
 
 /** @defgroup USBD_CORE_Exported_TypesDefinitions
@@ -165,7 +144,6 @@ typedef struct
 #endif
   volatile uint8_t          midi_tx_lock;
   volatile uint8_t          audio_tx_active;
-  AUDIO_OffsetTypeDef       offset;
   USBD_AUDIO_ControlTypeDef control;   
 }
 USBD_AUDIO_HandleTypeDef; 
@@ -211,15 +189,18 @@ extern USBD_ClassTypeDef  USBD_AUDIO;
 uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev, 
                                         USBD_AUDIO_ItfTypeDef *fops);
 
-void  USBD_AUDIO_Sync (USBD_HandleTypeDef *pdev, AUDIO_OffsetTypeDef offset);
+
+void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels);
+void usbd_audio_tx_stop_callback();
+void usbd_audio_tx_callback(uint8_t* data, size_t len);
+void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels);
+void usbd_audio_rx_stop_callback();
+void usbd_audio_rx_callback(uint8_t* data, size_t len);
+void usbd_audio_gain_callback(uint8_t gain);
+void usbd_audio_sync_callback(uint8_t gain);
 
 
-   void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio);
-   void usbd_audio_rx_callback(uint8_t* data, size_t len);
-   void usbd_audio_tx_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio);
-   void usbd_audio_gain_callback(uint8_t gain);
-   void usbd_audio_sync_callback(uint8_t gain);
-   void usbd_audio_write(USBD_HandleTypeDef* pdev, uint8_t* buf, uint32_t len);
+void usbd_audio_write(uint8_t* buffer, size_t len);
 
    /**
   * @}

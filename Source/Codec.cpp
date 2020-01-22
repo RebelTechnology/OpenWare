@@ -54,24 +54,38 @@ void usbd_audio_empty_ringbuffer(uint8_t* buffer, size_t len){
   }
 }
 
-void usbd_start_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-#ifdef USE_USBD_AUDIO_TX
-  usbd_audio_empty_ringbuffer(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
-  usbd_audio_write(pdev, haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
-#endif
-}
-
-void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  audio_rx_buffer.setAll(0);
-  size_t pos = audio_rx_buffer.getReadIndex() == 0 ? audio_rx_buffer.getCapacity()/2 : 0;
-  audio_rx_buffer.setWriteIndex(pos); // todo: update write index from SAI callbacks and set this correctly
+void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels){
   // set read head at half a ringbuffer distance from write head
-  pos = audio_tx_buffer.getWriteIndex() / USB_AUDIO_CHANNELS;
+  size_t pos = audio_tx_buffer.getWriteIndex() / USB_AUDIO_CHANNELS;
   size_t len = audio_tx_buffer.getCapacity() / USB_AUDIO_CHANNELS;
   pos = (pos + len/2) % len;
   pos *= USB_AUDIO_CHANNELS;
   audio_tx_buffer.setReadIndex(pos);
-  usbd_start_tx(pdev, haudio);
+#if DEBUG
+  printf("start tx %d %d\n", rate, channels);
+#endif
+}
+
+void usbd_audio_tx_stop_callback(){
+#if DEBUG
+  printf("stop tx\n");
+#endif
+}
+
+void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
+  audio_rx_buffer.setAll(0);
+  size_t pos = audio_rx_buffer.getReadIndex() == 0 ? audio_rx_buffer.getCapacity()/2 : 0;
+  audio_rx_buffer.setWriteIndex(pos); // todo: update write index from SAI callbacks and set this correctly
+#if DEBUG
+  printf("start rx %d %d\n", rate, channels);
+#endif
+}
+
+void usbd_audio_rx_stop_callback(){
+  audio_rx_buffer.setAll(0);
+#if DEBUG
+  printf("stop rx\n");
+#endif
 }
 
 void usbd_audio_rx_callback(uint8_t* data, size_t len){
@@ -91,8 +105,11 @@ void usbd_audio_rx_callback(uint8_t* data, size_t len){
 #endif
 }
 
-void usbd_audio_tx_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  usbd_start_tx(pdev, haudio);
+void usbd_audio_tx_callback(uint8_t* data, size_t len){
+#ifdef USE_USBD_AUDIO_TX
+  usbd_audio_empty_ringbuffer(data, len);
+  usbd_audio_write(data, len);
+#endif
 }
 
 void usbd_audio_gain_callback(uint8_t gain){
