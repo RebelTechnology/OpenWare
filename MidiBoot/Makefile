@@ -65,7 +65,8 @@ info:
 	openocd -f openocd.cfg -c "init" -c "flash info 0" -c "exit"
 
 unlock:
-	openocd -f openocd.cfg -c "init" -c "halt" -c "flash protect 0 0 11 off" -c "flash info 0" -c "exit"
+	# openocd -f openocd.cfg -c "init" -c "halt" -c "flash protect 0 0 11 off" -c "flash info 0" -c "exit"
+	openocd -f openocd.cfg -c "init" -c "reset halt" -c "stm32f4x unlock 0" -c "reset halt"
 
 erase:
 	openocd -f openocd.cfg -c "init" -c "halt" -c "stm32f2x mass_erase 0" -c "flash info 0" -c "exit"
