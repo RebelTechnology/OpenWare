@@ -3,6 +3,7 @@
 #include "errorhandlers.h"
 #include "ApplicationSettings.h"
 #include <cstring>
+#include "ProgramManager.h"
 
 #if AUDIO_BITS_PER_SAMPLE == 32
 typedef int32_t audio_t;
@@ -56,10 +57,10 @@ void usbd_audio_empty_ringbuffer(uint8_t* buffer, size_t len){
 
 void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels){
   // set read head at half a ringbuffer distance from write head
-  size_t pos = audio_tx_buffer.getWriteIndex() / USB_AUDIO_CHANNELS;
-  size_t len = audio_tx_buffer.getCapacity() / USB_AUDIO_CHANNELS;
+  size_t pos = audio_tx_buffer.getWriteIndex();
+  size_t len = audio_tx_buffer.getCapacity();
   pos = (pos + len/2) % len;
-  pos *= USB_AUDIO_CHANNELS;
+  pos = (pos/USB_AUDIO_CHANNELS)*USB_AUDIO_CHANNELS; // round down to nearest frame
   audio_tx_buffer.setReadIndex(pos);
 #if DEBUG
   printf("start tx %d %d\n", rate, channels);
@@ -72,27 +73,54 @@ void usbd_audio_tx_stop_callback(){
 #endif
 }
 
+void update_rx_read_index(){
+  extern DMA_HandleTypeDef hdma_sai1_b;
+  // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  // size_t pos = audio_rx_buffer.getCapacity() - (hdma_sai1_b.Instance->NDTR/sizeof(int32_t));
+  size_t pos = audio_rx_buffer.getCapacity() - hdma_sai1_b.Instance->NDTR;
+  audio_rx_buffer.setReadIndex(pos);
+}
+
 void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
   audio_rx_buffer.setAll(0);
-  size_t pos = audio_rx_buffer.getReadIndex() == 0 ? audio_rx_buffer.getCapacity()/2 : 0;
-  audio_rx_buffer.setWriteIndex(pos); // todo: update write index from SAI callbacks and set this correctly
+  update_rx_read_index();
+  size_t pos = audio_rx_buffer.getWriteIndex();
+  size_t len = audio_rx_buffer.getCapacity();
+  pos = (pos + len/2) % len;
+  pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
+  audio_rx_buffer.setWriteIndex(pos);
+  program.exitProgram(true);
 #if DEBUG
-  printf("start rx %d %d\n", rate, channels);
+  printf("start rx %d %d %d\n", rate, channels, pos);
 #endif
 }
 
 void usbd_audio_rx_stop_callback(){
   audio_rx_buffer.setAll(0);
+  program.startProgram(true);
 #if DEBUG
   printf("stop rx\n");
 #endif
 }
 
+static int32_t usbd_audio_rx_flow = 0;
 void usbd_audio_rx_callback(uint8_t* data, size_t len){
 #ifdef USE_USBD_AUDIO_RX
   // copy audio to codec_txbuf aka audio_rx_buffer
+  update_rx_read_index();
   audio_t* src = (audio_t*)data;
   size_t blocksize = len / (USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
+  size_t available = audio_rx_buffer.getWriteCapacity()/AUDIO_CHANNELS;
+  if(available < blocksize){
+    usbd_audio_rx_flow += blocksize-available;
+    // skip some frames
+    src += (blocksize - available)*USB_AUDIO_CHANNELS;
+    blocksize = available;
+    // usbd_audio_rx_flow++;
+    // // skip a frame
+    // src += USB_AUDIO_CHANNELS;
+    // blocksize--;
+  }
   while(blocksize--){
     int32_t* dst = audio_rx_buffer.getWriteHead();
     size_t ch = USB_AUDIO_CHANNELS;
@@ -101,6 +129,14 @@ void usbd_audio_rx_callback(uint8_t* data, size_t len){
     // should we leave in place or zero out any remaining channels?
     memset(dst, 0, (AUDIO_CHANNELS-USB_AUDIO_CHANNELS)*sizeof(int32_t));
     audio_rx_buffer.incrementWriteHead(AUDIO_CHANNELS);
+  }
+  if(available > audio_rx_buffer.getCapacity()/AUDIO_CHANNELS - 48){
+    // if write space before transfer is greater than 48 frames from capacity
+    usbd_audio_rx_flow--;
+    int32_t* src = audio_rx_buffer.getWriteHead();
+    audio_rx_buffer.incrementWriteHead(AUDIO_CHANNELS);
+    int32_t* dst = audio_rx_buffer.getWriteHead();
+    memcpy(dst, src, AUDIO_CHANNELS*sizeof(int32_t));
   }
 #endif
 }
@@ -117,10 +153,7 @@ void usbd_audio_gain_callback(uint8_t gain){
 }
 
 void usbd_audio_sync_callback(uint8_t shift){
-#ifdef DEBUG
-  printf("AUDIO SHIFT %d\n", shift);
-#endif
-  // todo: do something with the shift number
+  // todo: do something
 }
 #endif // USE_USB_AUDIO
 
@@ -295,11 +328,9 @@ extern "C" {
   SAI_HandleTypeDef hsai_BlockB1;
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
-    audio_rx_buffer.setReadIndex(codec_blocksize*AUDIO_CHANNELS);
   }
   void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
-    audio_rx_buffer.setReadIndex(0);
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
     error(CONFIG_ERROR, "SAI DMA Error");
