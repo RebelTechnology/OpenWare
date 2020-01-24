@@ -996,8 +996,7 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
 {
   /* SOF (Start of Frame) Every millisecond (12000 full-bandwidth bit times), the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
-  if(0)
-    usbd_audio_sync_callback(0);
+  usbd_audio_sync_callback(0);
   return USBD_OK;
 }
 
