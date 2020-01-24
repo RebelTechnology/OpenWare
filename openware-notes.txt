@@ -183,6 +183,24 @@ amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d5214000000000
 # flash Wizard firmware
 amidi -p hw:2 -s Wizard.syx
 
+# set parameter A to value 63 on channel 0
+amidi -p hw:1 -S b0143f
+
+# request program message
+amidi -p hw:1 -S b04322
+
+# request device stats
+amidi -p hw:1 -S b04324
+
+# request program stats
+amidi -p hw:1 -S b04324
+
+# request button status
+amidi -p hw:1 -S b04319
+
+# dump all messages received
+amidi -p hw:1 -d -a
+
 -----------------------------------------------------------------
 
 #define VECT_TAB_OFFSET  0x00008000
