@@ -67,7 +67,7 @@ void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleType
 
 void codec_init(){
   rxindex = 0;
-  rxhalf = AUDIO_BLOCK_SIZE*USB_AUDIO_CHANNELS;
+  rxhalf = AUDIO_BLOCK_SIZE*AUDIO_CHANNELS;
   rxfull = 2*rxhalf;  
   ads_setup(ads_samples);
 #ifdef USE_KX122
