@@ -132,7 +132,7 @@ USBD_AUDIO_ControlTypeDef;
 
 typedef struct
 {
-  __IO uint32_t             alt_setting; 
+  uint32_t                  tx_alt_setting, rx_alt_setting, midi_alt_setting; 
 #ifdef USE_USBD_AUDIO_TX
   uint8_t                   audio_tx_buffer[AUDIO_TX_TOTAL_BUF_SIZE];
 #endif
