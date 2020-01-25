@@ -213,6 +213,9 @@ public:
     screen.print(64, offset+8, "cpu ");
     screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
     screen.print("%");
+    // draw firmware version
+    screen.print(1, offset+16, "fw  ");
+    screen.print(FIRMWARE_VERSION);
   }
   
   void drawStats(ScreenBuffer& screen){
