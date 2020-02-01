@@ -12,13 +12,16 @@
 #include "ApplicationSettings.h"
 #include "ProgramManager.h"
 #include "Codec.h"
+#include "message.h"
+#include "calibration.hpp"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #define NOF_ENCODERS 6
-
 #define ENC_MULTIPLIER 6 // shift left by this many steps
-#define NOF_CONTROL_MODES 4
+#define NOF_CONTROL_MODES 5
+#define SHOW_CALIBRATION_DEBUG  // This flag renders current values in calibration menu
+#define CALIBRATION_DEBUG_FLOAT // Display float values instead of raw integers
 
 /*    
 screen 128 x 64, font 5x7
@@ -54,14 +57,23 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, VOLUME, EXIT
+    PLAY, STATUS, PRESET, VOLUME, CALIBRATE, EXIT
   };
   ControlMode controlMode = PLAY;
+
+  InputCalibration input_cal;
+  OutputCalibration output_cal;
+  BaseCalibration *current_cal;
+  BaseCalibration::CalibrationMode calibrationMode;
+  bool isCalibrationRunning;
+  bool isCalibrationModeSelected;
+  bool calibrationConfirm = false; //This is a flag used to track encoder presses
 
   const char controlModeNames[NOF_CONTROL_MODES][12] = { "  Play   >",
 							 "< Status >",
 							 "< Preset >",
-							 "< Volume" };
+							 "< Volume >",
+							 "< V/Oct   " };
 
   ParameterController(){
     reset();
@@ -147,7 +159,7 @@ public:
     screen.print(1, 24+10, names[selectedPid[0]]);
     if(selectedPid[0] < SIZE-1)
       screen.print(1, 24+20, names[selectedPid[0]+1]);
-    screen.invert(0, 25, 128, 10);
+    screen.invert(0, 25, 64, 10);
   }
 
   void drawBlockParameterNames(ScreenBuffer& screen){
@@ -288,6 +300,98 @@ public:
     screen.print((int)selected);
   }
 
+  void drawCalibration(uint8_t selected, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    if (isCalibrationRunning) {
+      /*
+      screen.print(1, 24 + 10, "S=");
+      screen.print((int)calibrationScalar);
+      screen.print(65, 24 + 10, "O=");
+      screen.print((int)calibrationOffset);
+      */
+      if (isCalibrationModeSelected) {
+	if (calibrationMode == BaseCalibration::CAL_INPUT)
+	  switch(input_cal.state){
+	  case BaseCalibration::CAL_LO:
+	    screen.print(1, 24 + 20, "1V to IN1");
+	    screen.print(1, 24 + 30, "Sample ");
+	    screen.print(input_cal.getInput());
+	    break;
+	  case BaseCalibration::CAL_HI:
+	    screen.print(1, 24 + 20, "3V to IN1");
+	    screen.print(1, 24 + 30, "Sample ");
+	    screen.print(input_cal.getInput());
+	    break;
+	  case BaseCalibration::CAL_DONE:
+	    // Save or discard results
+	    screen.print(1, 24, "Calbiration results");
+	    screen.print(1, 24 + 10, "Scalar:");
+	    screen.print((int)input_cal.getScalar());
+	    screen.print(1, 24 + 20, "Offset:");
+	    screen.print((int)input_cal.getOffset());
+	    screen.print(1, 24 + 30, "Save");
+	    screen.print(65, 24 + 30, "Discard");
+	    if (selected == BaseCalibration::CAL_SAVE)
+	      screen.invert(0, 24 + 20, 64, 10);
+	    else
+	      screen.invert(64, 24 + 20, 64, 10);
+	    break;
+	  }
+      }
+      else {
+	// Select calibration mode
+	screen.print(1, 24, "Input");
+	screen.print(49, 24, "Output");
+	screen.print(97, 24, "Exit");
+	switch (selected) {
+	case BaseCalibration::CAL_INPUT:
+	  screen.invert(0, 14, 48, 10);
+	  break;
+	case BaseCalibration::CAL_OUTPUT:
+	  screen.invert(48, 14, 48, 10);
+	  break;
+	default:
+	  screen.invert(96, 14, 48, 10);
+	  return;
+	}
+      }
+    }
+    else {
+      screen.print(1, 24, "Start calibration");
+      #ifdef SHOW_CALIBRATION_DEBUG
+      // Not sure if this should be visible by default, but it helps while debugging
+      screen.invert(0, 14, 128, 10);
+      screen.print(29, 24 + 10, "Input");
+      screen.print(78, 24 + 10, "Output");
+      screen.print(1, 24 + 20, "Scl");
+      
+      #ifdef CALIBRATION_DEBUG_FLOAT
+      screen.print(29, 24 + 20, msg_ftoa((float)((int32_t)settings.input_scalar) / UINT16_MAX, 10));
+      screen.print(78, 24 + 20, msg_ftoa((float)((int32_t)settings.output_scalar) / UINT16_MAX, 10));
+      #else
+      screen.print(29, 24 + 20, msg_itoa(settings.input_scalar, 10));
+      screen.print(78, 24 + 20, msg_itoa(settings.output_scalar, 10));
+      #endif // CALIBRATION_DEBUG_FLOAT
+      
+      screen.print(1, 24 + 30, "Off");
+      
+      #ifdef CALIBRATION_DEBUG_FLOAT
+      screen.print(29, 24 + 30, msg_ftoa((float)((int32_t)settings.input_offset) / UINT16_MAX, 10));
+      screen.print(78, 24 + 30, msg_ftoa((float)((int32_t)settings.output_offset) / UINT16_MAX, 10));
+      #else
+      screen.print(29, 24 + 30, msg_itoa(settings.input_offset, 10));
+      screen.print(78, 24 + 30, msg_itoa(settings.output_offset, 10));
+      #endif // CALIBRATION_DEBUG_FLOAT
+      
+      screen.drawHorizontalLine(0, 24 + 10, 128, WHITE);
+      screen.drawHorizontalLine(0, 24 + 20, 128, WHITE);
+      screen.drawVerticalLine(27, 24, 30, WHITE);
+      screen.drawVerticalLine(76, 24, 30, WHITE);
+      #endif // SHOW_CALIBRATION_DEBUG
+    }
+	
+  }
+
   void drawControlMode(ScreenBuffer& screen){
     switch(controlMode){
     case PLAY:
@@ -306,6 +410,10 @@ public:
     case VOLUME:
       drawTitle(controlModeNames[controlMode], screen);    
       drawVolume(selectedPid[1], screen);
+      break;
+    case CALIBRATE:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawCalibration(selectedPid[1], screen);
       break;
     case EXIT:
       drawTitle("done", screen);
@@ -392,7 +500,11 @@ public:
       break;
     case VOLUME:
       selectedPid[1] = settings.audio_output_gain; // todo: get current
-      break;	
+      break;
+    case CALIBRATE:
+      selectedPid[1] = 2;
+      resetCalibration();
+      break;
     default:
       break;
     }
@@ -418,10 +530,17 @@ public:
 	settings.audio_output_gain = selectedPid[1];
 	controlMode = EXIT;
 	break;
+      case CALIBRATE:
+	if (!calibrationConfirm) {
+	  calibrationConfirm = true;
+	  updateCalibration();
+	}
+	break;
       default:
 	break;
       }
-    }else{
+    }
+    else{
       if(controlMode == EXIT){
 	displayMode = STANDARD;
       }else{
@@ -431,8 +550,52 @@ public:
 	}else if(delta < 0 && controlMode > 0){
 	  setControlMode(controlMode-1);
 	}
+	if (controlMode == CALIBRATE)
+	  calibrationConfirm = false;
 	encoders[1] = value;
       }
+    }
+  }
+
+  void resetCalibration(){
+    //    selectedPid[1] = 0;
+    isCalibrationRunning = false;
+    isCalibrationModeSelected = false;
+    input_cal.reset();
+    output_cal.reset();
+  }
+
+  void updateCalibration(){
+    // This function runs once every time when encoder is pressed.
+    if (isCalibrationRunning){
+      if (isCalibrationModeSelected) {
+	if (current_cal->state == BaseCalibration::CAL_DONE) {
+	  current_cal->results = (BaseCalibration::CalibrationResults)selectedPid[1];
+	  if (current_cal->results == BaseCalibration::CAL_SAVE)
+	    current_cal->storeResults();
+	  resetCalibration();
+	}
+	else if (current_cal->readSample())
+	  current_cal->nextState();
+	if (current_cal->isDone())
+	  current_cal->calibrate();
+      }
+      else {
+	isCalibrationModeSelected = true;
+	switch (selectedPid[1]){
+	case 0:
+	  input_cal.reset();
+	  break;
+	case 1:
+	  output_cal.reset();
+	  break;
+	case 2:
+	  controlMode = EXIT;
+	}
+      }
+    }
+    else{
+      isCalibrationRunning = true;
     }
   }
 
@@ -444,6 +607,25 @@ public:
       break;
     case PRESET:
       selectedPid[1] = min(registry.getNumberOfPatches()-1, value);
+      break;
+    case CALIBRATE:
+      if (isCalibrationRunning && !isCalibrationModeSelected) {
+	selectedPid[1] = max(0, min(value, 2));
+	// calibration process is not running yet.
+	switch ((BaseCalibration::CalibrationMode)selectedPid[1]){
+	case BaseCalibration::CAL_INPUT:
+	  calibrationMode = BaseCalibration::CAL_INPUT;
+	  current_cal = &input_cal;
+	  break;
+	case BaseCalibration::CAL_OUTPUT:
+	  calibrationMode = BaseCalibration::CAL_OUTPUT;
+	  current_cal = &output_cal;
+	  break;
+	}
+      }
+      else if (isCalibrationRunning && isCalibrationModeSelected && current_cal->state == BaseCalibration::CAL_DONE) {
+	selectedPid[1] = max(0, min(value, 1));
+      }
       break;
     default:
       break;
