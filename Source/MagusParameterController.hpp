@@ -67,7 +67,8 @@ public:
   BaseCalibration::CalibrationMode calibrationMode;
   bool isCalibrationRunning;
   bool isCalibrationModeSelected;
-  bool calibrationConfirm = false; //This is a flag used to track encoder presses
+  bool calibrationConfirm = false; //A flag used to track encoder presses.
+  bool continueCalibration = false; // Runs output calibration for several buffer
 
   const char controlModeNames[NOF_CONTROL_MODES][12] = { "  Play   >",
 							 "< Status >",
@@ -303,40 +304,60 @@ public:
   void drawCalibration(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
     if (isCalibrationRunning) {
-      /*
-      screen.print(1, 24 + 10, "S=");
-      screen.print((int)calibrationScalar);
-      screen.print(65, 24 + 10, "O=");
-      screen.print((int)calibrationOffset);
-      */
       if (isCalibrationModeSelected) {
-	if (calibrationMode == BaseCalibration::CAL_INPUT)
-	  switch(input_cal.state){
-	  case BaseCalibration::CAL_LO:
-	    screen.print(1, 24 + 20, "1V to IN1");
-	    screen.print(1, 24 + 30, "Sample ");
-	    screen.print(input_cal.getInput());
-	    break;
-	  case BaseCalibration::CAL_HI:
-	    screen.print(1, 24 + 20, "3V to IN1");
-	    screen.print(1, 24 + 30, "Sample ");
-	    screen.print(input_cal.getInput());
-	    break;
-	  case BaseCalibration::CAL_DONE:
-	    // Save or discard results
-	    screen.print(1, 24, "Calbiration results");
-	    screen.print(1, 24 + 10, "Scalar:");
-	    screen.print((int)input_cal.getScalar());
-	    screen.print(1, 24 + 20, "Offset:");
-	    screen.print((int)input_cal.getOffset());
-	    screen.print(1, 24 + 30, "Save");
-	    screen.print(65, 24 + 30, "Discard");
-	    if (selected == BaseCalibration::CAL_SAVE)
-	      screen.invert(0, 24 + 20, 64, 10);
-	    else
-	      screen.invert(64, 24 + 20, 64, 10);
-	    break;
+	float input_multiplier = (float)(int32_t)settings.input_scalar / UINT16_MAX;
+	float input_offset = (float)(int32_t)settings.input_offset / UINT16_MAX;
+	float input_sample = current_cal->getInput();
+	float input_voltage = (input_sample - input_offset) * input_multiplier;
+
+	switch (current_cal->state){
+	case BaseCalibration::CAL_LO:
+	  if (calibrationMode == BaseCalibration::CAL_INPUT) {
+	    screen.print(1, 24 + 10, "1V to IN1");
 	  }
+	  else {
+	    screen.print(1, 24 + 10, "OUT1 to IN1");
+	    screen.print(1, 24 + 20, "Voltage ");
+	    screen.print(input_voltage);
+	  }
+	  screen.print(1, 24 + 30, "Sample  ");
+	  screen.print(input_sample);
+	  break;
+	case BaseCalibration::CAL_HI:
+	  if (calibrationMode == BaseCalibration::CAL_INPUT) {
+	    screen.print(1, 24 + 10, "3V to IN1");
+	  }
+	  else {
+	    float input_multiplier = (float)(int32_t)settings.input_scalar / UINT16_MAX;
+	    float input_offset = (float)(int32_t)settings.input_offset / UINT16_MAX;
+	    screen.print(1, 24 + 10, "OUT1 to IN1");
+	    screen.print(1, 24 + 20, "Voltage ");
+	    screen.print(input_voltage);
+	  }
+	  screen.print(1, 24 + 30, "Sample  ");
+	  screen.print(input_sample);
+	  break;	  
+	case BaseCalibration::CAL_DONE:
+	  // Save or discard results
+	  float input_multiplier = (float)(int32_t)settings.input_scalar / UINT16_MAX;
+	  float input_offset = (float)(int32_t)settings.input_offset / UINT16_MAX;
+	  float volts1 = (current_cal->samples[0] - input_offset) * input_multiplier;
+	  float volts2 = (current_cal->samples[1] - input_offset) * input_multiplier;
+	  
+	  screen.print(1, 24, "Calibration results");
+	  screen.print(1, 24 + 10, "Scalar:");
+	  screen.print((int)current_cal->getScalar());
+	  screen.print(1, 24 + 20, "Offset:");
+	  screen.print((int)current_cal->getOffset());
+
+	  screen.print(1, 24 + 30, "Save");
+	  screen.print(65, 24 + 30, "Discard");
+	  if (selected == BaseCalibration::CAL_SAVE)
+	    screen.invert(0, 24 + 20, 64, 10);
+	  else
+	    screen.invert(64, 24 + 20, 64, 10);
+	  break;	
+	}
       }
       else {
 	// Select calibration mode
@@ -550,15 +571,19 @@ public:
 	}else if(delta < 0 && controlMode > 0){
 	  setControlMode(controlMode-1);
 	}
-	if (controlMode == CALIBRATE)
-	  calibrationConfirm = false;
+	if (controlMode == CALIBRATE) {
+	  if (continueCalibration)
+	    updateCalibration();
+	  else
+	    calibrationConfirm = false;
+	}
 	encoders[1] = value;
       }
     }
   }
 
   void resetCalibration(){
-    //    selectedPid[1] = 0;
+    //selectedPid[1] = 0;
     isCalibrationRunning = false;
     isCalibrationModeSelected = false;
     input_cal.reset();
@@ -566,6 +591,7 @@ public:
   }
 
   void updateCalibration(){
+    continueCalibration = false;
     // This function runs once every time when encoder is pressed.
     if (isCalibrationRunning){
       if (isCalibrationModeSelected) {
@@ -574,9 +600,13 @@ public:
 	  if (current_cal->results == BaseCalibration::CAL_SAVE)
 	    current_cal->storeResults();
 	  resetCalibration();
+	  program.loadProgram(settings.program_index);
+	  program.resetProgram(false);
 	}
 	else if (current_cal->readSample())
 	  current_cal->nextState();
+	else
+	  continueCalibration = true;
 	if (current_cal->isDone())
 	  current_cal->calibrate();
       }
@@ -584,13 +614,16 @@ public:
 	isCalibrationModeSelected = true;
 	switch (selectedPid[1]){
 	case 0:
+	  program.exitProgram(false);
 	  input_cal.reset();
 	  break;
 	case 1:
+	  program.exitProgram(false);
 	  output_cal.reset();
 	  break;
-	case 2:
-	  controlMode = EXIT;
+	  //case 2:
+	  //controlMode = EXIT;
+	  //break;
 	}
       }
     }
