@@ -275,3 +275,19 @@ define armex
 end
 
 -----------------------------------------------------------------
+
+Wizard pin compatible devices:
+STM32F777ZITx
+STM32F767ZITx
+STM32F767ZGTx
+STM32F756ZGTx
+STM32F746ZGTx
+STM32F765ZGTx
+...
+
+Noctua pin compatible devices:
+STM32F427VITx
+STM32F446VETx
+
+PE12 / pin 43 : 
+
