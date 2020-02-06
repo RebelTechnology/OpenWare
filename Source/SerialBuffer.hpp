@@ -106,7 +106,6 @@ public:
       return readpos - writepos;
     else
       return size - writepos;
-    // return size-writepos;
   }
   size_t getContiguousReadCapacity(){
     if(writepos < readpos)
