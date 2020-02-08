@@ -20,8 +20,8 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 #define NOF_ENCODERS 6
 #define ENC_MULTIPLIER 6 // shift left by this many steps
 #define NOF_CONTROL_MODES 5
-#define SHOW_CALIBRATION_DEBUG  // This flag renders current values in calibration menu
-#define CALIBRATION_DEBUG_FLOAT // Display float values instead of raw integers
+#define SHOW_CALIBRATION_INFO  // This flag renders current values in calibration menu
+#define CALIBRATION_INFO_FLOAT // Display float values instead of raw integers
 
 /*    
 screen 128 x 64, font 5x7
@@ -287,11 +287,22 @@ public:
   void drawPresetNames(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
     selected = min(selected, registry.getNumberOfPatches()-1);
-    if(selected > 0)
-      screen.print(1, 24, registry.getPatchName(selected-1));
-    screen.print(1, 24+10, registry.getPatchName(selected));
-    if(selected+1 < (int)registry.getNumberOfPatches())
-      screen.print(1, 24+20, registry.getPatchName(selected+1));
+    if(selected > 1) {
+      screen.setCursor(1, 24);
+      screen.print((int)selected - 1);
+      screen.print(".");
+      screen.print(registry.getPatchName(selected - 1));
+    };
+    screen.setCursor(1, 24+10);
+    screen.print((int)selected);
+    screen.print(".");
+    screen.print(registry.getPatchName(selected));
+    if(selected+1 < (int)registry.getNumberOfPatches()) {
+      screen.setCursor(1, 24+20);
+      screen.print((int)selected + 1);
+      screen.print(".");
+      screen.print(registry.getPatchName(selected+1));
+    }
     screen.invert(0, 25, 128, 10);
   }
 
@@ -346,9 +357,9 @@ public:
 	  
 	  screen.print(1, 24, "Calibration results");
 	  screen.print(1, 24 + 10, "Scalar:");
-	  screen.print((int)current_cal->getScalar());
+	  screen.print((float)current_cal->getScalar() / UINT16_MAX);
 	  screen.print(1, 24 + 20, "Offset:");
-	  screen.print((int)current_cal->getOffset());
+	  screen.print((float)current_cal->getOffset() / UINT16_MAX);
 
 	  screen.print(1, 24 + 30, "Save");
 	  screen.print(65, 24 + 30, "Discard");
@@ -379,36 +390,36 @@ public:
     }
     else {
       screen.print(1, 24, "Start calibration");
-      #ifdef SHOW_CALIBRATION_DEBUG
+      #ifdef SHOW_CALIBRATION_INFO
       // Not sure if this should be visible by default, but it helps while debugging
       screen.invert(0, 14, 128, 10);
       screen.print(29, 24 + 10, "Input");
       screen.print(78, 24 + 10, "Output");
       screen.print(1, 24 + 20, "Scl");
       
-      #ifdef CALIBRATION_DEBUG_FLOAT
+      #ifdef CALIBRATION_INFO_FLOAT
       screen.print(29, 24 + 20, msg_ftoa((float)((int32_t)settings.input_scalar) / UINT16_MAX, 10));
       screen.print(78, 24 + 20, msg_ftoa((float)((int32_t)settings.output_scalar) / UINT16_MAX, 10));
       #else
       screen.print(29, 24 + 20, msg_itoa(settings.input_scalar, 10));
       screen.print(78, 24 + 20, msg_itoa(settings.output_scalar, 10));
-      #endif // CALIBRATION_DEBUG_FLOAT
+      #endif // CALIBRATION_INFO_FLOAT
       
       screen.print(1, 24 + 30, "Off");
       
-      #ifdef CALIBRATION_DEBUG_FLOAT
+      #ifdef CALIBRATION_INFO_FLOAT
       screen.print(29, 24 + 30, msg_ftoa((float)((int32_t)settings.input_offset) / UINT16_MAX, 10));
       screen.print(78, 24 + 30, msg_ftoa((float)((int32_t)settings.output_offset) / UINT16_MAX, 10));
       #else
       screen.print(29, 24 + 30, msg_itoa(settings.input_offset, 10));
       screen.print(78, 24 + 30, msg_itoa(settings.output_offset, 10));
-      #endif // CALIBRATION_DEBUG_FLOAT
+      #endif // CALIBRATION_INFO_FLOAT
       
       screen.drawHorizontalLine(0, 24 + 10, 128, WHITE);
       screen.drawHorizontalLine(0, 24 + 20, 128, WHITE);
       screen.drawVerticalLine(27, 24, 30, WHITE);
       screen.drawVerticalLine(76, 24, 30, WHITE);
-      #endif // SHOW_CALIBRATION_DEBUG
+      #endif // SHOW_CALIBRATION_INFO
     }
 	
   }
@@ -639,7 +650,7 @@ public:
       codec.setOutputGain(selectedPid[1]);
       break;
     case PRESET:
-      selectedPid[1] = min(registry.getNumberOfPatches()-1, value);
+      selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
       break;
     case CALIBRATE:
       if (isCalibrationRunning && !isCalibrationModeSelected) {
