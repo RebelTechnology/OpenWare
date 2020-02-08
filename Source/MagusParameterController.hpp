@@ -57,9 +57,16 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, VOLUME, CALIBRATE, EXIT
+    PLAY, STATUS, PRESET, GAIN, CALIBRATE, EXIT
   };
   ControlMode controlMode = PLAY;
+  bool saveSettings;
+
+  enum GainSelection {
+    GAIN_INPUT, GAIN_OUTPUT
+  };
+  GainSelection gainSelection;
+  bool isGainPressed;
 
   InputCalibration input_cal;
   OutputCalibration output_cal;
@@ -73,13 +80,16 @@ public:
   const char controlModeNames[NOF_CONTROL_MODES][12] = { "  Play   >",
 							 "< Status >",
 							 "< Preset >",
-							 "< Volume >",
+							 "< Gain   >",
 							 "< V/Oct   " };
 
   ParameterController(){
     reset();
   }
   void reset(){
+    saveSettings = false;
+    isGainPressed = false;
+    gainSelection = GAIN_INPUT;
     drawCallback = defaultDrawCallback;
     for(int i=0; i<SIZE; ++i){
       strcpy(names[i], "Parameter ");
@@ -306,10 +316,18 @@ public:
     screen.invert(0, 25, 128, 10);
   }
 
-  void drawVolume(uint8_t selected, ScreenBuffer& screen){
+  void drawGain(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
-    screen.print(1, 34, "Volume ");
-    screen.print((int)selected);
+    screen.print(1, 24 + 10, "Input  ");
+    screen.print((int)settings.audio_input_gain);
+    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
+    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.audio_input_gain >> 1, 4, WHITE);
+    //    screen.print((int)selected);
+    screen.print(1, 24 + 20, "Output ");
+    screen.print((int)settings.audio_output_gain);
+    screen.drawRectangle(64, 24 + 10 + 1, 64, 8, WHITE);
+    screen.fillRectangle(64, 24 + 10 + 1 + 2, (int)settings.audio_output_gain >> 1, 4, WHITE);
+    screen.invert(0, 24 + ((gainSelection == GAIN_INPUT)?0:10), 40, 10);
   }
 
   void drawCalibration(uint8_t selected, ScreenBuffer& screen){
@@ -432,9 +450,9 @@ public:
       drawTitle(controlModeNames[controlMode], screen);    
       drawPresetNames(selectedPid[1], screen);
       break;
-    case VOLUME:
+    case GAIN:
       drawTitle(controlModeNames[controlMode], screen);    
-      drawVolume(selectedPid[1], screen);
+      drawGain(selectedPid[1], screen);
       break;
     case CALIBRATE:
       drawTitle(controlModeNames[controlMode], screen);
@@ -445,7 +463,7 @@ public:
       break;
     }
     // todo!
-    // select: Scope, VU Meter, Patch Stats, Set Volume, Show MIDI, Reset Patch, Select Patch...
+    // select: Scope, VU Meter, Patch Stats, Set Gain, Show MIDI, Reset Patch, Select Patch...
   }
 
   void draw(ScreenBuffer& screen){
@@ -523,8 +541,9 @@ public:
     case PRESET:
       selectedPid[1] = settings.program_index;
       break;
-    case VOLUME:
-      selectedPid[1] = settings.audio_output_gain; // todo: get current
+    case GAIN:
+      gainSelection = GAIN_INPUT;
+      selectedPid[1] = settings.audio_input_gain; // todo: get current
       break;
     case CALIBRATE:
       selectedPid[1] = 2;
@@ -551,9 +570,18 @@ public:
 	program.resetProgram(false);
 	controlMode = EXIT;
 	break;
-      case VOLUME:
-	settings.audio_output_gain = selectedPid[1];
-	controlMode = EXIT;
+      case GAIN:
+	if (gainSelection == GAIN_INPUT) {
+	  settings.audio_input_gain = selectedPid[1];
+	  if (!isGainPressed)
+	    gainSelection = GAIN_OUTPUT;
+	}
+	else {
+	  settings.audio_output_gain = selectedPid[1];
+	  if (!isGainPressed)
+	    gainSelection = GAIN_INPUT;
+	}
+	isGainPressed = true;
 	break;
       case CALIBRATE:
 	if (!calibrationConfirm) {
@@ -568,6 +596,8 @@ public:
     else{
       if(controlMode == EXIT){
 	displayMode = STANDARD;
+	if (saveSettings)
+	  settings.saveToFlash();
       }else{
 	int16_t delta = value - encoders[1];
 	if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
@@ -638,9 +668,17 @@ public:
 
   void setControlModeValue(uint8_t value){
     switch(controlMode){
-    case VOLUME:
-      selectedPid[1] = min(127, value);
-      codec.setOutputGain(selectedPid[1]);
+    case GAIN:
+      selectedPid[1] = max(0, min(127, value));
+      if (gainSelection == GAIN_INPUT) {
+	codec.setInputGain(selectedPid[1]);
+	settings.audio_input_gain = selectedPid[1];
+      }
+      else {
+	codec.setOutputGain(selectedPid[1]);
+	settings.audio_output_gain = selectedPid[1];
+      }
+      isGainPressed = false;
       break;
     case PRESET:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
