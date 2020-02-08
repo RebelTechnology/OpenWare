@@ -8,8 +8,6 @@
 #define VOLTS_HI 3.0f
 #define SAMPLE_LO -0.5f
 #define SAMPLE_HI 0.5f
-
-
 #define MIN_BUFFER_WRITES 8192
 // Amount of bytes we want to send before reading calibration
 // We don't just count buffer in case if buffer size would change
@@ -86,9 +84,26 @@ public:
   }
 
   float getInput() {
-    // Returns input sample converted to float
+    /*--------------------------------------------------------------
+      We want to use whole buffer for measurement, but we only have
+      8 bits left in ADC input (assuming 24 bit sample data stored as
+      32 bit value. So we'll use minimum of 256 samples or buffer size.
+      --------------------------------------------------------------*/
     ProgramVector* pv = getProgramVector();
-    return (float)(int32_t)((pv->audio_input[0])<<8) / 2147483648.0f;
+    int32_t tmp_data = 0;
+    uint8_t shift = 0;
+    uint16_t num_samples = 1;
+    while (num_samples < 256 && num_samples < settings.audio_blocksize) {
+      num_samples = num_samples << 1;
+      shift++;
+    }
+    uint16_t block_step = max(1, settings.audio_blocksize / num_samples);
+    // Block step is used to skip some samples when audio buffer size > 256
+
+    for (int i = 0; i < settings.audio_blocksize; i = i + block_step)
+      // We read only left channel (* 2) and we do it every block_step samples.
+      tmp_data += ((int32_t)((pv->audio_input[i * 2]) << 8)) >> shift;
+    return (float)tmp_data / 2147483648.0f;
   }
   
   virtual void nextState(){
@@ -108,8 +123,8 @@ public:
 
 class InputCalibration : public BaseCalibration {
  public:
-  // Note: calibration tested with ER-101, results are spot on.
   void calibrate(){
+    // Calibrate based on known voltage and measured samples
     calculateScalarAndOffset(samples[0], samples[1], VOLTS_LO, VOLTS_HI);
   }
 
@@ -121,8 +136,6 @@ class InputCalibration : public BaseCalibration {
   }
   
   bool readSample(){
-    ProgramVector* pv = getProgramVector();
-    // TODO: use average over multiple values for better precision?
     samples[(state == CAL_LO)?0:1] = getInput();
     return true;
   }
@@ -139,6 +152,7 @@ class OutputCalibration : public BaseCalibration {
   float current_sample;
 public:
   void calibrate(){
+    // First measure voltage from calibrated input, then use it to determine scaling
     float input_multiplier = (float)(int32_t)settings.input_scalar / UINT16_MAX;
     float input_offset = (float)(int32_t)settings.input_offset / UINT16_MAX;
 
@@ -165,18 +179,19 @@ public:
   };
 
   bool readSample(){
-    if (data_written >= MIN_BUFFER_WRITES) {
-      // Ready to read results
-      samples[(state == CAL_LO)?0:1] = getInput();
-      return true;
-    }
-    else {
+    if (data_written < MIN_BUFFER_WRITES) {
+      // First we must write a certain of data to output buffer
       ProgramVector* pv = getProgramVector();      
       for (uint16_t i = 0; i < pv->audio_blocksize; i++) {
 	pv->audio_output[i * 2] = (int32_t)(current_sample * 2147483648.0f) >> 8;
 	data_written++;
       }
       return false;
+    }
+    else {
+      // Ready to read results previously written
+      samples[(state == CAL_LO)?0:1] = getInput();
+      return true;      
     }    
   }
 
