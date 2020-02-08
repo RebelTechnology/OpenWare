@@ -9,8 +9,8 @@
 #define SAMPLE_LO -0.5f
 #define SAMPLE_HI 0.5f
 #define MIN_BUFFER_WRITES 8192
-// Amount of bytes we want to send before reading calibration
-// We don't just count buffer in case if buffer size would change
+// Amount of bytes we want to send before reading calibration.
+// We don't count buffers to avoid measuring input too early due to short buffer size.
 
 
 class BaseCalibration {
