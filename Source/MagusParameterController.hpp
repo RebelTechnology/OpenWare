@@ -339,8 +339,6 @@ public:
 	    screen.print(1, 24 + 10, "3V to IN1");
 	  }
 	  else {
-	    float input_multiplier = (float)(int32_t)settings.input_scalar / UINT16_MAX;
-	    float input_offset = (float)(int32_t)settings.input_offset / UINT16_MAX;
 	    screen.print(1, 24 + 10, "OUT1 to IN1");
 	    screen.print(1, 24 + 20, "Voltage ");
 	    screen.print(input_voltage);
@@ -350,11 +348,6 @@ public:
 	  break;	  
 	case BaseCalibration::CAL_DONE:
 	  // Save or discard results
-	  float input_multiplier = (float)(int32_t)settings.input_scalar / UINT16_MAX;
-	  float input_offset = (float)(int32_t)settings.input_offset / UINT16_MAX;
-	  float volts1 = (current_cal->samples[0] - input_offset) * input_multiplier;
-	  float volts2 = (current_cal->samples[1] - input_offset) * input_multiplier;
-	  
 	  screen.print(1, 24, "Calibration results");
 	  screen.print(1, 24 + 10, "Scalar:");
 	  screen.print((float)current_cal->getScalar() / UINT16_MAX);
