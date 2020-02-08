@@ -32,7 +32,7 @@ protected:
 
     To get scalar variable, we divide multiplier by UINT16_MAX
     ----------------------------------------------------------*/
-    float f_scalar = ((volts1 - volts2) / (sample1 -sample2) * UINT16_MAX);
+    float f_scalar = ((volts1 - volts2) / (sample1 - sample2) * UINT16_MAX);
     scalar = f_scalar;
     
     /*----------------------------------------------------------
@@ -43,7 +43,7 @@ protected:
     This also has to be multiplied by UINT16_MAX to get integer
     value.
     ----------------------------------------------------------*/
-    offset = (int32_t)((sample1 - volts1 * UINT16_MAX / f_scalar) * UINT16_MAX);    
+    offset = ((sample1 - volts1 * UINT16_MAX / f_scalar) * UINT16_MAX);
   }
 public:
   enum CalibrationMode {
