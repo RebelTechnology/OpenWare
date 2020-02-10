@@ -105,7 +105,8 @@ enum OpenWareMidiSysexCommand {
   SYSEX_DEVICE_ID                 = 0x21,
   SYSEX_PROGRAM_MESSAGE           = 0x22,
   SYSEX_DEVICE_STATS              = 0x23,
-  SYSEX_PROGRAM_STATS             = 0x24
+  SYSEX_PROGRAM_STATS             = 0x24,
+  SYSEX_PROGRAM_ERROR             = 0x30
 };
 
 /*
