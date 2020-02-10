@@ -748,8 +748,11 @@ public:
       selectedBlock = 0;
     }else{
       if(encoders[0] != value){
-	user[selectedPid[0]] = getEncoderValue(0);
 	selectedBlock = 0;
+	encoders[0] = value;
+	// We must update encoder value before calculating user value, otherwise
+	// previous value would be displayed
+	user[selectedPid[0]] = getEncoderValue(0);
       }
       if(displayMode == SELECTGLOBALPARAMETER)
 	displayMode = STANDARD;
@@ -771,6 +774,9 @@ public:
       }else{
 	if(encoders[i] != value){
 	  selectedBlock = i;
+	  encoders[i] = value;
+	  // We must update encoder value before calculating user value, otherwise
+	  // previous value would be displayed
 	  user[selectedPid[i]] = getEncoderValue(i);
 	}
 	if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
