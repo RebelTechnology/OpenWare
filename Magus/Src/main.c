@@ -229,7 +229,7 @@ int main(void)
 
   /* Start scheduler */
   osKernelStart();
-  
+ 
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
@@ -323,6 +323,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Init.DataSize = SAI_DATASIZE_24;
   hsai_BlockA1.Init.FirstBit = SAI_FIRSTBIT_MSB;
   hsai_BlockA1.Init.ClockStrobing = SAI_CLOCKSTROBING_FALLINGEDGE;
+  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockA1.FrameInit.FrameLength = 64;
@@ -344,6 +345,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.DataSize = SAI_DATASIZE_24;
   hsai_BlockB1.Init.FirstBit = SAI_FIRSTBIT_MSB;
   hsai_BlockB1.Init.ClockStrobing = SAI_CLOCKSTROBING_FALLINGEDGE;
+  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
   hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockB1.FrameInit.FrameLength = 64;
@@ -810,15 +812,11 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
-    
-    
-                 
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
 
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
-
   /* USER CODE BEGIN 5 */
   setup();
  
