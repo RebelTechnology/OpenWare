@@ -183,10 +183,17 @@ void Codec::start(){
   setOutputGain(settings.audio_output_gain);
   codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   HAL_StatusTypeDef ret;
+#ifdef USE_CS4271
+  ret = HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  ASSERT(ret == HAL_OK, "Failed to start SAI RX DMA");
+  ret = HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  ASSERT(ret == HAL_OK, "Failed to start SAI TX DMA");
+#else
   ret = HAL_SAI_Receive_DMA(&hsai_BlockA1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   ASSERT(ret == HAL_OK, "Failed to start SAI RX DMA");
   ret = HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
   ASSERT(ret == HAL_OK, "Failed to start SAI TX DMA");
+#endif
 }
 
 void Codec::pause(){
