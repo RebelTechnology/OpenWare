@@ -25,7 +25,7 @@ static audio_t kx122_samples[KX122_TOTAL_CHANNELS];
 SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_ringbuffer;
 volatile static size_t adc_underflow = 0;
 
-void fill_buffer(uint8_t* buffer, size_t len){
+void usbd_fill_buffer(uint8_t* buffer, size_t len){
   len /= (AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS);
   audio_t* dst = (audio_t*)buffer;
   size_t available;
@@ -45,7 +45,7 @@ void usbd_audio_gain_callback(uint8_t gain){
 }
 
 void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  fill_buffer(haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
+  usbd_fill_buffer(haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
   usbd_audio_write(pdev, haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
 }
 

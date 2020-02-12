@@ -293,3 +293,24 @@ define armex
 end
 
 -----------------------------------------------------------------
+
+Wizard pin compatible devices:
+STM32F777ZITx
+STM32F767ZITx
+STM32F767ZGTx
+STM32F756ZGTx
+STM32F746ZGTx
+STM32F765ZGTx
+...
+
+Noctua pin compatible devices:
+STM32F427VITx 256k SRAM, 2Mb FLASH, $6.70 @1k
+STM32F446VETx 128k SRAM, 512k FLASH, $3.98 @1k
+
+PE12 / pin 43 : 
+
+-----------------------------------------------------------------
+
+Compiling with C++14 support with -std=gnu++14 can cause `operator delete(void*, size_t) undefined` errors.
+
+-----------------------------------------------------------------

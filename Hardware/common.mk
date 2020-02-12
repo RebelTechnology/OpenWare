@@ -73,7 +73,7 @@ stlink:
 	@$(GDB) -ex "target extended localhost:4242" $(ELF)
 
 openocd: $(ELF)
-	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "load" $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
 
 bin: $(BIN) $(HEX)
 	@echo Built $(PROJECT) $(PLATFORM) $(CONFIG) firmware in $(BIN)

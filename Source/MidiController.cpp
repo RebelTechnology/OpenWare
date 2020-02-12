@@ -16,10 +16,6 @@
 #include "ble_midi.h"
 #endif /* USE_BLE_MIDI */
 
-const char* getFirmwareVersion(){ 
-  return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
-}
-
 void MidiController::sendPatchParameterValues(){
   sendCc(PATCH_PARAMETER_A, (uint8_t)(getParameterValue(PARAMETER_A)>>5) & 0x7f);
   sendCc(PATCH_PARAMETER_B, (uint8_t)(getParameterValue(PARAMETER_B)>>5) & 0x7f);

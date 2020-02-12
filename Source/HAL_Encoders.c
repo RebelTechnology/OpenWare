@@ -10,7 +10,7 @@ SPI_HandleTypeDef* Encoders_SPIConfig;
 #define pbarCS(state)		HAL_GPIO_WritePin(ENC_nCS_GPIO_Port,  ENC_nCS_Pin,  (GPIO_PinState)state)
 #define pbarRST(state)		HAL_GPIO_WritePin(ENC_NRST_GPIO_Port,  ENC_NRST_Pin,  (GPIO_PinState)state)
 
-static int16_t rgENC_Values[7];
+static int16_t rgENC_Values[7] = {0};
 
 static uint16_t NOP_CNT = 250; // doesn't work in Release build
 

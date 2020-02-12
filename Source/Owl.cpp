@@ -580,6 +580,7 @@ void setup(){
     // Encoders
     extern SPI_HandleTypeDef ENCODERS_SPI;
     Encoders_init(&ENCODERS_SPI);
+    Encoders_readAll();
   }
   {
     // Pixi
@@ -828,7 +829,6 @@ void loop(void){
   }
   TLC5946_Refresh_GS();
   Encoders_readAll();
-  // graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
   graphics.params.updateEncoders(Encoders_get(), 7);
   MAX11300_bulkreadADC();
   for(int i=0; i<16; ++i){
@@ -970,4 +970,8 @@ void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
 #ifdef USE_DIGITALBUS
   bus_tx_frame(data);
 #endif /* USE_DIGITALBUS */
+}
+
+const char* getFirmwareVersion(){ 
+  return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
 }

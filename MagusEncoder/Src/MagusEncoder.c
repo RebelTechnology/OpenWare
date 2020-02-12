@@ -8,8 +8,6 @@ extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 
 // Variables
-uint8_t bSwitch_ENC[7];
-uint8_t bSwitch_ENC_Prev[7];
 uint8_t seqA[7];
 uint8_t seqB[7];
 
@@ -18,21 +16,14 @@ uint16_t rgENC_Data[7];
 void Encoders_Init (void)
 {
 	// Reset encoder values
+	rgENC_Data[0]  = 0x0000;
 	rgENC_Data[1]  = 0x3FFF;
 	rgENC_Data[2]  = 0x3FFF;
 	rgENC_Data[3]  = 0x3FFF;
 	rgENC_Data[4]  = 0x3FFF;
 	rgENC_Data[5]  = 0x3FFF;
 	rgENC_Data[6]  = 0x3FFF;
-	
-	// Reset switch values
-	bSwitch_ENC[1] = 0;
-	bSwitch_ENC[2] = 0;
-	bSwitch_ENC[3] = 0;
-	bSwitch_ENC[4] = 0;
-	bSwitch_ENC[5] = 0;
-	bSwitch_ENC[6] = 0;
-	
+		
 		// Configure and start TIM Encoders
   __HAL_TIM_SET_COUNTER(&htim1, INT16_MAX/2);
   __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
