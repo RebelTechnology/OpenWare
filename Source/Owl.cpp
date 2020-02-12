@@ -971,3 +971,7 @@ void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
   bus_tx_frame(data);
 #endif /* USE_DIGITALBUS */
 }
+
+const char* getFirmwareVersion(){ 
+  return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
+}

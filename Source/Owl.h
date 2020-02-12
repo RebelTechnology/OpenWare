@@ -40,6 +40,8 @@ extern "C" {
   void setOperationMode(OperationMode mode);
   void setLed(uint8_t led, uint32_t rgb);
 
+  const char* getFirmwareVersion();
+
 #ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder);
   void encoderReset(uint8_t encoder, int16_t value);
