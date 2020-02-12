@@ -580,6 +580,7 @@ void setup(){
     // Encoders
     extern SPI_HandleTypeDef ENCODERS_SPI;
     Encoders_init(&ENCODERS_SPI);
+    Encoders_readAll();
   }
   {
     // Pixi
@@ -828,7 +829,6 @@ void loop(void){
   }
   TLC5946_Refresh_GS();
   Encoders_readAll();
-  // graphics.params.updateEncoders((int16_t*)rgENC_Values, 7);
   graphics.params.updateEncoders(Encoders_get(), 7);
   MAX11300_bulkreadADC();
   for(int i=0; i<16; ++i){
