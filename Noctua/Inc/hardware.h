@@ -46,6 +46,7 @@
 #define USE_USBD_MIDI
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
+#define USBD_MAX_POWER              100 // 100mA
 
 #define AUDIO_SAMPLINGRATE          48000
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */

@@ -114,7 +114,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x01,                                 /* bConfigurationValue */
   0x00,                                 /* iConfiguration */
   0x80,                                 /* bmAttributes: BUS Powered */
-  100,                                  /* bMaxPower = 200 mA*/
+  USBD_MAX_POWER/2,                     /* bMaxPower in 2mA steps */
   /* 09 bytes */
   
   /* Standard AC Interface Descriptor */

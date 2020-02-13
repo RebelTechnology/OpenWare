@@ -28,6 +28,10 @@
 #define MIDI_OUTPUT_BUFFER_SIZE      512
 #define MIDI_INPUT_BUFFER_SIZE       256
 
+#ifndef USBD_MAX_POWER
+#define USBD_MAX_POWER               200 // 200mA
+#endif
+
 #ifndef OWLBOOT_MAGIC
 #define OWLBOOT_MAGIC                (0xDADAB007)
 #endif
