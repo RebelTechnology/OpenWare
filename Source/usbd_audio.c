@@ -76,7 +76,7 @@ USBD_ClassTypeDef  USBD_AUDIO =
   USBD_AUDIO_GetDeviceQualifierDesc,
 };
 
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
 #define AUDIO_RX_EP                    0x01 // bEndpointAddress
 #define AUDIO_TX_EP                    0x81
 #define MIDI_RX_EP                     0x02
@@ -129,7 +129,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x00,                                 /* iInterface */
   /* 09 bytes */
 
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
 #ifdef USE_USBD_AUDIO_RX
   /* Class-Specific AC Interface Header Descriptor */
   0x0a,                                 // bLength
@@ -887,7 +887,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
   */
 static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
 {
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR){
@@ -922,7 +922,7 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
   */
 static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 {
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR)

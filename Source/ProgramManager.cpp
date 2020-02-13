@@ -27,7 +27,7 @@
 #ifdef USE_USB_HOST
 #include "usbh_midi.h"
 #endif /* USE_USB_HOST */
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
 extern void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t len);
 #endif
 
@@ -101,7 +101,7 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   pv->audio_input = rx;
   pv->audio_output = tx;
   pv->audio_blocksize = size;
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
   // todo: move to onProgramReady
   usbd_audio_fill_ringbuffer(rx, size);
 #endif		       
@@ -228,7 +228,7 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
-// #ifdef USE_USB_AUDIO
+// #ifdef USE_USBD_AUDIO
 //   usbd_audio_fill_ringbuffer(pv->audio_output, pv->audio_blocksize);
 // #endif		       
   /* Block indefinitely */

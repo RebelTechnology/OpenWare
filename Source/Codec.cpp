@@ -24,7 +24,7 @@ extern "C" {
   int32_t* codec_txbuf; // todo: ensure buffer alignment
 }
 
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
 volatile static size_t adc_underflow = 0;
 SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_tx_buffer;
@@ -155,7 +155,7 @@ void usbd_audio_gain_callback(uint8_t gain){
 void usbd_audio_sync_callback(uint8_t shift){
   // todo: do something
 }
-#endif // USE_USB_AUDIO
+#endif // USE_USBD_AUDIO
 
 uint16_t Codec::getBlockSize(){
   return codec_blocksize;

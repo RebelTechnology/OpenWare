@@ -100,7 +100,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   if (htim == &htim8){
     // sample all channels
     iis3dwb_read();
-#if defined USE_USB_AUDIO && defined AUDIO_BYPASS
+#if defined USE_USBD_AUDIO && defined AUDIO_BYPASS
     // write directly to usb buffer
     audio_t* dst = audio_tx_buffer.getWriteHead(); // assume there's enough contiguous space for one full frame
 #else
@@ -111,7 +111,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     *dst++ = dev_data_raw_acceleration.i16bit[2];
     // memcpy(dst, ads_samples, AUDIO_CHANNELS*sizeof(audio_t));
     // dst += ADS_ACTIVE_CHANNELS;
-#if defined USE_USB_AUDIO && defined AUDIO_BYPASS
+#if defined USE_USBD_AUDIO && defined AUDIO_BYPASS
     audio_tx_buffer.incrementWriteHead(AUDIO_CHANNELS);
 #else
     rxindex += AUDIO_CHANNELS;
