@@ -360,7 +360,7 @@ void updateProgramVector(ProgramVector* pv){
 #elif defined OWL_BIOSIGNALS || defined OWL_NOCTUA
   pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
 #else
-  pv->audio_format = AUDIO_FORMAT_24B24_2X;
+  pv->audio_format = AUDIO_FORMAT_24B32;
   // pv->audio_format = AUDIO_FORMAT_24B32_2X;
 #endif
 #endif /* PROGRAM_VECTOR_V13 */
