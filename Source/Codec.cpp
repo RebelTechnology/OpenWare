@@ -231,6 +231,15 @@ void Codec::setOutputGain(int8_t value){
   codec_set_gain_out(value);
 }
 
+void Codec::setHighPass(bool hpf){
+#ifdef USE_PCM3168A
+  if(hpf)
+    codec_write(82, 0b00000000); // enable HPF for all ADC channels
+  else
+    codec_write(82, 0b00000111); // disable HPF for all ADC channels
+#endif
+}
+
 #ifdef USE_IIS3DWB
 extern "C" {
   void iis3dwb_read();

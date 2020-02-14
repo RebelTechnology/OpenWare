@@ -202,6 +202,8 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN, p, 2) == 0){
     settings.audio_output_gain = value;  
     codec.setOutputGain(settings.audio_output_gain);
+  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_HIGHPASS, p, 2) == 0){
+    codec.setHighPass(value);
 #endif
   }else if(strncmp(SYSEX_CONFIGURATION_PC_BUTTON, p, 2) == 0){
     settings.program_change_button = value;

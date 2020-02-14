@@ -5,7 +5,7 @@
  extern "C" {
 #endif
 
-#include  "usbd_ioreq.h"
+#include "usbd_ioreq.h"
 #include "device.h"
 
 #define AUDIO_DESCRIPTOR_TYPE                         0x21

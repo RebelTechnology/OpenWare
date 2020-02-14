@@ -88,6 +88,7 @@ USBD_ClassTypeDef  USBD_AUDIO =
 #define AUDIO_NUM_INTERFACES           0x03
 #define AUDIO_MIDI_IF                  0x02
 #define AUDIO_TX_IF                    0x01
+#define AUDIO_RX_IF                    0xff // dummy
 #endif
 #else
 #define USB_AUDIO_CONFIG_DESC_SIZ      101
@@ -95,6 +96,8 @@ USBD_ClassTypeDef  USBD_AUDIO =
 #define AUDIO_MIDI_IF                  0x01
 #define MIDI_RX_EP                     0x01
 #define MIDI_TX_EP                     0x81
+#define AUDIO_TX_IF                    0xff // dummy
+#define AUDIO_RX_IF                    0xff // dummy
 #endif
 
 /* USB AUDIO device Configuration Descriptor */
@@ -662,6 +665,7 @@ void usbd_audio_select_alt(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* h
     }
     if(alt == 1){
       /* Open IN (i.e. microphone) Endpoint */
+      USBD_LL_FlushEP(pdev, AUDIO_TX_EP);
       rv = USBD_LL_OpenEP(pdev,
 			  AUDIO_TX_EP,
 			  USBD_EP_TYPE_ISOC,
@@ -817,7 +821,7 @@ static uint8_t  USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev,
       break;
 
     case USB_REQ_SET_INTERFACE :
-      USBD_DbgLog("iface %d alt %d\n", req->wIndex, req->wValue);
+      /* USBD_DbgLog("iface %d alt %d\n", req->wIndex, req->wValue); */
       switch(req->wIndex){
       case 0:
 	/* Audio Control interface, only alternate zero is accepted  */     
@@ -831,7 +835,6 @@ static uint8_t  USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev,
 	  usbd_audio_select_alt(pdev, haudio, req->wIndex, req->wValue);
 	else
 	  ret = USBD_FAIL;
-	/* USBD_DbgLog("iface %d alt %d\n", req->wIndex, req->wValue); */
 	break;
       default:
 	ret = USBD_FAIL;
