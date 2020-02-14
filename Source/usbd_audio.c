@@ -651,35 +651,33 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
 
 void usbd_audio_select_alt(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio, uint8_t iface, uint8_t alt){
   USBD_StatusTypeDef rv;
-  /* if(iface == AUDIO_TX_IF && haudio->tx_alt_setting != alt){ */
-  if(iface == 2 && haudio->tx_alt_setting != alt){
+  if(iface == AUDIO_TX_IF && haudio->tx_alt_setting != alt){
 #ifdef USE_USBD_AUDIO_TX_FALSE
-    haudio->audio_tx_active = 0;
-    if(haudio->tx_alt_setting != 0){
+    if(alt == 0){
       // close previous
+      haudio->audio_tx_active = 0;
       usbd_audio_tx_stop_callback();
       /* Close EP IN */
       USBD_LL_CloseEP(pdev, AUDIO_TX_EP);
     }
     if(alt == 1){
       /* Open IN (i.e. microphone) Endpoint */
-      USBD_LL_FlushEP(pdev, AUDIO_TX_EP);
       rv = USBD_LL_OpenEP(pdev,
 			  AUDIO_TX_EP,
 			  USBD_EP_TYPE_ISOC,
 			  AUDIO_TX_PACKET_SIZE);
       if(rv != USBD_OK)
-        USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
+	USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
       haudio->audio_tx_active = 1;
       usbd_audio_tx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
       usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
     }
 #endif
     haudio->tx_alt_setting = alt;
-  /* }else if(iface == AUDIO_RX_IF && haudio->rx_alt_setting != alt){ */
-  }else if(iface == 1 && haudio->rx_alt_setting != alt){
+  }else if(iface == AUDIO_RX_IF && haudio->rx_alt_setting != alt){
 #ifdef USE_USBD_AUDIO_RX
-    if(haudio->rx_alt_setting != 0){
+    /* if(haudio->rx_alt_setting != 0){ */
+    if(alt == 0){
       /* Close EP OUT */
       USBD_LL_CloseEP(pdev, AUDIO_RX_EP);
       usbd_audio_rx_stop_callback();
@@ -819,22 +817,21 @@ static uint8_t  USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev,
       break;
 
     case USB_REQ_SET_INTERFACE :
+      USBD_DbgLog("iface %d alt %d\n", req->wIndex, req->wValue);
       switch(req->wIndex){
       case 0:
 	/* Audio Control interface, only alternate zero is accepted  */     
 	if(req->wValue != 0)
 	  ret = USBD_FAIL;
 	break;
-      /* case AUDIO_RX_IF: */
-      /* case AUDIO_TX_IF: */
-      /* case AUDIO_MIDI_IF: */
-      case 1: // AUDIO_TX_IF
-      case 2: // AUDIO_RX_IF
+      case AUDIO_RX_IF:
+      case AUDIO_TX_IF:
+      case AUDIO_MIDI_IF:
 	if(req->wValue <= 1) // only alt 0 or 1
 	  usbd_audio_select_alt(pdev, haudio, req->wIndex, req->wValue);
 	else
 	  ret = USBD_FAIL;
-	USBD_DbgLog("iface %d alt %d\n", req->wIndex, req->wValue);
+	/* USBD_DbgLog("iface %d alt %d\n", req->wIndex, req->wValue); */
 	break;
       default:
 	ret = USBD_FAIL;
