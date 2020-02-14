@@ -268,7 +268,7 @@ void onProgramReady(){
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
 #ifdef USE_USB_HOST
-  midi_host_push();
+  usbh_midi_push();
 #endif
 }
 

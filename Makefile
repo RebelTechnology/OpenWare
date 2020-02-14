@@ -2,7 +2,7 @@ OPENWARE = $(CURDIR)
 
 # Debug / Release
 ifndef CONFIG
-  CONFIG = Debug
+  CONFIG = Release
 endif
 
 .PHONY: clean deploy-midiboot deploy-alchemist

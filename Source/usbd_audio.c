@@ -1005,7 +1005,7 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
   if(epnum == MIDI_RX_EP){
     /* Forward data to midi callback */
     uint32_t len = USBD_LL_GetRxDataSize(pdev, epnum);
-    midi_device_rx(haudio->midi_rx_buffer, len);
+    usbd_midi_rx(haudio->midi_rx_buffer, len);
     /* Prepare Out endpoint to receive next packet */
     USBD_LL_PrepareReceive(pdev,
 			   MIDI_RX_EP,
@@ -1098,7 +1098,7 @@ void usbd_audio_write(uint8_t* buf, size_t len) {
 #endif
 }
 
-void midi_device_tx(uint8_t* buf, uint32_t len) {
+void usbd_midi_tx(uint8_t* buf, uint32_t len) {
 #ifdef USE_USBD_MIDI
   extern USBD_HandleTypeDef USBD_HANDLE;
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
@@ -1110,7 +1110,7 @@ void midi_device_tx(uint8_t* buf, uint32_t len) {
 #endif /* USE_USBD_MIDI */
 }
 
-uint8_t midi_device_connected(void){
+uint8_t usbd_midi_connected(void){
 #ifdef USE_USBD_MIDI
   extern USBD_HandleTypeDef USBD_HANDLE;
   return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED;
@@ -1119,7 +1119,7 @@ uint8_t midi_device_connected(void){
 #endif /* USE_USBD_MIDI */
 }
 
-uint8_t midi_device_ready(void){
+uint8_t usbd_midi_ready(void){
   extern USBD_HandleTypeDef USBD_HANDLE;
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
   /* return USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED; */

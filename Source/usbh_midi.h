@@ -74,9 +74,9 @@ extern "C" {
     //CDC_InterfaceDesc_Typedef         CDC_Desc;
   } MIDI_HandleTypeDef;
 
-  void midi_host_begin(void);
-  void midi_host_push(void);
-  void midi_host_reset(void);
+  void usbh_midi_begin(void);
+  void usbh_midi_push(void);
+  void usbh_midi_reset(void);
 
   USBH_StatusTypeDef  USBH_MIDI_Transmit(USBH_HandleTypeDef *phost,
 					 uint8_t *pbuff,

@@ -5,16 +5,6 @@
 #include <cstring>
 #include "ProgramManager.h"
 
-#if AUDIO_BITS_PER_SAMPLE == 32
-typedef int32_t audio_t;
-#elif AUDIO_BITS_PER_SAMPLE == 16
-typedef int16_t audio_t;
-#elif AUDIO_BITS_PER_SAMPLE == 8
-typedef int8_t audio_t;
-#else
-#error Invalid AUDIO_BITS_PER_SAMPLE
-#endif
-
 #include "SerialBuffer.hpp"
 SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer;
 
@@ -26,6 +16,17 @@ extern "C" {
 
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
+
+#if AUDIO_BITS_PER_SAMPLE == 32
+typedef int32_t audio_t;
+#elif AUDIO_BITS_PER_SAMPLE == 16
+typedef int16_t audio_t;
+#elif AUDIO_BITS_PER_SAMPLE == 8
+typedef int8_t audio_t;
+#else
+#error Invalid AUDIO_BITS_PER_SAMPLE
+#endif
+
 volatile static size_t adc_underflow = 0;
 SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_tx_buffer;
 

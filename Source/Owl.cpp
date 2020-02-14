@@ -883,7 +883,7 @@ void loop(void){
 
 extern "C"{
   // incoming data from USB device interface
-  void midi_device_rx(uint8_t *buffer, uint32_t length){
+  void usbd_midi_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4){
       if(!mididevice.readMidiFrame(buffer+i))
 	mididevice.reset();
@@ -896,11 +896,11 @@ extern "C"{
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
 
 #ifdef USE_USB_HOST
-  void midi_host_reset(void){
+  void usbh_midi_reset(void){
     midihost.reset();
     ledstatus ^= 0x3ff003ff;
   }
-  void midi_host_rx(uint8_t *buffer, uint32_t length){
+  void usbh_midi_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4){
       if(!midihost.readMidiFrame(buffer+i)){
 	midihost.reset();

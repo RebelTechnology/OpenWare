@@ -210,7 +210,7 @@ void MidiController::sendDeviceId(){
 }
 
 void MidiController::sendPc(uint8_t pc){
-  if(midi_device_connected()){
+  if(usbd_midi_connected()){
     uint8_t packet[4] = { USB_COMMAND_PROGRAM_CHANGE,
 			  (uint8_t)(PROGRAM_CHANGE | channel),
 			  pc, 0 };
@@ -219,7 +219,7 @@ void MidiController::sendPc(uint8_t pc){
 }
 
 void MidiController::sendCc(uint8_t cc, uint8_t value){
-  if(midi_device_connected()){
+  if(usbd_midi_connected()){
     uint8_t packet[4] = { USB_COMMAND_CONTROL_CHANGE,
 			  (uint8_t)(CONTROL_CHANGE | channel),
 			  cc, value };
@@ -228,7 +228,7 @@ void MidiController::sendCc(uint8_t cc, uint8_t value){
 }
 
 void MidiController::sendNoteOff(uint8_t note, uint8_t velocity){
-  if(midi_device_connected()){
+  if(usbd_midi_connected()){
     uint8_t packet[4] = { USB_COMMAND_NOTE_OFF,
 			  (uint8_t)(NOTE_OFF | channel),
 			  note, velocity };
@@ -237,7 +237,7 @@ void MidiController::sendNoteOff(uint8_t note, uint8_t velocity){
 }
 
 void MidiController::sendNoteOn(uint8_t note, uint8_t velocity){
-  if(midi_device_connected()){
+  if(usbd_midi_connected()){
     uint8_t packet[4] = { USB_COMMAND_NOTE_ON,
 			  (uint8_t)(NOTE_ON | channel),
 			  note, velocity };
@@ -246,7 +246,7 @@ void MidiController::sendNoteOn(uint8_t note, uint8_t velocity){
 }
 
 void MidiController::sendPitchBend(uint16_t value){
-  if(midi_device_connected()){
+  if(usbd_midi_connected()){
     uint8_t packet[4] = { USB_COMMAND_PITCH_BEND_CHANGE,
 			  (uint8_t)(PITCH_BEND_CHANGE | channel),
 			  (uint8_t)(value & 0x7f), (uint8_t)((value>>7) & 0x7f) };
@@ -264,7 +264,7 @@ void MidiController::sendSysEx(uint8_t* data, uint16_t size){
    * sent. Go through the sysex 3 bytes at a time, including the leading
    * 0xF0 and trailing 0xF7.
    */
-  if(midi_device_connected()){
+  if(usbd_midi_connected()){
     uint8_t packet[4] = { USB_COMMAND_SYSEX, SYSEX, MIDI_SYSEX_MANUFACTURER,
 			  uint8_t(MIDI_SYSEX_OWL_DEVICE | channel) };
     write(packet, sizeof(packet));
@@ -308,11 +308,11 @@ void MidiController::write(uint8_t* data, uint16_t size){
   else
     error(RUNTIME_ERROR, "usb tx overflow");
 #else
-  if(midi_device_ready()) // if not ready, packets will be missed
-    midi_device_tx(data, size);
+  if(usbd_midi_ready()) // if not ready, packets will be missed
+    usbd_midi_tx(data, size);
 #ifdef USE_USB_HOST
-  if(midi_host_ready())
-    midi_host_tx(data, size);
+  if(usbh_midi_ready())
+    usbh_midi_tx(data, size);
 #endif /* USE_USB_HOST */
 #ifdef USE_BLE_MIDI
   ble_tx(data, size);
@@ -325,11 +325,11 @@ void MidiController::push(){
   size_t len = buffer.getContiguousReadCapacity() & ~0x0003;
   // round down to multiple of four
   while(len >= 4){
-    if(midi_device_ready()) // if not ready, packets will be missed
-      midi_device_tx(buffer.getReadHead(), len);
+    if(usbd_midi_ready()) // if not ready, packets will be missed
+      usbd_midi_tx(buffer.getReadHead(), len);
 #ifdef USE_USB_HOST
-    if(midi_host_ready())
-      midi_host_tx(buffer.getReadHead(), len);
+    if(usbh_midi_ready())
+      usbh_midi_tx(buffer.getReadHead(), len);
 #endif /* USE_USB_HOST */
 #ifdef USE_BLE_MIDI
     ble_tx(buffer.getReadHead(), len);
@@ -343,11 +343,11 @@ void MidiController::push(){
 // void MidiController::push(){
 //   size_t len = buffer.getContiguousReadCapacity();
 //   while(len >= 4){
-//     if(midi_device_ready()) // if not ready, packets will be missed
-//       midi_device_tx(buffer.getReadHead(), 4);
+//     if(usbd_midi_ready()) // if not ready, packets will be missed
+//       usbd_midi_tx(buffer.getReadHead(), 4);
 // #ifdef USE_USB_HOST
-//     if(midi_host_ready())
-//       midi_host_tx(buffer.getReadHead(), 4);
+//     if(usbh_midi_ready())
+//       usbh_midi_tx(buffer.getReadHead(), 4);
 // #endif /* USE_USB_HOST */
 // #ifdef USE_BLE_MIDI
 //     ble_tx(buffer.getReadHead(), 4);
