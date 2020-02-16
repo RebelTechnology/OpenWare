@@ -80,6 +80,10 @@ public:
   void drawHorizontalLine(int x, int y, int length, Colour c);
   void drawRectangle(int x, int y, int width, int height, Colour c);
   void fillRectangle(int x, int y, int width, int height, Colour c);
+  
+  // circles - maybe add arch, ellipse here as well
+  void drawCircle(uint16_t x, uint16_t y, uint16_t r, Colour c);
+  void fillCircle(uint16_t x, uint16_t y, uint16_t r, Colour c);
 
   // text
   void print(int x, int y, const char* text);
