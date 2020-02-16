@@ -142,7 +142,7 @@ void ScreenBuffer::drawCircle(uint16_t x, uint16_t y, uint16_t r, Colour c){
 
 void ScreenBuffer::fillCircle(uint16_t x, uint16_t y, uint16_t r, Colour c){
     /*
-     * This is based of code from drawCircle, but we connect circle's point
+     * This is based of code from drawCircle, but we connect circle's points
      * with horizontal lines
      */
     int16_t tx = r;
