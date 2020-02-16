@@ -233,23 +233,15 @@ public:
     screen.drawCircle(84, offset + 15, 8, WHITE);
     screen.drawCircle(104, offset + 15, 8, WHITE);
     
-    switch (encoderSensitivity){
-    case SENS_SUPER_FINE:
-      screen.fillCircle(24, offset + 15, 6, WHITE);
-      break;
-    case SENS_FINE:
+    screen.fillCircle(24, offset + 15, 6, WHITE);
+    if (encoderSensitivity >= SENS_FINE)
       screen.fillCircle(44, offset + 15, 6, WHITE);
-      break;
-    case SENS_STANDARD:
+    if (encoderSensitivity >= SENS_STANDARD)
       screen.fillCircle(64, offset + 15, 6, WHITE);
-      break;
-    case SENS_COARSE:
+    if (encoderSensitivity >= SENS_COARSE)
       screen.fillCircle(84, offset + 15, 6, WHITE);
-      break;
-    case SENS_SUPER_COARSE:
+    if (encoderSensitivity >= SENS_SUPER_COARSE)
       screen.fillCircle(104, offset + 15, 6, WHITE);
-      break;      
-    }
 }
 
   void drawStatus(ScreenBuffer& screen){
@@ -700,7 +692,6 @@ public:
   }
 
   void setControlModeValue(uint8_t value){
-    uint8_t prevSensitivity = encoderSensitivity;
     bool sensitivityChanged = false;
     switch(controlMode){
     case PLAY:
