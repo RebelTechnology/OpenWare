@@ -87,18 +87,19 @@ public:
     /*--------------------------------------------------------------
       We want to use whole buffer for measurement, but we only have
       8 bits left in ADC input (assuming 24 bit sample data stored as
-      32 bit value. So we'll use minimum of 256 samples or buffer size.
+      32 bit value. So we'll use minimum of 128 samples or buffer size.
+      We can't use more in unsigned 32 bit variable as it would overflow.
       --------------------------------------------------------------*/
     ProgramVector* pv = getProgramVector();
     int32_t tmp_data = 0;
     uint8_t shift = 0;
     uint16_t num_samples = 1;
-    while (num_samples < 256 && num_samples < settings.audio_blocksize) {
+    while (num_samples < 128 && num_samples < settings.audio_blocksize) {
       num_samples = num_samples << 1;
       shift++;
     }
     uint16_t block_step = max(1, settings.audio_blocksize / num_samples);
-    // Block step is used to skip some samples when audio buffer size > 256
+    // Block step is used to skip some samples when audio buffer size > 128
 
     for (int i = 0; i < settings.audio_blocksize; i = i + block_step)
       // We read only left channel (* 2) and we do it every block_step samples.
