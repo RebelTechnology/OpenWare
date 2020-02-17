@@ -138,7 +138,7 @@ int main(void)
     // jump to application code
 
     /* Disable all interrupts */
-    RCC->CIR = 0x00000000;
+    __disable_irq();
 
     /* Jump to user application */
     uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
