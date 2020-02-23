@@ -6,6 +6,7 @@
 #include "Codec.h"
 #endif
 #include "MidiReader.h"
+#include "MidiStreamReader.h"
 #include "MidiController.h"
 #include "ProgramVector.h"
 #include "ProgramManager.h"
@@ -81,6 +82,9 @@ MidiController midi;
 #ifdef USE_USB_HOST
 MidiReader midihost;
 #endif /* USE_USB_HOST */
+#ifdef USE_UART_MIDI
+MidiStreamReader midiuart;
+#endif /* USE_UART_MIDI */
 ApplicationSettings settings;
 #define OWLBOOT_ADDRESS ((uint32_t*)0x2000FFF0)
 
@@ -138,6 +142,9 @@ void midiSetInputChannel(int8_t channel){
   mididevice.setInputChannel(channel);
 #ifdef USE_USB_HOST
   midihost.setInputChannel(channel);
+#endif
+#ifdef USE_UART_MIDI
+  midiuart.setInputChannel(channel);
 #endif
 #ifdef USE_DIGITALBUS
   bus_set_input_channel(channel);
@@ -882,6 +889,8 @@ void loop(void){
 }
 
 extern "C"{
+
+#ifdef USE_USBD_MIDI
   // incoming data from USB device interface
   void usbd_midi_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4){
@@ -894,14 +903,15 @@ extern "C"{
     }
   }
   // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
+#endif
 
 #ifdef USE_USB_HOST
   void usbh_midi_reset(void){
     midihost.reset();
     ledstatus ^= 0x3ff003ff;
   }
-  void usbh_midi_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4){
+  void usbh_midi_rx(uint8_t *buffer, uint32_t len){
+    for(uint16_t i=0; i<len; i+=4){
       if(!midihost.readMidiFrame(buffer+i)){
 	midihost.reset();
       }else{
@@ -910,6 +920,19 @@ extern "C"{
     }
   }
 #endif /* USE_USB_HOST */
+
+  
+#ifdef USE_UART_MIDI
+  void uart_rx_callback(uint8_t* data, size_t len){
+    for(uint16_t i=0; i<len; ++i){
+      if(!midiuart.read(data[i])){
+	error(RUNTIME_ERROR, "MIDI rx error");
+	midiuart.clear();
+	return;
+      }
+    }    
+  }
+#endif /* USE_UART_MIDI */
 
 #if 0 // ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder){

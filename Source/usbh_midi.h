@@ -2,6 +2,7 @@
 #define __USBH_MIDI_CORE_H
 
 #include "usbh_core.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,9 +78,7 @@ extern "C" {
   void usbh_midi_begin(void);
   void usbh_midi_push(void);
   void usbh_midi_reset(void);
-  uint8_t usbh_midi_connected(void);
-  uint8_t usbh_midi_ready(void);
-
+  bool usbh_midi_connected(void);
   bool usbh_midi_ready(void);
 
   USBH_StatusTypeDef  USBH_MIDI_Transmit(USBH_HandleTypeDef *phost,

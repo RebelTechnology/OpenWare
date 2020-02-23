@@ -392,12 +392,12 @@ static void MIDI_ProcessReception(USBH_HandleTypeDef *phost){
   }
 }
 
-uint8_t usbh_midi_connected(void){
+bool usbh_midi_connected(void){
   extern ApplicationTypeDef Appli_state; // defined in usb_host.c
   return Appli_state == APPLICATION_START || Appli_state == APPLICATION_READY;
 }
 
-uint8_t usbh_midi_ready(void){
+bool usbh_midi_ready(void){
   extern ApplicationTypeDef Appli_state;
   extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
   USBH_ClassTypeDef* activeClass = USBH_HANDLE.pActiveClass;
@@ -405,7 +405,7 @@ uint8_t usbh_midi_ready(void){
     MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)activeClass->pData;
     return MIDI_Handle != NULL && MIDI_Handle->data_tx_state == MIDI_IDLE;
   }
-  return 0;
+  return false;
 }
 
 void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){

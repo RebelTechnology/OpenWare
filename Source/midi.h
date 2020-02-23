@@ -1,6 +1,7 @@
 #ifndef __MIDI_H
 #define __MIDI_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "device.h"
 
@@ -16,8 +17,8 @@
    uint8_t usbd_midi_ready(void);
 #ifdef USE_USB_HOST
    // defined in usbh_midi.c
-   uint8_t usbh_midi_connected(void);
-   uint8_t usbh_midi_ready(void);
+   bool usbh_midi_connected(void);
+   bool usbh_midi_ready(void);
 
    void usbh_midi_rx(uint8_t *buffer, uint32_t length);
    void usbh_midi_tx(uint8_t* buffer, uint32_t length);
