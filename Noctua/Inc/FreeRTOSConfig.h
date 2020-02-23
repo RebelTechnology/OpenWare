@@ -25,7 +25,7 @@
  *
  * 1 tab == 4 spaces!
  */
- /* USER CODE END Header */
+/* USER CODE END Header */
 
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H

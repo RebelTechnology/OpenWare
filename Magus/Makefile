@@ -18,6 +18,7 @@ C_SRC += HAL_Encoders.c
 C_SRC += usbd_midi.c
 C_SRC += usbd_midi_if.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
+CPP_SRC += MidiStreamReader.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
 

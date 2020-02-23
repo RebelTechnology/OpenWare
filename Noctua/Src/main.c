@@ -56,6 +56,12 @@ DMA_HandleTypeDef hdma_spi4_tx;
 
 TIM_HandleTypeDef htim8;
 
+UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_rx;
+DMA_HandleTypeDef hdma_usart2_tx;
+
+HCD_HandleTypeDef hhcd_USB_OTG_HS;
+
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 
@@ -69,6 +75,7 @@ static void MX_SAI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_SPI4_Init(void);
 static void MX_TIM8_Init(void);
+static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -122,6 +129,7 @@ int main(void)
   MX_SPI2_Init();
   MX_SPI4_Init();
   MX_TIM8_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -153,7 +161,7 @@ int main(void)
 
   /* Start scheduler */
   osKernelStart();
-  
+ 
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
@@ -433,6 +441,73 @@ static void MX_TIM8_Init(void)
 
 }
 
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 31250;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * @brief USB_OTG_HS Initialization Function
+  * @param None
+  * @retval None
+  */
+void MX_USB_OTG_HS_HCD_Init(void)
+{
+
+  /* USER CODE BEGIN USB_OTG_HS_Init 0 */
+
+  /* USER CODE END USB_OTG_HS_Init 0 */
+
+  /* USER CODE BEGIN USB_OTG_HS_Init 1 */
+
+  /* USER CODE END USB_OTG_HS_Init 1 */
+  hhcd_USB_OTG_HS.Instance = USB_OTG_HS;
+  hhcd_USB_OTG_HS.Init.Host_channels = 12;
+  hhcd_USB_OTG_HS.Init.speed = HCD_SPEED_FULL;
+  hhcd_USB_OTG_HS.Init.dma_enable = DISABLE;
+  hhcd_USB_OTG_HS.Init.phy_itface = USB_OTG_EMBEDDED_PHY;
+  hhcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
+  hhcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
+  hhcd_USB_OTG_HS.Init.vbus_sensing_enable = DISABLE;
+  hhcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
+  if (HAL_HCD_Init(&hhcd_USB_OTG_HS) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USB_OTG_HS_Init 2 */
+
+  /* USER CODE END USB_OTG_HS_Init 2 */
+
+}
+
 /** 
   * Enable DMA controller clock
   */
@@ -441,8 +516,15 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+  /* DMA1_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
   /* DMA2_Stream1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
@@ -505,13 +587,11 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB0 PB1 PB2 PB10 
-                           PB11 PB13 PB14 PB15 
-                           PB3 PB4 PB5 PB7 
-                           PB8 PB9 */
+                           PB11 PB13 PB3 PB4 
+                           PB5 PB7 PB8 PB9 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10 
-                          |GPIO_PIN_11|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15 
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7 
-                          |GPIO_PIN_8|GPIO_PIN_9;
+                          |GPIO_PIN_11|GPIO_PIN_13|GPIO_PIN_3|GPIO_PIN_4 
+                          |GPIO_PIN_5|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -531,20 +611,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(ADC_RESET_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : USBH_ID_Pin */
-  GPIO_InitStruct.Pin = USBH_ID_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF12_OTG_HS_FS;
-  HAL_GPIO_Init(USBH_ID_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PD8 PD9 PD10 PD12 
-                           PD13 PD14 PD15 PD5 
-                           PD6 */
+                           PD13 PD14 PD15 */
   GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_12 
-                          |GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_5 
-                          |GPIO_PIN_6;
+                          |GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
