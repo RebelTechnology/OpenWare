@@ -147,4 +147,3 @@ void MidiReader::setCallback(void *callback){
   midiCallback = (void (*)(uint8_t, uint8_t, uint8_t, uint8_t))callback;
 }
 #endif /* USE_MIDI_CALLBACK */
-
