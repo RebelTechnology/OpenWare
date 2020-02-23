@@ -792,7 +792,7 @@ void loop(void){
 #else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
 #endif
-  midi.push();
+  midi.transmit();
 
 #ifdef OWL_EFFECTSBOX
   // uint8_t state =
@@ -965,11 +965,7 @@ void device_reset(){
 
 // called from patch program: Patch::sendMidi(MidiMessage)
 void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
-  uint8_t data[] = {port, status, d1, d2};
-  midi.write(data, 4);
-#ifdef USE_DIGITALBUS
-  bus_tx_frame(data);
-#endif /* USE_DIGITALBUS */
+  midi.send(MidiMessage(port, status, d1, d2));
 }
 
 const char* getFirmwareVersion(){ 

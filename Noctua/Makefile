@@ -11,8 +11,7 @@ C_SRC += iis3dwb_reg.c
 C_SRC += pcm3168a.c
 # CPP_SRC += usbh_midi.cpp
 C_SRC += usbd_audio.c
-# C_SRC += usbd_midi.c
-# C_SRC += usbd_midi_if.c
+CPP_SRC += MidiStreamReader.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
 
