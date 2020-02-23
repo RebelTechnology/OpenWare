@@ -12,6 +12,9 @@
 #ifdef USE_BLE_MIDI
 #include "ble_midi.h"
 #endif /* USE_BLE_MIDI */
+#ifdef USE_UART_MIDI
+#include "uart.h"
+#endif
 #include "SerialBuffer.hpp"
 
 void MidiWriter::sendErrorMessage(const char* msg){
@@ -96,7 +99,7 @@ public:
   }
   void transmit(){
     size_t len = buffer.getContiguousReadCapacity();
-    if(len >= 4){
+    if(len >= 4 && usbd_midi_ready()){
       usbd_midi_tx(buffer.getReadHead(), len);
       buffer.incrementReadHead(len);
       // len = buffer.getContiguousReadCapacity();
@@ -116,7 +119,7 @@ public:
   }
   void transmit(){
     size_t len = buffer.getContiguousReadCapacity();
-    if(len >= 4){
+    if(len >= 4 && usbh_midi_ready()){
       USBH_MIDI_Transmit(buffer.getReadHead(), len);
       buffer.incrementReadHead(len);
       // len = buffer.getContiguousReadCapacity();
@@ -145,8 +148,8 @@ public:
 BleMidiTransmitter ble_midi;
 #endif
 
-#ifdef USE_SERIAL_MIDI
-class SerialMidiTransmitter : public MidiTransmitter {
+#ifdef USE_UART_MIDI
+class UartMidiTransmitter : public MidiTransmitter {
 private:
   SerialBuffer<MIDI_OUTPUT_BUFFER_SIZE> buffer;
 public:
@@ -155,13 +158,13 @@ public:
   }
   void transmit(){
     size_t len = buffer.getContiguousReadCapacity();
-    if(len){
+    if(len && uart_ready()){
       uart_tx(buffer.getReadHead(), len);
       buffer.incrementReadHead(len);
     }
   }
 };
-SerialMidiTransmitter serial_midi;
+UartMidiTransmitter uart_midi;
 #endif
 
 void MidiWriter::send(MidiMessage msg){
@@ -174,25 +177,13 @@ void MidiWriter::send(MidiMessage msg){
 #ifdef USE_BLE
   ble_midi.write(msg);
 #endif
-#ifdef USE_SERIAL_MIDI
-  serial_midi.write(msg);
+#ifdef USE_UART_MIDI
+  uart_midi.write(msg);
 #endif
-#ifdef USE_DIGITALBUS
-  bus_tx_frame(msg.data);
-#endif /* USE_DIGITALBUS */
+// #ifdef USE_DIGITALBUS
+//   bus_tx_frame(msg.data);
+// #endif /* USE_DIGITALBUS */
 }
-
-// void MidiWriter::write(uint8_t* data, size_t len){
-// #ifdef USE_USBD_MIDI
-//   usbd_midi.write(data, len);
-// #endif
-// #ifdef USE_BLE
-//   ble_midi.write(data, len);
-// #endif
-// #ifdef USE_SERIAL_MIDI
-//   serial_midi.write(data, len);
-// #endif
-// }
 
 void MidiWriter::transmit(){
 #ifdef USE_USBD_MIDI
@@ -203,5 +194,8 @@ void MidiWriter::transmit(){
 #endif
 #ifdef USE_SERIAL_MIDI
   serial_midi.transmit();
+#endif
+#ifdef USE_UART_MIDI
+  uart_midi.transmit();
 #endif
 }

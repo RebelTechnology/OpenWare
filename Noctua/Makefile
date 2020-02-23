@@ -9,6 +9,7 @@ C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += iis3dwb_reg.c
 C_SRC += pcm3168a.c
+C_SRC += uart.c
 # CPP_SRC += usbh_midi.cpp
 C_SRC += usbd_audio.c
 CPP_SRC += MidiStreamReader.cpp
