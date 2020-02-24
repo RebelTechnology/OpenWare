@@ -55,6 +55,10 @@ void MX_USB_HOST_Process(void);
 }
 #endif /* USE_USB_HOST */
 
+#ifdef USE_UART_MIDI
+#include "uart.h"
+#endif /* USE_UART_MIDI */
+
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif /* USE_DIGITALBUS */
@@ -658,6 +662,10 @@ void setup(){
   // enable USB Host power
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 #endif
+
+#ifdef USE_UART_MIDI
+  uart_init();
+#endif /* USE_UART_MIDI */
 }
 
 #ifdef USE_DIGITALBUS
@@ -776,6 +784,9 @@ void loop(void){
 #endif
 
 #ifdef USE_USB_HOST
+#ifdef OWL_NOCTUA
+  MX_USB_HOST_Process(); // todo: enable PWR management
+#else
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
     if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
       HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
@@ -784,6 +795,7 @@ void loop(void){
   }else{
     MX_USB_HOST_Process();
   }
+#endif
 #endif
 
 #ifdef USE_DIGITALBUS
