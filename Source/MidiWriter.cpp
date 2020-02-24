@@ -3,11 +3,8 @@
 #include "MidiStatus.h"
 #include "MidiWriter.h"
 #include "OpenWareMidiControl.h"
-#ifdef USE_USBD_MIDI
+#if defined USE_USBD_MIDI || define  USE_USBH_MIDI
 #include "midi.h"
-#endif
-#ifdef USE_USBH_MIDI
-#include "usbh_midi.h"
 #endif
 #ifdef USE_BLE_MIDI
 #include "ble_midi.h"
@@ -120,7 +117,7 @@ public:
   void transmit(){
     size_t len = buffer.getContiguousReadCapacity();
     if(len >= 4 && usbh_midi_ready()){
-      USBH_MIDI_Transmit(buffer.getReadHead(), len);
+      usbh_midi_tx(buffer.getReadHead(), len);
       buffer.incrementReadHead(len);
       // len = buffer.getContiguousReadCapacity();
     }

@@ -643,16 +643,10 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN 5 */
   setup();
 
-  led_tx[0] = 0;
-  led_tx[91] = 0;
-  uint8_t counter = 0;
   /* Infinite loop */
   for(;;)
   {
     loop();
-    for(int i=1; i<91; ++i)
-      led_tx[i] = led_convert(i*71+counter++);
-    HAL_SPI_Transmit(&hspi4, (uint8_t*)led_tx, sizeof(led_tx), 1000);
     /* osDelay(1); */
   }
   /* USER CODE END 5 */ 
