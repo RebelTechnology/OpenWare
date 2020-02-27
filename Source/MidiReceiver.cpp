@@ -7,6 +7,9 @@
 #ifdef USE_UART_MIDI
 #include "uart.h"
 #endif /* USE_UART_MIDI */
+#ifdef USE_USB_HOST
+#include "usbh_midi.h"
+#endif /* USE_USB_HOST */
 
 #ifdef USE_USBD_MIDI
 static MidiReader mididevice;
@@ -48,6 +51,9 @@ void MidiReceiver::setInputChannel(int8_t channel){
 }
 
 void MidiReceiver::receive(){
+#ifdef USE_USB_HOST
+  usbh_midi_push();
+#endif
   while(midi_rx_buffer.notEmpty())
     forwardMidiMessage(midi_rx_buffer.pull());
 }

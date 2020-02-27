@@ -22,9 +22,6 @@
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
-#ifdef USE_USB_HOST
-#include "usbh_midi.h"
-#endif /* USE_USB_HOST */
 #ifdef USE_USBD_AUDIO
 extern void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t len);
 #endif
@@ -266,9 +263,6 @@ void onProgramReady(){
       bid = stateChanged.getFirstSetIndex();
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
-#ifdef USE_USB_HOST
-  usbh_midi_push();
-#endif
 }
 
 // called from program
