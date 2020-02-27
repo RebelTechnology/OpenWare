@@ -4,11 +4,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "device.h"
+#include "MidiMessage.h"
 #include "MidiWriter.h"
 #include "OpenWareMidiControl.h"
 
 class MidiController;
-extern MidiController midi;
+extern MidiController midi_tx;
 
 class MidiController : public MidiWriter {
 private:
@@ -31,6 +32,9 @@ public:
   void sendFirmwareVersion();
   void sendDeviceId();
   void sendProgramMessage();
+  
+  void handleMidiMessage(MidiMessage msg); // process MIDI from usbd
+  void forwardMidiMessage(MidiMessage msg); // send MIDI from all destinations to program callback
 };
 
 #endif /* __MIDI_CONTROLLER_H */

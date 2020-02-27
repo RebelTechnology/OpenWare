@@ -14,9 +14,7 @@
 #include "ServiceCall.h"
 #include "FlashStorage.h"
 #include "BitState.hpp"
-#ifdef USE_MIDI_CALLBACK
-#include "MidiReader.h"
-#endif /* USE_MIDI_CALLBACK */
+#include "MidiReceiver.h"
 #include "MidiController.h"
 #ifdef USE_SCREEN
 #include "Graphics.h"
@@ -238,7 +236,7 @@ void onProgramReady(){
   DWT->CYCCNT = 0;
 #endif
   // if(ulNotifiedValue > 16){
-  //   // midi.sendProgramStats();
+  //   // midi_tx.sendProgramStats();
   //   error(PROGRAM_ERROR, "CPU overrun");
   //   program.exitProgram(false);
   // }
@@ -299,7 +297,7 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 #ifdef USE_SCREEN 
   graphics.params.setName(id, name);
 #endif /* USE_SCREEN */
-  midi.sendPatchParameterName((PatchParameterId)id, name);
+  midi_tx.sendPatchParameterName((PatchParameterId)id, name);
 }
 
 // called from program
@@ -307,7 +305,7 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #if defined OWL_MAGUS || defined OWL_PRISM
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
-  midi.sendPatchName(program.getProgramIndex(), name);
+  midi_tx.sendPatchName(program.getProgramIndex(), name);
 }
 
 void updateProgramVector(ProgramVector* pv){
@@ -394,8 +392,8 @@ void programFlashTask(void* p){
     program.loadProgram(index);
     program.resetProgram(false);
   }
-  // midi.sendProgramMessage();
-  // midi.sendDeviceStats();
+  // midi_tx.sendProgramMessage();
+  // midi_tx.sendDeviceStats();
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
@@ -408,8 +406,8 @@ void eraseFlashTask(void* p){
     // debugMessage("Erased flash storage");
     registry.init();
   }
-  // midi.sendProgramMessage();
-  // midi.sendDeviceStats();
+  // midi_tx.sendProgramMessage();
+  // midi_tx.sendDeviceStats();
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
@@ -496,14 +494,7 @@ void runManagerTask(void* p){
 #ifdef USE_SCREEN
 	graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
-#ifdef USE_MIDI_CALLBACK
-	extern MidiReader mididevice;
-	mididevice.setCallback(NULL);
-#ifdef USE_USB_HOST
-	extern MidiReader midihost;
-	midihost.setCallback(NULL);
-#endif /* USE_USB_HOST */
-#endif /* USE_MIDI_CALLBACK */
+	midi_rx.setCallback(NULL);
 #ifdef USE_CODEC
 	codec.set(0);
 #endif
@@ -612,8 +603,8 @@ void ProgramManager::resetProgram(bool isr){
 void ProgramManager::updateProgramIndex(uint8_t index){
   patchindex = index;
   settings.program_index = index;
-  midi.sendPc(index);
-  midi.sendPatchName(index, registry.getPatchName(index));
+  midi_tx.sendPc(index);
+  midi_tx.sendPatchName(index, registry.getPatchName(index));
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);

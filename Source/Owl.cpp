@@ -5,7 +5,7 @@
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
-#include "MidiReader.h"
+#include "MidiReceiver.h"
 #include "MidiStreamReader.h"
 #include "MidiController.h"
 #include "ProgramVector.h"
@@ -49,15 +49,10 @@ Graphics graphics;
 
 #ifdef USE_USB_HOST
 #include "usbh_core.h"
-#include "usbh_midi.h"
 extern "C"{
 void MX_USB_HOST_Process(void);
 }
 #endif /* USE_USB_HOST */
-
-#ifdef USE_UART_MIDI
-#include "uart.h"
-#endif /* USE_UART_MIDI */
 
 #ifdef USE_DIGITALBUS
 #include "bus.h"
@@ -81,14 +76,8 @@ extern TIM_HandleTypeDef ENCODER_TIM2;
 #ifdef USE_CODEC
 Codec codec;
 #endif
-MidiReader mididevice;
-MidiController midi;
-#ifdef USE_USB_HOST
-MidiReader midihost;
-#endif /* USE_USB_HOST */
-#ifdef USE_UART_MIDI
-MidiStreamReader midiuart;
-#endif /* USE_UART_MIDI */
+MidiController midi_tx;
+MidiReceiver midi_rx;
 ApplicationSettings settings;
 #define OWLBOOT_ADDRESS ((uint32_t*)0x2000FFF0)
 
@@ -142,22 +131,12 @@ void setGateValue(uint8_t ch, int16_t value){
 }
 
 void midiSetInputChannel(int8_t channel){
-  settings.midi_input_channel = channel;
-  mididevice.setInputChannel(channel);
-#ifdef USE_USB_HOST
-  midihost.setInputChannel(channel);
-#endif
-#ifdef USE_UART_MIDI
-  midiuart.setInputChannel(channel);
-#endif
-#ifdef USE_DIGITALBUS
-  bus_set_input_channel(channel);
-#endif
+  midi_rx.setInputChannel(channel);
 }
 
 void midiSetOutputChannel(int8_t channel){
   settings.midi_output_channel = channel;
-  midi.setOutputChannel(channel);
+  midi_tx.setOutputChannel(channel);
 }
 
 void setLed(uint8_t led, uint32_t rgb){
@@ -353,7 +332,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   case PUSHBUTTON_Pin: {
     bool isSet = !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin);
     setButtonValue(PUSHBUTTON, isSet);
-    midi.sendCc(PUSHBUTTON, isSet ? 127 : 0);
+    midi_tx.sendCc(PUSHBUTTON, isSet ? 127 : 0);
 #if defined OWL_PEDAL || defined OWL_MODULAR
     setLed(0, isSet ? RED_COLOUR : GREEN_COLOUR);
 #endif
@@ -647,6 +626,7 @@ void setup(){
 #endif /* USE_ADC */
 #endif
 
+  midi_rx.init();
   midiSetInputChannel(settings.midi_input_channel);
   midiSetOutputChannel(settings.midi_output_channel);
 
@@ -662,10 +642,6 @@ void setup(){
   // enable USB Host power
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 #endif
-
-#ifdef USE_UART_MIDI
-  uart_init();
-#endif /* USE_UART_MIDI */
 }
 
 #ifdef USE_DIGITALBUS
@@ -811,7 +787,8 @@ void loop(void){
 #else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
 #endif
-  midi.transmit();
+  midi_tx.transmit();
+  midi_rx.receive();
 
 #ifdef OWL_EFFECTSBOX
   // uint8_t state =
@@ -902,50 +879,6 @@ void loop(void){
 
 extern "C"{
 
-#ifdef USE_USBD_MIDI
-  // incoming data from USB device interface
-  void usbd_midi_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4){
-      if(!mididevice.readMidiFrame(buffer+i))
-	mididevice.reset();
-#ifdef USE_DIGITALBUS
-      else
-	bus_tx_frame(buffer+i);
-#endif /* USE_DIGITALBUS */
-    }
-  }
-  // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
-#endif
-
-#ifdef USE_USB_HOST
-  void usbh_midi_reset(void){
-    midihost.reset();
-    ledstatus ^= 0x3ff003ff;
-  }
-  void usbh_midi_rx(uint8_t *buffer, uint32_t len){
-    for(uint16_t i=0; i<len; i+=4){
-      if(!midihost.readMidiFrame(buffer+i)){
-	midihost.reset();
-      }else{
-	ledstatus ^= 0x000ffc00;
-      }
-    }
-  }
-#endif /* USE_USB_HOST */
-
-  
-#ifdef USE_UART_MIDI
-  void uart_rx_callback(uint8_t* data, size_t len){
-    for(uint16_t i=0; i<len; ++i){
-      if(!midiuart.read(data[i])){
-	error(RUNTIME_ERROR, "MIDI rx error");
-	midiuart.clear();
-	return;
-      }
-    }    
-  }
-#endif /* USE_UART_MIDI */
-
 #if 0 // ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder){
     if(encoder == 0)
@@ -1000,7 +933,7 @@ void device_reset(){
 
 // called from patch program: Patch::sendMidi(MidiMessage)
 void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
-  midi.send(MidiMessage(port, status, d1, d2));
+  midi_tx.send(MidiMessage(port, status, d1, d2));
 }
 
 const char* getFirmwareVersion(){ 

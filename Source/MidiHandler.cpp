@@ -109,41 +109,41 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     setButtonValue(PUSHBUTTON, value == 127 ? 4095 : 0);
     // if(value == 127){
       // togglePushButton();
-      // midi.sendCc(LED, getLed() == GREEN ? 42 : 84);
+      // midi_tx.sendCc(LED, getLed() == GREEN ? 42 : 84);
     // }
     break;
   case REQUEST_SETTINGS:
     switch(value){
     case 0:
     case 127:
-      midi.sendDeviceInfo();
+      midi_tx.sendDeviceInfo();
       break;
     case SYSEX_PRESET_NAME_COMMAND:
-      midi.sendPatchNames();
+      midi_tx.sendPatchNames();
       break;
     case SYSEX_PARAMETER_NAME_COMMAND:
-      midi.sendPatchParameterNames();
+      midi_tx.sendPatchParameterNames();
       break;
     case SYSEX_CONFIGURATION_COMMAND:
-      midi.sendSettings();
+      midi_tx.sendSettings();
       break;
     case SYSEX_FIRMWARE_VERSION:
-      midi.sendFirmwareVersion();
+      midi_tx.sendFirmwareVersion();
       break;
     case SYSEX_DEVICE_ID:
-      midi.sendDeviceId();
+      midi_tx.sendDeviceId();
       break;
     case SYSEX_DEVICE_STATS:
-      midi.sendDeviceStats();
+      midi_tx.sendDeviceStats();
       break;
     case SYSEX_PROGRAM_MESSAGE:
-      midi.sendProgramMessage();
+      midi_tx.sendProgramMessage();
       break;
     case SYSEX_PROGRAM_STATS:
-      midi.sendStatus();
+      midi_tx.sendStatus();
       break;
     case PATCH_BUTTON:
-      midi.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
+      midi_tx.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
       break;
     }
     break;

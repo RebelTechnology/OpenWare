@@ -18,6 +18,7 @@ CPP_SRC += message.cpp
 CPP_SRC += StorageBlock.cpp
 CPP_SRC += MidiWriter.cpp
 CPP_SRC += MidiController.cpp
+CPP_SRC += MidiReceiver.cpp
 
 # CPP_SRC += FactoryPatches.cpp
 # CPP_SRC += DigitalBusHandler.cpp       

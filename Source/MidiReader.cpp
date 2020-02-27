@@ -9,10 +9,6 @@ bool midi_error(const char* str){
 
 bool MidiReader::readMidiFrame(uint8_t* frame){
   // apparently no running status in USB MIDI frames
-#ifdef USE_MIDI_CALLBACK
-  if(midiCallback != NULL && (frame[0]&0x0f) >= USB_COMMAND_NOTE_OFF)
-    midiCallback(frame[0], frame[1], frame[2], frame[3]);
-#endif
   // The Cable Number (CN) is a value ranging from 0x0 to 0xF indicating the number assignment of the Embedded MIDI Jack associated with the endpoint that is transferring the data.    
   switch(frame[0] & 0x0f){ // accept any cable number /  port
   case USB_COMMAND_MISC:
@@ -138,12 +134,3 @@ bool MidiReader::readMidiFrame(uint8_t* frame){
 void MidiReader::reset(){
   pos = 0;
 }
-
-#ifdef USE_MIDI_CALLBACK
-void MidiReader::setCallback(void *callback){
-  // if(callback == NULL)
-  //   midiCallback = NULL;
-  // else
-  midiCallback = (void (*)(uint8_t, uint8_t, uint8_t, uint8_t))callback;
-}
-#endif /* USE_MIDI_CALLBACK */
