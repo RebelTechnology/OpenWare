@@ -379,36 +379,6 @@ void updateProgramVector(ProgramVector* pv){
   pv->message = NULL;
 }
 
-// #include "eepromcontrol.h"
-// extern "C" {
-//   /*
-//    * re-program firmware: this entire function and all subroutines must run from RAM
-//    * (don't make this static!)
-//    */
-//   __attribute__ ((section (".coderam")))
-//   void flashFirmware(uint8_t* source, uint32_t size){
-//     __disable_irq(); // Disable ALL interrupts. Can only be executed in Privileged modes.
-//     eeprom_unlock();
-//     if(size > (16+16+64+128)*1024){
-//       eeprom_erase_sector(ADDR_FLASH_SECTOR_6);
-//     }
-//     if(size > (16+16+64)*1024){
-//       eeprom_erase_sector(ADDR_FLASH_SECTOR_5);
-//     }
-//     if(size > (16+16)*1024){
-//       eeprom_erase_sector(ADDR_FLASH_SECTOR_4);
-//     }
-//     if(size > 16*1024){
-//       eeprom_erase_sector(ADDR_FLASH_SECTOR_3);
-//     }
-//     eeprom_erase_sector(ADDR_FLASH_SECTOR_2);
-//     eeprom_write_block(ADDR_FLASH_SECTOR_2, source, size);
-//     eeprom_lock();
-//     eeprom_wait();
-//     NVIC_SystemReset(); // (static inline)
-//   }
-// }
-
 volatile uint8_t flashSectorToWrite;
 volatile void* flashAddressToWrite;
 volatile uint32_t flashSizeToWrite;
