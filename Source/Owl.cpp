@@ -788,7 +788,6 @@ void loop(void){
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
 #endif
   midi_tx.transmit();
-  midi_rx.receive();
 
 #ifdef OWL_EFFECTSBOX
   // uint8_t state =

@@ -254,6 +254,7 @@ void onProgramReady(){
   // }
 #endif
 
+  midi_rx.receive(); // push queued up MIDI messages through to patch
   updateParameters();
   pv->buttons = button_values;
   if(pv->buttonChangedCallback != NULL && stateChanged.getState()){
