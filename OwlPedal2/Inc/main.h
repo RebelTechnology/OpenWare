@@ -80,8 +80,6 @@ extern "C" {
 
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -102,12 +100,6 @@ void Error_Handler(void);
 #define CS_SDA_GPIO_Port GPIOE
 #define EXTSPI_nCS_Pin GPIO_PIN_15
 #define EXTSPI_nCS_GPIO_Port GPIOC
-#define EXTSPI_SCK_Pin GPIO_PIN_7
-#define EXTSPI_SCK_GPIO_Port GPIOF
-#define EXTSPI_MISO_Pin GPIO_PIN_8
-#define EXTSPI_MISO_GPIO_Port GPIOF
-#define EXTSPI_MOSI_Pin GPIO_PIN_9
-#define EXTSPI_MOSI_GPIO_Port GPIOF
 #define ADC4_Pin GPIO_PIN_10
 #define ADC4_GPIO_Port GPIOF
 #define ADC3_Pin GPIO_PIN_1
@@ -116,10 +108,6 @@ void Error_Handler(void);
 #define ADC2_GPIO_Port GPIOC
 #define ADC1_Pin GPIO_PIN_3
 #define ADC1_GPIO_Port GPIOC
-#define PWM1_Pin GPIO_PIN_0
-#define PWM1_GPIO_Port GPIOA
-#define PWM2_Pin GPIO_PIN_1
-#define PWM2_GPIO_Port GPIOA
 #define FLASH_MISO_Pin GPIO_PIN_6
 #define FLASH_MISO_GPIO_Port GPIOA
 #define FLASH_MOSI_Pin GPIO_PIN_7
@@ -128,8 +116,6 @@ void Error_Handler(void);
 #define FLASH_HOLD_GPIO_Port GPIOC
 #define FLASH_nCS_Pin GPIO_PIN_5
 #define FLASH_nCS_GPIO_Port GPIOC
-#define PWM3_Pin GPIO_PIN_1
-#define PWM3_GPIO_Port GPIOB
 #define SW2_Pin GPIO_PIN_2
 #define SW2_GPIO_Port GPIOB
 #define SW2_EXTI_IRQn EXTI2_IRQn
@@ -137,6 +123,12 @@ void Error_Handler(void);
 #define CS_nCS_GPIO_Port GPIOB
 #define CS_nRST_Pin GPIO_PIN_11
 #define CS_nRST_GPIO_Port GPIOB
+#define USBD_VBUS_Pin GPIO_PIN_9
+#define USBD_VBUS_GPIO_Port GPIOA
+#define USBD_DM_Pin GPIO_PIN_11
+#define USBD_DM_GPIO_Port GPIOA
+#define USBD_DP_Pin GPIO_PIN_12
+#define USBD_DP_GPIO_Port GPIOA
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
 #define FLASH_SCK_Pin GPIO_PIN_3
