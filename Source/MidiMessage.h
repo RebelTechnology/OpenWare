@@ -19,7 +19,7 @@ class MidiMessage {
   }
   /* The port, or Cable Number (CN), is a value ranging from 0x0 to 0xF indicating the number assignment of the Embedded MIDI Jack associated with the endpoint that is transferring the data. */
   uint8_t getPort(){
-    return (data[0] & 0xf0)>>4;
+    return data[0]>>4;
   }
   uint8_t getChannel(){
     return (data[1] & MIDI_CHANNEL_MASK);
