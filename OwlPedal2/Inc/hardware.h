@@ -1,8 +1,7 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
-/* #define OWL_ALCHEMIST_LED */
-#define OWL_ALCHEMIST
+#define OWL_PEDAL_MKII
 #define HARDWARE_ID                  OWL_PEDAL_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal mkII"
 
@@ -26,13 +25,12 @@
 
 #define USE_BKPSRAM
 
-#define USE_MODE_BUTTON
-#define MODE_BUTTON_PIN SW3_Pin
-#define MODE_BUTTON_PORT SW3_GPIO_Port
-#define MODE_BUTTON_GAIN ADC_C
-#define MODE_BUTTON_PATCH ADC_D
+/* #define USE_MODE_BUTTON */
+/* #define MODE_BUTTON_PIN SW3_Pin */
+/* #define MODE_BUTTON_PORT SW3_GPIO_Port */
+/* #define MODE_BUTTON_GAIN ADC_C */
+/* #define MODE_BUTTON_PATCH ADC_D */
 
-#define USE_RGB_LED
 #define USE_ADC
 #define ADC_PERIPH hadc3
 #define ADC_A 2
