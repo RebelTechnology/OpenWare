@@ -25,8 +25,9 @@
 #endif
 #define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
-#define MIDI_OUTPUT_BUFFER_SIZE      512
-#define MIDI_INPUT_BUFFER_SIZE       256
+#define MIDI_OUTPUT_BUFFER_SIZE      128
+#define MIDI_INPUT_BUFFER_SIZE       64
+#define MIDI_SYSEX_BUFFER_SIZE       248
 
 #ifndef USBD_MAX_POWER
 #define USBD_MAX_POWER               200 // 200mA

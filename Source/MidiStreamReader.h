@@ -23,7 +23,7 @@ public:
   MidiStreamReader(uint8_t cn) : 
     status(READY_STATUS), 
     runningStatus(0), 
-    pos(0), cn(cn) {
+    pos(0), cn(cn<<4) {
   }
 
   ~MidiStreamReader(){

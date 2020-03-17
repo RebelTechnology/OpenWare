@@ -8,8 +8,8 @@
 
 class MidiReader : public MidiHandler {
 protected:
-  uint8_t buffer[MIDI_INPUT_BUFFER_SIZE];
-  static constexpr unsigned int size = MIDI_INPUT_BUFFER_SIZE;
+  uint8_t buffer[MIDI_SYSEX_BUFFER_SIZE];
+  static constexpr unsigned int size = sizeof(buffer);
   unsigned int pos;
 public:
   MidiReader() : pos(0) {}  
