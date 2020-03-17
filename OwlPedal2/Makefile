@@ -25,3 +25,12 @@ OBJS += $(OBJS_UART)
 OBJS += $(OBJS_RTC)
 
 include $(OPENWARE)/Hardware/f4.mk
+
+flash:
+	openocd -f openocd.cfg -c "program Build/$(PROJECT).elf verify reset exit"
+
+debug: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
+
+attach: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" $(ELF)
