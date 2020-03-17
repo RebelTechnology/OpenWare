@@ -9,7 +9,7 @@ bool midi_error(const char* str){
 
 bool MidiReader::readMidiFrame(uint8_t* frame){
   // apparently no running status in USB MIDI frames
-  // The Cable Number (CN) is a value ranging from 0x0 to 0xF indicating the number assignment of the Embedded MIDI Jack associated with the endpoint that is transferring the data.    
+  // The Cable Number (CN) is a value ranging from 0x0 to 0xF indicating the number assignment of the Embedded MIDI Jack associated with the endpoint that is transferring the data.
   switch(frame[0] & 0x0f){ // accept any cable number /  port
   case USB_COMMAND_MISC:
   case USB_COMMAND_CABLE_EVENT:
