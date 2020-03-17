@@ -44,7 +44,7 @@ bool MidiReader::readMidiFrame(uint8_t* frame){
   case USB_COMMAND_SYSEX_EOX1:
     if(pos < 3 || buffer[0] != SYSEX || frame[1] != SYSEX_EOX){
       return midi_error("Invalid SysEx");
-    }else if(pos >= size){
+    }else if(pos+1 > size){
       return midi_error("SysEx buffer overflow");
     }else{
       buffer[pos++] = frame[1];
