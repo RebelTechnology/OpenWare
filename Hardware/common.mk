@@ -1,10 +1,12 @@
-# Name of executables
+# Name of binaries
 ELF=$(BUILD)/$(PROJECT).elf
 BIN=$(BUILD)/$(PROJECT).bin
 HEX=$(BUILD)/$(PROJECT).hex
 
 # Flags
 CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
+GIT_REVISION = $(shell git rev-parse --abbrev-ref HEAD) $(shell git rev-parse --short HEAD) $(CONFIG)
+CPPFLAGS += -DGIT_REVISION='"$(GIT_REVISION)"'
 
 # Tool path
 # TOOLROOT ?= ~/bin/gcc-arm-none-eabi-7-2018-q2-update/bin/
