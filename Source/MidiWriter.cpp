@@ -3,7 +3,7 @@
 #include "MidiStatus.h"
 #include "MidiWriter.h"
 #include "OpenWareMidiControl.h"
-#if defined USE_USBD_MIDI || define  USE_USBH_MIDI
+#if defined USE_USBD_MIDI || defined USE_USBH_MIDI
 #include "midi.h"
 #endif
 #ifdef USE_BLE_MIDI
