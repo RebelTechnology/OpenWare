@@ -20,7 +20,7 @@
 #define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*4)
 /* #define AUDIO_INT32_TO_SAMPLE(x)    (__REV16((x)>>8)) */
 /* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(__REV16(x))<<8) */
-#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
+#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>4)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
 #define USE_BKPSRAM
@@ -33,10 +33,10 @@
 
 #define USE_ADC
 #define ADC_PERIPH hadc3
-#define ADC_A 2
-#define ADC_B 3
-#define ADC_C 0
-#define ADC_D 1
+#define ADC_A 0
+#define ADC_B 1
+#define ADC_C 2
+#define ADC_D 3
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_HP_FILTER
