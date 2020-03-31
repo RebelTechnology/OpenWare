@@ -106,7 +106,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -209,9 +208,8 @@ int main(void)
 
   /* Start scheduler */
   osKernelStart();
-  
+ 
   /* We should never get here as control is now taken by the scheduler */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -464,6 +462,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Init.DataSize = SAI_DATASIZE_24;
   hsai_BlockA1.Init.FirstBit = SAI_FIRSTBIT_MSB;
   hsai_BlockA1.Init.ClockStrobing = SAI_CLOCKSTROBING_FALLINGEDGE;
+  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockA1.FrameInit.FrameLength = 64;
@@ -485,6 +484,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.DataSize = SAI_DATASIZE_24;
   hsai_BlockB1.Init.FirstBit = SAI_FIRSTBIT_MSB;
   hsai_BlockB1.Init.ClockStrobing = SAI_CLOCKSTROBING_FALLINGEDGE;
+  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
   hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockB1.FrameInit.FrameLength = 64;
@@ -908,8 +908,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(SW4_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB12 PB13 PB4 PB7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_4|GPIO_PIN_7;
+  /*Configure GPIO pins : PB12 PB4 PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_4|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -938,8 +938,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(USB_HOST_PWR_FAULT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA8 PA10 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_10|GPIO_PIN_15;
+  /*Configure GPIO pins : PA8 PA9 PA10 PA15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -982,15 +982,11 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
-    
-    
-                 
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
 
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
-
   /* USER CODE BEGIN 5 */
   setup();
 
