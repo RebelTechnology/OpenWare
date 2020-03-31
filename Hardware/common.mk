@@ -22,6 +22,7 @@ GDB=$(TOOLROOT)arm-none-eabi-gdb
 OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
+OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd.cfg
 
 # Set up search path
 vpath %.s $(BUILDROOT)/Src
@@ -34,6 +35,8 @@ vpath %.cpp $(OPENWARE)/LibSource
 vpath %.c $(OPENWARE)/Libraries/syscalls
 
 all: bin
+
+.PHONY: clean size debug flash attach all
 
 # Build executable 
 $(ELF) : $(OBJS) $(LDSCRIPT)
@@ -63,18 +66,6 @@ $(BUILD)/%.bin: $(BUILD)/%.elf
 $(BUILD)/%.hex : $(BUILD)/%.elf
 	@$(OBJCOPY) -O ihex $< $@
 
-clean:
-	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) gdbscript
-
-debug: $(ELF)
-	@$(GDB) -ex "target extended localhost:4242" -ex "load $(ELF)" $(ELF)
-
-stlink:
-	@$(GDB) -ex "target extended localhost:4242" $(ELF)
-
-openocd: $(ELF)
-	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
-
 bin: $(BIN) $(HEX)
 	@echo Built $(PROJECT) $(PLATFORM) $(CONFIG) firmware in $(BIN)
 
@@ -88,6 +79,18 @@ size: $(ELF) $(BIN)
 	@$(NM) --print-size --size-sort $(ELF) | grep -v '^08'| tail -n 10
 	@$(SIZE) $(ELF)
 	@ls -sh $(BIN)
+
+clean:
+	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) gdbscript
+
+flash:
+	$(OPENOCD) -c "program Build/$(PROJECT).elf verify reset exit"
+
+debug: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
+
+attach: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" $(ELF)
 
 # pull in dependencies
 -include $(OBJS:.o=.d)

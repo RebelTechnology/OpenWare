@@ -62,27 +62,27 @@ include $(OPENWARE)/Hardware/f4.mk
 .PHONY: clean deploy unlock erase upload lock
 
 info:
-	openocd -f openocd.cfg -c "init" -c "flash info 0" -c "exit"
+	$(OPENOCD) -c "init" -c "flash info 0" -c "exit"
 
 unlock:
-	openocd -f openocd.cfg -c "init" -c "halt" -c "flash protect 0 0 11 off" -c "flash info 0" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 11 off" -c "flash info 0" -c "exit"
 
 erase:
-	openocd -f openocd.cfg -c "init" -c "halt" -c "stm32f2x mass_erase 0" -c "flash info 0" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "stm32f2x mass_erase 0" -c "flash info 0" -c "exit"
 
 erase-boot: # flash erase_sector num first last
-	openocd -f openocd.cfg -c "init" -c "halt" -c "flash erase_sector 0 0 3" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 0 3" -c "exit"
 
 erase-storage: # flash erase_sector num first last
-	openocd -f openocd.cfg -c "init" -c "halt" -c "flash erase_sector 0 7 11" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 7 11" -c "exit"
 
 dump: # flash read_bank num filename [offset [length]]
-	openocd -f openocd.cfg -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"
 
 upload:
-	openocd -f openocd.cfg -c "program Build/MidiBoot.elf verify reset exit"
+	$(OPENOCD) -c "program Build/MidiBoot.elf verify reset exit"
 
 lock:
-	openocd -f openocd.cfg -c "init" -c "halt" -c "flash protect 0 0 1 on" -c "flash info 0" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 1 on" -c "flash info 0" -c "exit"
 
 deploy: upload lock

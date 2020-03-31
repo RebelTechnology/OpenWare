@@ -1,6 +1,7 @@
 PROJECT = MagusEncoder
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
+OPENOCD ?= openocd -f openocd.cfg
 
 include $(OPENWARE)/Hardware/STM32F051K4.mk
 
@@ -12,6 +13,3 @@ OBJS += $(CPP_SRC:%.cpp=Build/%.o)
 OBJS += $(S_SRC:%.s=Build/%.o)
 
 include $(OPENWARE)/Hardware/f0.mk
-
-flash:
-	openocd -f openocd.cfg -c "program Build/$(PROJECT).elf verify reset exit"
