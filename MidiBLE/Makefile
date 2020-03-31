@@ -9,7 +9,7 @@ TARGET = midi-ble
 ######################################
 # Debug / Release
 ifndef CONFIG
-  CONFIG = Debug
+  CONFIG = Release
 endif
 
 ifeq ($(CONFIG),Debug)
