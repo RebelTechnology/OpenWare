@@ -14,7 +14,11 @@ extern "C" {
   void codec_set_gain_out(int8_t volume);
   void codec_mute(bool doMute);
   uint8_t codec_read(uint8_t reg);
+#ifdef USE_WM8731
+  void codec_write(uint8_t reg, uint16_t data);
+#else
   void codec_write(uint8_t reg, uint8_t data);
+#endif
   void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
 
 #ifdef __cplusplus

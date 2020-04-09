@@ -7,9 +7,11 @@ include $(OPENWARE)/Hardware/owl1.mk
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += wm8731.c
+C_SRC += usbd_midi.c
+C_SRC += usbd_midi_if.c
 
 ifndef PLATFORM
-PLATFORM = Pedal
+PLATFORM = Modular
 endif
 
 ifeq ($(PLATFORM),Pedal)
