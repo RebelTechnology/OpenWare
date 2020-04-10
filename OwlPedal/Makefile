@@ -11,7 +11,7 @@ C_SRC += usbd_midi.c
 C_SRC += usbd_midi_if.c
 
 ifndef PLATFORM
-PLATFORM = Modular
+PLATFORM = Pedal
 endif
 
 ifeq ($(PLATFORM),Pedal)
