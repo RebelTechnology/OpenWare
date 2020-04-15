@@ -159,9 +159,7 @@ void assert_failed(const char* msg, const char* location, int line){
   p = stpncpy(p, location, 32);
   p = stpcpy(p, (const char*)" line ");
   p = stpcpy(p, msg_itoa(line, 10));
-  getProgramVector()->message = buffer;
-  if(getProgramVector()->programStatus != NULL)
-    getProgramVector()->programStatus(AUDIO_ERROR_STATUS);
+  error(AUDIO_ERROR_STATUS, buffer);
 }
 
 // void assert_failed(uint8_t* location, uint32_t line){

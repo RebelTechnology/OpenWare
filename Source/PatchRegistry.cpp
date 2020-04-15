@@ -83,7 +83,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
       patchblocks[index] = block;
       patchCount = max(patchCount, index+1);
     }else{
-      error(FLASH_ERROR, "failed to verify patch");
+      error(FLASH_ERROR, "Failed to verify patch");
     }
   }else if(*magic == 0xDADADEED && index > MAX_NUMBER_OF_PATCHES &&
 	   index <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){

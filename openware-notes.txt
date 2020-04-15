@@ -183,8 +183,6 @@ amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d5214000000000
 # flash Wizard firmware
 amidi -p hw:2 -s Wizard.syx
 
-start 60000 ends 67220
-
 -----------------------------------------------------------------
 
 #define VECT_TAB_OFFSET  0x00008000
@@ -196,5 +194,105 @@ make PLATFORM=Alchemist CONFIG=Release clean all
 
 FirmwareSender -in Build/Alchemist.bin -flash `crc32 Build/Alchemist.bin` -save Alchemist.syx
 FirmwareSender -in Build/Wizard.bin -flash `crc32 Build/Wizard.bin` -save Wizard.syx
+
+-----------------------------------------------------------------
+
+USB AUDIO + MIDI device descriptor
+
+https://eleccelerator.com/usbdescreqparser/
+
+4ch BioSignals w/o MIDI:
+
+09026400020100803209040000000101000009240100011e0001010c2402010102000700000000092403020101000100090401000001020000090401010101020000072401020001000b24020107042001401f0009058101e00001000007250100000000
+
+Focusrite Scarlett
+0902600106010980fa080b00030100200009040000000101200309240100020865000008240a290307000a08240b2801290308112402020101002804000000000e0000060c240314010300022800000011240201010200280200000000120000001224060b01000000000000000000000000000c2403160101000b280000070904010000010220040904010102010220041024010200010100000004000000000e0624020104180705010d9001010825010000020800070581110400040904020000010220050904020101010220051024011600010100000002000000001206240201041807058225c8000108250100000208000904030000010100000924010001090001010904040002010300000724010001410006240201010006240202020c09240301030102010009240302040101010b090502020002000000052501010109058302000200000005250101030904050001ff01100d07058403400008
+
+WireShark
+[Expert Info (Error/Malformed): Malformed Packet (Exception occurred)]
+
+https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/how-to-retrieve-information-about-a-usb-device
+MS USB hardware verifier
+
+https://www.usb.org/usb2tools
+http://www.testusb.com/Ch8ck.html
+
+
+-----------------------------------------------------------------
+
+enable semihosting:
+* remove C_SRC += libnosys_gnu.c in sources.mk
+* add `end` symbol to linker
+* add in main.c:
+int main(void)
+ {
+   /* USER CODE BEGIN 1 */
+   initialise_monitor_handles(); // remove when not semi-hosting
+
+Makefile owl2.mk:
+-CPPFLAGS += --specs=nano.specs
++LDLIBS += -lc -lm
++LDLIBS += -lrdimon
++# CPPFLAGS += -specs=rdimon.specs
++LDFLAGS += --specs=nano.specs
+-CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
+
+* use openocd
+* enable semi hosting in gdb:
+debug: $(ELF)
+       @$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
+
+-----------------------------------------------------------------
+
+To catch reset cycles due to buggy default patches
+#define USE_BKPSRAM
+
+in Cube, enable Timers/RTC clock source 
+
+define armex
+  printf "EXEC_RETURN (LR):\n",
+  info registers $lr
+    if ($lr & (0x4 == 0x4))
+      printf "Uses MSP 0x%x return.\n", $msp
+      set $armex_base = (uint32_t)$msp
+    else
+      printf "Uses PSP 0x%x return.\n", $psp
+      set $armex_base = (uint32_t)$psp
+    end
+
+    printf "xPSR            0x%x\n", *($armex_base+28)
+    printf "ReturnAddress   0x%x\n", *($armex_base+24)
+    printf "LR (R14)        0x%x\n", *($armex_base+20)
+    printf "R12             0x%x\n", *($armex_base+16)
+    printf "R3              0x%x\n", *($armex_base+12)
+    printf "R2              0x%x\n", *($armex_base+8)
+    printf "R1              0x%x\n", *($armex_base+4)
+    printf "R0              0x%x\n", *($armex_base)
+    printf "Return instruction:\n"
+    x/i *($armex_base+24)
+    printf "LR instruction:\n"
+    x/i *($armex_base+20)
+end
+
+-----------------------------------------------------------------
+
+Wizard pin compatible devices:
+STM32F777ZITx
+STM32F767ZITx
+STM32F767ZGTx
+STM32F756ZGTx
+STM32F746ZGTx
+STM32F765ZGTx
+...
+
+Noctua pin compatible devices:
+STM32F427VITx 256k SRAM, 2Mb FLASH, $6.70 @1k
+STM32F446VETx 128k SRAM, 512k FLASH, $3.98 @1k
+
+PE12 / pin 43 : 
+
+-----------------------------------------------------------------
+
+Compiling with C++14 support with -std=gnu++14 can cause `operator delete(void*, size_t) undefined` errors.
 
 -----------------------------------------------------------------

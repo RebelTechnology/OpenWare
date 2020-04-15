@@ -14,10 +14,9 @@
 #include "FlashStorage.h"
 #include "Owl.h"
 #include <math.h> /* for ceilf */
-
-const char* getFirmwareVersion(){ 
-  return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
-}
+#ifdef USE_BLE_MIDI
+#include "ble_midi.h"
+#endif /* USE_BLE_MIDI */
 
 void MidiController::sendPatchParameterValues(){
   sendCc(PATCH_PARAMETER_A, (uint8_t)(getParameterValue(PARAMETER_A)>>5) & 0x7f);
@@ -65,11 +64,11 @@ void MidiController::sendPatchParameterNames(){
 
 void MidiController::sendPatchParameterName(PatchParameterId pid, const char* name){
   uint8_t size = strnlen(name, 24);
-  uint8_t buffer[size+2];
-  buffer[0] = SYSEX_PARAMETER_NAME_COMMAND;
-  buffer[1] = pid;
-  memcpy(buffer+2, name, size);
-  sendSysEx(buffer, sizeof(buffer));
+  uint8_t buf[size+2];
+  buf[0] = SYSEX_PARAMETER_NAME_COMMAND;
+  buf[1] = pid;
+  memcpy(buf+2, name, size);
+  sendSysEx(buf, sizeof(buf));
 }
 
 void MidiController::sendPatchNames(){
@@ -81,11 +80,11 @@ void MidiController::sendPatchNames(){
 void MidiController::sendPatchName(uint8_t index, const char* name){
   if(name != NULL){
     uint8_t size = strnlen(name, 24);
-    uint8_t buffer[size+2];
-    buffer[0] = SYSEX_PRESET_NAME_COMMAND;
-    buffer[1] = index;
-    memcpy(buffer+2, name, size);
-    sendSysEx(buffer, sizeof(buffer));
+    uint8_t buf[size+2];
+    buf[0] = SYSEX_PRESET_NAME_COMMAND;
+    buf[1] = index;
+    memcpy(buf+2, name, size);
+    sendSysEx(buf, sizeof(buf));
   }
 }
 
@@ -98,11 +97,11 @@ void MidiController::sendDeviceInfo(){
 }
 
 void MidiController::sendDeviceStats(){
-  char buffer[80];
-  buffer[0] = SYSEX_DEVICE_STATS;
+  char buf[80];
+  buf[0] = SYSEX_DEVICE_STATS;
   char* p;
 #ifdef DEBUG_STACK
-  p = &buffer[1];
+  p = &buf[1];
   p = stpcpy(p, (const char*)"Program Stack ");
   p = stpcpy(p, msg_itoa(program.getProgramStackUsed(), 10));
   p = stpcpy(p, (const char*)"/");
@@ -111,10 +110,10 @@ void MidiController::sendDeviceStats(){
   p = stpcpy(p, msg_itoa(program.getManagerStackUsed(), 10));
   p = stpcpy(p, (const char*)"/");
   p = stpcpy(p, msg_itoa(program.getManagerStackAllocation(), 10));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 #endif /* DEBUG_STACK */
 #ifdef DEBUG_STORAGE
-  p = &buffer[1];
+  p = &buf[1];
   p = stpcpy(p, (const char*)"Storage used ");
   p = stpcpy(p, msg_itoa(storage.getTotalUsedSize(), 10));
   p = stpcpy(p, (const char*)" deleted ");
@@ -123,14 +122,14 @@ void MidiController::sendDeviceStats(){
   p = stpcpy(p, msg_itoa(storage.getFreeSize(), 10));
   p = stpcpy(p, (const char*)" total ");
   p = stpcpy(p, msg_itoa(storage.getTotalAllocatedSize(), 10));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 #endif /* DEBUG_STORAGE */
 }
 
 void MidiController::sendProgramStats(){
-  char buffer[64];
-  buffer[0] = SYSEX_PROGRAM_STATS;
-  char* p = &buffer[1];
+  char buf[64];
+  buf[0] = SYSEX_PROGRAM_STATS;
+  char* p = &buf[1];
 #ifdef DEBUG_DWT
   p = stpcpy(p, (const char*)"CPU: ");
   float percent = (program.getCyclesPerBlock()/getProgramVector()->audio_blocksize) / (float)ARM_CYCLES_PER_SAMPLE;
@@ -147,97 +146,69 @@ void MidiController::sendProgramStats(){
 #endif /* DEBUG_STACK */
   int mem = program.getHeapMemoryUsed();
   p = stpcpy(p, msg_itoa(mem, 10));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendStatus(){
-  char buffer[64];
-  buffer[0] = SYSEX_PROGRAM_STATS;
-  char* p = &buffer[1];
+  char buf[64];
+  buf[0] = SYSEX_PROGRAM_STATS;
+  char* p = &buf[1];
   uint8_t err = getErrorStatus();
-  switch(err & 0xf0){
-  case NO_ERROR:
+  if(err == NO_ERROR){
     sendProgramStats();
     return;
-    break;
-  case MEM_ERROR:
-    p = stpcpy(p, (const char*)"Memory Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case BUS_ERROR:
-    p = stpcpy(p, (const char*)"Bus Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case USAGE_ERROR:
-    p = stpcpy(p, (const char*)"Usage Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case NMI_ERROR:
-    p = stpcpy(p, (const char*)"NMI Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case HARDFAULT_ERROR:
-    p = stpcpy(p, (const char*)"HardFault Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  case PROGRAM_ERROR:
-    p = stpcpy(p, (const char*)"Program Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
-  default:
-    p = stpcpy(p, (const char*)"Unknown Error 0x");
-    p = stpcpy(p, msg_itoa(err, 16));
-    break;
   }
+  p = stpcpy(p, (const char*)"Error 0x");
+  p = stpcpy(p, msg_itoa(err, 16));
   const char* msg = getErrorMessage();
   if(err != NO_ERROR && msg != NULL){
   // if(msg != NULL){
     p = stpcpy(p, (const char*)" ");
     p = stpcpy(p, msg);
   }
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendProgramMessage(){
   ProgramVector* pv = getProgramVector();
   if(pv != NULL && pv->message != NULL){
-    char buffer[64];
-    buffer[0] = SYSEX_PROGRAM_MESSAGE;
-    char* p = &buffer[1];
+    char buf[64];
+    buf[0] = SYSEX_PROGRAM_MESSAGE;
+    char* p = &buf[1];
     p = stpncpy(p, pv->message, 62);
-    sendSysEx((uint8_t*)buffer, p-buffer);
+    sendSysEx((uint8_t*)buf, p-buf);
     pv->message = NULL;
   }
 }
 
 void MidiController::sendFirmwareVersion(){
-  char buffer[32];
-  buffer[0] = SYSEX_FIRMWARE_VERSION;
-  char* p = &buffer[1];
+  char buf[32];
+  buf[0] = SYSEX_FIRMWARE_VERSION;
+  char* p = &buf[1];
   p = stpcpy(p, getFirmwareVersion());
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendConfigurationSetting(const char* name, uint32_t value){
-  char buffer[16];
-  buffer[0] = SYSEX_CONFIGURATION_COMMAND;
-  char* p = &buffer[1];
+  char buf[16];
+  buf[0] = SYSEX_CONFIGURATION_COMMAND;
+  char* p = &buf[1];
   p = stpcpy(p, name);
   p = stpcpy(p, msg_itoa(value, 16));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendDeviceId(){
   uint32_t* deviceId = (uint32_t*)UID_BASE;
-  char buffer[32];
-  buffer[0] = SYSEX_DEVICE_ID;
-  char* p = &buffer[1];
+  char buf[32];
+  buf[0] = SYSEX_DEVICE_ID;
+  char* p = &buf[1];
   p = stpcpy(p, msg_itoa(deviceId[0], 16, 8));
   p = stpcpy(p, ":");
   p = stpcpy(p, msg_itoa(deviceId[1], 16, 8));
   p = stpcpy(p, ":");
   p = stpcpy(p, msg_itoa(deviceId[2], 16, 8));
-  sendSysEx((uint8_t*)buffer, p-buffer);
+  sendSysEx((uint8_t*)buf, p-buf);
 }
 
 void MidiController::sendPc(uint8_t pc){
@@ -333,19 +304,57 @@ void MidiController::sendSysEx(uint8_t* data, uint16_t size){
 }
 
 void MidiController::write(uint8_t* data, uint16_t size){
-  buffer.push(data, size);
+#ifdef USE_MIDI_TX_BUFFER
+  if(buffer.getWriteCapacity() >= size)
+    buffer.push(data, size);
+  else
+    error(RUNTIME_ERROR, "usb tx overflow");
+#else
+  if(midi_device_ready()) // if not ready, packets will be missed
+    midi_device_tx(data, size);
+#ifdef USE_USB_HOST
+  if(midi_host_ready())
+    midi_host_tx(data, size);
+#endif /* USE_USB_HOST */
+#ifdef USE_BLE_MIDI
+  ble_tx(data, size);
+#endif /* USE_BLE_MIDI */
+#endif
 }
 
 void MidiController::push(){
-  int len = buffer.getContiguousReadCapacity();
+#ifdef USE_MIDI_TX_BUFFER
+  size_t len = buffer.getContiguousReadCapacity() & ~0x0003;
+  // round down to multiple of four
   while(len >= 4){
     if(midi_device_ready()) // if not ready, packets will be missed
       midi_device_tx(buffer.getReadHead(), len);
 #ifdef USE_USB_HOST
     if(midi_host_ready())
       midi_host_tx(buffer.getReadHead(), len);
-#endif
+#endif /* USE_USB_HOST */
+#ifdef USE_BLE_MIDI
+    ble_tx(buffer.getReadHead(), len);
+#endif /* USE_BLE_MIDI */
     buffer.incrementReadHead(len);
-    len = buffer.getContiguousReadCapacity();
+    len = buffer.getContiguousReadCapacity() & ~0x0003;
   }
+#endif
 }
+
+// void MidiController::push(){
+//   size_t len = buffer.getContiguousReadCapacity();
+//   while(len >= 4){
+//     if(midi_device_ready()) // if not ready, packets will be missed
+//       midi_device_tx(buffer.getReadHead(), 4);
+// #ifdef USE_USB_HOST
+//     if(midi_host_ready())
+//       midi_host_tx(buffer.getReadHead(), 4);
+// #endif /* USE_USB_HOST */
+// #ifdef USE_BLE_MIDI
+//     ble_tx(buffer.getReadHead(), 4);
+// #endif /* USE_BLE_MIDI */
+//     buffer.incrementReadHead(4);
+//     len = buffer.getContiguousReadCapacity();
+//   }
+// }

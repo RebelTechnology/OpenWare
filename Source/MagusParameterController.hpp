@@ -237,8 +237,7 @@ public:
     screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
     screen.print("%");
     // draw firmware version
-    screen.print(1, offset+16, "fw  ");
-    screen.print(FIRMWARE_VERSION);
+    screen.print(1, offset+16, getFirmwareVersion());
   }
   
   void drawStats(ScreenBuffer& screen){
@@ -707,7 +706,7 @@ public:
       break;
     }
   }
- 
+
   void updateEncoders(int16_t* data, uint8_t size){
     uint16_t pressed = data[0];
 
@@ -717,7 +716,6 @@ public:
       selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
       if(pressed&0x3c) // exit status mode if any other encoder is pressed
 	controlMode = EXIT;
-      // selectControlMode(value, pressed&(1<<1));
       // use delta value from encoder 0 top left, store in selectedPid[1]
       int16_t delta = data[1] - encoders[0];
       if(delta > 0 && selectedPid[1] < 127)

@@ -5,6 +5,8 @@
 #include "device.h"
 #include "Codec.h"
 
+#define AUDIO_PROTOCOL               I2S_PROTOCOL_PHILIPS
+
 #ifdef __cplusplus
 extern "C" {
 #endif

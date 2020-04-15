@@ -28,10 +28,11 @@ bool StorageBlock::write(void* data, uint32_t size){
   if((uint32_t)header+4+size > EEPROM_PAGE_END)
     return false;
   eeprom_unlock();
-  int status = eeprom_write_word((uint32_t)getBlock(), 0xcf000000 | size); // set magick and size
+  eeprom_wait(); // clear flash flags
+  bool status = eeprom_write_word((uint32_t)getBlock(), 0xcf000000 | size); // set magick and size
   status = status || eeprom_write_block((uint32_t)getData(), data, size);
   eeprom_lock();
-  if(status != 0){
+  if(status){
     error(FLASH_ERROR, "Flash write failed");
     return false;
   }
@@ -52,7 +53,7 @@ bool StorageBlock::setDeleted(){
     eeprom_unlock();
     bool status = eeprom_write_word((uint32_t)header, 0xc0000000 | size);
     eeprom_lock();
-    if(status != 0){
+    if(status){
       error(FLASH_ERROR, "Flash delete failed");
       return false;
     }

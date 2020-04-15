@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v20.5"
+#define FIRMWARE_VERSION "v20.6"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -23,8 +23,9 @@
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
 #endif
+#define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
-#define MIDI_OUTPUT_BUFFER_SIZE      1024
+#define MIDI_OUTPUT_BUFFER_SIZE      512
 #define MIDI_INPUT_BUFFER_SIZE       256
 
 #ifndef OWLBOOT_MAGIC
@@ -37,8 +38,8 @@
 #define STORAGE_MAX_BLOCKS           64
 
 #define DEBUG_DWT
-#define DEBUG_STACK
-#define DEBUG_STORAGE
+/* #define DEBUG_STACK */
+/* #define DEBUG_STORAGE */
 
 #ifdef SSD1331
 #define OLED_WIDTH		     96
@@ -54,9 +55,6 @@
 #define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT/8)
 #endif
 
-#define CODEC_BLOCKSIZE              256
-#define CODEC_BUFFER_SIZE            (4*CODEC_BLOCKSIZE)
-
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
 #define MAX_FACTORY_PATCHES          36
@@ -65,11 +63,8 @@
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
 
-#define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
-#define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
-#define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
-#define ARM_CYCLES_PER_SAMPLE        3500 /* 168MHz / 48kHz */
+#define CODEC_BLOCKSIZE              64
+#define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
@@ -78,13 +73,24 @@
 #define AUDIO_OUTPUT_SCALAR          0xfffb5bab /* -4.642 * 65535 */
 #define DEFAULT_PROGRAM              1
 #define BUTTON_PROGRAM_CHANGE
-#define AUDIO_PROTOCOL               I2S_PROTOCOL_PHILIPS
 #define AUDIO_BITDEPTH               24    /* bits per sample */
 #define AUDIO_DATAFORMAT             24
 #define AUDIO_CODEC_MASTER           true
+#ifndef AUDIO_CHANNELS
 #define AUDIO_CHANNELS               2
+#endif
+#ifndef AUDIO_SAMPLINGRATE
 #define AUDIO_SAMPLINGRATE           48000
+#endif
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
+
+#define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
+#define MANAGER_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+#define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
+#define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+#define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
+
+#define CCM                          __attribute__ ((section (".ccmdata")))
 
 #endif /* __DEVICE_H__ */

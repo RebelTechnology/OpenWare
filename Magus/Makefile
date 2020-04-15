@@ -15,6 +15,8 @@ C_SRC += HAL_MAX11300.c
 C_SRC += HAL_TLC5946.c
 C_SRC += HAL_Encoders.c
 # C_SRC += HAL_OLED.c
+C_SRC += usbd_midi.c
+C_SRC += usbd_midi_if.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
@@ -33,6 +35,3 @@ OBJS += $(OBJS_OS)
 OBJS += $(OBJS_UART)
 
 include $(OPENWARE)/Hardware/f4.mk
-
-flash:
-	openocd -f openocd.cfg -c "program Build/Magus.elf verify reset exit"

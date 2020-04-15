@@ -120,7 +120,6 @@ void HAL_MspInit(void)
 */
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(hadc->Instance==ADC3)
   {
@@ -181,10 +180,8 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 * @param hadc: ADC handle pointer
 * @retval None
 */
-
 void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
 {
-
   if(hadc->Instance==ADC3)
   {
   /* USER CODE BEGIN ADC3_MspDeInit 0 */
@@ -221,7 +218,6 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
 */
 void HAL_DAC_MspInit(DAC_HandleTypeDef* hdac)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(hdac->Instance==DAC)
   {
@@ -254,10 +250,8 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* hdac)
 * @param hdac: DAC handle pointer
 * @retval None
 */
-
 void HAL_DAC_MspDeInit(DAC_HandleTypeDef* hdac)
 {
-
   if(hdac->Instance==DAC)
   {
   /* USER CODE BEGIN DAC_MspDeInit 0 */
@@ -287,7 +281,6 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* hdac)
 */
 void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc)
 {
-
   if(hrtc->Instance==RTC)
   {
   /* USER CODE BEGIN RTC_MspInit 0 */
@@ -308,10 +301,8 @@ void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc)
 * @param hrtc: RTC handle pointer
 * @retval None
 */
-
 void HAL_RTC_MspDeInit(RTC_HandleTypeDef* hrtc)
 {
-
   if(hrtc->Instance==RTC)
   {
   /* USER CODE BEGIN RTC_MspDeInit 0 */
@@ -334,7 +325,6 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* hrtc)
 */
 void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(hspi->Instance==SPI1)
   {
@@ -402,10 +392,8 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 * @param hspi: SPI handle pointer
 * @retval None
 */
-
 void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
 {
-
   if(hspi->Instance==SPI1)
   {
   /* USER CODE BEGIN SPI1_MspDeInit 0 */
@@ -456,7 +444,6 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
 */
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim_pwm)
 {
-
   if(htim_pwm->Instance==TIM2)
   {
   /* USER CODE BEGIN TIM2_MspInit 0 */
@@ -495,7 +482,6 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim_pwm)
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(htim->Instance==TIM2)
   {
@@ -567,10 +553,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
 * @param htim_pwm: TIM_PWM handle pointer
 * @retval None
 */
-
 void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* htim_pwm)
 {
-
   if(htim_pwm->Instance==TIM2)
   {
   /* USER CODE BEGIN TIM2_MspDeInit 0 */
@@ -615,7 +599,6 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* htim_pwm)
 */
 void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(huart->Instance==USART2)
   {
@@ -632,7 +615,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     */
     GPIO_InitStruct.Pin = USART_MOSI_Pin|USART_MISO_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -650,10 +633,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 * @param huart: UART handle pointer
 * @retval None
 */
-
 void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 {
-
   if(huart->Instance==USART2)
   {
   /* USER CODE BEGIN USART2_MspDeInit 0 */
@@ -681,11 +662,12 @@ static void HAL_FMC_MspInit(void){
   /* USER CODE BEGIN FMC_MspInit 0 */
 
   /* USER CODE END FMC_MspInit 0 */
-  GPIO_InitTypeDef GPIO_InitStruct;
+  GPIO_InitTypeDef GPIO_InitStruct ={0};
   if (FMC_Initialized) {
     return;
   }
   FMC_Initialized = 1;
+
   /* Peripheral clock enable */
   __HAL_RCC_FMC_CLK_ENABLE();
   
@@ -994,7 +976,6 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 
 void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
 {
-
 /* SAI1 */
     if(hsai->Instance==SAI1_Block_A)
     {

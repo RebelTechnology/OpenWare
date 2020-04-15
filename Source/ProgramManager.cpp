@@ -40,7 +40,8 @@
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
 #define FLASH_TASK_PRIORITY 5
 
-const uint32_t PROGRAMSTACK_SIZE = PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE); // size in bytes
+#define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
+// const uint32_t PROGRAMSTACK_SIZE = PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE); // size in bytes
 
 #define START_PROGRAM_NOTIFICATION  0x01
 #define STOP_PROGRAM_NOTIFICATION   0x02
@@ -51,7 +52,7 @@ ProgramManager program;
 PatchRegistry registry;
 ProgramVector staticVector;
 ProgramVector* programVector = &staticVector;
-static TaskHandle_t audioTask = NULL;
+static volatile TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
 static DynamicPatchDefinition dynamo;
@@ -167,6 +168,12 @@ void updateParameters(){
   parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
   parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
   parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
+#elif defined OWL_EUROWIZARD
+  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
+  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
+  parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_E])>>2;
 #elif defined OWL_WAVETABLE
   parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
   parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
@@ -301,7 +308,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->parameters_size = NOF_PARAMETERS;
   pv->parameters = parameter_values;
 #endif
-  pv->audio_samplingrate = 48000;
+  pv->audio_samplingrate = AUDIO_SAMPLINGRATE;
 #ifdef USE_CODEC
   pv->audio_blocksize = codec.getBlockSize();
 #else
@@ -323,29 +330,38 @@ void updateProgramVector(ProgramVector* pv){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
-  extern char _EXTRAM, _EXTRAM_END;
-#ifdef OWL_ARCH_F7
+#if defined OWL_PRISM || defined OWL_BIOSIGNALS || defined OWL_NOCTUA
+  extern char _CCMRAM, _CCMRAM_SIZE;
   static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_END - &_EXTRAM) },
+    // { start, size }
+    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
+    // todo: add remaining program space
+    { NULL, 0 }
+  };  
+#elif defined OWL_ARCH_F7
+  extern char _EXTRAM, _EXTRAM_SIZE;
+  static MemorySegment heapSegments[] = {
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
     { NULL, 0 }
   };
 #else
-  extern char _CCMRAM, _CCMRAM_END;
+  extern char _EXTRAM, _EXTRAM_SIZE;
+  extern char _CCMRAM, _CCMRAM_SIZE;
   static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_END - &_CCMRAM) - PROGRAMSTACK_SIZE },
-#ifndef OWL_PRISM
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_END - &_EXTRAM) },
-#endif
+    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
     // todo: add remaining program space
     { NULL, 0 }
   };
 #endif
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
-  pv->audio_format = AUDIO_FORMAT_24B16;
-  // pv->audio_format = AUDIO_FORMAT_24B24;
+  pv->audio_format = AUDIO_FORMAT_24B16_2X;
+#elif defined OWL_BIOSIGNALS || defined OWL_NOCTUA
+  pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
 #else
   pv->audio_format = AUDIO_FORMAT_24B32;
+  // pv->audio_format = AUDIO_FORMAT_24B32_2X;
 #endif
 #endif /* PROGRAM_VECTOR_V13 */
   pv->message = NULL;
@@ -440,7 +456,38 @@ void runAudioTask(void* p){
     for(;;);
 }
 
+void bootstrap(){
+ 
+#ifdef USE_BKPSRAM
+  extern RTC_HandleTypeDef hrtc;
+  uint8_t lastprogram = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
+  // uint8_t lastprogram = RTC->BKP1R;
+  // uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
+  // uint8_t lastprogram = *bkpsram_addr;
+#else    
+  uint8_t lastprogram = 0;
+#endif
+  if(lastprogram == settings.program_index){
+    error(CONFIG_ERROR, "Preventing reset program from starting");
+#ifdef USE_BKPSRAM
+    // reset for next time
+    extern RTC_HandleTypeDef hrtc;
+    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
+#endif
+  }else{
+    program.loadProgram(settings.program_index);
+    program.startProgram(false);
+  }
+
+#ifdef USE_CODEC
+  codec.start();
+  // codec.pause();
+#endif
+}
+
 void runManagerTask(void* p){
+  bootstrap();
+  
   uint32_t ulNotifiedValue = 0;
   TickType_t xMaxBlockTime = portMAX_DELAY;  /* Block indefinitely. */
   for(;;){
@@ -504,16 +551,14 @@ void runManagerTask(void* p){
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
-#ifndef OWL_ARCH_F7
-	extern char _CCMRAM, _CCMRAM_END;
-	uint32_t CCMHEAP_SIZE = (uint32_t)(&_CCMRAM_END - &_CCMRAM) - PROGRAMSTACK_SIZE;
-	uint8_t* CCMHEAP = (uint8_t*)&_CCMRAM;
-	uint8_t* PROGRAMSTACK = CCMHEAP+CCMHEAP_SIZE;
+#ifdef OWL_ARCH_F7
+	extern char _PATCHRAM, _PATCHRAM_SIZE;
+	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
 #else
-	extern char _PATCHRAM, _PATCHRAM_END;
-	uint32_t PATCHRAM_SIZE = (uint32_t)(&_PATCHRAM_END - &_PATCHRAM);
-	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram
+	extern char _CCMRAM_END;
+	uint8_t* PROGRAMSTACK = ((uint8_t*)&_CCMRAM_END) - PROGRAMSTACK_SIZE;
 #endif
+	memset(PROGRAMSTACK, 0xda, PROGRAMSTACK_SIZE);
 	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
 				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
 				      NULL, AUDIO_TASK_PRIORITY, 
@@ -539,10 +584,6 @@ ProgramManager::ProgramManager(){
 }
 
 void ProgramManager::startManager(){
-#ifdef USE_CODEC
-  codec.start();
-  // codec.pause();
-#endif
   updateProgramVector(getProgramVector());
 // #ifdef USE_SCREEN
 //   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
@@ -619,7 +660,7 @@ void ProgramManager::loadProgram(uint8_t pid){
       updateProgramIndex(pid);
 #ifndef USE_SCREEN
       memset(parameter_values, 0, sizeof(parameter_values));
-#endif  
+#endif
     }
   }
 }
@@ -637,7 +678,7 @@ uint32_t ProgramManager::getProgramStackAllocation(){
   if(patchdef != NULL)
     ss = patchdef->getStackSize();
   if(ss == 0)
-    ss = PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE);
+    ss = PROGRAMSTACK_SIZE; // PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE);
   return ss;
 }
 

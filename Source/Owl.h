@@ -11,6 +11,11 @@
 #define YELLOW_COLOUR 0x3ffffc00
 #define CYAN_COLOUR   0x000fffff
 #define NO_COLOUR     0x00000000
+#define COLOUR_LEVEL9 0x2ffbfeff
+#define COLOUR_LEVEL8 0x1ff7fdff
+#define COLOUR_LEVEL7 0x0ff3fcff
+#define COLOUR_LEVEL6 0x07f1fc7f
+#define COLOUR_LEVEL5 0x03f0fc3f
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +39,8 @@ extern "C" {
 
   void setOperationMode(OperationMode mode);
   void setLed(uint8_t led, uint32_t rgb);
+
+  const char* getFirmwareVersion();
 
 #ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder);

@@ -52,6 +52,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "hardware.h"
 
 /* USER CODE END Includes */
 
@@ -96,6 +97,7 @@ void Error_Handler(void);
 #define ADC1_P_GPIO_Port GPIOA
 #define ADC_DRDY_Pin GPIO_PIN_4
 #define ADC_DRDY_GPIO_Port GPIOA
+#define ADC_DRDY_EXTI_IRQn EXTI4_IRQn
 #define ADC_SPI_CLK_Pin GPIO_PIN_5
 #define ADC_SPI_CLK_GPIO_Port GPIOA
 #define ADC_START_Pin GPIO_PIN_6
@@ -140,6 +142,7 @@ void Error_Handler(void);
 #define ACC_NCS_GPIO_Port GPIOD
 #define ACC_INT1_Pin GPIO_PIN_1
 #define ACC_INT1_GPIO_Port GPIOD
+#define ACC_INT1_EXTI_IRQn EXTI1_IRQn
 #define ACC_INT2_Pin GPIO_PIN_2
 #define ACC_INT2_GPIO_Port GPIOD
 #define ADC_SPI_MISO_Pin GPIO_PIN_4

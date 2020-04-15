@@ -1,12 +1,14 @@
 # Name of executables
 ELF=$(BUILD)/$(PROJECT).elf
 BIN=$(BUILD)/$(PROJECT).bin
+HEX=$(BUILD)/$(PROJECT).hex
+SYX=$(BUILD)/$(PROJECT).syx
 
 # Flags
 CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
 
 # Tool path
-TOOLROOT ?= $(OPENWARE)/Tools/gcc-arm-none-eabi-7-2018-q2-update/bin/
+TOOLROOT ?= ~/bin/gcc-arm-none-eabi-9-2019-q4-major/bin/
 
 # Tools
 CC=$(TOOLROOT)arm-none-eabi-gcc
@@ -20,6 +22,7 @@ GDB=$(TOOLROOT)arm-none-eabi-gdb
 OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
+OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd.cfg
 
 # Set up search path
 vpath %.s $(BUILDROOT)/Src
@@ -33,9 +36,11 @@ vpath %.c $(OPENWARE)/Libraries/syscalls
 
 all: bin
 
+.PHONY: clean size debug flash attach all sysex
+
 # Build executable 
 $(ELF) : $(OBJS) $(LDSCRIPT)
-	@$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 # compile and generate dependency info
 $(BUILD)/%.o: %.c
@@ -58,20 +63,14 @@ $(BUILD)/%.s: %.cpp
 $(BUILD)/%.bin: $(BUILD)/%.elf
 	@$(OBJCOPY) -O binary $< $@
 
-clean:
-	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) gdbscript
+$(BUILD)/%.hex : $(BUILD)/%.elf
+	@$(OBJCOPY) -O ihex $< $@
 
-debug: $(ELF)
-	@$(GDB) -ex "target extended localhost:4242" -ex "load $(ELF)" $(ELF)
+$(BUILD)/%.syx: $(BUILD)/%.bin
+	FirmwareSender -save $@ -in $< -flash `crc32 $<`
 
-stlink:
-	@$(GDB) -ex "target extended localhost:4242" $(ELF)
-
-openocd: $(ELF)
-	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "load" $(ELF)
-
-bin: $(BIN)
-	@echo Successfully built $(CONFIG) firmware in $(BIN)
+bin: $(BIN) $(HEX)
+	@echo Built $(PROJECT) $(PLATFORM) $(CONFIG) firmware in $(BIN)
 
 map : $(OBJS) $(LDSCRIPT)
 	@$(LD) $(LDFLAGS) -Wl,-Map=$(ELF:.elf=.map) $(OBJS) $(LDLIBS)
@@ -83,6 +82,20 @@ size: $(ELF) $(BIN)
 	@$(NM) --print-size --size-sort $(ELF) | grep -v '^08'| tail -n 10
 	@$(SIZE) $(ELF)
 	@ls -sh $(BIN)
+
+clean:
+	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) gdbscript
+
+flash:
+	$(OPENOCD) -c "program Build/$(PROJECT).elf verify reset exit"
+
+debug: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
+
+attach: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" $(ELF)
+
+sysex: $(SYX)
 
 # pull in dependencies
 -include $(OBJS:.o=.d)

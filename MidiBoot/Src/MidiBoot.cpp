@@ -19,6 +19,10 @@ void ProgramManager::exitProgram(bool isr){}
 void setParameterValue(uint8_t ch, int16_t value){}
 void MidiReader::reset(){}
 
+const char* getFirmwareVersion(){ 
+  return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
+}
+
 #define FIRMWARE_SECTOR 0xff
 const uint32_t bootloaderMagicNumber = 0xDADAB007;
 uint32_t* bootloaderMagicAddress = (uint32_t*)0x2000FFF0;
@@ -199,7 +203,7 @@ void jump_to_bootloader(void){
 #endif
   *bootloaderMagicAddress = bootloaderMagicNumber;
   /* Disable all interrupts */
-  RCC->CIR = 0x00000000;
+  __disable_irq();
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
