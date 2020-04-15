@@ -1,5 +1,5 @@
 # Debug / Release
-CONFIG ?= Debug
+CONFIG ?= Release
 ifeq ($(CONFIG),Debug)
   CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g3

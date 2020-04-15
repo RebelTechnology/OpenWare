@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -341,7 +341,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   hpcd_USB_OTG_HS.Instance = USB_OTG_HS;
   hpcd_USB_OTG_HS.Init.dev_endpoints = 6;
   hpcd_USB_OTG_HS.Init.speed = PCD_SPEED_FULL;
-  hpcd_USB_OTG_HS.Init.dma_enable = DISABLE;
+  hpcd_USB_OTG_HS.Init.dma_enable = ENABLE;
   hpcd_USB_OTG_HS.Init.phy_itface = USB_OTG_EMBEDDED_PHY;
   hpcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
   hpcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
@@ -565,7 +565,7 @@ USBD_StatusTypeDef USBD_LL_SetUSBAddress(USBD_HandleTypeDef *pdev, uint8_t dev_a
   * @param  size: Data size    
   * @retval USBD status
   */
-USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint16_t size)
+USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint32_t size)
 {
   HAL_StatusTypeDef hal_status = HAL_OK;
   USBD_StatusTypeDef usb_status = USBD_OK;
@@ -585,7 +585,7 @@ USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev, uint8_t ep_addr, u
   * @param  size: Data size
   * @retval USBD status
   */
-USBD_StatusTypeDef USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint16_t size)
+USBD_StatusTypeDef USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uint8_t *pbuf, uint32_t size)
 {
   HAL_StatusTypeDef hal_status = HAL_OK;
   USBD_StatusTypeDef usb_status = USBD_OK;
