@@ -344,7 +344,6 @@ public:
 
   void drawVolume(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
-    //    screen.print((int)selected);
     screen.print(1, 24 + 10, "Volume ");
     screen.print((int)settings.audio_output_gain);
     screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
@@ -487,7 +486,7 @@ public:
       break;
     }
     // todo!
-    // select: Scope, VU Meter, Patch Stats, Show MIDI, Reset Patch ...
+    // select: Scope, VU Meter, Patch Stats, Set Gain, Show MIDI, Reset Patch, Select Patch...
   }
 
   void draw(ScreenBuffer& screen){
@@ -589,12 +588,12 @@ public:
         setErrorStatus(NO_ERROR);
         break;
       case PRESET:
-        // load preset
-        settings.program_index = selectedPid[1];
-        program.loadProgram(settings.program_index);
-        program.resetProgram(false);
-        controlMode = EXIT;
-        break;
+	// load preset
+	settings.program_index = selectedPid[1];
+	program.loadProgram(settings.program_index);
+	program.resetProgram(false);
+	controlMode = EXIT;
+	break;
       case VOLUME:
         controlMode = EXIT;
         break;
@@ -607,32 +606,26 @@ public:
       default:
         break;
       }
-    }
-    else{
+    }else{
       if(controlMode == EXIT){
-        displayMode = STANDARD;
-        sensitivitySelected = false;
-        if (saveSettings) {
-          settings.saveToFlash();
-        }
-      }
-      else{
-        int16_t delta = value - encoders[1];
-        if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
-          setControlMode(controlMode+1);
-        }
-        else if(delta < 0 && controlMode > 0){
-          setControlMode(controlMode-1);
-        }
-        if (controlMode == CALIBRATE){
-          if (continueCalibration) {
-            updateCalibration();
-          }
-          else{
-            calibrationConfirm = false;
-          }
-        }
-        encoders[1] = value;
+	displayMode = STANDARD;
+	sensitivitySelected = false;
+	if(saveSettings)
+	  settings.saveToFlash();
+      }else{
+	int16_t delta = value - encoders[1];
+	if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
+	  setControlMode(controlMode+1);
+	}else if(delta < 0 && controlMode > 0){
+	  setControlMode(controlMode-1);
+	}
+	if (controlMode == CALIBRATE) {
+	  if (continueCalibration)
+	    updateCalibration();
+	  else
+	    calibrationConfirm = false;
+	}
+	encoders[1] = value;
       }
     }
   }
@@ -657,8 +650,7 @@ public:
           resetCalibration();
           program.loadProgram(settings.program_index);
           program.resetProgram(false);
-        }
-        else {
+        } else{        
           if (current_cal->readSample()) {
             current_cal->nextState();
           }
@@ -668,8 +660,7 @@ public:
           if (current_cal->isDone())
             current_cal->calibrate();
         }
-      }
-      else {
+      } else {
         isCalibrationModeSelected = true;
         switch (selectedPid[1]){
         case 0:
@@ -680,9 +671,9 @@ public:
           program.exitProgram(false);
           output_cal.reset();
           break;
-        //case 2:
-        //  controlMode = EXIT;
-        //  break;
+	  //case 2:
+	  //  controlMode = EXIT;
+	  //  break;
         }
       }
     }

@@ -8,7 +8,6 @@ SYX=$(BUILD)/$(PROJECT).syx
 CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
 
 # Tool path
-# TOOLROOT ?= ~/bin/gcc-arm-none-eabi-7-2018-q2-update/bin/
 TOOLROOT ?= ~/bin/gcc-arm-none-eabi-9-2019-q4-major/bin/
 
 # Tools
