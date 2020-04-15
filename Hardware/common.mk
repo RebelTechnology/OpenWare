@@ -2,6 +2,7 @@
 ELF=$(BUILD)/$(PROJECT).elf
 BIN=$(BUILD)/$(PROJECT).bin
 HEX=$(BUILD)/$(PROJECT).hex
+SYX=$(BUILD)/$(PROJECT).syx
 
 # Flags
 CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
@@ -36,7 +37,7 @@ vpath %.c $(OPENWARE)/Libraries/syscalls
 
 all: bin
 
-.PHONY: clean size debug flash attach all
+.PHONY: clean size debug flash attach all sysex
 
 # Build executable 
 $(ELF) : $(OBJS) $(LDSCRIPT)
@@ -66,6 +67,9 @@ $(BUILD)/%.bin: $(BUILD)/%.elf
 $(BUILD)/%.hex : $(BUILD)/%.elf
 	@$(OBJCOPY) -O ihex $< $@
 
+$(BUILD)/%.syx: $(BUILD)/%.bin
+	FirmwareSender -save $@ -in $< -flash `crc32 $<`
+
 bin: $(BIN) $(HEX)
 	@echo Built $(PROJECT) $(PLATFORM) $(CONFIG) firmware in $(BIN)
 
@@ -91,6 +95,8 @@ debug: $(ELF)
 
 attach: $(ELF)
 	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" $(ELF)
+
+sysex: $(SYX)
 
 # pull in dependencies
 -include $(OBJS:.o=.d)
