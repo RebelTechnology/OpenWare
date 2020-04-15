@@ -91,7 +91,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     *magic = (*magic&0xffffff00) | (index&0xff);
     StorageBlock block = storage.append(data, size);
     if(block.verify()){
-      debugMessage("Resource stored to flash");
+      debugMessage("Resource stored to\nflash"); // Do we want to show this to users?
       index = index - 1 - MAX_NUMBER_OF_PATCHES;
       if(resourceblocks[index].verify())
         resourceblocks[index].setDeleted();

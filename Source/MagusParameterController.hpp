@@ -43,6 +43,18 @@ template<uint8_t SIZE>
 class ParameterController {
 public:
   char title[11] = "Magus";
+  
+  enum EncoderSensitivity {
+      SENS_SUPER_FINE = 0,
+      SENS_FINE = (ENC_MULTIPLIER / 2),
+      SENS_STANDARD = ENC_MULTIPLIER,
+      SENS_COARSE = (3 * ENC_MULTIPLIER / 2),
+      SENS_SUPER_COARSE = (ENC_MULTIPLIER * 2)
+  };
+  EncoderSensitivity encoderSensitivity = SENS_STANDARD;
+  // Sensitivity is currently not stored in settings, but it's not reset either.
+  bool sensitivitySelected;
+  
   int16_t parameters[SIZE];
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t offsets[NOF_ENCODERS]; // last seen encoder values
@@ -57,16 +69,10 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, GAIN, CALIBRATE, EXIT
+    PLAY, STATUS, PRESET, VOLUME, CALIBRATE, EXIT
   };
   ControlMode controlMode = PLAY;
   bool saveSettings;
-
-  enum GainSelection {
-    GAIN_INPUT, GAIN_OUTPUT
-  };
-  GainSelection gainSelection;
-  bool isGainPressed;
 
   InputCalibration input_cal;
   OutputCalibration output_cal;
@@ -77,19 +83,18 @@ public:
   bool calibrationConfirm = false; //A flag used to track encoder presses.
   bool continueCalibration = false; // Runs output calibration for several buffer
 
-  const char controlModeNames[NOF_CONTROL_MODES][12] = { "  Play   >",
-							 "< Status >",
-							 "< Preset >",
-							 "< Gain   >",
-							 "< V/Oct   " };
+  const char controlModeNames[NOF_CONTROL_MODES][12] = {
+    "  Play   >",
+    "< Status >",
+    "< Preset >",
+    "< Volume >",
+    "< V/Oct   " };
 
   ParameterController(){
     reset();
   }
   void reset(){
     saveSettings = false;
-    isGainPressed = false;
-    gainSelection = GAIN_INPUT;
     drawCallback = defaultDrawCallback;
     for(int i=0; i<SIZE; ++i){
       strcpy(names[i], "Parameter ");
@@ -117,12 +122,11 @@ public:
   }
  
   int16_t getEncoderValue(uint8_t eid){
-    return (encoders[eid] - offsets[eid]) << ENC_MULTIPLIER;
-    // value<<ENC_MULTIPLIER; // scale encoder values up
+    return (encoders[eid] - offsets[eid]) << encoderSensitivity;
   }
 
   void setEncoderValue(uint8_t eid, int16_t value){
-    offsets[eid] = encoders[eid] - (value >> ENC_MULTIPLIER);
+    offsets[eid] = encoders[eid] - (value >> encoderSensitivity);
   }
 
   void draw(uint8_t* pixels, uint16_t width, uint16_t height){
@@ -156,9 +160,9 @@ public:
     for(int i=2; i<NOF_ENCODERS; ++i){
       // screen.print(x+1, y, blocknames[i-1]);
       if(selectedBlock == i)
-	screen.drawHorizontalLine(x, y, 32, WHITE);
-	// screen.invert(x, 63-8, 32, 8);
-	// screen.invert(x, y-10, 32, 10);
+        screen.drawHorizontalLine(x, y, 32, WHITE);
+      // screen.invert(x, 63-8, 32, 8);
+      // screen.invert(x, y-10, 32, 10);
       x += 32;
     }
   }
@@ -204,19 +208,41 @@ public:
     for(int i=0; i<16; ++i){
       // 4px high by up to 16px long rectangle, filled if selected
       if(i == selectedPid[block])
-	screen.fillRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
+        screen.fillRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
       else
-	screen.drawRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
+        screen.drawRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
       x += 16;
       if(i & 0x01)
-	block++;
+        block++;
       if(i == 7){
-	x = 0;
-	y += 3;
-	block = 0;
+        x = 0;
+        y += 3;
+        block = 0;
       }
     }
   }
+  
+  void drawPlay(ScreenBuffer& screen) {
+    int offset = 16;
+    screen.setTextSize(1);
+    screen.print(1, offset + 33, "Encoder sensitivity");
+
+    screen.drawCircle(24, offset + 15, 8, WHITE);
+    screen.drawCircle(44, offset + 15, 8, WHITE);
+    screen.drawCircle(64, offset + 15, 8, WHITE);
+    screen.drawCircle(84, offset + 15, 8, WHITE);
+    screen.drawCircle(104, offset + 15, 8, WHITE);
+    
+    screen.fillCircle(24, offset + 15, 6, WHITE);
+    if (encoderSensitivity >= SENS_FINE)
+      screen.fillCircle(44, offset + 15, 6, WHITE);
+    if (encoderSensitivity >= SENS_STANDARD)
+      screen.fillCircle(64, offset + 15, 6, WHITE);
+    if (encoderSensitivity >= SENS_COARSE)
+      screen.fillCircle(84, offset + 15, 6, WHITE);
+    if (encoderSensitivity >= SENS_SUPER_COARSE)
+      screen.fillCircle(104, offset + 15, 6, WHITE);
+}
 
   void drawStatus(ScreenBuffer& screen){
     int offset = 16;
@@ -318,85 +344,82 @@ public:
 
   void drawGain(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
-    screen.print(1, 24 + 10, "Input  ");
-    screen.print((int)settings.audio_input_gain);
-    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
-    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.audio_input_gain >> 1, 4, WHITE);
-    //    screen.print((int)selected);
-    screen.print(1, 24 + 20, "Output ");
+    screen.print(1, 24 + 10, "Volume ");
     screen.print((int)settings.audio_output_gain);
-    screen.drawRectangle(64, 24 + 10 + 1, 64, 8, WHITE);
-    screen.fillRectangle(64, 24 + 10 + 1 + 2, (int)settings.audio_output_gain >> 1, 4, WHITE);
-    screen.invert(0, 24 + ((gainSelection == GAIN_INPUT)?0:10), 40, 10);
+    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
+    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.audio_output_gain >> 1, 4, WHITE);
+    screen.invert(0, 24, 40, 10);
   }
 
   void drawCalibration(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
     if (isCalibrationRunning) {
       if (isCalibrationModeSelected) {
-	float input_multiplier = (float)(int32_t)settings.input_scalar / UINT16_MAX;
-	float input_offset = (float)(int32_t)settings.input_offset / UINT16_MAX;
-	float input_sample = current_cal->getInput();
-	float input_voltage = (input_sample - input_offset) * input_multiplier;
+        float input_multiplier = (float)(int32_t)settings.input_scalar / UINT16_MAX;
+        float input_offset = (float)(int32_t)settings.input_offset / UINT16_MAX;
+        float input_sample = current_cal->getInput();
+        float input_voltage = (input_sample - input_offset) * input_multiplier;
 
-	switch (current_cal->state){
-	case BaseCalibration::CAL_LO:
-	  if (calibrationMode == BaseCalibration::CAL_INPUT) {
-	    screen.print(1, 24 + 10, "1V to IN1");
-	  }
-	  else {
-	    screen.print(1, 24 + 10, "OUT1 to IN1");
-	    screen.print(1, 24 + 20, "Voltage ");
-	    screen.print(input_voltage);
-	  }
-	  screen.print(1, 24 + 30, "Sample  ");
-	  screen.print(input_sample);
-	  break;
-	case BaseCalibration::CAL_HI:
-	  if (calibrationMode == BaseCalibration::CAL_INPUT) {
-	    screen.print(1, 24 + 10, "3V to IN1");
-	  }
-	  else {
-	    screen.print(1, 24 + 10, "OUT1 to IN1");
-	    screen.print(1, 24 + 20, "Voltage ");
-	    screen.print(input_voltage);
-	  }
-	  screen.print(1, 24 + 30, "Sample  ");
-	  screen.print(input_sample);
-	  break;	  
-	case BaseCalibration::CAL_DONE:
-	  // Save or discard results
-	  screen.print(1, 24, "Calibration results");
-	  screen.print(1, 24 + 10, "Scalar:");
-	  screen.print((float)current_cal->getScalar() / UINT16_MAX);
-	  screen.print(1, 24 + 20, "Offset:");
-	  screen.print((float)current_cal->getOffset() / UINT16_MAX);
+        switch (current_cal->state){
+        case BaseCalibration::CAL_LO:
+          if (calibrationMode == BaseCalibration::CAL_INPUT) {
+            screen.print(1, 24 + 10, "1V to IN1");
+          }
+          else {
+            screen.print(1, 24 + 10, "OUT1 to IN1");
+            screen.print(1, 24 + 20, "Voltage ");
+            screen.print(input_voltage);
+          }
+          screen.print(1, 24 + 30, "Sample  ");
+          screen.print(input_sample);
+          break;
+        case BaseCalibration::CAL_HI:
+          if (calibrationMode == BaseCalibration::CAL_INPUT) {
+            screen.print(1, 24 + 10, "3V to IN1");
+          }
+          else {
+            screen.print(1, 24 + 10, "OUT1 to IN1");
+            screen.print(1, 24 + 20, "Voltage ");
+            screen.print(input_voltage);
+          }
+          screen.print(1, 24 + 30, "Sample  ");
+          screen.print(input_sample);
+          break;	  
+        case BaseCalibration::CAL_DONE:
+          // Save or discard results
+          screen.print(1, 24, "Calibration results");
+          screen.print(1, 24 + 10, "Scalar:");
+          screen.print((float)current_cal->getScalar() / UINT16_MAX);
+          screen.print(1, 24 + 20, "Offset:");
+          screen.print((float)current_cal->getOffset() / UINT16_MAX);
 
-	  screen.print(1, 24 + 30, "Save");
-	  screen.print(65, 24 + 30, "Discard");
-	  if (selected == BaseCalibration::CAL_SAVE)
-	    screen.invert(0, 24 + 20, 64, 10);
-	  else
-	    screen.invert(64, 24 + 20, 64, 10);
-	  break;	
-	}
+          screen.print(1, 24 + 30, "Save");
+          screen.print(65, 24 + 30, "Discard");
+          if (selected == BaseCalibration::CAL_SAVE) {
+            screen.invert(0, 24 + 20, 64, 10);
+          }
+          else {
+            screen.invert(64, 24 + 20, 64, 10);
+          }
+          break;
+        }
       }
       else {
-	// Select calibration mode
-	screen.print(1, 24, "Input");
-	screen.print(49, 24, "Output");
-	screen.print(97, 24, "Exit");
-	switch (selected) {
-	case BaseCalibration::CAL_INPUT:
-	  screen.invert(0, 14, 48, 10);
-	  break;
-	case BaseCalibration::CAL_OUTPUT:
-	  screen.invert(48, 14, 48, 10);
-	  break;
-	default:
-	  screen.invert(96, 14, 48, 10);
-	  return;
-	}
+        // Select calibration mode
+        screen.print(1, 24, "Input");
+        screen.print(49, 24, "Output");
+        screen.print(97, 24, "Exit");
+        switch (selected) {
+        case BaseCalibration::CAL_INPUT:
+          screen.invert(0, 14, 48, 10);
+          break;
+        case BaseCalibration::CAL_OUTPUT:
+          screen.invert(48, 14, 48, 10);
+          break;
+        default:
+          screen.invert(96, 14, 48, 10);
+          break;
+        }
       }
     }
     else {
@@ -432,7 +455,6 @@ public:
       screen.drawVerticalLine(76, 24, 30, WHITE);
       #endif // SHOW_CALIBRATION_INFO
     }
-	
   }
 
   void drawControlMode(ScreenBuffer& screen){
@@ -440,6 +462,7 @@ public:
     case PLAY:
       // drawMessage("push to exit ->", screen);
       drawTitle(controlModeNames[controlMode], screen);    
+      drawPlay(screen);
       break;
     case STATUS:
       drawTitle(controlModeNames[controlMode], screen);    
@@ -450,7 +473,7 @@ public:
       drawTitle(controlModeNames[controlMode], screen);    
       drawPresetNames(selectedPid[1], screen);
       break;
-    case GAIN:
+    case VOLUME:
       drawTitle(controlModeNames[controlMode], screen);    
       drawGain(selectedPid[1], screen);
       break;
@@ -502,9 +525,9 @@ public:
       strncpy(names[pid], name, 11);
 #ifdef OWL_MAGUS
       if(names[pid][strnlen(names[pid], 11)-1] == '>')
-	setPortMode(pid, PORT_UNI_OUTPUT);
+        setPortMode(pid, PORT_UNI_OUTPUT);
       else
-	setPortMode(pid, PORT_UNI_INPUT);
+        setPortMode(pid, PORT_UNI_INPUT);
 #endif
     }
   }
@@ -541,9 +564,8 @@ public:
     case PRESET:
       selectedPid[1] = settings.program_index;
       break;
-    case GAIN:
-      gainSelection = GAIN_INPUT;
-      selectedPid[1] = settings.audio_input_gain; // todo: get current
+    case VOLUME:
+      selectedPid[1] = settings.audio_output_gain; // todo: get current
       break;
     case CALIBRATE:
       selectedPid[1] = 2;
@@ -558,11 +580,13 @@ public:
     if(pressed){
       switch(controlMode){
       case PLAY:
-	controlMode = EXIT;
-	break;
+        if (sensitivitySelected) {
+          controlMode = EXIT;
+        }
+        break;
       case STATUS:
-	setErrorStatus(NO_ERROR);
-	break;
+        setErrorStatus(NO_ERROR);
+        break;
       case PRESET:
 	// load preset
 	settings.program_index = selectedPid[1];
@@ -570,27 +594,17 @@ public:
 	program.resetProgram(false);
 	controlMode = EXIT;
 	break;
-      case GAIN:
-	if (gainSelection == GAIN_INPUT) {
-	  settings.audio_input_gain = selectedPid[1];
-	  if (!isGainPressed)
-	    gainSelection = GAIN_OUTPUT;
-	}
-	else {
-	  settings.audio_output_gain = selectedPid[1];
-	  if (!isGainPressed)
-	    gainSelection = GAIN_INPUT;
-	}
-	isGainPressed = true;
-	break;
+      case VOLUME:
+        controlMode = EXIT;
+        break;
       case CALIBRATE:
-	if (!calibrationConfirm) {
-	  calibrationConfirm = true;
-	  updateCalibration();
-	}
-	break;
+        if (!calibrationConfirm) {
+          calibrationConfirm = true;
+          updateCalibration();
+        }
+        break;
       default:
-	break;
+        break;
       }
     }
     else{
@@ -629,36 +643,40 @@ public:
     // This function runs once every time when encoder is pressed.
     if (isCalibrationRunning){
       if (isCalibrationModeSelected) {
-	if (current_cal->state == BaseCalibration::CAL_DONE) {
-	  current_cal->results = (BaseCalibration::CalibrationResults)selectedPid[1];
-	  if (current_cal->results == BaseCalibration::CAL_SAVE)
-	    current_cal->storeResults();
-	  resetCalibration();
-	  program.loadProgram(settings.program_index);
-	  program.resetProgram(false);
-	}
-	else if (current_cal->readSample())
-	  current_cal->nextState();
-	else
-	  continueCalibration = true;
-	if (current_cal->isDone())
-	  current_cal->calibrate();
+        if (current_cal->state == BaseCalibration::CAL_DONE) {
+          current_cal->results = (BaseCalibration::CalibrationResults)selectedPid[1];
+          if (current_cal->results == BaseCalibration::CAL_SAVE)
+            current_cal->storeResults();
+          resetCalibration();
+          program.loadProgram(settings.program_index);
+          program.resetProgram(false);
+        }
+        else {
+          if (current_cal->readSample()) {
+            current_cal->nextState();
+          }
+          else {
+            continueCalibration = true;
+          }
+          if (current_cal->isDone())
+            current_cal->calibrate();
+        }
       }
       else {
-	isCalibrationModeSelected = true;
-	switch (selectedPid[1]){
-	case 0:
-	  program.exitProgram(false);
-	  input_cal.reset();
-	  break;
-	case 1:
-	  program.exitProgram(false);
-	  output_cal.reset();
-	  break;
-	  //case 2:
-	  //controlMode = EXIT;
-	  //break;
-	}
+        isCalibrationModeSelected = true;
+        switch (selectedPid[1]){
+        case 0:
+          program.exitProgram(false);
+          input_cal.reset();
+          break;
+        case 1:
+          program.exitProgram(false);
+          output_cal.reset();
+          break;
+        //case 2:
+        //  controlMode = EXIT;
+        //  break;
+        }
       }
     }
     else{
@@ -667,39 +685,58 @@ public:
   }
 
   void setControlModeValue(uint8_t value){
+    bool sensitivityChanged = false;
     switch(controlMode){
-    case GAIN:
+    case PLAY:
+        sensitivitySelected = true;
+        value = max((uint8_t)SENS_SUPER_FINE, min((uint8_t)SENS_SUPER_COARSE, value));
+        if (value > (uint8_t)encoderSensitivity){
+          encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity + ENC_MULTIPLIER / 2);
+          value = (uint8_t)encoderSensitivity;
+          sensitivityChanged = true;
+        }
+        else {
+            if (selectedPid[1] < encoderSensitivity) {
+                encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity - ENC_MULTIPLIER / 2);
+                value = (uint8_t)encoderSensitivity;
+                sensitivityChanged = true;
+            }
+        }
+        selectedPid[1] = value;
+        if (sensitivityChanged) {
+          for (int eid = 0; eid < NOF_ENCODERS; eid++) {
+              // We update encoders with previous values recalculated with different sensitivity
+              if (eid != 1)
+                setEncoderValue(eid, user[selectedPid[eid]]);
+          }
+        }
+        break;
+    case VOLUME:
       selectedPid[1] = max(0, min(127, value));
-      if (gainSelection == GAIN_INPUT) {
-	codec.setInputGain(selectedPid[1]);
-	settings.audio_input_gain = selectedPid[1];
-      }
-      else {
-	codec.setOutputGain(selectedPid[1]);
-	settings.audio_output_gain = selectedPid[1];
-      }
-      isGainPressed = false;
+      codec.setOutputGain(selectedPid[1]);
+      settings.audio_output_gain = selectedPid[1];
+      saveSettings = true;
       break;
     case PRESET:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
       break;
     case CALIBRATE:
       if (isCalibrationRunning && !isCalibrationModeSelected) {
-	selectedPid[1] = max(0, min(value, 2));
-	// calibration process is not running yet.
-	switch ((BaseCalibration::CalibrationMode)selectedPid[1]){
-	case BaseCalibration::CAL_INPUT:
-	  calibrationMode = BaseCalibration::CAL_INPUT;
-	  current_cal = &input_cal;
-	  break;
-	case BaseCalibration::CAL_OUTPUT:
-	  calibrationMode = BaseCalibration::CAL_OUTPUT;
-	  current_cal = &output_cal;
-	  break;
-	}
+        selectedPid[1] = max(0, min(value, 2));
+        // calibration process is not running yet.
+        switch ((BaseCalibration::CalibrationMode)selectedPid[1]){
+        case BaseCalibration::CAL_INPUT:
+          calibrationMode = BaseCalibration::CAL_INPUT;
+          current_cal = &input_cal;
+          break;
+        case BaseCalibration::CAL_OUTPUT:
+          calibrationMode = BaseCalibration::CAL_OUTPUT;
+          current_cal = &output_cal;
+          break;
+        }
       }
       else if (isCalibrationRunning && isCalibrationModeSelected && current_cal->state == BaseCalibration::CAL_DONE) {
-	selectedPid[1] = max(0, min(value, 1));
+        selectedPid[1] = max(0, min(value, 1));
       }
       break;
     default:
@@ -715,75 +752,90 @@ public:
     if(displayMode == CONTROL){
       selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
       if(pressed&0x3c) // exit status mode if any other encoder is pressed
-	controlMode = EXIT;
+        controlMode = EXIT;
       // use delta value from encoder 0 top left, store in selectedPid[1]
       int16_t delta = data[1] - encoders[0];
-      if(delta > 0 && selectedPid[1] < 127)
-	setControlModeValue(selectedPid[1]+1);
-      else if(delta < 0 && selectedPid[1] > 0)
-	setControlModeValue(selectedPid[1]-1);
+      if(delta > 0 && selectedPid[1] < 127) {
+        setControlModeValue(selectedPid[1]+1);
+      }
+      else {
+          if(delta < 0 && selectedPid[1] > 0) {
+            setControlModeValue(selectedPid[1]-1);
+          }
+      }
       encoders[0] = data[1];
       return; // skip normal encoder processing
       // todo: should update offsets so values aren't changed on exit
-    }else if(pressed&(1<<1)){
-      displayMode = CONTROL;
-      controlMode = STATUS;
-      selectedPid[1] = 0;
     }
-    encoders[1] = value;
-
-    // update encoder 0 top left
-    value = data[1];
-    if(pressed&(1<<0)){
-      // update selected global parameter
-      // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
-      displayMode = SELECTGLOBALPARAMETER;
-      int16_t delta = value - encoders[0];
-      if(delta < 0)
-	selectGlobalParameter(selectedPid[0]-1);
-      else if(delta > 0)
-	selectGlobalParameter(selectedPid[0]+1);
-      selectedBlock = 0;
-    }else{
-      if(encoders[0] != value){
-	selectedBlock = 0;
-	encoders[0] = value;
-	// We must update encoder value before calculating user value, otherwise
-	// previous value would be displayed
-	user[selectedPid[0]] = getEncoderValue(0);
+    else {
+      if(pressed & (1 << 1)){
+        displayMode = CONTROL;
+        controlMode = PLAY;
+        selectedPid[1] = encoderSensitivity;
       }
-      if(displayMode == SELECTGLOBALPARAMETER)
-	displayMode = STANDARD;
-    }
-    encoders[0] = value;
+      encoders[1] = value;
 
-    // update encoders 2-6 bottom row
-    for(uint8_t i=2; i<NOF_ENCODERS; ++i){
-      value = data[i+1]; // +1 for buttons
-      if(pressed&(1<<i)){
-	// update selected block parameter
-	selectedBlock = i;
-	displayMode = SELECTBLOCKPARAMETER;
-	int16_t delta = value - encoders[i];
-	if(delta < 0)
-	  selectBlockParameter(i, selectedPid[i]-1);
-	else if(delta > 0)
-	  selectBlockParameter(i, selectedPid[i]+1);
-      }else{
-	if(encoders[i] != value){
-	  selectedBlock = i;
-	  encoders[i] = value;
-	  // We must update encoder value before calculating user value, otherwise
-	  // previous value would be displayed
-	  user[selectedPid[i]] = getEncoderValue(i);
-	}
-	if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
-	  displayMode = STANDARD;
+      // update encoder 0 top left
+      value = data[1];
+      if(pressed & (1<<0)){
+        // update selected global parameter
+        // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
+        displayMode = SELECTGLOBALPARAMETER;
+        int16_t delta = value - encoders[0];
+        if(delta < 0) {
+          selectGlobalParameter(selectedPid[0]-1);
+        }
+        else {
+          if(delta > 0) {              
+            selectGlobalParameter(selectedPid[0]+1);
+          }
+          selectedBlock = 0;
+        }
       }
-      encoders[i] = value;
+      else{
+        if(encoders[0] != value){
+          selectedBlock = 0;
+          encoders[0] = value;
+          // We must update encoder value before calculating user value, otherwise
+          // previous value would be displayed
+          user[selectedPid[0]] = getEncoderValue(0);
+        }
+        if(displayMode == SELECTGLOBALPARAMETER)
+          displayMode = STANDARD;
+      }
+      encoders[0] = value;
+
+      // update encoders 2-6 bottom row
+      for(uint8_t i=2; i<NOF_ENCODERS; ++i){
+        value = data[i+1]; // +1 for buttons
+        if(pressed&(1<<i)){
+          // update selected block parameter
+          selectedBlock = i;
+          displayMode = SELECTBLOCKPARAMETER;
+          int16_t delta = value - encoders[i];
+          if(delta < 0) {
+            selectBlockParameter(i, selectedPid[i]-1);
+          }
+          else
+            if(delta > 0)
+              selectBlockParameter(i, selectedPid[i]+1);
+          }
+          else{
+            if(encoders[i] != value){
+              selectedBlock = i;
+              encoders[i] = value;
+              // We must update encoder value before calculating user value, otherwise
+              // previous value would be displayed
+              user[selectedPid[i]] = getEncoderValue(i);
+            }
+            if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
+              displayMode = STANDARD;
+          }
+          encoders[i] = value;
+      }
+      if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
+        displayMode = ERROR;    
     }
-    if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
-      displayMode = ERROR;    
   }
 
   // called by MIDI cc and/or from patch
