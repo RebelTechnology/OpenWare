@@ -342,7 +342,7 @@ public:
     screen.invert(0, 25, 128, 10);
   }
 
-  void drawGain(uint8_t selected, ScreenBuffer& screen){
+  void drawVolume(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
     screen.print(1, 24 + 10, "Volume ");
     screen.print((int)settings.audio_output_gain);
@@ -475,7 +475,7 @@ public:
       break;
     case VOLUME:
       drawTitle(controlModeNames[controlMode], screen);    
-      drawGain(selectedPid[1], screen);
+      drawVolume(selectedPid[1], screen);
       break;
     case CALIBRATE:
       drawTitle(controlModeNames[controlMode], screen);
@@ -606,11 +606,11 @@ public:
       default:
         break;
       }
-    }
-    else{
+    }else{
       if(controlMode == EXIT){
 	displayMode = STANDARD;
-	if (saveSettings)
+	sensitivitySelected = false;
+	if(saveSettings)
 	  settings.saveToFlash();
       }else{
 	int16_t delta = value - encoders[1];
@@ -650,8 +650,7 @@ public:
           resetCalibration();
           program.loadProgram(settings.program_index);
           program.resetProgram(false);
-        }
-        else {
+        } else{        
           if (current_cal->readSample()) {
             current_cal->nextState();
           }
@@ -661,8 +660,7 @@ public:
           if (current_cal->isDone())
             current_cal->calibrate();
         }
-      }
-      else {
+      } else {
         isCalibrationModeSelected = true;
         switch (selectedPid[1]){
         case 0:
@@ -673,9 +671,9 @@ public:
           program.exitProgram(false);
           output_cal.reset();
           break;
-        //case 2:
-        //  controlMode = EXIT;
-        //  break;
+	  //case 2:
+	  //  controlMode = EXIT;
+	  //  break;
         }
       }
     }
