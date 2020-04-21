@@ -136,6 +136,7 @@ SECTIONS
     PROVIDE (_CCMRAM = .);
   } >CCMRAM
   _CCMRAM_END = ORIGIN(CCMRAM) + LENGTH(CCMRAM);
+  _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
 
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */
@@ -146,12 +147,14 @@ SECTIONS
     PROVIDE ( _EXTRAM = . );
   } >EXTRAM
   _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM);
+  _EXTRAM_SIZE = LENGTH(EXTRAM);
 
   .patchram (NOLOAD) :
   {
     PROVIDE (_PATCHRAM = .);
   } >PATCHRAM
   _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);  
+  _PATCHRAM_SIZE = LENGTH(PATCHRAM);
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

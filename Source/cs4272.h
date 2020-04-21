@@ -5,16 +5,6 @@
 #include "device.h"
 #include "Codec.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void codec_write(uint8_t reg, uint8_t data);
-
-#ifdef __cplusplus
-}
-#endif
-
 // Section 8.1 Mode Control
 #define CODEC_MODE_CTRL1_REG						(uint8_t)0x01
 #define CODEC_MC_FUNC_MODE(x)						(uint8_t)(((x) & 0x03) << 6)
