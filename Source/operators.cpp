@@ -11,6 +11,8 @@ void * operator new (size_t, void * p) { return p ; }
 void * operator new[](size_t size) { return pvPortMalloc(size); }
 void operator delete(void* ptr) { vPortFree(ptr); }
 void operator delete[](void * ptr) { vPortFree(ptr); }
+void operator delete(void* ptr, size_t size) { vPortFree(ptr); }
+void operator delete[](void* ptr, size_t size) { vPortFree(ptr); }
 
 //int _gettimeofday(struct timeval *__p, void *__tz){return 0;}
 

@@ -293,6 +293,3 @@ PE12 / pin 43 :
 
 -----------------------------------------------------------------
 
-Compiling with C++14 support with -std=gnu++14 can cause `operator delete(void*, size_t) undefined` errors.
-
------------------------------------------------------------------
