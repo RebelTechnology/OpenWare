@@ -7,16 +7,6 @@
 
 #define AUDIO_PROTOCOL               I2S_PROTOCOL_PHILIPS
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void codec_write(uint8_t reg, uint16_t data);
-
-#ifdef __cplusplus
-}
-#endif
-
 /* ------------------------------------------------------------ */
 /* WM8731 Registers */
 
