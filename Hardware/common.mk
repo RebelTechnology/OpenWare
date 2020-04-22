@@ -34,7 +34,7 @@ vpath %.c $(OPENWARE)/LibSource
 vpath %.cpp $(OPENWARE)/LibSource
 vpath %.c $(OPENWARE)/Libraries/syscalls
 
-all: bin
+all: bin sysex
 
 .PHONY: clean size debug flash attach all sysex
 
