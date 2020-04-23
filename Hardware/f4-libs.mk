@@ -27,6 +27,7 @@ OBJS_CRC = $(DRIVERS)/Src/stm32f4xx_hal_crc.o
 OBJS_RTC = $(DRIVERS)/Src/stm32f4xx_hal_rtc.o
 OBJS_RTC += $(DRIVERS)/Src/stm32f4xx_hal_pwr.o
 OBJS_RTC += $(DRIVERS)/Src/stm32f4xx_hal_rtc_ex.o
+OBJS_IWDG = $(DRIVERS)/Src/stm32f4xx_hal_iwdg.o
 
 # required by OWL 2
 OBJS_SAI = $(DRIVERS)/Src/stm32f4xx_hal_sai.o
@@ -65,8 +66,6 @@ OBJS_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
 OBJS_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
 
 ### CMSIS DSP Library ####
-
-# OBJS += $(USB_DEVICE) $(USB_OTG)
 OBJS_DSP = $(DSPLIB)/FastMathFunctions/arm_sin_f32.o
 OBJS_DSP += $(DSPLIB)/FastMathFunctions/arm_cos_f32.o
 OBJS_DSP += $(DSPLIB)/CommonTables/arm_common_tables.o
@@ -77,7 +76,6 @@ OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_bitreversal.o
 OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_rfft_fast_f32.o
 OBJS_DSP += $(DSPLIB)/TransformFunctions/arm_rfft_fast_init_f32.o
 OBJS_DSP += $(DSPLIB)/CommonTables/arm_const_structs.o
-
 
 # OBJS += $(DSPLIB)/FilteringFunctions/arm_biquad_cascade_df1_init_f32.o
 # OBJS += $(DSPLIB)/FilteringFunctions/arm_biquad_cascade_df1_f32.o
