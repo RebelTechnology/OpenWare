@@ -1002,12 +1002,12 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
 #ifdef USE_USBD_AUDIO_RX
   if (epnum == AUDIO_RX_EP){
     uint32_t len = USBD_LL_GetRxDataSize(pdev, epnum);
-    usbd_audio_rx_callback(haudio->audio_rx_buffer, len);
+    len = usbd_audio_rx_callback(haudio->audio_rx_buffer, len);
     /* Prepare Out endpoint to receive next audio packet */
     USBD_LL_PrepareReceive(pdev,
                            AUDIO_RX_EP,
                            haudio->audio_rx_buffer, 
-                           AUDIO_RX_PACKET_SIZE);
+                           len);
   }
 #endif /* USE_USBD_AUDIO_RX */
 

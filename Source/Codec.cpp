@@ -105,7 +105,7 @@ void usbd_audio_rx_stop_callback(){
 }
 
 static int32_t usbd_audio_rx_flow = 0;
-void usbd_audio_rx_callback(uint8_t* data, size_t len){
+size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
 #ifdef USE_USBD_AUDIO_RX
   // copy audio to codec_txbuf aka audio_rx_buffer
   update_rx_read_index();
@@ -117,10 +117,7 @@ void usbd_audio_rx_callback(uint8_t* data, size_t len){
     // skip some frames
     src += (blocksize - available)*USB_AUDIO_CHANNELS;
     blocksize = available;
-    // usbd_audio_rx_flow++;
-    // // skip a frame
-    // src += USB_AUDIO_CHANNELS;
-    // blocksize--;
+    len = available*USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE;
   }
   while(blocksize--){
     int32_t* dst = audio_rx_buffer.getWriteHead();
@@ -140,6 +137,7 @@ void usbd_audio_rx_callback(uint8_t* data, size_t len){
     memcpy(dst, src, AUDIO_CHANNELS*sizeof(int32_t));
   }
 #endif
+  return len;
 }
 
 void usbd_audio_tx_callback(uint8_t* data, size_t len){
