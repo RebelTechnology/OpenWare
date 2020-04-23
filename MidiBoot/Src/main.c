@@ -123,12 +123,14 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   MX_GPIO_Init();
-  MX_IWDG_Init();
   
   if(testButton() || testMagic() || testNoProgram() || testWatchdogReset()){
     // we're going to boot
   }else{
     // jump to application code
+
+    /* Enable watchdog */
+    MX_IWDG_Init();
 
     /* Disable all interrupts */
     RCC->CIR = 0x00000000;
@@ -145,6 +147,7 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_IWDG_Init();
   MX_FMC_Init();
   MX_SPI1_Init();
   MX_USB_DEVICE_Init();
