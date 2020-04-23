@@ -1,6 +1,13 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
+#ifndef OWLBOOT_MAGIC_NUMBER
+#define OWLBOOT_MAGIC_NUMBER        (0xDADAB007)
+#endif
+
+#ifndef OWLBOOT_MAGIC_ADDRESS
+#define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
+#endif
 
 #if defined OWL_MAGUS
   #define HARDWARE_VERSION    "OWL Magus Boot"

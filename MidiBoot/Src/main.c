@@ -69,9 +69,7 @@ void loop(void);
 typedef  void (*pFunction)(void);
 
 static int testMagic(){
-  const uint32_t bootloaderMagicNumber = 0xDADAB007;
-  const uint32_t* bootloaderMagicAddress = (uint32_t*)0x2000FFF0;
-  return *bootloaderMagicAddress == bootloaderMagicNumber;
+  return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_MAGIC_NUMBER;
 }
 
 static int testButton(){
@@ -143,6 +141,11 @@ int main(void)
     jumpToApplication();
     for(;;);
   }
+  /* Clear reset flags */
+  __HAL_RCC_CLEAR_RESET_FLAGS();
+
+  /* Clear magic */
+  *OWLBOOT_MAGIC_ADDRESS = 0;
 
   /* USER CODE END SysInit */
 
