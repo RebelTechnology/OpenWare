@@ -146,7 +146,7 @@ extern "C" {
 
   void loop(void){
     midi.push();
-    // wait for interrupts
+    IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
   }
 
 }
