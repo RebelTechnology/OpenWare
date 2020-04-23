@@ -46,6 +46,7 @@ void MPU_Config(void){
 }
 
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram){
+  __enable_irq(); // must enable SysTick IRQ for call to HAL_Delay()
   FMC_SDRAM_CommandTypeDef command;
   __IO uint32_t tmpmrd =0;
   /* Step 1:  Configure a clock configuration enable command */
