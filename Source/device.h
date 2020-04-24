@@ -28,8 +28,12 @@
 #define MIDI_OUTPUT_BUFFER_SIZE      512
 #define MIDI_INPUT_BUFFER_SIZE       256
 
-#ifndef OWLBOOT_MAGIC
-#define OWLBOOT_MAGIC                (0xDADAB007)
+#ifndef OWLBOOT_MAGIC_NUMBER
+#define OWLBOOT_MAGIC_NUMBER        (0xDADAB007)
+#endif
+
+#ifndef OWLBOOT_MAGIC_ADDRESS
+#define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
 #endif
 
 #define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)

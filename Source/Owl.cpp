@@ -82,7 +82,6 @@ MidiController midi;
 MidiReader midihost;
 #endif /* USE_USB_HOST */
 ApplicationSettings settings;
-#define OWLBOOT_ADDRESS ((uint32_t*)0x2000FFF0)
 
 #ifdef USE_ADC
 uint16_t adc_values[NOF_ADC_VALUES];
@@ -946,7 +945,7 @@ void jump_to_bootloader(void){
 #ifdef USE_USB_HOST
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
 #endif
-  *OWLBOOT_ADDRESS = OWLBOOT_MAGIC;
+  *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
   NVIC_SystemReset();
@@ -955,7 +954,7 @@ void jump_to_bootloader(void){
 }
 
 void device_reset(){
-  *OWLBOOT_ADDRESS = 0;
+  *OWLBOOT_MAGIC_ADDRESS = 0;
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
