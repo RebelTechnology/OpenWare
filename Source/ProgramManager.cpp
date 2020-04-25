@@ -22,9 +22,6 @@
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
-#ifdef USE_USBD_AUDIO
-extern void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t len);
-#endif
 
 #include "basicmaths.h"
 
@@ -96,10 +93,6 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   pv->audio_input = rx;
   pv->audio_output = tx;
   pv->audio_blocksize = size;
-#ifdef USE_USBD_AUDIO
-  // todo: move to onProgramReady
-  usbd_audio_fill_ringbuffer(rx, size);
-#endif		       
 #ifdef FASCINATION_MACHINE
   extern uint32_t ledstatus;
   static float audio_envelope_lambda = 0.999995f;
@@ -223,9 +216,6 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
-// #ifdef USE_USBD_AUDIO
-//   usbd_audio_fill_ringbuffer(pv->audio_output, pv->audio_blocksize);
-// #endif		       
   /* Block indefinitely */
   // uint32_t ulNotifiedValue =
   ulTaskNotifyTake(pdTRUE, portMAX_DELAY);

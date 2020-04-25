@@ -7,12 +7,25 @@
 
 #include "SerialBuffer.hpp"
 SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer;
+SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer;
 
 extern "C" {
   uint16_t codec_blocksize = 0;
-  int32_t codec_rxbuf[CODEC_BUFFER_SIZE];
-  int32_t* codec_txbuf; // todo: ensure buffer alignment
+  int32_t* codec_rxbuf;
+  int32_t* codec_txbuf;
 }
+
+#ifdef USE_CS4271
+#define HSAI_RX hsai_BlockB1
+#define HSAI_TX hsai_BlockA1
+#define HDMA_RX hdma_sai1_b
+#define HDMA_TX hdma_sai1_a
+#else
+#define HSAI_RX hsai_BlockA1
+#define HSAI_TX hsai_BlockB1
+#define HDMA_RX hdma_sai1_a
+#define HDMA_TX hdma_sai1_b
+#endif
 
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
@@ -27,44 +40,30 @@ typedef int8_t audio_t;
 #error Invalid AUDIO_BITS_PER_SAMPLE
 #endif
 
-volatile static size_t adc_underflow = 0;
-SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_tx_buffer;
-
-void usbd_audio_fill_ringbuffer(int32_t* buffer, size_t blocksize){
-  while(blocksize--){
-    audio_t* dst = audio_tx_buffer.getWriteHead();
-    size_t ch = USB_AUDIO_CHANNELS;
-    while(ch--)
-      *dst++ = AUDIO_INT32_TO_SAMPLE(*buffer++); // shift, round, dither, clip, truncate, bitswap
-    buffer += AUDIO_CHANNELS - USB_AUDIO_CHANNELS;
-    audio_tx_buffer.incrementWriteHead(USB_AUDIO_CHANNELS);
-  }
+static void update_rx_read_index(){
+  extern DMA_HandleTypeDef HDMA_RX;
+  // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  size_t pos = audio_rx_buffer.getCapacity() - HDMA_RX.Instance->NDTR;
+  audio_rx_buffer.setReadIndex(pos);
 }
 
-void usbd_audio_empty_ringbuffer(uint8_t* buffer, size_t len){
-  len /= (AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS);
-  audio_t* dst = (audio_t*)buffer;
-  size_t available;
-  for(size_t i=0; i<len; ++i){
-    memcpy(dst, audio_tx_buffer.getReadHead(), USB_AUDIO_CHANNELS*sizeof(audio_t));
-    available = audio_tx_buffer.getReadCapacity();
-    if(available > USB_AUDIO_CHANNELS)
-      audio_tx_buffer.incrementReadHead(USB_AUDIO_CHANNELS);
-    else
-      adc_underflow++;
-    dst += USB_AUDIO_CHANNELS;
-  }
+static void update_tx_write_index(){
+  extern DMA_HandleTypeDef HDMA_TX;
+  // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  size_t pos = audio_tx_buffer.getCapacity() - HDMA_TX.Instance->NDTR;
+  audio_tx_buffer.setWriteIndex(pos);
 }
 
 void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels){
   // set read head at half a ringbuffer distance from write head
+  update_tx_write_index();
   size_t pos = audio_tx_buffer.getWriteIndex();
   size_t len = audio_tx_buffer.getCapacity();
   pos = (pos + len/2) % len;
-  pos = (pos/USB_AUDIO_CHANNELS)*USB_AUDIO_CHANNELS; // round down to nearest frame
+  pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
   audio_tx_buffer.setReadIndex(pos);
 #if DEBUG
-  printf("start tx %d %d\n", rate, channels);
+  printf("start tx %d %d %d\n", rate, channels, pos);
 #endif
 }
 
@@ -72,14 +71,6 @@ void usbd_audio_tx_stop_callback(){
 #if DEBUG
   printf("stop tx\n");
 #endif
-}
-
-void update_rx_read_index(){
-  extern DMA_HandleTypeDef hdma_sai1_b;
-  // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  // size_t pos = audio_rx_buffer.getCapacity() - (hdma_sai1_b.Instance->NDTR/sizeof(int32_t));
-  size_t pos = audio_rx_buffer.getCapacity() - hdma_sai1_b.Instance->NDTR;
-  audio_rx_buffer.setReadIndex(pos);
 }
 
 void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
@@ -136,10 +127,19 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
 
 void usbd_audio_tx_callback(uint8_t* data, size_t len){
 #ifdef USE_USBD_AUDIO_TX
-  size_t available = audio_tx_buffer.getReadCapacity()*AUDIO_BYTES_PER_SAMPLE;
+  update_tx_write_index();
+  size_t available = audio_tx_buffer.getReadCapacity()*AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS/AUDIO_CHANNELS;
   if(available < len)
     len = available;
-  usbd_audio_empty_ringbuffer(data, len);
+  size_t blocksize = len / (USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
+  audio_t* dst = (audio_t*)data;
+  while(blocksize--){
+    int32_t* src = audio_tx_buffer.getReadHead();
+    size_t ch = USB_AUDIO_CHANNELS;
+    while(ch--)
+      *dst++ = AUDIO_INT32_TO_SAMPLE(*src++); // shift, round, dither, clip, truncate, bitswap
+    audio_tx_buffer.incrementReadHead(AUDIO_CHANNELS);
+  }
   usbd_audio_write(data, len);
 #endif
 }
@@ -162,6 +162,9 @@ uint16_t Codec::getBlockSize(){
 #endif
 
 void Codec::init(){
+  audio_rx_buffer.reset();
+  codec_rxbuf = audio_tx_buffer.getWriteHead();
+  audio_tx_buffer.reset();
   codec_txbuf = audio_rx_buffer.getReadHead();
   codec_init();
 }
@@ -285,7 +288,8 @@ void Codec::stop(){
 void Codec::start(){
   setInputGain(settings.audio_input_gain);
   setOutputGain(settings.audio_output_gain);
-  codec_blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
+  // codec_blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
+  codec_blocksize = CODEC_BUFFER_SIZE/4;
   HAL_StatusTypeDef ret;
   /* See STM32F405 Errata, I2S device limitations */
   /* The I2S peripheral must be enabled when the external master sets the WS line at: */
@@ -329,8 +333,8 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A
 
 extern "C" {
-  SAI_HandleTypeDef hsai_BlockA1;
-  SAI_HandleTypeDef hsai_BlockB1;
+  SAI_HandleTypeDef HSAI_RX;
+  SAI_HandleTypeDef HSAI_TX;
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
@@ -343,40 +347,41 @@ extern "C" {
 }
 
 void Codec::txrx(){
-  HAL_SAI_DMAStop(&hsai_BlockA1);
-  HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  HAL_SAI_DMAStop(&HSAI_RX);
+  HAL_SAI_Transmit_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
 }
 
 void Codec::stop(){
-  HAL_SAI_DMAStop(&hsai_BlockA1);
-  HAL_SAI_DMAStop(&hsai_BlockB1);
+  HAL_SAI_DMAStop(&HSAI_RX);
+  HAL_SAI_DMAStop(&HSAI_TX);
 }
 
 void Codec::start(){
   setOutputGain(settings.audio_output_gain);
-  codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
+  // codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
+  codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
   HAL_StatusTypeDef ret;
 #ifdef USE_CS4271
-  ret = HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  ret = HAL_SAI_Receive_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
-    ret = HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
-#else
+    ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
+#else // PCM3168A
   // start slave first (Noctua)
-  ret = HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
-    ret = HAL_SAI_Receive_DMA(&hsai_BlockA1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+    ret = HAL_SAI_Receive_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
 #endif
   ASSERT(ret == HAL_OK, "Failed to start SAI DMA");
 }
 
 void Codec::pause(){
-  HAL_SAI_DMAPause(&hsai_BlockB1);
-  HAL_SAI_DMAPause(&hsai_BlockA1);
+  HAL_SAI_DMAPause(&HSAI_RX);
+  HAL_SAI_DMAPause(&HSAI_TX);
 }
 
 void Codec::resume(){
-  HAL_SAI_DMAResume(&hsai_BlockB1);
-  HAL_SAI_DMAResume(&hsai_BlockA1);
+  HAL_SAI_DMAResume(&HSAI_RX);
+  HAL_SAI_DMAResume(&HSAI_TX);
 }
 
 extern "C" {
