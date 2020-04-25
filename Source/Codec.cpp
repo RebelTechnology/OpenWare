@@ -117,7 +117,6 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
     // skip some frames
     src += (blocksize - available)*USB_AUDIO_CHANNELS;
     blocksize = available;
-    len = available*USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE;
   }
   while(blocksize--){
     int32_t* dst = audio_rx_buffer.getWriteHead();
@@ -128,20 +127,18 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
     memset(dst, 0, (AUDIO_CHANNELS-USB_AUDIO_CHANNELS)*sizeof(int32_t));
     audio_rx_buffer.incrementWriteHead(AUDIO_CHANNELS);
   }
-  if(available > audio_rx_buffer.getCapacity()/AUDIO_CHANNELS - 48){
-    // if write space before transfer is greater than 48 frames from capacity
-    usbd_audio_rx_flow--;
-    int32_t* src = audio_rx_buffer.getWriteHead();
-    audio_rx_buffer.incrementWriteHead(AUDIO_CHANNELS);
-    int32_t* dst = audio_rx_buffer.getWriteHead();
-    memcpy(dst, src, AUDIO_CHANNELS*sizeof(int32_t));
-  }
+  available = audio_rx_buffer.getWriteCapacity()*AUDIO_BYTES_PER_SAMPLE;
+  if(available < AUDIO_RX_PACKET_SIZE)
+    return available;
 #endif
-  return len;
+  return AUDIO_RX_PACKET_SIZE;
 }
 
 void usbd_audio_tx_callback(uint8_t* data, size_t len){
 #ifdef USE_USBD_AUDIO_TX
+  size_t available = audio_tx_buffer.getReadCapacity()*AUDIO_BYTES_PER_SAMPLE;
+  if(available < len)
+    len = available;
   usbd_audio_empty_ringbuffer(data, len);
   usbd_audio_write(data, len);
 #endif
