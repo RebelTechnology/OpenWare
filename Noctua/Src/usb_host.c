@@ -32,7 +32,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-#ifdef OWL_USBD_FS
+#ifdef USE_USBD_FS
 #define HUSB_HOST hUsbHostHS
 #define HUSB_HOST_HSFS HOST_HS
 #else
