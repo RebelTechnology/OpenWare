@@ -143,6 +143,12 @@ SECTIONS
   _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
   _PATCHRAM_SIZE = LENGTH(PATCHRAM);
 
+  .flash_storage (NOLOAD) :
+  {
+    PROVIDE (_FLASH_STORAGE_BEGIN = .);
+  } >STORAGE
+  _FLASH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);
+
   /* Remove information from the standard libraries */
   /DISCARD/ :
   {
