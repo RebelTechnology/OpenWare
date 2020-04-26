@@ -5,7 +5,10 @@
 #include "eepromcontrol.h"
 // #include "stm32f4xx.h"
 
-StorageBlock::StorageBlock() : header(nullptr){} // (uint32_t*)EEPROM_PAGE_BEGIN
+extern char _FLASH_STORAGE_END;
+#define EEPROM_PAGE_END   ((uint32_t)&_FLASH_STORAGE_END)
+
+StorageBlock::StorageBlock() : header(nullptr){}
 
 uint32_t StorageBlock::getBlockSize(){
   uint32_t size = 4 + getDataSize();

@@ -4,6 +4,16 @@
 #include "message.h"
 #include "eepromcontrol.h"
 
+extern char _FLASH_STORAGE_BEGIN;
+extern char _FLASH_STORAGE_END;
+#define EEPROM_PAGE_BEGIN ((uint32_t)&_FLASH_STORAGE_BEGIN)
+#define EEPROM_PAGE_END   ((uint32_t)&_FLASH_STORAGE_END)
+#define EEPROM_PAGE_SIZE  (128*1024)
+
+uint32_t FlashStorage::getTotalAllocatedSize(){
+  return EEPROM_PAGE_END - EEPROM_PAGE_BEGIN;
+}
+
 void FlashStorage::init(){
   uint32_t offset = 0;
   StorageBlock block;

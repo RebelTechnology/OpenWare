@@ -21,9 +21,7 @@ public:
   uint32_t getWrittenSize(){
     return getTotalUsedSize() - getDeletedSize();
   }
-  uint32_t getTotalAllocatedSize(){
-    return EEPROM_PAGE_END - EEPROM_PAGE_BEGIN;
-  }
+  uint32_t getTotalAllocatedSize();
   uint32_t getFreeSize(){
     return getTotalAllocatedSize() - getTotalUsedSize();
   }
