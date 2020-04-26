@@ -105,8 +105,8 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
   size_t available = audio_rx_buffer.getWriteCapacity()/AUDIO_CHANNELS;
   if(available < blocksize){
     usbd_audio_rx_flow += blocksize-available;
-    // skip some frames
-    src += (blocksize - available)*USB_AUDIO_CHANNELS;
+    // skip some frames start and end of this block
+    src += (blocksize - available)*USB_AUDIO_CHANNELS/2;
     blocksize = available;
   }
   while(blocksize--){
@@ -118,7 +118,7 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
     memset(dst, 0, (AUDIO_CHANNELS-USB_AUDIO_CHANNELS)*sizeof(int32_t));
     audio_rx_buffer.incrementWriteHead(AUDIO_CHANNELS);
   }
-  available = audio_rx_buffer.getWriteCapacity()*AUDIO_BYTES_PER_SAMPLE;
+  available = audio_rx_buffer.getWriteCapacity()*AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS/AUDIO_CHANNELS;
   if(available < AUDIO_RX_PACKET_SIZE)
     return available;
 #endif
