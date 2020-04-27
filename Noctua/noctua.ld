@@ -14,6 +14,8 @@ CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memor
 BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 64K    /* Sector 0 to 3 */
 FLASH (rx)       : ORIGIN = 0x08010000, LENGTH = 320K   /* Sector 4 to 6 */
 STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 640K   /* Sector 7 to 11 */
+/* FLASH (rx)       : ORIGIN = 0x08010000, LENGTH = 448K */
+/* STORAGE (rw)     : ORIGIN = 0x08080000, LENGTH = 512K */
 }
 
 /* Define output sections */
