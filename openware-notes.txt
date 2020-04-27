@@ -324,3 +324,11 @@ DC Offset removed with 48dB 10Hz hpf
 20Vpp sine -3.24dB
 
 -----------------------------------------------------------------
+
+todo:
+- bootloader verify
+- disable all: sysex rule
+- IWDG->KR = 0xaaaa only if watchog is enabled, otherwise it hangs
+- fix Noctua bootloader
+
+-----------------------------------------------------------------
