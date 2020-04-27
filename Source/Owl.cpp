@@ -477,7 +477,6 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
-
 #ifdef OWL_BIOSIGNALS
   ble_init();
 #ifdef USE_LED
@@ -874,6 +873,7 @@ void loop(void){
   // for(int i=NOF_ADC_VALUES; i<NOF_PARAMETERS; ++i)
   //   graphics.params.updateValue(i, 0);
 #endif  
+  IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
 }
 
 extern "C"{
