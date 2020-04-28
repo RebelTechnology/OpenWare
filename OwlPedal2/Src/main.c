@@ -113,6 +113,7 @@ void StartDefaultTask(void const * argument);
 void setup();
 void loop(void);
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
+void initialise_monitor_handles(void);
 
 /* USER CODE END PFP */
 
@@ -128,7 +129,12 @@ void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+#ifdef DEBUG
+#warning "DEBUG uses printf and semihosting!"
+  if(CoreDebug->DHCSR & 0x01)
+    initialise_monitor_handles(); // remove when not semi-hosting
+  printf("showtime\n");
+#endif
   /* USER CODE END 1 */
   
 
