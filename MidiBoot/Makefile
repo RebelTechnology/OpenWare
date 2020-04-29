@@ -56,6 +56,7 @@ OBJS += $(S_SRC:%.s=Build/%.o)
 OBJS += $(OBJS_SDRAM)
 OBJS += $(OBJS_USBD)
 OBJS += $(OBJS_UART)
+OBJS += $(OBJS_IWDG)
 
 include $(OPENWARE)/Hardware/f4.mk
 

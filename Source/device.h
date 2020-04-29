@@ -33,8 +33,12 @@
 #define USBD_MAX_POWER               200 // 200mA
 #endif
 
-#ifndef OWLBOOT_MAGIC
-#define OWLBOOT_MAGIC                (0xDADAB007)
+#ifndef OWLBOOT_MAGIC_NUMBER
+#define OWLBOOT_MAGIC_NUMBER        (0xDADAB007)
+#endif
+
+#ifndef OWLBOOT_MAGIC_ADDRESS
+#define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
 #endif
 
 #define STORAGE_MAX_BLOCKS           64
@@ -94,5 +98,7 @@
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
+
+#define USE_IWDG                     // compile with support for IWDG watchdog
 
 #endif /* __DEVICE_H__ */

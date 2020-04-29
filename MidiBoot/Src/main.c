@@ -42,6 +42,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+IWDG_HandleTypeDef hiwdg;
+
 SPI_HandleTypeDef hspi1;
 
 SDRAM_HandleTypeDef hsdram1;
@@ -56,6 +58,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_FMC_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -66,9 +69,7 @@ void loop(void);
 typedef  void (*pFunction)(void);
 
 static int testMagic(){
-  const uint32_t bootloaderMagicNumber = 0xDADAB007;
-  const uint32_t* bootloaderMagicAddress = (uint32_t*)0x2000FFF0;
-  return *bootloaderMagicAddress == bootloaderMagicNumber;
+  return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_MAGIC_NUMBER;
 }
 
 static int testButton(){
@@ -82,6 +83,10 @@ static int testButton(){
 static int testNoProgram(){
   return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x20000000;
   /* Check Vector Table: Test if valid stack pointer is programmed at APPLICATION_ADDRESS */
+}
+
+static int testWatchdogReset(){
+  return __HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET;
 }
 
 /* USER CODE END PFP */
@@ -117,10 +122,13 @@ int main(void)
 
   MX_GPIO_Init();
   
-  if(testButton() || testMagic() || testNoProgram()){
+  if(testButton() || testMagic() || testNoProgram() || testWatchdogReset()){
     // we're going to boot
   }else{
     // jump to application code
+
+    /* Enable watchdog */
+    MX_IWDG_Init();
 
     /* Disable all interrupts */
     RCC->CIR = 0x00000000;
@@ -133,11 +141,16 @@ int main(void)
     jumpToApplication();
     for(;;);
   }
+  /* Clear reset flags */
+  __HAL_RCC_CLEAR_RESET_FLAGS();
+
+  /* Clear magic */
+  *OWLBOOT_MAGIC_ADDRESS = 0;
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  MX_IWDG_Init();
   MX_FMC_Init();
   MX_SPI1_Init();
   MX_USB_DEVICE_Init();
@@ -178,8 +191,9 @@ void SystemClock_Config(void)
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 25;
@@ -203,6 +217,34 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IWDG_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG_Init 0 */
+
+  /* USER CODE END IWDG_Init 0 */
+
+  /* USER CODE BEGIN IWDG_Init 1 */
+
+  /* USER CODE END IWDG_Init 1 */
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_128;
+  hiwdg.Init.Reload = 8*30000/128; // 8 seconds
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN IWDG_Init 2 */
+
+  /* USER CODE END IWDG_Init 2 */
+
 }
 
 /**

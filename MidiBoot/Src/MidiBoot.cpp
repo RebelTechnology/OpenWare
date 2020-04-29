@@ -24,8 +24,6 @@ const char* getFirmwareVersion(){
 }
 
 #define FIRMWARE_SECTOR 0xff
-const uint32_t bootloaderMagicNumber = 0xDADAB007;
-uint32_t* bootloaderMagicAddress = (uint32_t*)0x2000FFF0;
 
 void led_off(){
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
@@ -130,7 +128,6 @@ extern "C" {
   }
 
   void setup(){
-    *bootloaderMagicAddress = 0;
     led_green();
     midi.setOutputChannel(MIDI_OUTPUT_CHANNEL);
     mididevice.setInputChannel(MIDI_INPUT_CHANNEL);
@@ -146,7 +143,7 @@ extern "C" {
 
   void loop(void){
     midi.push();
-    // wait for interrupts
+    IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
   }
 
 }
@@ -201,7 +198,7 @@ void jump_to_bootloader(void){
 #ifdef USE_USB_HOST
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
 #endif
-  *bootloaderMagicAddress = bootloaderMagicNumber;
+  *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
   /* Disable all interrupts */
   __disable_irq();
   NVIC_SystemReset();
@@ -210,7 +207,6 @@ void jump_to_bootloader(void){
 }
 
 void device_reset(){
-  *bootloaderMagicAddress = 0;
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
