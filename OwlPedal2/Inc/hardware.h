@@ -1,6 +1,8 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
+#define DEBUG_STACK
+
 #define OWL_PEDAL_MKII
 #define HARDWARE_ID                  OWL_PEDAL_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal mkII"
