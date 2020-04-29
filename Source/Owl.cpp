@@ -486,7 +486,11 @@ static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
 void setup(){
-
+#ifdef USE_IWDG
+  DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_IWDG_STOP;
+  IWDG->KR = 0x5555; // ensure watchdog register write is allowed
+  IWDG->KR = 0xCCCC;
+#endif
 #ifdef OWL_BIOSIGNALS
   ble_init();
 #ifdef USE_LED
@@ -879,7 +883,9 @@ void loop(void){
   //   graphics.params.updateValue(i, 0);
 #endif  
 
+#ifdef USE_IWDG
   IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
+#endif
 }
 
 extern "C"{
