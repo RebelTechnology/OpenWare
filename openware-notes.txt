@@ -355,6 +355,9 @@ DC Offset removed with 48dB 10Hz hpf
 
 todo:
 - bootloader verify
+- send and receive error messages
+- send error messages without polling
+- bootloader message with reason for bootloader mode (watchdog, magic, no/invalid firmware)
 - disable all: sysex rule
 - IWDG->KR = 0xaaaa only if watchog is enabled, otherwise it hangs
 - fix Noctua bootloader
