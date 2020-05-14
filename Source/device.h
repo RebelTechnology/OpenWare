@@ -33,13 +33,8 @@
 #define USBD_MAX_POWER               200 // 200mA
 #endif
 
-#ifndef OWLBOOT_MAGIC_NUMBER
 #define OWLBOOT_MAGIC_NUMBER        (0xDADAB007)
-#endif
-
-#ifndef OWLBOOT_MAGIC_ADDRESS
 #define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
-#endif
 
 #define STORAGE_MAX_BLOCKS           64
 
@@ -99,6 +94,6 @@
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
-#define USE_IWDG                     // compile with support for IWDG watchdog
+/* #define USE_IWDG                     // compile with support for IWDG watchdog */
 
 #endif /* __DEVICE_H__ */

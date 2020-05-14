@@ -477,9 +477,10 @@ static TickType_t xFrequency;
 
 void setup(){
 #ifdef USE_IWDG
-  DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_IWDG_STOP;
+  IWDG->KR = 0xCCCC; // Enable IWDG and turn on LSI
   IWDG->KR = 0x5555; // ensure watchdog register write is allowed
-  IWDG->KR = 0xCCCC;
+  IWDG->PR = 0x05;   // prescaler 128
+  IWDG->RLR = 0x753; // reload 8 seconds
 #endif
 #ifdef OWL_BIOSIGNALS
   ble_init();
@@ -910,13 +911,16 @@ extern "C"{
       encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
   }
 #endif /* USE_ENCODERS */
-  
 }
 
 void jump_to_bootloader(void){
 #ifdef USE_USB_HOST
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
 #endif
+// #ifdef USE_USBD_MIDI
+//   extern USBD_HandleTypeDef USBD_HANDLE;
+//   USBD_DeInit(&USBD_HANDLE);
+// #endif
   *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
