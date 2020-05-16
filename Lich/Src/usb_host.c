@@ -32,13 +32,8 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-#ifdef USE_USBD_FS
 #define HUSB_HOST hUsbHostHS
 #define HUSB_HOST_HSFS HOST_HS
-#else
-#define HUSB_HOST hUsbHostFS
-#define HUSB_HOST_HSFS HOST_FS
-#endif
 /* USER CODE END PV */
 
 /* USER CODE BEGIN PFP */

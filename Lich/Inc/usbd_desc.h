@@ -105,11 +105,7 @@
   */
 
 /** Descriptor for the Usb device. */
-#ifdef OWL_USBD_FS
 extern USBD_DescriptorsTypeDef FS_Desc;
-#else
-extern USBD_DescriptorsTypeDef HS_Desc;
-#endif
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 

@@ -6,6 +6,8 @@
 #define HARDWARE_VERSION             "Lich"
 
 #define USBH_HANDLE hUsbHostHS
+#define USE_USBD_MIDI
+#define USE_USBD_FS
 
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW5_Pin
@@ -19,6 +21,7 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
+#define ADC_E 4
 #define AUDIO_OUTPUT_GAIN            127
 
 /* #define USE_RGB_LED */
