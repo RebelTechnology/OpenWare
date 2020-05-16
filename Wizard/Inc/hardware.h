@@ -10,6 +10,7 @@
 #ifdef OWL_USBD_HS
 #define USE_USBD_HS
 #define USBH_HANDLE hUsbHostFS
+#define CODEC_HP_FILTER
 #else
 #define USE_USBD_FS
 #define USBH_HANDLE hUsbHostHS
@@ -48,7 +49,6 @@
 #define ADC_PERIPH hadc3
 #define USE_CODEC
 #define USE_CS4271
-#define CODEC_HP_FILTER
 #define CODEC_SPI hspi4
 #define USE_USB_HOST
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
