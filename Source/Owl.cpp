@@ -710,7 +710,9 @@ void loop(void){
     }else if(getErrorStatus() != NO_ERROR){
       operationMode = ERROR_MODE;
     }else{
+#ifdef USE_RGB_LED
       updateLed();
+#endif
     }
     break;
   case CONFIGURE_MODE:
