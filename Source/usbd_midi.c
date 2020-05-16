@@ -511,7 +511,7 @@ static uint8_t  USBD_Midi_DataOut (USBD_HandleTypeDef *pdev,
   /* Get the received data buffer and update the counter */
   hmidi->rxLen = USBD_LL_GetRxDataSize (pdev, epnum);
   /* Forward data to user callback (midi_rx_usb_buffer) */
-  ((USBD_Midi_ItfTypeDef *)pdev->pUserData)->Receive(hmidi->rxBuffer, hmidi->rxLen);
+  usbd_midi_rx(hmidi->rxBuffer, hmidi->rxLen);
   /* Prepare Out endpoint to receive next packet */
   USBD_LL_PrepareReceive(pdev,
 			 MIDI_OUT_EP,
