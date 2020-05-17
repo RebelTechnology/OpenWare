@@ -339,7 +339,7 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   }
 }
 
-void midi_device_rx(uint8_t *buffer, uint32_t length){
+void usbd_midi_rx(uint8_t *buffer, uint32_t length){
   for(uint16_t i=0; i<length; i+=4){
     if(!midi_rx.readMidiFrame(buffer+i))
       midi_rx.reset();
