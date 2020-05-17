@@ -320,7 +320,6 @@ static uint8_t  USBD_Midi_Setup (USBD_HandleTypeDef *pdev,
     case USB_REQ_GET_INTERFACE :
       USBD_CtlSendData (pdev,
                         (uint8_t *)&(hmidi->alt_setting),
-                        /* (uint8_t *)&usbd_audio_AltSet, */
                         1);
       break;
     case USB_REQ_SET_INTERFACE :
