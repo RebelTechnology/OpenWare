@@ -48,37 +48,37 @@
 #include "usb_device.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
-#include "usbd_midi.h"
-#include "usbd_midi_if.h"
+#include "usbd_audio.h"
 
 /* USB Device Core handle declaration */
-#ifdef USE_USBD_HS
-USBD_HandleTypeDef hUsbDeviceHS;
-#else
-USBD_HandleTypeDef hUsbDeviceFS;
-#endif
+USBD_HandleTypeDef USBD_HANDLE;
 
 /* init function */				        
 void MX_USB_DEVICE_Init(void)
 {
   /* Init Device Library,Add Supported Class and Start the library*/
-#ifdef USE_USBD_HS
-  USBD_Init(&hUsbDeviceHS, &HS_Desc, DEVICE_HS);
-
-  USBD_RegisterClass(&hUsbDeviceHS, &USBD_Midi_ClassDriver);
-
-  USBD_Midi_RegisterInterface(&hUsbDeviceHS, &USBD_Midi_fops);
-
-  USBD_Start(&hUsbDeviceHS);
+#if defined USE_USBD_FS
+  if (USBD_Init(&USBD_HANDLE, &FS_Desc, DEVICE_FS) != USBD_OK)
+#elif defined USE_USBD_HS
+  if (USBD_Init(&USBD_HANDLE, &HS_Desc, DEVICE_HS) != USBD_OK)
 #else
-  USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS);
-
-  USBD_RegisterClass(&hUsbDeviceFS, &USBD_Midi_ClassDriver);
-
-  USBD_Midi_RegisterInterface(&hUsbDeviceFS, &USBD_Midi_fops);
-
-  USBD_Start(&hUsbDeviceFS);  
+#error Invalid USB configuration
 #endif
+  {
+    Error_Handler();
+  }
+  if (USBD_RegisterClass(&USBD_HANDLE, &USBD_AUDIO) != USBD_OK)
+  {
+    Error_Handler();
+  }
+  if (USBD_AUDIO_RegisterInterface(&USBD_HANDLE, NULL) != USBD_OK)
+  {
+    Error_Handler();
+  }
+  if (USBD_Start(&USBD_HANDLE) != USBD_OK)
+  {
+    Error_Handler();
+  }
 }
 /**
   * @}
