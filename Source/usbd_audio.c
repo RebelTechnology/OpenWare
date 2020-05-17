@@ -805,15 +805,21 @@ static uint8_t  USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev,
 	haudio->control.data[0] = 0;
       	USBD_CtlSendData (pdev, haudio->control.data, 1);
 	break;
+#ifdef USE_USBD_AUDIO_RX
       case AUDIO_RX_IF:
 	USBD_CtlSendData (pdev, &(haudio->rx_alt_setting), 1);
 	break;
+#endif
+#ifdef USE_USBD_AUDIO_TX
       case AUDIO_TX_IF:
 	USBD_CtlSendData (pdev, &(haudio->tx_alt_setting), 1);
 	break;
+#endif
+#ifdef USE_USBD_MIDI
       case AUDIO_MIDI_IF:
 	USBD_CtlSendData (pdev, &(haudio->midi_alt_setting), 1);
 	break;
+#endif
       default:
         ret = USBD_FAIL;
 	break;
@@ -828,13 +834,17 @@ static uint8_t  USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev,
 	if(req->wValue != 0)
 	  ret = USBD_FAIL;
 	break;
+#ifdef USE_USBD_AUDIO
       case AUDIO_RX_IF:
       case AUDIO_TX_IF:
-      case AUDIO_MIDI_IF:
 	if(req->wValue <= 1) // only alt 0 or 1
 	  usbd_audio_select_alt(pdev, haudio, req->wIndex, req->wValue);
 	else
 	  ret = USBD_FAIL;
+	break;
+#endif
+      case AUDIO_MIDI_IF:
+	// do nothing
 	break;
       default:
 	ret = USBD_FAIL;
@@ -958,7 +968,9 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
 {
   /* SOF (Start of Frame) Every millisecond (12000 full-bandwidth bit times), the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
+#ifdef USE_USBD_AUDIO
   usbd_audio_sync_callback(0);
+#endif
   return USBD_OK;
 }
 
