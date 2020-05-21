@@ -24,10 +24,10 @@ PLATFORM = Wizard
 endif
 
 ifeq ($(PLATFORM),EuroWizard)
-  CPPFLAGS += -Iusbd-fs -DOWL_USBD_FS -DOWL_EUROWIZARD
+  CPPFLAGS += -Iusbd-fs -DOWL_EUROWIZARD
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Wizard)
-  CPPFLAGS += -Iusbd-hs -DOWL_USBD_HS
+  CPPFLAGS += -Iusbd-hs
   vpath %.c usbd-hs
 endif
 
