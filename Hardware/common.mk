@@ -36,7 +36,7 @@ vpath %.c $(OPENWARE)/LibSource
 vpath %.cpp $(OPENWARE)/LibSource
 vpath %.c $(OPENWARE)/Libraries/syscalls
 
-all: bin sysex
+all: bin
 
 .PHONY: clean size debug flash attach all sysex
 
@@ -94,7 +94,7 @@ flash:
 debug: $(ELF)
 	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
 
-attach: $(ELF)
+attach:
 	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" $(ELF)
 
 sysex: $(SYX)
