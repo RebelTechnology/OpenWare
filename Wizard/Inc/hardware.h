@@ -5,15 +5,20 @@
 #define HARDWARE_ID                  WIZARD_HARDWARE
 #define HARDWARE_VERSION             "Wizard"
 /* #define FASCINATION_MACHINE */
-#define CODEC_LR_SWAP
 
-#ifdef OWL_USBD_HS
+#ifdef OWL_EUROWIZARD
 #define USE_USBD_HS
+#define USBD_HANDLE hUsbDeviceHS
 #define USBH_HANDLE hUsbHostFS
 #else
 #define USE_USBD_FS
+#define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
+#define CODEC_HP_FILTER
+#define CODEC_LR_SWAP
 #endif
+
+#define USE_USBD_MIDI
 
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW5_Pin
