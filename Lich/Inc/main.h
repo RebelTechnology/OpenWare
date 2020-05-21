@@ -80,8 +80,6 @@ extern "C" {
 
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -102,10 +100,12 @@ void Error_Handler(void);
 #define CS_SDA_GPIO_Port GPIOE
 #define EXTSPI_nCS_Pin GPIO_PIN_15
 #define EXTSPI_nCS_GPIO_Port GPIOC
-#define ADC5_Pin GPIO_PIN_7
-#define ADC5_GPIO_Port GPIOF
-#define SW5_Pin GPIO_PIN_9
-#define SW5_GPIO_Port GPIOF
+#define LED_SW1_Pin GPIO_PIN_7
+#define LED_SW1_GPIO_Port GPIOF
+#define LED_SW2_Pin GPIO_PIN_8
+#define LED_SW2_GPIO_Port GPIOF
+#define DISPLAY_G_Pin GPIO_PIN_9
+#define DISPLAY_G_GPIO_Port GPIOF
 #define ADC4_Pin GPIO_PIN_10
 #define ADC4_GPIO_Port GPIOF
 #define OSC1_Pin GPIO_PIN_0
@@ -118,10 +118,6 @@ void Error_Handler(void);
 #define ADC2_GPIO_Port GPIOC
 #define ADC1_Pin GPIO_PIN_3
 #define ADC1_GPIO_Port GPIOC
-#define PWM1_Pin GPIO_PIN_0
-#define PWM1_GPIO_Port GPIOA
-#define PWM2_Pin GPIO_PIN_1
-#define PWM2_GPIO_Port GPIOA
 #define USART_MOSI_Pin GPIO_PIN_2
 #define USART_MOSI_GPIO_Port GPIOA
 #define USART_MISO_Pin GPIO_PIN_3
@@ -140,19 +136,24 @@ void Error_Handler(void);
 #define FLASH_nCS_GPIO_Port GPIOC
 #define FLASH_WP_Pin GPIO_PIN_0
 #define FLASH_WP_GPIO_Port GPIOB
-#define SW3_Pin GPIO_PIN_1
-#define SW3_GPIO_Port GPIOB
-#define SW3_EXTI_IRQn EXTI1_IRQn
-#define SW4_Pin GPIO_PIN_2
-#define SW4_GPIO_Port GPIOB
+#define GATE_OUT_Pin GPIO_PIN_1
+#define GATE_OUT_GPIO_Port GPIOB
+#define DISPLAY_DP_Pin GPIO_PIN_2
+#define DISPLAY_DP_GPIO_Port GPIOB
 #define CS_CS_Pin GPIO_PIN_10
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
 #define CS_RST_GPIO_Port GPIOB
-#define USB_HOST_PWR_EN_Pin GPIO_PIN_6
-#define USB_HOST_PWR_EN_GPIO_Port GPIOC
+#define DISPLAY_A_Pin GPIO_PIN_6
+#define DISPLAY_A_GPIO_Port GPIOC
+#define DISPLAY_B_Pin GPIO_PIN_7
+#define DISPLAY_B_GPIO_Port GPIOC
 #define USB_HOST_PWR_FAULT_Pin GPIO_PIN_8
 #define USB_HOST_PWR_FAULT_GPIO_Port GPIOC
+#define DISPLAY_C_Pin GPIO_PIN_9
+#define DISPLAY_C_GPIO_Port GPIOC
+#define DISPLAY_D_Pin GPIO_PIN_8
+#define DISPLAY_D_GPIO_Port GPIOA
 #define SWDIO_Pin GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
@@ -162,17 +163,26 @@ void Error_Handler(void);
 #define SW2_EXTI_IRQn EXTI2_IRQn
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
-#define TRIG_OUT_Pin GPIO_PIN_9
-#define TRIG_OUT_GPIO_Port GPIOG
+#define DISPLAY_E_Pin GPIO_PIN_9
+#define DISPLAY_E_GPIO_Port GPIOG
+#define SW2G10_Pin GPIO_PIN_10
+#define SW2G10_GPIO_Port GPIOG
 #define FLASH_SCK_Pin GPIO_PIN_3
 #define FLASH_SCK_GPIO_Port GPIOB
-#define PWM3_Pin GPIO_PIN_8
-#define PWM3_GPIO_Port GPIOB
+#define DISPLAY_F_Pin GPIO_PIN_8
+#define DISPLAY_F_GPIO_Port GPIOB
 #define SW1_Pin GPIO_PIN_9
 #define SW1_GPIO_Port GPIOB
 #define SW1_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
-
+#define USBD_VBUS_Pin GPIO_PIN_9
+#define USBD_VBUS_GPIO_Port GPIOA
+#define USBD_ID_Pin GPIO_PIN_10
+#define USBD_ID_GPIO_Port GPIOA
+#define USBD_DM_Pin GPIO_PIN_11
+#define USBD_DM_GPIO_Port GPIOA
+#define USBD_DP_Pin GPIO_PIN_12
+#define USBD_DP_GPIO_Port GPIOA
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -24,12 +24,6 @@
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
 
-#define USE_MODE_BUTTON
-#define MODE_BUTTON_PIN SW5_Pin
-#define MODE_BUTTON_PORT SW5_GPIO_Port
-#define MODE_BUTTON_GAIN ADC_D
-#define MODE_BUTTON_PATCH ADC_E
-
 #define USE_BKPSRAM
 
 #define ADC_A 0
