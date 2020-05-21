@@ -422,7 +422,6 @@ void runAudioTask(void* p){
 }
 
 void bootstrap(){
- 
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   uint8_t lastprogram = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
