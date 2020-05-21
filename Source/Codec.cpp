@@ -162,9 +162,9 @@ uint16_t Codec::getBlockSize(){
 #endif
 
 void Codec::init(){
-  audio_rx_buffer.reset();
-  codec_rxbuf = audio_tx_buffer.getWriteHead();
   audio_tx_buffer.reset();
+  codec_rxbuf = audio_tx_buffer.getWriteHead();
+  audio_rx_buffer.reset();
   codec_txbuf = audio_rx_buffer.getReadHead();
   codec_init();
 }
