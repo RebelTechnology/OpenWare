@@ -146,10 +146,8 @@ void Error_Handler(void);
 #define CS_RST_GPIO_Port GPIOB
 #define DISPLAY_A_Pin GPIO_PIN_6
 #define DISPLAY_A_GPIO_Port GPIOC
-#define DISPLAY_B_Pin GPIO_PIN_7
+#define DISPLAY_B_Pin GPIO_PIN_8
 #define DISPLAY_B_GPIO_Port GPIOC
-#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_8
-#define USB_HOST_PWR_FAULT_GPIO_Port GPIOC
 #define DISPLAY_C_Pin GPIO_PIN_9
 #define DISPLAY_C_GPIO_Port GPIOC
 #define DISPLAY_D_Pin GPIO_PIN_8
@@ -165,8 +163,6 @@ void Error_Handler(void);
 #define CS_SDIN_GPIO_Port GPIOD
 #define DISPLAY_E_Pin GPIO_PIN_9
 #define DISPLAY_E_GPIO_Port GPIOG
-#define SW2G10_Pin GPIO_PIN_10
-#define SW2G10_GPIO_Port GPIOG
 #define FLASH_SCK_Pin GPIO_PIN_3
 #define FLASH_SCK_GPIO_Port GPIOB
 #define DISPLAY_F_Pin GPIO_PIN_8
