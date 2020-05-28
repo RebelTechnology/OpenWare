@@ -156,9 +156,17 @@ void Error_Handler(void);
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
 #define SWCLK_GPIO_Port GPIOA
-#define SW2_Pin GPIO_PIN_2
-#define SW2_GPIO_Port GPIOD
-#define SW2_EXTI_IRQn EXTI2_IRQn
+#define SW2_Pin GPIO_PIN_15
+#define SW2_GPIO_Port GPIOA
+#define SW2_EXTI_IRQn EXTI15_10_IRQn
+#define ENC_SW_Pin GPIO_PIN_10
+#define ENC_SW_GPIO_Port GPIOC
+#define SW1_Pin GPIO_PIN_12
+#define SW1_GPIO_Port GPIOC
+#define SW1_EXTI_IRQn EXTI15_10_IRQn
+#define GATE_IN2_Pin GPIO_PIN_2
+#define GATE_IN2_GPIO_Port GPIOD
+#define GATE_IN2_EXTI_IRQn EXTI2_IRQn
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
 #define DISPLAY_E_Pin GPIO_PIN_9
@@ -167,9 +175,9 @@ void Error_Handler(void);
 #define FLASH_SCK_GPIO_Port GPIOB
 #define DISPLAY_F_Pin GPIO_PIN_8
 #define DISPLAY_F_GPIO_Port GPIOB
-#define SW1_Pin GPIO_PIN_9
-#define SW1_GPIO_Port GPIOB
-#define SW1_EXTI_IRQn EXTI9_5_IRQn
+#define GATE_IN1_Pin GPIO_PIN_9
+#define GATE_IN1_GPIO_Port GPIOB
+#define GATE_IN1_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
 #define USBD_VBUS_Pin GPIO_PIN_9
 #define USBD_VBUS_GPIO_Port GPIOA
