@@ -317,6 +317,23 @@ extern "C" {
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
+#ifdef OWL_LICH
+  case SW1_Pin:
+  case GATE_IN1_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET ||
+      HAL_GPIO_ReadPin(GATE_IN1_GPIO_Port, GATE_IN1_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_A, state);
+    setButtonValue(PUSHBUTTON, state);
+    HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, state ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  }
+  case SW2_Pin:
+  case GATE_IN2_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET ||
+      HAL_GPIO_ReadPin(GATE_IN2_GPIO_Port, GATE_IN2_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_B, state);
+    HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, state ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  }
+#endif
 #ifdef OWL_BIOSIGNALS
   case ADC_DRDY_Pin: {
     ads_drdy();
@@ -735,7 +752,7 @@ void loop(void){
 #ifdef OWL_LICH
   extern TIM_HandleTypeDef htim2;
   int value = __HAL_TIM_GET_COUNTER(&htim2);
-  setSegmentDisplay(value);  
+  setSegmentDisplay(value>>2);
 #endif  
 #ifdef USE_MODE_BUTTON
   static int patchselect = 0;
