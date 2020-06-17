@@ -47,7 +47,9 @@ IWDG_HandleTypeDef hiwdg;
 
 SPI_HandleTypeDef hspi1;
 
+#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
 SDRAM_HandleTypeDef hsdram1;
+#endif
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -153,15 +155,17 @@ int main(void)
   /* Clear magic */
   *OWLBOOT_MAGIC_ADDRESS = 0;
 
+#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
+  MX_FMC_Init();
+  SDRAM_Initialization_Sequence(&hsdram1);   
+#endif
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_FMC_Init();
   MX_SPI1_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-
-  SDRAM_Initialization_Sequence(&hsdram1);   
 
   // Initialise
   setup();
@@ -297,7 +301,7 @@ static void MX_FMC_Init(void)
 {
 
   /* USER CODE BEGIN FMC_Init 0 */
-
+#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
   /* USER CODE END FMC_Init 0 */
 
   FMC_SDRAM_TimingTypeDef SdramTiming = {0};
@@ -335,7 +339,7 @@ static void MX_FMC_Init(void)
   }
 
   /* USER CODE BEGIN FMC_Init 2 */
-
+#endif
   /* USER CODE END FMC_Init 2 */
 }
 
