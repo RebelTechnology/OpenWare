@@ -159,7 +159,7 @@ void setButtonValue(uint8_t ch, uint8_t value){
 #ifdef USE_ADC
 void updateParameters(){
   // IIR exponential filter with lambda 0.75
-#if defined OWL_MODULAR || defined OWL_TESSERACT /* inverting ADCs */
+#if defined OWL_MODULAR || defined OWL_TESSERACT || defined OWL_LICH /* inverting ADCs */
   parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
   parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
   parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
