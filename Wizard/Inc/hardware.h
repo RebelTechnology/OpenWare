@@ -19,8 +19,6 @@
 #define CODEC_LR_SWAP
 #endif
 
-#define USE_USBD_MIDI
-
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW5_Pin
 #define MODE_BUTTON_PORT SW5_GPIO_Port

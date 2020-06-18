@@ -23,6 +23,7 @@
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
 #endif
+#define USE_USBD_MIDI
 #define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
 #define MIDI_OUTPUT_BUFFER_SIZE      128
