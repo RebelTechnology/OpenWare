@@ -35,6 +35,9 @@
 #define MIDI_DATA_IN_PACKET_SIZE       0x40
 #define MIDI_DATA_OUT_PACKET_SIZE      0x40
 
+#define USBD_EP_ATTR_ISOC_ASYNC                           0x04 /* Asynchronous isochronic transfer  */
+#define USBD_EP_ATTR_ISOC_ADAPT                           0x08 /* Adaptative isochronic transfer  */
+#define USBD_EP_ATTR_ISOC_SYNC                            0x0C /* Synchronous isochronic transfer  */
 
 /** @defgroup USBD_CORE_Exported_TypesDefinitions
   * @{

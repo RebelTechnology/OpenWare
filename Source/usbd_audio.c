@@ -315,8 +315,8 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /* Standard AS Isochronous Audio Data Endpoint Descriptor*/
   0x09,                                    /* bLength */
   USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
-  AUDIO_RX_EP,                             /* bEndpointAddress 1 out endpoint*/
-  USBD_EP_TYPE_ISOC,                       /* bmAttributes */
+  AUDIO_RX_EP,                             /* bEndpointAddress */
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC,                       /* bmAttributes */
   AUDIO_PACKET_SZE(USBD_AUDIO_FREQ),       /* wMaxPacketSize in Bytes (Freq(Samples)*2(Stereo)*2(HalfWord)) */
   0x01,                                    /* bInterval */
   0x00,                                    /* bRefresh */
@@ -386,7 +386,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x09,                         // Size of the descriptor, in bytes (bLength)
   0x05,                         // ENDPOINT descriptor (bDescriptorType)
   AUDIO_TX_EP,                  // IN Endpoint 1. (bEndpointAddress)
-  USBD_EP_TYPE_ISOC,            /* bmAttributes (1) 0x01 */ 
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC,            /* bmAttributes */ 
   AUDIO_PACKET_SZE(USBD_AUDIO_FREQ),    /* wMaxPacketSize in Bytes (Freq(Samples)*2(Stereo)*2(HalfWord)) */
   0x01,                         // Polling interval 1kHz. (bInterval)
   0x00,                         // Unused. (bRefresh)
