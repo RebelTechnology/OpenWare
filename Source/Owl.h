@@ -31,6 +31,11 @@ extern "C" {
 
   void setup(void);
   void loop(void);
+
+  void owl_setup();
+  void owl_loop();
+  void MX_USB_HOST_Process(void);
+
   void updateProgramVector(ProgramVector* pv);
 
   int16_t getAnalogValue(uint8_t index);
