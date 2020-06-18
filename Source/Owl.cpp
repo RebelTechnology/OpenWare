@@ -92,9 +92,8 @@ int16_t getAnalogValue(uint8_t ch){
 #ifdef USE_ADC
   if(ch < NOF_ADC_VALUES)
     return adc_values[ch];
-  else
 #endif
-    return 0;
+  return 0;
 }
 
 void setAnalogValue(uint8_t ch, int16_t value){
@@ -110,7 +109,7 @@ void setAnalogValue(uint8_t ch, int16_t value){
 #endif
 }
 
-void setGateValue(uint8_t ch, int16_t value){
+__weak void setGateValue(uint8_t ch, int16_t value){
 #ifdef OWL_WIZARD
   if(ch == BUTTON_F || ch == PUSHBUTTON)
     HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -324,14 +323,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
       HAL_GPIO_ReadPin(GATE_IN1_GPIO_Port, GATE_IN1_Pin) == GPIO_PIN_RESET;
     setButtonValue(BUTTON_A, state);
     setButtonValue(PUSHBUTTON, state);
-    HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, state ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, state ? GPIO_PIN_RESET : GPIO_PIN_SET);
   }
   case SW2_Pin:
   case GATE_IN2_Pin: {
     bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET ||
       HAL_GPIO_ReadPin(GATE_IN2_GPIO_Port, GATE_IN2_Pin) == GPIO_PIN_RESET;
     setButtonValue(BUTTON_B, state);
-    HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, state ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, state ? GPIO_PIN_RESET : GPIO_PIN_SET);
   }
 #endif
 #ifdef OWL_BIOSIGNALS
@@ -684,6 +683,10 @@ void updateLed(){
 #endif /*USE_RGB_LED */
 
 static volatile OperationMode operationMode = STARTUP_MODE;
+OperationMode getOperationMode(){
+  return operationMode;
+}
+
 void setOperationMode(OperationMode mode){
   setLed(0, YELLOW_COLOUR);
   operationMode = mode;
@@ -703,9 +706,9 @@ int getPatchSelectionValue(){
 void owl_mode_button(void){
   static int patchselect = 0;
   static int gainselect = 0;
-  switch(operationMode){
+  switch(getOperationMode()){
   case STARTUP_MODE:
-    operationMode = RUN_MODE;
+    setOperationMode(RUN_MODE);
     break;
   case LOAD_MODE:
     setLed(0, getParameterValue(PARAMETER_A)*BLUE_COLOUR/4095);
@@ -714,10 +717,10 @@ void owl_mode_button(void){
     if(isModeButtonPressed()){
       patchselect = getPatchSelectionValue();
       gainselect = getGainSelectionValue();
-      operationMode = CONFIGURE_MODE;
+      setOperationMode(CONFIGURE_MODE);
       setLed(0, NO_COLOUR);
     }else if(getErrorStatus() != NO_ERROR){
-      operationMode = ERROR_MODE;
+      setOperationMode(ERROR_MODE);
     }else{
 #ifdef USE_RGB_LED
       updateLed();
@@ -744,7 +747,7 @@ void owl_mode_button(void){
 	setLed(0, value & 0x01 ? YELLOW_COLOUR : CYAN_COLOUR);
       }
     }else{
-      operationMode = RUN_MODE;
+      setOperationMode(RUN_MODE);
     }
     break;
   case ERROR_MODE:

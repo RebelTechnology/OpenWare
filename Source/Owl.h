@@ -42,6 +42,7 @@ extern "C" {
   void setAnalogValue(uint8_t ch, int16_t value);
   void setGateValue(uint8_t bid, int16_t value);
 
+  OperationMode getOperationMode();
   void setOperationMode(OperationMode mode);
   void setLed(uint8_t led, uint32_t rgb);
 
