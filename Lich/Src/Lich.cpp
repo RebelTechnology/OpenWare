@@ -18,6 +18,8 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+extern TIM_HandleTypeDef htim2;
+
 #define SEG_DISPLAY_BLANK 10
 #define SEG_DISPLAY_E     11
 #define SEG_DISPLAY_U     12
@@ -66,8 +68,19 @@ void setGateValue(uint8_t ch, int16_t value){
     HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
 }
 
+bool isModeButtonPressed(){
+  return HAL_GPIO_ReadPin(ENC_SW_GPIO_Port, ENC_SW_Pin) == GPIO_PIN_RESET;
+}
+
+int getEncoderValue(){
+  return __HAL_TIM_GET_COUNTER(&htim2)>>2;
+}
+
+void setEncoderValue(int value){
+  __HAL_TIM_SET_COUNTER(&htim2, value<<2);
+}
+
 void setup(){
-  extern TIM_HandleTypeDef htim2;
   // __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
   HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
   setSegmentDisplay(11, true);
@@ -75,32 +88,32 @@ void setup(){
   HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, GPIO_PIN_SET);
   owl_setup();
+  setEncoderValue(program.getProgramIndex());
 }
 
-bool isModeButtonPressed(){
-  return HAL_GPIO_ReadPin(ENC_SW_GPIO_Port, ENC_SW_Pin) == GPIO_PIN_RESET;
-}
-
-int getEncoderValue(){
-  extern TIM_HandleTypeDef htim2;
-  return __HAL_TIM_GET_COUNTER(&htim2)>>2;
-}
-
-void setEncoderValue(int value){
-  extern TIM_HandleTypeDef htim2;
-  __HAL_TIM_SET_COUNTER(&htim2, value<<2);
-}
-
-#define PATCH_RESET_COUNTER 5000
+#define PATCH_RESET_COUNTER 100
+static uint32_t counter = PATCH_RESET_COUNTER;
 static void update_preset(){
-  int patchselect = getEncoderValue();
-  patchselect = max(1, min((int)registry.getNumberOfPatches()-1, patchselect + 1));  
+  static int patchselect = 0;
+  int value = getEncoderValue();
+  if(value != patchselect){
+    value = max(1, min((int)registry.getNumberOfPatches()-1, value));
+    patchselect = value;
+    setEncoderValue(patchselect);
+  }
+  if(program.getProgramIndex() != patchselect){
+    setSegmentDisplay(patchselect, false);
+  }else{
+    setSegmentDisplay(patchselect, true);
+  }
   switch(getOperationMode()){
   case STARTUP_MODE:
     setOperationMode(RUN_MODE);
     break;
   case LOAD_MODE:
     setSegmentDisplay(SEG_DISPLAY_U);
+    patchselect = program.getProgramIndex();
+    setEncoderValue(patchselect);
     break;
   case RUN_MODE:
     if(isModeButtonPressed()){
@@ -109,10 +122,7 @@ static void update_preset(){
 	program.loadProgram(patchselect);
 	program.resetProgram(false);
       }
-      setSegmentDisplay(patchselect, true);
-    }else if(patchselect != program.getProgramIndex()){
-      setSegmentDisplay(patchselect, false);
-      static uint32_t counter = PATCH_RESET_COUNTER;
+    }else if(program.getProgramIndex() != patchselect){
       if(--counter == 0){
 	counter = PATCH_RESET_COUNTER;
 	patchselect = program.getProgramIndex();
@@ -120,8 +130,6 @@ static void update_preset(){
       }
     }else if(getErrorStatus() != NO_ERROR){
       setOperationMode(ERROR_MODE);
-    }else{
-      setSegmentDisplay(patchselect, true);
     }
     break;
   case CONFIGURE_MODE:
@@ -130,7 +138,6 @@ static void update_preset(){
   case ERROR_MODE:
     if(isModeButtonPressed())
       program.resetProgram(false); // runAudioTask() changes to RUN_MODE
-    static uint32_t counter = PATCH_RESET_COUNTER;
     setSegmentDisplay(SEG_DISPLAY_E, counter > PATCH_RESET_COUNTER/2);
     if(--counter == 0)
       counter = PATCH_RESET_COUNTER;
