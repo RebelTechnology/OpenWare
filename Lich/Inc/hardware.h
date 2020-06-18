@@ -29,7 +29,6 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
-#define ADC_E 4
 #define AUDIO_OUTPUT_GAIN            127
 
 /* #define USE_RGB_LED */
