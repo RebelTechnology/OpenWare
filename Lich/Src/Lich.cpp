@@ -23,14 +23,16 @@ extern TIM_HandleTypeDef htim2;
 #define SEG_DISPLAY_BLANK 10
 #define SEG_DISPLAY_E     11
 #define SEG_DISPLAY_U     12
+#define SEG_DISPLAY_L     13
 const uint8_t seg_bits[] =
   {
 /*    0,    1,    2,    3,    4,    5,    6,    7,    8,    9 */
    0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x67,
-/*      blank,         E,          U */
-   0b00000000, 0b01111001, 0b00111110
-   // E: A D E F G: 1 0 0 1 1 1 1
-   // U: B C D E F: 0 1 1 1 1 1 0
+/*      blank,          E,          U,          L */
+   0b00000000, 0b01111001, 0b00111110, 0b00111000
+   // E: A D E F G: 1 0 0 1 1 1 1 0
+   // U: B C D E F: 0 1 1 1 1 1 0 0
+   // L: D E F:     0 0 0 1 1 1 0 0
   };
 GPIO_TypeDef* seg_ports[8] =
   {
@@ -111,7 +113,7 @@ static void update_preset(){
     setOperationMode(RUN_MODE);
     break;
   case LOAD_MODE:
-    setSegmentDisplay(SEG_DISPLAY_U);
+    setSegmentDisplay(SEG_DISPLAY_L);
     patchselect = program.getProgramIndex();
     setEncoderValue(patchselect);
     break;
@@ -134,6 +136,9 @@ static void update_preset(){
     break;
   case CONFIGURE_MODE:
     setOperationMode(RUN_MODE);
+    break;
+  case STREAM_MODE:
+    setSegmentDisplay(SEG_DISPLAY_U);
     break;
   case ERROR_MODE:
     if(isModeButtonPressed())
