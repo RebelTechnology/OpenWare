@@ -585,6 +585,7 @@ void ProgramManager::resetProgram(bool isr){
 }
 
 void ProgramManager::updateProgramIndex(uint8_t index){
+  setOperationMode(LOAD_MODE);
   patchindex = index;
   settings.program_index = index;
   midi_tx.sendPc(index);
