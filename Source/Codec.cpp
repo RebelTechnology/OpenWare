@@ -1,4 +1,5 @@
 #include "device.h"
+#include "Owl.h"
 #include "Codec.h"
 #include "errorhandlers.h"
 #include "ApplicationSettings.h"
@@ -82,6 +83,7 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
   pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
   audio_rx_buffer.setWriteIndex(pos);
   program.exitProgram(true);
+  setOperationMode(STREAM_MODE);
 #if DEBUG
   printf("start rx %d %d %d\n", rate, channels, pos);
 #endif
@@ -90,6 +92,7 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
 void usbd_audio_rx_stop_callback(){
   audio_rx_buffer.setAll(0);
   program.startProgram(true);
+  setOperationMode(RUN_MODE);
 #if DEBUG
   printf("stop rx\n");
 #endif

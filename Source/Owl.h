@@ -26,6 +26,7 @@ extern "C" {
     LOAD_MODE,
     RUN_MODE,
     CONFIGURE_MODE,
+    STREAM_MODE,
     ERROR_MODE
   } OperationMode;
 
