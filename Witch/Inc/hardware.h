@@ -33,7 +33,7 @@
 #define ADC_F 5
 #define ADC_G 6
 #define ADC_H 7
-#define ADC_H 8
+#define ADC_I 8
 #define AUDIO_OUTPUT_GAIN            127
 
 #define TRIG1_Pin GP7_Pin 	/* A17 */

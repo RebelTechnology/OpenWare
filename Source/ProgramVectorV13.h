@@ -24,6 +24,7 @@
 #define NOCTUA_HARDWARE             0x1c
 #define BIOSIGNALS_HARDWARE         0x1d
 #define LICH_HARDWARE               0x1e
+#define WITCH_HARDWARE              0x1f
 
 #define PROGRAM_VECTOR_CHECKSUM_V11 0x40
 #define PROGRAM_VECTOR_CHECKSUM_V12 0x50

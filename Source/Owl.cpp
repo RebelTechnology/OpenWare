@@ -546,7 +546,7 @@ void owl_setup(){
 #endif /* USE_DIGITALBUS */
 
 #ifdef USE_USB_HOST
-#if !defined OWL_NOCTUA && !defined OWL_LICH
+#if !defined OWL_NOCTUA && !defined OWL_LICH && !defined OWL_WITCH
   // enable USB Host power
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 #endif
@@ -784,7 +784,7 @@ __weak void loop(void){
 #endif
 
 #ifdef USE_USB_HOST
-#if defined OWL_NOCTUA || defined OWL_LICH
+#if defined OWL_NOCTUA || defined OWL_LICH || defined OWL_WITCH
   MX_USB_HOST_Process(); // todo: enable PWR management
 #else
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
@@ -939,7 +939,7 @@ extern "C"{
 
 void jump_to_bootloader(void){
 #ifdef USE_USB_HOST
-#if !defined OWL_NOCTUA && !defined OWL_LICH
+#if !defined OWL_NOCTUA && !defined OWL_LICH && !defined OWL_WITCH
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
 #endif
 #endif
