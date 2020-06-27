@@ -103,13 +103,9 @@ static void update_preset(){
     patchselect = value;
     setEncoderValue(patchselect);
   }
-  if(program.getProgramIndex() != patchselect){
-    setSegmentDisplay(patchselect, false);
-  }else{
-    setSegmentDisplay(patchselect, true);
-  }
   switch(getOperationMode()){
   case STARTUP_MODE:
+    setSegmentDisplay(SEG_DISPLAY_BLANK, true);
     setOperationMode(RUN_MODE);
     break;
   case LOAD_MODE:
@@ -118,20 +114,22 @@ static void update_preset(){
     setEncoderValue(patchselect);
     break;
   case RUN_MODE:
-    if(isModeButtonPressed()){
-      // switch patches
-      if(program.getProgramIndex() != patchselect){
+    if(program.getProgramIndex() != patchselect){
+      setSegmentDisplay(patchselect, false);
+      if(isModeButtonPressed()){
+	// switch patches
 	program.loadProgram(patchselect);
 	program.resetProgram(false);
-      }
-    }else if(program.getProgramIndex() != patchselect){
-      if(--counter == 0){
+      }else if(--counter == 0){
 	counter = PATCH_RESET_COUNTER;
 	patchselect = program.getProgramIndex();
 	setEncoderValue(patchselect);
       }
     }else if(getErrorStatus() != NO_ERROR){
       setOperationMode(ERROR_MODE);
+    }else{
+      setSegmentDisplay(patchselect, true);
+      counter = PATCH_RESET_COUNTER;
     }
     break;
   case CONFIGURE_MODE:
@@ -141,11 +139,11 @@ static void update_preset(){
     setSegmentDisplay(SEG_DISPLAY_U);
     break;
   case ERROR_MODE:
-    if(isModeButtonPressed())
-      program.resetProgram(false); // runAudioTask() changes to RUN_MODE
     setSegmentDisplay(SEG_DISPLAY_E, counter > PATCH_RESET_COUNTER/2);
     if(--counter == 0)
       counter = PATCH_RESET_COUNTER;
+    if(isModeButtonPressed())
+      program.resetProgram(false); // runAudioTask() changes to RUN_MODE
     break;
   }
 }
