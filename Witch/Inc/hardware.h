@@ -33,6 +33,7 @@
 #define ADC_F 5
 #define ADC_G 6
 #define ADC_H 7
+#define ADC_H 8
 #define AUDIO_OUTPUT_GAIN            127
 
 #define TRIG1_Pin GP7_Pin 	/* A17 */
@@ -49,6 +50,6 @@
 #define USE_USB_HOST
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 
-#define NOF_ADC_VALUES               8
+#define NOF_ADC_VALUES               9
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (4+4)
