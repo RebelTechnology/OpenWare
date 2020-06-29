@@ -4,29 +4,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "device.h"
+#include "MidiMessage.h"
+#include "MidiWriter.h"
 #include "OpenWareMidiControl.h"
-#include "SerialBuffer.hpp"
 
 class MidiController;
-extern MidiController midi;
+extern MidiController midi_tx;
 
-class MidiController {
+class MidiController : public MidiWriter {
 private:
   uint8_t channel;
-#ifdef USE_MIDI_TX_BUFFER
-  SerialBuffer<MIDI_OUTPUT_BUFFER_SIZE> buffer;
-#endif
 public:
   void setOutputChannel(uint8_t ch){
     channel = ch;
   }
-  void sendPc(uint8_t pc);
-  void sendCc(uint8_t cc, uint8_t value);
-  void sendPitchBend(uint16_t value);
-  void sendNoteOn(uint8_t note, uint8_t velocity);
-  void sendNoteOff(uint8_t note, uint8_t velocity);
-
-  void sendSysEx(uint8_t* data, uint16_t size);
   void sendSettings();
   void sendConfigurationSetting(const char* name, uint32_t value);
   void sendPatchParameterNames();
@@ -41,9 +32,9 @@ public:
   void sendFirmwareVersion();
   void sendDeviceId();
   void sendProgramMessage();
-
-  void write(uint8_t* data, uint16_t size);
-  void push();
+  
+  void handleMidiMessage(MidiMessage msg); // process MIDI from usbd
+  void forwardMidiMessage(MidiMessage msg); // send MIDI from all destinations to program callback
 };
 
 #endif /* __MIDI_CONTROLLER_H */

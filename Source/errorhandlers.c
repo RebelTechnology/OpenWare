@@ -19,7 +19,7 @@ void error(int8_t code, const char* reason){
 #ifdef DEBUG
   // assuming semihosting enabled
   if(reason != NULL)
-    printf("%s\n", reason);
+    printf("ERROR: %s\n", reason);
 #endif
 }
 

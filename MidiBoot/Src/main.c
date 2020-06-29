@@ -24,7 +24,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "hardware.h"
+#include "device.h"
+#include "errorhandlers.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,7 +47,9 @@ IWDG_HandleTypeDef hiwdg;
 
 SPI_HandleTypeDef hspi1;
 
+#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
 SDRAM_HandleTypeDef hsdram1;
+#endif
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -65,6 +68,7 @@ static void MX_IWDG_Init(void);
 void setup();
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void loop(void);
+void setMessage(const char* msg);
 
 typedef  void (*pFunction)(void);
 
@@ -121,14 +125,18 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   MX_GPIO_Init();
+  MX_IWDG_Init();
   
-  if(testButton() || testMagic() || testNoProgram() || testWatchdogReset()){
-    // we're going to boot
+  if(testMagic()){
+    setMessage("Bootloader starting");
+  }else if(testButton()){
+    setMessage("Bootloader requested");
+  }else if(testWatchdogReset()){
+    error(RUNTIME_ERROR, "Watchdog reset");
+  }else if(testNoProgram()){
+    error(RUNTIME_ERROR, "No valid firmware");
   }else{
     // jump to application code
-
-    /* Enable watchdog */
-    MX_IWDG_Init();
 
     /* Disable all interrupts */
     RCC->CIR = 0x00000000;
@@ -147,16 +155,17 @@ int main(void)
   /* Clear magic */
   *OWLBOOT_MAGIC_ADDRESS = 0;
 
+#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
+  MX_FMC_Init();
+  SDRAM_Initialization_Sequence(&hsdram1);   
+#endif
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_IWDG_Init();
-  MX_FMC_Init();
   MX_SPI1_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-
-  SDRAM_Initialization_Sequence(&hsdram1);   
 
   // Initialise
   setup();
@@ -169,7 +178,9 @@ int main(void)
   {
     loop();
     /* USER CODE END WHILE */
-
+#ifdef USE_IWDG
+    IWDG->KR = 0xaaaa; // reset the watchdog timer
+#endif
     /* USER CODE BEGIN 3 */
 
   }
@@ -232,17 +243,17 @@ static void MX_IWDG_Init(void)
   /* USER CODE END IWDG_Init 0 */
 
   /* USER CODE BEGIN IWDG_Init 1 */
-
+#ifdef USE_IWDG
   /* USER CODE END IWDG_Init 1 */
   hiwdg.Instance = IWDG;
   hiwdg.Init.Prescaler = IWDG_PRESCALER_128;
-  hiwdg.Init.Reload = 8*30000/128; // 8 seconds
+  hiwdg.Init.Reload = 8*32000/128; // 8 seconds
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {
     Error_Handler();
   }
   /* USER CODE BEGIN IWDG_Init 2 */
-
+#endif
   /* USER CODE END IWDG_Init 2 */
 
 }
@@ -290,7 +301,7 @@ static void MX_FMC_Init(void)
 {
 
   /* USER CODE BEGIN FMC_Init 0 */
-
+#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
   /* USER CODE END FMC_Init 0 */
 
   FMC_SDRAM_TimingTypeDef SdramTiming = {0};
@@ -328,7 +339,7 @@ static void MX_FMC_Init(void)
   }
 
   /* USER CODE BEGIN FMC_Init 2 */
-
+#endif
   /* USER CODE END FMC_Init 2 */
 }
 

@@ -183,6 +183,24 @@ amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d5214000000000
 # flash Wizard firmware
 amidi -p hw:2 -s Wizard.syx
 
+# set parameter A to value 63 on channel 0
+amidi -p hw:1 -S b0143f
+
+# request program message
+amidi -p hw:1 -S b04322
+
+# request device stats
+amidi -p hw:1 -S b04324
+
+# request program stats
+amidi -p hw:1 -S b04324
+
+# request button status
+amidi -p hw:1 -S b04319
+
+# dump all messages received
+amidi -p hw:1 -d -a
+
 -----------------------------------------------------------------
 
 #define VECT_TAB_OFFSET  0x00008000
@@ -293,3 +311,24 @@ PE12 / pin 43 :
 
 -----------------------------------------------------------------
 
+Compiling with C++14 support with -std=gnu++14 can cause `operator delete(void*, size_t) undefined` errors.
+
+-----------------------------------------------------------------
+
+DC Offset removed with normalising filter
+10Vpp sine input: -9.24dB, No signal: -80.9dB, SNR: 70.86dB
+DC Offset removed with 48dB 10Hz hpf
+10Vpp sine input: -9.23dB, No signal: -83.2dB, SNR: 73.97dB
+
+20Vpp triangle not clipping
+20Vpp sine -3.24dB
+
+-----------------------------------------------------------------
+
+todo:
+- bootloader verify
+- disable all: sysex rule
+- IWDG->KR = 0xaaaa only if watchog is enabled, otherwise it hangs
+- fix Noctua bootloader
+
+-----------------------------------------------------------------

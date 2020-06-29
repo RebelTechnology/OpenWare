@@ -14,10 +14,9 @@ C_SRC += ssd1309.c
 C_SRC += HAL_MAX11300.c
 C_SRC += HAL_TLC5946.c
 C_SRC += HAL_Encoders.c
-# C_SRC += HAL_OLED.c
-C_SRC += usbd_midi.c
-C_SRC += usbd_midi_if.c
+C_SRC += usbd_audio.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
+CPP_SRC += MidiStreamReader.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
 

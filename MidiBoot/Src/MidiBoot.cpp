@@ -8,8 +8,8 @@
 #include "eepromcontrol.h"
 #include "MidiController.h"
 
-static MidiReader mididevice;
-MidiController midi;
+static MidiReader midi_rx;
+MidiController midi_tx;
 FirmwareLoader loader;
 ProgramManager program;
 
@@ -46,9 +46,10 @@ void led_toggle(){
 }
 
 const char* message = NULL;
-void setMessage(const char* msg){
+extern "C" void setMessage(const char* msg){
   message = msg;
 }
+
 void sendMessage(){
   if(getErrorStatus() != NO_ERROR)
     message = getErrorMessage() == NULL ? "Error" : getErrorMessage();
@@ -57,7 +58,7 @@ void sendMessage(){
     buffer[0] = SYSEX_PROGRAM_MESSAGE;
     char* p = &buffer[1];
     p = stpncpy(p, message, 62);
-    midi.sendSysEx((uint8_t*)buffer, p-buffer);
+    midi_tx.sendSysEx((uint8_t*)buffer, p-buffer);
     message = NULL;
   }
 }
@@ -129,21 +130,29 @@ extern "C" {
 
   void setup(){
     led_green();
-    midi.setOutputChannel(MIDI_OUTPUT_CHANNEL);
-    mididevice.setInputChannel(MIDI_INPUT_CHANNEL);
-    midi.sendFirmwareVersion();
-    setMessage("OWL bootloader ready");
-    for(int i=0; i<3; i++){
-      HAL_Delay(600);
-      led_red();
-      HAL_Delay(600);
-      led_green();
-    }
+    midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
+    midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
+    setMessage("OWL Bootloader Ready");
   }
 
   void loop(void){
-    midi.push();
-    IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
+#ifdef USE_LED
+    static int counter = 3*1200;
+    if(counter){
+      switch(counter-- % 1200){
+      case 600:
+	led_red();
+	break;
+      case 0:
+	led_green();
+	break;
+      default:
+	HAL_Delay(1);
+	break;
+      }
+    }
+#endif
+    midi_tx.transmit();
   }
 
 }
@@ -194,22 +203,9 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   error(RUNTIME_ERROR, "Invalid STORE command");
 }
 
-void jump_to_bootloader(void){
-#ifdef USE_USB_HOST
-  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
-#endif
-  *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
-  /* Disable all interrupts */
-  __disable_irq();
-  NVIC_SystemReset();
-  /* Shouldn't get here */
-  while(1);
-}
-
 void device_reset(){
+  *OWLBOOT_MAGIC_ADDRESS = 0;
   NVIC_SystemReset();
-  /* Shouldn't get here */
-  while(1);
 }
 
 void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
@@ -226,7 +222,7 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     device_reset();
     break;
   case SYSEX_BOOTLOADER_COMMAND:
-    jump_to_bootloader();
+    error(RUNTIME_ERROR, "Bootloader OK");
     break;
   case SYSEX_FIRMWARE_UPLOAD:
     handleFirmwareUploadCommand(data+1, size-2);
@@ -330,10 +326,10 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     case 0:
       sendMessage();
     case SYSEX_FIRMWARE_VERSION:
-      midi.sendFirmwareVersion();
+      midi_tx.sendFirmwareVersion();
       break;
     case SYSEX_DEVICE_ID:
-      midi.sendDeviceId();
+      midi_tx.sendDeviceId();
       break;
     case SYSEX_PROGRAM_MESSAGE:
       sendMessage();
@@ -343,9 +339,9 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   }
 }
 
-void midi_device_rx(uint8_t *buffer, uint32_t length){
+void usbd_midi_rx(uint8_t *buffer, uint32_t length){
   for(uint16_t i=0; i<length; i+=4){
-    if(!mididevice.readMidiFrame(buffer+i))
-      mididevice.reset();
+    if(!midi_rx.readMidiFrame(buffer+i))
+      midi_rx.reset();
   }
 }

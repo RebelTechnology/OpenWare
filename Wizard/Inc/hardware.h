@@ -10,6 +10,7 @@
 #define USE_USBD_HS
 #define USBD_HANDLE hUsbDeviceHS
 #define USBH_HANDLE hUsbHostFS
+#define CODEC_HP_FILTER
 #else
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
@@ -17,8 +18,6 @@
 #define CODEC_HP_FILTER
 #define CODEC_LR_SWAP
 #endif
-
-#define USE_USBD_MIDI
 
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW5_Pin
@@ -53,7 +52,6 @@
 #define ADC_PERIPH hadc3
 #define USE_CODEC
 #define USE_CS4271
-#define CODEC_HP_FILTER
 #define CODEC_SPI hspi4
 #define USE_USB_HOST
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */

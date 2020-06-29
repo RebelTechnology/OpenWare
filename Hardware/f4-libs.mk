@@ -56,7 +56,6 @@ OBJS_USBD += $(DRIVERS)/Src/stm32f4xx_ll_usb.o
 OBJS_USBD += $(USB_DEVICE_FILE)/Core/Src/usbd_core.o
 OBJS_USBD += $(USB_DEVICE_FILE)/Core/Src/usbd_ioreq.o
 OBJS_USBD += $(USB_DEVICE_FILE)/Core/Src/usbd_ctlreq.o
-# OBJS_USBD += $(USB_DEVICE_FILE)/Class/AUDIO/Src/usbd_audio.o
 
 ### USB Host Library ###
 OBJS_USBH = $(DRIVERS)/Src/stm32f4xx_hal_hcd.o

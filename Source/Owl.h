@@ -26,17 +26,24 @@ extern "C" {
     LOAD_MODE,
     RUN_MODE,
     CONFIGURE_MODE,
+    STREAM_MODE,
     ERROR_MODE
   } OperationMode;
 
   void setup(void);
   void loop(void);
+
+  void owl_setup();
+  void owl_loop();
+  void MX_USB_HOST_Process(void);
+
   void updateProgramVector(ProgramVector* pv);
 
   int16_t getAnalogValue(uint8_t index);
   void setAnalogValue(uint8_t ch, int16_t value);
   void setGateValue(uint8_t bid, int16_t value);
 
+  OperationMode getOperationMode();
   void setOperationMode(OperationMode mode);
   void setLed(uint8_t led, uint32_t rgb);
 

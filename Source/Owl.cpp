@@ -5,7 +5,8 @@
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
-#include "MidiReader.h"
+#include "MidiReceiver.h"
+#include "MidiStreamReader.h"
 #include "MidiController.h"
 #include "ProgramVector.h"
 #include "ProgramManager.h"
@@ -48,9 +49,8 @@ Graphics graphics;
 
 #ifdef USE_USB_HOST
 #include "usbh_core.h"
-#include "usbh_midi.h"
 extern "C"{
-void MX_USB_HOST_Process(void);
+  void MX_USB_HOST_Process(void);
 }
 #endif /* USE_USB_HOST */
 
@@ -76,11 +76,8 @@ extern TIM_HandleTypeDef ENCODER_TIM2;
 #ifdef USE_CODEC
 Codec codec;
 #endif
-MidiReader mididevice;
-MidiController midi;
-#ifdef USE_USB_HOST
-MidiReader midihost;
-#endif /* USE_USB_HOST */
+MidiController midi_tx;
+MidiReceiver midi_rx;
 ApplicationSettings settings;
 
 #ifdef USE_ADC
@@ -95,9 +92,8 @@ int16_t getAnalogValue(uint8_t ch){
 #ifdef USE_ADC
   if(ch < NOF_ADC_VALUES)
     return adc_values[ch];
-  else
 #endif
-    return 0;
+  return 0;
 }
 
 void setAnalogValue(uint8_t ch, int16_t value){
@@ -113,7 +109,7 @@ void setAnalogValue(uint8_t ch, int16_t value){
 #endif
 }
 
-void setGateValue(uint8_t ch, int16_t value){
+__weak void setGateValue(uint8_t ch, int16_t value){
 #ifdef OWL_WIZARD
   if(ch == BUTTON_F || ch == PUSHBUTTON)
     HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -133,19 +129,12 @@ void setGateValue(uint8_t ch, int16_t value){
 }
 
 void midiSetInputChannel(int8_t channel){
-  settings.midi_input_channel = channel;
-  mididevice.setInputChannel(channel);
-#ifdef USE_USB_HOST
-  midihost.setInputChannel(channel);
-#endif
-#ifdef USE_DIGITALBUS
-  bus_set_input_channel(channel);
-#endif
+  midi_rx.setInputChannel(channel);
 }
 
 void midiSetOutputChannel(int8_t channel){
   settings.midi_output_channel = channel;
-  midi.setOutputChannel(channel);
+  midi_tx.setOutputChannel(channel);
 }
 
 void setLed(uint8_t led, uint32_t rgb){
@@ -327,6 +316,23 @@ extern "C" {
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
+#ifdef OWL_LICH
+  case SW1_Pin:
+  case GATE_IN1_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET ||
+      HAL_GPIO_ReadPin(GATE_IN1_GPIO_Port, GATE_IN1_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_A, state);
+    setButtonValue(PUSHBUTTON, state);
+    HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, state ? GPIO_PIN_RESET : GPIO_PIN_SET);
+  }
+  case SW2_Pin:
+  case GATE_IN2_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET ||
+      HAL_GPIO_ReadPin(GATE_IN2_GPIO_Port, GATE_IN2_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_B, state);
+    HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, state ? GPIO_PIN_RESET : GPIO_PIN_SET);
+  }
+#endif
 #ifdef OWL_BIOSIGNALS
   case ADC_DRDY_Pin: {
     ads_drdy();
@@ -341,7 +347,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
   case PUSHBUTTON_Pin: {
     bool isSet = !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin);
     setButtonValue(PUSHBUTTON, isSet);
-    midi.sendCc(PUSHBUTTON, isSet ? 127 : 0);
+    midi_tx.sendCc(PUSHBUTTON, isSet ? 127 : 0);
 #if defined OWL_PEDAL || defined OWL_MODULAR
     setLed(0, isSet ? RED_COLOUR : GREEN_COLOUR);
 #endif
@@ -485,12 +491,69 @@ uint8_t getPortMode(uint8_t index){
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
-void setup(){
+void owl_setup(){
 #ifdef USE_IWDG
-  DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_IWDG_STOP;
+  IWDG->KR = 0xCCCC; // Enable IWDG and turn on LSI
   IWDG->KR = 0x5555; // ensure watchdog register write is allowed
-  IWDG->KR = 0xCCCC;
+  IWDG->PR = 0x05;   // prescaler 128
+  IWDG->RLR = 0x753; // reload 8 seconds
 #endif
+#ifdef USE_RGB_LED
+  initLed();
+  setLed(0, NO_COLOUR);
+#endif /* USE_RGB_LED */
+#ifdef USE_BKPSRAM
+  HAL_PWR_EnableBkUpAccess();
+#endif
+  ledstatus = 0;
+  storage.init();
+  registry.init();
+  settings.init(); // settings need the registry to be initialised first
+#ifdef USE_CODEC
+  codec.init();
+  codec.set(0);
+  codec.bypass(false);
+  codec.setInputGain(settings.audio_input_gain);
+  codec.setOutputGain(settings.audio_output_gain);
+#endif /* USE_CODEC */
+
+  program.startManager();
+
+#ifdef USE_DAC
+  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
+  HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
+  setAnalogValue(PARAMETER_F, 0);
+  setAnalogValue(PARAMETER_G, 0);
+#endif
+
+#if defined USE_ADC && !defined OWL_WAVETABLE
+  extern ADC_HandleTypeDef ADC_PERIPH;
+  HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES);
+  if(ret != HAL_OK)
+    error(CONFIG_ERROR, "ADC Start failed");
+#endif /* USE_ADC */
+
+  midi_rx.init();
+  midiSetInputChannel(settings.midi_input_channel);
+  midiSetOutputChannel(settings.midi_output_channel);
+
+  xLastWakeTime = xTaskGetTickCount();
+  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+
+#ifdef USE_DIGITALBUS
+  bus_setup();
+  bus_set_input_channel(settings.midi_input_channel);
+#endif /* USE_DIGITALBUS */
+
+#ifdef USE_USB_HOST
+#if !defined OWL_NOCTUA && !defined OWL_LICH && !defined OWL_WITCH
+  // enable USB Host power
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+#endif
+#endif
+}
+
+__weak void setup(){
 #ifdef OWL_BIOSIGNALS
   ble_init();
 #ifdef USE_LED
@@ -498,14 +561,6 @@ void setup(){
   setLed(0, YELLOW_COLOUR);
 #endif
   setLed(1, NO_COLOUR);
-#endif
-
-#ifdef USE_BKPSRAM
-  // __HAL_RCC_PWR_CLK_ENABLE();
-  HAL_PWR_EnableBkUpAccess();
-  // __HAL_RCC_RTC_CLKPRESCALER(RCC_RTCCLKSOURCE_LSI);
-  // __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
-  // __HAL_RCC_RTC_ENABLE();
 #endif
   
 #ifdef OWL_PEDAL
@@ -524,36 +579,9 @@ void setup(){
   HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_RESET); // Trigger out off
 #endif
 
-#ifdef USE_SCREEN
-  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
-#endif
 #ifdef OWL_MAGUS
   HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
   HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Reset encoders 
-#endif /* OWL_MAGUS */
-
-#ifdef USE_DAC
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
-  setAnalogValue(PARAMETER_A, 0);
-  setAnalogValue(PARAMETER_B, 0);
-#endif
-  
-  ledstatus = 0;
-  storage.init();
-  registry.init();
-  settings.init(); // settings need the registry to be initialised first
-#ifdef USE_CODEC
-  codec.init();
-  codec.set(0);
-  codec.bypass(false);
-  codec.setInputGain(settings.audio_input_gain);
-  codec.setOutputGain(settings.audio_output_gain);
-#endif /* USE_CODEC */
-
-  program.startManager();
-
-#ifdef OWL_MAGUS
   {
     extern SPI_HandleTypeDef TLC5946_SPI;
 
@@ -604,11 +632,6 @@ void setup(){
     setLED(i, NONE);
 #endif /* OWL_EFFECTSBOX */
 
-#ifdef USE_RGB_LED
-  initLed();
-  setLed(0, NO_COLOUR);
-#endif /* USE_RGB_LED */
-
 #ifdef USE_ENCODERS
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
@@ -617,6 +640,7 @@ void setup(){
 #endif /* OWL_PLAYERF7 */
 
 #ifdef USE_SCREEN
+  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
 #endif /* USE_SCREEN */
@@ -630,46 +654,12 @@ void setup(){
   ret = HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(adc_values+4), 4);
   if(ret != HAL_OK)
     error(CONFIG_ERROR, "ADC3 Start failed");
-#else
-#ifdef USE_ADC
-  extern ADC_HandleTypeDef ADC_PERIPH;
-  HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES);
-  if(ret != HAL_OK)
-    error(CONFIG_ERROR, "ADC Start failed");
-#endif /* USE_ADC */
 #endif
-
-  midiSetInputChannel(settings.midi_input_channel);
-  midiSetOutputChannel(settings.midi_output_channel);
-
-  xLastWakeTime = xTaskGetTickCount();
-  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
-
-#ifdef USE_DIGITALBUS
-  bus_setup();
-  bus_set_input_channel(settings.midi_input_channel);
-#endif /* USE_DIGITALBUS */
-
-#ifdef USE_USB_HOST
-  // enable USB Host power
-  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
-#endif
+  owl_setup();
 }
 
 #ifdef USE_DIGITALBUS
 int busstatus;
-#endif
-
-#ifdef USE_MODE_BUTTON
-bool isModeButtonPressed(){
-  return HAL_GPIO_ReadPin(MODE_BUTTON_PORT, MODE_BUTTON_PIN) == GPIO_PIN_RESET;
-}
-int getGainSelectionValue(){
-  return adc_values[MODE_BUTTON_GAIN]*128*4/4096;
-}
-int getPatchSelectionValue(){
-  return adc_values[MODE_BUTTON_PATCH]*(registry.getNumberOfPatches()-1)*4/4095;
-}
 #endif
 
 #ifdef USE_RGB_LED
@@ -693,18 +683,32 @@ void updateLed(){
 #endif /*USE_RGB_LED */
 
 static volatile OperationMode operationMode = STARTUP_MODE;
+OperationMode getOperationMode(){
+  return operationMode;
+}
+
 void setOperationMode(OperationMode mode){
   setLed(0, YELLOW_COLOUR);
   operationMode = mode;
 }
 
-void loop(void){
 #ifdef USE_MODE_BUTTON
+bool isModeButtonPressed(){
+  return HAL_GPIO_ReadPin(MODE_BUTTON_PORT, MODE_BUTTON_PIN) == GPIO_PIN_RESET;
+}
+int getGainSelectionValue(){
+  return adc_values[MODE_BUTTON_GAIN]*128*4/4096;
+}
+int getPatchSelectionValue(){
+  return adc_values[MODE_BUTTON_PATCH]*(registry.getNumberOfPatches()-1)*4/4095;
+}
+
+void owl_mode_button(void){
   static int patchselect = 0;
   static int gainselect = 0;
-  switch(operationMode){
+  switch(getOperationMode()){
   case STARTUP_MODE:
-    operationMode = RUN_MODE;
+    setOperationMode(RUN_MODE);
     break;
   case LOAD_MODE:
     setLed(0, getParameterValue(PARAMETER_A)*BLUE_COLOUR/4095);
@@ -713,12 +717,14 @@ void loop(void){
     if(isModeButtonPressed()){
       patchselect = getPatchSelectionValue();
       gainselect = getGainSelectionValue();
-      operationMode = CONFIGURE_MODE;
+      setOperationMode(CONFIGURE_MODE);
       setLed(0, NO_COLOUR);
     }else if(getErrorStatus() != NO_ERROR){
-      operationMode = ERROR_MODE;
+      setOperationMode(ERROR_MODE);
     }else{
+#ifdef USE_RGB_LED
       updateLed();
+#endif
     }
     break;
   case CONFIGURE_MODE:
@@ -741,7 +747,7 @@ void loop(void){
 	setLed(0, value & 0x01 ? YELLOW_COLOUR : CYAN_COLOUR);
       }
     }else{
-      operationMode = RUN_MODE;
+      setOperationMode(RUN_MODE);
     }
     break;
   case ERROR_MODE:
@@ -750,6 +756,12 @@ void loop(void){
       program.resetProgram(false); // runAudioTask() changes to RUN_MODE
     break;
   }
+}
+#endif /* USE_MODE_BUTTON */
+
+__weak void loop(void){
+#ifdef USE_MODE_BUTTON
+  owl_mode_button();
 #endif /* USE_MODE_BUTTON */
 
 #ifdef FASCINATION_MACHINE
@@ -772,6 +784,9 @@ void loop(void){
 #endif
 
 #ifdef USE_USB_HOST
+#if defined OWL_NOCTUA || defined OWL_LICH || defined OWL_WITCH
+  MX_USB_HOST_Process(); // todo: enable PWR management
+#else
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
     if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
       HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
@@ -781,21 +796,9 @@ void loop(void){
     MX_USB_HOST_Process();
   }
 #endif
+#endif
 
-#ifdef USE_DIGITALBUS
-  busstatus = bus_status();
-#endif
-#ifdef USE_SCREEN
-  graphics.draw();
-  graphics.display();
-#endif /* USE_SCREEN */
-#ifdef OLED_DMA
-  // When using OLED_DMA this must delay for a minimum amount to allow screen to update
-  vTaskDelay(xFrequency);
-#else
-  vTaskDelayUntil(&xLastWakeTime, xFrequency);
-#endif
-  midi.push();
+  owl_loop();
 
 #ifdef OWL_EFFECTSBOX
   // uint8_t state =
@@ -882,41 +885,29 @@ void loop(void){
   // for(int i=NOF_ADC_VALUES; i<NOF_PARAMETERS; ++i)
   //   graphics.params.updateValue(i, 0);
 #endif  
+}
 
+void owl_loop(){
+#ifdef USE_DIGITALBUS
+  busstatus = bus_status();
+#endif
+#ifdef USE_SCREEN
+  graphics.draw();
+  graphics.display();
+#endif /* USE_SCREEN */
+#ifdef OLED_DMA
+  // When using OLED_DMA this must delay for a minimum amount to allow screen to update
+  vTaskDelay(xFrequency);
+#else
+  vTaskDelayUntil(&xLastWakeTime, xFrequency);
+#endif
+  midi_tx.transmit();
 #ifdef USE_IWDG
   IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
 #endif
 }
 
 extern "C"{
-  // incoming data from USB device interface
-  void midi_device_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4){
-      if(!mididevice.readMidiFrame(buffer+i))
-	mididevice.reset();
-#ifdef USE_DIGITALBUS
-      else
-	bus_tx_frame(buffer+i);
-#endif /* USE_DIGITALBUS */
-    }
-  }
-  // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
-
-#ifdef USE_USB_HOST
-  void midi_host_reset(void){
-    midihost.reset();
-    ledstatus ^= 0x3ff003ff;
-  }
-  void midi_host_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4){
-      if(!midihost.readMidiFrame(buffer+i)){
-	midihost.reset();
-      }else{
-	ledstatus ^= 0x000ffc00;
-      }
-    }
-  }
-#endif /* USE_USB_HOST */
 
 #if 0 // ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder){
@@ -944,13 +935,18 @@ extern "C"{
       encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
   }
 #endif /* USE_ENCODERS */
-  
 }
 
 void jump_to_bootloader(void){
 #ifdef USE_USB_HOST
+#if !defined OWL_NOCTUA && !defined OWL_LICH && !defined OWL_WITCH
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
 #endif
+#endif
+// #ifdef USE_USBD_MIDI
+//   extern USBD_HandleTypeDef USBD_HANDLE;
+//   USBD_DeInit(&USBD_HANDLE);
+// #endif
   *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
@@ -972,11 +968,7 @@ void device_reset(){
 
 // called from patch program: Patch::sendMidi(MidiMessage)
 void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
-  uint8_t data[] = {port, status, d1, d2};
-  midi.write(data, 4);
-#ifdef USE_DIGITALBUS
-  bus_tx_frame(data);
-#endif /* USE_DIGITALBUS */
+  midi_tx.send(MidiMessage(port, status, d1, d2));
 }
 
 const char* getFirmwareVersion(){ 

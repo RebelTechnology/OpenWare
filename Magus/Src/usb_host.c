@@ -118,10 +118,10 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
     break;
   case HOST_USER_DISCONNECTION:
     Appli_state = APPLICATION_DISCONNECT;
-    midi_host_reset();
+    usbh_midi_reset();
     break;
   case HOST_USER_UNRECOVERED_ERROR:
-    midi_host_reset(); // reset and hope for the best
+    usbh_midi_reset(); // reset and hope for the best
     error(USB_ERROR, "USB Host unrecovered error");
     break;
   case HOST_USER_SELECT_CONFIGURATION:

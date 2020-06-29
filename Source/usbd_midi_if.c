@@ -2,5 +2,5 @@
 #include "midi.h"
 
 USBD_Midi_ItfTypeDef USBD_Midi_fops = {
-  midi_device_rx,
+  usbd_midi_rx,
 };

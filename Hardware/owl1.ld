@@ -19,6 +19,7 @@ EXTRAM (rwx)     : ORIGIN = 0x68000000, LENGTH = 1M
 /* configured for classic OWL bootloader */
 FLASH (rx)       : ORIGIN = 0x08008000, LENGTH = 352K   /* Sector 2-6 */
 BOOTLOADER (r)   : ORIGIN = 0x08000000, LENGTH = 16K    /* Sector 0 */
+STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 512K
 }
 
 /* Define output sections */
@@ -155,6 +156,12 @@ SECTIONS
   } >PATCHRAM
   _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);  
   _PATCHRAM_SIZE = LENGTH(PATCHRAM);
+
+  .flash_storage (NOLOAD) :
+  {
+    PROVIDE (_FLASH_STORAGE_BEGIN = .);
+  } >STORAGE
+  _FLASH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

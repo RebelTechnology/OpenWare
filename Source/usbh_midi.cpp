@@ -30,7 +30,7 @@ extern "C" {
       NULL // pData: MIDI handle structure
     };
 
-  void midi_host_push();
+  void usbh_midi_push();
 }
 
 static SerialBuffer<USB_HOST_RX_BUFF_SIZE> rxbuffer;
@@ -392,12 +392,12 @@ static void MIDI_ProcessReception(USBH_HandleTypeDef *phost){
   }
 }
 
-uint8_t midi_host_connected(void){
+bool usbh_midi_connected(void){
   extern ApplicationTypeDef Appli_state; // defined in usb_host.c
   return Appli_state == APPLICATION_START || Appli_state == APPLICATION_READY;
 }
 
-uint8_t midi_host_ready(void){
+bool usbh_midi_ready(void){
   extern ApplicationTypeDef Appli_state;
   extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
   USBH_ClassTypeDef* activeClass = USBH_HANDLE.pActiveClass;
@@ -405,7 +405,7 @@ uint8_t midi_host_ready(void){
     MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)activeClass->pData;
     return MIDI_Handle != NULL && MIDI_Handle->data_tx_state == MIDI_IDLE;
   }
-  return 0;
+  return false;
 }
 
 void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
@@ -413,17 +413,17 @@ void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost){
   size_t len = USBH_MIDI_GetLastReceivedDataSize(phost);
   rxbuffer.incrementWriteHead(len);
   // len = rxbuffer.getContiguousWriteCapacity();
-  // midi_host_rx(USB_HOST_RX_BUFFER, len);
+  // usbh_midi_rx(USB_HOST_RX_BUFFER, len);
   // USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE); // start a new reception
   USBH_MIDI_Receive(phost, rxbuffer.getWriteHead(), rxbuffer.getContiguousWriteCapacity());
 }
 
-void midi_host_begin(){
+void usbh_midi_begin(){
   extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
   USBH_MIDI_Receive(&USBH_HANDLE, rxbuffer.getWriteHead(), rxbuffer.getContiguousWriteCapacity());
 }
 
-void midi_host_tx(uint8_t* buffer, uint32_t length){
+void usbh_midi_tx(uint8_t* buffer, uint32_t length){
   extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
   USBH_MIDI_Transmit(&USBH_HANDLE, buffer, length);
 }
@@ -432,10 +432,10 @@ void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost){
 // get ready to send some data
 }
 
-void midi_host_push(){
+void usbh_midi_push(){
   if(rxbuffer.notEmpty()){
     size_t len = rxbuffer.getContiguousReadCapacity();
-    midi_host_rx(rxbuffer.getReadHead(), len);
+    usbh_midi_rx(rxbuffer.getReadHead(), len);
     rxbuffer.incrementReadHead(len);
   }
 }

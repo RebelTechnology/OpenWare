@@ -14,9 +14,7 @@
 #include "ServiceCall.h"
 #include "FlashStorage.h"
 #include "BitState.hpp"
-#ifdef USE_MIDI_CALLBACK
-#include "MidiReader.h"
-#endif /* USE_MIDI_CALLBACK */
+#include "MidiReceiver.h"
 #include "MidiController.h"
 #ifdef USE_SCREEN
 #include "Graphics.h"
@@ -24,9 +22,6 @@
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
-#ifdef USE_USB_HOST
-#include "usbh_midi.h"
-#endif /* USE_USB_HOST */
 
 #include "basicmaths.h"
 
@@ -94,18 +89,19 @@ PatchDefinition* getPatchDefinition(){
 }
 
 void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
-  getProgramVector()->audio_input = rx;
-  getProgramVector()->audio_output = tx;
-  getProgramVector()->audio_blocksize = size;
-  // vTaskSuspend(screenTask);
+  ProgramVector* pv = getProgramVector();  
+  pv->audio_input = rx;
+  pv->audio_output = tx;
+  pv->audio_blocksize = size;
 #ifdef FASCINATION_MACHINE
   extern uint32_t ledstatus;
   static float audio_envelope_lambda = 0.999995f;
   static float audio_envelope = 0.0;
-  audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(getProgramVector()->audio_output[0])*(1.0f/INT16_MAX);
+  audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(pv->audio_output[0])*(1.0f/INT16_MAX);
 #endif
   if(audioTask != NULL){
     BaseType_t yield;
+    // wake up audio task
     vTaskNotifyGiveFromISR(audioTask, &yield);
     portYIELD_FROM_ISR(yield);
   }
@@ -163,7 +159,7 @@ void setButtonValue(uint8_t ch, uint8_t value){
 #ifdef USE_ADC
 void updateParameters(){
   // IIR exponential filter with lambda 0.75
-#if defined OWL_MODULAR || defined OWL_TESSERACT /* inverting ADCs */
+#if defined OWL_MODULAR || defined OWL_TESSERACT || defined OWL_LICH /* inverting ADCs */
   parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
   parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
   parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
@@ -220,13 +216,14 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
+  /* Block indefinitely */
   // uint32_t ulNotifiedValue =
-  ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
+  ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
 #endif
   // if(ulNotifiedValue > 16){
-  //   // midi.sendProgramStats();
+  //   // midi_tx.sendProgramStats();
   //   error(PROGRAM_ERROR, "CPU overrun");
   //   program.exitProgram(false);
   // }
@@ -244,6 +241,7 @@ void onProgramReady(){
   // }
 #endif
 
+  midi_rx.receive(); // push queued up MIDI messages through to patch
   updateParameters();
   pv->buttons = button_values;
   if(pv->buttonChangedCallback != NULL && stateChanged.getState()){
@@ -255,9 +253,6 @@ void onProgramReady(){
       bid = stateChanged.getFirstSetIndex();
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
-#ifdef USE_USB_HOST
-  midi_host_push();
-#endif
 }
 
 // called from program
@@ -287,7 +282,7 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 #ifdef USE_SCREEN 
   graphics.params.setName(id, name);
 #endif /* USE_SCREEN */
-  midi.sendPatchParameterName((PatchParameterId)id, name);
+  midi_tx.sendPatchParameterName((PatchParameterId)id, name);
 }
 
 // called from program
@@ -295,7 +290,7 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #if defined OWL_MAGUS || defined OWL_PRISM
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
-  midi.sendPatchName(program.getProgramIndex(), name);
+  midi_tx.sendPatchName(program.getProgramIndex(), name);
 }
 
 void updateProgramVector(ProgramVector* pv){
@@ -367,36 +362,6 @@ void updateProgramVector(ProgramVector* pv){
   pv->message = NULL;
 }
 
-// #include "eepromcontrol.h"
-// extern "C" {
-//   /*
-//    * re-program firmware: this entire function and all subroutines must run from RAM
-//    * (don't make this static!)
-//    */
-//   __attribute__ ((section (".coderam")))
-//   void flashFirmware(uint8_t* source, uint32_t size){
-//     __disable_irq(); // Disable ALL interrupts. Can only be executed in Privileged modes.
-//     eeprom_unlock();
-//     if(size > (16+16+64+128)*1024){
-//       eeprom_erase_sector(ADDR_FLASH_SECTOR_6);
-//     }
-//     if(size > (16+16+64)*1024){
-//       eeprom_erase_sector(ADDR_FLASH_SECTOR_5);
-//     }
-//     if(size > (16+16)*1024){
-//       eeprom_erase_sector(ADDR_FLASH_SECTOR_4);
-//     }
-//     if(size > 16*1024){
-//       eeprom_erase_sector(ADDR_FLASH_SECTOR_3);
-//     }
-//     eeprom_erase_sector(ADDR_FLASH_SECTOR_2);
-//     eeprom_write_block(ADDR_FLASH_SECTOR_2, source, size);
-//     eeprom_lock();
-//     eeprom_wait();
-//     NVIC_SystemReset(); // (static inline)
-//   }
-// }
-
 volatile uint8_t flashSectorToWrite;
 volatile void* flashAddressToWrite;
 volatile uint32_t flashSizeToWrite;
@@ -412,8 +377,8 @@ void programFlashTask(void* p){
     program.loadProgram(index);
     program.resetProgram(false);
   }
-  // midi.sendProgramMessage();
-  // midi.sendDeviceStats();
+  // midi_tx.sendProgramMessage();
+  // midi_tx.sendDeviceStats();
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
@@ -426,8 +391,8 @@ void eraseFlashTask(void* p){
     // debugMessage("Erased flash storage");
     registry.init();
   }
-  // midi.sendProgramMessage();
-  // midi.sendDeviceStats();
+  // midi_tx.sendProgramMessage();
+  // midi_tx.sendDeviceStats();
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
@@ -457,7 +422,6 @@ void runAudioTask(void* p){
 }
 
 void bootstrap(){
- 
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   uint8_t lastprogram = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
@@ -514,14 +478,7 @@ void runManagerTask(void* p){
 #ifdef USE_SCREEN
 	graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
-#ifdef USE_MIDI_CALLBACK
-	extern MidiReader mididevice;
-	mididevice.setCallback(NULL);
-#ifdef USE_USB_HOST
-	extern MidiReader midihost;
-	midihost.setCallback(NULL);
-#endif /* USE_USB_HOST */
-#endif /* USE_MIDI_CALLBACK */
+	midi_rx.setCallback(NULL);
 #ifdef USE_CODEC
 	codec.set(0);
 #endif
@@ -628,10 +585,11 @@ void ProgramManager::resetProgram(bool isr){
 }
 
 void ProgramManager::updateProgramIndex(uint8_t index){
+  setOperationMode(LOAD_MODE);
   patchindex = index;
   settings.program_index = index;
-  midi.sendPc(index);
-  midi.sendPatchName(index, registry.getPatchName(index));
+  midi_tx.sendPc(index);
+  midi_tx.sendPatchName(index, registry.getPatchName(index));
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);

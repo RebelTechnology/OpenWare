@@ -320,7 +320,6 @@ static uint8_t  USBD_Midi_Setup (USBD_HandleTypeDef *pdev,
     case USB_REQ_GET_INTERFACE :
       USBD_CtlSendData (pdev,
                         (uint8_t *)&(hmidi->alt_setting),
-                        /* (uint8_t *)&usbd_audio_AltSet, */
                         1);
       break;
     case USB_REQ_SET_INTERFACE :
@@ -389,7 +388,7 @@ uint8_t  *USBD_Midi_DeviceQualifierDescriptor (uint16_t *length)
 static volatile int midi_tx_lock = 0;
 
 #ifdef USE_USBD_HS
-void midi_device_tx(uint8_t* buf, uint32_t len) {
+void usbd_midi_tx(uint8_t* buf, uint32_t len) {
   extern USBD_HandleTypeDef hUsbDeviceHS;
   if(hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED){
     while(midi_tx_lock);
@@ -397,14 +396,14 @@ void midi_device_tx(uint8_t* buf, uint32_t len) {
     USBD_LL_Transmit(&hUsbDeviceHS, MIDI_IN_EP, buf, len);
   }
 }
-uint8_t midi_device_connected(void){
+uint8_t usbd_midi_connected(void){
   extern USBD_HandleTypeDef hUsbDeviceHS;
   return hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED;
 }
 #endif /* USE_USBD_HS */
 
 #ifdef USE_USBD_FS
-void midi_device_tx(uint8_t* buf, uint32_t len) {
+void usbd_midi_tx(uint8_t* buf, uint32_t len) {
   extern USBD_HandleTypeDef hUsbDeviceFS;
   if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED){
     while(midi_tx_lock);
@@ -412,13 +411,13 @@ void midi_device_tx(uint8_t* buf, uint32_t len) {
     USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, buf, len);
   }
 }
-uint8_t midi_device_connected(void){
+uint8_t usbd_midi_connected(void){
   extern USBD_HandleTypeDef hUsbDeviceFS;
   return hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED;
 }
 #endif /* USE_USBD_FS */
 
-uint8_t midi_device_ready(void){
+uint8_t usbd_midi_ready(void){
   return midi_tx_lock == 0;
 }
 
@@ -511,7 +510,7 @@ static uint8_t  USBD_Midi_DataOut (USBD_HandleTypeDef *pdev,
   /* Get the received data buffer and update the counter */
   hmidi->rxLen = USBD_LL_GetRxDataSize (pdev, epnum);
   /* Forward data to user callback (midi_rx_usb_buffer) */
-  ((USBD_Midi_ItfTypeDef *)pdev->pUserData)->Receive(hmidi->rxBuffer, hmidi->rxLen);
+  usbd_midi_rx(hmidi->rxBuffer, hmidi->rxLen);
   /* Prepare Out endpoint to receive next packet */
   USBD_LL_PrepareReceive(pdev,
 			 MIDI_OUT_EP,

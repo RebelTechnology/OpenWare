@@ -1,4 +1,4 @@
-# Name of executables
+# Name of binaries
 ELF=$(BUILD)/$(PROJECT).elf
 BIN=$(BUILD)/$(PROJECT).bin
 HEX=$(BUILD)/$(PROJECT).hex
@@ -6,6 +6,8 @@ SYX=$(BUILD)/$(PROJECT).syx
 
 # Flags
 CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
+GIT_REVISION = $(shell git rev-parse --abbrev-ref HEAD) $(shell git rev-parse --short HEAD) $(CONFIG)
+CPPFLAGS += -DGIT_REVISION='"$(GIT_REVISION)"'
 
 # Tool path
 TOOLROOT ?= ~/bin/gcc-arm-none-eabi-9-2019-q4-major/bin/
@@ -34,7 +36,7 @@ vpath %.c $(OPENWARE)/LibSource
 vpath %.cpp $(OPENWARE)/LibSource
 vpath %.c $(OPENWARE)/Libraries/syscalls
 
-all: bin sysex
+all: bin
 
 .PHONY: clean size debug flash attach all sysex
 
@@ -92,7 +94,7 @@ flash:
 debug: $(ELF)
 	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
 
-attach: $(ELF)
+attach:
 	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" $(ELF)
 
 sysex: $(SYX)

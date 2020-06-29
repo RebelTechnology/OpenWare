@@ -1,20 +1,17 @@
 #include "MidiStreamReader.h"
+#include "errorhandlers.h"
 
-MidiReaderStatus MidiStreamReader::read(unsigned char data){
-  if(status == READY_STATUS){
-    clear(); // discard previous message
-  }else if(pos > size){
-    status = ERROR_STATUS;
-    // todo: throw exception
-    return status;
-  }
+MidiMessage MidiStreamReader::read(unsigned char data){
+  if(pos == size || status == READY_STATUS)
+    clear();
   buffer[pos++] = data;
+  MidiMessage ret;
   switch(buffer[0] & MIDI_STATUS_MASK){
     // two byte messages
   case PROGRAM_CHANGE:
     if(pos == 2){
       status = READY_STATUS;
-      handleProgramChange(buffer[0], buffer[1]);
+      ret = MidiMessage(USB_COMMAND_PROGRAM_CHANGE|cn, buffer[0], buffer[1], 0);
     }else{
       status = INCOMPLETE_STATUS;
     }
@@ -22,7 +19,7 @@ MidiReaderStatus MidiStreamReader::read(unsigned char data){
   case CHANNEL_PRESSURE:
     if(pos == 2){
       status = READY_STATUS;
-      handleChannelPressure(buffer[0], buffer[1]);
+      ret = MidiMessage(USB_COMMAND_CHANNEL_PRESSURE|cn, buffer[0], buffer[1], 0);
     }else{
       status = INCOMPLETE_STATUS;
     }
@@ -31,7 +28,7 @@ MidiReaderStatus MidiStreamReader::read(unsigned char data){
   case NOTE_OFF:
     if(pos == 3){
       status = READY_STATUS;
-      handleNoteOff(buffer[0], buffer[1], buffer[2]);
+      ret = MidiMessage(USB_COMMAND_NOTE_OFF|cn, buffer[0], buffer[1], buffer[2]);
     }else{
       status = INCOMPLETE_STATUS;
     }
@@ -39,10 +36,7 @@ MidiReaderStatus MidiStreamReader::read(unsigned char data){
   case NOTE_ON:
     if(pos == 3){
       status = READY_STATUS;
-      if(buffer[2] == 0)
-	handleNoteOff(buffer[0], buffer[1], buffer[2]);
-      else
-	handleNoteOn(buffer[0], buffer[1], buffer[2]);
+      ret = MidiMessage(USB_COMMAND_NOTE_ON|cn, buffer[0], buffer[1], buffer[2]);
     }else{
       status = INCOMPLETE_STATUS;
     }
@@ -50,7 +44,7 @@ MidiReaderStatus MidiStreamReader::read(unsigned char data){
   case POLY_KEY_PRESSURE:
     if(pos == 3){
       status = READY_STATUS;
-      handlePolyKeyPressure(buffer[0], buffer[1], buffer[2]);
+      ret = MidiMessage(USB_COMMAND_POLY_KEY_PRESSURE|cn, buffer[0], buffer[1], buffer[2]);
     }else{
       status = INCOMPLETE_STATUS;
     }
@@ -58,7 +52,7 @@ MidiReaderStatus MidiStreamReader::read(unsigned char data){
   case CONTROL_CHANGE:
     if(pos == 3){
       status = READY_STATUS;
-      handleControlChange(buffer[0], buffer[1], buffer[2]);
+      ret = MidiMessage(USB_COMMAND_CONTROL_CHANGE|cn, buffer[0], buffer[1], buffer[2]);
     }else{
       status = INCOMPLETE_STATUS;
     }
@@ -66,7 +60,7 @@ MidiReaderStatus MidiStreamReader::read(unsigned char data){
   case PITCH_BEND_CHANGE:
     if(pos == 3){
       status = READY_STATUS;
-      handlePitchBend(buffer[0], (buffer[2]<<7) | buffer[1]);
+      ret = MidiMessage(USB_COMMAND_PITCH_BEND_CHANGE|cn, buffer[0], buffer[1], buffer[2]);
     }else{
       status = INCOMPLETE_STATUS;
     }
@@ -86,25 +80,33 @@ MidiReaderStatus MidiStreamReader::read(unsigned char data){
     case SYSTEM_RESET:
       // one byte messages
       status = READY_STATUS;
-      handleSystemRealTime(buffer[0]);
+      ret = MidiMessage(USB_COMMAND_SINGLE_BYTE|cn, buffer[0], 0, 0);
       break;
     case SYSEX:
-      if(data == SYSEX_EOX){
-	status = READY_STATUS;
-	handleSysEx(buffer+1, pos-2);
-      }else if(data >= STATUS_BYTE && pos > 1){
-	// SysEx message terminated by a status byte different from SYSEX_EOX
+      if(data == SYSEX_EOX || (data >= STATUS_BYTE && pos > 1)){
+	// SysEx message may be terminated by a status byte different from SYSEX_EOX
 	buffer[pos-1] = SYSEX_EOX;
 	status = READY_STATUS;
-	handleSysEx(buffer+1, pos-2);
-	buffer[0] = data; // save status byte for next message - will be saved
+	switch(pos){
+	case 1:
+	  ret = MidiMessage(USB_COMMAND_SYSEX_EOX1|cn, buffer[0], 0, 0);
+	case 2:
+	  ret = MidiMessage(USB_COMMAND_SYSEX_EOX2|cn, buffer[0], buffer[1], 0);
+	case 3:
+	  ret = MidiMessage(USB_COMMAND_SYSEX_EOX3|cn, buffer[0], buffer[1], buffer[2]);
+	}
+	if(data != SYSEX_EOX)
+	  buffer[0] = data; // save status byte for next message - will be saved
+      }else if(pos == 3){
+	ret = MidiMessage(USB_COMMAND_SYSEX|cn, buffer[0], buffer[1], buffer[2]);	
       }else{
 	status = INCOMPLETE_STATUS;
       }
       break;
     case SYSEX_EOX: // receiving SYSEX_EOX on its own is really an error
     default:
-      status = ERROR_STATUS;
+      error(RUNTIME_ERROR, "Invalid MIDI System Common message");
+      clear();
       break;
     }
     break;
@@ -114,8 +116,9 @@ MidiReaderStatus MidiStreamReader::read(unsigned char data){
       buffer[pos++] = data;
       buffer[0] = runningStatus;
     }else{
-      status = ERROR_STATUS;
+      error(RUNTIME_ERROR, "Invalid MIDI message");
+      clear();
     }
   }
-  return status;
+  return ret;
 }

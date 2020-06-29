@@ -14,9 +14,9 @@ extern uint16_t rgENC_Values[7];
 void setup(void);
 void loop(void);
 
-void midi_host_reset(){}
+void usbh_midi_reset(){}
    void midi_device_rx(uint8_t *buffer, uint32_t length){}
-   void midi_host_rx(uint8_t *buffer, uint32_t length){}
+   void usbh_midi_rx(uint8_t *buffer, uint32_t length){}
 
    void vApplicationMallocFailedHook(void) {
     // taskDISABLE_INTERRUPTS();

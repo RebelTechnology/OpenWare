@@ -4,12 +4,7 @@
 #define OWL_NOCTUA
 #define HARDWARE_ID                  NOCTUA_HARDWARE
 #define HARDWARE_VERSION             "Noctua"
-
-#define AUDIO_CHANNELS               8
-
-/* #define USE_USB_AUDIO */
-/* #define USE_USBD_MIDI */
-/* #define USE_USBD_AUDIO_IN // microphone */
+#undef USE_EXTERNAL_RAM
 
 /* #define USE_MODE_BUTTON */
 /* #define MODE_BUTTON_PIN SW3_Pin */
@@ -31,13 +26,40 @@
 #define ADC_G 6
 #define ADC_H 7
 #define USE_CODEC
+/* #define USE_IIS3DWB */
 #define USE_PCM3168A
-#define CODEC_HP_FILTER
-#define CODEC_SPI hspi2
+
+/* USB audio settings */
+#define AUDIO_BITS_PER_SAMPLE       16
+#define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
+#define AUDIO_CHANNELS              8
+#define USB_AUDIO_CHANNELS          4
+/* #define AUDIO_INT32_TO_SAMPLE(x)    (__REV16((x)>>8)) */
+/* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(__REV16(x))<<8) */
+#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
+#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
+
+#define USE_USBD_AUDIO
+#define USE_USBD_AUDIO_TX  // microphone
+#define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_FS
-/* #define USE_USB_HOST */
+#define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
+#define USBD_MAX_POWER              100 // 100mA for iPad compatibility
+#define USE_USB_HOST
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
+#define USE_USBH_MIDI
+
+#define USE_UART_MIDI
+#define UART_MIDI_HANDLE huart2
+#define UART_MIDI_RX_BUFFER_SIZE 256
+
+#define AUDIO_SAMPLINGRATE          48000
+#define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
+
+/* #define USE_PCM3168A */
+/* #define CODEC_HP_FILTER */
+#define CODEC_SPI hspi2
 
 #define USB_HOST_PWR_EN_GPIO_Port GPIOB
 #define USB_HOST_PWR_EN_Pin GPIO_PIN_0 // PB0 is unused

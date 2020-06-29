@@ -19,7 +19,7 @@ static audio_t kx122_samples[KX122_TOTAL_CHANNELS];
 #endif
 
 
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
 #include "SerialBuffer.hpp"
 SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_ringbuffer;
@@ -63,11 +63,11 @@ void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleType
   usbd_initiate_tx(pdev, haudio);
 }
 
-#endif // USE_USB_AUDIO
+#endif // USE_USBD_AUDIO
 
 void codec_init(){
   rxindex = 0;
-  rxhalf = AUDIO_BLOCK_SIZE*USB_AUDIO_CHANNELS;
+  rxhalf = AUDIO_BLOCK_SIZE*AUDIO_CHANNELS;
   rxfull = 2*rxhalf;  
   ads_setup(ads_samples);
 #ifdef USE_KX122
@@ -90,7 +90,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   if (htim == &htim8){
     // sample all channels
 
-#if defined USE_USB_AUDIO && defined AUDIO_BYPASS
+#if defined USE_USBD_AUDIO && defined AUDIO_BYPASS
     // write directly to usb buffer
     audio_t* dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame
 #else
@@ -102,19 +102,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     memcpy(dst, kx122_samples, KX122_ACTIVE_CHANNELS*sizeof(audio_t));
     dst += KX122_ACTIVE_CHANNELS;
 #endif
-#if defined USE_USB_AUDIO && defined AUDIO_BYPASS
+#if defined USE_USBD_AUDIO && defined AUDIO_BYPASS
     audio_ringbuffer.incrementWriteHead(USB_AUDIO_CHANNELS);
 #else
     rxindex += USB_AUDIO_CHANNELS;
     if(rxindex == rxhalf){
       audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize); // trigger audio processing block
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
       audio_ringbuffer.write(codec_txbuf+rxhalf, codec_blocksize*USB_AUDIO_CHANNELS); // copy back previous block
 #endif
     }else if(rxindex >= rxfull){
       rxindex = 0;
       audioCallback(codec_rxbuf+rxhalf, codec_txbuf+rxhalf, codec_blocksize);
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
       audio_ringbuffer.write(codec_txbuf, codec_blocksize*USB_AUDIO_CHANNELS);
 #endif
     }

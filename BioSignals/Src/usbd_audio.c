@@ -497,7 +497,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
     /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(haudio->buffer, */
     /* 							 AUDIO_IN_PACKET_SIZE/2, */
     /* 							 AUDIO_CMD_START); */
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
     usbd_audio_start_callback(pdev, haudio);
 #endif
 
@@ -663,7 +663,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
   */
 static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
 {
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR){
@@ -698,7 +698,7 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
   */
 static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 {
-#ifdef USE_USB_AUDIO
+#ifdef USE_USBD_AUDIO
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR)

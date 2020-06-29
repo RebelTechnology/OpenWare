@@ -8,13 +8,15 @@ include $(OPENWARE)/Hardware/owl2.mk
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 
-C_SRC += usbd_midi.c
-C_SRC += usbd_midi_if.c
+C_SRC += usbd_audio.c
+# C_SRC += usbd_midi.c
+# C_SRC += usbd_midi_if.c
 C_SRC += sdram.c
 C_SRC += sysex.c
 C_SRC += crc32.c
 C_SRC += eepromcontrol.c
 C_SRC += message.c
+CPP_SRC += MidiWriter.cpp
 # S_SRC = startup_openboot.s
 
 ifndef PLATFORM
@@ -24,7 +26,7 @@ endif
 C_SRC += usbd_desc.c usbd_conf.c
 
 ifeq ($(PLATFORM),Magus)
-  CPPFLAGS += -Iusbd-fs -DOWL_MAGUS
+  CPPFLAGS += -Iusbd-fs -DOWL_MAGUS -DUSE_USBD_FS
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Alchemist)
   CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST -DUSE_USBD_HS
@@ -33,16 +35,16 @@ else ifeq ($(PLATFORM),Wizard)
   CPPFLAGS += -Iusbd-hs -DOWL_WIZARD -DUSE_USBD_HS
   vpath %.c usbd-hs
 else ifeq ($(PLATFORM),EuroWizard)
-  CPPFLAGS += -Iusbd-fs -DOWL_ALCHEMIST -DUSE_USBD_FS
+  CPPFLAGS += -Iusbd-fs -DOWL_WIZARD -DUSE_USBD_FS
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Rack)
-  CPPFLAGS += -Iusbd-hs -DOWL_RACK
+  CPPFLAGS += -Iusbd-hs -DOWL_RACK -DUSE_USBD_HS
   vpath %.c usbd-hs
 else ifeq ($(PLATFORM),Noctua)
-  CPPFLAGS += -Iusbd-fs -DOWL_NOCTUA
+  CPPFLAGS += -Iusbd-fs -DOWL_NOCTUA -DUSE_USBD_FS
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),BioSignals)
-  CPPFLAGS += -Iusbd-hs -DOWL_BIOSIGNALS
+  CPPFLAGS += -Iusbd-hs -DOWL_BIOSIGNALS -DUSE_USBD_HS
   vpath %.c usbd-hs
 endif
 
@@ -66,7 +68,8 @@ info:
 	$(OPENOCD) -c "init" -c "flash info 0" -c "exit"
 
 unlock:
-	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 11 off" -c "flash info 0" -c "exit"
+	$(OPENOCD) -c "init" -c "reset halt" -c "stm32f4x unlock 0" -c "exit"
+	$(OPENOCD) -c "init" -c "reset halt" -c "flash protect 0 0 11 off" -c "flash info 0" -c "exit"
 
 erase:
 	$(OPENOCD) -c "init" -c "halt" -c "stm32f2x mass_erase 0" -c "flash info 0" -c "exit"

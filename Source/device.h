@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v20.8"
+#define FIRMWARE_VERSION "v20.8a"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -23,22 +23,20 @@
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
 #endif
+#define USE_USBD_MIDI
 #define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
-#define MIDI_OUTPUT_BUFFER_SIZE      512
-#define MIDI_INPUT_BUFFER_SIZE       256
+#define MIDI_OUTPUT_BUFFER_SIZE      128
+#define MIDI_INPUT_BUFFER_SIZE       64
+#define MIDI_SYSEX_BUFFER_SIZE       256
 
-#ifndef OWLBOOT_MAGIC_NUMBER
+#ifndef USBD_MAX_POWER
+#define USBD_MAX_POWER               200 // 200mA
+#endif
+
 #define OWLBOOT_MAGIC_NUMBER        (0xDADAB007)
-#endif
-
-#ifndef OWLBOOT_MAGIC_ADDRESS
 #define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
-#endif
 
-#define EEPROM_PAGE_BEGIN            ((uint32_t)0x08060000)
-#define EEPROM_PAGE_SIZE             (128*1024)
-#define EEPROM_PAGE_END              ((uint32_t)0x08100000)
 #define STORAGE_MAX_BLOCKS           64
 
 #define DEBUG_DWT
@@ -90,13 +88,13 @@
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+#define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
 #define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
-#define USE_IWDG                     // compile with support for IWDG watchdog
+/* #define USE_IWDG                     // compile with support for IWDG watchdog */
 
 #endif /* __DEVICE_H__ */

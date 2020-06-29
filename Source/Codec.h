@@ -42,6 +42,7 @@ class Codec {
   /* int8_t getOutputGain(); */
   /* Set gain between 0 (mute) and 127 (max) */
   void setOutputGain(int8_t value);
+  void setHighPass(bool hpf);
   int32_t getMin();
   int32_t getMax();
   float getAvg();
