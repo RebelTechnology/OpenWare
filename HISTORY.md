@@ -1,3 +1,8 @@
+20.8.0
+------
+
+* Add watchdog support (automatically reset if firmware hangs)
+
 20.7.0
 ------
 
