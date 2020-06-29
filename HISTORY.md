@@ -1,3 +1,12 @@
+20.9.0
+------
+
+* Add USB audio streaming drivers
+* New Noctua project
+* New Lich project
+* New Witch project
+
+
 20.8.0
 ------
 
