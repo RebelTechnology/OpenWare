@@ -6,7 +6,6 @@
 * New Lich project
 * New Witch project
 
-
 20.8.0
 ------
 
