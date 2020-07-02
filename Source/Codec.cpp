@@ -166,7 +166,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
 #endif
 }
 
-void usbd_audio_gain_callback(uint8_t gain){
+void usbd_audio_gain_callback(uint16_t gain){
   codec_set_gain_in(gain);
 }
 

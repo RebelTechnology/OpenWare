@@ -11,11 +11,18 @@
 #define AUDIO_DESCRIPTOR_TYPE                         0x21
 #define USB_DEVICE_CLASS_AUDIO                        0x01
 
+/* USB AUDIO class bRequest types */
 #define AUDIO_REQ_SET_CUR                             0x01
 #define AUDIO_REQ_GET_CUR                             0x81
+#define AUDIO_REQ_SET_MIN                             0x02
 #define AUDIO_REQ_GET_MIN                             0x82
+#define AUDIO_REQ_SET_MAX                             0x03
 #define AUDIO_REQ_GET_MAX                             0x83
+#define AUDIO_REQ_SET_RES                             0x04
 #define AUDIO_REQ_GET_RES                             0x84
+#define AUDIO_REQ_SET_MEM                             0x05
+#define AUDIO_REQ_GET_MEM                             0x85
+#define AUDIO_REQ_GET_STAT                            0xff   
 
 #define AUDIO_IN_STREAMING_CTRL                       0x03
 #define AUDIO_OUT_STREAMING_CTRL                      0x04
@@ -67,6 +74,7 @@ typedef struct
 #endif
   volatile uint8_t          midi_tx_lock;
   volatile uint8_t          audio_tx_active;
+  int16_t                   volume;
   USBD_AUDIO_ControlTypeDef control;   
 }
 USBD_AUDIO_HandleTypeDef; 
@@ -83,7 +91,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len);
 void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels);
 void usbd_audio_rx_stop_callback();
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len);
-void usbd_audio_gain_callback(uint8_t gain);
+void usbd_audio_gain_callback(uint16_t gain);
 void usbd_audio_sync_callback(uint8_t gain);
 
 
