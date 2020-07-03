@@ -96,7 +96,7 @@ int16_t getAnalogValue(uint8_t ch){
   return 0;
 }
 
-void setAnalogValue(uint8_t ch, int16_t value){
+__weak void setAnalogValue(uint8_t ch, int16_t value){
 #ifdef USE_DAC
   switch(ch){
   case PARAMETER_F:
@@ -316,6 +316,27 @@ extern "C" {
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
+#ifdef OWL_WITCH
+  case SW1_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_SET;
+      setButtonValue(BUTTON_A, state);
+      setButtonValue(PUSHBUTTON, state);
+      break;
+    }
+  case SW2_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_SET;
+      setButtonValue(BUTTON_B, state);
+      break;
+    }
+  case SW3_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_SET;
+      setButtonValue(BUTTON_C, state);
+      break;
+    }
+#endif
 #ifdef OWL_LICH
   case SW1_Pin:
   case GATE_IN1_Pin: {
@@ -324,6 +345,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     setButtonValue(BUTTON_A, state);
     setButtonValue(PUSHBUTTON, state);
     HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, state ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    break;
   }
   case SW2_Pin:
   case GATE_IN2_Pin: {
@@ -331,15 +353,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
       HAL_GPIO_ReadPin(GATE_IN2_GPIO_Port, GATE_IN2_Pin) == GPIO_PIN_RESET;
     setButtonValue(BUTTON_B, state);
     HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, state ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    break;
   }
 #endif
 #ifdef OWL_BIOSIGNALS
   case ADC_DRDY_Pin: {
     ads_drdy();
+    break;
   }
 #ifdef USE_KX122
   case ACC_INT1_Pin: {
     kx122_drdy();
+    break;
   }
 #endif
 #endif
