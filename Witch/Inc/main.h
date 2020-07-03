@@ -134,6 +134,8 @@ void Error_Handler(void);
 #define FLASH_WP_GPIO_Port GPIOB
 #define SW3_Pin GPIO_PIN_1
 #define SW3_GPIO_Port GPIOB
+#define SW4_Pin GPIO_PIN_2
+#define SW4_GPIO_Port GPIOB
 #define CS_CS_Pin GPIO_PIN_10
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
