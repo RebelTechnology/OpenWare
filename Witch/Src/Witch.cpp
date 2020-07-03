@@ -18,6 +18,19 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+void setAnalogValue(uint8_t ch, int16_t value){
+  extern DAC_HandleTypeDef hdac;
+  // todo set LEDs
+  switch(ch){
+  case PARAMETER_F:
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
+    break;
+  case PARAMETER_G:
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+    break;
+  }
+}
+
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
   case PUSHBUTTON:
