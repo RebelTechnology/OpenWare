@@ -55,12 +55,14 @@ void setup(){
 }
 
 void loop(void){
-  bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
-  if(state != getButtonValue(BUTTON_D))
-    setButtonValue(BUTTON_D, state);
+  bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
+  if(state != getButtonValue(BUTTON_A)){
+      setButtonValue(PUSHBUTTON, state);
+      setButtonValue(BUTTON_A, state);
+  }
   state = HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
   if(state != getButtonValue(BUTTON_E))
-    setButtonValue(BUTTON_D, state); // todo: mode button
+    setButtonValue(BUTTON_E, state); // todo: mode button
 
   MX_USB_HOST_Process(); // todo: enable PWR management
   owl_loop();

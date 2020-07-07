@@ -317,23 +317,22 @@ extern "C" {
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
   switch(pin){
 #ifdef OWL_WITCH
-  case SW1_Pin:
-    {
-      bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_SET;
-      setButtonValue(BUTTON_A, state);
-      setButtonValue(PUSHBUTTON, state);
-      break;
-    }
   case SW2_Pin:
     {
-      bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_SET;
+      bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
       setButtonValue(BUTTON_B, state);
       break;
     }
   case SW3_Pin:
     {
-      bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_SET;
+      bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
       setButtonValue(BUTTON_C, state);
+      break;
+    }
+  case SW4_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_D, state);
       break;
     }
 #endif
