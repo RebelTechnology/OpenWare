@@ -137,7 +137,7 @@ void midiSetOutputChannel(int8_t channel){
   midi_tx.setOutputChannel(channel);
 }
 
-void setLed(uint8_t led, uint32_t rgb){
+__weak void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
 #if defined OWL_TESSERACT
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
@@ -208,7 +208,7 @@ void setLed(uint8_t led, uint32_t rgb){
 #endif
 }
 
-void initLed(){
+__weak void initLed(){
   // Initialise RGB LED PWM timers
 #if defined OWL_TESSERACT || defined OWL_ALCHEMIST
   extern TIM_HandleTypeDef htim2;
@@ -522,10 +522,8 @@ void owl_setup(){
   IWDG->PR = 0x05;   // prescaler 128
   IWDG->RLR = 0x753; // reload 8 seconds
 #endif
-#ifdef USE_RGB_LED
   initLed();
   setLed(0, NO_COLOUR);
-#endif /* USE_RGB_LED */
 #ifdef USE_BKPSRAM
   HAL_PWR_EnableBkUpAccess();
 #endif
@@ -580,10 +578,6 @@ void owl_setup(){
 __weak void setup(){
 #ifdef OWL_BIOSIGNALS
   ble_init();
-#ifdef USE_LED
-  initLed();
-  setLed(0, YELLOW_COLOUR);
-#endif
   setLed(1, NO_COLOUR);
 #endif
   
