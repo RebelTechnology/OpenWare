@@ -6,6 +6,7 @@
 #define HARDWARE_VERSION             "Magus"
 
 #define USE_SCREEN
+#define USE_IWDG
 #define SSD1309
 /* #define OLED_DMA */
 #define OLED_SOFT_CS

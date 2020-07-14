@@ -22,6 +22,7 @@
 #define USE_CODEC
 #define USE_WM8731
 #define USE_USBD_FS
+#define USE_IWDG
 
 #ifdef OWL_RACK
 #define NOF_ADC_VALUES               0
