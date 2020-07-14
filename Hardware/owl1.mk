@@ -1,9 +1,9 @@
 # Debug / Release
 CONFIG ?= Release
 ifeq ($(CONFIG),Debug)
-  CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
-  ASFLAGS  = -g3
-  CFLAGS   = -g3
+  CPPFLAGS = -O -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
+  ASFLAGS  = -O -g3
+  CFLAGS   = -O -g3
 endif
 ifeq ($(CONFIG),Release)
   CPPFLAGS = -O2
@@ -34,6 +34,6 @@ CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant
-DEF_FLAGS = -DSTM32F407xx -DARM_MATH_CM4
+DEF_FLAGS = -DSTM32F405xx -DARM_MATH_CM4
 DEF_FLAGS += -D__FPU_PRESENT=1U
-S_SRC = startup_stm32f407xx.s
+S_SRC = startup_stm32f405xx.s
