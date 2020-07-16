@@ -12,6 +12,10 @@
 #if defined OWL_MAGUS
   #define HARDWARE_VERSION    "OWL Magus Boot"
   #define APPLICATION_ADDRESS 0x08010000
+#elif defined OWL_LICH
+  #define HARDWARE_VERSION    "OWL Lich Boot"
+  #define APPLICATION_ADDRESS 0x08010000
+  /* #define USE_BOOT1_PIN todo: change to use BUT1 PC12 */
 #elif defined OWL_ALCHEMIST
   #define HARDWARE_VERSION    "OWL Alchemist Boot"
   #define USE_BOOT1_PIN
