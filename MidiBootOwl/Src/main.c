@@ -24,7 +24,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "hardware.h"
+#include "device.h"
+#include "errorhandlers.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -137,6 +138,7 @@ void SystemInit_ExtMemCtl(void)
 
 void setup();
 void loop(void);
+void setMessage(const char* msg); 
 
 typedef  void (*pFunction)(void);
 
@@ -194,14 +196,19 @@ int main(void)
 
   SystemInit_ExtMemCtl();
   MX_GPIO_Init();
+  MX_IWDG_Init();
 
-  if(testButton() || testMagic() || testNoProgram() || testWatchdogReset()){
+  if(testMagic()){
     // we're going to boot
+    setMessage("Bootloader starting");
+  }else if(testButton()){
+    setMessage("Bootloader requested");
+  }else if(testWatchdogReset()){
+    error(RUNTIME_ERROR, "Watchdog reset");
+  }else if(testNoProgram()){
+    error(RUNTIME_ERROR, "No valid firmware");
   }else{
     // jump to application code
-
-    /* Enable watchdog */
-    MX_IWDG_Init();
 
     /* Disable all interrupts */
     RCC->CIR = 0x00000000;
@@ -240,6 +247,9 @@ int main(void)
   while (1)
   {
     loop();
+#ifdef USE_IWDG
+    IWDG->KR = 0xaaaa; // reset the watchdog timer
+#endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -304,7 +314,7 @@ static void MX_IWDG_Init(void)
   /* USER CODE END IWDG_Init 0 */
 
   /* USER CODE BEGIN IWDG_Init 1 */
-
+#ifdef USE_IWDG
   /* USER CODE END IWDG_Init 1 */
   hiwdg.Instance = IWDG;
   hiwdg.Init.Prescaler = IWDG_PRESCALER_128;
@@ -314,7 +324,7 @@ static void MX_IWDG_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN IWDG_Init 2 */
-
+#endif
   /* USER CODE END IWDG_Init 2 */
 
 }

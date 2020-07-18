@@ -177,10 +177,10 @@ int main(void)
   while (1)
   {
     loop();
-    /* USER CODE END WHILE */
 #ifdef USE_IWDG
     IWDG->KR = 0xaaaa; // reset the watchdog timer
 #endif
+    /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
 
   }
