@@ -17,9 +17,9 @@ EXTRAM (rwx)     : ORIGIN = 0x68000000, LENGTH = 1M
 /* configured for new OwlBoot bootloader */
 /* FLASH (rx)       : ORIGIN = 0x08010000, LENGTH = 320K   /\* Sector 4-7 *\/ */
 /* configured for classic OWL bootloader */
+BOOTLOADER (r)   : ORIGIN = 0x08000000, LENGTH = 32K    /* Sector 0-1 */
 FLASH (rx)       : ORIGIN = 0x08008000, LENGTH = 352K   /* Sector 2-6 */
-BOOTLOADER (r)   : ORIGIN = 0x08000000, LENGTH = 16K    /* Sector 0 */
-STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 512K
+STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 640K   /* Sector 7-11 */
 }
 
 /* Define output sections */
@@ -29,6 +29,7 @@ SECTIONS
   .isr_vector :
   {
     . = ALIGN(4);
+    PROVIDE ( _ISR_VECTOR = . ); 
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
   } >FLASH
