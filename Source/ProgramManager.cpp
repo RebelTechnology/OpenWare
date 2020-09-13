@@ -701,5 +701,5 @@ void ProgramManager::saveToFlash(uint8_t sector, void* address, uint32_t length)
 uint16_t getSampleCounter(){
   // does not work: always returns values <= 5
   // return DMA_GetCurrDataCounter(DMA2_Stream0);
-  return (DWT->CYCCNT)/3500;
+  return (DWT->CYCCNT)/ARM_CYCLES_PER_SAMPLE;
 }

@@ -130,6 +130,7 @@ void Error_Handler(void);
 #define I2S_MCLK_GPIO_Port GPIOC
 #define PUSH_GATE_IN_Pin GPIO_PIN_6
 #define PUSH_GATE_IN_GPIO_Port GPIOB
+#define PUSH_GATE_IN_EXTI_IRQn EXTI9_5_IRQn
 #define PUSH_GATE_OUT_Pin GPIO_PIN_7
 #define PUSH_GATE_OUT_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
