@@ -678,9 +678,9 @@ extern "C" {
     (void) pxTask;
     /* Run time stack overflow checking is performed if
        configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
-       function is called if a stack overflow is detected. */
+       function is called from PendSV ISR if a stack overflow is detected. */
     error(PROGRAM_ERROR, "Stack overflow");
-    program.exitProgram(false);
+    program.exitProgram(true);
     HAL_Delay(5000);
     assert_param(0);
   }
