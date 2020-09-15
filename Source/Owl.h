@@ -38,13 +38,15 @@ extern "C" {
   void MX_USB_HOST_Process(void);
 
   void updateProgramVector(ProgramVector* pv);
-
+  void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len);
+  
   int16_t getAnalogValue(uint8_t index);
   void setAnalogValue(uint8_t ch, int16_t value);
   void setGateValue(uint8_t bid, int16_t value);
 
   OperationMode getOperationMode();
   void setOperationMode(OperationMode mode);
+  void initLed();
   void setLed(uint8_t led, uint32_t rgb);
 
   const char* getFirmwareVersion();

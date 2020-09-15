@@ -8,9 +8,9 @@ include $(OPENWARE)/Hardware/owl2.mk
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 
-C_SRC += usbd_audio.c
-# C_SRC += usbd_midi.c
-# C_SRC += usbd_midi_if.c
+# C_SRC += usbd_audio.c
+C_SRC += usbd_midi.c
+C_SRC += usbd_midi_if.c
 C_SRC += sdram.c
 C_SRC += sysex.c
 C_SRC += crc32.c
@@ -27,6 +27,9 @@ C_SRC += usbd_desc.c usbd_conf.c
 
 ifeq ($(PLATFORM),Magus)
   CPPFLAGS += -Iusbd-fs -DOWL_MAGUS -DUSE_USBD_FS
+  vpath %.c usbd-fs
+else ifeq ($(PLATFORM),Lich)
+  CPPFLAGS += -Iusbd-fs -DOWL_LICH -DUSE_USBD_FS
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Alchemist)
   CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST -DUSE_USBD_HS

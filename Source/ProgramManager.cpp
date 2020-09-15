@@ -157,7 +157,7 @@ void setButtonValue(uint8_t ch, uint8_t value){
 }
 
 #ifdef USE_ADC
-void updateParameters(){
+__weak void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
   // IIR exponential filter with lambda 0.75
 #if defined OWL_MODULAR || defined OWL_TESSERACT || defined OWL_LICH /* inverting ADCs */
   parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
@@ -206,7 +206,7 @@ void updateParameters(){
 #endif
 }
 #else
-void updateParameters(){
+__weak void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
 }
 #endif
 
@@ -242,7 +242,7 @@ void onProgramReady(){
 #endif
 
   midi_rx.receive(); // push queued up MIDI messages through to patch
-  updateParameters();
+  updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
   pv->buttons = button_values;
   if(pv->buttonChangedCallback != NULL && stateChanged.getState()){
     int bid = stateChanged.getFirstSetIndex();

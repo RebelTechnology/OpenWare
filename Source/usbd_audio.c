@@ -21,8 +21,6 @@
 
 
 #define AUDIO_SAMPLE_FREQ(frq)  (uint8_t)(frq), (uint8_t)((frq >> 8)), (uint8_t)((frq >> 16))
-#define AUDIO_PACKET_SZE(frq)   (uint8_t)(((frq * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE)/1000) & 0xFF), \
-    (uint8_t)((((frq * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE)/1000) >> 8) & 0xFF)
 
 
 static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev, 
@@ -72,33 +70,49 @@ USBD_ClassTypeDef  USBD_AUDIO =
   USBD_AUDIO_GetDeviceQualifierDesc,
 };
 
-#ifdef USE_USBD_AUDIO
 #define AUDIO_RX_EP                    0x01 // bEndpointAddress
 #define AUDIO_TX_EP                    0x81
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x82
-#ifdef USE_USBD_AUDIO_RX
-#define USB_AUDIO_CONFIG_DESC_SIZ      258 // wTotalLength
-#define AUDIO_NUM_INTERFACES           0x04
-#define AUDIO_MIDI_IF                  0x03
-#define AUDIO_TX_IF                    0x02
+
 #define AUDIO_RX_IF                    0x01 // bInterfaceNumber
+#define AUDIO_TX_IF                    0x02
+#define AUDIO_MIDI_IF                  0x03
+
+#ifdef USE_USBD_AUDIO_RX
+#define USBD_AUDIO_RX_AC_DESC_LEN      21
+#define USBD_AUDIO_RX_AS_DESC_LEN      52
+#define USBD_AUDIO_RX_NUM_INTERFACES   1
 #else
-#define USB_AUDIO_CONFIG_DESC_SIZ      174
-#define AUDIO_NUM_INTERFACES           0x03
-#define AUDIO_MIDI_IF                  0x02
-#define AUDIO_TX_IF                    0x01
-#define AUDIO_RX_IF                    0xff // dummy
+#define USBD_AUDIO_RX_AC_DESC_LEN      0
+#define USBD_AUDIO_RX_AS_DESC_LEN      0
+#define USBD_AUDIO_RX_NUM_INTERFACES   0
 #endif
+
+#ifdef USE_USBD_AUDIO_TX
+#define USBD_AUDIO_TX_AC_DESC_LEN      21
+#define USBD_AUDIO_TX_AS_DESC_LEN      52
+#define USBD_AUDIO_TX_NUM_INTERFACES   1
 #else
-#define USB_AUDIO_CONFIG_DESC_SIZ      101
-#define AUDIO_NUM_INTERFACES           0x02
-#define AUDIO_MIDI_IF                  0x01
-#define MIDI_RX_EP                     0x01
-#define MIDI_TX_EP                     0x81
-#define AUDIO_TX_IF                    0xff // dummy
-#define AUDIO_RX_IF                    0xff // dummy
+#define USBD_AUDIO_TX_AC_DESC_LEN      0
+#define USBD_AUDIO_TX_AS_DESC_LEN      0
+#define USBD_AUDIO_TX_NUM_INTERFACES   0
 #endif
+
+#ifdef USE_USBD_MIDI
+#define USBD_MIDI_DESC_LEN             74
+#define USBD_MIDI_NUM_INTERFACES       1
+#else
+#define USBD_MIDI_DESC_LEN             0
+#define USBD_MIDI_NUM_INTERFACES       0
+#endif
+
+// including Audio Control AC interface
+#define AUDIO_NUM_INTERFACES           (1+USBD_AUDIO_RX_NUM_INTERFACES+USBD_AUDIO_TX_NUM_INTERFACES+USBD_MIDI_NUM_INTERFACES)
+
+#define USBD_AC_HEADER_LEN             (8+AUDIO_NUM_INTERFACES)
+#define USBD_AC_DESC_LEN               (USBD_AC_HEADER_LEN+USBD_AUDIO_RX_AC_DESC_LEN+USBD_AUDIO_TX_AC_DESC_LEN)
+#define USB_AUDIO_CONFIG_DESC_SIZ      (9+9+USBD_AC_DESC_LEN+USBD_AUDIO_RX_AS_DESC_LEN+USBD_AUDIO_TX_AS_DESC_LEN+USBD_MIDI_DESC_LEN)
 
 /* USB AUDIO device Configuration Descriptor */
 __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALIGN_END =
@@ -109,11 +123,11 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x02,                                 /* bDescriptorType */
   LOBYTE(USB_AUDIO_CONFIG_DESC_SIZ),    /* wTotalLength */
   HIBYTE(USB_AUDIO_CONFIG_DESC_SIZ),    /* wTotalLength */
-  AUDIO_NUM_INTERFACES,                 /* bNumInterfaces */
+  AUDIO_NUM_INTERFACES,                 /* bNumInterfaces (+1 for AC Interface) */
   0x01,                                 /* bConfigurationValue */
   0x00,                                 /* iConfiguration */
   0x80,                                 /* bmAttributes: BUS Powered */
-  USBD_MAX_POWER/2,                     /* bMaxPower in 2mA steps */
+  100,                                  /* bMaxPower in 2mA steps */
   /* 09 bytes */
   
   /* Standard AC Interface Descriptor */
@@ -128,24 +142,30 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x00,                                 /* iInterface */
   /* 09 bytes */
 
-#ifdef USE_USBD_AUDIO
-#ifdef USE_USBD_AUDIO_RX
   /* Class-Specific AC Interface Header Descriptor */
-  0x0a,                                 // bLength
+  USBD_AC_HEADER_LEN,                   // bLength
   0x24,                                 // bDescriptorType
   0x01,                                 // bDescriptorSubtype
   0x00,                                 // bcdADC
   0x01,                                 // bcdADC Audio Device compliant to the USB Audio specification version 1.00
-  LOBYTE(62),                           // wTotalLength 10+12+10+9+12+9 = 62 (rx only is 41)
-  HIBYTE(62),                           // wTotalLength
+  LOBYTE(USBD_AC_DESC_LEN),             // wTotalLength
+  HIBYTE(USBD_AC_DESC_LEN),             // wTotalLength
   // Includes the combined length of this descriptor header and all Unit and Terminal descriptors.
-  0x02,                                 // bInCollection
-  0x01,                                 // baInterfaceNr
-  0x02,                                 // baInterfaceNr
-  /* 10 bytes */
+  AUDIO_NUM_INTERFACES,                 // bInCollection
+  0x00,                                 // baInterfaceNr Audio Control interface
+#ifdef USE_USBD_AUDIO_RX
+  AUDIO_RX_IF,                          // baInterfaceNr
+#endif
+#ifdef USE_USBD_AUDIO_TX
+  AUDIO_TX_IF,                          // baInterfaceNr
+#endif
+#ifdef USE_USBD_MIDI
+  AUDIO_MIDI_IF,                        // baInterfaceNr
+#endif
+  /* 8+AUDIO_NUM_INTERFACES bytes */
 
-  /* USB IN Terminal for play session */
-  /* Input Terminal Descriptor */
+#ifdef USE_USBD_AUDIO_RX
+  /* USB Speaker Terminal Descriptor */
   0x0c,                                 // bLength
   0x24,                                 // bDescriptorType
   0x02,                                 // bDescriptorSubtype
@@ -154,28 +174,25 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x01,                                 // wTerminalType 
   0x00,                                 // bAssocTerminal
   USB_AUDIO_CHANNELS,                   // bNrChannels 
-  0x00,                                 // wChannelConfig 0x03 sets stereo channels left and right
+  0x03,                                 // wChannelConfig 0x03 sets stereo channels left and right
   0x00,                                 // wChannelConfig Mono sets no position bits 
   0x00,                                 // iChannelNames
   0x00,                                 // iTerminal Unused
   /* 12 byte */
 
-  /* USB Play control feature */
-  /* Feature Unit Descriptor*/
-  0x0a,                                 // bLength
-  0x24,                                 // bDescriptorType
-  0x06,                                 // bDescriptorSubtype
-  0x16,                                 // bUnitID
-  0x12,                                 // bSourceID
-  0x01,                                 // bControlSize
-  /* @TODO add volume control on L/R channel */
-  0x01|0x02, // USBD_AUDIO_CONTROL_FEATURE_UNIT_MUTE|USBD_AUDIO_CONTROL_FEATURE_UNIT_VOLUME,      /* bmaControls(0) */
-  0,                                            /* bmaControls(1) */
-  0,                                            /* bmaControls(2) */
-  0x00,                                         /* iTerminal */
-  /* 10 byte */
+  /* /\* Feature Unit Descriptor*\/ */
+  /* 0x0a,                                 // bLength */
+  /* 0x24,                                 // bDescriptorType */
+  /* 0x06,                                 // bDescriptorSubtype */
+  /* 0x16,                                 // bUnitID */
+  /* 0x12,                                 // bSourceID */
+  /* 0x01,                                 // bControlSize */
+  /* 0x01|0x02, // USBD_AUDIO_CONTROL_FEATURE_UNIT_MUTE|USBD_AUDIO_CONTROL_FEATURE_UNIT_VOLUME,      /\* bmaControls(0) *\/ */
+  /* 0,                                            /\* bmaControls(1) *\/ */
+  /* 0,                                            /\* bmaControls(2) *\/ */
+  /* 0x00,                                         /\* iTerminal *\/ */
+  /* /\* 10 byte *\/ */
   
-  /*USB Play : Speaker Terminal */
   /* Output Terminal Descriptor */
   0x09,                                 // bLength
   0x024,                                // bDescriptorType
@@ -189,23 +206,10 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /* 09 byte */
 
   // 12+10+9 = 31 bytes
-#else
-  /* Class-Specific AC Interface Header Descriptor */
-  0x09,                                 // bLength
-  0x24,                                 // bDescriptorType
-  0x01,                                 // bDescriptorSubtype HEADER descriptor subtype 0x01
-  0x00,                         // bcdADC
-  0x01,                         // bcdADC Audio Device compliant to the USB Audio specification version 1.00
-  LOBYTE(30),                   // wTotalLength 9+12+9 = 30
-  HIBYTE(30),                   // wTotalLength Total number of bytes returned for the class-specific AudioControl interface descriptor
-  // Includes the combined length of this descriptor header and all Unit and Terminal descriptors.
-  0x01,                         // bInCollection The number of AudioStreaming interfaces in the Audio Interface Collection to which this AudioControl interface belongs bInCollection
-  0x01,                         // baInterfaceNr AudioStreaming interface 1 belongs to this AudioControl interface. baInterfaceNr
-  /* 9 bytes */
 #endif
 
 #ifdef USE_USBD_AUDIO_TX  
-  /*USB Microphone Input Terminal Descriptor */
+  /* USB Microphone Terminal Descriptor */
   0x0C,                         // Size of the descriptor, in bytes
   0x24, // bDescriptorType CS_INTERFACE Descriptor Type 0x24
   0x02,    // bDescriptorSubtype INPUT_TERMINAL descriptor subtype 0x02
@@ -214,7 +218,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x02,                         // wTerminalType Terminal is Microphone (0x0201)
   0x00,                         // bAssocTerminal No association
   USB_AUDIO_CHANNELS,           // bNrChannels 
-  0x00,                         // wChannelConfig
+  0x03,                         // wChannelConfig
   0x00,                         // wChannelConfig Mono sets no position bits 
   0x00,                         // iChannelNames Unused
   0x00,                         // iTerminal Unused
@@ -231,39 +235,10 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x00,                            // unused  (iTerminal)
   /* 9 bytes */
 
-  /* /\* USB Audio Feature Unit Descriptor *\/ */
-  /* 0x09,                                 /\* bLength *\/ */
-  /* 0x24,                                 /\* bDescriptorType *\/ */
-  /* 0x06,                                 /\* bDescriptorSubtype *\/ */
-  /* AUDIO_IN_STREAMING_CTRL,              /\* bUnitID *\/ */
-  /* 0x01,                                 /\* bSourceID *\/ */
-  /* 0x01,                                 /\* bControlSize *\/ */
-  /* AUDIO_CONTROL_MUTE,                   /\* bmaControls(0) *\/ */
-  /* 0,                                    /\* bmaControls(1) *\/ */
-  /* 0x00,                                 /\* iTerminal *\/ */
-  /* /\* 09 byte *\/ */
-
-  /* USB Microphone Audio Feature Unit Descriptor */
-  /* 0x0c,                                 /\* bLength *\/ */
-  /* 0x24,                                 /\* bDescriptorType *\/ */
-  /* 0x06,                                 /\* bDescriptorSubtype *\/ */
-  /* AUDIO_IN_STREAMING_CTRL,              /\* bUnitID *\/ */
-  /* 0x01,                                 /\* bSourceID *\/ */
-  /* 0x01,                                 /\* bControlSize *\/ */
-  /* AUDIO_CONTROL_VOLUME,                 /\* bmaControls(0) *\/ */
-  /* /\* AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME,                 /\\* bmaControls(0) *\\/ *\/ */
-  /* 0,                 /\* bmaControls(1) *\/ */
-  /* 0,                 /\* bmaControls(2) *\/ */
-  /* 0,                 /\* bmaControls(3) *\/ */
-  /* 0,                 /\* bmaControls(4) *\/ */
-  /* 0x00,                                 /\* iFeature *\/ */
-  /* 12 bytes */
-
   // 12+9 = 21 bytes
 #endif
   
 #ifdef USE_USBD_AUDIO_RX
-  /* USB play Standard AS Interface Descriptor - Audio Streaming Zero Bandwith */
   /* Standard AS Interface Descriptor */
   0x09,                                    /* bLength */
   USB_DESC_TYPE_INTERFACE,                 /* bDescriptorType */
@@ -276,7 +251,6 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x00,                                    /* iInterface */
   /* 09 byte */
   
-  /* USB play Standard AS Interface Descriptors - Audio streaming operational */
   /* Standard AS Interface Descriptor */
   0x09,                                    /* bLength */
   USB_DESC_TYPE_INTERFACE,                 /* bDescriptorType 0x04 */
@@ -315,9 +289,10 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   /* Standard AS Isochronous Audio Data Endpoint Descriptor*/
   0x09,                                    /* bLength */
   USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
-  AUDIO_RX_EP,                             /* bEndpointAddress */
-  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC,                       /* bmAttributes */
-  AUDIO_PACKET_SZE(USBD_AUDIO_FREQ),       /* wMaxPacketSize in Bytes (Freq(Samples)*2(Stereo)*2(HalfWord)) */
+  AUDIO_RX_EP,                             /* bEndpointAddress 1 out endpoint*/
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC,/* bmAttributes */
+  LOBYTE(AUDIO_RX_PACKET_SIZE),		   /* wMaxPacketSize in bytes */
+  HIBYTE(AUDIO_RX_PACKET_SIZE),
   0x01,                                    /* bInterval */
   0x00,                                    /* bRefresh */
   0x00,                                    /* bSynchAddress */
@@ -336,6 +311,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   // 9+9+7+11+9+7 = 52 bytes
 #endif /*USE_USBD_AUDIO_RX */
 
+#ifdef USE_USBD_AUDIO_TX
   /* USB Microphone Standard AS Interface Descriptor (Alt. Set. 0) (CODE == 3)*/ //zero-bandwidth interface
   0x09,                         // Size of the descriptor, in bytes (bLength)
   USB_DESC_TYPE_INTERFACE,      // INTERFACE descriptor type (bDescriptorType) 0x04
@@ -386,8 +362,9 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x09,                         // Size of the descriptor, in bytes (bLength)
   0x05,                         // ENDPOINT descriptor (bDescriptorType)
   AUDIO_TX_EP,                  // IN Endpoint 1. (bEndpointAddress)
-  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC,            /* bmAttributes */ 
-  AUDIO_PACKET_SZE(USBD_AUDIO_FREQ),    /* wMaxPacketSize in Bytes (Freq(Samples)*2(Stereo)*2(HalfWord)) */
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC,/* bmAttributes */
+  LOBYTE(AUDIO_TX_PACKET_SIZE),		   /* wMaxPacketSize in bytes */
+  HIBYTE(AUDIO_TX_PACKET_SIZE),
   0x01,                         // Polling interval 1kHz. (bInterval)
   0x00,                         // Unused. (bRefresh)
   0x00,                         // Unused. (bSynchAddress)
@@ -402,20 +379,10 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x00,0x00,                         // Unused. (wLockDelay
   /* 07 bytes */
 
-#else
-  /* Class-specific AC Interface Descriptor */
-  0x09,                                 /* bLength */
-  0x24,                                 /* bDescriptorType */
-  0x01,                                 /* bDescriptorSubtype */
-  0x00,                                 /* bcdADC */
-  0x01,                                 /* bcdADC */
-  0x09,                                 /* wTotalLength */
-  0x00,					/* wTotalLength */
-  0x01,                                 /* bInCollection */
-  0x01,                                 /* baInterfaceNr */
-  /* 09 bytes */
-#endif
-  
+  // 9+9+7+11+9+7 = 52 bytes
+#endif /*USE_USBD_AUDIO_TX */
+
+#ifdef USE_USBD_MIDI
   /* Standard MS Interface Descriptor */
   /* MIDI Adapter Standard MS Interface Descriptor */
   0x09,                                 /* bLength */
@@ -521,6 +488,9 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x01,                                 /* bNumEmbMIDIJack */
   0x03                                  /* BaAssocJackID */
   /* 05 bytes */
+
+  // 5+9+5+9+9+9+6+6+7+9 = 74 bytes
+#endif /* USE_USBD_MIDI */
 } ;
 
 /* USB Standard Device Descriptor */
@@ -538,13 +508,124 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIE
   0x00,
 };
 
-/**
-  * @}
-  */ 
+static USBD_StatusTypeDef USBD_AUDIO_CloseEndpoint(USBD_HandleTypeDef *pdev,
+						   USBD_AUDIO_HandleTypeDef* haudio, uint8_t ep){
+  USBD_StatusTypeDef rv;
+  switch(ep){
+#ifdef USE_USBD_AUDIO_RX
+  case AUDIO_RX_EP:
+    if(pdev->ep_out[AUDIO_RX_EP & 0xFU].is_used){
+      usbd_audio_rx_stop_callback();
+      rv = USBD_LL_CloseEP(pdev, AUDIO_RX_EP);
+      pdev->ep_out[AUDIO_RX_EP & 0xFU].is_used = 0U;
+    }
+    break;
+#endif /* USE_USBD_AUDIO_RX */
+#ifdef USE_USBD_AUDIO_TX
+  case AUDIO_TX_EP:
+    if(pdev->ep_in[AUDIO_TX_EP & 0xFU].is_used){
+      haudio->audio_tx_active = 0;
+      usbd_audio_tx_stop_callback();
+      rv = USBD_LL_CloseEP(pdev, AUDIO_TX_EP);
+      pdev->ep_in[AUDIO_TX_EP & 0xFU].is_used = 0U;
+    }
+    break;
+#endif /* USE_USBD_AUDIO_TX */
+#ifdef USE_USBD_MIDI
+  case MIDI_RX_EP:
+    if(pdev->ep_out[MIDI_RX_EP & 0xFU].is_used){
+      rv = USBD_LL_CloseEP(pdev, MIDI_RX_EP);
+      pdev->ep_out[MIDI_RX_EP & 0xFU].is_used = 0U;
+    }
+    break;
+  case MIDI_TX_EP:
+    if(pdev->ep_in[MIDI_TX_EP & 0xFU].is_used){
+      rv = USBD_LL_CloseEP(pdev, MIDI_TX_EP);
+      pdev->ep_in[MIDI_TX_EP & 0xFU].is_used = 0U;
+    }
+    break;
+#endif /* USE_USBD_MIDI */
+  default:
+    rv = USBD_FAIL;
+  }
+  return rv;
+}
 
-/** @defgroup USBD_AUDIO_Private_Functions
-  * @{
-  */ 
+static USBD_StatusTypeDef USBD_AUDIO_OpenEndpoint(USBD_HandleTypeDef *pdev,
+						  USBD_AUDIO_HandleTypeDef* haudio, uint8_t ep){
+  USBD_StatusTypeDef rv = USBD_OK;
+  switch(ep){
+#ifdef USE_USBD_AUDIO_RX
+  case AUDIO_RX_EP:
+    if(!pdev->ep_out[AUDIO_RX_EP & 0xFU].is_used){
+      /* Open OUT (i.e. speaker) Endpoint */
+      rv = USBD_LL_OpenEP(pdev,
+			  AUDIO_RX_EP,
+			  USBD_EP_TYPE_ISOC,
+			  AUDIO_RX_PACKET_SIZE);
+      if(rv != USBD_OK)
+	USBD_ErrLog("Open of OUT streaming endpoint failed. error %d\n", rv);
+      pdev->ep_out[AUDIO_RX_EP & 0xFU].is_used = 1U;
+      /* Prepare OUT endpoint to receive 1st packet */
+      USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
+      usbd_audio_rx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
+    }
+    break;
+#endif /* USE_USBD_AUDIO_RX */
+#ifdef USE_USBD_AUDIO_TX
+  case AUDIO_TX_EP:
+    if(!pdev->ep_in[AUDIO_TX_EP & 0xFU].is_used){
+      /* Open IN (i.e. microphone) Endpoint */
+      rv = USBD_LL_OpenEP(pdev,
+			  AUDIO_TX_EP,
+			  USBD_EP_TYPE_ISOC,
+			  AUDIO_TX_PACKET_SIZE);
+      if(rv != USBD_OK)
+	USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
+      pdev->ep_in[AUDIO_TX_EP & 0xFU].is_used = 1U;
+      haudio->audio_tx_active = 1;
+      usbd_audio_tx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
+      USBD_LL_FlushEP(pdev, AUDIO_TX_EP);
+      usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
+    }
+    break;
+#endif /* USE_USBD_AUDIO_TX */
+#ifdef USE_USBD_MIDI
+  case MIDI_RX_EP:
+    if(!pdev->ep_out[MIDI_RX_EP & 0xFU].is_used){
+      /* Open the MIDI out EP */
+      rv = USBD_LL_OpenEP(pdev,
+			  MIDI_RX_EP,
+			  USBD_EP_TYPE_BULK,
+			  MIDI_DATA_OUT_PACKET_SIZE);			
+      if(rv != USBD_OK )
+	USBD_ErrLog("Open of OUT MIDI endpoint failed. error %d\n", rv);
+      pdev->ep_out[MIDI_RX_EP & 0xFU].is_used = 1U;
+      /* Prepare Out endpoint to receive next packet */
+      USBD_LL_PrepareReceive(pdev,
+			     MIDI_RX_EP,
+			     haudio->midi_rx_buffer,
+			     MIDI_DATA_OUT_PACKET_SIZE);
+    }
+    break;
+  case MIDI_TX_EP:
+    if(!pdev->ep_in[MIDI_TX_EP & 0xFU].is_used){
+      /* Open the MIDI in EP */
+      rv = USBD_LL_OpenEP(pdev,
+			  MIDI_TX_EP,
+			  USBD_EP_TYPE_BULK,
+			  MIDI_DATA_IN_PACKET_SIZE);
+      if(rv != USBD_OK)
+	USBD_ErrLog("Open of IN MIDI endpoint failed. error %d\n", rv);
+      pdev->ep_in[MIDI_TX_EP & 0xFU].is_used = 1U;
+    }
+    break;
+#endif /* USE_USBD_MIDI */
+  default:
+    rv = USBD_FAIL;
+  }
+  return rv;
+}
 
 /**
   * @brief  USBD_AUDIO_Init
@@ -554,70 +635,35 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIE
   * @retval status
   */
 static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev, 
-                               uint8_t cfgidx)
+				 uint8_t cfgidx)
 {
   USBD_AUDIO_HandleTypeDef   *haudio;
+  /* Assign Audio structure */
+  /* pdev->pClassData = USBD_malloc(sizeof (USBD_AUDIO_HandleTypeDef)); */
+  pdev->pClassData = &usbd_audio_handle;  
+  haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
+  haudio->ac_alt_setting = 0;
+  haudio->tx_alt_setting = 0;
+  haudio->rx_alt_setting = 0;
+  haudio->midi_alt_setting = 0;
+  haudio->midi_tx_lock = 0;
+  haudio->audio_tx_active = 0;
+  haudio->volume = 0;
 
-    USBD_StatusTypeDef rv;
-
-    /* Assign Audio structure */
-    /* pdev->pClassData = USBD_malloc(sizeof (USBD_AUDIO_HandleTypeDef)); */
-    pdev->pClassData = &usbd_audio_handle;  
-    haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
-    haudio->tx_alt_setting = 0;
-    haudio->rx_alt_setting = 0;
-    haudio->midi_alt_setting = 0;
-    haudio->midi_tx_lock = 0;
-    haudio->audio_tx_active = 0;
-
-#ifdef USE_USBD_AUDIO_TX
-    /* Open IN (i.e. microphone) Endpoint */
-    rv = USBD_LL_OpenEP(pdev,
-			AUDIO_TX_EP,
-			USBD_EP_TYPE_ISOC,
-			AUDIO_TX_PACKET_SIZE);
-    if(rv != USBD_OK)
-      USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
-    haudio->audio_tx_active = 1;
-    usbd_audio_tx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
-    usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
+#ifdef USE_USBD_AUDIO_TX_FALSE
+  USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_TX_EP);
 #endif
+
 #ifdef USE_USBD_AUDIO_RX_FALSE
-    /* Open OUT (i.e. speaker) Endpoint */
-    rv = USBD_LL_OpenEP(pdev,
-			AUDIO_RX_EP,
-			USBD_EP_TYPE_ISOC,
-			AUDIO_RX_PACKET_SIZE);
-    if(rv != USBD_OK)
-      USBD_ErrLog("Open of OUT streaming endpoint failed. error %d\n", rv);
-    /* Prepare OUT endpoint to receive 1st packet */
-    USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
-    usbd_audio_rx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
+  USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_RX_EP);
 #endif
 
 #ifdef USE_USBD_MIDI
-    /* Open the in EP */
-    rv = USBD_LL_OpenEP(pdev,
-			MIDI_TX_EP,
-			USBD_EP_TYPE_BULK,
-			MIDI_DATA_IN_PACKET_SIZE);
-    if(rv != USBD_OK ) 
-      USBD_ErrLog("Open of IN MIDI endpoint failed. error %d\n", rv);
-    /* Open the out EP */
-    rv = USBD_LL_OpenEP(pdev,
-			MIDI_RX_EP,
-			USBD_EP_TYPE_BULK,
-			MIDI_DATA_OUT_PACKET_SIZE);			
-    if(rv != USBD_OK )
-      USBD_ErrLog("Open of OUT MIDI endpoint failed. error %d\n", rv);
-    /* Prepare Out endpoint to receive next packet */
-    USBD_LL_PrepareReceive(pdev,
-			   MIDI_RX_EP,
-			   haudio->midi_rx_buffer,
-			   MIDI_DATA_OUT_PACKET_SIZE);
+  USBD_AUDIO_OpenEndpoint(pdev, haudio, MIDI_TX_EP);
+  USBD_AUDIO_OpenEndpoint(pdev, haudio, MIDI_RX_EP);
 #endif
 
-    return USBD_OK;
+  return USBD_OK;
 }
 
 /**
@@ -630,20 +676,20 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev, 
                                  uint8_t cfgidx)
 {
-
-#ifdef USE_USBD_MIDI
-  USBD_LL_CloseEP(pdev, MIDI_TX_EP);
-  USBD_LL_CloseEP(pdev, MIDI_RX_EP);
-#endif
+  USBD_AUDIO_HandleTypeDef* haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
+  (void)haudio;
 
 #ifdef USE_USBD_AUDIO_RX
-  /* Close EP OUT */
-  USBD_LL_CloseEP(pdev, AUDIO_RX_EP);		  
+  USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_RX_EP);
 #endif
 
 #ifdef USE_USBD_AUDIO_TX
-  /* Close EP IN */
-  USBD_LL_CloseEP(pdev, AUDIO_TX_EP);
+  USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_TX_EP);
+#endif
+
+#ifdef USE_USBD_MIDI
+  USBD_AUDIO_CloseEndpoint(pdev, haudio, MIDI_RX_EP);
+  USBD_AUDIO_CloseEndpoint(pdev, haudio, MIDI_TX_EP);
 #endif
 
   /* DeInit  physical Interface components */
@@ -652,89 +698,72 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
   return USBD_OK;
 }
 
-void usbd_audio_select_alt(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio, uint8_t iface, uint8_t alt){
-  USBD_StatusTypeDef rv;
-  if(iface == AUDIO_TX_IF && haudio->tx_alt_setting != alt){
-#ifdef USE_USBD_AUDIO_TX_FALSE
-    if(alt == 0){
-      // close previous
-      haudio->audio_tx_active = 0;
-      usbd_audio_tx_stop_callback();
-      /* Close EP IN */
-      USBD_LL_CloseEP(pdev, AUDIO_TX_EP);
-    }
-    if(alt == 1){
-      /* Open IN (i.e. microphone) Endpoint */
-      USBD_LL_FlushEP(pdev, AUDIO_TX_EP);
-      rv = USBD_LL_OpenEP(pdev,
-			  AUDIO_TX_EP,
-			  USBD_EP_TYPE_ISOC,
-			  AUDIO_TX_PACKET_SIZE);
-      if(rv != USBD_OK)
-	USBD_ErrLog("Open of IN streaming endpoint failed. error %d\n", rv);
-      haudio->audio_tx_active = 1;
-      usbd_audio_tx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
-      usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
-    }
-#endif
-    haudio->tx_alt_setting = alt;
-  }else if(iface == AUDIO_RX_IF && haudio->rx_alt_setting != alt){
+#define USBD_AUDIO_DESC_TYPE_CS_DEVICE                               0x21
+#define USBD_AUDIO_DESC_SIZ                                          0x09
+static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
+						USBD_SetupReqTypedef *req){
+  USBD_AUDIO_HandleTypeDef* haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
+  (void)haudio;
+  uint8_t as_interface_num = req->wIndex;
+  uint8_t new_alt = req->wValue;
+
+  switch(as_interface_num){
 #ifdef USE_USBD_AUDIO_RX
-    /* if(haudio->rx_alt_setting != 0){ */
-    if(alt == 0){
-      /* Close EP OUT */
-      USBD_LL_CloseEP(pdev, AUDIO_RX_EP);
-      usbd_audio_rx_stop_callback();
+  case AUDIO_RX_IF:
+    if(new_alt != haudio->rx_alt_setting){
+      if(new_alt == 0){
+    	// close old
+	USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_RX_EP);
+      }else{
+    	// open new
+    	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_RX_EP);
+      }
+      haudio->rx_alt_setting = new_alt;
+    }    
+    return USBD_OK;
+    break;
+#endif/* USE_USBD_AUDIO_RX */
+#ifdef USE_USBD_AUDIO_TX
+  case AUDIO_TX_IF:
+    if(new_alt != haudio->tx_alt_setting){
+      if(new_alt == 0){
+  	// close old
+  	USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_TX_EP);
+      }else{
+  	// open new
+  	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_TX_EP);
+      }
+      haudio->tx_alt_setting = new_alt;
     }
-    if(alt == 1){
-      /* Open OUT (i.e. speaker) Endpoint */
-      rv = USBD_LL_OpenEP(pdev,
-			  AUDIO_RX_EP,
-			  USBD_EP_TYPE_ISOC,
-			  AUDIO_RX_PACKET_SIZE);
-      if(rv != USBD_OK)
-        USBD_ErrLog("Open of OUT streaming endpoint failed. error %d\n", rv);
-      usbd_audio_rx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
-      /* Prepare OUT endpoint to receive 1st packet */
-      USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
-    }      
-#endif
-    haudio->rx_alt_setting = alt;
+    return USBD_OK;
+    break;
+#endif /* USE_USBD_AUDIO_TX */
+  case 0: // Control interface
+  case AUDIO_MIDI_IF:
+    if(new_alt == 0)
+      return USBD_OK;
+    // deliberate fall-through
+  default:
+    USBD_CtlError(pdev, req);
   }
+  return USBD_FAIL;
 }
 
-static uint8_t AUDIO_REQ(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{  
-  uint8_t ret = USBD_OK;
-
-      /* switch (req->bRequest) */
-    /* { */
-    /* case AUDIO_REQ_GET_CUR: */
-    /*   AUDIO_REQ_GetCurrent(pdev, req); */
-    /*   break; */
-      
-    /* case AUDIO_REQ_SET_CUR: */
-    /*   AUDIO_REQ_SetCurrent(pdev, req);    */
-    /*   break; */
-      
-    /* default: */
-    /*   USBD_CtlError (pdev, req); */
-    /*   ret = USBD_FAIL;  */
-    /* } */
-
+static uint8_t AUDIO_REQ(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req) {  
+  USBD_DbgLog("Req 0x%x 0x%x", req->wValue, req->bRequest);
+  USBD_AUDIO_HandleTypeDef* haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
   static int16_t tmpdata;
-  uint8_t control_selector = HIBYTE(req->wValue);
-  switch(control_selector){
-  case 0x01: { // USBD_AUDIO_CONTROL_FEATURE_UNIT_MUTE: {
+  switch(HIBYTE(req->wValue)){
+  case 0x01: // USBD_AUDIO_CONTROL_FEATURE_UNIT_MUTE: {
     /* Send the current mute state */
     tmpdata = 0;
     USBD_CtlSendData (pdev, (uint8_t*)&tmpdata, 1);
     break;
-  }
-  case 0x02: { // USBD_AUDIO_CONTROL_FEATURE_UNIT_VOLUME: {
+  case 0x02:  // USBD_AUDIO_CONTROL_FEATURE_UNIT_VOLUME: {
     switch(req->bRequest) {
     case AUDIO_REQ_GET_CUR:
-      tmpdata = 0;
+      tmpdata = haudio->volume;
+      break;
     case AUDIO_REQ_GET_MIN:
       tmpdata = -6400;
       /* tmpdata = (uint16_t*) &(feature_control->MinVolume); */
@@ -747,25 +776,30 @@ static uint8_t AUDIO_REQ(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
       tmpdata = 128;
       /* tmpdata = (uint16_t*) &(feature_control->ResVolume); */
       break;
+    case AUDIO_REQ_SET_CUR:
+    case AUDIO_REQ_SET_RES:
+      /* if (req->wLength) { */
+      /* Prepare the reception of the buffer over EP0 */
+      haudio->control.cmd = req->bRequest;     /* Set the request value */
+      haudio->control.len = MIN(2, (uint8_t)req->wLength); /* Set the request data length */
+      haudio->control.unit = HIBYTE(req->wIndex);  /* Set the request target unit */
+      USBD_CtlPrepareRx(pdev, haudio->control.data, req->wLength);
+      return USBD_OK;   
+      /* } */
+      break;
     default :
       /* control not supported */
-      ret = USBD_FAIL;      
       USBD_CtlError (pdev, req);
+      return USBD_FAIL;
     }
-    /* Send the current mute state */
+    /* Send the response */
     USBD_CtlSendData (pdev, (uint8_t*)&tmpdata, 2);
     break;
-  }
   default:
-    ret = USBD_FAIL;      
     USBD_CtlError (pdev, req);
+    return USBD_FAIL;
   }
-  /* if((req->bmRequest & USB_REQ_RECIPIENT_MASK) == USB_REQ_RECIPIENT_INTERFACE){ */
-  /* }else{ */
-  /*   ret = USBD_FAIL;       */
-  /*    USBD_CtlError (pdev, req); */
-  /* } */
-  return ret;
+  return USBD_OK;   
 }
 
 /**
@@ -775,92 +809,83 @@ static uint8_t AUDIO_REQ(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
   * @param  req: usb requests
   * @retval status
   */
-static uint8_t  USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev, 
-				  USBD_SetupReqTypedef *req)
+static uint8_t USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev, 
+				 USBD_SetupReqTypedef *req)
 {
+  USBD_DbgLog("Setup 0x%x 0x%x 0x%x 0x%x", req->bmRequest, req->bRequest, 
+	      req->wIndex, req->wValue);
   USBD_AUDIO_HandleTypeDef   *haudio;
   uint16_t len;
   uint8_t *pbuf;
   uint8_t ret = USBD_OK;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
-  
+
   switch (req->bmRequest & USB_REQ_TYPE_MASK){
-  case USB_REQ_TYPE_CLASS :  
-    ret = AUDIO_REQ(pdev, req);
-    break;
-    
+  case USB_REQ_TYPE_CLASS :
+    if((req->bmRequest & USB_REQ_RECIPIENT_MASK) == USB_REQ_RECIPIENT_INTERFACE) {
+      switch (req->bRequest) {
+      case AUDIO_REQ_GET_CUR:
+      case AUDIO_REQ_GET_MIN:
+      case AUDIO_REQ_GET_MAX:
+      case AUDIO_REQ_GET_RES:
+      case AUDIO_REQ_SET_CUR:
+      case AUDIO_REQ_SET_RES:
+	AUDIO_REQ(pdev, req);
+        break;        
+      default:
+        USBD_CtlError (pdev, req);
+        ret = USBD_FAIL; 
+      }
+    }
+    else
+    {
+     USBD_CtlError (pdev, req);
+        ret = USBD_FAIL;
+    }
+    break;    
   case USB_REQ_TYPE_STANDARD:
-    switch (req->bRequest) {
-    case USB_REQ_GET_DESCRIPTOR:
-      if( (req->wValue >> 8) == AUDIO_DESCRIPTOR_TYPE){
+    switch (req->bRequest){
+    case USB_REQ_GET_DESCRIPTOR:      
+      if( (req->wValue >> 8) == USBD_AUDIO_DESC_TYPE_CS_DEVICE){
         pbuf = USBD_AUDIO_CfgDesc + 18;
-        len = MIN(USB_AUDIO_CONFIG_DESC_SIZ , req->wLength);
+        len = MIN(USBD_AUDIO_DESC_SIZ , req->wLength);
         USBD_CtlSendData (pdev, pbuf, len);
       }
       break;
-      
     case USB_REQ_GET_INTERFACE :
       switch(req->wIndex){
       case 0:
-	haudio->control.data[0] = 0;
-      	USBD_CtlSendData (pdev, haudio->control.data, 1);
+	USBD_CtlSendData(pdev, &(haudio->ac_alt_setting), 1);
+	return USBD_OK;
 	break;
-#ifdef USE_USBD_AUDIO_RX
       case AUDIO_RX_IF:
-	USBD_CtlSendData (pdev, &(haudio->rx_alt_setting), 1);
+	USBD_CtlSendData(pdev, &(haudio->rx_alt_setting), 1);
+	return USBD_OK;
 	break;
-#endif
-#ifdef USE_USBD_AUDIO_TX
       case AUDIO_TX_IF:
-	USBD_CtlSendData (pdev, &(haudio->tx_alt_setting), 1);
+	USBD_CtlSendData(pdev, &(haudio->tx_alt_setting), 1);
+	return USBD_OK;
 	break;
-#endif
-#ifdef USE_USBD_MIDI
       case AUDIO_MIDI_IF:
-	USBD_CtlSendData (pdev, &(haudio->midi_alt_setting), 1);
+	USBD_CtlSendData(pdev, &(haudio->midi_alt_setting), 1);
+	return USBD_OK;
 	break;
-#endif
       default:
+        USBD_CtlError (pdev, req);
         ret = USBD_FAIL;
 	break;
       }
       break;
-
     case USB_REQ_SET_INTERFACE :
-      /* USBD_DbgLog("iface %d alt %d\n", req->wIndex, req->wValue); */
-      switch(req->wIndex){
-      case 0:
-	/* Audio Control interface, only alternate zero is accepted  */     
-	if(req->wValue != 0)
-	  ret = USBD_FAIL;
-	break;
-#ifdef USE_USBD_AUDIO
-      case AUDIO_RX_IF:
-      case AUDIO_TX_IF:
-	if(req->wValue <= 1) // only alt 0 or 1
-	  usbd_audio_select_alt(pdev, haudio, req->wIndex, req->wValue);
-	else
-	  ret = USBD_FAIL;
-	break;
-#endif
-      case AUDIO_MIDI_IF:
-	// do nothing
-	break;
-      default:
-	ret = USBD_FAIL;
-	break;
-      }
+      return USBD_AUDIO_SetInterfaceAlternate(pdev, req);
       break;
     default:
-      ret = USBD_FAIL;
-      break;
+      USBD_CtlError (pdev, req);
+      ret = USBD_FAIL;     
     }
   }
-  if(ret == USBD_FAIL)
-    USBD_CtlError (pdev, req);
   return ret;
 }
-
 
 /**
   * @brief  USBD_AUDIO_GetCfgDesc 
@@ -911,25 +936,19 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR){
-    USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
-    if (haudio->control.unit == AUDIO_OUT_STREAMING_CTRL)
+    USBD_DbgLog("SET_CUR 0x%x", haudio->control.unit);
+    if (haudio->control.unit == AUDIO_OUT_STREAMING_CTRL ||
+	haudio->control.unit == AUDIO_IN_STREAMING_CTRL)
     {
-      usbd_audio_gain_callback(haudio->control.data[0]);
-     /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->MuteCtl(haudio->control.data[0]);      */
-      haudio->control.cmd = 0;
-      haudio->control.len = 0;
-    }
-    else if(haudio->control.unit == AUDIO_IN_STREAMING_CTRL)
-    {
-      usbd_audio_gain_callback(haudio->control.data[0]);
-     /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->MuteCtl(haudio->control.data[0]);      */
+      haudio->volume = (haudio->control.data[0] << 8) | haudio->control.data[1];
+      usbd_audio_gain_callback(haudio->volume);
       haudio->control.cmd = 0;
       haudio->control.len = 0;
     }
   }else if (haudio->control.cmd == AUDIO_REQ_GET_CUR){
-    USBD_DbgLog("GET_CUR %d\n", haudio->control.unit);
+    USBD_DbgLog("GET_CUR 0x%x", haudio->control.unit);
   }else{
-    USBD_DbgLog("Control CMD %d\n", haudio->control.cmd);
+    USBD_DbgLog("Control CMD 0x%x 0x%x", haudio->control.cmd, haudio->control.unit);
   }
 #endif
   return USBD_OK;
@@ -948,10 +967,11 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR)
   {/* In this driver, to simplify code, only SET_CUR request is managed */
     USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
-    if (haudio->control.unit == AUDIO_OUT_STREAMING_CTRL)
+    if (haudio->control.unit == AUDIO_OUT_STREAMING_CTRL ||
+	haudio->control.unit == AUDIO_IN_STREAMING_CTRL)
     {
-      usbd_audio_gain_callback(haudio->control.data[0]);
-     /* ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->MuteCtl(haudio->control.data[0]); */
+      haudio->volume = (haudio->control.data[0] << 8) | haudio->control.data[1];
+      usbd_audio_gain_callback(haudio->volume);
       haudio->control.cmd = 0;
       haudio->control.len = 0;
     }
@@ -959,6 +979,7 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 #endif
   return USBD_OK;
 }
+    
 /**
   * @brief  USBD_AUDIO_SOF
   *         handle SOF event
@@ -1060,10 +1081,7 @@ static uint8_t  *USBD_AUDIO_GetDeviceQualifierDesc (uint16_t *length)
 uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev, 
                                         void *fops)
 {
-  if(fops != NULL)
-  {
-    pdev->pUserData= fops;
-  }
+  pdev->pUserData = fops;
   return 0;
 }
 
