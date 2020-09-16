@@ -615,6 +615,11 @@ __weak void setup(){
     TLC5946_Refresh_GS();
     HAL_Delay(100);
 
+    // Start test PWM
+    extern TIM_HandleTypeDef htim10;
+    HAL_TIM_Base_Start_IT(&htim10);
+    HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
+
     // Start BLANK PWM
     extern TIM_HandleTypeDef htim2;
     HAL_TIM_Base_Start(&htim2);
