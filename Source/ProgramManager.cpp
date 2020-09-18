@@ -611,8 +611,10 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
 }
 
 void ProgramManager::loadProgram(uint8_t pid){
+  // We must always force loading patch definition, because it uses cached value that
+  // is also updated in other places
+  PatchDefinition* def = registry.getPatchDefinition(pid);
   if(patchindex != pid){
-    PatchDefinition* def = registry.getPatchDefinition(pid);
     if(def != NULL && def->getProgramVector() != NULL){
       patchdef = def;
       updateProgramIndex(pid);
