@@ -242,7 +242,9 @@ void onProgramReady(){
 #endif
 
   midi_rx.receive(); // push queued up MIDI messages through to patch
+#ifdef USE_ADC
   updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
+#endif
   pv->buttons = button_values;
   if(pv->buttonChangedCallback != NULL && stateChanged.getState()){
     int bid = stateChanged.getFirstSetIndex();
