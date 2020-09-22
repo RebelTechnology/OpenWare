@@ -69,10 +69,6 @@ extern "C" {
     uint16_t		RxDataLength;
     MIDI_DataStateTypeDef		data_tx_state;
     MIDI_DataStateTypeDef		data_rx_state;
-    uint8_t						Rx_Poll;
-    //uint8_t			buff[8];
-    //MIDI_DataItfTypedef                DataItf;
-    //CDC_InterfaceDesc_Typedef         CDC_Desc;
   } MIDI_HandleTypeDef;
 
   void usbh_midi_begin(void);
@@ -96,7 +92,7 @@ extern "C" {
 
   void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost);
 
-  void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost);
+  void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost, uint8_t* data, size_t length);
 
 #ifdef __cplusplus
 }
