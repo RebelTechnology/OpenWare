@@ -91,6 +91,7 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
 
 void usbd_audio_rx_stop_callback(){
   audio_rx_buffer.setAll(0);
+  program.loadProgram(program.getProgramIndex());
   program.startProgram(true);
   setOperationMode(RUN_MODE);
 #if DEBUG
