@@ -112,7 +112,7 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
     break;
   case HOST_USER_CLASS_ACTIVE:
     if(Appli_state == APPLICATION_START){
-      USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE);
+      usbh_midi_begin();
       Appli_state = APPLICATION_READY;
     }
     break;
