@@ -7,6 +7,9 @@ endif
 
 .PHONY: clean deploy-midiboot deploy-alchemist
 
+# To avoid problems on case insensitive filesystems, mark all targets named the same as a directory as phony
+.PHONY: midiboot tesseract alchemist wizard owlpedal quadfm player prism magus effectsbox noctua biosignals
+
 export OPENWARE CONFIG
 
 all: alchemist wizard magus tesseract prism effectsbox owlpedal player #quadfm owlboot ## build (almost) all targets
