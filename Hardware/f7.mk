@@ -1,5 +1,5 @@
 # Library path
-LIBROOT=$(BUILDROOT)/Drivers/
+LIBROOT=$(OPENWARE)/Libraries/Drivers/
 
 # Build path
 BUILD=$(BUILDROOT)/Build
@@ -9,10 +9,10 @@ DRIVERS=$(LIBROOT)/STM32F7xx_HAL_Driver
 CMSIS_DEVICE=$(LIBROOT)/CMSIS/Device/ST/STM32F7xx
 CMSIS_CORE=$(LIBROOT)/CMSIS/Include
 DSPLIB=$(LIBROOT)/CMSIS/DSP_Lib/Source
-USB_DEVICE_FILE=$(BUILDROOT)/Middlewares/ST/STM32_USB_Device_Library
-USB_HOST_FILE=$(BUILDROOT)/Middlewares/ST/STM32_USB_Host_Library
+USB_DEVICE_FILE=$(OPENWARE)/Libraries/Middlewares/ST/STM32_USB_Device_Library
+USB_HOST_FILE=$(OPENWARE)/Libraries/Middlewares/ST/STM32_USB_Host_Library
 USB_OTG_FILE=$(LIBROOT)/STM32_USB_OTG_Driver
-FREERTOS_DIR=$(BUILDROOT)/Middlewares/Third_Party/FreeRTOS/Source
+FREERTOS_DIR=$(OPENWARE)/Libraries/Middlewares/Third_Party/FreeRTOS/Source
 
 INC_FLAGS = -I$(CMSIS_CORE) -I$(CMSIS_DEVICE)/Include -I$(DRIVERS)/Inc 
 INC_FLAGS += -I$(BUILDROOT)/Source -I$(BUILDROOT)/Inc
