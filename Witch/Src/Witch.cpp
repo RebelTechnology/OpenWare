@@ -34,10 +34,10 @@ void setAnalogValue(uint8_t ch, int16_t value){
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
   case PUSHBUTTON:
-  case BUTTON_A:
+  case BUTTON_E:
     HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
     break;
-  case BUTTON_B:
+  case BUTTON_F:
     HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
     break;
   }    
@@ -177,6 +177,7 @@ void setup(){
 }
 
 void loop(void){
+  MX_USB_HOST_Process(); // todo: enable PWR management
   bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
   if(state != getButtonValue(BUTTON_A)){
       setButtonValue(PUSHBUTTON, state);
