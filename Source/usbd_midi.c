@@ -542,13 +542,6 @@ uint8_t  *USBD_Midi_GetDeviceQualifierDesc (uint16_t *length)
 uint8_t  USBD_Midi_RegisterInterface  (USBD_HandleTypeDef   *pdev, 
                                       USBD_Midi_ItfTypeDef *fops)
 {
-  uint8_t  ret = USBD_FAIL;
-  
-  if(fops != NULL)
-  {
-    pdev->pUserData= fops;
-    ret = USBD_OK;    
-  }
-  
-  return ret;
+  pdev->pUserData = fops;
+  return USBD_OK;
 }
