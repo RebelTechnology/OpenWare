@@ -136,7 +136,7 @@ int main(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-#ifdef OWL_USBD_FS
+#ifdef USE_USBD_FS
   /*Configure GPIO pins : PB13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
