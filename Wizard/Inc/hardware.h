@@ -6,7 +6,7 @@
 #define HARDWARE_VERSION             "Wizard"
 /* #define FASCINATION_MACHINE */
 
-#ifdef OWL_EUROWIZARD
+#ifndef OWL_EUROWIZARD
 #define USE_USBD_HS
 #define USBD_HANDLE hUsbDeviceHS
 #define USBH_HANDLE hUsbHostFS
