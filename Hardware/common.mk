@@ -5,7 +5,6 @@ HEX=$(BUILD)/$(PROJECT).hex
 SYX=$(BUILD)/$(PROJECT).syx
 
 # Flags
-CPPFLAGS += -I$(OPENWARE)/LibSource -I$(OPENWARE)/Source -ISrc
 GIT_REVISION = $(shell git rev-parse --abbrev-ref HEAD) $(shell git rev-parse --short HEAD) $(CONFIG)
 CPPFLAGS += -DGIT_REVISION='"$(GIT_REVISION)"'
 
@@ -26,32 +25,31 @@ OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
 OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd.cfg
 
-# Set up search path
-vpath %.s $(BUILDROOT)/Src
-vpath %.c $(BUILDROOT)/Src
-vpath %.cpp $(BUILDROOT)/Src
-vpath %.c $(OPENWARE)/Source
-vpath %.cpp $(OPENWARE)/Source
-vpath %.c $(OPENWARE)/LibSource
-vpath %.cpp $(OPENWARE)/LibSource
-vpath %.c $(OPENWARE)/Libraries/syscalls
+# Generate dependency information
+CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
 all: bin
 
-.PHONY: clean size debug flash attach all sysex
+.PHONY: clean size debug flash attach all sysex bin
+
+# Set up search path
+OBJS = $(addprefix $(BUILD)/,$(notdir $(C_SRC:.c=.o)))
+vpath %.c $(sort $(dir $(C_SRC)))
+OBJS += $(addprefix $(BUILD)/,$(notdir $(CPP_SRC:.cpp=.o)))
+vpath %.cpp $(sort $(dir $(CPP_SRC)))
+OBJS += $(addprefix $(BUILD)/,$(notdir $(S_SRC:.s=.o)))
+vpath %.s $(sort $(dir $(S_SRC)))
 
 # Build executable 
 $(ELF) : $(OBJS) $(LDSCRIPT)
-	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+	@$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 # compile and generate dependency info
-$(BUILD)/%.o: %.c
-	@$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
-	@$(CC) -MM -MT"$@" $(CPPFLAGS) $(CFLAGS) $< > $(@:.o=.d)
+$(BUILD)/%.o: %.c Makefile | $(BUILD)
+	@$(CC) -c $(CPPFLAGS) $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD)/$(notdir $(<:.c=.lst)) $< -o $@
 
-$(BUILD)/%.o: %.cpp
-	@$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
-	@$(CXX) -MM -MT"$@" $(CPPFLAGS) $(CXXFLAGS) $< > $(@:.o=.d)
+$(BUILD)/%.o: %.cpp Makefile | $(BUILD)
+	@$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) -Wa,-a,-ad,-alms=$(BUILD)/$(notdir $(<:.c=.lst)) $< -o $@
 
 $(BUILD)/%.o: %.s
 	@$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
