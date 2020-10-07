@@ -84,7 +84,7 @@ void setEncoderValue(int value){
 
 void setup(){
   // __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
-  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   setSegmentDisplay(11, true);
   HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, GPIO_PIN_SET);
@@ -93,7 +93,8 @@ void setup(){
   setEncoderValue(program.getProgramIndex());
 }
 
-#define PATCH_RESET_COUNTER 100
+#define PATCH_RESET_COUNTER (5000/MAIN_LOOP_SLEEP_MS)
+
 static uint32_t counter = PATCH_RESET_COUNTER;
 static void update_preset(){
   static int patchselect = 0;
