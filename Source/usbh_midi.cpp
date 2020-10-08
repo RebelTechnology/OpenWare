@@ -349,9 +349,16 @@ static void MIDI_ProcessTransmission(USBH_HandleTypeDef *phost){
     }
 }
 
+void usbh_midi_reset(void){
+  // extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
+  // USBH_LL_ResetPort(&USBH_HANDLE);
+}
+
 bool usbh_midi_connected(void){
-  extern ApplicationTypeDef Appli_state; // defined in usb_host.c
-  return Appli_state == APPLICATION_START || Appli_state == APPLICATION_READY;
+  extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
+  return USBH_HANDLE.device.is_connected;
+  // extern ApplicationTypeDef Appli_state; // defined in usb_host.c
+  // return Appli_state == APPLICATION_START || Appli_state == APPLICATION_READY;
 }
 
 bool usbh_midi_ready(void){
