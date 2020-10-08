@@ -31,6 +31,9 @@ ifeq ($(PLATFORM),Magus)
 else ifeq ($(PLATFORM),Lich)
   CPPFLAGS += -Iusbd-fs -DOWL_LICH -DUSE_USBD_FS
   vpath %.c usbd-fs
+else ifeq ($(PLATFORM),Witch)
+  CPPFLAGS += -Iusbd-fs -DOWL_WITCH -DUSE_USBD_FS
+  vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Alchemist)
   CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST -DUSE_USBD_HS
   vpath %.c usbd-hs
