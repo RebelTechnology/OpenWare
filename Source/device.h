@@ -86,6 +86,10 @@
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 
+#ifndef MAIN_LOOP_SLEEP_MS
+#define MAIN_LOOP_SLEEP_MS           2
+#endif
+
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
 #define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))

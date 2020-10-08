@@ -560,7 +560,7 @@ void owl_setup(){
   midiSetOutputChannel(settings.midi_output_channel);
 
   xLastWakeTime = xTaskGetTickCount();
-  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+  xFrequency = MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 
 #ifdef USE_DIGITALBUS
   bus_setup();
