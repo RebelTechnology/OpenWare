@@ -69,6 +69,13 @@ void MX_USB_HOST_Process()
 {
   /* USB Host Background task */
   USBH_Process(&HUSB_HOST);
+  if(Appli_state == APPLICATION_DISCONNECT){
+    USBH_Stop(&HUSB_HOST);
+    USBH_DeInit(&HUSB_HOST);
+    MX_USB_HOST_Init();
+    // USBH_Start(&HUSB_HOST);
+    Appli_state = APPLICATION_IDLE;
+  }
 }
 
 /* USER CODE END 1 */
