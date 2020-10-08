@@ -91,8 +91,6 @@ void setup(){
   HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, GPIO_PIN_SET);
   owl_setup();
   setEncoderValue(program.getProgramIndex());
-  // enable USB Host power
-  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 }
 
 #define PATCH_RESET_COUNTER (5000/MAIN_LOOP_SLEEP_MS)

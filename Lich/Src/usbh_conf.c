@@ -456,6 +456,9 @@ USBH_StatusTypeDef USBH_LL_DriverVBUS(USBH_HandleTypeDef *phost, uint8_t state)
       /* ToDo: Add IOE driver control */
       /* USER CODE BEGIN DRIVE_HIGH_CHARGE_FOR_HS */
 
+      // disable USB Host power
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+
       /* USER CODE END DRIVE_HIGH_CHARGE_FOR_HS */
     }
     else
@@ -463,6 +466,9 @@ USBH_StatusTypeDef USBH_LL_DriverVBUS(USBH_HandleTypeDef *phost, uint8_t state)
       /* Drive low Charge pump */
       /* ToDo: Add IOE driver control */
       /* USER CODE BEGIN DRIVE_LOW_CHARGE_FOR_HS */
+
+      // enable USB Host power
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 
       /* USER CODE END DRIVE_LOW_CHARGE_FOR_HS */
     }
