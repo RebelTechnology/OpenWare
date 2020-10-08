@@ -144,6 +144,10 @@ void Error_Handler(void);
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
 #define CS_RST_GPIO_Port GPIOB
+#define USB_HOST_PWR_EN_Pin GPIO_PIN_12
+#define USB_HOST_PWR_EN_GPIO_Port GPIOB
+#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_13
+#define USB_HOST_PWR_FAULT_GPIO_Port GPIOB
 #define DISPLAY_A_Pin GPIO_PIN_6
 #define DISPLAY_A_GPIO_Port GPIOC
 #define DISPLAY_B_Pin GPIO_PIN_8

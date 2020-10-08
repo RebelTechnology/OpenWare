@@ -91,6 +91,8 @@ void setup(){
   HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, GPIO_PIN_SET);
   owl_setup();
   setEncoderValue(program.getProgramIndex());
+  // enable USB Host power
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 }
 
 #define PATCH_RESET_COUNTER (5000/MAIN_LOOP_SLEEP_MS)
@@ -150,7 +152,14 @@ static void update_preset(){
 }
 
 void loop(void){
-  MX_USB_HOST_Process(); // todo: enable PWR management
+  if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
+    if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+      error(USB_ERROR, "USBH PWR Fault");
+    }
+  }else{
+    MX_USB_HOST_Process();
+  }
   update_preset();
   owl_loop();
 }

@@ -5,6 +5,7 @@
   * @retval None
   */
 /* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
@@ -131,19 +132,6 @@ int main(void)
   MX_SPI1_Init();
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-#ifdef USE_USBD_FS
-  /*Configure GPIO pins : PB13 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-#else
-  /*Configure GPIO pins : PA9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-#endif
   
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);
@@ -235,8 +223,7 @@ void SystemClock_Config(void)
   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
@@ -251,7 +238,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB buses clocks
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -555,7 +542,7 @@ static void MX_SPI4_Init(void)
   hspi4.Init.NSS = SPI_NSS_SOFT;
   hspi4.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi4.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi4.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi4.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi4.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   hspi4.Init.CRCPolynomial = 10;
   if (HAL_SPI_Init(&hspi4) != HAL_OK)
@@ -747,7 +734,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, FLASH_WP_Pin|GATE_OUT_Pin|DISPLAY_DP_Pin|CS_CS_Pin
-                          |CS_RST_Pin|DISPLAY_F_Pin, GPIO_PIN_RESET);
+                          |CS_RST_Pin|USB_HOST_PWR_EN_Pin|DISPLAY_F_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(DISPLAY_A_GPIO_Port, DISPLAY_A_Pin, GPIO_PIN_SET);
@@ -787,19 +774,20 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pins : FLASH_WP_Pin GATE_OUT_Pin DISPLAY_DP_Pin CS_CS_Pin
-                           CS_RST_Pin DISPLAY_F_Pin */
+                           CS_RST_Pin USB_HOST_PWR_EN_Pin DISPLAY_F_Pin */
   GPIO_InitStruct.Pin = FLASH_WP_Pin|GATE_OUT_Pin|DISPLAY_DP_Pin|CS_CS_Pin
-                          |CS_RST_Pin|DISPLAY_F_Pin;
+                          |CS_RST_Pin|USB_HOST_PWR_EN_Pin|DISPLAY_F_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB12 PB13 PB4 PB7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_4|GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  /*Configure GPIO pin : USB_HOST_PWR_FAULT_Pin */
+  GPIO_InitStruct.Pin = USB_HOST_PWR_FAULT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  /* GPIO_InitStruct.Pull = GPIO_NOPULL; */
+  HAL_GPIO_Init(USB_HOST_PWR_FAULT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD11 PD12 PD13 PD3
                            PD4 PD5 PD7 */
@@ -862,6 +850,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(DISPLAY_E_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB4 PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : GATE_IN1_Pin */
   GPIO_InitStruct.Pin = GATE_IN1_Pin;
