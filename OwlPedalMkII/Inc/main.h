@@ -100,6 +100,10 @@ void Error_Handler(void);
 #define CS_SDA_GPIO_Port GPIOE
 #define EXTSPI_nCS_Pin GPIO_PIN_15
 #define EXTSPI_nCS_GPIO_Port GPIOC
+#define LED_R_Pin GPIO_PIN_7
+#define LED_R_GPIO_Port GPIOF
+#define LED_G_Pin GPIO_PIN_9
+#define LED_G_GPIO_Port GPIOF
 #define ADC4_Pin GPIO_PIN_10
 #define ADC4_GPIO_Port GPIOF
 #define ADC3_Pin GPIO_PIN_1
