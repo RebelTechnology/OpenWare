@@ -69,6 +69,13 @@ void MX_USB_HOST_Process()
 {
   /* USB Host Background task */
   USBH_Process(&HUSB_HOST);
+  if(Appli_state == APPLICATION_DISCONNECT){
+    USBH_Stop(&HUSB_HOST);
+    USBH_DeInit(&HUSB_HOST);
+    MX_USB_HOST_Init();
+    // USBH_Start(&HUSB_HOST);
+    Appli_state = APPLICATION_IDLE;
+  }
 }
 
 /* USER CODE END 1 */
@@ -112,9 +119,8 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
   case HOST_USER_SELECT_CONFIGURATION:
     break;
 
-  case HOST_USER_DISCONNECTION:
-    Appli_state = APPLICATION_DISCONNECT;
-    usbh_midi_reset();
+  case HOST_USER_CONNECTION:
+    Appli_state = APPLICATION_START;
     break;
 
   case HOST_USER_CLASS_ACTIVE:
@@ -124,13 +130,15 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
     }
     break;
 
-  case HOST_USER_CONNECTION:
-    Appli_state = APPLICATION_START;
+  case HOST_USER_DISCONNECTION:
+    Appli_state = APPLICATION_DISCONNECT;
+    usbh_midi_reset();
     break;
 
   case HOST_USER_UNRECOVERED_ERROR:
     usbh_midi_reset(); // reset and hope for the best
-    error(USB_ERROR, "USB Host unrecovered error");
+    Appli_state = APPLICATION_DISCONNECT;
+    error(USB_ERROR, "USB Host error");
     break;
 
   default:

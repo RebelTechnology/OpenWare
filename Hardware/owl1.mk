@@ -36,4 +36,4 @@ ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32F405xx -DARM_MATH_CM4
 DEF_FLAGS += -D__FPU_PRESENT=1U
-S_SRC = startup_stm32f405xx.s
+S_SRC = $(BUILDROOT)/Src/startup_stm32f407xx.s

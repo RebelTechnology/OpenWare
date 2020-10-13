@@ -84,7 +84,7 @@ void setEncoderValue(int value){
 
 void setup(){
   // __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
-  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   setSegmentDisplay(11, true);
   HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, GPIO_PIN_SET);
@@ -93,7 +93,8 @@ void setup(){
   setEncoderValue(program.getProgramIndex());
 }
 
-#define PATCH_RESET_COUNTER 100
+#define PATCH_RESET_COUNTER (5000/MAIN_LOOP_SLEEP_MS)
+
 static uint32_t counter = PATCH_RESET_COUNTER;
 static void update_preset(){
   static int patchselect = 0;
@@ -149,7 +150,14 @@ static void update_preset(){
 }
 
 void loop(void){
-  MX_USB_HOST_Process(); // todo: enable PWR management
+  if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
+    if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+      error(USB_ERROR, "USBH PWR Fault");
+    }
+  }else{
+    MX_USB_HOST_Process();
+  }
   update_preset();
   owl_loop();
 }

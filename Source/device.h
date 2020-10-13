@@ -58,7 +58,6 @@
 #endif
 
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
-#define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
 #define MAX_FACTORY_PATCHES          36
 #define MAX_USER_PATCHES             4
 
@@ -86,6 +85,10 @@
 #endif
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
+
+#ifndef MAIN_LOOP_SLEEP_MS
+#define MAIN_LOOP_SLEEP_MS           2
+#endif
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))

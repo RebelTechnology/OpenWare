@@ -91,6 +91,7 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
 
 void usbd_audio_rx_stop_callback(){
   audio_rx_buffer.setAll(0);
+  program.loadProgram(program.getProgramIndex());
   program.startProgram(true);
   setOperationMode(RUN_MODE);
 #if DEBUG
@@ -103,7 +104,7 @@ static uint32_t usbd_audio_rx_count = 0;
 static uint32_t usbd_audio_rx_overflow_limit = 10000;
 // expect a 1 in 10k sample overflow (-0.01% sample accuracy)
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
-#ifdef USE_USBD_AUDIO_RX
+#if defined USE_USBD_AUDIO_RX && USB_AUDIO_CHANNELS > 0
   // copy audio to codec_txbuf aka audio_rx_buffer
   update_rx_read_index();
   audio_t* src = (audio_t*)data;
@@ -142,7 +143,7 @@ static uint32_t usbd_audio_tx_count = 0;
 static uint32_t usbd_audio_tx_underflow_limit = 10000;
 // expect a 1 in 10k sample underflow (-0.01% sample accuracy)
 void usbd_audio_tx_callback(uint8_t* data, size_t len){
-#ifdef USE_USBD_AUDIO_TX
+#if defined USE_USBD_AUDIO_TX && USB_AUDIO_CHANNELS > 0
   update_tx_write_index();
   size_t blocksize = len / (USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
   size_t available = audio_tx_buffer.getReadCapacity()/AUDIO_CHANNELS;

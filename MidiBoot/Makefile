@@ -5,18 +5,18 @@ OPENWARE ?= $(BUILDROOT)/..
 LDSCRIPT = STM32F427ZI-boot.ld
 include $(OPENWARE)/Hardware/owl2.mk
 
-C_SRC = $(notdir $(wildcard Src/*.c))
-CPP_SRC = $(notdir $(wildcard Src/*.cpp))
+C_SRC = $(wildcard Src/*.c)
+CPP_SRC = $(wildcard Src/*.cpp)
 
 # C_SRC += usbd_audio.c
-C_SRC += usbd_midi.c
-C_SRC += usbd_midi_if.c
-C_SRC += sdram.c
-C_SRC += sysex.c
-C_SRC += crc32.c
-C_SRC += eepromcontrol.c
-C_SRC += message.c
-CPP_SRC += MidiWriter.cpp
+C_SRC += $(OPENWARE)/Source/usbd_midi.c
+C_SRC += $(OPENWARE)/Source/usbd_midi_if.c
+C_SRC += $(OPENWARE)/Source/sdram.c
+C_SRC += $(OPENWARE)/Source/sysex.c
+C_SRC += $(OPENWARE)/Source/crc32.c
+C_SRC += $(OPENWARE)/Source/eepromcontrol.c
+C_SRC += $(OPENWARE)/Source/message.c
+CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 # S_SRC = startup_openboot.s
 
 ifndef PLATFORM
@@ -30,6 +30,9 @@ ifeq ($(PLATFORM),Magus)
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Lich)
   CPPFLAGS += -Iusbd-fs -DOWL_LICH -DUSE_USBD_FS
+  vpath %.c usbd-fs
+else ifeq ($(PLATFORM),Witch)
+  CPPFLAGS += -Iusbd-fs -DOWL_WITCH -DUSE_USBD_FS
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Alchemist)
   CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST -DUSE_USBD_HS
@@ -51,17 +54,12 @@ else ifeq ($(PLATFORM),BioSignals)
   vpath %.c usbd-hs
 endif
 
-# CPP_SRC += MidiReader.cpp
-CPP_SRC += MidiController.cpp
+CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 
-OBJS = $(C_SRC:%.c=Build/%.o)
-OBJS += $(CPP_SRC:%.cpp=Build/%.o)
-OBJS += $(S_SRC:%.s=Build/%.o)
-
-OBJS += $(OBJS_SDRAM)
-OBJS += $(OBJS_USBD)
-OBJS += $(OBJS_UART)
-OBJS += $(OBJS_IWDG)
+C_SRC += $(C_SRC_SDRAM)
+C_SRC += $(C_SRC_USBD)
+C_SRC += $(C_SRC_UART)
+C_SRC += $(C_SRC_IWDG)
 
 include $(OPENWARE)/Hardware/f4.mk
 

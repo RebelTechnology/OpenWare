@@ -76,10 +76,6 @@ extern "C" {
 #endif
 
 #ifdef USE_USB_HOST
-  void usbh_midi_reset(void){
-    // midihost.reset();
-    // ledstatus ^= 0x3ff003ff;
-  }
   void usbh_midi_rx(uint8_t *buffer, uint32_t len){
     for(size_t i=0; i<len; i+=4)
       midi_rx_buffer.push(MidiMessage(buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]));

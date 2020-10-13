@@ -67,7 +67,6 @@ MidiMessage MidiStreamReader::read(unsigned char data){
     break;
   case SYSTEM_COMMON:
     switch(buffer[0]){
-    case TIME_CODE_QUARTER_FRAME:
     case RESERVED_F4:
     case RESERVED_F9:
     case TUNE_REQUEST:
@@ -82,6 +81,25 @@ MidiMessage MidiStreamReader::read(unsigned char data){
       status = READY_STATUS;
       ret = MidiMessage(USB_COMMAND_SINGLE_BYTE|cn, buffer[0], 0, 0);
       break;
+    case TIME_CODE_QUARTER_FRAME:
+    case SONG_SELECT:
+      // two byte messages
+      if(pos == 2){
+	status = READY_STATUS;
+	ret = MidiMessage(USB_COMMAND_2BYTE_SYSTEM_COMMON|cn, buffer[0], buffer[1], 0);
+      }else{
+	status = INCOMPLETE_STATUS;
+      }
+      break;
+    case SONG_POSITION_PTR:
+      // three byte messages
+      if(pos == 3){
+	status = READY_STATUS;
+	ret = MidiMessage(USB_COMMAND_3BYTE_SYSTEM_COMMON|cn, buffer[0], buffer[1], buffer[2]);
+      }else{
+	status = INCOMPLETE_STATUS;
+      }
+      break;      
     case SYSEX:
       if(data == SYSEX_EOX || (data >= STATUS_BYTE && pos > 1)){
 	// SysEx message may be terminated by a status byte different from SYSEX_EOX
