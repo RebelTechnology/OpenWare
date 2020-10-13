@@ -114,8 +114,10 @@ void Error_Handler(void);
 #define ADC1_GPIO_Port GPIOC
 #define SW4_Pin GPIO_PIN_2
 #define SW4_GPIO_Port GPIOA
+#define SW4_EXTI_IRQn EXTI2_IRQn
 #define SW3_Pin GPIO_PIN_3
 #define SW3_GPIO_Port GPIOA
+#define SW3_EXTI_IRQn EXTI3_IRQn
 #define SW1_Pin GPIO_PIN_5
 #define SW1_GPIO_Port GPIOA
 #define SW1_EXTI_IRQn EXTI9_5_IRQn
