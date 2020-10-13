@@ -5,17 +5,26 @@ ifndef CONFIG
   CONFIG = Release
 endif
 
-.PHONY: clean deploy-midiboot deploy-alchemist
+.PHONY: clean
+
+# To avoid problems on case insensitive filesystems, mark all targets named the same as a directory as phony
+.PHONY: midiboot tesseract alchemist wizard owlpedal quadfm player prism magus effectsbox noctua biosignals witch lich
 
 export OPENWARE CONFIG
 
-all: alchemist wizard magus tesseract prism effectsbox owlpedal player #quadfm owlboot ## build (almost) all targets
+all: alchemist wizard magus witch lich owlpedal midiboot noctua # biosignals tesseract prism effectsbox player quadfm  ## build most targets
 
 midiboot: ## build MidiBoot project
 	@$(MAKE) -C MidiBoot all
 
 tesseract: ## build Tesseract project
 	@$(MAKE) -C Tesseract all
+
+witch: ## build Witch project
+	@$(MAKE) -C Witch all
+
+lich: ## build Lich project
+	@$(MAKE) -C Lich all
 
 alchemist: ## build Alchemist project
 	@$(MAKE) -C Alchemist all
@@ -49,6 +58,8 @@ biosignals: ## build BioSignals project
 
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
+	@$(MAKE) -C Witch clean
+	@$(MAKE) -C Lich clean
 	@$(MAKE) -C Alchemist clean
 	@$(MAKE) -C Wizard clean
 	@$(MAKE) -C OwlPedal clean
@@ -68,9 +79,3 @@ help: ## show this help
 	@echo 'Usage: make [target] ...'
 	@echo 'Targets:'
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e  's/^\(.*\): .*##\(.*\)/\1:#\2/' | column -t -c 2 -s '#'
-
-deploy-midiboot: ## flash device with bootloader
-	@$(MAKE) -C MidiBoot deploy
-
-deploy-alchemist: ## flash Alchemist firmware
-	openocd -f Hardware/stm32f4.cfg -c "program Alchemist/Build/Alchemist.elf verify reset exit"

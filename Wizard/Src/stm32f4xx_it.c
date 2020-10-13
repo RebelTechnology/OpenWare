@@ -40,6 +40,7 @@
 #include "task.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "device.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,7 +74,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-#ifdef OWL_USBD_FS
+#ifdef USE_USBD_FS
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
 #else
@@ -212,7 +213,7 @@ void OTG_FS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
 
-#ifdef OWL_USBD_FS
+#ifdef USE_USBD_FS
   /* USER CODE END OTG_FS_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
@@ -229,7 +230,7 @@ void OTG_HS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_HS_IRQn 0 */
 
-#ifdef OWL_USBD_FS
+#ifdef USE_USBD_FS
   /* USER CODE END OTG_HS_IRQn 0 */
   HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
   /* USER CODE BEGIN OTG_HS_IRQn 1 */

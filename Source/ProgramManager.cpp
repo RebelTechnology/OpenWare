@@ -243,7 +243,11 @@ void onProgramReady(){
 
   midi_rx.receive(); // push queued up MIDI messages through to patch
 #ifdef USE_ADC
+#ifdef USE_SCREEN
+  updateParameters(graphics.params.parameters, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
+#else
   updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
+#endif
 #endif
   pv->buttons = button_values;
   if(pv->buttonChangedCallback != NULL && stateChanged.getState()){
@@ -613,8 +617,10 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
 }
 
 void ProgramManager::loadProgram(uint8_t pid){
+  // We must always force loading patch definition, because it uses cached value that
+  // is also updated in other places
+  PatchDefinition* def = registry.getPatchDefinition(pid);
   if(patchindex != pid){
-    PatchDefinition* def = registry.getPatchDefinition(pid);
     if(def != NULL && def->getProgramVector() != NULL){
       patchdef = def;
       updateProgramIndex(pid);

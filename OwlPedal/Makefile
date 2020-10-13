@@ -4,11 +4,11 @@ OPENWARE ?= $(BUILDROOT)/..
 
 include $(OPENWARE)/Hardware/owl1.mk
 
-C_SRC = $(notdir $(wildcard Src/*.c))
-CPP_SRC = $(notdir $(wildcard Src/*.cpp))
-C_SRC += wm8731.c
-C_SRC += usbd_midi.c
-C_SRC += usbd_midi_if.c
+C_SRC = $(wildcard Src/*.c)
+CPP_SRC = $(wildcard Src/*.cpp)
+C_SRC += $(OPENWARE)/Source/wm8731.c
+C_SRC += $(OPENWARE)/Source/usbd_midi.c
+C_SRC += $(OPENWARE)/Source/usbd_midi_if.c
 
 ifndef PLATFORM
 PLATFORM = Pedal
@@ -25,16 +25,12 @@ endif
 
 include $(OPENWARE)/Hardware/sources.mk
 
-OBJS = $(C_SRC:%.c=Build/%.o)
-OBJS += $(CPP_SRC:%.cpp=Build/%.o)
-OBJS += $(S_SRC:%.s=Build/%.o)
-
-OBJS += $(OBJS_I2S)
-OBJS += $(OBJS_SRAM)
-OBJS += $(OBJS_USBD)
-OBJS += $(OBJS_DSP)
-OBJS += $(OBJS_OS)
-OBJS += $(OBJS_UART)
+C_SRC += $(C_SRC_I2S)
+C_SRC += $(C_SRC_SRAM)
+C_SRC += $(C_SRC_USBD)
+C_SRC += $(C_SRC_DSP)
+C_SRC += $(C_SRC_OS)
+C_SRC += $(C_SRC_UART)
 
 include $(OPENWARE)/Hardware/f4.mk
 

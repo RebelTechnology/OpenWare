@@ -1,5 +1,5 @@
 # Library path
-LIBROOT=$(BUILDROOT)/Drivers/
+LIBROOT=$(OPENWARE)/Libraries/Drivers/
 
 # Build path
 BUILD=$(BUILDROOT)/Build
@@ -9,7 +9,7 @@ DRIVERS=$(LIBROOT)/STM32F0xx_HAL_Driver
 CMSIS_DEVICE=$(LIBROOT)/CMSIS/Device/ST/STM32F0xx
 CMSIS_CORE=$(LIBROOT)/CMSIS/Include
 DSPLIB=$(LIBROOT)/CMSIS/DSP_Lib/Source
-FREERTOS_DIR=$(BUILDROOT)/Middlewares/Third_Party/FreeRTOS/Source
+FREERTOS_DIR=$(OPENWARE)/Libraries/Middlewares/Third_Party/FreeRTOS/Source
 
 INC_FLAGS = -I$(CMSIS_CORE) -I$(CMSIS_DEVICE)/Include -I$(DRIVERS)/Inc 
 INC_FLAGS += -I$(BUILDROOT)/Source -I$(BUILDROOT)/Inc
