@@ -98,16 +98,12 @@ void setup(){
 static uint32_t counter = PATCH_RESET_COUNTER;
 static void update_preset(){
   static int patchselect = 0;
-  int value = getEncoderValue();
-  if(value != patchselect){
-    value = max(1, min((int)registry.getNumberOfPatches()-1, value));
-    patchselect = value;
-    setEncoderValue(patchselect);
-  }
   switch(getOperationMode()){
   case STARTUP_MODE:
     setSegmentDisplay(SEG_DISPLAY_BLANK, true);
     setOperationMode(RUN_MODE);
+    patchselect = program.getProgramIndex();
+    setEncoderValue(patchselect);
     break;
   case LOAD_MODE:
     setSegmentDisplay(SEG_DISPLAY_L);
@@ -115,6 +111,13 @@ static void update_preset(){
     setEncoderValue(patchselect);
     break;
   case RUN_MODE:
+    if(getErrorStatus() != NO_ERROR){
+      setOperationMode(ERROR_MODE);
+    }else if(getEncoderValue() != patchselect){
+      patchselect = max(1, min((int)registry.getNumberOfPatches()-1, getEncoderValue()));
+      if(getEncoderValue() != patchselect)
+	setEncoderValue(patchselect);
+    }
     if(program.getProgramIndex() != patchselect){
       setSegmentDisplay(patchselect, false);
       if(isModeButtonPressed()){
@@ -124,10 +127,8 @@ static void update_preset(){
       }else if(--counter == 0){
 	counter = PATCH_RESET_COUNTER;
 	patchselect = program.getProgramIndex();
-	setEncoderValue(patchselect);
+	setEncoderValue(patchselect);	
       }
-    }else if(getErrorStatus() != NO_ERROR){
-      setOperationMode(ERROR_MODE);
     }else{
       setSegmentDisplay(patchselect, true);
       counter = PATCH_RESET_COUNTER;
@@ -143,8 +144,10 @@ static void update_preset(){
     setSegmentDisplay(SEG_DISPLAY_E, counter > PATCH_RESET_COUNTER/2);
     if(--counter == 0)
       counter = PATCH_RESET_COUNTER;
-    if(isModeButtonPressed())
+    if(isModeButtonPressed()){
+      program.loadProgram(patchselect);
       program.resetProgram(false); // runAudioTask() changes to RUN_MODE
+    }
     break;
   }
 }
@@ -158,6 +161,6 @@ void loop(void){
   }else{
     MX_USB_HOST_Process();
   }
-  update_preset();
+  update_preset();  
   owl_loop();
 }
