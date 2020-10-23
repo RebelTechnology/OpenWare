@@ -98,6 +98,6 @@
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
-/* #define USE_IWDG                     // compile with support for IWDG watchdog */
+#define USE_IWDG                     // compile with support for IWDG watchdog
 
 #endif /* __DEVICE_H__ */
