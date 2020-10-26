@@ -66,8 +66,18 @@ static void setSegmentDisplay(int value, bool dot=false){
 }
 
 void setGateValue(uint8_t ch, int16_t value){
-  if(ch == PUSHBUTTON)
+  switch(ch){
+  case BUTTON_A:
+    setLed(0, value);
+    break;
+  case BUTTON_B:
+    setLed(1, value);
+    break;
+  case PUSHBUTTON:
+  case BUTTON_C:
     HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
+    break;
+  }
 }
 
 bool isModeButtonPressed(){
@@ -80,6 +90,17 @@ int getEncoderValue(){
 
 void setEncoderValue(int value){
   __HAL_TIM_SET_COUNTER(&htim2, value<<2);
+}
+
+void setLed(uint8_t led, uint32_t rgb){
+  switch(led){
+  case 0:
+    HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    break;
+  case 1:
+    HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    break;
+  }
 }
 
 void setup(){
