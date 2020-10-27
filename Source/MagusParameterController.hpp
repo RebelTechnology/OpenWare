@@ -19,7 +19,6 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #define NOF_ENCODERS 6
 #define ENC_MULTIPLIER 6 // shift left by this many steps
-#define NOF_CONTROL_MODES 5
 #define SHOW_CALIBRATION_INFO  // This flag renders current values in calibration menu
 #define CALIBRATION_INFO_FLOAT // Display float values instead of raw integers
 
@@ -69,7 +68,7 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, VOLUME, CALIBRATE, EXIT
+    PLAY, STATUS, PRESET, DATA, VOLUME, CALIBRATE, EXIT, NOF_CONTROL_MODES
   };
   ControlMode controlMode = PLAY;
   bool saveSettings;
@@ -87,6 +86,7 @@ public:
     "  Play   >",
     "< Status >",
     "< Preset >",
+    "< Data   >",
     "< Volume >",
     "< V/Oct   " };
 
@@ -342,6 +342,28 @@ public:
     screen.invert(0, 25, 128, 10);
   }
 
+  void drawResourceNames(int selected, ScreenBuffer &screen) {
+    screen.setTextSize(1);
+    selected = min(selected, registry.getNumberOfResources() - 1);
+    if (selected > 0 && registry.getNumberOfResources() > 0) {
+      screen.setCursor(1, 24);
+      screen.print((int)selected - 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print(".");
+      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + selected));
+    };
+    screen.setCursor(1, 24 + 10);
+    screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
+    screen.print(".");
+    screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+    if (selected + 1 < (int)registry.getNumberOfResources()) {
+      screen.setCursor(1, 24 + 20);
+      screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print(".");
+      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
+    }
+    screen.invert(0, 25, 128, 10);
+  }
+
   void drawVolume(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
     screen.print(1, 24 + 10, "Volume ");
@@ -472,6 +494,10 @@ public:
     case PRESET:
       drawTitle(controlModeNames[controlMode], screen);    
       drawPresetNames(selectedPid[1], screen);
+      break;
+    case DATA:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawResourceNames(selectedPid[1], screen);
       break;
     case VOLUME:
       drawTitle(controlModeNames[controlMode], screen);    

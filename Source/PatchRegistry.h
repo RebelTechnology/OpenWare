@@ -18,6 +18,7 @@ public:
   const char* getResourceName(unsigned int index);
   PatchDefinition* getPatchDefinition(unsigned int index);
   unsigned int getNumberOfPatches();
+  unsigned int getNumberOfResources();
   void registerPatch(PatchDefinition* def);
   void setDynamicPatchDefinition(PatchDefinition* def){
     dynamicPatchDefinition = def;
@@ -30,7 +31,7 @@ private:
   StorageBlock patchblocks[MAX_NUMBER_OF_PATCHES];
   StorageBlock resourceblocks[MAX_NUMBER_OF_RESOURCES];
   PatchDefinition* defs[MAX_NUMBER_OF_PATCHES];
-  uint8_t patchCount;
+  uint8_t patchCount, resourceCount;
   PatchDefinition* dynamicPatchDefinition;
 };
 

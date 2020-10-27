@@ -19,6 +19,7 @@ PatchRegistry::PatchRegistry() {}
 
 void PatchRegistry::init() {
   patchCount = 0;
+  resourceCount = 0;
   // FactoryPatchDefinition::init();
   // PatchDefinition* def;
   // for(int i=0; i<MAX_USER_PATCHES; ++i){
@@ -34,11 +35,11 @@ void PatchRegistry::init() {
       uint32_t magic = *(uint32_t*)block.getData();
       int id = magic&0x00ff;
       if(id > 0 && id <= MAX_NUMBER_OF_PATCHES){
-	patchblocks[id-1] = block;
-	patchCount = max(patchCount, id);
-      }else if(id > MAX_NUMBER_OF_PATCHES && 
-	       id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
-	resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
+        patchblocks[id-1] = block;
+        patchCount = max(patchCount, id);
+      }else if(id > MAX_NUMBER_OF_PATCHES && id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
+        resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
+        resourceCount = 0;
       }
     }
   }
@@ -98,6 +99,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
       if(resourceblocks[index].verify())
         resourceblocks[index].setDeleted();
       resourceblocks[index] = block;
+      resourceCount = max(resourceCount, index + 1);
     }else{
       error(FLASH_ERROR, "failed to verify resource");
     }
@@ -125,6 +127,10 @@ unsigned int PatchRegistry::getNumberOfPatches(){
   // return nofPatches+1;
   // return MAX_NUMBER_OF_PATCHES+1;
   return patchCount+1;
+}
+
+unsigned int PatchRegistry::getNumberOfResources(){
+  return resourceCount;
 }
 
 PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
