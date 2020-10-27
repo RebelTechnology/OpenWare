@@ -37,7 +37,9 @@
 #define OWLBOOT_MAGIC_NUMBER        (0xDADAB007)
 #define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
 
+#ifndef STORAGE_MAX_BLOCKS
 #define STORAGE_MAX_BLOCKS           64
+#endif
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
@@ -61,8 +63,14 @@
 #define MAX_FACTORY_PATCHES          36
 #define MAX_USER_PATCHES             4
 
+#ifndef MAX_NUMBER_OF_PATCHES
 #define MAX_NUMBER_OF_PATCHES        40
+#endif
+#define APPLICATION_SETTINGS_RESOURCE_INDEX (MAX_NUMBER_OF_PATCHES + 1)
+#define APPLICATION_SETTINGS_NAME    "__SETTINGS__"
+#ifndef MAX_NUMBER_OF_RESOURCES
 #define MAX_NUMBER_OF_RESOURCES      12
+#endif
 
 #define CODEC_BLOCKSIZE              64
 #define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)

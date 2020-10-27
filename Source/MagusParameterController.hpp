@@ -347,17 +347,17 @@ public:
     selected = min(selected, registry.getNumberOfResources() - 1);
     if (selected > 0 && registry.getNumberOfResources() > 0) {
       screen.setCursor(1, 24);
-      screen.print((int)selected - 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + selected));
     };
     screen.setCursor(1, 24 + 10);
-    screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
+    screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
     screen.print(".");
     screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
     if (selected + 1 < (int)registry.getNumberOfResources()) {
       screen.setCursor(1, 24 + 20);
-      screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print((int)selected + 2 + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
     }
@@ -589,6 +589,13 @@ public:
       break;
     case PRESET:
       selectedPid[1] = settings.program_index;
+      break;
+    case DATA:
+      selectedPid[1] = max(
+        0,
+        min(
+          registry.getNumberOfResources() > 0 ? registry.getNumberOfResources() - 1 : 0,
+          value));
       break;
     case VOLUME:
       selectedPid[1] = settings.audio_output_gain; // todo: get current
