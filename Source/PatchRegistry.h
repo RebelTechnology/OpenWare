@@ -26,6 +26,7 @@ public:
   ResourceHeader* getResource(uint8_t index);
   ResourceHeader* getResource(const char* name);
   void store(uint8_t index, uint8_t* data, size_t size);
+  void setDeleted(uint8_t index);
 private:
   bool isPresetBlock(StorageBlock block);
   StorageBlock patchblocks[MAX_NUMBER_OF_PATCHES];

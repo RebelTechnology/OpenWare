@@ -621,12 +621,26 @@ public:
         setErrorStatus(NO_ERROR);
         break;
       case PRESET:
-	// load preset
-	settings.program_index = selectedPid[1];
-	program.loadProgram(settings.program_index);
-	program.resetProgram(false);
-	controlMode = EXIT;
-	break;
+        // load preset
+        settings.program_index = selectedPid[1];
+        program.loadProgram(settings.program_index);
+        program.resetProgram(false);
+        controlMode = EXIT;
+        break;
+      case DATA: {
+          // Delete resource unless it's protected by "__" prefix
+          ResourceHeader* res = registry.getResource(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+          if (res != NULL) {
+            if(res->name[0] == '_' && res->name[1] == '_'){
+              debugMessage("Resource protected");
+            }
+            else {
+              registry.setDeleted(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+            }
+          }
+          controlMode = EXIT;
+          break;
+        }
       case VOLUME:
         controlMode = EXIT;
         break;
@@ -750,6 +764,9 @@ public:
       break;
     case PRESET:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
+      break;
+    case DATA:
+      selectedPid[1] = max(0, min(registry.getNumberOfResources() - 1, value));
       break;
     case CALIBRATE:
       if (isCalibrationRunning && !isCalibrationModeSelected) {
