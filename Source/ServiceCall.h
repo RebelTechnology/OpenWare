@@ -12,6 +12,8 @@
 #define SYSTEM_TABLE_POW                   "SPW"
 #define SYSTEM_FUNCTION_DRAW               "DRW"
 #define SYSTEM_FUNCTION_MIDI               "MDI"
+#define SYSTEM_FUNCTION_RESOURCE_STORE     "RSS"
+#define SYSTEM_FUNCTION_RESOURCE_DELETE    "RSD"
 
 #define OWL_SERVICE_VERSION                OWL_SERVICE_VERSION_V1
 

@@ -57,7 +57,7 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
     if(resourceblocks[i].verify()){
       ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
       if(strcmp(name, hdr->name) == 0)
-	return hdr;
+        return hdr;
     }
   }
   return NULL;
@@ -179,7 +179,7 @@ PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
     if(patchblocks[index].verify()){
       flashPatch.load(patchblocks[index].getData(), patchblocks[index].getDataSize());
       if(flashPatch.verify())
-	def = &flashPatch;
+        def = &flashPatch;
     }
   }
   if(def == &emptyPatch)
@@ -198,3 +198,11 @@ void PatchRegistry::registerPatch(PatchDefinition* def){
 //     nofPatches++;
 //   }
 // }
+
+void store_resource(uint8_t index, uint8_t* data, size_t size){
+  registry.store(index + MAX_NUMBER_OF_PATCHES + 1, data, size);
+}
+
+void delete_resource(uint8_t index){
+  registry.setDeleted(index + MAX_NUMBER_OF_PATCHES + 1);
+}

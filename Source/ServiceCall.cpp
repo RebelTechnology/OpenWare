@@ -3,6 +3,7 @@
 #include "ServiceCall.h"
 #include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
+#include "PatchRegistry.h"
 #include "Owl.h"
 
 #define USE_FFT_TABLES
@@ -106,6 +107,27 @@ static int handleGetParameters(void** params, int len){
       *value = settings.output_offset;
     }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
       *value = settings.output_scalar;
+    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_COUNT, p, 2) == 0){
+      *value = registry.getNumberOfResources();
+    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_ID, p, 2) == 0 && len >= index + 3){
+      ResourceHeader* res = registry.getResource(*(uint8_t*)value + MAX_NUMBER_OF_PATCHES + 1);
+      if (res == NULL){
+        ret = OWL_SERVICE_INVALID_ARGS;
+      }
+      else {
+        *(const char**)params[index++] = res->name;
+        *(uint8_t**)params[index++] = (uint8_t*)res + sizeof(ResourceHeader);
+        *(uint32_t*)params[index++] = res->size;
+      }
+    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_NAME, p, 2) == 0 && len >= index + 2){
+      ResourceHeader* res = registry.getResource(*((const char**)value));
+      if (res == NULL){
+        ret = OWL_SERVICE_INVALID_ARGS;
+      }
+      else {
+        *(uint8_t**)params[index++] = (uint8_t*)res + sizeof(ResourceHeader);
+        *(uint32_t*)params[index++] = res->size;
+      }
     }else{
       ret = OWL_SERVICE_INVALID_ARGS;
     }
@@ -152,8 +174,16 @@ static int handleRequestCallback(void** params, int len){
     if(strncmp(SYSTEM_FUNCTION_MIDI, name, 3) == 0){
       *callback = (void*)midi_send;
       ret = OWL_SERVICE_OK;
-    }
+    } else
 #endif /* USE_MIDI_CALLBACK */
+    if(strncmp(SYSTEM_FUNCTION_RESOURCE_STORE, name, 3) == 0){
+      *callback = (void*)store_resource;
+      ret = OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_RESOURCE_DELETE, name, 3) == 0){
+      *callback = (void*)delete_resource;
+      ret = OWL_SERVICE_OK;
+    }
   }
   return ret;
 }
