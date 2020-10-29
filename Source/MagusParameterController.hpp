@@ -9,6 +9,7 @@
 #include "Owl.h"
 #include "OpenWareMidiControl.h"
 #include "PatchRegistry.h"
+#include "FlashStorage.h"
 #include "ApplicationSettings.h"
 #include "ProgramManager.h"
 #include "Codec.h"
@@ -258,12 +259,42 @@ public:
       screen.print(mem);
       screen.print("k");
     }
-    // draw CPU load
-    screen.print(64, offset+8, "cpu ");
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
+
+    // draw flash usage
+    int flash_used = storage.getWrittenSize() / 1024;
+    int flash_total = storage.getTotalAllocatedSize() / 1024;
+    screen.print(64, offset + 8, "flash ");
+    screen.print(flash_used * 100 / flash_total);
     screen.print("%");
+    screen.setCursor(64, offset + 17);
+    if (flash_used > 999) {
+      screen.print(flash_used / 1024);
+      screen.print(".");
+      screen.print((int)((flash_used  % 1024) * 10 / 1024));
+      screen.print("M/");
+    }
+    else {
+      screen.print(flash_used);
+      screen.print("k/");
+    }
+    if (flash_total > 999) {
+      screen.print(flash_total / 1024);
+      screen.print(".");
+      screen.print((int)((flash_total  % 1024) * 10 / 1024));
+      screen.print("M");
+    }
+    else {
+      screen.print(flash_total);
+      screen.print("k");
+    }
+
+    // draw CPU load
+    screen.print(1, offset + 17, "cpu ");
+    screen.print((int)((pv->cycles_per_block) / pv->audio_blocksize) / 83);
+    screen.print("%");
+    
     // draw firmware version
-    screen.print(1, offset+16, getFirmwareVersion());
+    screen.print(1, offset+26, getFirmwareVersion());
   }
   
   void drawStats(ScreenBuffer& screen){
