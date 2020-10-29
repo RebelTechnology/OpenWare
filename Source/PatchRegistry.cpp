@@ -63,6 +63,10 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
   return NULL;
 }
 
+uint8_t* PatchRegistry::getData(ResourceHeader* resource){
+  return ((uint8_t*)resource) + sizeof(ResourceHeader);
+}
+
 void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
   if(size > storage.getFreeSize() + storage.getDeletedSize())
     return error(FLASH_ERROR, "Insufficient flash available");
@@ -133,6 +137,7 @@ void PatchRegistry::setDeleted(uint8_t index) {
           block->setDeleted();
           init();
           debugMessage("Deleted resource", index);
+          onResourceUpdate();
         }
         else {
           error(PROGRAM_ERROR, "Invalid resource");

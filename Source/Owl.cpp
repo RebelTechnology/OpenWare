@@ -19,8 +19,6 @@
 #include "PatchRegistry.h"
 
 #ifdef OWL_MAGUS
-#include "purple-blue-cyan.h"
-#include "orange-red-pink.h"
 #include "HAL_TLC5946.h"
 #include "HAL_MAX11300.h"
 // #include "HAL_OLED.h"
@@ -28,6 +26,8 @@
 #define TLC5940_RED_DC 0x55
 #define TLC5940_GREEN_DC 0x55
 #define TLC5940_BLUE_DC 0x55
+const uint32_t* dyn_rainbowinputs = rainbowinputs;
+const uint32_t* dyn_rainbowoutputs = rainbowoutputs;
 #endif
 
 #ifdef USE_SCREEN
@@ -531,6 +531,7 @@ void owl_setup(){
   storage.init();
   registry.init();
   settings.init(); // settings need the registry to be initialised first
+  onResourceUpdate();
 #ifdef USE_CODEC
   codec.init();
   codec.set(0);
@@ -859,7 +860,7 @@ __weak void loop(void){
     if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
       uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, rainbowinputs[val&0x3ff]);
+      setLed(i, dyn_rainbowinputs[val&0x3ff]);
     }else{
       // DACs
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
@@ -867,7 +868,7 @@ __weak void loop(void){
       // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
       graphics.params.updateValue(i, 0);
       uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, rainbowoutputs[val&0x3ff]);
+      setLed(i, dyn_rainbowoutputs[val&0x3ff]);
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
   }

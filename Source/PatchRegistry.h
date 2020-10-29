@@ -25,6 +25,7 @@ public:
   }
   ResourceHeader* getResource(uint8_t index);
   ResourceHeader* getResource(const char* name);
+  uint8_t* getData(ResourceHeader* resource);
   void store(uint8_t index, uint8_t* data, size_t size);
   void setDeleted(uint8_t index);
 private:

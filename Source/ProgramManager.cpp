@@ -299,6 +299,31 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
   midi_tx.sendPatchName(program.getProgramIndex(), name);
 }
 
+// Called on init, resource operation, storage erase
+__weak void onResourceUpdate(void){
+#ifdef OWL_MAGUS
+    extern const uint32_t rainbowinputs[];
+    extern const uint32_t rainbowoutputs[];
+    extern const uint32_t* dyn_rainbowinputs;
+    extern const uint32_t* dyn_rainbowoutputs;
+    ResourceHeader* res = registry.getResource("Rainbow.in");
+    if (res == NULL){
+      dyn_rainbowinputs = rainbowinputs;
+    }
+    else {
+      dyn_rainbowinputs = (uint32_t*)registry.getData(res);
+    }
+    res = registry.getResource("Rainbow.out");
+    if (res == NULL){
+      dyn_rainbowoutputs = rainbowoutputs;
+    }
+    else {
+      dyn_rainbowoutputs = (uint32_t*)registry.getData(res);
+    }
+#endif
+}
+
+
 void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
@@ -383,6 +408,8 @@ void programFlashTask(void* p){
     program.loadProgram(index);
     program.resetProgram(false);
   }
+  if (index > MAX_NUMBER_OF_PATCHES)
+    onResourceUpdate();
   // midi_tx.sendProgramMessage();
   // midi_tx.sendDeviceStats();
   utilityTask = NULL;
@@ -396,6 +423,7 @@ void eraseFlashTask(void* p){
     storage.erase();
     // debugMessage("Erased flash storage");
     registry.init();
+    onResourceUpdate();
   }
   // midi_tx.sendProgramMessage();
   // midi_tx.sendDeviceStats();
