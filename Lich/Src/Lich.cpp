@@ -65,6 +65,19 @@ static void setSegmentDisplay(int value, bool dot=false){
     HAL_GPIO_WritePin(seg_ports[i], seg_pins[i], (bits & (1<<i)) ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
+
+void setAnalogValue(uint8_t ch, int16_t value){
+extern DAC_HandleTypeDef hdac;
+  switch(ch){
+  case PARAMETER_F:
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
+    break;
+  case PARAMETER_G:
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+    break;
+  }
+}
+
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
   case BUTTON_A:
@@ -107,11 +120,11 @@ void setup(){
   // __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   setSegmentDisplay(11, true);
-  HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, GPIO_PIN_SET);
   owl_setup();
   setEncoderValue(program.getProgramIndex());
+  setGateValue(BUTTON_A, 0);
+  setGateValue(BUTTON_B, 0);
+  setGateValue(PUSHBUTTON, 0);
 }
 
 #define PATCH_RESET_COUNTER (5000/MAIN_LOOP_SLEEP_MS)
