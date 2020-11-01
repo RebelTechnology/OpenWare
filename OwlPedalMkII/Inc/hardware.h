@@ -7,9 +7,9 @@
 #define HARDWARE_ID                  OWL_PEDAL_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal mkII"
 
-#define USE_USBD_AUDIO
-#define USE_USBD_AUDIO_TX  // microphone
-#define USE_USBD_AUDIO_RX // speaker
+/* #define USE_USBD_AUDIO */
+/* #define USE_USBD_AUDIO_TX  // microphone */
+/* #define USE_USBD_AUDIO_RX // speaker */
 #define USE_USBD_MIDI
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
@@ -18,7 +18,7 @@
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              2
-#define USB_AUDIO_CHANNELS          0
+#define USB_AUDIO_CHANNELS          2
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
