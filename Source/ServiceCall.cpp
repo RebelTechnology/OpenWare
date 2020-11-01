@@ -108,26 +108,21 @@ static int handleGetParameters(void** params, int len){
     }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
       *value = settings.output_scalar;
     }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_COUNT, p, 2) == 0){
-      *value = registry.getNumberOfResources();
-    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_ID, p, 2) == 0 && len >= index + 3){
-      ResourceHeader* res = registry.getResource(*(uint8_t*)value + MAX_NUMBER_OF_PATCHES + 1);
+      *value = (int)registry.getNumberOfResources();
+    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_ID, p, 2) == 0 && len > index){
+      uint8_t* res_index = (uint8_t*)params[index++];
+      ResourceHeader* res = registry.getResource(*res_index + MAX_NUMBER_OF_PATCHES + 1);
       if (res == NULL){
         ret = OWL_SERVICE_INVALID_ARGS;
       }
-      else {
-        *(const char**)params[index++] = res->name;
-        *(uint8_t**)params[index++] = (uint8_t*)res + sizeof(ResourceHeader);
-        *(uint32_t*)params[index++] = res->size;
-      }
-    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_NAME, p, 2) == 0 && len >= index + 2){
-      ResourceHeader* res = registry.getResource(*((const char**)value));
+      *value = (int32_t)res;
+    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_NAME, p, 2) == 0 && len > index){
+      const char* name = (char*)params[index++];
+      ResourceHeader* res = registry.getResource(name);
       if (res == NULL){
         ret = OWL_SERVICE_INVALID_ARGS;
       }
-      else {
-        *(uint8_t**)params[index++] = (uint8_t*)res + sizeof(ResourceHeader);
-        *(uint32_t*)params[index++] = res->size;
-      }
+      *value = (int32_t)res;
     }else{
       ret = OWL_SERVICE_INVALID_ARGS;
     }
