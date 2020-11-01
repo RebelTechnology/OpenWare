@@ -98,6 +98,10 @@
 #define MAIN_LOOP_SLEEP_MS           2
 #endif
 
+#ifndef LOAD_INDICATOR_PARAMETER
+#define LOAD_INDICATOR_PARAMETER     PARAMETER_A
+#endif
+
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
 #define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))

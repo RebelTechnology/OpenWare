@@ -136,6 +136,15 @@ public:
     draw(screen);
   }
 
+  void drawLoadProgress(uint8_t progress, ScreenBuffer &screen){
+    // progress should be 0 - 127
+    screen.drawRectangle(0, 30, 128, 20, WHITE);
+    screen.setCursor(32, 40);
+    screen.setTextSize(1);
+    screen.print("Uploading...");
+    screen.fillRectangle(0, 44, progress, 5, WHITE);
+  }
+
   void drawParameter(int pid, int y, ScreenBuffer& screen){
     int x = 0;
 #if 0
@@ -553,7 +562,12 @@ public:
     case STANDARD:
       // draw most recently changed parameter
       // drawParameter(selectedPid[selectedBlock], 44, screen);
-      drawParameter(selectedPid[selectedBlock], 54, screen);
+      if (getOperationMode() == LOAD_MODE){
+        drawLoadProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen);
+      }
+      else {
+        drawParameter(selectedPid[selectedBlock], 54, screen);
+      }
       // use callback to draw title and message
       drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       break;
