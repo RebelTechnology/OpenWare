@@ -83,7 +83,7 @@ static int testLoop(){
   return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_LOOP_NUMBER;
 }
 
-static int testButton(){
+int testButton(){
 #ifdef USE_BOOT1_PIN
   return !(BOOT1_GPIO_Port->IDR & BOOT1_Pin);
 #else
