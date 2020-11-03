@@ -93,6 +93,17 @@ void setGateValue(uint8_t ch, int16_t value){
   }
 }
 
+void setLed(uint8_t led, uint32_t rgb){
+  switch(led){
+  case 0:
+    HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    break;
+  case 1:
+    HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    break;
+  }
+}
+
 bool isModeButtonPressed(){
   return HAL_GPIO_ReadPin(ENC_SW_GPIO_Port, ENC_SW_Pin) == GPIO_PIN_RESET;
 }
@@ -105,25 +116,14 @@ void setEncoderValue(int value){
   __HAL_TIM_SET_COUNTER(&htim2, value<<2);
 }
 
-void setLed(uint8_t led, uint32_t rgb){
-  switch(led){
-  case 0:
-    HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    break;
-  case 1:
-    HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    break;
-  }
-}
-
 void setup(){
   // __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   setSegmentDisplay(11, true);
   owl_setup();
   setEncoderValue(program.getProgramIndex());
-  setGateValue(BUTTON_A, 0);
-  setGateValue(BUTTON_B, 0);
+  setLed(0, 0);
+  setLed(1, 0);
   setGateValue(PUSHBUTTON, 0);
 }
 
@@ -195,6 +195,6 @@ void loop(void){
   }else{
     MX_USB_HOST_Process();
   }
-  update_preset();  
+  update_preset();
   owl_loop();
 }
