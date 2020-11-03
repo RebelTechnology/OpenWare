@@ -81,10 +81,10 @@ extern DAC_HandleTypeDef hdac;
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
   case BUTTON_A:
-    setLed(0, value);
+    setLed(1, value);
     break;
   case BUTTON_B:
-    setLed(1, value);
+    setLed(2, value);
     break;
   case PUSHBUTTON:
   case BUTTON_C:
@@ -95,10 +95,10 @@ void setGateValue(uint8_t ch, int16_t value){
 
 void setLed(uint8_t led, uint32_t rgb){
   switch(led){
-  case 0:
+  case 1:
     HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
     break;
-  case 1:
+  case 2:
     HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
     break;
   }
@@ -122,16 +122,16 @@ void setup(){
   setSegmentDisplay(11, true);
   owl_setup();
   setEncoderValue(program.getProgramIndex());
-  setLed(0, 0);
   setLed(1, 0);
+  setLed(2, 0);
   setGateValue(PUSHBUTTON, 0);
 }
 
 #define PATCH_RESET_COUNTER (5000/MAIN_LOOP_SLEEP_MS)
 
-static uint32_t counter = PATCH_RESET_COUNTER;
 static void update_preset(){
   static int patchselect = 0;
+  static uint32_t counter = PATCH_RESET_COUNTER;
   switch(getOperationMode()){
   case STARTUP_MODE:
     setSegmentDisplay(SEG_DISPLAY_BLANK, true);
