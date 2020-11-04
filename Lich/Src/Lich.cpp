@@ -65,6 +65,27 @@ static void setSegmentDisplay(int value, bool dot=false){
     HAL_GPIO_WritePin(seg_ports[i], seg_pins[i], (bits & (1<<i)) ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
+void pinChanged(uint16_t pin){
+  switch(pin){
+  case SW1_Pin:
+  case GATE_IN1_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET ||
+      HAL_GPIO_ReadPin(GATE_IN1_GPIO_Port, GATE_IN1_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_A, state);
+    setButtonValue(PUSHBUTTON, state);
+    setLed(1, state ? RED_COLOUR : NO_COLOUR);
+    break;
+  }
+  case SW2_Pin:
+  case GATE_IN2_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET ||
+      HAL_GPIO_ReadPin(GATE_IN2_GPIO_Port, GATE_IN2_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_B, state);
+    setLed(2, state ? RED_COLOUR : NO_COLOUR);
+    break;
+  }
+  }
+}
 
 void setAnalogValue(uint8_t ch, int16_t value){
 extern DAC_HandleTypeDef hdac;

@@ -43,6 +43,7 @@ extern "C" {
   int16_t getAnalogValue(uint8_t index);
   void setAnalogValue(uint8_t ch, int16_t value);
   void setGateValue(uint8_t bid, int16_t value);
+  void pinChanged(uint16_t pin);
 
   OperationMode getOperationMode();
   void setOperationMode(OperationMode mode);

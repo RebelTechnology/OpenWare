@@ -315,46 +315,12 @@ void updateProgramSelector(uint8_t button, uint8_t led, uint8_t patch, bool valu
 extern "C" {
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
+  pinChanged(pin);
+}
+}
+
+__weak void pinChanged(uint16_t pin){
   switch(pin){
-#ifdef OWL_WITCH
-  case SW2_Pin:
-    {
-      bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_B, state);
-      break;
-    }
-  case SW3_Pin:
-    {
-      bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_C, state);
-      break;
-    }
-  case SW4_Pin:
-    {
-      bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_D, state);
-      break;
-    }
-#endif
-#ifdef OWL_LICH
-  case SW1_Pin:
-  case GATE_IN1_Pin: {
-    bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET ||
-      HAL_GPIO_ReadPin(GATE_IN1_GPIO_Port, GATE_IN1_Pin) == GPIO_PIN_RESET;
-    setButtonValue(BUTTON_A, state);
-    setButtonValue(PUSHBUTTON, state);
-    setLed(1, state ? RED_COLOUR : NO_COLOUR);
-    break;
-  }
-  case SW2_Pin:
-  case GATE_IN2_Pin: {
-    bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET ||
-      HAL_GPIO_ReadPin(GATE_IN2_GPIO_Port, GATE_IN2_Pin) == GPIO_PIN_RESET;
-    setButtonValue(BUTTON_B, state);
-    setLed(2, state ? RED_COLOUR : NO_COLOUR);
-    break;
-  }
-#endif
 #ifdef OWL_BIOSIGNALS
   case ADC_DRDY_Pin: {
     ads_drdy();
@@ -488,7 +454,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     break;
 #endif    
   }
-}
 }
 
 #ifdef OWL_MAGUS

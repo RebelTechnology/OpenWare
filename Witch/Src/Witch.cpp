@@ -18,6 +18,29 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+void pinChanged(uint16_t pin){
+  switch(pin){
+  case SW2_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_B, state);
+      break;
+    }
+  case SW3_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_C, state);
+      break;
+    }
+  case SW4_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_D, state);
+      break;
+    }
+  }
+}
+
 void setAnalogValue(uint8_t ch, int16_t value){
   extern DAC_HandleTypeDef hdac;
   // todo set LEDs
