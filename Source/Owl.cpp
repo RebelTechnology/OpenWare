@@ -343,7 +343,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
       HAL_GPIO_ReadPin(GATE_IN1_GPIO_Port, GATE_IN1_Pin) == GPIO_PIN_RESET;
     setButtonValue(BUTTON_A, state);
     setButtonValue(PUSHBUTTON, state);
-    HAL_GPIO_WritePin(LED_SW1_GPIO_Port, LED_SW1_Pin, state ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    setLed(1, state ? RED_COLOUR : NO_COLOUR);
     break;
   }
   case SW2_Pin:
@@ -351,7 +351,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
     bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET ||
       HAL_GPIO_ReadPin(GATE_IN2_GPIO_Port, GATE_IN2_Pin) == GPIO_PIN_RESET;
     setButtonValue(BUTTON_B, state);
-    HAL_GPIO_WritePin(LED_SW2_GPIO_Port, LED_SW2_Pin, state ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    setLed(2, state ? RED_COLOUR : NO_COLOUR);
     break;
   }
 #endif

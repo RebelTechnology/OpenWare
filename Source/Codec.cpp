@@ -135,7 +135,7 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
   // if(available < AUDIO_RX_PACKET_SIZE)
   //   return available;
 #endif
-  return AUDIO_RX_PACKET_SIZE;
+  return len;
 }
 
 static int32_t usbd_audio_tx_flow = 0;

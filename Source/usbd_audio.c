@@ -14,11 +14,11 @@
 
 #include "usbd_audio.h"
 #include "usbd_desc.h"
+#include "usbd_conf.h"
 #include "usbd_ctlreq.h"
 #include "device.h"
 #include "midi.h"
 #include "message.h"
-
 
 #define AUDIO_SAMPLE_FREQ(frq)  (uint8_t)(frq), (uint8_t)((frq >> 8)), (uint8_t)((frq >> 16))
 
@@ -76,8 +76,21 @@ USBD_ClassTypeDef  USBD_AUDIO =
 #define MIDI_TX_EP                     0x82
 
 #define AUDIO_RX_IF                    0x01 // bInterfaceNumber
+/* #define AUDIO_TX_IF                    0x02 */
+/* #define AUDIO_MIDI_IF                  0x03 */
+
+#ifdef USE_USBD_AUDIO_RX
 #define AUDIO_TX_IF                    0x02
+#else
+#define AUDIO_TX_IF                    0x01
+#endif
+#if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
 #define AUDIO_MIDI_IF                  0x03
+#elif defined USE_USBD_AUDIO_RX || defined USE_USBD_AUDIO_TX
+#define AUDIO_MIDI_IF                  0x02
+#else
+#define AUDIO_MIDI_IF                  0x01
+#endif
 
 #ifdef USE_USBD_AUDIO_RX
 #define USBD_AUDIO_RX_AC_DESC_LEN      21
@@ -107,8 +120,8 @@ USBD_ClassTypeDef  USBD_AUDIO =
 #define USBD_MIDI_NUM_INTERFACES       0
 #endif
 
-// including Audio Control AC interface
-#define AUDIO_NUM_INTERFACES           (1+USBD_AUDIO_RX_NUM_INTERFACES+USBD_AUDIO_TX_NUM_INTERFACES+USBD_MIDI_NUM_INTERFACES)
+// not including Audio Control AC interface
+#define AUDIO_NUM_INTERFACES           (USBD_AUDIO_RX_NUM_INTERFACES+USBD_AUDIO_TX_NUM_INTERFACES+USBD_MIDI_NUM_INTERFACES)
 
 #define USBD_AC_HEADER_LEN             (8+AUDIO_NUM_INTERFACES)
 #define USBD_AC_DESC_LEN               (USBD_AC_HEADER_LEN+USBD_AUDIO_RX_AC_DESC_LEN+USBD_AUDIO_TX_AC_DESC_LEN)
@@ -123,11 +136,16 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x02,                                 /* bDescriptorType */
   LOBYTE(USB_AUDIO_CONFIG_DESC_SIZ),    /* wTotalLength */
   HIBYTE(USB_AUDIO_CONFIG_DESC_SIZ),    /* wTotalLength */
-  AUDIO_NUM_INTERFACES,                 /* bNumInterfaces (+1 for AC Interface) */
+  (AUDIO_NUM_INTERFACES+1),             /* bNumInterfaces (+1 for AC Interface) */
   0x01,                                 /* bConfigurationValue */
   0x00,                                 /* iConfiguration */
+#ifdef USBD_SELF_POWERED
+  0xc0,                                 /* bmAttributes: Self Powered */
+  0,                                    /* bMaxPower in 2mA steps */
+#else
   0x80,                                 /* bmAttributes: BUS Powered */
   100,                                  /* bMaxPower in 2mA steps */
+#endif
   /* 09 bytes */
   
   /* Standard AC Interface Descriptor */
@@ -152,7 +170,6 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   HIBYTE(USBD_AC_DESC_LEN),             // wTotalLength
   // Includes the combined length of this descriptor header and all Unit and Terminal descriptors.
   AUDIO_NUM_INTERFACES,                 // bInCollection
-  0x00,                                 // baInterfaceNr Audio Control interface
 #ifdef USE_USBD_AUDIO_RX
   AUDIO_RX_IF,                          // baInterfaceNr
 #endif
@@ -637,6 +654,7 @@ static USBD_StatusTypeDef USBD_AUDIO_OpenEndpoint(USBD_HandleTypeDef *pdev,
 static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev, 
 				 uint8_t cfgidx)
 {
+  USBD_DbgLog("Init 0x%x", cfgidx);
   USBD_AUDIO_HandleTypeDef   *haudio;
   /* Assign Audio structure */
   /* pdev->pClassData = USBD_malloc(sizeof (USBD_AUDIO_HandleTypeDef)); */
@@ -676,6 +694,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev, 
                                  uint8_t cfgidx)
 {
+  USBD_DbgLog("DeInit 0x%x", cfgidx);
   USBD_AUDIO_HandleTypeDef* haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
   (void)haudio;
 
@@ -702,6 +721,7 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
 #define USBD_AUDIO_DESC_SIZ                                          0x09
 static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
 						USBD_SetupReqTypedef *req){
+  USBD_DbgLog("SetInterfaceAlt 0x%x 0x%x", req->wIndex, req->wValue);
   USBD_AUDIO_HandleTypeDef* haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   (void)haudio;
   uint8_t as_interface_num = req->wIndex;
@@ -746,7 +766,7 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
   default:
     USBD_CtlError(pdev, req);
   }
-  return USBD_FAIL;
+ return USBD_FAIL;
 }
 
 static uint8_t AUDIO_REQ(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req) {  
@@ -845,7 +865,8 @@ static uint8_t USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev,
     break;    
   case USB_REQ_TYPE_STANDARD:
     switch (req->bRequest){
-    case USB_REQ_GET_DESCRIPTOR:      
+    case USB_REQ_GET_DESCRIPTOR:
+      USBD_DbgLog("GET_DESCRIPTOR 0x%x 0x%x 0x%x", req->wIndex, req->wValue >> 8, req->wLength);
       if( (req->wValue >> 8) == USBD_AUDIO_DESC_TYPE_CS_DEVICE){
         pbuf = USBD_AUDIO_CfgDesc + 18;
         len = MIN(USBD_AUDIO_DESC_SIZ , req->wLength);
@@ -858,18 +879,24 @@ static uint8_t USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev,
 	USBD_CtlSendData(pdev, &(haudio->ac_alt_setting), 1);
 	return USBD_OK;
 	break;
+#ifdef USE_USBD_AUDIO_RX
       case AUDIO_RX_IF:
 	USBD_CtlSendData(pdev, &(haudio->rx_alt_setting), 1);
 	return USBD_OK;
 	break;
+#endif
+#ifdef USE_USBD_AUDIO_TX
       case AUDIO_TX_IF:
 	USBD_CtlSendData(pdev, &(haudio->tx_alt_setting), 1);
 	return USBD_OK;
 	break;
+#endif
+#ifdef USE_USBD_MIDI
       case AUDIO_MIDI_IF:
 	USBD_CtlSendData(pdev, &(haudio->midi_alt_setting), 1);
 	return USBD_OK;
 	break;
+#endif
       default:
         USBD_CtlError (pdev, req);
         ret = USBD_FAIL;
@@ -989,7 +1016,7 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
 {
   /* SOF (Start of Frame) Every millisecond (12000 full-bandwidth bit times), the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
-#ifdef USE_USBD_AUDIO
+#ifdef USE_USBD_AUDIO_FALSE // todo: Start-of-frame sync
   usbd_audio_sync_callback(0);
 #endif
   return USBD_OK;
