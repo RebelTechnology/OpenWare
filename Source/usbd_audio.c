@@ -75,20 +75,22 @@ USBD_ClassTypeDef  USBD_AUDIO =
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x82
 
+#if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
 #define AUDIO_RX_IF                    0x01 // bInterfaceNumber
-/* #define AUDIO_TX_IF                    0x02 */
-/* #define AUDIO_MIDI_IF                  0x03 */
-
-#ifdef USE_USBD_AUDIO_RX
 #define AUDIO_TX_IF                    0x02
-#else
-#define AUDIO_TX_IF                    0x01
-#endif
-#if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
 #define AUDIO_MIDI_IF                  0x03
-#elif defined USE_USBD_AUDIO_RX || defined USE_USBD_AUDIO_TX
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
+#define AUDIO_RX_IF                    0x01
+#define AUDIO_TX_IF                    0x02
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI
+#define AUDIO_RX_IF                    0x01
+#define AUDIO_MIDI_IF                  0x02
+#elif defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
+#define AUDIO_TX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x02
 #else
+#define AUDIO_RX_IF                    0x01
+#define AUDIO_TX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x01
 #endif
 
@@ -197,18 +199,20 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x00,                                 // iTerminal Unused
   /* 12 byte */
 
-  /* /\* Feature Unit Descriptor*\/ */
-  /* 0x0a,                                 // bLength */
-  /* 0x24,                                 // bDescriptorType */
-  /* 0x06,                                 // bDescriptorSubtype */
-  /* 0x16,                                 // bUnitID */
-  /* 0x12,                                 // bSourceID */
-  /* 0x01,                                 // bControlSize */
-  /* 0x01|0x02, // USBD_AUDIO_CONTROL_FEATURE_UNIT_MUTE|USBD_AUDIO_CONTROL_FEATURE_UNIT_VOLUME,      /\* bmaControls(0) *\/ */
-  /* 0,                                            /\* bmaControls(1) *\/ */
-  /* 0,                                            /\* bmaControls(2) *\/ */
-  /* 0x00,                                         /\* iTerminal *\/ */
-  /* /\* 10 byte *\/ */
+#if 0
+  /* Feature Unit Descriptor*/
+  0x0a,                                 // bLength
+  0x24,                                 // bDescriptorType
+  0x06,                                 // bDescriptorSubtype
+  0x16,                                 // bUnitID
+  0x12,                                 // bSourceID
+  0x01,                                 // bControlSize
+  0x01|0x02, // USBD_AUDIO_CONTROL_FEATURE_UNIT_MUTE|USBD_AUDIO_CONTROL_FEATURE_UNIT_VOLUME,      /* bmaControls(0) */
+  0,                                            /* bmaControls(1) */
+  0,                                            /* bmaControls(2) */
+  0x00,                                         /* iTerminal */
+  /* 10 byte */
+#endif
   
   /* Output Terminal Descriptor */
   0x09,                                 // bLength
@@ -657,7 +661,6 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
   USBD_DbgLog("Init 0x%x", cfgidx);
   USBD_AUDIO_HandleTypeDef   *haudio;
   /* Assign Audio structure */
-  /* pdev->pClassData = USBD_malloc(sizeof (USBD_AUDIO_HandleTypeDef)); */
   pdev->pClassData = &usbd_audio_handle;  
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   haudio->ac_alt_setting = 0;
@@ -1058,6 +1061,7 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
 {
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
+  (void)haudio;
   
 #ifdef USE_USBD_AUDIO_RX
   if (epnum == AUDIO_RX_EP){
