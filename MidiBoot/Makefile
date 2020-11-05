@@ -1,4 +1,3 @@
-PROJECT = MidiBoot
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
@@ -22,6 +21,8 @@ CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 ifndef PLATFORM
 PLATFORM = Alchemist
 endif
+
+PROJECT = MidiBoot-$(PLATFORM)
 
 C_SRC += usbd_desc.c usbd_conf.c
 
