@@ -1,3 +1,13 @@
+21.0.0
+------
+
+* First public Lich release
+* New Library submodule
+* Refactored build structure
+* Refactored Owl.cpp into subprojects
+* Fix USB audio mic driver Windows support
+* Improved USB Host performance
+
 20.9.0
 ------
 
