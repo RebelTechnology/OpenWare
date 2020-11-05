@@ -26,9 +26,14 @@
 #elif defined OWL_WITCH
   #define HARDWARE_VERSION    "OWL Witch Boot"
   #define APPLICATION_ADDRESS 0x08010000
-  /* #define USE_BOOT1_PIN todo: change  */
-/* #define BOOT1_Pin GPIO_PIN_2 */
-/* #define BOOT1_GPIO_Port GPIOB */
+  #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_9
+  #define BOOT1_GPIO_Port GPIOF
+  #define USE_LED
+  #define LED1_Pin GPIO_PIN_9
+  #define LED1_GPIO_Port GPIOC
+  #define LED2_Pin GPIO_PIN_8
+  #define LED2_GPIO_Port GPIOA
 #elif defined OWL_ALCHEMIST
   #define HARDWARE_VERSION    "OWL Alchemist Boot"
   #define USE_BOOT1_PIN
