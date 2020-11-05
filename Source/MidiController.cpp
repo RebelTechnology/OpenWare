@@ -93,8 +93,10 @@ void MidiController::sendDeviceInfo(){
 
 void MidiController::sendDeviceStats(){
   char buf[80];
+  (void)buf;
   buf[0] = SYSEX_DEVICE_STATS;
   char* p;
+  (void)p;
 #ifdef DEBUG_STACK
   p = &buf[1];
   p = stpcpy(p, (const char*)"Program Stack ");
