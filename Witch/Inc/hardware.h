@@ -47,8 +47,6 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
-#define USE_USB_HOST
-#define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 
 #define NOF_ADC_VALUES               9
 #define NOF_PARAMETERS               40
