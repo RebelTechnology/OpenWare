@@ -240,7 +240,7 @@ void MidiHandler::handleSettingsStoreCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
   int32_t ret = loader.handleFirmwareUpload(data, size);
   if(ret == 0){
-    setOperationMode(LOAD_MODE);
+    owl.setOperationMode(LOAD_MODE);
     setParameterValue(PARAMETER_A, loader.index*4095/loader.size);
   }
 }

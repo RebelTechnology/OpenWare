@@ -30,27 +30,22 @@ extern "C" {
     ERROR_MODE
   } OperationMode;
 
+  /** functions with weak declarations that can be defined by subprojects
+   *  to implement device specific behaviour */
   void setup(void);
   void loop(void);
-
-  void owl_setup();
-  void owl_loop();
-  void MX_USB_HOST_Process(void);
-
-  void updateProgramVector(ProgramVector* pv);
-  void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len);
-  
-  int16_t getAnalogValue(uint8_t index);
-  void setAnalogValue(uint8_t ch, int16_t value);
-  void setGateValue(uint8_t bid, int16_t value);
-  void pinChanged(uint16_t pin);
-
-  OperationMode getOperationMode();
-  void setOperationMode(OperationMode mode);
   void initLed();
   void setLed(uint8_t led, uint32_t rgb);
+  void pinChanged(uint16_t pin);
+  void setButtonValue(uint8_t ch, uint8_t value);
+  void setAnalogValue(uint8_t ch, int16_t value);
+  void setGateValue(uint8_t bid, int16_t value);
 
+  
+  int16_t getAnalogValue(uint8_t index);
   const char* getFirmwareVersion();
+  void updateProgramVector(ProgramVector* pv);
+  void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len);  
 
 #ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder);
@@ -77,7 +72,6 @@ extern "C" {
   int16_t getParameterValue(uint8_t index);
   void setParameterValue(uint8_t ch, int16_t value);
   uint8_t getButtonValue(uint8_t ch);
-  void setButtonValue(uint8_t ch, uint8_t value);
   uint16_t getSampleCounter();
   void delay(uint32_t ms);
 
@@ -85,9 +79,22 @@ extern "C" {
 
   void jump_to_bootloader(void);  
   void device_reset(void);
+  void MX_USB_HOST_Process(void);
 
 #ifdef __cplusplus
 }
+class Owl {
+ private:
+  volatile OperationMode operationMode = STARTUP_MODE;
+  
+ public:
+  void setup();
+  void loop();
+  OperationMode getOperationMode();
+  void setOperationMode(OperationMode mode);
+};
+extern Owl owl;
+
 #endif
 
 #endif /*  __OWL_H__ */

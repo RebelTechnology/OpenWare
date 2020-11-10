@@ -73,20 +73,20 @@ extern TIM_HandleTypeDef ENCODER_TIM2;
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
-#ifdef USE_CODEC
-Codec codec;
-#endif
+Owl owl;
+uint32_t ledstatus;
 MidiController midi_tx;
 MidiReceiver midi_rx;
 ApplicationSettings settings;
-
+#ifdef USE_CODEC
+Codec codec;
+#endif
 #ifdef USE_ADC
 uint16_t adc_values[NOF_ADC_VALUES];
 #endif
 #ifdef USE_DAC
 extern DAC_HandleTypeDef hdac;
 #endif
-uint32_t ledstatus;
 
 int16_t getAnalogValue(uint8_t ch){
 #ifdef USE_ADC
@@ -480,7 +480,7 @@ uint8_t getPortMode(uint8_t index){
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
-void owl_setup(){
+void Owl::setup(void){
 #ifdef USE_IWDG
   IWDG->KR = 0xCCCC; // Enable IWDG and turn on LSI
   IWDG->KR = 0x5555; // ensure watchdog register write is allowed
@@ -638,7 +638,7 @@ __weak void setup(){
   if(ret != HAL_OK)
     error(CONFIG_ERROR, "ADC3 Start failed");
 #endif
-  owl_setup();
+  owl.setup();
 }
 
 #ifdef USE_DIGITALBUS
@@ -665,12 +665,11 @@ void updateLed(){
 }
 #endif /*USE_RGB_LED */
 
-static volatile OperationMode operationMode = STARTUP_MODE;
-OperationMode getOperationMode(){
+OperationMode Owl::getOperationMode(){
   return operationMode;
 }
 
-void setOperationMode(OperationMode mode){
+void Owl::setOperationMode(OperationMode mode){
   setLed(0, YELLOW_COLOUR);
   operationMode = mode;
 }
@@ -689,9 +688,9 @@ int getPatchSelectionValue(){
 void owl_mode_button(void){
   static int patchselect = 0;
   static int gainselect = 0;
-  switch(getOperationMode()){
+  switch(owl.getOperationMode()){
   case STARTUP_MODE:
-    setOperationMode(RUN_MODE);
+    owl.setOperationMode(RUN_MODE);
     break;
   case LOAD_MODE:
     setLed(0, getParameterValue(PARAMETER_A)*BLUE_COLOUR/4095);
@@ -700,10 +699,10 @@ void owl_mode_button(void){
     if(isModeButtonPressed()){
       patchselect = getPatchSelectionValue();
       gainselect = getGainSelectionValue();
-      setOperationMode(CONFIGURE_MODE);
+      owl.setOperationMode(CONFIGURE_MODE);
       setLed(0, NO_COLOUR);
     }else if(getErrorStatus() != NO_ERROR){
-      setOperationMode(ERROR_MODE);
+      owl.setOperationMode(ERROR_MODE);
     }else{
 #ifdef USE_RGB_LED
       updateLed();
@@ -730,7 +729,7 @@ void owl_mode_button(void){
 	setLed(0, value & 0x01 ? YELLOW_COLOUR : CYAN_COLOUR);
       }
     }else{
-      setOperationMode(RUN_MODE);
+      owl.setOperationMode(RUN_MODE);
     }
     break;
   case ERROR_MODE:
@@ -781,7 +780,7 @@ __weak void loop(void){
 #endif
 #endif
 
-  owl_loop();
+  owl.loop();
 
 #ifdef OWL_EFFECTSBOX
   // uint8_t state =
@@ -870,7 +869,7 @@ __weak void loop(void){
 #endif  
 }
 
-void owl_loop(){
+void Owl::loop(){
 #ifdef USE_DIGITALBUS
   busstatus = bus_status();
 #endif

@@ -141,7 +141,7 @@ void setup(){
   // __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   setSegmentDisplay(11, true);
-  owl_setup();
+  owl.setup();
   setEncoderValue(program.getProgramIndex());
   setLed(1, 0);
   setLed(2, 0);
@@ -153,10 +153,10 @@ void setup(){
 static void update_preset(){
   static int patchselect = 0;
   static uint32_t counter = PATCH_RESET_COUNTER;
-  switch(getOperationMode()){
+  switch(owl.getOperationMode()){
   case STARTUP_MODE:
     setSegmentDisplay(SEG_DISPLAY_BLANK, true);
-    setOperationMode(RUN_MODE);
+    owl.setOperationMode(RUN_MODE);
     patchselect = program.getProgramIndex();
     setEncoderValue(patchselect);
     break;
@@ -167,7 +167,7 @@ static void update_preset(){
     break;
   case RUN_MODE:
     if(getErrorStatus() != NO_ERROR){
-      setOperationMode(ERROR_MODE);
+      owl.setOperationMode(ERROR_MODE);
     }else if(getEncoderValue() != patchselect){
       patchselect = max(1, min((int)registry.getNumberOfPatches()-1, getEncoderValue()));
       if(getEncoderValue() != patchselect)
@@ -190,7 +190,7 @@ static void update_preset(){
     }
     break;
   case CONFIGURE_MODE:
-    setOperationMode(RUN_MODE);
+    owl.setOperationMode(RUN_MODE);
     break;
   case STREAM_MODE:
     setSegmentDisplay(SEG_DISPLAY_U);
@@ -217,5 +217,5 @@ void loop(void){
     MX_USB_HOST_Process();
   }
   update_preset();
-  owl_loop();
+  owl.loop();
 }
