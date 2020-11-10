@@ -352,7 +352,7 @@ static void MIDI_ProcessTransmission(USBH_HandleTypeDef *phost){
     }
 }
 
-void usbh_midi_reset(void){
+__weak void usbh_midi_reset(void){
   // extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
   // USBH_LL_ResetPort(&USBH_HANDLE);
 }
