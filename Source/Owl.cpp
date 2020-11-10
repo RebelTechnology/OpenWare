@@ -940,6 +940,10 @@ void jump_to_bootloader(void){
 //   USBD_DeInit(&USBD_HANDLE);
 // #endif
   *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
+#ifdef USE_BKPSRAM
+  extern RTC_HandleTypeDef hrtc;
+  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
+#endif
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
   NVIC_SystemReset();
@@ -953,6 +957,8 @@ void device_reset(){
   extern RTC_HandleTypeDef hrtc;
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
+  /* Disable all interrupts */
+  RCC->CIR = 0x00000000;
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
