@@ -123,7 +123,6 @@ bool isModeButtonPressed(){
   return HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
 }
 
-
 #define PATCH_RESET_COUNTER 80
 static uint32_t counter = 0;
 static void update_preset(){
