@@ -8,7 +8,6 @@ C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/wm8731.c
 C_SRC += $(OPENWARE)/Source/usbd_midi.c
-C_SRC += $(OPENWARE)/Source/usbd_midi_if.c
 
 ifndef PLATFORM
 PLATFORM = Pedal

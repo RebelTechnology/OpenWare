@@ -9,7 +9,6 @@ CPP_SRC = $(wildcard Src/*.cpp)
 
 # C_SRC += usbd_audio.c
 C_SRC += $(OPENWARE)/Source/usbd_midi.c
-C_SRC += $(OPENWARE)/Source/usbd_midi_if.c
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/crc32.c

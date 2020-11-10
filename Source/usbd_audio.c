@@ -1113,7 +1113,7 @@ uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev,
                                         void *fops)
 {
   pdev->pUserData = fops;
-  return 0;
+  return USBD_OK;
 }
 
 void usbd_audio_write(uint8_t* buf, size_t len) {
