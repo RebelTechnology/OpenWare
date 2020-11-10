@@ -887,6 +887,16 @@ void Owl::loop(){
 #ifdef USE_IWDG
   IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
 #endif
+  if(backgroundTask != NULL)
+    backgroundTask->loop();
+}
+
+void Owl::setBackgroundTask(BackgroundTask* bt){
+  if(backgroundTask != NULL)
+    backgroundTask->end();
+  backgroundTask = bt;
+  if(backgroundTask != NULL)
+    backgroundTask->begin();
 }
 
 extern "C"{

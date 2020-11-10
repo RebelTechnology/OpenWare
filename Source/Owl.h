@@ -82,16 +82,26 @@ extern "C" {
   void MX_USB_HOST_Process(void);
 
 #ifdef __cplusplus
-}
+} /* extern C */
+
+class BackgroundTask {
+ public:
+  virtual void begin(){}
+  virtual void loop() = 0;
+  virtual void end(){}
+};
+
 class Owl {
  private:
   volatile OperationMode operationMode = STARTUP_MODE;
+  BackgroundTask* backgroundTask = NULL;
   
  public:
   void setup();
   void loop();
   OperationMode getOperationMode();
   void setOperationMode(OperationMode mode);
+  void setBackgroundTask(BackgroundTask* bt);
 };
 extern Owl owl;
 
