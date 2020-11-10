@@ -7,6 +7,7 @@
 #include "ProgramManager.h"
 #include "PatchRegistry.h"
 #include "OpenWareMidiControl.h"
+#include "ApplicationSettings.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -148,7 +149,7 @@ void setup(){
   setGateValue(PUSHBUTTON, 0);
 }
 
-#define PATCH_RESET_COUNTER (5000/MAIN_LOOP_SLEEP_MS)
+#define PATCH_RESET_COUNTER (4000/MAIN_LOOP_SLEEP_MS)
 
 static void update_preset(){
   static int patchselect = 0;
@@ -169,6 +170,7 @@ static void update_preset(){
     if(getErrorStatus() != NO_ERROR){
       owl.setOperationMode(ERROR_MODE);
     }else if(getEncoderValue() != patchselect){
+      // encoder has changed
       patchselect = max(1, min((int)registry.getNumberOfPatches()-1, getEncoderValue()));
       if(getEncoderValue() != patchselect)
 	setEncoderValue(patchselect);
@@ -185,8 +187,19 @@ static void update_preset(){
 	setEncoderValue(patchselect);	
       }
     }else{
-      setSegmentDisplay(patchselect, true);
-      counter = PATCH_RESET_COUNTER;
+      // encoder hasn't changed and the current patch is selected
+      if(isModeButtonPressed()){
+	// press and hold to store settings
+	if(--counter == 0){
+	  counter = PATCH_RESET_COUNTER;
+	  settings.saveToFlash();
+	}else{
+	  setSegmentDisplay(patchselect, counter*MAIN_LOOP_SLEEP_MS > 2000);
+	}
+      }else{
+	setSegmentDisplay(patchselect, true);
+	counter = PATCH_RESET_COUNTER;
+      }
     }
     break;
   case CONFIGURE_MODE:
@@ -200,8 +213,9 @@ static void update_preset(){
     if(--counter == 0)
       counter = PATCH_RESET_COUNTER;
     if(isModeButtonPressed()){
-      program.loadProgram(patchselect);
-      program.resetProgram(false); // runAudioTask() changes to RUN_MODE
+      setErrorStatus(NO_ERROR);
+      owl.setOperationMode(RUN_MODE); // allows new patch selection if patch doesn't load
+      program.resetProgram(false);
     }
     break;
   }
