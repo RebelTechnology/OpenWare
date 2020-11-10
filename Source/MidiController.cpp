@@ -192,24 +192,28 @@ void MidiController::sendProgramStats(){
   sendSysEx((uint8_t*)buf, p-buf);
 }
 
-void MidiController::sendStatus(){
-  char buf[64];
-  buf[0] = SYSEX_PROGRAM_STATS;
-  char* p = &buf[1];
+void MidiController::sendErrorMessage(){
   uint8_t err = getErrorStatus();
-  if(err == NO_ERROR){
+  if(err != NO_ERROR){
+    char buf[64];
+    buf[0] = SYSEX_PROGRAM_ERROR;
+    char* p = &buf[1];
+    p = stpcpy(p, (const char*)"Error 0x");
+    p = stpcpy(p, msg_itoa(err, 16));
+    const char* msg = getErrorMessage();
+    if(msg != NULL){
+      p = stpcpy(p, (const char*)" ");
+      p = stpcpy(p, msg);
+    }
+    sendSysEx((uint8_t*)buf, p-buf);
+  }
+}
+
+void MidiController::sendStatus(){
+  if(getErrorStatus() == NO_ERROR)
     sendProgramStats();
-    return;
-  }
-  p = stpcpy(p, (const char*)"Error 0x");
-  p = stpcpy(p, msg_itoa(err, 16));
-  const char* msg = getErrorMessage();
-  if(err != NO_ERROR && msg != NULL){
-  // if(msg != NULL){
-    p = stpcpy(p, (const char*)" ");
-    p = stpcpy(p, msg);
-  }
-  sendSysEx((uint8_t*)buf, p-buf);
+  else
+    sendErrorMessage();
 }
 
 void MidiController::sendProgramMessage(){
