@@ -188,7 +188,7 @@ static void update_preset(){
       }
     }else{
       // encoder hasn't changed and the current patch is selected
-      if(isModeButtonPressed()){
+      if(isModeButtonPressed() && patchselect != 0){
 	// press and hold to store settings
 	if(--counter == 0){
 	  counter = PATCH_RESET_COUNTER;
