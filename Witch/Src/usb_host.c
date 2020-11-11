@@ -72,10 +72,11 @@ void MX_USB_HOST_Process()
   if(Appli_state == APPLICATION_DISCONNECT){
     USBH_Stop(&HUSB_HOST);
     USBH_DeInit(&HUSB_HOST);
+    Appli_state = APPLICATION_DISCONNECTED;
+  }else if(Appli_state == APPLICATION_DISCONNECTED){
     MX_USB_HOST_Init();
-    // USBH_Start(&HUSB_HOST);
     Appli_state = APPLICATION_IDLE;
-  }
+  }  
 }
 
 /* USER CODE END 1 */

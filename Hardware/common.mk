@@ -84,7 +84,7 @@ size: $(ELF) $(BIN)
 	@ls -sh $(BIN)
 
 clean:
-	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) gdbscript
+	@rm -f $(OBJS) $(BUILD)/*.{d,lst} $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s)
 
 flash:
 	$(OPENOCD) -c "program Build/$(PROJECT).elf verify reset exit"

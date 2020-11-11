@@ -34,14 +34,15 @@
 #define USBD_MAX_POWER               200 // 200mA
 #endif
 
-#define OWLBOOT_MAGIC_NUMBER        (0xDADAB007)
+#define OWLBOOT_MAGIC_NUMBER        0xDADAB007
+#define OWLBOOT_LOOP_NUMBER         0xDADADEAD
 #define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
 
 #define STORAGE_MAX_BLOCKS           64
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
-/* #define DEBUG_STORAGE */
+#define DEBUG_STORAGE
 
 #ifdef SSD1331
 #define OLED_WIDTH		     96
@@ -68,10 +69,18 @@
 #define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */
+#ifndef AUDIO_INPUT_OFFSET
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
+#endif
+#ifndef AUDIO_INPUT_SCALAR
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */
+#endif
+#ifndef AUDIO_OUTPUT_OFFSET
 #define AUDIO_OUTPUT_OFFSET          0x00001eec /* 0.1208 * 65535 */
+#endif
+#ifndef AUDIO_OUTPUT_SCALAR
 #define AUDIO_OUTPUT_SCALAR          0xfffb5bab /* -4.642 * 65535 */
+#endif
 #define DEFAULT_PROGRAM              1
 #define BUTTON_PROGRAM_CHANGE
 #define AUDIO_BITDEPTH               24    /* bits per sample */
@@ -98,6 +107,6 @@
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
-/* #define USE_IWDG                     // compile with support for IWDG watchdog */
+#define USE_IWDG                     // compile with support for IWDG watchdog
 
 #endif /* __DEVICE_H__ */

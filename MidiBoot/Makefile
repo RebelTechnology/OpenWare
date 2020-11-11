@@ -1,4 +1,3 @@
-PROJECT = MidiBoot
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
@@ -10,7 +9,6 @@ CPP_SRC = $(wildcard Src/*.cpp)
 
 # C_SRC += usbd_audio.c
 C_SRC += $(OPENWARE)/Source/usbd_midi.c
-C_SRC += $(OPENWARE)/Source/usbd_midi_if.c
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/crc32.c
@@ -22,6 +20,8 @@ CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 ifndef PLATFORM
 PLATFORM = Alchemist
 endif
+
+PROJECT = MidiBoot-$(PLATFORM)
 
 C_SRC += usbd_desc.c usbd_conf.c
 
