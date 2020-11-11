@@ -261,11 +261,8 @@ void SystemInit (void)
   FMC_Bank1_R->BTCR[0] = 0x000030D2;
 
   /* Configure the Vector Table location add offset address for cortex-M7 ------------------*/
-#ifdef VECT_TAB_SRAM
-  SCB->VTOR = D1_AXISRAM_BASE  | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal AXI-RAM */
-#else
-  SCB->VTOR = FLASH_BANK1_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
-#endif
+  extern char _ISR_VECTOR;
+  SCB->VTOR = (uint32_t)&_ISR_VECTOR;
 
 #endif /*DUAL_CORE && CORE_CM4*/
 
