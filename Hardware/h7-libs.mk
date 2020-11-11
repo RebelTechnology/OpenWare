@@ -21,6 +21,7 @@ C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_spi.c
 
 # optionals
 C_SRC_UART = $(DRIVERS)/Src/stm32h7xx_hal_uart.c
+C_SRC_UART += $(DRIVERS)/Src/stm32h7xx_hal_uart_ex.c
 C_SRC_DAC = $(DRIVERS)/Src/stm32h7xx_hal_dac.c
 C_SRC_DAC += $(DRIVERS)/Src/stm32h7xx_hal_dac_ex.c
 C_SRC_CRC = $(DRIVERS)/Src/stm32h7xx_hal_crc.c
