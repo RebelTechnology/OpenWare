@@ -45,6 +45,12 @@
 
 /* USER CODE BEGIN Includes */
 /* Section where include file can be added */
+#include "device.h"
+#ifdef DEBUG_STACK
+#define configUSE_TRACE_FACILITY                1
+#define INCLUDE_uxTaskGetStackHighWaterMark     1
+#endif /* DEBUG_STACK */
+
 /* USER CODE END Includes */
 
 /* Ensure definitions are only used by the compiler, and not by the assembler. */
@@ -69,7 +75,7 @@
 #define configMAX_TASK_NAME_LEN                  ( 16 )
 #define configUSE_16_BIT_TICKS                   0
 #define configQUEUE_REGISTRY_SIZE                8
-#define configCHECK_FOR_STACK_OVERFLOW           1
+#define configCHECK_FOR_STACK_OVERFLOW           2
 #define configUSE_MALLOC_FAILED_HOOK             1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
 /* USER CODE BEGIN MESSAGE_BUFFER_LENGTH_TYPE */
@@ -89,7 +95,7 @@ to exclude the API function. */
 #define INCLUDE_vTaskDelete                  1
 #define INCLUDE_vTaskCleanUpResources        0
 #define INCLUDE_vTaskSuspend                 1
-#define INCLUDE_vTaskDelayUntil              0
+#define INCLUDE_vTaskDelayUntil              1
 #define INCLUDE_vTaskDelay                   1
 #define INCLUDE_xTaskGetSchedulerState       1
 

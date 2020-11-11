@@ -5,6 +5,8 @@
 #define HARDWARE_ID                  GENIUS_HARDWARE
 #define HARDWARE_VERSION             "Genius"
 
+#define hdac hdac1
+
 #define USE_SCREEN
 #define SSD1309
 /* #define OLED_DMA */
@@ -35,6 +37,9 @@
 #define USE_USBH_MIDI
 
 #define USE_ADC
+#define ADC_PERIPH hadc1
+#define ADC_A 0
+#define ADC_B 1
 #define NOF_ADC_VALUES               2
 #define NOF_PARAMETERS               20
 #define NOF_BUTTONS                  (2+2)
