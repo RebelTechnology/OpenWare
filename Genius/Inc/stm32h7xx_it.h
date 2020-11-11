@@ -49,12 +49,12 @@
 /* Exported functions prototypes ---------------------------------------------*/
 void SysTick_Handler(void);
 void EXTI4_IRQHandler(void);
+void DMA1_Stream0_IRQHandler(void);
 void DMA1_Stream4_IRQHandler(void);
 void TIM2_IRQHandler(void);
 void TIM3_IRQHandler(void);
 void SPI2_IRQHandler(void);
 void EXTI15_10_IRQHandler(void);
-void DMA2_Stream0_IRQHandler(void);
 void DMA2_Stream1_IRQHandler(void);
 void DMA2_Stream4_IRQHandler(void);
 void OTG_HS_IRQHandler(void);
