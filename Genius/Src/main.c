@@ -20,10 +20,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "usb_device.h"
+#include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "device.h"
+#include "errorhandlers.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,6 +97,11 @@ static void MX_USB_OTG_HS_HCD_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
+void setup(void);
+void loop(void);
+void MX_USB_HOST_Process(void);
+void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
+void initialise_monitor_handles(void);
 
 /* USER CODE END PFP */
 
@@ -109,7 +117,12 @@ void StartDefaultTask(void const * argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+#ifdef DEBUG
+#warning "DEBUG uses printf and semihosting!"
+  if(CoreDebug->DHCSR & 0x01)
+    initialise_monitor_handles(); // remove when not semi-hosting
+  printf("showtime\n");
+#endif
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -146,6 +159,35 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   MX_USB_OTG_HS_HCD_Init();
   /* USER CODE BEGIN 2 */
+  HAL_SAI_DeInit(&hsai_BlockA1);
+  HAL_SAI_DeInit(&hsai_BlockB1);
+  hsai_BlockA1.Instance = SAI1_Block_A;
+  hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_TX;
+  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+    Error_Handler();
+  hsai_BlockB1.Instance = SAI1_Block_B;
+  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
+  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
+  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+    Error_Handler();
+
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+  SDRAM_Initialization_Sequence(&hsdram1);   
 
   /* USER CODE END 2 */
 
@@ -1118,11 +1160,18 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
+  /* init code for USB_HOST */
+  MX_USB_HOST_Init();
+
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 5 */
+  setup();
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    loop();
   }
   /* USER CODE END 5 */
 }
@@ -1134,8 +1183,11 @@ void StartDefaultTask(void const * argument)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -1150,8 +1202,11 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
