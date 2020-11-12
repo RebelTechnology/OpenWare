@@ -6,6 +6,7 @@ void eeprom_lock(){
   HAL_FLASH_Lock();
 }
 
+#ifndef STM32H743xx // todo: fix for H7!
 int eeprom_wait(){ 
   return FLASH_WaitForLastOperation(5000);
 }
@@ -82,3 +83,4 @@ int eeprom_erase(uint32_t address){
     ret = -1;
   return ret;
 }
+#endif
