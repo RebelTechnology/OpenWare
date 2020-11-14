@@ -6,7 +6,7 @@
 #endif
 
 #include "usbd_ioreq.h"
-#include "device.h"
+#include "cfg.h"
 
 #define AUDIO_DESCRIPTOR_TYPE                         0x21
 #define USB_DEVICE_CLASS_AUDIO                        0x01
@@ -47,17 +47,69 @@
 #define USBD_EP_ATTR_ISOC_ADAPT                           0x08 /* attribute synchro adaptative  */
 #define USBD_EP_ATTR_ISOC_SYNC                            0x0C /* attribute synchro synchronous  */
 
+
+#if 1
+/* Audio Control Requests */
+#define AUDIO_CONTROL_REQ                             0x01U
+/* Feature Unit, UAC Spec 1.0 p.102 */
+#define AUDIO_CONTROL_REQ_FU_MUTE                     0x01U
+#define AUDIO_CONTROL_REQ_FU_VOL                      0x02U
+
+/* Audio Streaming Requests */
+#define AUDIO_STREAMING_REQ                           0x02U
+#define AUDIO_STREAMING_REQ_FREQ_CTRL                 0x01U
+#define AUDIO_STREAMING_REQ_PITCH_CTRL                0x02U
+
+/* Volume. See UAC Spec 1.0 p.77 */
+#ifndef USBD_AUDIO_VOL_DEFAULT
+#define USBD_AUDIO_VOL_DEFAULT                        0x8d00U
+#endif
+#ifndef USBD_AUDIO_VOL_MAX
+#define USBD_AUDIO_VOL_MAX                            0x0000U
+#endif
+#ifndef USBD_AUDIO_VOL_MIN
+#define USBD_AUDIO_VOL_MIN                            0x8100U
+#endif
+#ifndef USBD_AUDIO_VOL_STEP
+#define USBD_AUDIO_VOL_STEP                           0x0100U
+#endif /* Total number of steps can't be too many, host will complain. */
+
+/** 
+ * The minimum distance that the wr_ptr should keep before rd_ptr to 
+ * prevent overwriting unplayed buffer
+ */
+#define USBD_AUDIO_FREQ_MAX USBD_AUDIO_FREQ
+#define AUDIO_BUF_SAFEZONE                            ((uint16_t)((USBD_AUDIO_FREQ_MAX / 1000U + 1) * 2U * 4U))
+
+#endif
+
+typedef enum
+{
+  AUDIO_OFFSET_NONE = 0,
+  AUDIO_OFFSET_HALF,
+  AUDIO_OFFSET_FULL,
+  AUDIO_OFFSET_UNKNOWN,
+}
+AUDIO_OffsetTypeDef;
+/**
+  * @}
+  */
+
+
 /** @defgroup USBD_CORE_Exported_TypesDefinitions
   * @{
   */
  typedef struct
 {
-   uint8_t cmd;   
-   uint8_t data[USB_MAX_EP0_SIZE];  
-   uint8_t len;  
-   uint8_t unit;    
+   uint8_t cmd;                    /* bRequest */
+   uint8_t req_type;               /* bmRequest */
+   uint8_t cs;                     /* wValue (high byte): Control Selector */
+   uint8_t cn;                     /* wValue (low byte): Control Number */
+   uint8_t unit;                   /* wIndex: Feature Unit ID, Extension Unit ID, or Interface, Endpoint */
+   uint8_t len;                    /* wLength */
+   uint8_t data[USB_MAX_EP0_SIZE]; /* Data */
 }
-USBD_AUDIO_ControlTypeDef; 
+USBD_AUDIO_ControlTypeDef;
 
 
 
@@ -76,6 +128,14 @@ typedef struct
   volatile uint8_t          midi_tx_lock;
   volatile uint8_t          audio_tx_active;
   int16_t                   volume;
+#if 1
+  AUDIO_OffsetTypeDef       offset;
+  uint8_t                   rd_enable;
+  uint16_t                  rd_ptr;
+  uint16_t                  wr_ptr;
+  uint32_t                  freq;
+  uint32_t                  bit_depth;
+#endif
   USBD_AUDIO_ControlTypeDef control;   
 }
 USBD_AUDIO_HandleTypeDef; 
@@ -94,9 +154,12 @@ void usbd_audio_rx_stop_callback();
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len);
 void usbd_audio_gain_callback(uint16_t gain);
 void usbd_audio_sync_callback(uint8_t gain);
-
-
 void usbd_audio_write(uint8_t* buffer, size_t len);
+
+void usbd_midi_rx(uint8_t *buffer, uint32_t length);
+void usbd_midi_tx(uint8_t* buffer, uint32_t length);
+uint8_t usbd_midi_connected(void);
+uint8_t usbd_midi_ready(void);
 
 #ifdef __cplusplus
 }
