@@ -152,6 +152,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len);
 void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels);
 void usbd_audio_rx_stop_callback();
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len);
+void usbd_audio_mute_callback(uint16_t gain);
 void usbd_audio_gain_callback(uint16_t gain);
 void usbd_audio_sync_callback(uint8_t gain);
 void usbd_audio_write(uint8_t* buffer, size_t len);
