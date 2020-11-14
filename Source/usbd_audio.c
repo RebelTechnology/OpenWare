@@ -16,9 +16,6 @@
 #include "usbd_desc.h"
 #include "usbd_conf.h"
 #include "usbd_ctlreq.h"
-#include "device.h"
-#include "midi.h"
-#include "message.h"
 
 #define AUDIO_SAMPLE_FREQ(frq)  (uint8_t)(frq), (uint8_t)((frq >> 8)), (uint8_t)((frq >> 16))
 
@@ -761,11 +758,13 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
     return USBD_OK;
     break;
 #endif /* USE_USBD_AUDIO_TX */
-  case 0: // Control interface
+#ifdef USE_USBD_MIDI
   case AUDIO_MIDI_IF:
     if(new_alt == 0)
       return USBD_OK;
     // deliberate fall-through
+#endif
+  case 0: // Control interface
   default:
     USBD_CtlError(pdev, req);
   }
@@ -941,6 +940,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 				   uint8_t epnum)
 {
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
+  (void)haudio;
 #ifdef USE_USBD_AUDIO_TX
   if(epnum == (AUDIO_TX_EP & ~0x80)){
     usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
@@ -1037,6 +1037,7 @@ static uint8_t  USBD_AUDIO_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t ep
 
   return USBD_OK;
 }
+
 /**
   * @brief  USBD_AUDIO_IsoOutIncomplete
   *         handle data ISO OUT Incomplete event
@@ -1049,6 +1050,7 @@ static uint8_t  USBD_AUDIO_IsoOutIncomplete (USBD_HandleTypeDef *pdev, uint8_t e
 
   return USBD_OK;
 }
+
 /**
   * @brief  USBD_AUDIO_DataOut
   *         handle data OUT Stage
@@ -1061,8 +1063,7 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
 {
   USBD_AUDIO_HandleTypeDef   *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
-  (void)haudio;
-  
+  (void)haudio;  
 #ifdef USE_USBD_AUDIO_RX
   if (epnum == AUDIO_RX_EP){
     uint32_t len = USBD_LL_GetRxDataSize(pdev, epnum);
@@ -1074,7 +1075,6 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
                            len);
   }
 #endif /* USE_USBD_AUDIO_RX */
-
 #ifdef USE_USBD_MIDI
   if(epnum == MIDI_RX_EP){
     /* Forward data to midi callback */
@@ -1085,9 +1085,8 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
 			   MIDI_RX_EP,
 			   haudio->midi_rx_buffer,
 			   MIDI_DATA_OUT_PACKET_SIZE);
+  }  
 #endif
-  }
-  
   return USBD_OK;
 }
 
