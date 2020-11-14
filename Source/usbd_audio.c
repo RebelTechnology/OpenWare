@@ -141,12 +141,12 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   (AUDIO_NUM_INTERFACES+1),             /* bNumInterfaces (+1 for AC Interface) */
   0x01,                                 /* bConfigurationValue */
   0x00,                                 /* iConfiguration */
-#ifdef USBD_SELF_POWERED
+#if (USBD_SELF_POWERED == 1U)
   0xc0,                                 /* bmAttributes: Self Powered */
   0,                                    /* bMaxPower in 2mA steps */
 #else
   0x80,                                 /* bmAttributes: BUS Powered */
-  100,                                  /* bMaxPower in 2mA steps */
+  USBD_MAX_POWER,                       /* bMaxPower in 2mA steps */
 #endif
   /* 09 bytes */
   
