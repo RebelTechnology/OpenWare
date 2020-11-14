@@ -92,7 +92,7 @@ USBD_ClassTypeDef  USBD_AUDIO =
 #endif
 
 #ifdef USE_USBD_AUDIO_RX
-#define USBD_AUDIO_RX_AC_DESC_LEN      21
+#define USBD_AUDIO_RX_AC_DESC_LEN      30
 #define USBD_AUDIO_RX_AS_DESC_LEN      52
 #define USBD_AUDIO_RX_NUM_INTERFACES   1
 #else
@@ -185,52 +185,53 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   0x0c,                                 // bLength
   0x24,                                 // bDescriptorType
   0x02,                                 // bDescriptorSubtype
-  0x12,                                 // bTerminalID 
+  0x01,                                 // bTerminalID 
   0x01,                                 // wTerminalType USBD_AUDIO_TERMINAL_IO_USB_STREAMING   0x0101
   0x01,                                 // wTerminalType 
   0x00,                                 // bAssocTerminal
-  USB_AUDIO_CHANNELS,                   // bNrChannels 
+  USB_AUDIO_CHANNELS,                   // bNrChannels
+#if USB_AUDIO_CHANNELS == 1
+  0x00,                                 // wChannelConfig 0x00 sets Mono, no position bits
+#else
   0x03,                                 // wChannelConfig 0x03 sets stereo channels left and right
-  0x00,                                 // wChannelConfig Mono sets no position bits 
+#endif
+  0x00,                                 // wChannelConfig
   0x00,                                 // iChannelNames
   0x00,                                 // iTerminal Unused
   /* 12 byte */
 
-#if 0
   /* Feature Unit Descriptor*/
-  0x0a,                                 // bLength
+  0x09,                                 // bLength
   0x24,                                 // bDescriptorType
   0x06,                                 // bDescriptorSubtype
-  0x16,                                 // bUnitID
-  0x12,                                 // bSourceID
+  0x02,                                 // bUnitID
+  0x01,                                 // bSourceID
   0x01,                                 // bControlSize
-  0x01|0x02, // USBD_AUDIO_CONTROL_FEATURE_UNIT_MUTE|USBD_AUDIO_CONTROL_FEATURE_UNIT_VOLUME,      /* bmaControls(0) */
-  0,                                            /* bmaControls(1) */
-  0,                                            /* bmaControls(2) */
-  0x00,                                         /* iTerminal */
-  /* 10 byte */
-#endif
+  0x01|0x02,                            // bmaControls(0) AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME
+  0,                                    // bmaControls(1)
+  0x00,                                 // iTerminal
+  /* 09 byte */
   
   /* Output Terminal Descriptor */
   0x09,                                 // bLength
   0x024,                                // bDescriptorType
   0x03,                                 // bDescriptorSubtype
-  0x14,                                 // bTerminalID 
+  0x03,                                 // bTerminalID 
   0x01,                                 // wTerminalType  0x0301
   0x03,                                 // wTerminalType  0x0301
   0x00,                                 // bAssocTerminal
-  0x16,                                 // bSourceID FU 06
+  0x02,                                 // bSourceID
   0x00,                                 // iTerminal
   /* 09 byte */
 
-  // 12+10+9 = 31 bytes
+  // 12+9+9 = 30 bytes
 #endif
 
 #ifdef USE_USBD_AUDIO_TX  
   /* USB Microphone Terminal Descriptor */
   0x0C,                         // Size of the descriptor, in bytes
-  0x24, // bDescriptorType CS_INTERFACE Descriptor Type 0x24
-  0x02,    // bDescriptorSubtype INPUT_TERMINAL descriptor subtype 0x02
+  0x24,                         // bDescriptorType CS_INTERFACE Descriptor Type 0x24
+  0x02,                         // bDescriptorSubtype INPUT_TERMINAL descriptor subtype 0x02
   0x01,                         // bTerminalID ID of this Terminal.
   0x01,                         // wTerminalType
   0x02,                         // wTerminalType Terminal is Microphone (0x0201)
