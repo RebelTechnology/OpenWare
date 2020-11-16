@@ -6,7 +6,7 @@
 #endif
 
 #include "usbd_ioreq.h"
-#include "cfg.h"
+#include "device.h"
 
 #define AUDIO_DESCRIPTOR_TYPE                         0x21
 #define USB_DEVICE_CLASS_AUDIO                        0x01

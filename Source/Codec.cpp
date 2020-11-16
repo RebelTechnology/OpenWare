@@ -167,8 +167,12 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
 #endif
 }
 
-void usbd_audio_gain_callback(uint16_t gain){
-  codec_set_gain_in(gain);
+void usbd_audio_mute_callback(int16_t gain){
+  // todo!
+}
+
+void usbd_audio_gain_callback(int16_t gain){
+  // codec_set_gain_in(gain); todo!
 }
 
 void usbd_audio_sync_callback(uint8_t shift){
@@ -241,7 +245,7 @@ void Codec::bypass(bool doBypass){
 }
 
 void Codec::mute(bool doMute){
-  codec_set_gain_out(0);
+  codec_set_gain_out(0); // todo: fixme!
 }
 
 void Codec::setInputGain(int8_t value){

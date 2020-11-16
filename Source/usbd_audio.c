@@ -27,6 +27,13 @@
     (bytes)[2]= (uint8_t)(((frq) >> 16));	\
   }while(0);
 
+#if defined USE_USBD_FS
+#define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
+#elif defined USE_USBD_HS
+#define USB_OTG_BASE_ADDRESS  USB_OTG_HS   
+#endif
+
+#define USB_SOF_NUMBER() ((((USB_OTG_DeviceTypeDef *)((uint32_t )USB_OTG_BASE_ADDRESS + USB_OTG_DEVICE_BASE))->DSTS&USB_OTG_DSTS_FNSOF)>>USB_OTG_DSTS_FNSOF_Pos)
 
 static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev, 
                                uint8_t cfgidx);
@@ -55,19 +62,16 @@ static uint8_t  USBD_AUDIO_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t ep
 
 static uint8_t  USBD_AUDIO_IsoOutIncomplete (USBD_HandleTypeDef *pdev, uint8_t epnum);
 
-#if 1
 static void AUDIO_REQ_GetCurrent(USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef* req);
 static void AUDIO_REQ_GetMax(USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef* req);
 static void AUDIO_REQ_GetMin(USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef* req);
 static void AUDIO_REQ_GetRes(USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef* req);
 static void AUDIO_REQ_SetCurrent(USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef* req);
+#ifdef USE_USBD_AUDIO_RX
 static void AUDIO_OUT_StopAndReset(USBD_HandleTypeDef* pdev);
 static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev);
-static uint8_t VOL_PERCENT(int16_t vol);
-
-#define USBD_AUDIO_DESC_TYPE_CS_DEVICE                               0x21
-#define USBD_AUDIO_DESC_SIZ                                          0x09
 #endif
+static uint8_t VOL_PERCENT(int16_t vol);
 
 USBD_AUDIO_HandleTypeDef usbd_audio_handle;
 
@@ -127,44 +131,33 @@ volatile uint8_t fb_data[3] = {
 
 /* FNSOF is critical for frequency changing to work */
 volatile uint32_t fnsof = 0;
-
 #endif
 
 #if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
 #define AUDIO_RX_IF                    0x01 // bInterfaceNumber
 #define AUDIO_TX_IF                    0x02
 #define AUDIO_MIDI_IF                  0x03
-
 #define AUDIO_RX_EP                    0x01 // bEndpointAddress
 #define AUDIO_FB_EP                    0x81
 #define AUDIO_TX_EP                    0x82
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x83
-
 #elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_TX_IF                    0x02
-#define AUDIO_RX_EP                    0x01 // bEndpointAddress
+#define AUDIO_RX_EP                    0x01
 #define AUDIO_FB_EP                    0x81
 #define AUDIO_TX_EP                    0x82
-
-#define AUDIO_RX_EP                    0x01 // bEndpointAddress
-#define AUDIO_FB_EP                    0x81
-#define AUDIO_TX_EP                    0x82
-
 #elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x02
-
-#define AUDIO_RX_EP                    0x01 // bEndpointAddress
+#define AUDIO_RX_EP                    0x01
 #define AUDIO_FB_EP                    0x81
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x82
-
 #elif defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
 #define AUDIO_TX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x02
-
 #define AUDIO_TX_EP                    0x81
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x82
@@ -172,8 +165,7 @@ volatile uint32_t fnsof = 0;
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_TX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x01
-
-#define AUDIO_RX_EP                    0x01 // bEndpointAddress
+#define AUDIO_RX_EP                    0x01
 #define AUDIO_FB_EP                    0x81
 #define AUDIO_TX_EP                    0x81
 #define MIDI_RX_EP                     0x01
@@ -871,7 +863,7 @@ static uint8_t USBD_AUDIO_Setup (USBD_HandleTypeDef *pdev,
     case USB_REQ_GET_DESCRIPTOR:
       if ((req->wValue >> 8) == AUDIO_DESCRIPTOR_TYPE) {
 	pbuf = USBD_AUDIO_CfgDesc + 18;
-	len = MIN(USBD_AUDIO_DESC_SIZ, req->wLength);
+	len = MIN(0x09, req->wLength);
 	USBD_CtlSendData(pdev, pbuf, len);
       }
       break;
@@ -946,8 +938,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 {
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
   (void)haudio;
-#if 1
-  /* epnum is the lowest 4 bits of bEndpointAddress. See UAC 1.0 spec, p.61 */
+#ifdef USE_USBD_AUDIO_RX
   if (epnum == (AUDIO_FB_EP & 0xf)) {
     tx_flag = 0U;
   }
@@ -1121,14 +1112,16 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
       }
     } else if (haudio->control.req_type == AUDIO_STREAMING_REQ) {
       USBD_DbgLog("STREAMING_REQ 0x%x 0x%x", haudio->control.cs, haudio->control.data[0]);
-      /* Frequency Control */
+#ifdef USE_USBD_AUDIO_RX
       if (haudio->control.cs == AUDIO_STREAMING_REQ_FREQ_CTRL) {
+	/* Frequency Control */
 	uint32_t new_freq = AUDIO_FREQ_FROM_DATA(haudio->control.data);
 	if (haudio->frequency != new_freq) {
 	  haudio->frequency = new_freq;
 	  AUDIO_OUT_Restart(pdev);
 	}
       }
+#endif
     }
     haudio->control.req_type = 0U;
     haudio->control.cs = 0U;
@@ -1278,9 +1271,7 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
     /* Transmit feedback only when the last one is transmitted */
     if (tx_flag == 0U) {
       /* Get FNSOF. Use volatile for fnsof_new since its address is mapped to a hardware register. */
-      USB_OTG_GlobalTypeDef* USBx = USB_OTG_FS;
-      uint32_t USBx_BASE = (uint32_t)USBx;
-      uint32_t volatile fnsof_new = (USBx_DEVICE->DSTS & USB_OTG_DSTS_FNSOF) >> 8;
+      uint32_t volatile fnsof_new = USB_SOF_NUMBER();
 
       if ((fnsof & 0x1) == (fnsof_new & 0x1)) {
         USBD_LL_Transmit(pdev, AUDIO_FB_EP, (uint8_t*)fb_data, 3U);
@@ -1289,10 +1280,9 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
       }
     }
   }
-#else
+#endif
 #ifdef USE_USBD_AUDIO_FALSE // todo: Start-of-frame sync
   usbd_audio_sync_callback(0);
-#endif
 #endif
   return USBD_OK;
 }
@@ -1306,15 +1296,12 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
   */
 static uint8_t  USBD_AUDIO_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
-#if 1
-    USB_OTG_GlobalTypeDef* USBx = USB_OTG_FS;
-  uint32_t USBx_BASE = (uint32_t)USBx;
-  fnsof = (USBx_DEVICE->DSTS & USB_OTG_DSTS_FNSOF) >> 8;
-  if (tx_flag == 1U) {
+#ifdef USE_USBD_AUDIO_RX
+  fnsof = USB_SOF_NUMBER();
+  if(tx_flag == 1U) {
     tx_flag = 0U;
     USBD_LL_FlushEP(pdev, AUDIO_FB_EP);
   }
-
 #endif
   return USBD_OK;
 }
@@ -1375,6 +1362,7 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
 }
 
 
+#ifdef USE_USBD_AUDIO_RX
 /**
  * @brief  Stop playing and reset buffer pointers
  * @param  pdev: instance
@@ -1423,6 +1411,8 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
 
   tx_flag = 0U;
 }
+#endif /* USE_USBD_AUDIO_RX */
+
 
 /**
 * @brief  DeviceQualifierDescriptor 
