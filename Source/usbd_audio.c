@@ -760,11 +760,11 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
 #endif /* USE_USBD_AUDIO_TX */
 #ifdef USE_USBD_MIDI
   case AUDIO_MIDI_IF:
+#endif
+  case 0: // Control interface
     if(new_alt == 0)
       return USBD_OK;
     // deliberate fall-through
-#endif
-  case 0: // Control interface
   default:
     USBD_CtlError(pdev, req);
   }
