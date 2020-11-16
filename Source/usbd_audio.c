@@ -16,6 +16,8 @@
 #include "usbd_desc.h"
 #include "usbd_conf.h"
 #include "usbd_ctlreq.h"
+#include "device.h"
+#include "midi.h"
 
 #define AUDIO_SAMPLE_FREQ(frq)           (uint8_t)(frq), (uint8_t)((frq >> 8)), (uint8_t)((frq >> 16))
 #define AUDIO_FREQ_FROM_DATA(bytes)      ((((uint32_t)((bytes)[2]))<<16)|(((uint32_t)((bytes)[1]))<<8)|(((uint32_t)((bytes)[0]))))
@@ -805,15 +807,16 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
 #endif /* USE_USBD_AUDIO_TX */
 #ifdef USE_USBD_MIDI
   case AUDIO_MIDI_IF:
-    if(new_alt != 0)
-      ret = USBD_FAIL;
 #endif
   case 0: // Control interface
+    if(new_alt != 0)
+      ret = USBD_FAIL;
+    break;
   default:
     ret = USBD_FAIL;
     break;
   }
- return ret;
+  return ret;
 }
 
 /**
