@@ -27,17 +27,18 @@
 #define AUDIO_IN_STREAMING_CTRL                       0x03
 #define AUDIO_OUT_STREAMING_CTRL                      0x04
 
-#define AUDIO_RX_PACKET_SIZE                          (uint32_t)(((USBD_AUDIO_FREQ * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000)) 
-#define AUDIO_TX_PACKET_SIZE                          (uint32_t)(((USBD_AUDIO_FREQ * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000))
+#define AUDIO_RX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_FREQ * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000)) 
+#define AUDIO_TX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_FREQ * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000))
+#define AUDIO_FB_PACKET_SIZE                          3U
     
 /* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
   that it is an even number and higher than 3 */
 #define AUDIO_RX_PACKET_NUM                           1
 #define AUDIO_TX_PACKET_NUM                           1
 /* Total size of the audio transfer buffer */
-#define AUDIO_RX_TOTAL_BUF_SIZE                       ((uint32_t)(AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM))
+#define AUDIO_RX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM))
 /* Total size of the IN (i.e. microphopne) transfer buffer */
-#define AUDIO_TX_TOTAL_BUF_SIZE                       ((uint32_t)(AUDIO_TX_PACKET_SIZE * AUDIO_TX_PACKET_NUM))
+#define AUDIO_TX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_TX_PACKET_SIZE * AUDIO_TX_PACKET_NUM))
 
 #define MIDI_DATA_IN_PACKET_SIZE       0x40
 #define MIDI_DATA_OUT_PACKET_SIZE      0x40
@@ -118,22 +119,23 @@ typedef struct
   uint8_t                   ac_alt_setting, tx_alt_setting, rx_alt_setting, midi_alt_setting;
 #ifdef USE_USBD_AUDIO_TX
   uint8_t                   audio_tx_buffer[AUDIO_TX_TOTAL_BUF_SIZE];
+  volatile uint8_t          audio_tx_active;
 #endif
 #ifdef USE_USBD_AUDIO_RX
   uint8_t                   audio_rx_buffer[AUDIO_RX_TOTAL_BUF_SIZE];
+  volatile uint8_t          audio_rx_active;
 #endif
 #ifdef USE_USBD_MIDI
   uint8_t                   midi_rx_buffer[MIDI_DATA_OUT_PACKET_SIZE];
-#endif
   volatile uint8_t          midi_tx_lock;
-  volatile uint8_t          audio_tx_active;
+#endif
   int16_t                   volume;
 #if 1
   AUDIO_OffsetTypeDef       offset;
   uint8_t                   rd_enable;
   uint16_t                  rd_ptr;
   uint16_t                  wr_ptr;
-  uint32_t                  freq;
+  uint32_t                  frequency;
   uint32_t                  bit_depth;
 #endif
   USBD_AUDIO_ControlTypeDef control;   
@@ -152,8 +154,8 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len);
 void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels);
 void usbd_audio_rx_stop_callback();
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len);
-void usbd_audio_mute_callback(uint16_t gain);
-void usbd_audio_gain_callback(uint16_t gain);
+void usbd_audio_mute_callback(int16_t gain);
+void usbd_audio_gain_callback(int16_t gain);
 void usbd_audio_sync_callback(uint8_t gain);
 void usbd_audio_write(uint8_t* buffer, size_t len);
 
