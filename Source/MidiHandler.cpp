@@ -177,7 +177,7 @@ void MidiHandler::updateCodecSettings(){
 }
 
 void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
-  if(size < 3) // size may be 3 or 4 depending on number of digits in value
+  if(size < 3) // size may be 3 or more depending on number of digits in value
     return;
   char* p = (char*)data;
   int32_t value = strtol(p+2, NULL, 16);
