@@ -41,13 +41,13 @@
 /* Total size of the IN (i.e. microphopne) transfer buffer */
 #define AUDIO_TX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_TX_PACKET_SIZE * AUDIO_TX_PACKET_NUM))
 
-#define MIDI_DATA_IN_PACKET_SIZE       0x40
-#define MIDI_DATA_OUT_PACKET_SIZE      0x40
+#define MIDI_TX_PACKET_SIZE                           0x40
+#define MIDI_RX_PACKET_SIZE                           0x40
    
-#define USBD_EP_ATTR_ISOC_NOSYNC                          0x00 /* attribute no synchro */
-#define USBD_EP_ATTR_ISOC_ASYNC                           0x04 /* attribute synchro by feedback  */
-#define USBD_EP_ATTR_ISOC_ADAPT                           0x08 /* attribute synchro adaptative  */
-#define USBD_EP_ATTR_ISOC_SYNC                            0x0C /* attribute synchro synchronous  */
+#define USBD_EP_ATTR_ISOC_NOSYNC                      0x00 /* attribute no synchro */
+#define USBD_EP_ATTR_ISOC_ASYNC                       0x04 /* attribute synchro by feedback  */
+#define USBD_EP_ATTR_ISOC_ADAPT                       0x08 /* attribute synchro adaptative  */
+#define USBD_EP_ATTR_ISOC_SYNC                        0x0C /* attribute synchro synchronous  */
 
 
 #if 1
@@ -85,18 +85,6 @@
 
 #endif
 
-typedef enum
-{
-  AUDIO_OFFSET_NONE = 0,
-  AUDIO_OFFSET_HALF,
-  AUDIO_OFFSET_FULL,
-  AUDIO_OFFSET_UNKNOWN,
-}
-AUDIO_OffsetTypeDef;
-/**
-  * @}
-  */
-
 
 /** @defgroup USBD_CORE_Exported_TypesDefinitions
   * @{
@@ -121,24 +109,20 @@ typedef struct
 #ifdef USE_USBD_AUDIO_TX
   uint8_t                   audio_tx_buffer[AUDIO_TX_TOTAL_BUF_SIZE];
   volatile uint8_t          audio_tx_active;
+  volatile uint16_t         tx_soffn;
 #endif
 #ifdef USE_USBD_AUDIO_RX
   uint8_t                   audio_rx_buffer[AUDIO_RX_TOTAL_BUF_SIZE];
   volatile uint8_t          audio_rx_active;
+  volatile uint16_t         fb_soffn;
 #endif
 #ifdef USE_USBD_MIDI
-  uint8_t                   midi_rx_buffer[MIDI_DATA_OUT_PACKET_SIZE];
+  uint8_t                   midi_rx_buffer[MIDI_RX_PACKET_SIZE];
   volatile uint8_t          midi_tx_lock;
 #endif
   int16_t                   volume;
-#if 1
-  AUDIO_OffsetTypeDef       offset;
-  uint8_t                   rd_enable;
-  uint16_t                  rd_ptr;
-  uint16_t                  wr_ptr;
   uint32_t                  frequency;
   uint32_t                  bit_depth;
-#endif
   USBD_AUDIO_ControlTypeDef control;   
 }
 USBD_AUDIO_HandleTypeDef; 
@@ -157,8 +141,8 @@ void usbd_audio_rx_stop_callback();
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len);
 void usbd_audio_mute_callback(int16_t gain);
 void usbd_audio_gain_callback(int16_t gain);
-void usbd_audio_sync_callback(uint8_t gain);
 void usbd_audio_write(uint8_t* buffer, size_t len);
+uint32_t usbd_audio_get_rx_count();
 
 void usbd_midi_rx(uint8_t *buffer, uint32_t length);
 void usbd_midi_tx(uint8_t* buffer, uint32_t length);

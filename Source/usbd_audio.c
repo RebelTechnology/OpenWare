@@ -25,13 +25,6 @@
     (bytes)[2]= (uint8_t)(((frq) >> 16));	\
   }while(0);
 
-#if defined USE_USBD_FS
-#define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
-#elif defined USE_USBD_HS
-#define USB_OTG_BASE_ADDRESS  USB_OTG_HS   
-#endif
-
-#define USB_SOF_NUMBER() ((((USB_OTG_DeviceTypeDef *)((uint32_t )USB_OTG_BASE_ADDRESS + USB_OTG_DEVICE_BASE))->DSTS&USB_OTG_DSTS_FNSOF)>>USB_OTG_DSTS_FNSOF_Pos)
 
 static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev, 
                                uint8_t cfgidx);
@@ -102,33 +95,24 @@ USBD_ClassTypeDef  USBD_AUDIO =
 /* Feedback is limited to +/- 1kHz */
 #define AUDIO_FB_DELTA (uint32_t)(1 << 22)
 
+#define FB_REFRESH 5 /* Feedback refresh rate 2^(10-FB_REFRESH) */
+#define FB_RATE (1<<(10-FB_REFRESH))
+
 /**
   * @brief   get_usb_full_speed_rate
-  *         Set feedback value from rate 
-  * @param  rate: 
-  * @param  buf: 
-  * @retval 
+  *         Set feedback value from sample rate 
   */
 static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
-  uint32_t freq =  ((rate << 13) + 62) / 125;
+  // convert sample rate to 16.16 format (from Linux kernel)
+  uint32_t freq = ((rate << 13) + 62) / 125;
+  // store 10.14 format in little endian
   buf[0] = freq >> 2;
   buf[1] = freq >> 10;
   buf[2] = freq >> 18;
 }
 
-volatile uint32_t tx_flag = 1;
+uint8_t fb_data[3];
 
-volatile uint32_t fb_nom = AUDIO_FB_DEFAULT;
-volatile uint32_t fb_value = AUDIO_FB_DEFAULT;
-volatile uint32_t audio_buf_writable_size_last = AUDIO_RX_TOTAL_BUF_SIZE / 2U;
-volatile int32_t fb_raw = AUDIO_FB_DEFAULT;
-volatile uint8_t fb_data[3] = {
-    (uint8_t)((AUDIO_FB_DEFAULT & 0x0000FF00) >> 8),
-    (uint8_t)((AUDIO_FB_DEFAULT & 0x00FF0000) >> 16),
-    (uint8_t)((AUDIO_FB_DEFAULT & 0xFF000000) >> 24)};
-
-/* FNSOF is critical for frequency changing to work */
-volatile uint32_t fnsof = 0;
 #endif
 
 #if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
@@ -414,7 +398,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
   LOBYTE(AUDIO_RX_PACKET_SIZE),		   /* wMaxPacketSize */
   HIBYTE(AUDIO_RX_PACKET_SIZE),
   0x01,                                    /* bInterval 1ms */
-  0x02,                                    /* bRefresh SOF_RATE 4ms = 2^2 */
+  FB_REFRESH,                              /* bRefresh SOF_RATE */
   0x00,                                    /* bSynchAddress */
   /* 09 byte*/
 
@@ -677,6 +661,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
 #ifdef USE_USBD_AUDIO_TX_FALSE
   USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_TX_EP, USBD_EP_TYPE_ISOC, AUDIO_TX_PACKET_SIZE);
   haudio->audio_tx_active = 1;
+  haudio->tx_soffn = USB_SOF_NUMBER();
   usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
 #endif
 
@@ -684,21 +669,17 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
   USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_RX_EP, USBD_EP_TYPE_ISOC, AUDIO_RX_PACKET_SIZE);
   USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_FB_EP, USBD_EP_TYPE_ISOC, AUDIO_FB_PACKET_SIZE);
   haudio->audio_rx_active = 0;
+  haudio->fb_soffn = USB_SOF_NUMBER();
   /* Prepare OUT endpoint to receive 1st packet */
   USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
   usbd_audio_rx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
 #endif
-  /** 
-   * Set tx_flag 1 to block feedback transmission in SOF handler since 
-   * device is not ready.
-   */
-  tx_flag = 1U;
 
 #ifdef USE_USBD_MIDI
-  USBD_AUDIO_OpenEndpoint(pdev, haudio, MIDI_TX_EP, USBD_EP_TYPE_BULK, MIDI_DATA_IN_PACKET_SIZE);
-  USBD_AUDIO_OpenEndpoint(pdev, haudio, MIDI_RX_EP, USBD_EP_TYPE_BULK, MIDI_DATA_OUT_PACKET_SIZE);
+  USBD_AUDIO_OpenEndpoint(pdev, haudio, MIDI_TX_EP, USBD_EP_TYPE_BULK, MIDI_TX_PACKET_SIZE);
+  USBD_AUDIO_OpenEndpoint(pdev, haudio, MIDI_RX_EP, USBD_EP_TYPE_BULK, MIDI_RX_PACKET_SIZE);
   /* Prepare Out endpoint to receive next packet */
-  USBD_LL_PrepareReceive(pdev, MIDI_RX_EP, haudio->midi_rx_buffer, MIDI_DATA_OUT_PACKET_SIZE);
+  USBD_LL_PrepareReceive(pdev, MIDI_RX_EP, haudio->midi_rx_buffer, MIDI_RX_PACKET_SIZE);
   haudio->midi_tx_lock = 0;
 #endif
 
@@ -724,8 +705,6 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
   USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_FB_EP);
   haudio->audio_rx_active = 0;
   usbd_audio_rx_stop_callback();
-  /* Clear feedback transmission flag */
-  tx_flag = 0U;
 #endif
 
 #ifdef USE_USBD_AUDIO_TX
@@ -766,10 +745,8 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
     	// open new
     	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_RX_EP, USBD_EP_TYPE_ISOC, AUDIO_RX_PACKET_SIZE);
 	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_FB_EP, USBD_EP_TYPE_ISOC, AUDIO_FB_PACKET_SIZE);
-	/* /\* Prepare OUT endpoint to receive 1st packet *\/ */
-	/* USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE); */
-	/* usbd_audio_rx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS); */
-	haudio->bit_depth = 16U;
+	haudio->fb_soffn = USB_SOF_NUMBER();
+	/* haudio->bit_depth = 16U; // alt 1 */
 	AUDIO_OUT_Restart(pdev);
       }
       USBD_LL_FlushEP(pdev, AUDIO_FB_EP);
@@ -789,6 +766,8 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
   	// open new
   	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_TX_EP, USBD_EP_TYPE_ISOC, AUDIO_TX_PACKET_SIZE);
 	haudio->audio_tx_active = 1;
+	haudio->tx_soffn = USB_SOF_NUMBER();
+	/* send first audio data */
 	usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
       }
       haudio->tx_alt_setting = new_alt;
@@ -925,32 +904,36 @@ static uint8_t  *USBD_AUDIO_GetCfgDesc (uint16_t *length)
 }
 
 /**
-  * @brief  USBD_AUDIO_DataIn
-  *         handle data IN Stage
-  * @param  pdev: device instance
-  * @param  epnum: endpoint index
-  * @retval status
-  */
+ * @brief  USBD_AUDIO_DataIn
+ *         handle data IN Stage
+ * @param  pdev: device instance
+ * @param  epnum: endpoint index
+ * @retval status
+ */
 static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev, 
 				   uint8_t epnum)
 {
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
   (void)haudio;
+  switch(epnum | 0x80){
 #ifdef USE_USBD_AUDIO_RX
-  if (epnum == (AUDIO_FB_EP & 0xf)) {
-    tx_flag = 0U;
-  }
+  case AUDIO_FB_EP:
+    haudio->fb_soffn = USB_SOF_NUMBER();
+    USBD_LL_Transmit(pdev, AUDIO_FB_EP, (uint8_t*)fb_data, 3U);
+    break;
 #endif
 #ifdef USE_USBD_AUDIO_TX
-  if(epnum == (AUDIO_TX_EP & ~0x80)){
+  case AUDIO_TX_EP:
+    haudio->tx_soffn = USB_SOF_NUMBER();
     usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
-  }
+    break;
 #endif
 #ifdef USE_USBD_MIDI
-  if(epnum == (MIDI_TX_EP & ~0x80)){
+  case MIDI_TX_EP:
     haudio->midi_tx_lock = 0;
-  }
+    break;
 #endif
+  }
   return USBD_OK;
 }
 
@@ -1005,8 +988,14 @@ static void AUDIO_REQ_GetMax(USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef* req
         int16_t vol_max = USBD_AUDIO_VOL_MAX;
         USBD_CtlSendData(pdev, (uint8_t*)&vol_max, 2);
       };
-          break;
+	break;
     }
+  /* } else if ((req->bmRequest & 0x1f) == AUDIO_STREAMING_REQ) { */
+  /*   if (HIBYTE(req->wValue) == AUDIO_STREAMING_REQ_FREQ_CTRL) { */
+  /*     // Max frequency */
+  /*     AUDIO_FREQ_TO_DATA(data_ep->control_cbk.MaxFrequency , haudio->last_control.data) */
+  /* 	USBD_CtlSendData(pdev, haudio->control.data, 3); */
+  /*   } */
   }
 }
 
@@ -1027,6 +1016,12 @@ static void AUDIO_REQ_GetMin(USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef* req
       };
           break;
     }
+  /* } else if ((req->bmRequest & 0x1f) == AUDIO_STREAMING_REQ) { */
+  /*   if (HIBYTE(req->wValue) == AUDIO_STREAMING_REQ_FREQ_CTRL) { */
+  /*     // Min frequency */
+  /*     AUDIO_FREQ_TO_DATA(data_ep->control_cbk.MinFrequency , haudio->last_control.data) */
+  /* 	USBD_CtlSendData(pdev, haudio->control.data, 3); */
+  /*   } */
   }
 }
 
@@ -1176,111 +1171,28 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
 #endif
   return USBD_OK;
 }
-    
+
 /**
   * @brief  USBD_AUDIO_SOF
   *         handle SOF event
   * @param  pdev: device instance
   * @retval status
   */
-static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
-{
-  /* SOF (Start of Frame) Every millisecond (12000 full-bandwidth bit times), the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
-#if 0
+static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
+  /* SOF (Start of Frame) Every millisecond the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
   USBD_AUDIO_HandleTypeDef* haudio;
-  haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
-  
-  /**
-   * 1. Must be static so that the values are kept when the function is 
-   *    again called.
-   * 2. Must be volatile so that it will not be optimized out by the compiler.
-   */
-  // static volatile uint32_t fb_value = AUDIO_FB_DEFAULT;
-  // static volatile uint32_t audio_buf_writable_size_last = AUDIO_RX_TOTAL_BUF_SIZE / 2U;
-  // static volatile int32_t fb_raw = AUDIO_FB_DEFAULT;
-  static volatile uint32_t sof_count = 0;
-
-  /* Do stuff only when playing */
-  if (haudio->audio_rx_active) {
-    /* Remaining writable buffer size */
-    uint32_t audio_buf_writable_size;
-
-    /* Update audio read pointer */
-    /* haudio->rd_ptr = AUDIO_RX_TOTAL_BUF_SIZE - BSP_AUDIO_OUT_GetRemainingDataSize(); */
-    /* return LL_DMA_ReadReg(AUDIO_SAIx_DMAx_STREAM, NDTR) & 0xFFFF; */
-    haudio->rd_ptr = AUDIO_RX_TOTAL_BUF_SIZE/2; // todo: read HDMA_TX.Instance->NDTR
-    // todo: or add usbd_audio_rx_get_read_size(), see Codec::update_rx_read_index()
-
-    /* Calculate remaining writable buffer size */
-    if (haudio->rd_ptr < haudio->wr_ptr) {
-      audio_buf_writable_size = haudio->rd_ptr + AUDIO_RX_TOTAL_BUF_SIZE - haudio->wr_ptr;
-    } else {
-      audio_buf_writable_size = haudio->rd_ptr - haudio->wr_ptr;
-    }
-
-    /* Monitor remaining writable buffer size with LED */
-    /* if (audio_buf_writable_size < AUDIO_BUF_SAFEZONE) { */
-    /*   BSP_LED_On(LED2); */
-    /* } else { */
-    /*   BSP_LED_Off(LED2); */
-    /* } */
-
-    sof_count += 1;
-
-    if (sof_count == 1U) {
-      sof_count = 0;
-      /* Calculate feedback value based on the change of writable buffer size */
-      /* v2 */
-      int32_t audio_buf_writable_size_dev_from_nom;
-      audio_buf_writable_size_dev_from_nom = audio_buf_writable_size - (AUDIO_RX_TOTAL_BUF_SIZE >> 1);
-      // fb_value += audio_buf_writable_size_dev_from_nom * 1352;
-      fb_value += audio_buf_writable_size_dev_from_nom * audio_buf_writable_size_dev_from_nom / 912673 * 128 * audio_buf_writable_size_dev_from_nom;
-      /* v1 */
-      // int32_t audio_buf_writable_size_change;
-      // audio_buf_writable_size_change = audio_buf_writable_size - audio_buf_writable_size_last;
-      // fb_raw += audio_buf_writable_size_change * 0x1000;
-      // fb_value = (uint32_t)fb_raw;
-
-      /* Update last writable buffer size */
-      audio_buf_writable_size_last = audio_buf_writable_size;
-
-      /* Check feedback max / min */
-      if (fb_value > fb_nom + AUDIO_FB_DELTA) {
-        fb_value = fb_raw = fb_nom + AUDIO_FB_DELTA;
-      } else if (fb_value < fb_nom - AUDIO_FB_DELTA) {
-        fb_value = fb_raw = fb_nom - AUDIO_FB_DELTA;
-      }
-
-      /* Set 10.14 format feedback data */
-      /**
-       * Order of 3 bytes in feedback packet: { LO byte, MID byte, HI byte }
-       * 
-       * For example,
-       * 48.000(dec) => 300000(hex, 8.16) => 0C0000(hex, 10.14) => packet { 00, 00, 0C }
-       * 
-       * Note that ALSA accepts 8.16 format.
-       */
-      fb_data[0] = (fb_value & 0x0000FF00) >> 8;
-      fb_data[1] = (fb_value & 0x00FF0000) >> 16;
-      fb_data[2] = (fb_value & 0xFF000000) >> 24;
-      /* get_usb_full_speed_rate() */
-    }
-
-    /* Transmit feedback only when the last one is transmitted */
-    if (tx_flag == 0U) {
-      /* Get FNSOF. Use volatile for fnsof_new since its address is mapped to a hardware register. */
-      uint32_t volatile fnsof_new = USB_SOF_NUMBER();
-
-      if ((fnsof & 0x1) == (fnsof_new & 0x1)) {
-        USBD_LL_Transmit(pdev, AUDIO_FB_EP, (uint8_t*)fb_data, 3U);
-        /* Block transmission until it's finished. */
-        tx_flag = 1U;
-      }
+  haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;  
+#ifdef USE_USBD_AUDIO_RX
+  static uint32_t sof_count = 0;
+  if(haudio->audio_rx_active && ++sof_count == FB_RATE){
+    sof_count = 0;
+    // number of samples since last request (or 0 if unknown)
+    uint32_t samples = usbd_audio_get_rx_count();
+    if(samples != 0){
+      samples <<= (14 - FB_REFRESH); // convert to n.14 format
+      AUDIO_FREQ_TO_DATA(samples, fb_data); // pack into 3 bytes
     }
   }
-#endif
-#ifdef USE_USBD_AUDIO_FALSE // todo: Start-of-frame sync
-  usbd_audio_sync_callback(0);
 #endif
   return USBD_OK;
 }
@@ -1294,11 +1206,35 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
   */
 static uint8_t  USBD_AUDIO_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
+  
+/* The application must read the Endpoint Control register for all isochronous IN */
+/* endpoints to detect endpoints with incomplete IN data transfers. */
+/* Endpoint transfer is incomplete if both the following conditions are met: */
+/* - EONUM bit (in OTG_DOEPCTLx) = FNSOF[0] (in OTG_DSTS) */
+/* - EPENA = 1 (in OTG_DOEPCTLx) */
+  USBD_AUDIO_HandleTypeDef* haudio;
+  haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;  
+  uint16_t current_sof;
+  current_sof = USB_SOF_NUMBER();
+
 #ifdef USE_USBD_AUDIO_RX
-  fnsof = USB_SOF_NUMBER();
-  if(tx_flag == 1U) {
-    tx_flag = 0U;
+  // todo: fix this to work for FB and TX endpoints
+  if(pdev->ep_in[AUDIO_FB_EP & 0xFU].is_used && 
+     IS_ISO_IN_INCOMPLETE_EP(AUDIO_FB_EP & 0xFU, current_sof, haudio->fb_soffn)){
+    USB_CLEAR_INCOMPLETE_IN_EP(AUDIO_FB_EP);
     USBD_LL_FlushEP(pdev, AUDIO_FB_EP);
+    haudio->fb_soffn = USB_SOF_NUMBER();
+    USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, 3U);
+  }
+#endif
+
+#ifdef USE_USBD_AUDIO_TX
+  if(pdev->ep_in[AUDIO_TX_EP & 0xFU].is_used && 
+     IS_ISO_IN_INCOMPLETE_EP(AUDIO_TX_EP & 0xFU, current_sof, haudio->tx_soffn)){
+    USB_CLEAR_INCOMPLETE_IN_EP(AUDIO_TX_EP);
+    USBD_LL_FlushEP(pdev, AUDIO_TX_EP);
+    haudio->tx_soffn = USB_SOF_NUMBER();
+    usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
   }
 #endif
   return USBD_OK;
@@ -1335,10 +1271,11 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
     uint32_t len;
     if(haudio->audio_rx_active == 0){
       haudio->audio_rx_active = 1;
-      /* Set last writable buffer size to actual value. Note that rd_ptr is 0 now.  */
-      audio_buf_writable_size_last = AUDIO_RX_TOTAL_BUF_SIZE - haudio->wr_ptr;
       usbd_audio_rx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS);
       len = AUDIO_RX_PACKET_SIZE;
+      /* send first synchro data */
+      get_usb_full_speed_rate(USBD_AUDIO_FREQ, fb_data);
+      USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, 3U);
     }else{
       len = USBD_LL_GetRxDataSize(pdev, epnum);
     }
@@ -1353,7 +1290,7 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
     uint32_t len = USBD_LL_GetRxDataSize(pdev, epnum);
     usbd_midi_rx(haudio->midi_rx_buffer, len);
     /* Prepare Out endpoint to receive next packet */
-    USBD_LL_PrepareReceive(pdev, MIDI_RX_EP, haudio->midi_rx_buffer, MIDI_DATA_OUT_PACKET_SIZE);
+    USBD_LL_PrepareReceive(pdev, MIDI_RX_EP, haudio->midi_rx_buffer, MIDI_RX_PACKET_SIZE);
   }  
 #endif
   return USBD_OK;
@@ -1371,12 +1308,7 @@ static void AUDIO_OUT_StopAndReset(USBD_HandleTypeDef* pdev)
   haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
   USBD_DbgLog("AUDIO_OUT_StopAndReset %lu", haudio->frequency);
 
-  tx_flag = 1U;
   haudio->audio_rx_active = 0;
-  audio_buf_writable_size_last = AUDIO_RX_TOTAL_BUF_SIZE / 2U;
-  haudio->offset = AUDIO_OFFSET_UNKNOWN;
-  haudio->rd_ptr = 0U;
-  haudio->wr_ptr = 0U;
   USBD_LL_FlushEP(pdev, AUDIO_FB_EP);
   USBD_LL_FlushEP(pdev, AUDIO_RX_EP);
   usbd_audio_rx_stop_callback();
@@ -1394,20 +1326,14 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
   USBD_DbgLog("AUDIO_OUT_Restart %lu", haudio->frequency);
 
   AUDIO_OUT_StopAndReset(pdev);
+  /* haudio->audio_rx_active = 0; */
+  /* USBD_LL_FlushEP(pdev, AUDIO_FB_EP); */
+  /* USBD_LL_FlushEP(pdev, AUDIO_RX_EP); */
 
-  switch (haudio->frequency) {
-  case 44100:
-    fb_raw = fb_nom = fb_value = (44 << 22) + (1 << 22) / 10;
-    break;
-  default:
-    fb_raw = fb_nom = fb_value = (haudio->frequency/1000) << 22;
-    break;
-  }
+  /* get_usb_full_speed_rate(haudio->frequency, fb_data); // reset to new frequency */
 
   /* usbd_audio_rx_start_callback(USBD_AUDIO_FREQ, USB_AUDIO_CHANNELS); */
   /* ((USBD_AUDIO_ItfTypeDef*)pdev->pUserData)->Init(haudio->frequency, VOL_PERCENT(haudio->volume), 0); */
-
-  tx_flag = 0U;
 }
 #endif /* USE_USBD_AUDIO_RX */
 

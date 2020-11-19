@@ -175,8 +175,8 @@ void usbd_audio_gain_callback(int16_t gain){
   // codec_set_gain_in(gain); todo!
 }
 
-void usbd_audio_sync_callback(uint8_t shift){
-  // todo: do something
+uint32_t usbd_audio_get_rx_count(){
+  return 0; // todo!
 }
 #endif // USE_USBD_AUDIO
 
