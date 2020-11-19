@@ -15,7 +15,7 @@
 
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX  // microphone
-/* #define USE_USBD_AUDIO_RX  // speaker */
+#define USE_USBD_AUDIO_RX  // speaker
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
@@ -46,7 +46,7 @@
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (4+2)
 
-#define AUDIO_INPUT_OFFSET           (-0.0022*65535)
-#define AUDIO_INPUT_SCALAR           (-10.75*65535)
-#define AUDIO_OUTPUT_OFFSET          (0.0014*65535)
-#define AUDIO_OUTPUT_SCALAR          (10.2*65535)
+#define AUDIO_INPUT_OFFSET           ((uint32_t)(-0.0022*65535))
+#define AUDIO_INPUT_SCALAR           ((uint32_t)(-10.75*65535))
+#define AUDIO_OUTPUT_OFFSET          ((uint32_t)(0.0014*65535))
+#define AUDIO_OUTPUT_SCALAR          ((uint32_t)(10.2*65535))
