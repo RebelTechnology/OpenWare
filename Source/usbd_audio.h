@@ -6,6 +6,7 @@
 #endif
 
 #include "usbd_ioreq.h"
+#include "midi.h"
 #include "device.h"
 
 #define AUDIO_DESCRIPTOR_TYPE                         0x21
