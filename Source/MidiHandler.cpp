@@ -93,24 +93,8 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   case MIDI_CC_EFFECT_CTRL_2:
     setParameterValue(PARAMETER_H, value<<5);
     break;
-  // case 21: {
-  //   static uint8_t last = 0;
-  //   encoderChanged(0, (value-last)*3);
-  //   last = value;
-  //   break;
-  // }
-  // case 22: {
-  //   static uint8_t last = 0;
-  //   encoderChanged(1, (value-last)*3);
-  //   last = value;
-  //   break;
-  // }
   case PATCH_BUTTON:
     setButtonValue(PUSHBUTTON, value == 127 ? 4095 : 0);
-    // if(value == 127){
-      // togglePushButton();
-      // midi_tx.sendCc(LED, getLed() == GREEN ? 42 : 84);
-    // }
     break;
   case PATCH_BUTTON_ON:
     setButtonValue(value, 127);
