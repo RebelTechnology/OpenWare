@@ -46,7 +46,7 @@
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (4+2)
 
-#define AUDIO_INPUT_OFFSET           0xffffff70 /* -0.0022*65535 */
-#define AUDIO_INPUT_SCALAR           0xfff5400b /* -10.75*65535 */
-#define AUDIO_OUTPUT_OFFSET          0x0000005b /* 0.0014*65535 */
-#define AUDIO_OUTPUT_SCALAR          0x000a3329 /* 10.2*65535 */
+#define AUDIO_INPUT_OFFSET           (-0.0022*65535)
+#define AUDIO_INPUT_SCALAR           (-10.75*65535)
+#define AUDIO_OUTPUT_OFFSET          (0.0014*65535)
+#define AUDIO_OUTPUT_SCALAR          (10.2*65535)
