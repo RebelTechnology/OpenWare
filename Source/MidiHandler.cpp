@@ -112,6 +112,12 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
       // midi_tx.sendCc(LED, getLed() == GREEN ? 42 : 84);
     // }
     break;
+  case PATCH_BUTTON_ON:
+    setButtonValue(value, 127);
+    break;
+  case PATCH_BUTTON_OFF:
+    setButtonValue(value, 0);
+    break;
   case REQUEST_SETTINGS:
     switch(value){
     case 0:
