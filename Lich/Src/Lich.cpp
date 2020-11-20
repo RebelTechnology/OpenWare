@@ -221,6 +221,16 @@ static void update_preset(){
   }
 }
 
+extern "C" {
+  void usbh_midi_reset(void){
+    HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+    HAL_Delay(100); // wait 100mS
+    HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+    // extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
+    // USBH_LL_ResetPort(&USBH_HANDLE);
+  }
+}
+
 void loop(void){
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
     if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){

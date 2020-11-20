@@ -356,13 +356,6 @@ void Owl::setup(void){
   bus_setup();
   bus_set_input_channel(settings.midi_input_channel);
 #endif /* USE_DIGITALBUS */
-
-#ifdef USE_USB_HOST
-#if !defined OWL_NOCTUA && !defined OWL_LICH && !defined OWL_WITCH
-  // enable USB Host power
-  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
-#endif
-#endif
 }
 
 __weak void setup(){
@@ -528,9 +521,7 @@ __weak void loop(void){
 #endif
 
 #ifdef USE_USB_HOST
-#if defined OWL_NOCTUA || defined OWL_LICH || defined OWL_WITCH
-  MX_USB_HOST_Process(); // todo: enable PWR management
-#else
+#if defined USB_HOST_PWR_FAULT_Pin && defined USB_HOST_PWR_EN_Pin
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
     if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
       HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
@@ -539,6 +530,8 @@ __weak void loop(void){
   }else{
     MX_USB_HOST_Process();
   }
+#else
+  MX_USB_HOST_Process();
 #endif
 #endif
 
@@ -619,7 +612,7 @@ extern "C"{
 
 void jump_to_bootloader(void){
 #ifdef USE_USB_HOST
-#if !defined OWL_NOCTUA && !defined OWL_LICH && !defined OWL_WITCH
+#if defined USB_HOST_PWR_EN_GPIO_Port && defined USB_HOST_PWR_EN_Pin
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
 #endif
 #endif
