@@ -42,17 +42,21 @@ typedef int8_t audio_t;
 #endif
 
 static void update_rx_read_index(){
+#if defined USE_CS4271 || defined USE_PCM3168A
   extern DMA_HandleTypeDef HDMA_RX;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   size_t pos = audio_rx_buffer.getCapacity() - HDMA_RX.Instance->NDTR;
   audio_rx_buffer.setReadIndex(pos);
+#endif
 }
 
 static void update_tx_write_index(){
+#if defined USE_CS4271 || defined USE_PCM3168A
   extern DMA_HandleTypeDef HDMA_TX;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   size_t pos = audio_tx_buffer.getCapacity() - HDMA_TX.Instance->NDTR;
   audio_tx_buffer.setWriteIndex(pos);
+#endif
 }
 
 void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels){
@@ -83,7 +87,7 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
   pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
   audio_rx_buffer.setWriteIndex(pos);
   program.exitProgram(true);
-  setOperationMode(STREAM_MODE);
+  owl.setOperationMode(STREAM_MODE);
 #if DEBUG
   printf("start rx %d %d %d\n", rate, channels, pos);
 #endif
@@ -91,8 +95,9 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
 
 void usbd_audio_rx_stop_callback(){
   audio_rx_buffer.setAll(0);
+  program.loadProgram(program.getProgramIndex());
   program.startProgram(true);
-  setOperationMode(RUN_MODE);
+  owl.setOperationMode(RUN_MODE);
 #if DEBUG
   printf("stop rx\n");
 #endif
@@ -103,7 +108,7 @@ static uint32_t usbd_audio_rx_count = 0;
 static uint32_t usbd_audio_rx_overflow_limit = 10000;
 // expect a 1 in 10k sample overflow (-0.01% sample accuracy)
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
-#ifdef USE_USBD_AUDIO_RX
+#if defined USE_USBD_AUDIO_RX && USB_AUDIO_CHANNELS > 0
   // copy audio to codec_txbuf aka audio_rx_buffer
   update_rx_read_index();
   audio_t* src = (audio_t*)data;
@@ -134,7 +139,7 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
   // if(available < AUDIO_RX_PACKET_SIZE)
   //   return available;
 #endif
-  return AUDIO_RX_PACKET_SIZE;
+  return len;
 }
 
 static int32_t usbd_audio_tx_flow = 0;
@@ -142,7 +147,7 @@ static uint32_t usbd_audio_tx_count = 0;
 static uint32_t usbd_audio_tx_underflow_limit = 10000;
 // expect a 1 in 10k sample underflow (-0.01% sample accuracy)
 void usbd_audio_tx_callback(uint8_t* data, size_t len){
-#ifdef USE_USBD_AUDIO_TX
+#if defined USE_USBD_AUDIO_TX && USB_AUDIO_CHANNELS > 0
   update_tx_write_index();
   size_t blocksize = len / (USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
   size_t available = audio_tx_buffer.getReadCapacity()/AUDIO_CHANNELS;
@@ -166,12 +171,16 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
 #endif
 }
 
-void usbd_audio_gain_callback(uint16_t gain){
-  codec_set_gain_in(gain);
+void usbd_audio_mute_callback(int16_t gain){
+  // todo!
 }
 
-void usbd_audio_sync_callback(uint8_t shift){
-  // todo: do something
+void usbd_audio_gain_callback(int16_t gain){
+  // codec_set_gain_in(gain); todo!
+}
+
+uint32_t usbd_audio_get_rx_count(){
+  return 0; // todo!
 }
 #endif // USE_USBD_AUDIO
 
@@ -240,7 +249,7 @@ void Codec::bypass(bool doBypass){
 }
 
 void Codec::mute(bool doMute){
-  codec_set_gain_out(0);
+  codec_set_gain_out(0); // todo: fixme!
 }
 
 void Codec::setInputGain(int8_t value){

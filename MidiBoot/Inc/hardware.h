@@ -15,16 +15,46 @@
 #elif defined OWL_LICH
   #define HARDWARE_VERSION    "OWL Lich Boot"
   #define APPLICATION_ADDRESS 0x08010000
-  /* #define USE_BOOT1_PIN todo: change to use BUT1 PC12 */
+  #define USE_BOOT1_PIN
+  #define BOOT1_GPIO_Port GPIOC
+  #define BOOT1_Pin  GPIO_PIN_10
+  #define USE_LED
+  #define LED1_Pin GPIO_PIN_7
+  #define LED1_GPIO_Port GPIOF
+  #define LED2_Pin GPIO_PIN_8
+  #define LED2_GPIO_Port GPIOF
+#elif defined OWL_WITCH
+  #define HARDWARE_VERSION    "OWL Witch Boot"
+  #define APPLICATION_ADDRESS 0x08010000
+  #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_9
+  #define BOOT1_GPIO_Port GPIOF
+  #define USE_LED
+  #define LED1_Pin GPIO_PIN_9
+  #define LED1_GPIO_Port GPIOC
+  #define LED2_Pin GPIO_PIN_8
+  #define LED2_GPIO_Port GPIOA
 #elif defined OWL_ALCHEMIST
   #define HARDWARE_VERSION    "OWL Alchemist Boot"
   #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_2
+  #define BOOT1_GPIO_Port GPIOB
   #define USE_LED
+  #define LED1_Pin GPIO_PIN_0
+  #define LED1_GPIO_Port GPIOA
+  #define LED2_Pin GPIO_PIN_1
+  #define LED2_GPIO_Port GPIOA
   #define APPLICATION_ADDRESS 0x08010000
 #elif defined OWL_WIZARD
   #define HARDWARE_VERSION    "OWL Wizard Boot"
   #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_2
+  #define BOOT1_GPIO_Port GPIOB
   #define USE_LED
+  #define LED1_Pin GPIO_PIN_0
+  #define LED1_GPIO_Port GPIOA
+  #define LED2_Pin GPIO_PIN_1
+  #define LED2_GPIO_Port GPIOA
   #define APPLICATION_ADDRESS 0x08010000
 #elif defined OWL_NOCTUA
   #define HARDWARE_VERSION    "OWL Noctua Boot"

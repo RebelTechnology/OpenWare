@@ -44,10 +44,11 @@ static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
   //USB_MIDI_ChangeConnectionState(0);
 
   interface = USBH_FindInterface(phost, USB_AUDIO_CLASS, USB_MIDISTREAMING_SUBCLASS, 0xFF);
+  USBH_DbgLog ("USBH InterfaceInit 0x%x", interface);
 
   if(interface == 0xFF){
     /* No Valid Interface */
-    USBH_DbgLog ("Cannot Find the interface for MIDI Interface Class.", phost->pActiveClass->Name);
+    USBH_DbgLog ("Cannot Find the interface for MIDI Interface Class %s.", phost->pActiveClass->Name);
     status = USBH_FAIL;
   }else{
     USBH_SelectInterface (phost, interface);
@@ -110,6 +111,7 @@ static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
  * @retval USBH Status
  */
 USBH_StatusTypeDef USBH_MIDI_InterfaceDeInit (USBH_HandleTypeDef *phost){
+  USBH_DbgLog ("USBH InterfaceDeInit");
   MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
 
   if ( MIDI_Handle->OutPipe){
@@ -152,6 +154,7 @@ static USBH_StatusTypeDef USBH_MIDI_ClassRequest (USBH_HandleTypeDef *phost){
   * @retval USBH Status
   */
 USBH_StatusTypeDef  USBH_MIDI_Stop(USBH_HandleTypeDef *phost){
+  USBH_DbgLog ("USBH Stop 0x%x", phost->gState);
   MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
   if(phost->gState == HOST_CLASS){
     MIDI_Handle->state = MIDI_IDLE_STATE;
@@ -349,9 +352,16 @@ static void MIDI_ProcessTransmission(USBH_HandleTypeDef *phost){
     }
 }
 
+__weak void usbh_midi_reset(void){
+  // extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
+  // USBH_LL_ResetPort(&USBH_HANDLE);
+}
+
 bool usbh_midi_connected(void){
-  extern ApplicationTypeDef Appli_state; // defined in usb_host.c
-  return Appli_state == APPLICATION_START || Appli_state == APPLICATION_READY;
+  extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
+  return USBH_HANDLE.device.is_connected;
+  // extern ApplicationTypeDef Appli_state; // defined in usb_host.c
+  // return Appli_state == APPLICATION_START || Appli_state == APPLICATION_READY;
 }
 
 bool usbh_midi_ready(void){

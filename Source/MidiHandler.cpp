@@ -93,24 +93,14 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   case MIDI_CC_EFFECT_CTRL_2:
     setParameterValue(PARAMETER_H, value<<5);
     break;
-  // case 21: {
-  //   static uint8_t last = 0;
-  //   encoderChanged(0, (value-last)*3);
-  //   last = value;
-  //   break;
-  // }
-  // case 22: {
-  //   static uint8_t last = 0;
-  //   encoderChanged(1, (value-last)*3);
-  //   last = value;
-  //   break;
-  // }
   case PATCH_BUTTON:
     setButtonValue(PUSHBUTTON, value == 127 ? 4095 : 0);
-    // if(value == 127){
-      // togglePushButton();
-      // midi_tx.sendCc(LED, getLed() == GREEN ? 42 : 84);
-    // }
+    break;
+  case PATCH_BUTTON_ON:
+    setButtonValue(value, 127);
+    break;
+  case PATCH_BUTTON_OFF:
+    setButtonValue(value, 0);
     break;
   case REQUEST_SETTINGS:
     switch(value){
@@ -177,7 +167,7 @@ void MidiHandler::updateCodecSettings(){
 }
 
 void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
-  if(size < 3) // size may be 3 or 4 depending on number of digits in value
+  if(size < 3) // size may be 3 or more depending on number of digits in value
     return;
   char* p = (char*)data;
   int32_t value = strtol(p+2, NULL, 16);
@@ -240,7 +230,7 @@ void MidiHandler::handleSettingsStoreCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
   int32_t ret = loader.handleFirmwareUpload(data, size);
   if(ret == 0){
-    setOperationMode(LOAD_MODE);
+    owl.setOperationMode(LOAD_MODE);
     setParameterValue(PARAMETER_A, loader.index*4095/loader.size);
   }
 }

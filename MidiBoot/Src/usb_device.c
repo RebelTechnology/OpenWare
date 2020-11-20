@@ -67,11 +67,11 @@ void MX_USB_DEVICE_Init(void)
   {
     Error_Handler();
   }
-  if (USBD_RegisterClass(&USBD_HANDLE, &USBD_Midi_ClassDriver) != USBD_OK)
+  if (USBD_RegisterClass(&USBD_HANDLE, &USBD_AUDIO) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_Midi_RegisterInterface(&USBD_HANDLE, NULL) != USBD_OK)
+  if (USBD_AUDIO_RegisterInterface(&USBD_HANDLE, NULL) != USBD_OK)
   {
     Error_Handler();
   }
