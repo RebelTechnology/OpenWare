@@ -130,8 +130,8 @@ USBD_AUDIO_HandleTypeDef;
 extern USBD_ClassTypeDef  USBD_AUDIO;
 #define USBD_AUDIO_CLASS    &USBD_AUDIO
 
-uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev, 
-                                        void *fops);
+uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev, void *fops);
+uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd);
 
 void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels);
 void usbd_audio_tx_stop_callback();

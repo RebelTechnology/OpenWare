@@ -1362,6 +1362,37 @@ uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev,
   return USBD_OK;
 }
 
+uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd){
+#if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
+  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x40);
+  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
+  HAL_PCDEx_SetTxFiFo(hpcd, 3, 0x20);
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
+  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
+  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI
+  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
+  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
+#elif defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
+  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
+  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
+#else
+  HAL_PCDEx_SetRxFiFo(hpcd, 0xa0);
+  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x40);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
+#endif
+  /* total 0x140 words available for rx and tx fifos */  
+  return USBD_OK;
+}
+  
 /* Convert USB volume value to % */
 uint8_t VOL_PERCENT(int16_t vol)
 {

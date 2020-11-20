@@ -42,17 +42,21 @@ typedef int8_t audio_t;
 #endif
 
 static void update_rx_read_index(){
+#if defined USE_CS4271 || defined USE_PCM3168A
   extern DMA_HandleTypeDef HDMA_RX;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   size_t pos = audio_rx_buffer.getCapacity() - HDMA_RX.Instance->NDTR;
   audio_rx_buffer.setReadIndex(pos);
+#endif
 }
 
 static void update_tx_write_index(){
+#if defined USE_CS4271 || defined USE_PCM3168A
   extern DMA_HandleTypeDef HDMA_TX;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   size_t pos = audio_tx_buffer.getCapacity() - HDMA_TX.Instance->NDTR;
   audio_tx_buffer.setWriteIndex(pos);
+#endif
 }
 
 void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels){
