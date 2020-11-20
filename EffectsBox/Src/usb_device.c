@@ -47,8 +47,7 @@
 #include "usb_device.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
-#include "usbd_midi.h"
-#include "usbd_midi_if.h"
+#include "usbd_audio.h"
 
 /* USB Device Core handle declaration */
 USBD_HandleTypeDef hUsbDeviceHS;
