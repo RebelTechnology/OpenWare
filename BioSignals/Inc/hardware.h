@@ -4,6 +4,7 @@
 #define OWL_BIOSIGNALS
 #define HARDWARE_ID                  BIOSIGNALS_HARDWARE
 #define HARDWARE_VERSION             "BioSignals"
+#define NO_EXTERNAL_RAM
 
 #define USE_BLE_MIDI
 #define BLE_SPI hspi2

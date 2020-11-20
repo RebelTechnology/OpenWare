@@ -67,7 +67,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     return error(FLASH_ERROR, "Insufficient flash available");
   if(size < 4)
     return error(FLASH_ERROR, "Invalid resource size");
-#if USE_EXTERNAL_RAM
+#ifdef USE_EXTERNAL_RAM
   extern char _EXTRAM_END, _FLASH_STORAGE_SIZE;
   if(size > storage.getFreeSize())
     storage.defrag(

@@ -4,7 +4,7 @@
 #define OWL_NOCTUA
 #define HARDWARE_ID                  NOCTUA_HARDWARE
 #define HARDWARE_VERSION             "Noctua"
-#undef USE_EXTERNAL_RAM
+#define NO_EXTERNAL_RAM
 
 /* #define USE_BKPSRAM enable to prevent reset loops */ 
 

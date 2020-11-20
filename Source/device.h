@@ -109,6 +109,10 @@
 
 #define USE_IWDG                     // compile with support for IWDG watchdog
 
+#ifndef NO_EXTERNAL_RAM
+#define USE_EXTERNAL_RAM
+#endif
+
 
 #if defined USE_USBD_FS
 #define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
