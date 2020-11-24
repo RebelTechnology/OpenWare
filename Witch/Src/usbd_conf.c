@@ -27,6 +27,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "device.h"
+uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd);
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -368,17 +369,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   HAL_PCD_RegisterIsoOutIncpltCallback(&hpcd_USB_OTG_FS, PCD_ISOOUTIncompleteCallback);
   HAL_PCD_RegisterIsoInIncpltCallback(&hpcd_USB_OTG_FS, PCD_ISOINIncompleteCallback);
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
-#ifdef USE_USBD_AUDIO_TX
-  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x80);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x60);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 2, 0x40);
-#else
-  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0xa0);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x40);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x60);
-#endif
-  /* total 0x140 words available for rx and tx fifos */
+  USBD_AUDIO_SetFiFos(&hpcd_USB_OTG_FS);
   }
   return USBD_OK;
 }
@@ -464,7 +455,8 @@ USBD_StatusTypeDef USBD_LL_CloseEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 {
   HAL_StatusTypeDef hal_status = HAL_OK;
   USBD_StatusTypeDef usb_status = USBD_OK;
-  
+
+  USB_DISABLE_EP_BEFORE_CLOSE(ep_addr);
   hal_status = HAL_PCD_EP_Close(pdev->pData, ep_addr);
   
   usb_status =  USBD_Get_USB_Status(hal_status);    

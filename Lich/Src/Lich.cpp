@@ -141,7 +141,7 @@ void setEncoderValue(int value){
 void setup(){
   // __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-  setSegmentDisplay(11, true);
+  setSegmentDisplay(SEG_DISPLAY_L, true);
   owl.setup();
   setEncoderValue(program.getProgramIndex());
   setLed(1, 0);
@@ -176,7 +176,7 @@ static void update_preset(){
 	setEncoderValue(patchselect);
     }
     if(program.getProgramIndex() != patchselect){
-      setSegmentDisplay(patchselect, false);
+      setSegmentDisplay(patchselect % 10, false);
       if(isModeButtonPressed()){
 	// switch patches
 	program.loadProgram(patchselect);
@@ -194,10 +194,10 @@ static void update_preset(){
 	  counter = PATCH_RESET_COUNTER;
 	  settings.saveToFlash();
 	}else{
-	  setSegmentDisplay(patchselect, counter*MAIN_LOOP_SLEEP_MS > 2000);
+	  setSegmentDisplay(patchselect % 10, counter*MAIN_LOOP_SLEEP_MS > 2000);
 	}
       }else{
-	setSegmentDisplay(patchselect, true);
+	setSegmentDisplay(patchselect % 10, true);
 	counter = PATCH_RESET_COUNTER;
       }
     }
@@ -218,6 +218,16 @@ static void update_preset(){
       program.resetProgram(false);
     }
     break;
+  }
+}
+
+extern "C" {
+  void usbh_midi_reset(void){
+    HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+    HAL_Delay(100); // wait 100mS
+    HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+    // extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
+    // USBH_LL_ResetPort(&USBH_HANDLE);
   }
 }
 

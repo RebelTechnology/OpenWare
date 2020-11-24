@@ -6,6 +6,7 @@
 
 #define HARDWARE_ID                  PRISM_HARDWARE
 #define HARDWARE_VERSION             "Prism"
+#define NO_EXTERNAL_RAM
 
 #define USE_DIGITALBUS
 #define DIGITAL_BUS_ENABLED          0

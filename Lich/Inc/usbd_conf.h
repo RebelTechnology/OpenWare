@@ -36,6 +36,7 @@
 #include "stm32f4xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "device.h"
 #ifdef DEBUG
 #define DEBUG_LEVEL     3
 #else

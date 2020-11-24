@@ -12,7 +12,7 @@ endif
 
 export OPENWARE CONFIG
 
-all: alchemist wizard magus witch lich owlpedal midiboot noctua # biosignals tesseract prism effectsbox player quadfm  ## build most targets
+all: alchemist wizard magus witch lich owlpedal midiboot noctua effectsbox biosignals # tesseract prism player quadfm  ## build most targets
 
 midiboot: ## build MidiBoot project
 	@$(MAKE) -C MidiBoot all

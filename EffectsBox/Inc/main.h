@@ -183,9 +183,8 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
-void _Error_Handler(char *, int);
-
-#define Error_Handler() _Error_Handler(__FILE__, __LINE__)
+void Error_Handler(void);
+#define _Error_Handler(a, b) Error_Handler()
 #ifdef __cplusplus
 }
 #endif
