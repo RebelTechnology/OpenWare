@@ -301,26 +301,6 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 
 // Called on init, resource operation, storage erase
 __weak void onResourceUpdate(void){
-#ifdef OWL_MAGUS
-    extern const uint32_t rainbowinputs[];
-    extern const uint32_t rainbowoutputs[];
-    extern const uint32_t* dyn_rainbowinputs;
-    extern const uint32_t* dyn_rainbowoutputs;
-    ResourceHeader* res = registry.getResource("Rainbow.in");
-    if (res == NULL){
-      dyn_rainbowinputs = rainbowinputs;
-    }
-    else {
-      dyn_rainbowinputs = (uint32_t*)registry.getData(res);
-    }
-    res = registry.getResource("Rainbow.out");
-    if (res == NULL){
-      dyn_rainbowoutputs = rainbowoutputs;
-    }
-    else {
-      dyn_rainbowoutputs = (uint32_t*)registry.getData(res);
-    }
-#endif
 }
 
 

@@ -17,11 +17,6 @@
 #define COLOUR_LEVEL6 0x07f1fc7f
 #define COLOUR_LEVEL5 0x03f0fc3f
 
-#ifdef OWL_MAGUS
-#include "purple-blue-cyan.h"
-#include "orange-red-pink.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

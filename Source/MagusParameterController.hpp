@@ -562,7 +562,7 @@ public:
     case STANDARD:
       // draw most recently changed parameter
       // drawParameter(selectedPid[selectedBlock], 44, screen);
-      if (getOperationMode() == LOAD_MODE){
+      if (owl.getOperationMode() == LOAD_MODE){
         drawLoadProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen);
       }
       else {
