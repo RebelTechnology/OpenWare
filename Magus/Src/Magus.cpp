@@ -1,0 +1,159 @@
+#include "Owl.h"
+#include "device.h"
+#include "errorhandlers.h"
+
+#include "purple-blue-cyan.h"
+#include "orange-red-pink.h"
+#include "HAL_TLC5946.h"
+#include "HAL_MAX11300.h"
+// #include "HAL_OLED.h"
+#include "HAL_Encoders.h"
+#define TLC5940_RED_DC 0x55
+#define TLC5940_GREEN_DC 0x55
+#define TLC5940_BLUE_DC 0x55
+
+#ifdef USE_SCREEN
+#include "Graphics.h"
+Graphics graphics;
+#endif /* USE_SCREEN */
+
+static bool updateMAX11300 = false;
+// int16_t dynamicParameterValues[NOF_PARAMETERS];
+static uint8_t portMode[20];
+void setPortMode(uint8_t index, uint8_t mode){
+  // todo: select range automatically based on output value
+  if(index < 20){
+    if(portMode[index] != mode){
+      portMode[index] = mode;
+      updateMAX11300 = true;
+      // MAX11300_setDACValue(index+1, 0);
+    }
+  }
+}
+uint8_t getPortMode(uint8_t index){
+  if(index < 20)
+    return portMode[index];
+  return PORT_UNI_INPUT;
+}
+
+void setLed(uint8_t led, uint32_t rgb){
+  TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+}
+
+void setup(){
+  HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
+  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Reset encoders 
+  {
+    extern SPI_HandleTypeDef TLC5946_SPI;
+
+    // LEDs
+    TLC5946_init(&TLC5946_SPI);
+    // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
+    TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
+    TLC5946_setAll(0x10, 0x10, 0x10);
+
+    HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
+
+    TLC5946_Refresh_DC();
+    TLC5946_Refresh_GS();
+    HAL_Delay(100);
+
+    // Start BLANK PWM
+    extern TIM_HandleTypeDef htim2;
+    HAL_TIM_Base_Start(&htim2);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+
+    // Start LED Driver PWM : GSCLK
+    extern TIM_HandleTypeDef htim3;
+    HAL_TIM_Base_Start(&htim3);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+  }
+  {
+    // Encoders
+    extern SPI_HandleTypeDef ENCODERS_SPI;
+    Encoders_init(&ENCODERS_SPI);
+    Encoders_readAll();
+  }
+  {
+    // Pixi
+    extern SPI_HandleTypeDef MAX11300_SPI;
+    MAX11300_init(&MAX11300_SPI);
+    MAX11300_setDeviceControl(DCR_RESET);
+  }
+
+#ifdef USE_SCREEN
+  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
+  extern SPI_HandleTypeDef OLED_SPI;
+  graphics.begin(&OLED_SPI);
+#endif /* USE_SCREEN */
+
+#ifdef USE_USB_HOST
+  // enable USB Host power
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+#endif
+
+  owl.setup();
+}
+
+void loop(void){
+
+#ifdef USE_USB_HOST
+  if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
+    if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
+      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+      error(USB_ERROR, "USBH PWR Fault");
+    }
+  }else{
+    MX_USB_HOST_Process();
+  }
+#endif
+
+  owl.loop();
+
+  if(updateMAX11300){
+    MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
+    for(int i=0; i<20; ++i){
+      uint16_t mode;
+      switch(portMode[i]){
+      case PORT_UNI_OUTPUT:
+	mode = PCR_Range_DAC_0_P10|PCR_Mode_DAC;
+	break;
+      case PORT_UNI_INPUT:
+      default:
+	mode = PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT;
+	break;
+      }
+      MAX11300_setPortMode(i+1, mode);
+    }
+    updateMAX11300 = false;
+  }
+  TLC5946_Refresh_GS();
+  Encoders_readAll();
+  graphics.params.updateEncoders(Encoders_get(), 7);
+  MAX11300_bulkreadADC();
+  for(int i=0; i<16; ++i){
+    if(getPortMode(i) == PORT_UNI_INPUT){
+      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+      uint16_t val = graphics.params.parameters[i]>>2;
+      setLed(i, rainbowinputs[val&0x3ff]);
+    }else{
+      // DACs
+    // TODO: store values set from patch somewhere and multiply with user[] value for outputs
+    // graphics.params.updateOutput(i, getOutputValue(i));
+      // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
+      graphics.params.updateValue(i, 0);
+      uint16_t val = graphics.params.parameters[i]>>2;
+      setLed(i, rainbowoutputs[val&0x3ff]);
+      MAX11300_setDAC(i+1, graphics.params.parameters[i]);
+    }
+  }
+  for(int i=16; i<20; ++i){
+    if(getPortMode(i) == PORT_UNI_INPUT){
+      graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
+    }else{
+      graphics.params.updateValue(i, 0);
+      MAX11300_setDAC(i+1, graphics.params.parameters[i]);
+    }
+  }
+  // MAX11300_bulkwriteDAC();
+}
