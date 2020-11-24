@@ -1,24 +1,19 @@
 #include "Owl.h"
 #include "device.h"
 #include "errorhandlers.h"
-
+#include "Graphics.h"
 #include "purple-blue-cyan.h"
 #include "orange-red-pink.h"
 #include "HAL_TLC5946.h"
 #include "HAL_MAX11300.h"
-// #include "HAL_OLED.h"
 #include "HAL_Encoders.h"
 #define TLC5940_RED_DC 0x55
 #define TLC5940_GREEN_DC 0x55
 #define TLC5940_BLUE_DC 0x55
 
-#ifdef USE_SCREEN
-#include "Graphics.h"
 Graphics graphics;
-#endif /* USE_SCREEN */
 
 static bool updateMAX11300 = false;
-// int16_t dynamicParameterValues[NOF_PARAMETERS];
 static uint8_t portMode[20];
 void setPortMode(uint8_t index, uint8_t mode){
   // todo: select range automatically based on output value
@@ -81,11 +76,9 @@ void setup(){
     MAX11300_setDeviceControl(DCR_RESET);
   }
 
-#ifdef USE_SCREEN
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
-#endif /* USE_SCREEN */
 
 #ifdef USE_USB_HOST
   // enable USB Host power
