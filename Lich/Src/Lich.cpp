@@ -141,7 +141,7 @@ void setEncoderValue(int value){
 void setup(){
   // __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-  setSegmentDisplay(11, true);
+  setSegmentDisplay(SEG_DISPLAY_L, true);
   owl.setup();
   setEncoderValue(program.getProgramIndex());
   setLed(1, 0);
@@ -176,7 +176,7 @@ static void update_preset(){
 	setEncoderValue(patchselect);
     }
     if(program.getProgramIndex() != patchselect){
-      setSegmentDisplay(patchselect, false);
+      setSegmentDisplay(patchselect % 10, false);
       if(isModeButtonPressed()){
 	// switch patches
 	program.loadProgram(patchselect);
@@ -194,10 +194,10 @@ static void update_preset(){
 	  counter = PATCH_RESET_COUNTER;
 	  settings.saveToFlash();
 	}else{
-	  setSegmentDisplay(patchselect, counter*MAIN_LOOP_SLEEP_MS > 2000);
+	  setSegmentDisplay(patchselect % 10, counter*MAIN_LOOP_SLEEP_MS > 2000);
 	}
       }else{
-	setSegmentDisplay(patchselect, true);
+	setSegmentDisplay(patchselect % 10, true);
 	counter = PATCH_RESET_COUNTER;
       }
     }
