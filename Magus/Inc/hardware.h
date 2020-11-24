@@ -48,3 +48,7 @@
 #define NOF_BUTTONS                  0
 #undef USE_DAC
 
+#define AUDIO_INPUT_OFFSET           ((uint32_t)(0.00007896*65535))
+#define AUDIO_INPUT_SCALAR           ((uint32_t)(-6.43010423*65535))
+#define AUDIO_OUTPUT_OFFSET          ((uint32_t)(0.00039729*65535))
+#define AUDIO_OUTPUT_SCALAR          ((uint32_t)(5.03400000*65535))
