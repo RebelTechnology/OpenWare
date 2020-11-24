@@ -20,7 +20,7 @@
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              2
-#define USB_AUDIO_CHANNELS          0
+#define USB_AUDIO_CHANNELS          2
 /* #define AUDIO_INT32_TO_SAMPLE(x)    (__REV16((x)>>8)) */
 /* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(__REV16(x))<<8) */
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
@@ -30,7 +30,7 @@
 
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX  // microphone
-#define USE_USBD_AUDIO_RX // speaker
+/* #define USE_USBD_AUDIO_RX // speaker */
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
@@ -48,3 +48,7 @@
 #define NOF_BUTTONS                  0
 #undef USE_DAC
 
+#define AUDIO_INPUT_OFFSET           ((uint32_t)(0.00007896*65535))
+#define AUDIO_INPUT_SCALAR           ((uint32_t)(-6.43010423*65535))
+#define AUDIO_OUTPUT_OFFSET          ((uint32_t)(0.00039729*65535))
+#define AUDIO_OUTPUT_SCALAR          ((uint32_t)(5.03400000*65535))

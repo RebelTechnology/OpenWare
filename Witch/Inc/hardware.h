@@ -15,7 +15,7 @@
 
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX  // microphone
-#define USE_USBD_AUDIO_RX // speaker
+/* #define USE_USBD_AUDIO_RX // speaker */
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
@@ -47,8 +47,6 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
-#define USE_USB_HOST
-#define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 
 #define NOF_ADC_VALUES               9
 #define NOF_PARAMETERS               40

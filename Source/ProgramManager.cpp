@@ -356,14 +356,15 @@ void updateProgramVector(ProgramVector* pv){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
-#if defined OWL_PRISM || defined OWL_BIOSIGNALS || defined OWL_NOCTUA
+#ifdef USE_EXTERNAL_RAM
+  extern char _EXTRAM, _EXTRAM_SIZE;
   extern char _CCMRAM, _CCMRAM_SIZE;
   static MemorySegment heapSegments[] = {
-    // { start, size }
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
     // todo: add remaining program space
     { NULL, 0 }
-  };  
+  };
 #elif defined OWL_ARCH_F7
   extern char _EXTRAM, _EXTRAM_SIZE;
   static MemorySegment heapSegments[] = {
@@ -371,14 +372,13 @@ void updateProgramVector(ProgramVector* pv){
     { NULL, 0 }
   };
 #else
-  extern char _EXTRAM, _EXTRAM_SIZE;
   extern char _CCMRAM, _CCMRAM_SIZE;
   static MemorySegment heapSegments[] = {
+    // { start, size }
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
     // todo: add remaining program space
     { NULL, 0 }
-  };
+  };  
 #endif
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
@@ -441,7 +441,7 @@ void runAudioTask(void* p){
       updateProgramVector(pv);
       programVector = pv;
       setErrorStatus(NO_ERROR);
-      setOperationMode(RUN_MODE);
+      owl.setOperationMode(RUN_MODE);
       setLed(0, GREEN_COLOUR);
       // codec.softMute(false);
       // codec.resume();
@@ -556,7 +556,7 @@ void runManagerTask(void* p){
 				      (StackType_t*)PROGRAMSTACK, 
 				      &audioTaskBuffer);
       }
-      if(audioTask == NULL)
+      if(audioTask == NULL && registry.hasPatches())
 	error(PROGRAM_ERROR, "Failed to start program task");
     }
   }
@@ -619,7 +619,7 @@ void ProgramManager::resetProgram(bool isr){
 }
 
 void ProgramManager::updateProgramIndex(uint8_t index){
-  setOperationMode(LOAD_MODE);
+  owl.setOperationMode(LOAD_MODE);
   patchindex = index;
   settings.program_index = index;
   midi_tx.sendPc(index);

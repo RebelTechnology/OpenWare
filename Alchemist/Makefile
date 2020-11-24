@@ -8,8 +8,7 @@ C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/cs4272.c
-C_SRC += $(OPENWARE)/Source/usbd_midi.c
-C_SRC += $(OPENWARE)/Source/usbd_midi_if.c
+C_SRC += $(OPENWARE)/Source/usbd_audio.c
 
 include $(OPENWARE)/Hardware/sources.mk
 

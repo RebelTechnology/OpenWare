@@ -13,6 +13,8 @@ MidiController midi_tx;
 FirmwareLoader loader;
 ProgramManager program;
 
+extern "C" int testButton();
+
 MidiHandler::MidiHandler(){}
 ProgramManager::ProgramManager(){}
 void ProgramManager::exitProgram(bool isr){}
@@ -26,23 +28,31 @@ const char* getFirmwareVersion(){
 #define FIRMWARE_SECTOR 0xff
 
 void led_off(){
+#ifdef USE_LED
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+#endif
 }
 
 void led_green(){
+#ifdef USE_LED
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+#endif
 }
 
 void led_red(){
+#ifdef USE_LED
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+#endif
 }
 
 void led_toggle(){
+#ifdef USE_LED
   HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
   HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+#endif
 }
 
 const char* message = NULL;
@@ -137,7 +147,8 @@ extern "C" {
 
   void loop(void){
 #ifdef USE_LED
-    static int counter = 3*1200;
+    // flash 3 times on startup
+    static uint32_t counter = 3*1200;
     if(counter){
       switch(counter-- % 1200){
       case 600:

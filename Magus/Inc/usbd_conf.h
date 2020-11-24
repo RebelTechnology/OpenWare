@@ -70,7 +70,7 @@
 /*---------- -----------*/
 #define USBD_MAX_NUM_INTERFACES     5U
 /*---------- -----------*/
-#define USBD_MAX_NUM_CONFIGURATION     5U
+#define USBD_MAX_NUM_CONFIGURATION     1U
 /*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512U
 /*---------- -----------*/

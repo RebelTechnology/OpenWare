@@ -163,6 +163,7 @@ SECTIONS
     PROVIDE (_FLASH_STORAGE_BEGIN = .);
   } >STORAGE
   _FLASH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);
+  _FLASH_STORAGE_SIZE = LENGTH(STORAGE);
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

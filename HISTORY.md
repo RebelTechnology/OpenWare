@@ -1,3 +1,19 @@
+21.0.0
+------
+* Updated USB audio driver
+* Fix USB audio mic driver Windows support
+* Added PATCH_BUTTON_ON/OFF MIDI controls
+
+
+20.10.0
+-------
+
+* First public Lich release
+* New Library submodule
+* Refactored build structure
+* Refactored Owl.cpp into subprojects
+* Improved USB Host performance
+
 20.9.0
 ------
 

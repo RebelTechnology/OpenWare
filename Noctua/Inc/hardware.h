@@ -4,13 +4,7 @@
 #define OWL_NOCTUA
 #define HARDWARE_ID                  NOCTUA_HARDWARE
 #define HARDWARE_VERSION             "Noctua"
-#undef USE_EXTERNAL_RAM
-
-/* #define USE_MODE_BUTTON */
-/* #define MODE_BUTTON_PIN SW3_Pin */
-/* #define MODE_BUTTON_PORT SW3_GPIO_Port */
-/* #define MODE_BUTTON_GAIN ADC_C */
-/* #define MODE_BUTTON_PATCH ADC_D */
+#define NO_EXTERNAL_RAM
 
 /* #define USE_BKPSRAM enable to prevent reset loops */ 
 

@@ -19,6 +19,7 @@ public:
   PatchDefinition* getPatchDefinition(unsigned int index);
   unsigned int getNumberOfPatches();
   unsigned int getNumberOfResources();
+  bool hasPatches();
   void registerPatch(PatchDefinition* def);
   void setDynamicPatchDefinition(PatchDefinition* def){
     dynamicPatchDefinition = def;
