@@ -28,8 +28,8 @@
 #define AUDIO_IN_STREAMING_CTRL                       0x03
 #define AUDIO_OUT_STREAMING_CTRL                      0x04
 
-#define AUDIO_RX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_FREQ * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000)) 
-#define AUDIO_TX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_FREQ * USB_AUDIO_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000))
+#define AUDIO_RX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_RX_FREQ * USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000)) 
+#define AUDIO_TX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_TX_FREQ * USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000))
 #define AUDIO_FB_PACKET_SIZE                          3U
     
 /* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
@@ -44,12 +44,16 @@
 #define MIDI_TX_PACKET_SIZE                           0x40
 #define MIDI_RX_PACKET_SIZE                           0x40
    
-#define USBD_EP_ATTR_ISOC_NOSYNC                      0x00 /* attribute no synchro */
-#define USBD_EP_ATTR_ISOC_ASYNC                       0x04 /* attribute synchro by feedback  */
-#define USBD_EP_ATTR_ISOC_ADAPT                       0x08 /* attribute synchro adaptative  */
-#define USBD_EP_ATTR_ISOC_SYNC                        0x0C /* attribute synchro synchronous  */
+#define USBD_EP_ATTR_ISOC_NOSYNC                      0x00 /* no synchro */
+#define USBD_EP_ATTR_ISOC_ASYNC                       0x04 /* synchronisation by feedback  */
+#define USBD_EP_ATTR_ISOC_ADAPT                       0x08 /* adaptative synchronisation   */
+#define USBD_EP_ATTR_ISOC_SYNC                        0x0C /* synchronous mode  */
 
-
+/* Class-Specific AS Isochronous Audio Data Endpoint Descriptor bmAttributes */
+#define USBD_AUDIO_AS_CONTROL_SAMPLING_FREQUENCY             0x0001 /* D0 = 1*/
+#define USBD_AUDIO_AS_CONTROL_PITCH                          0x0002 /* D1 = 1*/
+#define USBD_AUDIO_AS_CONTROL_MAX_PACKET_ONLY                0x0080 /* D7 = 1*/
+   
 #if 1
 /* Audio Control Requests */
 #define AUDIO_CONTROL_REQ                             0x01U
@@ -75,13 +79,6 @@
 #ifndef USBD_AUDIO_VOL_STEP
 #define USBD_AUDIO_VOL_STEP                           0x0100U
 #endif /* Total number of steps can't be too many, host will complain. */
-
-/** 
- * The minimum distance that the wr_ptr should keep before rd_ptr to 
- * prevent overwriting unplayed buffer
- */
-#define USBD_AUDIO_FREQ_MAX USBD_AUDIO_FREQ
-#define AUDIO_BUF_SAFEZONE                            ((uint16_t)((USBD_AUDIO_FREQ_MAX / 1000U + 1) * 2U * 4U))
 
 #endif
 
