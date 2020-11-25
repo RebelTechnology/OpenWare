@@ -60,7 +60,7 @@ static void update_tx_write_index(){
 }
 
 void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels){
-#if defined USE_USBD_AUDIO_TX && USB_AUDIO_CHANNELS > 0
+#if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
   // set read head at half a ringbuffer distance from write head
   update_tx_write_index();
   size_t pos = audio_tx_buffer.getWriteIndex();
@@ -81,7 +81,7 @@ void usbd_audio_tx_stop_callback(){
 }
 
 void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
-#if defined USE_USBD_AUDIO_RX && USB_AUDIO_CHANNELS > 0
+#if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
   audio_rx_buffer.setAll(0);
   update_rx_read_index();
   size_t pos = audio_rx_buffer.getWriteIndex();
@@ -98,7 +98,7 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
 }
 
 void usbd_audio_rx_stop_callback(){
-#if defined USE_USBD_AUDIO_RX && USB_AUDIO_CHANNELS > 0
+#if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
   audio_rx_buffer.setAll(0);
   program.loadProgram(program.getProgramIndex());
   program.startProgram(true);
@@ -111,29 +111,29 @@ void usbd_audio_rx_stop_callback(){
 
 static int32_t usbd_audio_rx_flow = 0;
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
-#if defined USE_USBD_AUDIO_RX && USB_AUDIO_CHANNELS > 0
+#if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
   // copy audio to codec_txbuf aka audio_rx_buffer
   update_rx_read_index();
   audio_t* src = (audio_t*)data;
-  size_t blocksize = len / (USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
+  size_t blocksize = len / (USBD_AUDIO_RX_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
   size_t available = audio_rx_buffer.getWriteCapacity()/AUDIO_CHANNELS;
   if(available < blocksize){
     usbd_audio_rx_flow += blocksize-available;
     // skip some frames start and end of this block
-    // src += (blocksize - available)*USB_AUDIO_CHANNELS/2;
+    // src += (blocksize - available)*USBD_AUDIO_RX_CHANNELS/2;
     blocksize = available;
-    len = blocksize*USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE;
+    len = blocksize*USBD_AUDIO_RX_CHANNELS*AUDIO_BYTES_PER_SAMPLE;
   }
   while(blocksize--){
       int32_t* dst = audio_rx_buffer.getWriteHead();
-      size_t ch = USB_AUDIO_CHANNELS;
+      size_t ch = USBD_AUDIO_RX_CHANNELS;
       while(ch--)
   	*dst++ = AUDIO_SAMPLE_TO_INT32(*src++);
       // should we leave in place or zero out any remaining channels?
-      memset(dst, 0, (AUDIO_CHANNELS-USB_AUDIO_CHANNELS)*sizeof(int32_t));
+      memset(dst, 0, (AUDIO_CHANNELS-USBD_AUDIO_RX_CHANNELS)*sizeof(int32_t));
       audio_rx_buffer.incrementWriteHead(AUDIO_CHANNELS);
   }
-  // available = audio_rx_buffer.getWriteCapacity()*AUDIO_BYTES_PER_SAMPLE*USB_AUDIO_CHANNELS/AUDIO_CHANNELS;
+  // available = audio_rx_buffer.getWriteCapacity()*AUDIO_BYTES_PER_SAMPLE*USBD_AUDIO_RX_CHANNELS/AUDIO_CHANNELS;
   // if(available < AUDIO_RX_PACKET_SIZE)
   //   return available;
 #endif
@@ -143,19 +143,19 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
 static int32_t usbd_audio_tx_flow = 0;
 // expect a 1 in 10k sample underflow (-0.01% sample accuracy)
 void usbd_audio_tx_callback(uint8_t* data, size_t len){
-#if defined USE_USBD_AUDIO_TX && USB_AUDIO_CHANNELS > 0
+#if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
   update_tx_write_index();
-  size_t blocksize = len / (USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
+  size_t blocksize = len / (USBD_AUDIO_TX_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
   size_t available = audio_tx_buffer.getReadCapacity()/AUDIO_CHANNELS;
   if(available < blocksize){
     usbd_audio_tx_flow += blocksize-available;
     blocksize = available;
-    len = blocksize*USB_AUDIO_CHANNELS*AUDIO_BYTES_PER_SAMPLE;
+    len = blocksize*USBD_AUDIO_TX_CHANNELS*AUDIO_BYTES_PER_SAMPLE;
   }
   audio_t* dst = (audio_t*)data;
   while(blocksize--){
     int32_t* src = audio_tx_buffer.getReadHead();
-    size_t ch = USB_AUDIO_CHANNELS;
+    size_t ch = USBD_AUDIO_TX_CHANNELS;
     while(ch--)
       *dst++ = AUDIO_INT32_TO_SAMPLE(*src++); // shift, round, dither, clip, truncate, bitswap
     audio_tx_buffer.incrementReadHead(AUDIO_CHANNELS);
