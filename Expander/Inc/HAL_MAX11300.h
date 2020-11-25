@@ -1,6 +1,7 @@
 #ifndef __HAL_MAX11300_H
 #define __HAL_MAX11300_H
 
+#include <stdint.h>
 
 #ifdef __cplusplus
 	extern "C" {

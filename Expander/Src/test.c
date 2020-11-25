@@ -1,3 +1,4 @@
+#include "stm32f1xx_hal.h"
 #include "HAL_MAX11300.h"
 #include "HAL_TLC5946.h"
 
