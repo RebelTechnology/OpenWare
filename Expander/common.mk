@@ -64,18 +64,14 @@ $(BUILD)/%.bin: $(BUILD)/%.elf
 clean:
 	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) $(OBJS:.o=.s) gdbscript
 
-debug: $(ELF)
-	echo "target extended localhost:4242" > gdbscript
-	echo "load $(ELF)" >> gdbscript
-	$(GDB) -x gdbscript $(ELF)
-# 	bash -c "$(GDB) -x <(echo target extended localhost:4242) $(ELF)"
-
 flash:
-	$(STFLASH) write $(BIN) 0x8000000
+	$(OPENOCD) -c "program Build/$(PROJECT).elf verify reset exit"
 
-stlink:
-	echo "target extended localhost:4242" > gdbscript
-	$(GDB) -x gdbscript $(ELF)
+debug: $(ELF)
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" -ex "load" $(ELF)
+
+attach:
+	@$(GDB) -ex "target extended-remote localhost:3333" -ex "monitor reset hard" -ex "monitor arm semihosting enable" $(ELF)
 
 etags:
 	find $(PERIPH_FILE) -type f -iname "*.[ch]" | xargs etags --append
