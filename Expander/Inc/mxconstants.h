@@ -71,6 +71,9 @@
 #define SWCLK_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
+#define MAX_CS_GPIO_Port MAX_nCS_GPIO_Port
+#define MAX_CS_Pin MAX_nCS_Pin
+
 /* USER CODE END Private defines */
 
 /**

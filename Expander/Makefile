@@ -55,6 +55,8 @@ Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim.c \
 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim_ex.c \
 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.c \
 Src/system_stm32f1xx.c  
+C_SOURCES += Src/HAL_MAX11300.c
+C_SOURCES += Src/HAL_TLC5946.c
 
 # ASM sources
 ASM_SOURCES =  \

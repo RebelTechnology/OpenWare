@@ -34,7 +34,8 @@
 #include "stm32f1xx_hal.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "HAL_MAX11300.h"
+#include "HAL_TLC5946.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -67,6 +68,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+void setup(void);
+void run(void);
 
 /* USER CODE END PFP */
 
@@ -98,6 +101,10 @@ int main(void)
   MX_USART1_UART_Init();
 
   /* USER CODE BEGIN 2 */
+	  
+  MAX11300_init(&hspi1);
+  TLC5946_init(&hspi2);
+  setup();
 
   /* USER CODE END 2 */
 
@@ -108,6 +115,7 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+   run();
 
   }
   /* USER CODE END 3 */
@@ -210,7 +218,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 0;
+  htim1.Init.Period = 2;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
@@ -363,6 +371,23 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+  if(hspi == &hspi2){TLC5946_TxINTCallback();}
+	if(hspi == &hspi1){MAX11300_TxINTCallback();}
+}
+
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+  if(hspi == &hspi2){}
+	if(hspi == &hspi1){MAX11300_RxINTCallback();}
+}
+
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
+  if(hspi == &hspi2){TLC5946_TxINTCallback();}
+  if(hspi == &hspi1){MAX11300_TxRxINTCallback();}
+}
 
 /* USER CODE END 4 */
 
