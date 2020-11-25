@@ -70,7 +70,7 @@
 /*---------- -----------*/
 #define USBD_MAX_NUM_INTERFACES     5U
 /*---------- -----------*/
-#define USBD_MAX_NUM_CONFIGURATION     5U
+#define USBD_MAX_NUM_CONFIGURATION     1U
 /*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512U
 /*---------- -----------*/
@@ -80,7 +80,8 @@
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
 /*---------- -----------*/
-#define USBD_AUDIO_FREQ     AUDIO_SAMPLINGRATE
+#define USBD_AUDIO_RX_FREQ     AUDIO_SAMPLINGRATE
+#define USBD_AUDIO_TX_FREQ     AUDIO_SAMPLINGRATE
 
 /****************************************/
 /* #define for FS and HS identification */

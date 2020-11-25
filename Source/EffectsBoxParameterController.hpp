@@ -1,6 +1,7 @@
 #ifndef __ParameterController_hpp__
 #define __ParameterController_hpp__
 
+#include <string.h>
 #include "device.h"
 #include "basicmaths.h"
 #include "ProgramVector.h"
