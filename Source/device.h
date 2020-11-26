@@ -95,6 +95,11 @@
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 
+#define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
+#define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE
+#define USBD_AUDIO_RX_CHANNELS       AUDIO_CHANNELS
+#define USBD_AUDIO_TX_CHANNELS       AUDIO_CHANNELS
+
 #ifndef MAIN_LOOP_SLEEP_MS
 #define MAIN_LOOP_SLEEP_MS           2
 #endif
@@ -112,7 +117,6 @@
 #ifndef NO_EXTERNAL_RAM
 #define USE_EXTERNAL_RAM
 #endif
-
 
 #if defined USE_USBD_FS
 #define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
