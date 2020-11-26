@@ -33,7 +33,7 @@
 
 /* USER CODE END INCLUDE */
 
-void MX_DriverVbusFS(uint8_t state);
+void MX_DriverVbusHS(uint8_t state);
 
 #ifdef __cplusplus
 }

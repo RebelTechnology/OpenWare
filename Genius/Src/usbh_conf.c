@@ -36,7 +36,7 @@
 
 /* USER CODE END PV */
 
-HCD_HandleTypeDef hhcd_USB_OTG_FS;
+HCD_HandleTypeDef hhcd_USB_OTG_HS;
 void Error_Handler(void);
 
 /* USER CODE BEGIN 0 */
@@ -136,23 +136,23 @@ void HAL_HCD_PortDisabled_Callback(HCD_HandleTypeDef *hhcd)
 USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
 {
   /* Init USB_IP */
-  if (phost->id == HOST_FS) {
+  if (phost->id == HOST_HS) {
   /* Link the driver to the stack. */
-  hhcd_USB_OTG_FS.pData = phost;
-  phost->pData = &hhcd_USB_OTG_FS;
+  hhcd_USB_OTG_HS.pData = phost;
+  phost->pData = &hhcd_USB_OTG_HS;
 
-  hhcd_USB_OTG_FS.Instance = USB_OTG_FS;
-  hhcd_USB_OTG_FS.Init.Host_channels = 16;
-  hhcd_USB_OTG_FS.Init.speed = HCD_SPEED_FULL;
-  hhcd_USB_OTG_FS.Init.dma_enable = DISABLE;
-  hhcd_USB_OTG_FS.Init.phy_itface = HCD_PHY_EMBEDDED;
-  hhcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
-  if (HAL_HCD_Init(&hhcd_USB_OTG_FS) != HAL_OK)
+  hhcd_USB_OTG_HS.Instance = USB_OTG_HS;
+  hhcd_USB_OTG_HS.Init.Host_channels = 16;
+  hhcd_USB_OTG_HS.Init.speed = HCD_SPEED_FULL;
+  hhcd_USB_OTG_HS.Init.dma_enable = DISABLE;
+  hhcd_USB_OTG_HS.Init.phy_itface = HCD_PHY_EMBEDDED;
+  hhcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
+  if (HAL_HCD_Init(&hhcd_USB_OTG_HS) != HAL_OK)
   {
     Error_Handler( );
   }
 
-  USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG_FS));
+  USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG_HS));
   }
   return USBH_OK;
 }
@@ -381,8 +381,8 @@ USBH_URBStateTypeDef USBH_LL_GetURBState(USBH_HandleTypeDef *phost, uint8_t pipe
   */
 USBH_StatusTypeDef USBH_LL_DriverVBUS(USBH_HandleTypeDef *phost, uint8_t state)
 {
-  if (phost->id == HOST_FS) {
-    MX_DriverVbusFS(state);
+  if (phost->id == HOST_HS) {
+    MX_DriverVbusHS(state);
   }
 
   /* USER CODE BEGIN 0 */
