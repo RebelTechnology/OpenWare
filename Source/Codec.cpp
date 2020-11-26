@@ -45,7 +45,7 @@ static void update_rx_read_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A
   extern DMA_HandleTypeDef HDMA_RX;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  size_t pos = audio_rx_buffer.getCapacity() - HDMA_RX.Instance->NDTR;
+  size_t pos = audio_rx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX);
   audio_rx_buffer.setReadIndex(pos);
 #endif
 }
@@ -54,7 +54,7 @@ static void update_tx_write_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A
   extern DMA_HandleTypeDef HDMA_TX;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  size_t pos = audio_tx_buffer.getCapacity() - HDMA_TX.Instance->NDTR;
+  size_t pos = audio_tx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX);
   audio_tx_buffer.setWriteIndex(pos);
 #endif
 }
