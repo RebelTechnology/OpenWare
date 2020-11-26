@@ -51,4 +51,5 @@ void loop(void){
   }
 #endif
   // graphics.params.updateEncoders(Encoders_get(), 7);
+  owl.loop();
 }
