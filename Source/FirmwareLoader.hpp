@@ -80,16 +80,13 @@ public:
     // allocate memory
     if(size > MAX_SYSEX_FIRMWARE_SIZE)
       return setError("SysEx too big");
-#if 0
-    static uint8_t static_buffer[1024*12]; // todo remove!
-    buffer = static_buffer; 
-#elif defined OWL_PRISM || defined OWL_BIOSIGNALS || defined OWL_NOCTUA
+#ifdef USE_EXTERNAL_RAM
+    extern char _EXTRAM; // defined in link script
+    buffer = (uint8_t*)&_EXTRAM;
+#else
     // required by devices with no ext mem
     extern char _PATCHRAM;
     buffer = (uint8_t*)&_PATCHRAM; 
-#else
-    extern char _EXTRAM; // defined in link script
-    buffer = (uint8_t*)&_EXTRAM;
 #endif
     return 0;
   }

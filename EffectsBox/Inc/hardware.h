@@ -24,12 +24,22 @@
 #define USE_CS4271
 #define CODEC_HP_FILTER
 #define CODEC_SPI hspi4
-#define USE_USBD_HS
 #define USE_SCREEN
 #define SSD1309
 #define OLED_SPI hspi5
 /* #define OLED_DMA */
 #define OLED_SOFT_CS
+
+#define AUDIO_BITS_PER_SAMPLE       16
+#define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
+#define AUDIO_CHANNELS              2
+#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
+#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
+#define USE_USBD_AUDIO
+#define USE_USBD_AUDIO_TX  // microphone
+/* #define USE_USBD_AUDIO_RX  // speaker */
+#define USE_USBD_HS
+#define USBD_HANDLE hUsbDeviceHS
 
 #define USE_ENCODERS
 #define ENCODER_TIM1 htim4

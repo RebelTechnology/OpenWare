@@ -36,7 +36,11 @@
 #include "stm32f4xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#ifdef DEBUG
+#define DEBUG_LEVEL     3
+#else
+#define DEBUG_LEVEL     0
+#endif
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_HOST_LIBRARY
@@ -84,7 +88,7 @@
 #define USBH_MAX_DATA_BUFFER      512U
  
 /*----------   -----------*/
-#define USBH_DEBUG_LEVEL      0U
+#define USBH_DEBUG_LEVEL      DEBUG_LEVEL
  
 /*----------   -----------*/
 #define USBH_USE_OS      0U

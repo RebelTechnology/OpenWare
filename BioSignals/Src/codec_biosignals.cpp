@@ -31,7 +31,7 @@ void usbd_fill_buffer(uint8_t* buffer, size_t len){
   size_t available;
   for(size_t i=0; i<len; ++i){
     memcpy(dst, audio_ringbuffer.getReadHead(), USB_AUDIO_CHANNELS*sizeof(audio_t));
-    available = audio_ringbuffer.getReadSpace();
+    available = audio_ringbuffer.getReadCapacity();
     if(available > USB_AUDIO_CHANNELS)
       audio_ringbuffer.incrementReadHead(USB_AUDIO_CHANNELS);
     else
@@ -45,17 +45,17 @@ void usbd_audio_gain_callback(uint8_t gain){
 }
 
 void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  usbd_fill_buffer(haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
-  usbd_audio_write(pdev, haudio->audio_out_buffer, AUDIO_IN_PACKET_SIZE);
+  usbd_fill_buffer(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
+  usbd_audio_write(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
 }
 
 void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
   // set read head at half a ringbuffer distance from write head
-  size_t pos = audio_ringbuffer.getWritePos() / USB_AUDIO_CHANNELS;
-  size_t len = audio_ringbuffer.getSize() / USB_AUDIO_CHANNELS;
+  size_t pos = audio_ringbuffer.getWriteIndex() / USB_AUDIO_CHANNELS;
+  size_t len = audio_ringbuffer.getCapacity() / USB_AUDIO_CHANNELS;
   pos = (pos + len/2) % len;
   pos *= USB_AUDIO_CHANNELS;
-  audio_ringbuffer.setReadPos(pos);
+  audio_ringbuffer.setReadIndex(pos);
   usbd_initiate_tx(pdev, haudio);
 }
 
@@ -109,13 +109,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     if(rxindex == rxhalf){
       audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize); // trigger audio processing block
 #ifdef USE_USBD_AUDIO
-      audio_ringbuffer.write(codec_txbuf+rxhalf, codec_blocksize*USB_AUDIO_CHANNELS); // copy back previous block
+      audio_ringbuffer.push(codec_txbuf+rxhalf, codec_blocksize*USB_AUDIO_CHANNELS); // copy back previous block
 #endif
     }else if(rxindex >= rxfull){
       rxindex = 0;
       audioCallback(codec_rxbuf+rxhalf, codec_txbuf+rxhalf, codec_blocksize);
 #ifdef USE_USBD_AUDIO
-      audio_ringbuffer.write(codec_txbuf, codec_blocksize*USB_AUDIO_CHANNELS);
+      audio_ringbuffer.push(codec_txbuf, codec_blocksize*USB_AUDIO_CHANNELS);
 #endif
     }
 #endif

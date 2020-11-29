@@ -67,10 +67,12 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     return error(FLASH_ERROR, "Insufficient flash available");
   if(size < 4)
     return error(FLASH_ERROR, "Invalid resource size");
-#if USE_EXTERNAL_RAM
-  extern char _EXTRAM;
+#ifdef USE_EXTERNAL_RAM
+  extern char _EXTRAM_END, _FLASH_STORAGE_SIZE;
   if(size > storage.getFreeSize())
-    storage.defrag((uint8_t*)&_EXTRAM, 1024*1024);
+    storage.defrag(
+      (uint8_t*)&_EXTRAM_END - (uint32_t)(&_FLASH_STORAGE_SIZE),
+      (uint32_t)(&_FLASH_STORAGE_SIZE));
 #endif
   uint32_t* magic = (uint32_t*)data;
   if(*magic == 0xDADAC0DE && index > 0 && index <= MAX_NUMBER_OF_PATCHES){
@@ -125,6 +127,10 @@ unsigned int PatchRegistry::getNumberOfPatches(){
   // return nofPatches+1;
   // return MAX_NUMBER_OF_PATCHES+1;
   return patchCount+1;
+}
+
+bool PatchRegistry::hasPatches(){
+  return patchCount > 0 || dynamicPatchDefinition != NULL;
 }
 
 PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){

@@ -1,27 +1,26 @@
 PROJECT = MidiBootOwl
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
+DFUUTIL ?= dfu-util
 
 LDSCRIPT = STM32F405ZGT6-boot.ld
 include $(OPENWARE)/Hardware/owl1.mk
 
-C_SRC = $(notdir $(wildcard Src/*.c))
-CPP_SRC = $(notdir $(wildcard Src/*.cpp))
+C_SRC = $(wildcard Src/*.c)
+CPP_SRC = $(wildcard Src/*.cpp)
 
-C_SRC += usbd_midi.c
-C_SRC += usbd_midi_if.c
-C_SRC += sysex.c
-C_SRC += crc32.c
-C_SRC += eepromcontrol.c
-C_SRC += message.c
-# S_SRC = startup_openboot.s
+# C_SRC += usbd_audio.c
+C_SRC += $(OPENWARE)/Source/usbd_midi.c
+C_SRC += $(OPENWARE)/Source/sysex.c
+C_SRC += $(OPENWARE)/Source/crc32.c
+C_SRC += $(OPENWARE)/Source/eepromcontrol.c
+C_SRC += $(OPENWARE)/Source/message.c
+CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
+CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 
 ifndef PLATFORM
-PLATFORM = Modular
+PLATFORM = Pedal
 endif
-
-#C_SRC += usbd_desc.c usbd_conf.c
-
 
 ifeq ($(PLATFORM),Pedal)
   CPPFLAGS += -Iusbd-fs -DOWL_PEDAL
@@ -34,21 +33,14 @@ else ifeq ($(PLATFORM),Rack)
 #  vpath %.c usbd-fs
 endif
 
-# CPP_SRC += MidiReader.cpp
-CPP_SRC += MidiController.cpp
-CPP_SRC += MidiWriter.cpp
-
-OBJS = $(C_SRC:%.c=Build/%.o)
-OBJS += $(CPP_SRC:%.cpp=Build/%.o)
-OBJS += $(S_SRC:%.s=Build/%.o)
-
-OBJS += $(OBJS_USBD)
-OBJS += $(OBJS_UART)
-OBJS += $(OBJS_IWDG)
-OBJS += $(OBJS_SRAM)
-
+C_SRC += $(C_SRC_SRAM)
+C_SRC += $(C_SRC_USBD)
+C_SRC += $(C_SRC_UART)
+C_SRC += $(C_SRC_IWDG)
 
 include $(OPENWARE)/Hardware/f4.mk
+
+DFUCMD = $(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0
 
 .PHONY: clean deploy unlock erase upload lock
 
@@ -77,4 +69,6 @@ upload:
 lock:
 	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 1 on" -c "flash info 0" -c "exit"
 
-deploy: upload lock
+dfu: Build/MidiBootOwl.elf
+	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s 0x8000000 -D $<
+	@echo Uploaded $< to OWL bootsector

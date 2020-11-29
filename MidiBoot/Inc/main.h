@@ -58,10 +58,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LED1_Pin GPIO_PIN_0
-#define LED1_GPIO_Port GPIOA
-#define LED2_Pin GPIO_PIN_1
-#define LED2_GPIO_Port GPIOA
 #define FLASH_MISO_Pin GPIO_PIN_6
 #define FLASH_MISO_GPIO_Port GPIOA
 #define FLASH_MOSI_Pin GPIO_PIN_7
@@ -70,14 +66,8 @@ void Error_Handler(void);
 #define FLASH_HOLD_GPIO_Port GPIOC
 #define FLASH_nCS_Pin GPIO_PIN_5
 #define FLASH_nCS_GPIO_Port GPIOC
-#define BOOT1_Pin GPIO_PIN_2
-#define BOOT1_GPIO_Port GPIOB
 #define FLASH_SCK_Pin GPIO_PIN_3
 #define FLASH_SCK_GPIO_Port GPIOB
-#define SW3_Pin GPIO_PIN_8
-#define SW3_GPIO_Port GPIOB
-#define SW2_Pin GPIO_PIN_9
-#define SW2_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

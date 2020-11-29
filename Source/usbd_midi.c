@@ -21,7 +21,7 @@ static uint8_t  USBD_Midi_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t epn
 static uint8_t  USBD_Midi_IsoOutIncomplete (USBD_HandleTypeDef *pdev, uint8_t epnum);
 
 
-USBD_ClassTypeDef  USBD_Midi_ClassDriver = 
+USBD_ClassTypeDef  USBD_AUDIO = 
 {
   USBD_Midi_Init,
   USBD_Midi_DeInit,
@@ -539,8 +539,8 @@ uint8_t  *USBD_Midi_GetDeviceQualifierDesc (uint16_t *length)
   * @param  fops: CD  Interface callback
   * @retval status
   */
-uint8_t  USBD_Midi_RegisterInterface  (USBD_HandleTypeDef   *pdev, 
-                                      USBD_Midi_ItfTypeDef *fops)
+uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev, 
+					void *fops)
 {
   pdev->pUserData = fops;
   return USBD_OK;

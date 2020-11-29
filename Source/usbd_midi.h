@@ -47,14 +47,9 @@
 #define AUDIO_REQ_GET_CUR                             0x81
 #define AUDIO_REQ_SET_CUR                             0x01
 
-extern USBD_ClassTypeDef  USBD_Midi_ClassDriver;
 
-typedef struct _USBD_Midi_Itf
-{
-  void(*Receive)(uint8_t *, uint32_t);  
-
-}USBD_Midi_ItfTypeDef;
-
+extern USBD_ClassTypeDef  USBD_AUDIO;
+#define USBD_AUDIO_CLASS    &USBD_AUDIO
 
 typedef struct
 {
@@ -65,8 +60,8 @@ typedef struct
 USBD_Midi_HandleTypeDef; 
 
 
-uint8_t  USBD_Midi_RegisterInterface  (USBD_HandleTypeDef   *pdev, 
-                                      USBD_Midi_ItfTypeDef *fops);
+uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev, 
+                                      void *fops);
 
 #ifdef __cplusplus
 }

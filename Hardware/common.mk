@@ -24,13 +24,14 @@ OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
 OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd.cfg
+MKDIR=mkdir
 
 # Generate dependency information
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
-all: bin
+all: build_dir bin
 
-.PHONY: clean size debug flash attach all sysex bin
+.PHONY: clean size debug flash attach all sysex bin build_dir
 
 # Set up search path
 OBJS = $(addprefix $(BUILD)/,$(notdir $(C_SRC:.c=.o)))
@@ -39,6 +40,12 @@ OBJS += $(addprefix $(BUILD)/,$(notdir $(CPP_SRC:.cpp=.o)))
 vpath %.cpp $(sort $(dir $(CPP_SRC)))
 OBJS += $(addprefix $(BUILD)/,$(notdir $(S_SRC:.s=.o)))
 vpath %.s $(sort $(dir $(S_SRC)))
+
+# Create build directory
+build_dir: $(BUILD)
+
+$(BUILD):
+	$(MKDIR) $(BUILD)
 
 # Build executable 
 $(ELF) : $(OBJS) $(LDSCRIPT)
@@ -84,7 +91,7 @@ size: $(ELF) $(BIN)
 	@ls -sh $(BIN)
 
 clean:
-	@rm -f $(OBJS) $(BUILD)/*.d $(ELF) $(CLEANOTHER) $(BIN) $(ELF:.elf=.s) gdbscript
+	@rm -rf $(BUILD) $(CLEANOTHER)  gdbscript
 
 flash:
 	$(OPENOCD) -c "program Build/$(PROJECT).elf verify reset exit"

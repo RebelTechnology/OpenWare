@@ -4,12 +4,12 @@ OPENWARE ?= $(BUILDROOT)/..
 
 include $(OPENWARE)/Hardware/owl2.mk
 
-C_SRC = $(wildcard Src/*.c)
+C_SRC = $(filter-out Src/test.c, $(wildcard Src/*.c))
 CPP_SRC = $(wildcard Src/*.cpp)
 
 # C_SRC += test.c EffectsBox_Test.c
 # C_SRC += HAL_OLED.c
-# C_SRC += usbd_midi.c usbd_midi_if.c
+C_SRC += usbd_audio.c
 
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/cs4272.c

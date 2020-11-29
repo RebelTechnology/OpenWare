@@ -125,6 +125,8 @@ enum OpenWareMidiControl {
 
   PATCH_BUTTON           = 25, /* LED Pushbutton: 0=not pressed, 127=pressed */
   PATCH_CONTROL          = 26, /* Remote control: 0=local, 127=MIDI */
+  PATCH_BUTTON_ON        = 27, /* Switch a button on: 0-127 button id */
+  PATCH_BUTTON_OFF       = 28, /* Switch a button off: 0-127 button id */
   LED                    = 30, /* set/get LED value: 
 				* 0-41 = off
 				* 42-83 = green

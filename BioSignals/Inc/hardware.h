@@ -4,6 +4,7 @@
 #define OWL_BIOSIGNALS
 #define HARDWARE_ID                  BIOSIGNALS_HARDWARE
 #define HARDWARE_VERSION             "BioSignals"
+#define NO_EXTERNAL_RAM
 
 #define USE_BLE_MIDI
 #define BLE_SPI hspi2
@@ -18,11 +19,14 @@
 
 #define USE_CODEC
 #define USE_ADS1294
-/* #define USE_USBD_AUDIO */
-/* #define USE_USBD_AUDIO_IN // microphone */
-/* #define USE_USBD_AUDIO_OUT // speaker */
+
+#define USE_USBD_AUDIO
+#define USE_USBD_AUDIO_TX  // microphone
+/* #define USE_USBD_AUDIO_RX  // speaker */
+#define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceHS
-/* #define AUDIO_BYPASS */
+#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
+#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
 #define USE_KX122
 #define KX122_ACTIVE_CHANNELS         3
@@ -50,15 +54,14 @@
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
 #if defined USE_KX122 && defined USE_CODEC
-#define USB_AUDIO_CHANNELS          (ADS_ACTIVE_CHANNELS + KX122_ACTIVE_CHANNELS)
+#define AUDIO_CHANNELS              (ADS_ACTIVE_CHANNELS + KX122_ACTIVE_CHANNELS)
 #elif defined USE_CODEC
-#define USB_AUDIO_CHANNELS          ADS_ACTIVE_CHANNELS
+#define AUDIO_CHANNELS              ADS_ACTIVE_CHANNELS
 #elif defined USE_KX122
-#define USB_AUDIO_CHANNELS          KX122_ACTIVE_CHANNELS
+#define AUDIO_CHANNELS              KX122_ACTIVE_CHANNELS
 #else
 #error "Invalid configuration"
 #endif
-#define AUDIO_CHANNELS               USB_AUDIO_CHANNELS
 
 #define NOF_ADC_VALUES               0
 #define NOF_PARAMETERS               5

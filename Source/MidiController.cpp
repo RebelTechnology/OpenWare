@@ -21,10 +21,44 @@ void MidiController::sendPatchParameterValues(){
   sendCc(PATCH_PARAMETER_E, (uint8_t)(getParameterValue(PARAMETER_E)>>5) & 0x7f);
 }
 
+class SendSettingsTask : public BackgroundTask {
+private:
+  uint8_t state;
+public:
+  void begin(){
+    state = 0;
+  }
+  void loop(){
+    switch(state++){
+    case 0:
+      midi_tx.sendPc(settings.program_index);
+      midi_tx.sendPatchParameterValues();
+      midi_tx.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
+      break;
+    case 1:
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_RATE, settings.audio_samplingrate);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_BITDEPTH, settings.audio_bitdepth);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_DATAFORMAT, settings.audio_dataformat);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_BLOCKSIZE, settings.audio_blocksize);
+      break;
+    case 2:
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_BYPASS, settings.audio_codec_bypass);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_SWAP, settings.audio_codec_swaplr);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_PC_BUTTON, settings.program_change_button);
+      break;
+    case 3:
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_INPUT_OFFSET, settings.input_offset);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_INPUT_SCALAR, settings.input_scalar);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_OUTPUT_OFFSET, settings.output_offset);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_OUTPUT_SCALAR, settings.output_scalar);
+      break;
+    default:
+      owl.setBackgroundTask(NULL);
+    }
+  }
+};
+
 void MidiController::sendSettings(){
-  // sendPc(settings.program_index); // TODO!
-  sendPatchParameterValues();
-  sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
   // sendCc(LED, getLed() == NONE ? 0 : getLed() == GREEN ? 42 : 84);
   // sendCc(LEFT_INPUT_GAIN, codec.getInputGainLeft()<<2);
   // sendCc(RIGHT_INPUT_GAIN, codec.getInputGainRight()<<2);
@@ -35,14 +69,43 @@ void MidiController::sendSettings(){
   // sendCc(LEFT_OUTPUT_MUTE, codec.getOutputMuteLeft() ? 127 : 0);
   // sendCc(RIGHT_OUTPUT_MUTE, codec.getOutputMuteRight() ? 127 : 0);
   // sendCc(BYPASS, codec.getBypass() ? 127 : 0);
+  static SendSettingsTask task;
+  owl.setBackgroundTask(&task);
+}
 
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_RATE, settings.audio_samplingrate);
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_BITDEPTH, settings.audio_bitdepth);
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_DATAFORMAT, settings.audio_dataformat);
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_AUDIO_BLOCKSIZE, settings.audio_blocksize);
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_BYPASS, settings.audio_codec_bypass);
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_SWAP, settings.audio_codec_swaplr);
-  sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_PC_BUTTON, settings.program_change_button);
+
+class SendRegistryTask : public BackgroundTask {
+private:
+  uint8_t state;
+public:
+  void begin(){
+    state = 0;
+  }
+  void loop(){
+    if(state < registry.getNumberOfPatches()){
+      midi_tx.sendPatchName(state, registry.getPatchName(state));
+      state++;
+    }else{
+      midi_tx.sendPc(settings.program_index);
+      owl.setBackgroundTask(NULL);
+    }
+  }
+};
+      
+void MidiController::sendPatchNames(){
+  static SendRegistryTask task;
+  owl.setBackgroundTask(&task);
+}
+
+void MidiController::sendPatchName(uint8_t index, const char* name){
+  if(name != NULL){
+    uint8_t size = strnlen(name, 24);
+    uint8_t buf[size+2];
+    buf[0] = SYSEX_PRESET_NAME_COMMAND;
+    buf[1] = index;
+    memcpy(buf+2, name, size);
+    sendSysEx(buf, sizeof(buf));
+  }
 }
 
 void MidiController::sendPatchParameterNames(){
@@ -66,23 +129,6 @@ void MidiController::sendPatchParameterName(PatchParameterId pid, const char* na
   sendSysEx(buf, sizeof(buf));
 }
 
-void MidiController::sendPatchNames(){
-  for(uint8_t i=0; i<registry.getNumberOfPatches(); ++i)
-    sendPatchName(i, registry.getPatchName(i));
-  sendPc(program.getProgramIndex());
-}
-
-void MidiController::sendPatchName(uint8_t index, const char* name){
-  if(name != NULL){
-    uint8_t size = strnlen(name, 24);
-    uint8_t buf[size+2];
-    buf[0] = SYSEX_PRESET_NAME_COMMAND;
-    buf[1] = index;
-    memcpy(buf+2, name, size);
-    sendSysEx(buf, sizeof(buf));
-  }
-}
-
 void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
   sendProgramMessage();
@@ -93,8 +139,10 @@ void MidiController::sendDeviceInfo(){
 
 void MidiController::sendDeviceStats(){
   char buf[80];
+  (void)buf;
   buf[0] = SYSEX_DEVICE_STATS;
   char* p;
+  (void)p;
 #ifdef DEBUG_STACK
   p = &buf[1];
   p = stpcpy(p, (const char*)"Program Stack ");
@@ -144,24 +192,28 @@ void MidiController::sendProgramStats(){
   sendSysEx((uint8_t*)buf, p-buf);
 }
 
-void MidiController::sendStatus(){
-  char buf[64];
-  buf[0] = SYSEX_PROGRAM_STATS;
-  char* p = &buf[1];
+void MidiController::sendErrorMessage(){
   uint8_t err = getErrorStatus();
-  if(err == NO_ERROR){
+  if(err != NO_ERROR){
+    char buf[64];
+    buf[0] = SYSEX_PROGRAM_ERROR;
+    char* p = &buf[1];
+    p = stpcpy(p, (const char*)"Error 0x");
+    p = stpcpy(p, msg_itoa(err, 16));
+    const char* msg = getErrorMessage();
+    if(msg != NULL){
+      p = stpcpy(p, (const char*)" ");
+      p = stpcpy(p, msg);
+    }
+    sendSysEx((uint8_t*)buf, p-buf);
+  }
+}
+
+void MidiController::sendStatus(){
+  if(getErrorStatus() == NO_ERROR)
     sendProgramStats();
-    return;
-  }
-  p = stpcpy(p, (const char*)"Error 0x");
-  p = stpcpy(p, msg_itoa(err, 16));
-  const char* msg = getErrorMessage();
-  if(err != NO_ERROR && msg != NULL){
-  // if(msg != NULL){
-    p = stpcpy(p, (const char*)" ");
-    p = stpcpy(p, msg);
-  }
-  sendSysEx((uint8_t*)buf, p-buf);
+  else
+    sendErrorMessage();
 }
 
 void MidiController::sendProgramMessage(){

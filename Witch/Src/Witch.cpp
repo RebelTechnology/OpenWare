@@ -18,6 +18,29 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+void pinChanged(uint16_t pin){
+  switch(pin){
+  case SW2_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_B, state);
+      break;
+    }
+  case SW3_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_C, state);
+      break;
+    }
+  case SW4_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_D, state);
+      break;
+    }
+  }
+}
+
 void setAnalogValue(uint8_t ch, int16_t value){
   extern DAC_HandleTypeDef hdac;
   // todo set LEDs
@@ -100,13 +123,12 @@ bool isModeButtonPressed(){
   return HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
 }
 
-
 #define PATCH_RESET_COUNTER 80
 static uint32_t counter = 0;
 static void update_preset(){
-  switch(getOperationMode()){
+  switch(owl.getOperationMode()){
   case STARTUP_MODE:
-    setOperationMode(RUN_MODE);
+    owl.setOperationMode(RUN_MODE);
     break;
   case STREAM_MODE:
   case LOAD_MODE:
@@ -119,9 +141,9 @@ static void update_preset(){
     break;
   case RUN_MODE:
     if(isModeButtonPressed()){
-      setOperationMode(CONFIGURE_MODE);
+      owl.setOperationMode(CONFIGURE_MODE);
     }else if(getErrorStatus() != NO_ERROR){
-      setOperationMode(ERROR_MODE);
+      owl.setOperationMode(ERROR_MODE);
     }else{
       setLed(1, getParameterValue(PARAMETER_A));
       setLed(2, getParameterValue(PARAMETER_B));
@@ -151,7 +173,7 @@ static void update_preset(){
 	program.resetProgram(false);
       }
     }else{
-      setOperationMode(RUN_MODE);
+      owl.setOperationMode(RUN_MODE);
     }
     break;
   case ERROR_MODE:
@@ -173,7 +195,7 @@ void setup(){
   HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(LEDPWM1_GPIO_Port, LEDPWM1_Pin, GPIO_PIN_SET);
-  owl_setup();
+  owl.setup();
 }
 
 void loop(void){
@@ -187,5 +209,5 @@ void loop(void){
   // if(state != getButtonValue(BUTTON_E))
   //   setButtonValue(BUTTON_E, state); // todo: mode button
   update_preset();
-  owl_loop();
+  owl.loop();
 }

@@ -58,7 +58,8 @@ typedef enum {
   APPLICATION_IDLE = 0,
   APPLICATION_START,
   APPLICATION_READY,
-  APPLICATION_DISCONNECT
+  APPLICATION_DISCONNECT,
+  APPLICATION_DISCONNECTED
 }ApplicationTypeDef;
 
 /** @defgroup USBH_HOST_Exported_FunctionsPrototype USBH_HOST_Exported_FunctionsPrototype
