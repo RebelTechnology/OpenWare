@@ -109,7 +109,6 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
 
 /* called by the program when an error or anomaly has occured */
 void onProgramStatus(ProgramVectorAudioStatus status){
-  setLed(0, RED_COLOUR);
   program.exitProgram(false);
   char msg[] = "Err xx";
   msg[4] = '0'+(status/10);
@@ -414,9 +413,9 @@ void runAudioTask(void* p){
       programVector = pv;
       setErrorStatus(NO_ERROR);
       owl.setOperationMode(RUN_MODE);
-      setLed(0, GREEN_COLOUR);
-      // codec.softMute(false);
-      // codec.resume();
+#ifdef USE_CODEC
+	codec.clear();
+#endif
       def->run();
       error(PROGRAM_ERROR, "Program exited");
     }else{
@@ -485,11 +484,11 @@ void runManagerTask(void* p){
 	graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
 	midi_rx.setCallback(NULL);
-#ifdef USE_CODEC
-	codec.set(0);
-#endif
 	vTaskDelete(audioTask);
 	audioTask = NULL;
+#ifdef USE_CODEC
+	codec.clear();
+#endif
       }
     }
     // allow idle task to garbage collect if necessary
