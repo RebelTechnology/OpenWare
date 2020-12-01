@@ -126,6 +126,7 @@ public:
   }
   void reset(){
     readpos = writepos = 0;
+    setAll(0);
   }
   void setAll(const T value){
     for(size_t i=0; i<size; ++i)
