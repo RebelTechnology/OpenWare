@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include "arm_math.h"
 #include "device.h"
 #include "ServiceCall.h"
@@ -93,9 +94,8 @@ static int handleCFFT(void** params, int len){
 #endif
 
 static int handleGetParameters(void** params, int len){
-  int ret = OWL_SERVICE_INVALID_ARGS;
+  int ret = OWL_SERVICE_OK;
   int index = 0;
-  ret = OWL_SERVICE_OK;
   while(len >= index+2){
     char* p = (char*)params[index++];
     int32_t* value = (int32_t*)params[index++];
@@ -109,13 +109,6 @@ static int handleGetParameters(void** params, int len){
       *value = settings.output_scalar;
     }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_COUNT, p, 2) == 0){
       *value = (int)registry.getNumberOfResources();
-    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_ID, p, 2) == 0 && len > index){
-      uint8_t* res_index = (uint8_t*)params[index++];
-      ResourceHeader* res = registry.getResource(*res_index + MAX_NUMBER_OF_PATCHES + 1);
-      if (res == NULL){
-        ret = OWL_SERVICE_INVALID_ARGS;
-      }
-      *value = (int32_t)res;
     }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_NAME, p, 2) == 0 && len > index){
       const char* name = (char*)params[index++];
       ResourceHeader* res = registry.getResource(name);
@@ -125,6 +118,38 @@ static int handleGetParameters(void** params, int len){
       *value = (int32_t)res;
     }else{
       ret = OWL_SERVICE_INVALID_ARGS;
+    }
+  }
+  return ret;
+}
+
+/*
+ * Copy resource contents to preallocated buffer in memory
+ * 
+ * 5 parameters are expected:
+ *  - operation name (only 1 currently supported)
+ *  - buffer address
+ *  - resource name
+ *  - copy length in bytes
+ *  - copy offset in bytes
+ */
+static int handleLoadResource(void** params, int len){
+  int ret = OWL_SERVICE_INVALID_ARGS;
+  int index = 0;
+  while(len >= index + 5){
+    char* p = (char*)params[index++];
+    if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_NAME, p, 2) == 0){
+      void* buffer = params[index++];
+      const char* name = (const char*)params[index++];
+      uint32_t length = *(uint32_t*)params[index++];
+      uint32_t offset = *(uint32_t*)params[index++];
+      ResourceHeader* res = registry.getResource(name);
+      // We will only load data if offset/size won't try reading past resource end
+      if (res != NULL && (sizeof(ResourceHeader) + res-> size - offset >= length)){
+        // We'll need a separate method in registry class to handle copying (i.e. for non-memorymapped storages)
+        memcpy(buffer, (void*)((uint8_t*)res + offset), length);
+        ret = OWL_SERVICE_OK;
+      }
     }
   }
   return ret;
@@ -171,11 +196,7 @@ static int handleRequestCallback(void** params, int len){
       ret = OWL_SERVICE_OK;
     } else
 #endif /* USE_MIDI_CALLBACK */
-    if(strncmp(SYSTEM_FUNCTION_RESOURCE_STORE, name, 3) == 0){
-      *callback = (void*)store_resource;
-      ret = OWL_SERVICE_OK;
-    }
-    else if(strncmp(SYSTEM_FUNCTION_RESOURCE_DELETE, name, 3) == 0){
+    if(strncmp(SYSTEM_FUNCTION_RESOURCE_DELETE, name, 3) == 0){
       *callback = (void*)delete_resource;
       ret = OWL_SERVICE_OK;
     }
@@ -226,7 +247,10 @@ int serviceCall(int service, void** params, int len){
     break;
   case OWL_SERVICE_GET_ARRAY:
     ret = handleGetArray(params, len);
-    break;  
+    break;
+  case OWL_SERVICE_LOAD_RESOURCE:
+    ret = handleLoadResource(params, len);
+    break;
   case OWL_SERVICE_REQUEST_CALLBACK:
     ret = handleRequestCallback(params, len);
     break;
