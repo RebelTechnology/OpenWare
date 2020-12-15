@@ -102,9 +102,4 @@ public:
   static ScreenBuffer* create(uint16_t width, uint16_t height);
 };
 
-/* class VideoPatch : public Patch { */
-/* public: */
-/*   virtual void processVideo(ScreenBuffer& video, AudioBuffer& audio) = 0; */
-/* }; */
-
 #endif // __ScreenBuffer_h__

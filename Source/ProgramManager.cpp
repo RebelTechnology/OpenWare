@@ -23,8 +23,6 @@
 #include "bus.h"
 #endif
 
-#include "basicmaths.h"
-
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
