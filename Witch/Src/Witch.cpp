@@ -123,6 +123,105 @@ bool isModeButtonPressed(){
   return HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
 }
 
+
+/**
+  * @brief  Configure gpio mode for a dedicated pin on dedicated port.
+  * @note   I/O mode can be Input mode, General purpose output, Alternate function mode or Analog.
+  * @note   Warning: only one pin can be passed as parameter.
+  * @rmtoll MODER        MODEy         LL_GPIO_SetPinMode
+  * @param  GPIOx GPIO Port
+  * @param  Pin This parameter can be one of the following values:
+  *         @arg @ref LL_GPIO_PIN_0
+  *         @arg @ref LL_GPIO_PIN_1
+  *         @arg @ref LL_GPIO_PIN_2
+  *         @arg @ref LL_GPIO_PIN_3
+  *         @arg @ref LL_GPIO_PIN_4
+  *         @arg @ref LL_GPIO_PIN_5
+  *         @arg @ref LL_GPIO_PIN_6
+  *         @arg @ref LL_GPIO_PIN_7
+  *         @arg @ref LL_GPIO_PIN_8
+  *         @arg @ref LL_GPIO_PIN_9
+  *         @arg @ref LL_GPIO_PIN_10
+  *         @arg @ref LL_GPIO_PIN_11
+  *         @arg @ref LL_GPIO_PIN_12
+  *         @arg @ref LL_GPIO_PIN_13
+  *         @arg @ref LL_GPIO_PIN_14
+  *         @arg @ref LL_GPIO_PIN_15
+  * @param  Mode This parameter can be one of the following values:
+  *         @arg @ref LL_GPIO_MODE_INPUT
+  *         @arg @ref LL_GPIO_MODE_OUTPUT
+  *         @arg @ref LL_GPIO_MODE_ALTERNATE
+  *         @arg @ref LL_GPIO_MODE_ANALOG
+  * @retval None
+  */
+#define LL_GPIO_PIN_0                      GPIO_BSRR_BS_0 /*!< Select pin 0 */
+#define LL_GPIO_PIN_1                      GPIO_BSRR_BS_1 /*!< Select pin 1 */
+#define LL_GPIO_PIN_2                      GPIO_BSRR_BS_2 /*!< Select pin 2 */
+#define LL_GPIO_PIN_3                      GPIO_BSRR_BS_3 /*!< Select pin 3 */
+#define LL_GPIO_PIN_4                      GPIO_BSRR_BS_4 /*!< Select pin 4 */
+#define LL_GPIO_PIN_5                      GPIO_BSRR_BS_5 /*!< Select pin 5 */
+#define LL_GPIO_PIN_6                      GPIO_BSRR_BS_6 /*!< Select pin 6 */
+#define LL_GPIO_PIN_7                      GPIO_BSRR_BS_7 /*!< Select pin 7 */
+#define LL_GPIO_PIN_8                      GPIO_BSRR_BS_8 /*!< Select pin 8 */
+#define LL_GPIO_PIN_9                      GPIO_BSRR_BS_9 /*!< Select pin 9 */
+#define LL_GPIO_PIN_10                     GPIO_BSRR_BS_10 /*!< Select pin 10 */
+#define LL_GPIO_PIN_11                     GPIO_BSRR_BS_11 /*!< Select pin 11 */
+#define LL_GPIO_PIN_12                     GPIO_BSRR_BS_12 /*!< Select pin 12 */
+#define LL_GPIO_PIN_13                     GPIO_BSRR_BS_13 /*!< Select pin 13 */
+#define LL_GPIO_PIN_14                     GPIO_BSRR_BS_14 /*!< Select pin 14 */
+#define LL_GPIO_PIN_15                     GPIO_BSRR_BS_15 /*!< Select pin 15 */
+
+#define LL_GPIO_MODE_INPUT                 (0x00000000U) /*!< Select input mode */
+#define LL_GPIO_MODE_OUTPUT                GPIO_MODER_MODER0_0  /*!< Select output mode */
+#define LL_GPIO_MODE_ALTERNATE             GPIO_MODER_MODER0_1  /*!< Select alternate function mode */
+#define LL_GPIO_MODE_ANALOG                GPIO_MODER_MODER0    /*!< Select analog mode */
+
+__STATIC_INLINE void LL_GPIO_SetPinMode(GPIO_TypeDef *GPIOx, uint32_t Pin, uint32_t Mode)
+{
+  MODIFY_REG(GPIOx->MODER, (GPIO_MODER_MODER0 << (POSITION_VAL(Pin) * 2U)), (Mode << (POSITION_VAL(Pin) * 2U)));
+}
+
+#define SW1_LL_Pin LL_GPIO_PIN_2
+#define SW2_LL_Pin LL_GPIO_PIN_1
+#define SW3_LL_Pin LL_GPIO_PIN_2
+#define SW4_LL_Pin LL_GPIO_PIN_9
+
+bool fiddle(int i, bool selected){
+  GPIO_TypeDef* port;
+  uint16_t pin;
+  uint32_t llpin;
+  switch(i){
+  case 1:
+    port = SW1_GPIO_Port;
+    pin = SW1_Pin;
+    llpin = SW1_LL_Pin;
+    break;
+  case 2:
+    port = SW2_GPIO_Port;
+    pin = SW2_Pin;
+    llpin = SW2_LL_Pin;
+    break;
+  case 3:
+    port = SW3_GPIO_Port;
+    pin = SW3_Pin;
+    llpin = SW3_LL_Pin;
+    break;
+  case 4:
+    port = SW4_GPIO_Port;
+    pin = SW4_Pin;
+    llpin = SW4_LL_Pin;
+    break;
+  }
+  LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_INPUT);
+  bool value = HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET;
+  if(selected){
+    LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_OUTPUT);
+    HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET);
+  }
+  return value;
+
+}
+
 #define PATCH_RESET_COUNTER 80
 static uint32_t counter = 0;
 static void update_preset(){
@@ -141,6 +240,8 @@ static void update_preset(){
     break;
   case RUN_MODE:
     if(isModeButtonPressed()){
+      for(int i=1; i<=6; ++i)
+	setLed(i, 0);
       owl.setOperationMode(CONFIGURE_MODE);
     }else if(getErrorStatus() != NO_ERROR){
       owl.setOperationMode(ERROR_MODE);
@@ -155,24 +256,19 @@ static void update_preset(){
   case CONFIGURE_MODE:
     if(isModeButtonPressed()){
       uint8_t patchselect = program.getProgramIndex();
-      if(getButtonValue(BUTTON_A)){
-	patchselect = 1;
-      }else if(getButtonValue(BUTTON_B)){
-	patchselect = 2;
-      }else if(getButtonValue(BUTTON_C)){
-	patchselect = 3;
-      }else if(getButtonValue(BUTTON_D)){
-	patchselect = 4;
+      for(int i=1; i<=4; ++i){
+	if(fiddle(i, i==patchselect))
+	  patchselect = i;
       }
       if(patchselect >= registry.getNumberOfPatches())
 	patchselect = program.getProgramIndex();
-      for(size_t i=1; i<5; ++i)
-	setLed(i, i == patchselect ? 4095 : 0);
       if(program.getProgramIndex() != patchselect){
       	program.loadProgram(patchselect);
 	program.resetProgram(false);
       }
     }else{
+      for(int i=1; i<=4; ++i)
+	fiddle(i, false); // set all to input mode
       owl.setOperationMode(RUN_MODE);
     }
     break;
