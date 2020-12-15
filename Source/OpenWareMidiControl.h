@@ -89,7 +89,6 @@ enum PatchButtonId {
 #define SYSEX_CONFIGURATION_BUS_ENABLE            "BE"
 #define SYSEX_CONFIGURATION_BUS_FORWARD_MIDI      "BM"
 #define SYSEX_CONFIGURATION_RESOURCE_COUNT        "RC"
-#define SYSEX_CONFIGURATION_RESOURCE_BY_ID        "RI"
 #define SYSEX_CONFIGURATION_RESOURCE_BY_NAME      "RN"
 
 enum OpenWareMidiSysexCommand {
