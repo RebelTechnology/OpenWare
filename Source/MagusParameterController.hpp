@@ -303,7 +303,7 @@ public:
 
     // draw CPU load
     screen.print(1, offset + 17, "cpu ");
-    screen.print((int)((pv->cycles_per_block) / pv->audio_blocksize) / 83);
+    screen.print((int)((pv->cycles_per_block) / pv->audio_blocksize) / 35);
     screen.print("%");
     
     // draw firmware version

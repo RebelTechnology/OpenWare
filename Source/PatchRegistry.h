@@ -39,7 +39,6 @@ private:
 };
 
 // Wrappers to be used as callbacks for service calls
-void store_resource(uint8_t index, ResourceHeader* resource);
 void delete_resource(uint8_t index);
 
 #endif // __PatchRegistry_h__

@@ -107,15 +107,6 @@ static int handleGetParameters(void** params, int len){
       *value = settings.output_offset;
     }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
       *value = settings.output_scalar;
-    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_COUNT, p, 2) == 0){
-      *value = (int)registry.getNumberOfResources();
-    }else if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_NAME, p, 2) == 0 && len > index){
-      const char* name = (char*)params[index++];
-      ResourceHeader* res = registry.getResource(name);
-      if (res == NULL){
-        ret = OWL_SERVICE_INVALID_ARGS;
-      }
-      *value = (int32_t)res;
     }else{
       ret = OWL_SERVICE_INVALID_ARGS;
     }
@@ -126,30 +117,46 @@ static int handleGetParameters(void** params, int len){
 /*
  * Copy resource contents to preallocated buffer in memory
  * 
- * 5 parameters are expected:
- *  - operation name (only 1 currently supported)
- *  - buffer address
+ * 4 parameters are expected:
  *  - resource name
- *  - copy length in bytes
- *  - copy offset in bytes
+ *  - buffer address
+ *  - offset in bytes
+ *  - max_length in bytes
+ * 
+ * When buffer address is not given, we will update max_length based on resource size. If resource
+ * is using memory mapped storage, buffer address will be set to resource start + offset. If storage
+ * is not memory mapped, we can't set this pointer.
+ * 
+ * When address is given, we're assuming max_length to be its size. So resource contents up to that
+ * length in bytes would be copied, starting after offset specified.
  */
 static int handleLoadResource(void** params, int len){
   int ret = OWL_SERVICE_INVALID_ARGS;
   int index = 0;
-  while(len >= index + 5){
-    char* p = (char*)params[index++];
-    if(strncmp(SYSEX_CONFIGURATION_RESOURCE_BY_NAME, p, 2) == 0){
-      void* buffer = params[index++];
-      const char* name = (const char*)params[index++];
-      uint32_t length = *(uint32_t*)params[index++];
-      uint32_t offset = *(uint32_t*)params[index++];
-      ResourceHeader* res = registry.getResource(name);
-      // We will only load data if offset/size won't try reading past resource end
-      if (res != NULL && (sizeof(ResourceHeader) + res-> size - offset >= length)){
-        // We'll need a separate method in registry class to handle copying (i.e. for non-memorymapped storages)
-        memcpy(buffer, (void*)((uint8_t*)res + offset), length);
-        ret = OWL_SERVICE_OK;
+  while(len >= index + 4){
+    const char* name = (const char*)params[index++];
+    uint8_t** buffer = (uint8_t**)params[index++];
+    uint32_t* offset = (uint32_t*)params[index++];
+    uint32_t* max_size = (uint32_t*)params[index++];
+    ResourceHeader* res = registry.getResource(name);
+    // We require offset to be aligned to 4 bytes
+    if (res != NULL && !(*offset & 0b11)) {
+      if (*buffer == NULL) {
+        // Buffer pointer not given, so we will update value refenced by max_size with
+        // actual resource size here
+        *max_size = res->size - *offset;
+        // TODO: this requires memory mapped access, so upcoming SPI NOR storage won't be able to set buffer ptr.
+        // if (storage.isMemoryMapped()) ...
+        *buffer = registry.getData(res) + *offset;
       }
+      else if (res->size - *offset <= *max_size){
+        // Buffer pointer is given. We'll copy data into it on condition that we're told
+        // that enough space is preallocated
+        memcpy((void*)*buffer, (void*)(registry.getData(res) + *offset), *max_size);
+        // We'll need a separate method in registry class to handle copying (i.e. for non-memorymapped storages)
+        // storage.copyData(*buffer, *offset, *max_length);
+      }
+      ret = OWL_SERVICE_OK;
     }
   }
   return ret;
@@ -194,12 +201,8 @@ static int handleRequestCallback(void** params, int len){
     if(strncmp(SYSTEM_FUNCTION_MIDI, name, 3) == 0){
       *callback = (void*)midi_send;
       ret = OWL_SERVICE_OK;
-    } else
-#endif /* USE_MIDI_CALLBACK */
-    if(strncmp(SYSTEM_FUNCTION_RESOURCE_DELETE, name, 3) == 0){
-      *callback = (void*)delete_resource;
-      ret = OWL_SERVICE_OK;
     }
+#endif /* USE_MIDI_CALLBACK */
   }
   return ret;
 }

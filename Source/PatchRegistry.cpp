@@ -210,10 +210,6 @@ void PatchRegistry::registerPatch(PatchDefinition* def){
 //   }
 // }
 
-void store_resource(uint8_t index, ResourceHeader* resource){
-  registry.store(index + MAX_NUMBER_OF_PATCHES + 1, (uint8_t*)resource, resource->size);
-}
-
 void delete_resource(uint8_t index){
   registry.setDeleted(index + MAX_NUMBER_OF_PATCHES + 1);
 }
