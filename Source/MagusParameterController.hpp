@@ -74,6 +74,9 @@ public:
   ControlMode controlMode = PLAY;
   bool saveSettings;
 
+  bool resourceDelete;
+  bool resourceDeletePressed; // This is used to ensure that we don't delete current resourse on menu enter
+
   InputCalibration input_cal;
   OutputCalibration output_cal;
   BaseCalibration *current_cal;
@@ -96,6 +99,7 @@ public:
   }
   void reset(){
     saveSettings = false;
+    resourceDelete = false;
     drawCallback = defaultDrawCallback;
     for(int i=0; i<SIZE; ++i){
       strcpy(names[i], "Parameter ");
@@ -384,24 +388,36 @@ public:
 
   void drawResourceNames(int selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
-    selected = min(selected, registry.getNumberOfResources() - 1);
+    if (resourceDelete)
+      selected = min(selected, registry.getNumberOfResources());
+    else
+      selected = min(selected, registry.getNumberOfResources() - 1);
+    if (resourceDelete && selected == 0)
+      screen.print(18, 24, "Delete:");
     if (selected > 0 && registry.getNumberOfResources() > 0) {
       screen.setCursor(1, 24);
       screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + selected));
     };
-    screen.setCursor(1, 24 + 10);
-    screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
-    screen.print(".");
-    screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+    if (selected < (int)registry.getNumberOfResources()) {
+      screen.setCursor(1, 24 + 10);
+      screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print(".");
+      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+    }
+    else if (resourceDelete)
+      screen.print(18, 24 + 10, "Exit");
     if (selected + 1 < (int)registry.getNumberOfResources()) {
       screen.setCursor(1, 24 + 20);
       screen.print((int)selected + 2 + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
     }
-    screen.invert(0, 25, 128, 10);
+    if (resourceDelete)
+      screen.drawRectangle(0, 25, 128, 10, WHITE);
+    else
+      screen.invert(0, 25, 128, 10);
   }
 
   void drawVolume(uint8_t selected, ScreenBuffer& screen){
@@ -636,11 +652,8 @@ public:
       selectedPid[1] = settings.program_index;
       break;
     case DATA:
-      selectedPid[1] = max(
-        0,
-        min(
-          registry.getNumberOfResources() > 0 ? registry.getNumberOfResources() - 1 : 0,
-          value));
+      selectedPid[1] = 0; // Go to beginning of resource list
+      resourceDelete = false;
       break;
     case VOLUME:
       selectedPid[1] = settings.audio_output_gain; // todo: get current
@@ -673,19 +686,33 @@ public:
         controlMode = EXIT;
         break;
       case DATA: {
-          // Delete resource unless it's protected by "__" prefix
-          ResourceHeader* res = registry.getResource(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
-          if (res != NULL) {
-            if(res->name[0] == '_' && res->name[1] == '_'){
-              debugMessage("Resource protected");
-            }
-            else {
-              registry.setDeleted(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+        if (resourceDelete) {
+          if (selectedPid[1] == registry.getNumberOfResources()){
+            // Exit on last menu item (exit link after resources list)
+            resourceDelete = false;
+            resourceDeletePressed = false;
+            controlMode = EXIT;
+          }
+          else if (!resourceDeletePressed) {
+            // Delete resource unless it's protected by "__" prefix
+            resourceDeletePressed = true;
+            ResourceHeader* res = registry.getResource(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+            if (res != NULL) {
+              if(res->name[0] == '_' && res->name[1] == '_'){
+                debugMessage("Resource protected");
+              }
+              else {
+                registry.setDeleted(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+              }
             }
           }
-          controlMode = EXIT;
-          break;
         }
+        else {
+          resourceDelete = true;
+          resourceDeletePressed = true;
+        }
+        break;
+      }
       case VOLUME:
         controlMode = EXIT;
         break;
@@ -717,6 +744,9 @@ public:
 	  else
 	    calibrationConfirm = false;
 	}
+  else if (controlMode == DATA && resourceDeletePressed) {
+    resourceDeletePressed = false;
+  }
 	encoders[1] = value;
       }
     }
@@ -811,7 +841,10 @@ public:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
       break;
     case DATA:
-      selectedPid[1] = max(0, min(registry.getNumberOfResources() - 1, value));
+      if (resourceDelete)
+        selectedPid[1] = max(0, min(registry.getNumberOfResources(), value));
+      else
+        selectedPid[1] = max(0, min(registry.getNumberOfResources() - 1, value));
       break;
     case CALIBRATE:
       if (isCalibrationRunning && !isCalibrationModeSelected) {
