@@ -44,7 +44,7 @@
 #define ADS_ACTIVE_CHANNELS         4
 #define ADS_HSPI                    hspi1
 
-#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*4)
+#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USBD_AUDIO_TX_CHANNELS*4)
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       32
