@@ -414,6 +414,9 @@ public:
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
     }
+    else if (resourceDelete && selected < (int)registry.getNumberOfResources()){
+      screen.print(18, 24 + 20, "Exit");
+    }
     if (resourceDelete)
       screen.drawRectangle(0, 25, 128, 10, WHITE);
     else
