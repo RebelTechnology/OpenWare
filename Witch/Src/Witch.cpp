@@ -240,8 +240,11 @@ static void update_preset(){
     break;
   case RUN_MODE:
     if(isModeButtonPressed()){
+      program.exitProgram(false);
       for(int i=1; i<=6; ++i)
 	setLed(i, 0);
+      setGateValue(BUTTON_E, 0);
+      setGateValue(BUTTON_F, 0);
       owl.setOperationMode(CONFIGURE_MODE);
     }else if(getErrorStatus() != NO_ERROR){
       owl.setOperationMode(ERROR_MODE);
@@ -263,12 +266,13 @@ static void update_preset(){
       if(patchselect >= registry.getNumberOfPatches())
 	patchselect = program.getProgramIndex();
       if(program.getProgramIndex() != patchselect){
-      	program.loadProgram(patchselect);
-	program.resetProgram(false);
+      	program.loadProgram(patchselect); // enters load mode
+	owl.setOperationMode(CONFIGURE_MODE);
       }
     }else{
       for(int i=1; i<=4; ++i)
 	fiddle(i, false); // set all to input mode
+      program.startProgram(false);
       owl.setOperationMode(RUN_MODE);
     }
     break;
