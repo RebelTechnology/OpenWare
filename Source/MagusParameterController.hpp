@@ -2,7 +2,6 @@
 #define __ParameterController_hpp__
 
 #include "device.h"
-#include "basicmaths.h"
 #include "errorhandlers.h"
 #include "ProgramVector.h"
 // #include "HAL_Encoders.h"
@@ -14,7 +13,6 @@
 #include "ProgramManager.h"
 #include "Codec.h"
 #include "message.h"
-#include "calibration.hpp"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -22,6 +20,18 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 #define ENC_MULTIPLIER 6 // shift left by this many steps
 #define SHOW_CALIBRATION_INFO  // This flag renders current values in calibration menu
 #define CALIBRATION_INFO_FLOAT // Display float values instead of raw integers
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+#ifndef abs
+#define abs(x) ((x)>0?(x):-(x))
+#endif
+
+#include "calibration.hpp"
 
 /*    
 screen 128 x 64, font 5x7
