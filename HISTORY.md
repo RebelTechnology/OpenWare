@@ -3,6 +3,11 @@
 * Updated USB audio driver
 * Fix USB audio mic driver Windows support
 * Added PATCH_BUTTON_ON/OFF MIDI controls
+* Don't raise errors for incomplete SysEx messages (Mac OS)
+* Added patch resource support
+* Refactor subproject code and Owl class
+* Added background tasks
+* Created background tasks for MIDI SysEx message batches
 
 
 20.10.0
