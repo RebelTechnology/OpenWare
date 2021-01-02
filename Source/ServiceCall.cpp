@@ -23,6 +23,9 @@
 #ifdef USE_MIDI_CALLBACK
 #include "MidiReceiver.h"
 #endif /* USE_MIDI_CALLBACK */
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
 
 #ifdef USE_FFT_TABLES
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
