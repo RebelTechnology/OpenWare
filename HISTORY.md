@@ -8,6 +8,7 @@
 * Refactor subproject code and Owl class
 * Added background tasks
 * Created background tasks for MIDI SysEx message batches
+* New Magus resource UI
 
 
 20.10.0
