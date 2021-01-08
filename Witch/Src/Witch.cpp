@@ -222,7 +222,8 @@ bool fiddle(int i, bool selected){
 
 }
 
-#define PATCH_RESET_COUNTER 80
+#define PATCH_RESET_COUNTER (600/MAIN_LOOP_SLEEP_MS)
+
 static uint32_t counter = 0;
 static void update_preset(){
   switch(owl.getOperationMode()){
@@ -256,6 +257,7 @@ static void update_preset(){
       setLed(5, getParameterValue(PARAMETER_F));
       setLed(6, getParameterValue(PARAMETER_G));
     }
+    counter = 0;
   case CONFIGURE_MODE:
     if(isModeButtonPressed()){
       uint8_t patchselect = program.getProgramIndex();
