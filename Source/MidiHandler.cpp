@@ -308,7 +308,7 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
 	memset(data, 0, 32);
 	res = (ResourceHeader*)data;
 	size += 32;
-	slot = registry.getNumberOfResources()+MAX_NUMBER_OF_PATCHES;
+	slot = registry.getNumberOfResources()+MAX_NUMBER_OF_PATCHES+1;
       }else{
 	slot = registry.getSlot(res);
       }
