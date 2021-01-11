@@ -286,10 +286,29 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
       program.saveToFlash(slot, loader.getData(), loader.getSize());
       loader.clear();
     }else{
-      error(PROGRAM_ERROR, "Invalid program slot");
+      error(PROGRAM_ERROR, "Invalid STORE slot");
     }
   }else{
-    error(PROGRAM_ERROR, "No program to store");
+    error(PROGRAM_ERROR, "Invalid STORE command");
+  }
+}
+
+void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
+  if(loader.isReady() && size > 1){
+    const char* name = (const char*)data;
+    size_t len = strnlen(name, 20);
+    if(len > 0 && len < 20){
+      // todo: create ResourceHeader
+      // stop patch or check if running
+      // flash in background task
+      program.saveToFlash(slot, loader.getData(), loader.getSize());
+      loader.clear();
+      
+    }else{
+      error(PROGRAM_ERROR, "Invalid SAVE name");
+    }
+  }else{
+    error(PROGRAM_ERROR, "Invalid SAVE command");
   }
 }
 
@@ -320,6 +339,9 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     break;
   case SYSEX_FIRMWARE_FLASH:
     handleFirmwareFlashCommand(data+4, size-5);
+    break;
+  case SYSEX_FIRMWARE_SAVE:
+    handleFirmwareSaveCommand(data+4, size-5);
     break;
   case SYSEX_FLASH_ERASE:
     handleFlashEraseCommand(data+4, size-5);
