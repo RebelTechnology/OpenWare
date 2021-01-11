@@ -298,12 +298,22 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
     const char* name = (const char*)data;
     size_t len = strnlen(name, 20);
     if(len > 0 && len < 20){
-      // todo: create ResourceHeader
+      // todo: create ResourceHeader in FirmwareLoader::beginFirmwareUpload()
       // stop patch or check if running
       // flash in background task
+      uint32_t slot;
+      ResourceHeader* res = registry.getResource(name);      
+      if(res == NULL){
+	memmove(data+32, data, size); // make space for resoure header
+	memset(data, 0, 32);
+	res = (ResourceHeader*)data;
+	size += 32;
+	slot = registry.getNumberOfResources()+MAX_NUMBER_OF_PATCHES;
+      }else{
+	slot = registry.getSlot(res);
+      }
       program.saveToFlash(slot, loader.getData(), loader.getSize());
       loader.clear();
-      
     }else{
       error(PROGRAM_ERROR, "Invalid SAVE name");
     }
