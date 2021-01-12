@@ -302,17 +302,21 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
       // stop patch or check if running
       // flash in background task
       uint32_t slot;
-      ResourceHeader* res = registry.getResource(name);      
-      if(res == NULL){
-	memmove(data+32, data, size); // make space for resoure header
-	memset(data, 0, 32);
-	res = (ResourceHeader*)data;
-	size += 32;
+      ResourceHeader* res = registry.getResource(name);
+      if(res == NULL)
 	slot = registry.getNumberOfResources()+MAX_NUMBER_OF_PATCHES+1;
-      }else{
+      else
 	slot = registry.getSlot(res);
-      }
-      program.saveToFlash(slot, loader.getData(), loader.getSize());
+      data = loader.getData();
+      size = loader.getSize();
+      memmove(data+sizeof(ResourceHeader), data, size); // make space for resource header
+      memset(data, 0, sizeof(ResourceHeader)); // zero fill header
+      res = (ResourceHeader*)data;
+      res->magic = 0xDADADEED;
+      res->size = size;
+      strcpy(res->name, name);
+      size += sizeof(ResourceHeader);
+      program.saveToFlash(slot, data, size);
       loader.clear();
     }else{
       error(PROGRAM_ERROR, "Invalid SAVE name");
