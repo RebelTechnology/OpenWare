@@ -98,6 +98,12 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
 
+  .bootloader_token 0x08007FF0:
+  {
+    . = ALIGN(4);
+    KEEP(*(.bootloader_token));
+  }
+
   _estack = ORIGIN(RAM)+LENGTH(RAM);
 
   _siccmram = LOADADDR(.ccmram);

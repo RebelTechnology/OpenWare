@@ -98,7 +98,7 @@ void saveToFlash(uint8_t sector, void* data, uint32_t length){
     if(length > 64*1024){
       eeprom_erase_sector(FLASH_SECTOR_5);
       if(length > (64+128)*1024){
-	eeprom_erase_sector(FLASH_SECTOR_6);
+        eeprom_erase_sector(FLASH_SECTOR_6);
       }
     }
     eeprom_write_block(ADDR_FLASH_SECTOR_4, data, length);

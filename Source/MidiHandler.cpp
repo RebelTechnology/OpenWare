@@ -6,6 +6,7 @@
 #include "FirmwareLoader.hpp"
 #include "ApplicationSettings.h"
 #include "errorhandlers.h"
+#include "BootloaderToken.h"
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
@@ -269,8 +270,22 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t checksum = loader.decodeInt(data);
     if(checksum == loader.getChecksum()){
-      program.saveToFlash(-1, loader.getData(), loader.getSize());
-      loader.clear();
+      // Bootloader size would be exactly 32k/64k due to token added in its end. So
+      // alignment is not expected to become an issue here (unless >16 bytes would be necessary).
+      BootloaderToken* token = reinterpret_cast<BootloaderToken*>(
+        loader.getData() + loader.getSize() - sizeof(BootloaderToken));
+      if (token->magic != BOOTLOADER_MAGIC) {
+        error(PROGRAM_ERROR, "Invalid bootloader");
+      }
+      else if (token->hardware_id != HARDWARE_ID) {
+        error(PROGRAM_ERROR, "Invalid hardware ID");
+      }
+      else {
+        //program.eraseFromFlash(-2);
+        program.saveToFlash(-2, loader.getData(), loader.getSize());
+        loader.clear();
+        program.resetProgram(true);
+      }
     }else{
       error(PROGRAM_ERROR, "Invalid FLASH checksum");
     }

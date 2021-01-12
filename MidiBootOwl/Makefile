@@ -17,6 +17,7 @@ C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/message.c
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
+CPP_SRC += $(OPENWARE)/Source/BootloaderToken.cpp
 
 ifndef PLATFORM
 PLATFORM = Pedal

@@ -15,6 +15,7 @@ C_SRC += $(OPENWARE)/Source/crc32.c
 C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/message.c
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
+CPP_SRC += $(OPENWARE)/Source/BootloaderToken.cpp
 # S_SRC = startup_openboot.s
 
 ifndef PLATFORM
@@ -85,9 +86,13 @@ dump: # flash read_bank num filename [offset [length]]
 	$(OPENOCD) -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"
 
 upload:
-	$(OPENOCD) -c "program Build/MidiBoot.elf verify reset exit"
+	$(OPENOCD) -c "program Build/${PROJECT}.elf verify reset exit"
 
 lock:
-	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 1 on" -c "flash info 0" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 3 on" -c "flash info 0" -c "exit"
 
 deploy: upload lock
+
+sysex:
+	FirmwareSender -in "Build/${PROJECT}.bin" -flash `crc32 "Build/${PROJECT}.bin"` -save "Build/${PROJECT}.syx"
+
