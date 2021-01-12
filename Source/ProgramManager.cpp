@@ -382,13 +382,13 @@ void programFlashTask(void* p){
     error(PROGRAM_ERROR, "Flash firmware TODO");
   }else{
     registry.store(index, source, size);
-    program.loadProgram(index);
-    program.resetProgram(false);
+    if(index > MAX_NUMBER_OF_PATCHES){
+      onResourceUpdate();
+    }else{
+      program.loadProgram(index);
+    }
   }
-  if (index > MAX_NUMBER_OF_PATCHES)
-    onResourceUpdate();
-  // midi_tx.sendProgramMessage();
-  // midi_tx.sendDeviceStats();
+  program.resetProgram(false);
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
@@ -442,7 +442,7 @@ void bootstrap(){
 #else    
   uint8_t lastprogram = 0;
 #endif
-  if(lastprogram == settings.program_index){
+  if(lastprogram != 0 && lastprogram == settings.program_index){
     error(CONFIG_ERROR, "Preventing reset program from starting");
 #ifdef USE_BKPSRAM
     // reset for next time
@@ -598,15 +598,14 @@ void ProgramManager::resetProgram(bool isr){
 void ProgramManager::updateProgramIndex(uint8_t index){
   owl.setOperationMode(LOAD_MODE);
   patchindex = index;
-  settings.program_index = index;
   midi_tx.sendPc(index);
   midi_tx.sendPatchName(index, registry.getPatchName(index));
+  settings.program_index = index;
 #ifdef USE_BKPSRAM
-  extern RTC_HandleTypeDef hrtc;
-  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
-  // RTC->BKP1R = index;
-// uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
-  // *bkpsram_addr = index;
+  if(index != 0){
+    extern RTC_HandleTypeDef hrtc;
+    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
+  }
 #endif
 }
 
