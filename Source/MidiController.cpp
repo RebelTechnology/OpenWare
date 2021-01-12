@@ -31,7 +31,7 @@ public:
   void loop(){
     switch(state++){
     case 0:
-      midi_tx.sendPc(settings.program_index);
+      midi_tx.sendPc(program.getProgramIndex());
       midi_tx.sendPatchParameterValues();
       midi_tx.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
       break;
@@ -74,7 +74,7 @@ void MidiController::sendSettings(){
 }
 
 
-class SendRegistryTask : public BackgroundTask {
+class SendPatchNamesTask : public BackgroundTask {
 private:
   uint8_t state;
 public:
@@ -83,25 +83,52 @@ public:
   }
   void loop(){
     if(state < registry.getNumberOfPatches()){
-      midi_tx.sendPatchName(state, registry.getPatchName(state));
+      midi_tx.sendName(SYSEX_PRESET_NAME_COMMAND, state, registry.getPatchName(state));
       state++;
     }else{
-      midi_tx.sendPc(settings.program_index);
-      owl.setBackgroundTask(NULL);
+      midi_tx.sendPc(program.getProgramIndex());
+      owl.setBackgroundTask(NULL); // end this task
+    }
+  }
+};
+
+class SendResourceNamesTask : public BackgroundTask {
+private:
+  uint8_t state;
+public:
+  void begin(){
+    state = 0;
+  }
+  void loop(){
+    if(state < registry.getNumberOfResources()){
+      midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, state,
+		       registry.getResourceName(state+MAX_NUMBER_OF_PATCHES+1));
+      state++;
+    }else{
+      owl.setBackgroundTask(NULL); // end this task
     }
   }
 };
       
+void MidiController::sendPatchName(uint8_t slot){
+  sendName(SYSEX_PRESET_NAME_COMMAND, slot, registry.getPatchName(slot));
+}
+
 void MidiController::sendPatchNames(){
-  static SendRegistryTask task;
+  static SendPatchNamesTask task;
+  owl.setBackgroundTask(&task);
+}
+      
+void MidiController::sendResourceNames(){
+  static SendResourceNamesTask task;
   owl.setBackgroundTask(&task);
 }
 
-void MidiController::sendPatchName(uint8_t index, const char* name){
+void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name){
   if(name != NULL){
     uint8_t size = strnlen(name, 24);
     uint8_t buf[size+2];
-    buf[0] = SYSEX_PRESET_NAME_COMMAND;
+    buf[0] = cmd;
     buf[1] = index;
     memcpy(buf+2, name, size);
     sendSysEx(buf, sizeof(buf));

@@ -293,7 +293,6 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #if defined OWL_MAGUS || defined OWL_PRISM
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
-  midi_tx.sendPatchName(program.getProgramIndex(), name);
 }
 
 // Called on init, resource operation, storage erase
@@ -599,8 +598,7 @@ void ProgramManager::updateProgramIndex(uint8_t index){
   owl.setOperationMode(LOAD_MODE);
   patchindex = index;
   midi_tx.sendPc(index);
-  midi_tx.sendPatchName(index, registry.getPatchName(index));
-  settings.program_index = index;
+  midi_tx.sendPatchName(index);
 #ifdef USE_BKPSRAM
   if(index != 0){
     extern RTC_HandleTypeDef hrtc;

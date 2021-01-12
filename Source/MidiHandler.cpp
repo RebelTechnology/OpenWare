@@ -117,6 +117,9 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     case SYSEX_CONFIGURATION_COMMAND:
       midi_tx.sendSettings();
       break;
+    case SYSEX_RESOURCE_NAME_COMMAND:
+      midi_tx.sendResourceNames();
+      break;
     case SYSEX_FIRMWARE_VERSION:
       midi_tx.sendFirmwareVersion();
       break;
