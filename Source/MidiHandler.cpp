@@ -272,8 +272,9 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
     if(checksum == loader.getChecksum()){
       // Bootloader size would be exactly 32k/64k due to token added in its end. So
       // alignment is not expected to become an issue here (unless >16 bytes would be necessary).
+      extern char _ISR_VECTOR_SIZE;
       BootloaderToken* token = reinterpret_cast<BootloaderToken*>(
-        loader.getData() + loader.getSize() - sizeof(BootloaderToken));
+        loader.getData() + (uint32_t)&_ISR_VECTOR_SIZE);
       if (token->magic != BOOTLOADER_MAGIC) {
         error(PROGRAM_ERROR, "Invalid bootloader");
       }

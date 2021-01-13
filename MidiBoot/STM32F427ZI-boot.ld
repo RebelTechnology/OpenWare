@@ -28,6 +28,12 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+  .bootloader_token :
+  {
+    . = ALIGN(4);
+    KEEP(*(.bootloader_token));
+  } > FLASH
+
   /* The program code and other data goes into FLASH */
   .text :
   {
@@ -96,12 +102,6 @@ SECTIONS
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
-
-  .bootloader_token 0x0800FFF0:
-  {
-    . = ALIGN(4);
-    KEEP(*(.bootloader_token));
-  }
 
   /* Uninitialized data section */
   . = ALIGN(4);

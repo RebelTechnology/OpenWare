@@ -34,9 +34,9 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #include "calibration.hpp"
 
-extern char _BOOTLOADER_END;
+extern char _BOOTLOADER, _ISR_VECTOR_SIZE;
 static BootloaderToken* bootloader_token = reinterpret_cast<BootloaderToken*>(
-  (uint32_t)&_BOOTLOADER_END - sizeof(BootloaderToken));
+  (uint32_t)&_BOOTLOADER + (uint32_t)&_ISR_VECTOR_SIZE);
 
 /*    
 screen 128 x 64, font 5x7

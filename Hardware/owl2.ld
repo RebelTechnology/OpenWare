@@ -29,7 +29,9 @@ SECTIONS
     PROVIDE ( _ISR_VECTOR = . );
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
+    PROVIDE ( _ISR_VECTOR_END = . );
   } >FLASH
+  _ISR_VECTOR_SIZE = _ISR_VECTOR_END - _ISR_VECTOR;
 
   /* The program code and other data goes into FLASH */
   .text :
