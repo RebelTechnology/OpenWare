@@ -5,6 +5,8 @@
 #define HARDWARE_ID                  NOCTUA_HARDWARE
 #define HARDWARE_VERSION             "Mussol"
 
+#define NO_EXTERNAL_RAM
+
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
@@ -15,6 +17,11 @@
 /* #define USE_USBD_AUDIO_TX  // microphone */
 /* #define USE_USBD_AUDIO_RX // speaker */
 #define USBD_HANDLE hUsbDeviceHS
+
+#define USBH_HANDLE hUsbHostFS
+#define USE_USB_HOST
+#define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
+#define USE_USBH_MIDI
 
 /* #define USE_BKPSRAM */
 

@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -24,9 +24,9 @@
 #include "usb_device.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
-#include "usbd_audio.h"
 
 /* USER CODE BEGIN Includes */
+#include "usbd_audio.h"
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
@@ -40,7 +40,7 @@
 /* USER CODE END PFP */
 
 /* USB Device Core handle declaration. */
-USBD_HandleTypeDef hUsbDeviceFS;
+USBD_HandleTypeDef hUsbDeviceHS;
 
 /*
  * -- Insert your variables declaration here --
@@ -67,19 +67,19 @@ void MX_USB_DEVICE_Init(void)
   /* USER CODE END USB_DEVICE_Init_PreTreatment */
   
   /* Init Device Library, add supported class and start the library. */
-  if (USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS) != USBD_OK)
+  if (USBD_Init(&hUsbDeviceHS, &HS_Desc, DEVICE_HS) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_RegisterClass(&hUsbDeviceFS, &USBD_AUDIO) != USBD_OK)
+  if (USBD_RegisterClass(&hUsbDeviceHS, &USBD_AUDIO) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_AUDIO_RegisterInterface(&hUsbDeviceFS, NULL) != USBD_OK)
+  if (USBD_AUDIO_RegisterInterface(&hUsbDeviceHS, NULL) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_Start(&hUsbDeviceFS) != USBD_OK)
+  if (USBD_Start(&hUsbDeviceHS) != USBD_OK)
   {
     Error_Handler();
   }
