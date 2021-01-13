@@ -422,12 +422,6 @@ void eraseFlashTask(void* p){
     registry.init();
     onResourceUpdate();
   }
-  else if (sector == 0xfe) {
-    taskENTER_CRITICAL();
-    if (!bootloader.erase())
-      error(PROGRAM_ERROR, "Bootloader erase error");
-    taskEXIT_CRITICAL();
-  }
   // midi_tx.sendProgramMessage();
   // midi_tx.sendDeviceStats();
   utilityTask = NULL;
