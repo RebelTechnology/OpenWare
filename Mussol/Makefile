@@ -1,19 +1,15 @@
-PROJECT = Alchemist
+PROJECT = Mussol
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-include $(OPENWARE)/Hardware/owl2.mk
+include $(OPENWARE)/Hardware/mussol.mk
 
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
-C_SRC += $(OPENWARE)/Source/sdram.c
-C_SRC += $(OPENWARE)/Source/cs4272.c
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
 
 include $(OPENWARE)/Hardware/sources.mk
 
-C_SRC += $(C_SRC_SAI)
-C_SRC += $(C_SRC_SDRAM)
 C_SRC += $(C_SRC_USBD)
 C_SRC += $(C_SRC_DSP)
 C_SRC += $(C_SRC_OS)
