@@ -9,7 +9,7 @@ GIT_REVISION = $(shell git rev-parse --abbrev-ref HEAD) $(shell git rev-parse --
 CPPFLAGS += -DGIT_REVISION='"$(GIT_REVISION)"'
 
 # Tool path
-TOOLROOT ?= ~/bin/gcc-arm-none-eabi-9-2019-q4-major/bin/
+# TOOLROOT ?= ~/bin/gcc-arm-none-eabi-9-2020-q2-update/bin/
 
 # Tools
 CC=$(TOOLROOT)arm-none-eabi-gcc
