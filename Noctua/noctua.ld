@@ -138,6 +138,13 @@ SECTIONS
   _CCMRAM_END = ORIGIN(CCMRAM) + LENGTH(CCMRAM);
   _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
 
+  /* Bootloader end will be used for finding bootloader token */
+  .bootloader (NOLOAD) :
+  {
+    PROVIDE (_BOOTLOADER = .);
+  } >BOOTLOADER
+  _BOOTLOADER_END = ORIGIN(BOOTLOADER) + LENGTH(BOOTLOADER);
+
   .patchram (NOLOAD) :
   {
     PROVIDE (_PATCHRAM = .);
