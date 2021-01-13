@@ -1,8 +1,10 @@
+#include <inttypes.h>
 #include "arm_math.h"
 #include "device.h"
 #include "ServiceCall.h"
 #include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
+#include "PatchRegistry.h"
 #include "Owl.h"
 
 #define USE_FFT_TABLES
@@ -21,6 +23,9 @@
 #ifdef USE_MIDI_CALLBACK
 #include "MidiReceiver.h"
 #endif /* USE_MIDI_CALLBACK */
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
 
 #ifdef USE_FFT_TABLES
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
@@ -92,9 +97,8 @@ static int handleCFFT(void** params, int len){
 #endif
 
 static int handleGetParameters(void** params, int len){
-  int ret = OWL_SERVICE_INVALID_ARGS;
+  int ret = OWL_SERVICE_OK;
   int index = 0;
-  ret = OWL_SERVICE_OK;
   while(len >= index+2){
     char* p = (char*)params[index++];
     int32_t* value = (int32_t*)params[index++];
@@ -108,6 +112,54 @@ static int handleGetParameters(void** params, int len){
       *value = settings.output_scalar;
     }else{
       ret = OWL_SERVICE_INVALID_ARGS;
+    }
+  }
+  return ret;
+}
+
+/*
+ * Copy resource contents to preallocated buffer in memory
+ * 
+ * 4 parameters are expected:
+ *  - resource name
+ *  - buffer address
+ *  - offset in bytes
+ *  - max_length in bytes
+ * 
+ * When buffer address is not given, we will update max_length based on resource size. If resource
+ * is using memory mapped storage, buffer address will be set to resource start + offset. If storage
+ * is not memory mapped, we can't set this pointer.
+ * 
+ * When address is given, we're assuming max_length to be its size. So resource contents up to that
+ * length in bytes would be copied, starting after offset specified.
+ */
+static int handleLoadResource(void** params, int len){
+  int ret = OWL_SERVICE_INVALID_ARGS;
+  if(len == 4){
+    const char* name = (const char*)params[0];
+    uint8_t** buffer = (uint8_t**)params[1];
+    uint32_t offset = *(uint32_t*)params[2];
+    uint32_t* max_size = (uint32_t*)params[3];
+    ResourceHeader* res = registry.getResource(name);
+    // We require offset to be aligned to 4 bytes
+    if (res != NULL && !(offset & 0b11)) {
+      if (*buffer == NULL) {
+        // Buffer pointer not given, so we will update value refenced by max_size with
+        // actual resource size here
+        *max_size = res->size - offset;
+        // TODO: this requires memory mapped access, so upcoming SPI NOR storage won't be able to set buffer ptr.
+        // e.g. if (storage.isMemoryMapped()) ...
+        *buffer = (uint8_t*)registry.getData(res) + offset;
+      }
+      else {
+	uint32_t copy_size = min(*max_size, res->size - offset);
+        // Buffer pointer is given. We'll copy no more than max_size data into it.
+        memcpy(*buffer, ((uint8_t*)registry.getData(res) + offset), copy_size);
+	*max_size = copy_size; // update max_size parameter with amount of data actually copied
+        // We'll need a separate method in registry class to handle copying (i.e. for non-memorymapped storages)
+        // e.g. storage.copyData(*buffer, *offset, *max_length);
+      }
+      ret = OWL_SERVICE_OK;
     }
   }
   return ret;
@@ -201,7 +253,10 @@ int serviceCall(int service, void** params, int len){
     break;
   case OWL_SERVICE_GET_ARRAY:
     ret = handleGetArray(params, len);
-    break;  
+    break;
+  case OWL_SERVICE_LOAD_RESOURCE:
+    ret = handleLoadResource(params, len);
+    break;
   case OWL_SERVICE_REQUEST_CALLBACK:
     ret = handleRequestCallback(params, len);
     break;

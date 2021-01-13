@@ -201,6 +201,19 @@ amidi -p hw:1 -S b04319
 # dump all messages received
 amidi -p hw:1 -d -a
 
+# send patch and run
+amidi -p $OWLPORT -i 1 -s Ping_Pong_Lich.syx
+amidi -p $OWLPORT -S f07d5212f7
+# or store in slot 1
+amidi -p $OWLPORT -S f07d52110000000001f7
+
+OWLPORT=`amidi -l|grep OWL|sed 's/.*\(hw:.*\),.*/\1/g'`
+
+-----------------------------------------------------------------
+
+Record 2 seconds 48k 16bit stereo
+arecord -D hw:1 -c 2 -r 48000 -f S16_LE out.wav
+
 -----------------------------------------------------------------
 
 #define VECT_TAB_OFFSET  0x00008000

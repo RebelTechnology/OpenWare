@@ -81,7 +81,6 @@
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
 /*---------- -----------*/
-#define USBD_AUDIO_FREQ     AUDIO_SAMPLINGRATE
 
 /****************************************/
 /* #define for FS and HS identification */
