@@ -397,12 +397,15 @@ void eraseFlashTask(void* p){
   int sector = flashSectorToWrite;
   if(sector == 0xff){
     storage.erase();
-    // debugMessage("Erased flash storage");
-    registry.init();
-    onResourceUpdate();
+  }else{
+    registry.setDeleted(sector);
   }
-  // midi_tx.sendProgramMessage();
-  // midi_tx.sendDeviceStats();
+  storage.init();
+  registry.init();
+  settings.init();
+  if(sector > MAX_NUMBER_OF_PATCHES)
+      onResourceUpdate();
+  program.resetProgram(false);
   utilityTask = NULL;
   vTaskDelete(NULL);
 }

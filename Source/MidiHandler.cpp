@@ -255,17 +255,14 @@ void MidiHandler::runProgram(){
 }
 
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
-  storage.erase();
-  storage.init();
-  registry.init();
-  settings.init();
-  // if(size == 5){
-  //   uint32_t sector = loader.decodeInt(data);
-  //   program.eraseFromFlash(sector);
-  //   loader.clear();
-  // }else{
-  //   error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
-  // }
+  if(size == 5){
+    uint32_t slot = loader.decodeInt(data);
+    program.eraseFromFlash(sector);
+  }else if(size == 0){
+    program.eraseFromFlash(0xff);
+  }else{
+    error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
+  }
 }
 
 void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
