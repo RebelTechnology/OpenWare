@@ -333,7 +333,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
-#ifdef USE_EXTERNAL_RAM
+#if defined USE_EXTERNAL_RAM && defined USE_CCM_RAM
   extern char _EXTRAM, _EXTRAM_SIZE;
   extern char _CCMRAM, _CCMRAM_SIZE;
   static MemorySegment heapSegments[] = {
@@ -342,20 +342,25 @@ void updateProgramVector(ProgramVector* pv){
     // todo: add remaining program space
     { NULL, 0 }
   };
-#elif defined OWL_ARCH_F7
+#elif defined USE_EXTERNAL_RAM
   extern char _EXTRAM, _EXTRAM_SIZE;
   static MemorySegment heapSegments[] = {
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
     { NULL, 0 }
   };
-#else
+#elif defined USE_CCM_RAM
   extern char _CCMRAM, _CCMRAM_SIZE;
   static MemorySegment heapSegments[] = {
     // { start, size }
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
+    { NULL, 0 }
+  };
+#else
+  static MemorySegment heapSegments[] = {
+    // { start, size }
     // todo: add remaining program space
     { NULL, 0 }
-  };  
+  };
 #endif
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
@@ -519,7 +524,7 @@ void runManagerTask(void* p){
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
-#ifdef OWL_ARCH_F7
+#ifdef NO_CCM_RAM
 	extern char _PATCHRAM, _PATCHRAM_SIZE;
 	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
 #else
