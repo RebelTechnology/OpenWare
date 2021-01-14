@@ -33,7 +33,7 @@ SECTIONS
   {
     . = ALIGN(4);
     KEEP(*(.bootloader_token));
-  } > FLASH;
+  } > FLASH
 
   /* The program code and other data goes into FLASH */
   .text :
