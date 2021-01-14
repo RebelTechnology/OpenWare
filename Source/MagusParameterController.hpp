@@ -34,9 +34,7 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #include "calibration.hpp"
 
-extern char _BOOTLOADER, _ISR_VECTOR_SIZE;
-static BootloaderToken* bootloader_token = reinterpret_cast<BootloaderToken*>(
-  (uint32_t)&_BOOTLOADER + (uint32_t)&_ISR_VECTOR_SIZE);
+extern BootloaderToken* bootloader_token;
 
 /*    
 screen 128 x 64, font 5x7
@@ -325,16 +323,9 @@ public:
     screen.print(1, offset+26, getFirmwareVersion());
     if (bootloader_token->magic == BOOTLOADER_MAGIC){
       screen.print(" (bt.");
-      screen.print((int)(bootloader_token->version >> 16));
-      screen.print(".");
-      screen.print((int)(bootloader_token->version & 0xFF));
+      screen.print(getBootloaderVersion());
       screen.print(")");
     }
-    /*
-    else {
-      screen.print(" (bt. N/A)");
-    }
-    */
   }
   
   void drawStats(ScreenBuffer& screen){

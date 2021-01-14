@@ -11,6 +11,7 @@
 #include "ProgramVector.h"
 #include "ProgramManager.h"
 #include "ApplicationSettings.h"
+#include "BootloaderToken.h"
 #include "cmsis_os.h"
 #include "BitState.hpp"
 #include "errorhandlers.h"
@@ -591,4 +592,23 @@ void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
+}
+
+extern char _BOOTLOADER, _ISR_VECTOR_SIZE;
+BootloaderToken* bootloader_token = reinterpret_cast<BootloaderToken*>(
+  (uint32_t)&_BOOTLOADER + (uint32_t)&_ISR_VECTOR_SIZE);
+
+const char* getBootloaderVersion(){
+  static char bootloader_version_str[16];
+  if (bootloader_token->magic == BOOTLOADER_MAGIC){
+    strcpy(bootloader_version_str, "v");
+    char buf[6];
+    strcat(bootloader_version_str, itoa(bootloader_token->version >> 16, buf, 10));
+    strcat(bootloader_version_str, ".");
+    strcat(bootloader_version_str, itoa(bootloader_token->version & 0xFF, buf, 10));
+    return (const char*)bootloader_version_str;
+  }
+  else {
+    return "N/A";
+  }
 }

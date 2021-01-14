@@ -30,6 +30,7 @@ public:
   void sendProgramStats();
   void sendStatus();
   void sendFirmwareVersion();
+  void sendBootloaderVersion();
   void sendDeviceId();
   void sendProgramMessage();
   void sendErrorMessage();

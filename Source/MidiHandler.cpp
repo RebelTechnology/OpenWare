@@ -127,6 +127,9 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     case SYSEX_DEVICE_STATS:
       midi_tx.sendDeviceStats();
       break;
+    case SYSEX_BOOTLOADER_VERSION:
+      midi_tx.sendBootloaderVersion();
+      break;
     case SYSEX_PROGRAM_MESSAGE:
       midi_tx.sendProgramMessage();
       break;

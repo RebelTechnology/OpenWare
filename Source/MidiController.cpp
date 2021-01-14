@@ -131,6 +131,7 @@ void MidiController::sendPatchParameterName(PatchParameterId pid, const char* na
 
 void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
+  sendBootloaderVersion();
   sendProgramMessage();
   //   sendProgramStats(); done by sendStatus() in case of no error
   sendDeviceStats();
@@ -233,6 +234,14 @@ void MidiController::sendFirmwareVersion(){
   buf[0] = SYSEX_FIRMWARE_VERSION;
   char* p = &buf[1];
   p = stpcpy(p, getFirmwareVersion());
+  sendSysEx((uint8_t*)buf, p-buf);
+}
+
+void MidiController::sendBootloaderVersion(){
+  char buf[16];
+  buf[0] = SYSEX_BOOTLOADER_VERSION;
+  char* p = &buf[1];
+  p = stpcpy(p, getBootloaderVersion());
   sendSysEx((uint8_t*)buf, p-buf);
 }
 
