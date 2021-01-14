@@ -6,6 +6,7 @@
 #define HARDWARE_VERSION             "Mussol"
 
 #define NO_EXTERNAL_RAM
+#define NO_CCM_RAM
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
