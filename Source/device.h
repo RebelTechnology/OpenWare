@@ -72,8 +72,7 @@
 #define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_BOOTLOADER_SIZE
 #endif
 #define BOOTLOADER_MAGIC             0xB007C0DE
-#define BOOTLOADER_VERSION_MAJOR     0x00
-#define BOOTLOADER_VERSION_MINOR     0x01
+#define BOOTLOADER_VERSION           "v0.1"
 
 #define MAX_FACTORY_PATCHES          36
 #define MAX_USER_PATCHES             4

@@ -11,7 +11,7 @@
 #include "ProgramVector.h"
 #include "ProgramManager.h"
 #include "ApplicationSettings.h"
-#include "BootloaderToken.h"
+#include "VersionToken.h"
 #include "cmsis_os.h"
 #include "BitState.hpp"
 #include "errorhandlers.h"
@@ -595,18 +595,12 @@ const char* getFirmwareVersion(){
 }
 
 extern char _BOOTLOADER, _ISR_VECTOR_SIZE;
-BootloaderToken* bootloader_token = reinterpret_cast<BootloaderToken*>(
+VersionToken* bootloader_token = reinterpret_cast<VersionToken*>(
   (uint32_t)&_BOOTLOADER + (uint32_t)&_ISR_VECTOR_SIZE);
 
 const char* getBootloaderVersion(){
-  static char bootloader_version_str[16];
   if (bootloader_token->magic == BOOTLOADER_MAGIC){
-    strcpy(bootloader_version_str, "v");
-    char buf[6];
-    strcat(bootloader_version_str, itoa(bootloader_token->version >> 16, buf, 10));
-    strcat(bootloader_version_str, ".");
-    strcat(bootloader_version_str, itoa(bootloader_token->version & 0xFF, buf, 10));
-    return (const char*)bootloader_version_str;
+    return bootloader_token->version;
   }
   else {
     return "N/A";

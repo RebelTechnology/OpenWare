@@ -13,7 +13,7 @@
 #include "ProgramManager.h"
 #include "Codec.h"
 #include "message.h"
-#include "BootloaderToken.h"
+#include "VersionToken.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -34,7 +34,7 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #include "calibration.hpp"
 
-extern BootloaderToken* bootloader_token;
+extern VersionToken* bootloader_token;
 
 /*    
 screen 128 x 64, font 5x7

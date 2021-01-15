@@ -9,7 +9,7 @@
 #include "ApplicationSettings.h"
 #include "errorhandlers.h"
 #include "BootloaderStorage.hpp"
-#include "BootloaderToken.h"
+#include "VersionToken.h"
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
@@ -389,7 +389,7 @@ void programFlashTask(void* p){
     bootloader.erase();
     extern char _BOOTLOADER, _BOOTLOADER_END;
     if (*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
-        *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(BootloaderToken)) != 0xFFFFFFFF){
+        *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(VersionToken)) != 0xFFFFFFFF){
       error(PROGRAM_ERROR, "Bootloader not erased");
     }
     else {
