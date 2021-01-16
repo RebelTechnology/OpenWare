@@ -116,7 +116,7 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_C] + adc_values[ADC_D])>>2;
   parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_E] + adc_values[ADC_F])>>2;
   parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_G] + adc_values[ADC_H])>>2;
-  parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_I])>>2;  
+  parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_I])>>2;
 }
 
 bool isModeButtonPressed(){
@@ -180,6 +180,22 @@ __STATIC_INLINE void LL_GPIO_SetPinMode(GPIO_TypeDef *GPIOx, uint32_t Pin, uint3
 {
   MODIFY_REG(GPIOx->MODER, (GPIO_MODER_MODER0 << (POSITION_VAL(Pin) * 2U)), (Mode << (POSITION_VAL(Pin) * 2U)));
 }
+__STATIC_INLINE uint32_t LL_GPIO_IsInputPinSet(GPIO_TypeDef *GPIOx, uint32_t PinMask)
+{
+  return (READ_BIT(GPIOx->IDR, PinMask) == (PinMask));
+}
+__STATIC_INLINE uint32_t LL_GPIO_ReadInputPort(GPIO_TypeDef *GPIOx)
+{
+  return (uint32_t)(READ_REG(GPIOx->IDR));
+}
+__STATIC_INLINE uint32_t LL_GPIO_ReadOutputPort(GPIO_TypeDef *GPIOx)
+{
+  return (uint32_t)(READ_REG(GPIOx->ODR));
+}
+__STATIC_INLINE void LL_GPIO_WriteOutputPort(GPIO_TypeDef *GPIOx, uint32_t PortValue)
+{
+  WRITE_REG(GPIOx->ODR, PortValue);
+}
 
 #define SW1_LL_Pin LL_GPIO_PIN_2
 #define SW2_LL_Pin LL_GPIO_PIN_1
@@ -191,31 +207,35 @@ bool fiddle(int i, bool selected){
   uint16_t pin;
   uint32_t llpin;
   switch(i){
-  case 1:
+  case 1: // PB2
     port = SW1_GPIO_Port;
     pin = SW1_Pin;
     llpin = SW1_LL_Pin;
     break;
-  case 2:
+  case 2: // PB1
     port = SW2_GPIO_Port;
     pin = SW2_Pin;
     llpin = SW2_LL_Pin;
     break;
-  case 3:
+  case 3: // PD2
     port = SW3_GPIO_Port;
     pin = SW3_Pin;
     llpin = SW3_LL_Pin;
     break;
-  case 4:
+  case 4: // PB9
     port = SW4_GPIO_Port;
     pin = SW4_Pin;
     llpin = SW4_LL_Pin;
     break;
   }
   LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_INPUT);
+  // bool value = LL_GPIO_IsInputPinSet(port, llpin);
   bool value = HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET;
+  uint32_t portvalues = LL_GPIO_ReadOutputPort(port);
   if(selected){
     LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_OUTPUT);
+    // LL_GPIO_WriteOutputPort(port, portvalues & ~llpin); // switch pin off
+    // LL_GPIO_WriteOutputPort(port, port | llpin); // switch pin on
     HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET);
   }
   return value;
@@ -250,10 +270,14 @@ static void update_preset(){
     }else if(getErrorStatus() != NO_ERROR){
       owl.setOperationMode(ERROR_MODE);
     }else{
-      setLed(1, getParameterValue(PARAMETER_A));
-      setLed(2, getParameterValue(PARAMETER_B));
-      setLed(3, getParameterValue(PARAMETER_C));
-      setLed(4, getParameterValue(PARAMETER_D));
+      setLed(1, getAnalogValue(ADC_A));
+      setLed(2, getAnalogValue(ADC_C));
+      setLed(3, getAnalogValue(ADC_E));
+      setLed(4, getAnalogValue(ADC_G));
+      // setLed(1, getParameterValue(PARAMETER_A));
+      // setLed(2, getParameterValue(PARAMETER_B));
+      // setLed(3, getParameterValue(PARAMETER_C));
+      // setLed(4, getParameterValue(PARAMETER_D));
       setLed(5, getParameterValue(PARAMETER_F));
       setLed(6, getParameterValue(PARAMETER_G));
     }
@@ -297,6 +321,7 @@ void setup(){
   HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(LEDPWM1_GPIO_Port, LEDPWM1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LEDPWM_GPIO_Port, LEDPWM_Pin, GPIO_PIN_SET);
   owl.setup();
 }
 
