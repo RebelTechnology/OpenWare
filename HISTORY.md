@@ -1,5 +1,11 @@
+21.1.0
+------
+
+* Added MIDI commands for resource SAVE, NAME and DELETE 
+
 21.0.0
 ------
+
 * Updated USB audio driver
 * Fix USB audio mic driver Windows support
 * Added PATCH_BUTTON_ON/OFF MIDI controls
