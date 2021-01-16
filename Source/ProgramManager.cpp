@@ -8,7 +8,7 @@
 #include "DynamicPatchDefinition.hpp"
 #include "ApplicationSettings.h"
 #include "errorhandlers.h"
-#include "BootloaderStorage.hpp"
+#include "BootloaderStorage.h"
 #include "VersionToken.h"
 #ifdef USE_CODEC
 #include "Codec.h"

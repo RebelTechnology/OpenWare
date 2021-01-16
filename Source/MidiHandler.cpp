@@ -13,6 +13,10 @@
 #include "Owl.h"
 #include "FlashStorage.h"
 #include "PatchRegistry.h"
+#ifndef USE_BOOTLOADER_MODE
+#include "BootloaderStorage.h"
+extern BootloaderStorage bootloader;
+#endif
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
@@ -213,6 +217,13 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     midiSetInputChannel(max(-1, min(15, value)));
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
     midiSetOutputChannel(max(-1, min(15, value)));
+#ifndef USE_BOOTLOADER_MODE
+  }else if(strncmp(SYSEX_CONFIGURATION_BOOTLOADER_LOCK, p, 2) == 0){
+    if (value)
+      bootloader.lock();
+    else
+      bootloader.unlock();
+#endif
 #ifdef USE_DIGITALBUS
   }else if(strncmp(SYSEX_CONFIGURATION_BUS_ENABLE, p, 2) == 0){
     settings.bus_enabled = value;

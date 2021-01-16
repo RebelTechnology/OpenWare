@@ -44,7 +44,8 @@
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
-#define DEBUG_STORAGE
+/* #define DEBUG_STORAGE */
+#define DEBUG_BOOTLOADER
 
 #ifdef SSD1331
 #define OLED_WIDTH		     96

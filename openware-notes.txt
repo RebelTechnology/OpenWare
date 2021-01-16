@@ -186,6 +186,9 @@ amidi -p hw:2 -s Wizard.syx
 # set parameter A to value 63 on channel 0
 amidi -p hw:1 -S b0143f
 
+# request firmware configuration
+amidi -p hw:1 -S b04303
+
 # request firmware version
 amidi -p hw:1 -S b04320
 
@@ -200,6 +203,12 @@ amidi -p hw:1 -S b04324
 
 # request bootloader version
 amidi -p hw:1 -S b04325
+
+# unlock bootloader
+amidi -p hw:1 -S f07d5203424c30f7
+
+# lock bootloader
+amidi -p hw:1 -S f07d5203424c31f7
 
 # request button status
 amidi -p hw:1 -S b04319
