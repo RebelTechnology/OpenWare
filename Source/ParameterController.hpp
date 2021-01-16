@@ -2,9 +2,18 @@
 #define __ParameterController_hpp__
 
 #include <string.h>
-#include "basicmaths.h"
 #include "errorhandlers.h"
 #include "ProgramVector.h"
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+#ifndef abs
+#define abs(x) ((x)>0?(x):-(x))
+#endif
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
