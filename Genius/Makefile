@@ -1,6 +1,7 @@
 PROJECT = Genius
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
+OPENOCD ?= openocd -f $(BUILDROOT)/openocd.cfg
 
 include $(OPENWARE)/Hardware/owl3.mk
 
