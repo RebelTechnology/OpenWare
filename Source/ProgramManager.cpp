@@ -23,8 +23,6 @@
 #include "bus.h"
 #endif
 
-#include "basicmaths.h"
-
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
@@ -109,7 +107,6 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
 
 /* called by the program when an error or anomaly has occured */
 void onProgramStatus(ProgramVectorAudioStatus status){
-  setLed(0, RED_COLOUR);
   program.exitProgram(false);
   char msg[] = "Err xx";
   msg[4] = '0'+(status/10);
@@ -299,6 +296,11 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
   midi_tx.sendPatchName(program.getProgramIndex(), name);
 }
 
+// Called on init, resource operation, storage erase
+__weak void onResourceUpdate(void){
+}
+
+
 void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
@@ -383,6 +385,8 @@ void programFlashTask(void* p){
     program.loadProgram(index);
     program.resetProgram(false);
   }
+  if (index > MAX_NUMBER_OF_PATCHES)
+    onResourceUpdate();
   // midi_tx.sendProgramMessage();
   // midi_tx.sendDeviceStats();
   utilityTask = NULL;
@@ -396,6 +400,7 @@ void eraseFlashTask(void* p){
     storage.erase();
     // debugMessage("Erased flash storage");
     registry.init();
+    onResourceUpdate();
   }
   // midi_tx.sendProgramMessage();
   // midi_tx.sendDeviceStats();
@@ -414,9 +419,9 @@ void runAudioTask(void* p){
       programVector = pv;
       setErrorStatus(NO_ERROR);
       owl.setOperationMode(RUN_MODE);
-      setLed(0, GREEN_COLOUR);
-      // codec.softMute(false);
-      // codec.resume();
+#ifdef USE_CODEC
+	codec.clear();
+#endif
       def->run();
       error(PROGRAM_ERROR, "Program exited");
     }else{
@@ -485,11 +490,11 @@ void runManagerTask(void* p){
 	graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
 	midi_rx.setCallback(NULL);
-#ifdef USE_CODEC
-	codec.set(0);
-#endif
 	vTaskDelete(audioTask);
 	audioTask = NULL;
+#ifdef USE_CODEC
+	codec.clear();
+#endif
       }
     }
     // allow idle task to garbage collect if necessary

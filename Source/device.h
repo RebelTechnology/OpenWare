@@ -38,7 +38,9 @@
 #define OWLBOOT_LOOP_NUMBER         0xDADADEAD
 #define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
 
+#ifndef STORAGE_MAX_BLOCKS
 #define STORAGE_MAX_BLOCKS           64
+#endif
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
@@ -62,8 +64,14 @@
 #define MAX_FACTORY_PATCHES          36
 #define MAX_USER_PATCHES             4
 
+#ifndef MAX_NUMBER_OF_PATCHES
 #define MAX_NUMBER_OF_PATCHES        40
+#endif
+#define APPLICATION_SETTINGS_RESOURCE_INDEX (MAX_NUMBER_OF_PATCHES + 1)
+#define APPLICATION_SETTINGS_NAME    "__SETTINGS__"
+#ifndef MAX_NUMBER_OF_RESOURCES
 #define MAX_NUMBER_OF_RESOURCES      12
+#endif
 
 #define CODEC_BLOCKSIZE              64
 #define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
@@ -95,8 +103,17 @@
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
 #define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 
+#define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
+#define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE
+#define USBD_AUDIO_RX_CHANNELS       AUDIO_CHANNELS
+#define USBD_AUDIO_TX_CHANNELS       AUDIO_CHANNELS
+
 #ifndef MAIN_LOOP_SLEEP_MS
 #define MAIN_LOOP_SLEEP_MS           2
+#endif
+
+#ifndef LOAD_INDICATOR_PARAMETER
+#define LOAD_INDICATOR_PARAMETER     PARAMETER_A
 #endif
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
@@ -112,7 +129,6 @@
 #ifndef NO_EXTERNAL_RAM
 #define USE_EXTERNAL_RAM
 #endif
-
 
 #if defined USE_USBD_FS
 #define USB_OTG_BASE_ADDRESS  USB_OTG_FS   

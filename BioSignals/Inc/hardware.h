@@ -44,7 +44,7 @@
 #define ADS_ACTIVE_CHANNELS         4
 #define ADS_HSPI                    hspi1
 
-#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USB_AUDIO_CHANNELS*4)
+#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USBD_AUDIO_TX_CHANNELS*4)
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       32
@@ -54,15 +54,14 @@
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
 #if defined USE_KX122 && defined USE_CODEC
-#define USB_AUDIO_CHANNELS          (ADS_ACTIVE_CHANNELS + KX122_ACTIVE_CHANNELS)
+#define AUDIO_CHANNELS              (ADS_ACTIVE_CHANNELS + KX122_ACTIVE_CHANNELS)
 #elif defined USE_CODEC
-#define USB_AUDIO_CHANNELS          ADS_ACTIVE_CHANNELS
+#define AUDIO_CHANNELS              ADS_ACTIVE_CHANNELS
 #elif defined USE_KX122
-#define USB_AUDIO_CHANNELS          KX122_ACTIVE_CHANNELS
+#define AUDIO_CHANNELS              KX122_ACTIVE_CHANNELS
 #else
 #error "Invalid configuration"
 #endif
-#define AUDIO_CHANNELS               USB_AUDIO_CHANNELS
 
 #define NOF_ADC_VALUES               0
 #define NOF_PARAMETERS               5
