@@ -257,7 +257,7 @@ void MidiHandler::runProgram(){
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
   if(size == 5){
     uint32_t slot = loader.decodeInt(data);
-    program.eraseFromFlash(sector);
+    program.eraseFromFlash(slot);
   }else if(size == 0){
     program.eraseFromFlash(0xff);
   }else{
