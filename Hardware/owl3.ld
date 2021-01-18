@@ -136,12 +136,13 @@ SECTIONS
     *(.ccmdata)
     . = ALIGN(8);
     PROVIDE (_CCMRAM = .);
-  } >RAM_D3
-  _CCMRAM_END = ORIGIN(RAM_D3) + LENGTH(RAM_D3);
+  /* } >RAM_CCM */
+  /* _CCMRAM_END = ORIGIN(RAM_CCM) + LENGTH(RAM_CCM); */
+  /* } >RAM_D3 */
+  /* _CCMRAM_END = ORIGIN(RAM_D3) + LENGTH(RAM_D3); */
+  } >ITCMRAM
+  _CCMRAM_END = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM);
   _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
-  /* } >ITCMRAM */
-  /* _CCMRAM_END = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM); */
-  /* _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM; */
 
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */
@@ -150,12 +151,12 @@ SECTIONS
     /* *(.extdata) */
     /* . = ALIGN(8); */
     PROVIDE ( _EXTRAM = . );
-  } >RAM_D1
-  _EXTRAM_END = ORIGIN(RAM_D1) + LENGTH(RAM_D1);
-  _EXTRAM_SIZE = LENGTH(RAM_D1);
-  /* } >EXTRAM */
-  /* _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM); */
-  /* _EXTRAM_SIZE = LENGTH(EXTRAM); */
+  /* } >RAM_D1 */
+  /* _EXTRAM_END = ORIGIN(RAM_D1) + LENGTH(RAM_D1); */
+  /* _EXTRAM_SIZE = LENGTH(RAM_D1); */
+  } >EXTRAM
+  _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM);
+  _EXTRAM_SIZE = LENGTH(EXTRAM);
 
   .patchram (NOLOAD) :
   {
