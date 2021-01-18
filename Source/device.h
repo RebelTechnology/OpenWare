@@ -130,6 +130,10 @@
 #define USE_EXTERNAL_RAM
 #endif
 
+#ifndef NO_CCM_RAM
+#define USE_CCM_RAM
+#endif
+
 #if defined USE_USBD_FS
 #define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
 #elif defined USE_USBD_HS

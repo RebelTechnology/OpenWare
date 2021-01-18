@@ -69,7 +69,7 @@ int eeprom_erase(uint32_t address){
     ret = eeprom_erase_sector(FLASH_SECTOR_6);
   else if(address < ADDR_FLASH_SECTOR_8)
     ret = eeprom_erase_sector(FLASH_SECTOR_7);
-#ifndef OWL_ARCH_F7
+#ifdef FLASH_SECTOR_8
   else if(address < ADDR_FLASH_SECTOR_9)
     ret = eeprom_erase_sector(FLASH_SECTOR_8);
   else if(address < ADDR_FLASH_SECTOR_10)
