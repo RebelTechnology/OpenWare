@@ -1,29 +1,27 @@
 #include "Owl.h"
 #include "Graphics.h"
 
-Graphics graphics;
-
 extern "C"{
   void eeprom_unlock(){}
   int eeprom_write_block(uint32_t address, void* data, uint32_t size)
   {return 0;}
-   int eeprom_write_word(uint32_t address, uint32_t data)
+  int eeprom_write_word(uint32_t address, uint32_t data)
   {return 0;}
-   int eeprom_write_byte(uint32_t address, uint8_t data)
+  int eeprom_write_byte(uint32_t address, uint8_t data)
   {return 0;}
-   int eeprom_erase(uint32_t address)
+  int eeprom_erase(uint32_t address)
   {return 0;}
-
-   int eeprom_wait()
+  int eeprom_wait()
   {return 0;}
-   int eeprom_erase_sector(uint32_t sector)
+  int eeprom_erase_sector(uint32_t sector)
   {return 0;}
-
-void setPortMode(uint8_t index, uint8_t mode){}
-uint8_t getPortMode(uint8_t index){
-  return 0;
-}
+  void setPortMode(uint8_t index, uint8_t mode){}
+  uint8_t getPortMode(uint8_t index){
+    return 0;
+  }
 }  
+
+Graphics graphics;
 
 void setup(){
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off

@@ -5,10 +5,15 @@
 #define HARDWARE_ID                  GENIUS_HARDWARE
 #define HARDWARE_VERSION             "Genius"
 
+/* #define NO_EXT_RAM */
+/* #define NO_CCM_RAM */
+#define DMA_RAM                      __attribute__ ((section (".dmadata")))
+
 #define hdac hdac1
 
 #define USE_SCREEN
 #define SSD1309
+
 /* #define OLED_DMA */
 #define OLED_SOFT_CS
 #define OLED_SPI hspi2
@@ -28,8 +33,8 @@
 #define MAIN_LOOP_SLEEP_MS          20
 
 #define USE_USBD_AUDIO
-#define USE_USBD_AUDIO_TX  // microphone
-#define USE_USBD_AUDIO_RX // speaker
+/* #define USE_USBD_AUDIO_TX  // microphone */
+/* #define USE_USBD_AUDIO_RX // speaker */
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
