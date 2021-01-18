@@ -8,7 +8,8 @@ _Min_Stack_Size = 0x200; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-DTCMRAM (xrw)    : ORIGIN = 0x20000000, LENGTH = 128K
+DTCMRAM (xrw)    : ORIGIN = 0x20000000, LENGTH = 48K
+PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K
 RAM_D1  (xrw)    : ORIGIN = 0x24000000, LENGTH = 512K
 RAM_D2  (xrw)    : ORIGIN = 0x30000000, LENGTH = 288K
 RAM_D3  (xrw)    : ORIGIN = 0x38000000, LENGTH = 64K
@@ -125,8 +126,8 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >DTCMRAM
-  _estack = ORIGIN(DTCMRAM)+LENGTH(DTCMRAM); /* end of firmware RAM */
+  } >ITCMRAM
+  _estack = ORIGIN(ITCMRAM)+LENGTH(ITCMRAM); /* end of firmware RAM */
 
   /* CCM section, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".ccmdata"))); */
@@ -135,9 +136,12 @@ SECTIONS
     *(.ccmdata)
     . = ALIGN(8);
     PROVIDE (_CCMRAM = .);
-  } >ITCMRAM
-  _CCMRAM_END = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM);
+  } >RAM_D3
+  _CCMRAM_END = ORIGIN(RAM_D3) + LENGTH(RAM_D3);
   _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
+  /* } >ITCMRAM */
+  /* _CCMRAM_END = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM); */
+  /* _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM; */
 
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */
@@ -146,16 +150,24 @@ SECTIONS
     /* *(.extdata) */
     /* . = ALIGN(8); */
     PROVIDE ( _EXTRAM = . );
-  } >EXTRAM
-  _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM);
-  _EXTRAM_SIZE = LENGTH(EXTRAM);
+  } >RAM_D1
+  _EXTRAM_END = ORIGIN(RAM_D1) + LENGTH(RAM_D1);
+  _EXTRAM_SIZE = LENGTH(RAM_D1);
+  /* } >EXTRAM */
+  /* _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM); */
+  /* _EXTRAM_SIZE = LENGTH(EXTRAM); */
 
   .patchram (NOLOAD) :
   {
     PROVIDE (_PATCHRAM = .);
-  } >RAM_D1
-  _PATCHRAM_END = ORIGIN(RAM_D1) + LENGTH(RAM_D1);
-  _PATCHRAM_SIZE = LENGTH(RAM_D1);
+  } >PATCHRAM
+  _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
+  _PATCHRAM_SIZE = LENGTH(PATCHRAM);
+
+  .dmadata (NOLOAD) :
+  {
+    *(.dmadata)
+  } >RAM_D2
 
   .flash_storage (NOLOAD) :
   {
