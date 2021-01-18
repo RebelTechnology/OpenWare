@@ -342,12 +342,12 @@ void updateProgramVector(ProgramVector* pv){
 #endif
   static MemorySegment heapSegments[] = {
 #ifdef USE_CCM_RAM
-    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
+    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) },
 #endif
 #ifdef USE_EXTERNAL_RAM
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
 #endif
-    // todo: add remaining program space
+    // todo: add remaining program space (minus any used for stack if there is no CCM)
     { NULL, 0 }
   };
   pv->heapSegments = (MemorySegment*)heapSegments;
@@ -536,8 +536,9 @@ void runManagerTask(void* p){
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
 #ifdef USE_CCM_RAM
-	extern char _CCMRAM_END;
-	uint8_t* PROGRAMSTACK = ((uint8_t*)&_CCMRAM_END) - PROGRAMSTACK_SIZE;
+	static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] CCM_RAM;
+	// extern char _CCMRAM_END;
+	// uint8_t* PROGRAMSTACK = ((uint8_t*)&_CCMRAM_END) - PROGRAMSTACK_SIZE;
 #else
 	extern char _PATCHRAM, _PATCHRAM_SIZE;
 	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
