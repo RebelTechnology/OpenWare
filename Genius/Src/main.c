@@ -117,12 +117,27 @@ void initialise_monitor_handles(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
 #ifdef DEBUG
 #warning "DEBUG uses printf and semihosting!"
   if(CoreDebug->DHCSR & 0x01)
     initialise_monitor_handles(); // remove when not semi-hosting
   printf("showtime\n");
 #endif
+
+/* #ifdef NDEBUG */
+/*   /\* Enable I-Cache-------------------------------------------------------------*\/ */
+/*   SCB_EnableICache(); */
+  
+/*   /\* Enable D-Cache-------------------------------------------------------------*\/ */
+/*   SCB_EnableDCache(); */
+/* #endif */
+
+  /* Enable D2 domain SRAM Clocks */
+  __HAL_RCC_D2SRAM1_CLK_ENABLE();
+  __HAL_RCC_D2SRAM2_CLK_ENABLE();
+  __HAL_RCC_D2SRAM3_CLK_ENABLE();
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -209,7 +224,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 1024);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
