@@ -299,7 +299,6 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 __weak void onResourceUpdate(void){
 }
 
-
 void updateProgramVector(ProgramVector* pv){
   pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
@@ -332,35 +331,22 @@ void updateProgramVector(ProgramVector* pv){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
-#if defined USE_EXTERNAL_RAM && defined USE_CCM_RAM
-  extern char _EXTRAM, _EXTRAM_SIZE;
+#ifdef USE_CCM_RAM
   extern char _CCMRAM, _CCMRAM_SIZE;
-  static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
-    // todo: add remaining program space
-    { NULL, 0 }
-  };
-#elif defined USE_EXTERNAL_RAM
-  extern char _EXTRAM, _EXTRAM_SIZE;
-  static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
-    { NULL, 0 }
-  };
-#elif defined USE_CCM_RAM
-  extern char _CCMRAM, _CCMRAM_SIZE;
-  static MemorySegment heapSegments[] = {
-    // { start, size }
-    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
-    { NULL, 0 }
-  };
-#else
-  static MemorySegment heapSegments[] = {
-    // { start, size }
-    // todo: add remaining program space
-    { NULL, 0 }
-  };
 #endif
+#ifdef USE_EXTERNAL_RAM
+  extern char _EXTRAM, _EXTRAM_SIZE;
+#endif
+  static MemorySegment heapSegments[] = {
+#ifdef USE_CCM_RAM
+    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
+#endif
+#ifdef USE_EXTERNAL_RAM
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
+#endif
+    // todo: add remaining program space
+    { NULL, 0 }
+  };
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
@@ -526,12 +512,12 @@ void runManagerTask(void* p){
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
-#ifdef NO_CCM_RAM
-	extern char _PATCHRAM, _PATCHRAM_SIZE;
-	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
-#else
+#ifdef USE_CCM_RAM
 	extern char _CCMRAM_END;
 	uint8_t* PROGRAMSTACK = ((uint8_t*)&_CCMRAM_END) - PROGRAMSTACK_SIZE;
+#else
+	extern char _PATCHRAM, _PATCHRAM_SIZE;
+	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
 #endif
 	memset(PROGRAMSTACK, 0xda, PROGRAMSTACK_SIZE);
 	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
