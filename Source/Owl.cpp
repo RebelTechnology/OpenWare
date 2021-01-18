@@ -69,7 +69,7 @@ ApplicationSettings settings;
 Codec codec;
 #endif
 #ifdef USE_ADC
-uint16_t adc_values[NOF_ADC_VALUES];
+uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM;
 #endif
 #ifdef USE_DAC
 extern DAC_HandleTypeDef hdac;

@@ -136,8 +136,6 @@
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
 
-#define CCM                          __attribute__ ((section (".ccmdata")))
-
 #define USE_IWDG                     // compile with support for IWDG watchdog
 
 #ifndef NO_EXTERNAL_RAM
@@ -146,6 +144,11 @@
 
 #ifndef NO_CCM_RAM
 #define USE_CCM_RAM
+#define CCM_RAM                          __attribute__ ((section (".ccmdata")))
+#endif
+
+#ifndef DMA_RAM
+#define DMA_RAM
 #endif
 
 #if defined USE_USBD_FS

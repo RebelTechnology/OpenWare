@@ -7,8 +7,8 @@
 #include "ProgramManager.h"
 
 #include "SerialBuffer.hpp"
-SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer;
-SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer;
+SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer DMA_RAM;
+SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer DMA_RAM;
 
 extern "C" {
   uint16_t codec_blocksize = 0;
@@ -163,6 +163,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
   usbd_audio_write(data, len);
 #endif
 }
+#endif // USE_USBD_AUDIO
 
 void usbd_audio_mute_callback(int16_t gain){
   // todo!
@@ -175,7 +176,6 @@ void usbd_audio_gain_callback(int16_t gain){
 uint32_t usbd_audio_get_rx_count(){
   return 0; // todo!
 }
-#endif // USE_USBD_AUDIO
 
 uint16_t Codec::getBlockSize(){
   return codec_blocksize;
