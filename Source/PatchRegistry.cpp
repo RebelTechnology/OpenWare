@@ -63,6 +63,18 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
   return NULL;
 }
 
+unsigned int PatchRegistry::getSlot(ResourceHeader* resource){
+  const char* name = resource->name;
+  for(int i=0; i<MAX_NUMBER_OF_RESOURCES; ++i){
+    if(resourceblocks[i].verify()){
+      ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
+      if(strcmp(name, hdr->name) == 0)
+        return i+MAX_NUMBER_OF_PATCHES+1;
+    }
+  }
+  return 0;
+}
+
 void* PatchRegistry::getData(ResourceHeader* resource){
   return (uint8_t*)resource + sizeof(ResourceHeader);
 }

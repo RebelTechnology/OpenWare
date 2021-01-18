@@ -293,7 +293,6 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #if defined OWL_MAGUS || defined OWL_PRISM
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
-  midi_tx.sendPatchName(program.getProgramIndex(), name);
 }
 
 // Called on init, resource operation, storage erase
@@ -382,13 +381,13 @@ void programFlashTask(void* p){
     error(PROGRAM_ERROR, "Flash firmware TODO");
   }else{
     registry.store(index, source, size);
-    program.loadProgram(index);
-    program.resetProgram(false);
+    if(index > MAX_NUMBER_OF_PATCHES){
+      onResourceUpdate();
+    }else{
+      program.loadProgram(index);
+    }
   }
-  if (index > MAX_NUMBER_OF_PATCHES)
-    onResourceUpdate();
-  // midi_tx.sendProgramMessage();
-  // midi_tx.sendDeviceStats();
+  program.resetProgram(false);
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
@@ -398,12 +397,15 @@ void eraseFlashTask(void* p){
   int sector = flashSectorToWrite;
   if(sector == 0xff){
     storage.erase();
-    // debugMessage("Erased flash storage");
-    registry.init();
-    onResourceUpdate();
+  }else{
+    registry.setDeleted(sector);
   }
-  // midi_tx.sendProgramMessage();
-  // midi_tx.sendDeviceStats();
+  storage.init();
+  registry.init();
+  settings.init();
+  if(sector > MAX_NUMBER_OF_PATCHES)
+      onResourceUpdate();
+  program.resetProgram(false);
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
@@ -442,7 +444,7 @@ void bootstrap(){
 #else    
   uint8_t lastprogram = 0;
 #endif
-  if(lastprogram == settings.program_index){
+  if(lastprogram != 0 && lastprogram == settings.program_index){
     error(CONFIG_ERROR, "Preventing reset program from starting");
 #ifdef USE_BKPSRAM
     // reset for next time
@@ -598,15 +600,13 @@ void ProgramManager::resetProgram(bool isr){
 void ProgramManager::updateProgramIndex(uint8_t index){
   owl.setOperationMode(LOAD_MODE);
   patchindex = index;
-  settings.program_index = index;
   midi_tx.sendPc(index);
-  midi_tx.sendPatchName(index, registry.getPatchName(index));
+  midi_tx.sendPatchName(index);
 #ifdef USE_BKPSRAM
-  extern RTC_HandleTypeDef hrtc;
-  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
-  // RTC->BKP1R = index;
-// uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
-  // *bkpsram_addr = index;
+  if(index != 0){
+    extern RTC_HandleTypeDef hrtc;
+    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
+  }
 #endif
 }
 
