@@ -12,6 +12,10 @@
 #include "ProgramManager.h"
 #include "FlashStorage.h"
 #include "Owl.h"
+#ifdef DEBUG_BOOTLOADER
+#include "BootloaderStorage.h"
+extern BootloaderStorage bootloader;
+#endif
 
 void MidiController::sendPatchParameterValues(){
   sendCc(PATCH_PARAMETER_A, (uint8_t)(getParameterValue(PARAMETER_A)>>5) & 0x7f);
@@ -45,6 +49,7 @@ public:
       midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_BYPASS, settings.audio_codec_bypass);
       midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_SWAP, settings.audio_codec_swaplr);
       midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_PC_BUTTON, settings.program_change_button);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_BOOTLOADER_LOCK, bool(bootloader.getWriteProtectedSectors()));
       break;
     case 3:
       midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_INPUT_OFFSET, settings.input_offset);
@@ -131,6 +136,7 @@ void MidiController::sendPatchParameterName(PatchParameterId pid, const char* na
 
 void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
+  sendBootloaderVersion();
   sendProgramMessage();
   //   sendProgramStats(); done by sendStatus() in case of no error
   sendDeviceStats();
@@ -167,6 +173,25 @@ void MidiController::sendDeviceStats(){
   p = stpcpy(p, msg_itoa(storage.getTotalAllocatedSize(), 10));
   sendSysEx((uint8_t*)buf, p-buf);
 #endif /* DEBUG_STORAGE */
+#ifdef DEBUG_BOOTLOADER
+  p = &buf[1];
+  p = stpcpy(p, (const char*)"Bootloader ");
+  p = stpcpy(p, getBootloaderVersion());
+  if (bootloader.getWriteProtectedSectors()){
+    p = stpcpy(p, (const char*)" is locked");
+    if (bootloader.isWriteProtected()){
+      p = stpcpy(p, (const char*)" (all sectors)");
+    }
+    else {
+      // We can get here in very weird situations, i.e. bootloader resizing
+      p = stpcpy(p, (const char*)" (some sectors)");
+    }
+  }
+  else {
+    p = stpcpy(p, (const char*)" is unlocked");
+  }
+  sendSysEx((uint8_t*)buf, p-buf);
+#endif /* DEBUG_BOOTLOADER */
 }
 
 void MidiController::sendProgramStats(){
@@ -233,6 +258,14 @@ void MidiController::sendFirmwareVersion(){
   buf[0] = SYSEX_FIRMWARE_VERSION;
   char* p = &buf[1];
   p = stpcpy(p, getFirmwareVersion());
+  sendSysEx((uint8_t*)buf, p-buf);
+}
+
+void MidiController::sendBootloaderVersion(){
+  char buf[16];
+  buf[0] = SYSEX_BOOTLOADER_VERSION;
+  char* p = &buf[1];
+  p = stpcpy(p, getBootloaderVersion());
   sendSysEx((uint8_t*)buf, p-buf);
 }
 

@@ -25,9 +25,12 @@ SECTIONS
   .isr_vector :
   {
     . = ALIGN(4);
+    PROVIDE ( _ISR_VECTOR = . ); 
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
+    PROVIDE ( _ISR_VECTOR_END = . ); 
   } >FLASH
+  _ISR_VECTOR_SIZE = _ISR_VECTOR_END - _ISR_VECTOR;
 
   /* The program code and other data goes into FLASH */
   .text :
@@ -137,6 +140,13 @@ SECTIONS
   } >CCMRAM
   _CCMRAM_END = ORIGIN(CCMRAM) + LENGTH(CCMRAM);
   _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
+
+  /* Bootloader end will be used for finding bootloader token */
+  .bootloader (NOLOAD) :
+  {
+    PROVIDE (_BOOTLOADER = .);
+  } >BOOTLOADER
+  _BOOTLOADER_END = ORIGIN(BOOTLOADER) + LENGTH(BOOTLOADER);
 
   .patchram (NOLOAD) :
   {

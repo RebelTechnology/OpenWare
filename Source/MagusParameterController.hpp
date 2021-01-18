@@ -13,6 +13,7 @@
 #include "ProgramManager.h"
 #include "Codec.h"
 #include "message.h"
+#include "VersionToken.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -32,6 +33,8 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 #endif
 
 #include "calibration.hpp"
+
+extern VersionToken* bootloader_token;
 
 /*    
 screen 128 x 64, font 5x7
@@ -318,6 +321,11 @@ public:
     
     // draw firmware version
     screen.print(1, offset+26, getFirmwareVersion());
+    if (bootloader_token->magic == BOOTLOADER_MAGIC){
+      screen.print(" (bt.");
+      screen.print(getBootloaderVersion());
+      screen.print(")");
+    }
   }
   
   void drawStats(ScreenBuffer& screen){
