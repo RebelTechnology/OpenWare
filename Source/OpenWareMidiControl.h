@@ -88,6 +88,7 @@ enum PatchButtonId {
 #define SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL   "MO"
 #define SYSEX_CONFIGURATION_BUS_ENABLE            "BE"
 #define SYSEX_CONFIGURATION_BUS_FORWARD_MIDI      "BM"
+#define SYSEX_CONFIGURATION_BOOTLOADER_LOCK       "BL"
 
 enum OpenWareMidiSysexCommand {
   SYSEX_PRESET_NAME_COMMAND       = 0x01,
@@ -109,6 +110,7 @@ enum OpenWareMidiSysexCommand {
   SYSEX_PROGRAM_MESSAGE           = 0x22,
   SYSEX_DEVICE_STATS              = 0x23,
   SYSEX_PROGRAM_STATS             = 0x24,
+  SYSEX_BOOTLOADER_VERSION        = 0x25,
   SYSEX_PROGRAM_ERROR             = 0x30
 };
 

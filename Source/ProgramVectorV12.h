@@ -4,14 +4,11 @@
 #define PROGRAM_VECTOR_V12
 
 #include <stdint.h>
+#include "hardware_ids.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define OWL_PEDAL_HARDWARE          0x11
-#define OWL_MODULAR_HARDWARE        0x12
-#define OWL_RACK_HARDWARE           0x13
 
 #define PROGRAM_VECTOR_CHECKSUM_V11 0x40
 #define PROGRAM_VECTOR_CHECKSUM_V12 0x50
