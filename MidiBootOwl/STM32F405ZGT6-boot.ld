@@ -29,6 +29,12 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+  .bootloader_token :
+  {
+    . = ALIGN(4);
+    KEEP(*(.bootloader_token));
+  } > FLASH
+
   /* The program code and other data goes into FLASH */
   .text :
   {

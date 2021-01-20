@@ -6,12 +6,17 @@
 #include "FirmwareLoader.hpp"
 #include "ApplicationSettings.h"
 #include "errorhandlers.h"
+#include "VersionToken.h"
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
 #include "Owl.h"
 #include "FlashStorage.h"
 #include "PatchRegistry.h"
+#ifndef USE_BOOTLOADER_MODE
+#include "BootloaderStorage.h"
+extern BootloaderStorage bootloader;
+#endif
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
@@ -129,6 +134,9 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     case SYSEX_DEVICE_STATS:
       midi_tx.sendDeviceStats();
       break;
+    case SYSEX_BOOTLOADER_VERSION:
+      midi_tx.sendBootloaderVersion();
+      break;
     case SYSEX_PROGRAM_MESSAGE:
       midi_tx.sendProgramMessage();
       break;
@@ -212,6 +220,13 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     midiSetInputChannel(max(-1, min(15, value)));
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
     midiSetOutputChannel(max(-1, min(15, value)));
+#ifndef USE_BOOTLOADER_MODE
+  }else if(strncmp(SYSEX_CONFIGURATION_BOOTLOADER_LOCK, p, 2) == 0){
+    if (value)
+      bootloader.lock();
+    else
+      bootloader.unlock();
+#endif
 #ifdef USE_DIGITALBUS
   }else if(strncmp(SYSEX_CONFIGURATION_BUS_ENABLE, p, 2) == 0){
     settings.bus_enabled = value;
@@ -269,8 +284,23 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t checksum = loader.decodeInt(data);
     if(checksum == loader.getChecksum()){
-      program.saveToFlash(-1, loader.getData(), loader.getSize());
-      loader.clear();
+      // Bootloader size would be exactly 32k/64k due to token added in its end. So
+      // alignment is not expected to become an issue here (unless >16 bytes would be necessary).
+      extern char _ISR_VECTOR_SIZE;
+      VersionToken* token = reinterpret_cast<VersionToken*>(
+        loader.getData() + (uint32_t)&_ISR_VECTOR_SIZE);
+      if (token->magic != BOOTLOADER_MAGIC) {
+        error(PROGRAM_ERROR, "Invalid bootloader");
+      }
+      else if (token->hardware_id != HARDWARE_ID) {
+        error(PROGRAM_ERROR, "Invalid hardware ID");
+      }
+      else {
+        //program.eraseFromFlash(-2);
+        program.saveToFlash(-2, loader.getData(), loader.getSize());
+        loader.clear();
+        program.resetProgram(true);
+      }
     }else{
       error(PROGRAM_ERROR, "Invalid FLASH checksum");
     }

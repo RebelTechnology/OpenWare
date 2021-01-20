@@ -8,6 +8,8 @@
 #include "DynamicPatchDefinition.hpp"
 #include "ApplicationSettings.h"
 #include "errorhandlers.h"
+#include "BootloaderStorage.h"
+#include "VersionToken.h"
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
@@ -45,6 +47,7 @@ ProgramManager program;
 PatchRegistry registry;
 ProgramVector staticVector;
 ProgramVector* programVector = &staticVector;
+BootloaderStorage bootloader;
 static volatile TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
@@ -367,10 +370,25 @@ void programFlashTask(void* p){
   uint8_t index = flashSectorToWrite;
   uint32_t size = flashSizeToWrite;
   uint8_t* source = (uint8_t*)flashAddressToWrite;
-  if(index == 0xff && size < MAX_SYSEX_FIRMWARE_SIZE){
+  if(index == 0xff && size <= MAX_SYSEX_FIRMWARE_SIZE){
     // flashFirmware(source, size); 
     error(PROGRAM_ERROR, "Flash firmware TODO");
-  }else{
+  }
+  else if (index == 0xfe && size <= MAX_SYSEX_BOOTLOADER_SIZE){
+    taskENTER_CRITICAL();
+    bootloader.erase();
+    extern char _BOOTLOADER, _BOOTLOADER_END;
+    if (*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
+        *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(VersionToken)) != 0xFFFFFFFF){
+      error(PROGRAM_ERROR, "Bootloader not erased");
+    }
+    else {
+      if (!bootloader.store((void*)source, size))
+        error(PROGRAM_ERROR, "Bootloader write error");
+    }
+    taskEXIT_CRITICAL();
+  }
+  else{
     registry.store(index, source, size);
     if(index > MAX_NUMBER_OF_PATCHES){
       onResourceUpdate();
@@ -385,12 +403,14 @@ void programFlashTask(void* p){
 
 
 void eraseFlashTask(void* p){
-  int sector = flashSectorToWrite;
+  uint8_t sector = flashSectorToWrite;
+  taskENTER_CRITICAL();
   if(sector == 0xff){
     storage.erase();
   }else{
     registry.setDeleted(sector);
   }
+  taskEXIT_CRITICAL();
   storage.init();
   registry.init();
   settings.init();
@@ -494,14 +514,14 @@ void runManagerTask(void* p){
     vTaskDelay(20);
     if(ulNotifiedValue & PROGRAM_FLASH_NOTIFICATION){ // program flash
       if(utilityTask != NULL)
-	error(PROGRAM_ERROR, "Utility task already running");
+        error(PROGRAM_ERROR, "Utility task already running");
       xTaskCreate(programFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
       // bool ret = utilityTask.create(programFlashTask, "Flash Write", FLASH_TASK_PRIORITY);
       // if(!ret)
       // 	error(PROGRAM_ERROR, "Failed to start Flash Write task");
     }else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
       if(utilityTask != NULL)
-	error(PROGRAM_ERROR, "Utility task already running");
+        error(PROGRAM_ERROR, "Utility task already running");
       xTaskCreate(eraseFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
       // bool ret = utilityTask.create(eraseFlashTask, "Flash Erase", FLASH_TASK_PRIORITY);
       // if(!ret)
