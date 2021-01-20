@@ -8,11 +8,16 @@
 /* #define NO_EXT_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
+#define USE_ICACHE
+#define USE_DCACHE
 
 #define hdac hdac1
 
 #define USE_SCREEN
 #define SSD1309
+
+#define ENCODER_TIM1 htim2
+#define ENCODER_TIM2 htim3
 
 /* #define OLED_DMA */
 #define OLED_SOFT_CS
