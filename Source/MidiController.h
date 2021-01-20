@@ -23,8 +23,10 @@ public:
   void sendPatchParameterNames();
   void sendPatchParameterName(PatchParameterId pid, const char* name);
   void sendPatchParameterValues();
+  void sendPatchName(uint8_t slot);
   void sendPatchNames();
-  void sendPatchName(uint8_t index, const char* name);
+  void sendResourceNames();
+  void sendName(uint8_t cmd, uint8_t index, const char* name);
   void sendDeviceInfo();
   void sendDeviceStats();
   void sendProgramStats();

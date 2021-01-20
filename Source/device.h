@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v21.0"
+#define FIRMWARE_VERSION "v21.1"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
