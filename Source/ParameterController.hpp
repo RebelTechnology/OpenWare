@@ -73,7 +73,8 @@ public:
     if(pv->message != NULL)
       screen.print(2, 36, pv->message);
     screen.print(2, 46, "cpu/mem: ");
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
+    uint32_t divisor = RCC_GetSystemClockFreq()/pv->audio_samplingrate;
+    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/divisor);
     screen.print("% ");
     screen.print((int)(pv->heap_bytes_used)/1024);
     screen.print("kB");
