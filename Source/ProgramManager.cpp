@@ -371,24 +371,20 @@ void programFlashTask(void* p){
   uint32_t size = flashSizeToWrite;
   uint8_t* source = (uint8_t*)flashAddressToWrite;
   if(index == 0xff && size <= MAX_SYSEX_FIRMWARE_SIZE){
-    // flashFirmware(source, size); 
-    error(PROGRAM_ERROR, "Flash firmware TODO");
-  }
-  else if (index == 0xfe && size <= MAX_SYSEX_BOOTLOADER_SIZE){
+    error(PROGRAM_ERROR, "Enter bootloader to flash firmware");
+  }else if (index == 0xfe && size <= MAX_SYSEX_BOOTLOADER_SIZE){
     taskENTER_CRITICAL();
     bootloader.erase();
     extern char _BOOTLOADER, _BOOTLOADER_END;
-    if (*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
+    if(*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
         *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(VersionToken)) != 0xFFFFFFFF){
       error(PROGRAM_ERROR, "Bootloader not erased");
-    }
-    else {
-      if (!bootloader.store((void*)source, size))
+    }else{
+      if(!bootloader.store((void*)source, size))
         error(PROGRAM_ERROR, "Bootloader write error");
     }
     taskEXIT_CRITICAL();
-  }
-  else{
+  }else{
     registry.store(index, source, size);
     if(index > MAX_NUMBER_OF_PATCHES){
       onResourceUpdate();
@@ -401,21 +397,20 @@ void programFlashTask(void* p){
   vTaskDelete(NULL);
 }
 
-
 void eraseFlashTask(void* p){
-  uint8_t sector = flashSectorToWrite;
+  uint8_t slot = flashSectorToWrite;
   taskENTER_CRITICAL();
-  if(sector == 0xff){
+  if(slot == 0xff){
     storage.erase();
   }else{
-    registry.setDeleted(sector);
+    registry.setDeleted(slot);
   }
   taskEXIT_CRITICAL();
   storage.init();
   registry.init();
   settings.init();
-  if(sector > MAX_NUMBER_OF_PATCHES)
-      onResourceUpdate();
+  if(slot > MAX_NUMBER_OF_PATCHES)
+    onResourceUpdate();
   program.resetProgram(false);
   utilityTask = NULL;
   vTaskDelete(NULL);
@@ -532,6 +527,12 @@ void runManagerTask(void* p){
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
+#ifdef USE_ICACHE
+	SCB_InvalidateICache();
+#endif
+#ifdef USE_DCACHE
+	SCB_CleanInvalidateDCache();
+#endif
 #ifdef USE_CCM_RAM
 	static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] CCM_RAM;
 	// extern char _CCMRAM_END;
