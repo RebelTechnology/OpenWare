@@ -402,6 +402,10 @@ void eraseFlashTask(void* p){
   taskENTER_CRITICAL();
   if(slot == 0xff){
     storage.erase();
+    taskEXIT_CRITICAL();
+    // debugMessage("Erased flash storage");
+    registry.init();
+    onResourceUpdate();
   }else{
     registry.setDeleted(slot);
   }
