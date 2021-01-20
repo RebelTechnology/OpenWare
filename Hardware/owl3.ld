@@ -9,12 +9,14 @@ _Min_Stack_Size = 0x200; /* required amount of stack */
 MEMORY
 {
 DTCMRAM (xrw)    : ORIGIN = 0x20000000, LENGTH = 48K
-PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K
-RAM_D1  (xrw)    : ORIGIN = 0x24000000, LENGTH = 512K
+PATCHRAM (rwx)   : ORIGIN = 0x24000000, LENGTH = 512K
+/* PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K */
+/* RAM_D1  (xrw)    : ORIGIN = 0x24000000, LENGTH = 512K */
 RAM_D2  (xrw)    : ORIGIN = 0x30000000, LENGTH = 288K
 RAM_D3  (xrw)    : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM (xrw)    : ORIGIN = 0x00000000, LENGTH = 64K
 EXTRAM  (rwx)    : ORIGIN = 0xD0000000, LENGTH = 8M
+BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K
 FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 512K
 STORAGE (rx)     : ORIGIN = 0x08100000, LENGTH = 512K
 }
@@ -29,7 +31,9 @@ SECTIONS
     PROVIDE ( _ISR_VECTOR = . );
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
+    PROVIDE ( _ISR_VECTOR_END = . );
   } >FLASH
+  _ISR_VECTOR_SIZE = _ISR_VECTOR_END - _ISR_VECTOR;
 
   /* The program code and other data goes into FLASH */
   .text :
@@ -143,6 +147,13 @@ SECTIONS
   } >ITCMRAM
   _CCMRAM_END = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM);
   _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
+
+  /* Bootloader end will be used for finding bootloader token */
+  .bootloader (NOLOAD) :
+  {
+    PROVIDE (_BOOTLOADER = .);
+  } >BOOTLOADER
+  _BOOTLOADER_END = ORIGIN(BOOTLOADER) + LENGTH(BOOTLOADER);
 
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */
