@@ -78,6 +78,7 @@ osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_FMC_Init(void);
@@ -124,14 +125,18 @@ int main(void)
     initialise_monitor_handles(); // remove when not semi-hosting
   printf("showtime\n");
 #endif
-
-/* #ifdef NDEBUG */
-/*   /\* Enable I-Cache-------------------------------------------------------------*\/ */
-/*   SCB_EnableICache(); */
-  
-/*   /\* Enable D-Cache-------------------------------------------------------------*\/ */
-/*   SCB_EnableDCache(); */
-/* #endif */
+#ifdef USE_ICACHE
+  /* Enable I-Cache-------------------------------------------------------------*/
+  /* After reset, you must invalidate each cache before enabling (SCB_EnableICache) it. */
+  /* SCB_InvalidateICache(); */
+  SCB_EnableICache();
+#endif
+#ifdef USE_DCACHE
+  /* Enable D-Cache-------------------------------------------------------------*/
+  /* Before enabling the data cache, you must invalidate the entire data cache (SCB_InvalidateDCache), because external memory might have changed from when the cache was disabled. */
+  /* SCB_InvalidateDCache(); */
+  SCB_EnableDCache();
+#endif
 
   /* Enable D2 domain SRAM Clocks */
   __HAL_RCC_D2SRAM1_CLK_ENABLE();
@@ -139,6 +144,9 @@ int main(void)
   __HAL_RCC_D2SRAM3_CLK_ENABLE();
 
   /* USER CODE END 1 */
+
+  /* MPU Configuration--------------------------------------------------------*/
+  MPU_Config();
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -1165,6 +1173,34 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* MPU Configuration */
+
+void MPU_Config(void)
+{
+  MPU_Region_InitTypeDef MPU_InitStruct = {0};
+
+  /* Disables the MPU */
+  HAL_MPU_Disable();
+  /** Initializes and configures the Region and the memory to be protected 
+  */
+  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+  MPU_InitStruct.BaseAddress = 0x30000000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;
+  MPU_InitStruct.SubRegionDisable = 0x0;
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+
+  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+  /* Enables the MPU */
+  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+
+}
 
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**

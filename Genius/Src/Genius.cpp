@@ -1,6 +1,7 @@
 #include "Owl.h"
 #include "Graphics.h"
 
+
 extern "C"{
   void eeprom_unlock(){}
   int eeprom_write_block(uint32_t address, void* data, uint32_t size)
@@ -15,11 +16,20 @@ extern "C"{
   {return 0;}
   int eeprom_erase_sector(uint32_t sector)
   {return 0;}
+  int eeprom_write_unlock(uint32_t wrp_sectors)
+  {return 0;}
+  int eeprom_write_lock(uint32_t wrp_sectors)
+  {return 0;}
+  uint32_t eeprom_write_protection(uint32_t wrp_sectors)
+  {return 0;}
   void setPortMode(uint8_t index, uint8_t mode){}
   uint8_t getPortMode(uint8_t index){
     return 0;
   }
 }  
+
+  extern TIM_HandleTypeDef ENCODER_TIM1;
+  extern TIM_HandleTypeDef ENCODER_TIM2;
 
 Graphics graphics;
 
@@ -33,8 +43,33 @@ void setup(){
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 #endif
 
+  __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
+  __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
+  HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
+
   owl.setup();
 }
+
+// int16_t* Encoders_get(){
+void updateEncoders(){
+  graphics.params.encoderChanged(0, __HAL_TIM_GET_COUNTER(&ENCODER_TIM1));
+  graphics.params.encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
+}
+
+  // case ENC1_SW_Pin: // GPIO_PIN_14:
+  //   setButtonValue(BUTTON_A, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+  //   setButtonValue(PUSHBUTTON, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
+  //   break;
+  // case ENC2_SW_Pin: // GPIO_PIN_4:
+  //   setButtonValue(BUTTON_B, !(ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
+  //   break;
+  // case TR_IN_A_Pin: // GPIO_PIN_11:
+  //   setButtonValue(BUTTON_C, !(TR_IN_A_GPIO_Port->IDR & TR_IN_A_Pin));
+  //   break;
+  // case TR_IN_B_Pin: // GPIO_PIN_10:
+  //   setButtonValue(BUTTON_D, !(TR_IN_B_GPIO_Port->IDR & TR_IN_B_Pin));
+  //   break;
 
 void loop(void){
 
@@ -48,6 +83,9 @@ void loop(void){
     MX_USB_HOST_Process();
   }
 #endif
-  // graphics.params.updateEncoders(Encoders_get(), 7);
+#if defined USE_DCACHE
+  // SCB_CleanInvalidateDCache_by_Addr((uint32_t*)graphics.params.user, sizeof(graphics.params.user));
+#endif
+  updateEncoders();
   owl.loop();
 }
