@@ -67,10 +67,13 @@
 #ifndef MAX_SYSEX_BOOTLOADER_SIZE
 #define MAX_SYSEX_BOOTLOADER_SIZE    (64 * 1024) // OWL1 uses 32kb, must be overridden
 #endif
+#ifndef MAX_SYSEX_PROGRAM_SIZE
+#define MAX_SYSEX_PROGRAM_SIZE       (512 * 1024)
+#endif
 #ifdef USE_BOOTLOADER_MODE // Flag to choose if we're flashing firmware or bootloader from SySex
 #define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_FIRMWARE_SIZE
 #else
-#define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_BOOTLOADER_SIZE
+#define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_PROGRAM_SIZE
 #endif
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           "v0.1"
