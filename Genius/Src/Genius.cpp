@@ -53,8 +53,13 @@ void setup(){
 
 // int16_t* Encoders_get(){
 void updateEncoders(){
-  graphics.params.encoderChanged(0, __HAL_TIM_GET_COUNTER(&ENCODER_TIM1));
-  graphics.params.encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
+  static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
+  int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
+  graphics.params.encoderChanged(0, value - encoder_values[0]);
+  encoder_values[0] = value;
+  value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
+  graphics.params.encoderChanged(0, value - encoder_values[1]);
+  encoder_values[1] = value;
 }
 
   // case ENC1_SW_Pin: // GPIO_PIN_14:

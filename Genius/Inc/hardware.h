@@ -8,8 +8,8 @@
 /* #define NO_EXT_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
-#define USE_ICACHE
-#define USE_DCACHE
+/* #define USE_ICACHE */
+/* #define USE_DCACHE */
 
 #define hdac hdac1
 
