@@ -36,7 +36,6 @@
 #define FLASH_TASK_PRIORITY 5
 
 #define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
-// const uint32_t PROGRAMSTACK_SIZE = PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE); // size in bytes
 
 #define START_PROGRAM_NOTIFICATION  0x01
 #define STOP_PROGRAM_NOTIFICATION   0x02
@@ -302,7 +301,7 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 __weak void onResourceUpdate(void){
 }
 
-void updateProgramVector(ProgramVector* pv){
+void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
 #ifdef USE_SCREEN
@@ -334,6 +333,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
+  extern char _PATCHRAM_END;
 #ifdef USE_CCM_RAM
   extern char _CCMRAM, _CCMRAM_SIZE;
 #endif
@@ -344,10 +344,10 @@ void updateProgramVector(ProgramVector* pv){
 #ifdef USE_CCM_RAM
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) },
 #endif
+    { (uint8_t*)def->getStackBase(), (uint32_t)&_PATCHRAM_END - (uint32_t)def->getStackBase() },
 #ifdef USE_EXTERNAL_RAM
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
 #endif
-    // todo: add remaining program space (minus any used for stack if there is no CCM)
     { NULL, 0 }
   };
   pv->heapSegments = (MemorySegment*)heapSegments;
@@ -427,7 +427,7 @@ void runAudioTask(void* p){
     PatchDefinition* def = getPatchDefinition();
     ProgramVector* pv = def == NULL ? NULL : def->getProgramVector();
     if(pv != NULL && def->verify()){
-      updateProgramVector(pv);
+      updateProgramVector(pv, def);
       programVector = pv;
       setErrorStatus(NO_ERROR);
       owl.setOperationMode(RUN_MODE);
@@ -537,14 +537,7 @@ void runManagerTask(void* p){
 #ifdef USE_DCACHE
 	SCB_CleanInvalidateDCache();
 #endif
-#ifdef USE_CCM_RAM
-	static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] CCM_RAM;
-	// extern char _CCMRAM_END;
-	// uint8_t* PROGRAMSTACK = ((uint8_t*)&_CCMRAM_END) - PROGRAMSTACK_SIZE;
-#else
-	extern char _PATCHRAM, _PATCHRAM_SIZE;
-	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
-#endif
+	static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] CCM_RAM; // use CCM if available
 	memset(PROGRAMSTACK, 0xda, PROGRAMSTACK_SIZE);
 	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
 				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
@@ -571,7 +564,7 @@ ProgramManager::ProgramManager(){
 }
 
 void ProgramManager::startManager(){
-  updateProgramVector(getProgramVector());
+  // updateProgramVector(getProgramVector(), NULL);
 // #ifdef USE_SCREEN
 //   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
 // #endif
@@ -666,7 +659,7 @@ uint32_t ProgramManager::getProgramStackAllocation(){
   if(patchdef != NULL)
     ss = patchdef->getStackSize();
   if(ss == 0)
-    ss = PROGRAMSTACK_SIZE; // PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE);
+    ss = PROGRAMSTACK_SIZE;
   return ss;
 }
 
