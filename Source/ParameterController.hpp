@@ -29,6 +29,7 @@ public:
   ParameterController(){
     reset();
   }
+  void setTitle(const char* str){}
   void reset(){
     drawCallback = defaultDrawCallback;
     for(int i=0; i<SIZE; ++i){

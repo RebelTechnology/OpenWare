@@ -292,7 +292,7 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 
 // called from program
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
-#if defined OWL_MAGUS || defined OWL_PRISM
+#if defined USE_SCREEN
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
 }
