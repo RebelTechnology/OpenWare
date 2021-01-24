@@ -19,6 +19,7 @@ PatchRegistry::PatchRegistry() {}
 
 void PatchRegistry::init() {
   patchCount = 0;
+  resourceCount = 0;
   // FactoryPatchDefinition::init();
   // PatchDefinition* def;
   // for(int i=0; i<MAX_USER_PATCHES; ++i){
@@ -34,11 +35,11 @@ void PatchRegistry::init() {
       uint32_t magic = *(uint32_t*)block.getData();
       int id = magic&0x00ff;
       if(id > 0 && id <= MAX_NUMBER_OF_PATCHES){
-	patchblocks[id-1] = block;
-	patchCount = max(patchCount, id);
-      }else if(id > MAX_NUMBER_OF_PATCHES && 
-	       id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
-	resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
+        patchblocks[id-1] = block;
+        patchCount = max(patchCount, id);
+      }else if(id > MAX_NUMBER_OF_PATCHES && id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
+        resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
+        resourceCount = max(resourceCount, id - MAX_NUMBER_OF_PATCHES);
       }
     }
   }
@@ -56,10 +57,26 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
     if(resourceblocks[i].verify()){
       ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
       if(strcmp(name, hdr->name) == 0)
-	return hdr;
+        return hdr;
     }
   }
   return NULL;
+}
+
+unsigned int PatchRegistry::getSlot(ResourceHeader* resource){
+  const char* name = resource->name;
+  for(int i=0; i<MAX_NUMBER_OF_RESOURCES; ++i){
+    if(resourceblocks[i].verify()){
+      ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
+      if(strcmp(name, hdr->name) == 0)
+        return i+MAX_NUMBER_OF_PATCHES+1;
+    }
+  }
+  return 0;
+}
+
+void* PatchRegistry::getData(ResourceHeader* resource){
+  return (uint8_t*)resource + sizeof(ResourceHeader);
 }
 
 void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
@@ -100,11 +117,50 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
       if(resourceblocks[index].verify())
         resourceblocks[index].setDeleted();
       resourceblocks[index] = block;
+      resourceCount = max(resourceCount, index + 1);
     }else{
       error(FLASH_ERROR, "failed to verify resource");
     }
   }else{
     error(PROGRAM_ERROR, "Invalid magic");
+  }
+}
+
+void PatchRegistry::setDeleted(uint8_t index) {
+  if (!index) {
+    // 0 is dynamic patch, nothing to delete from storage
+    error(PROGRAM_ERROR, "Invalid ID");
+  }
+  else {
+    if (--index < MAX_NUMBER_OF_PATCHES){
+      StorageBlock* block = &patchblocks[index];
+      if (block->isValidSize()){
+        block->setDeleted();
+        init();
+        debugMessage("Deleted patch", index);
+      }
+      else {
+        error(PROGRAM_ERROR, "Invalid patch");
+      }
+    }
+    else {
+      index -= MAX_NUMBER_OF_PATCHES;
+      if (index < MAX_NUMBER_OF_RESOURCES) {
+        StorageBlock* block = &resourceblocks[index];
+        if (block->isValidSize()){
+          block->setDeleted();
+          init();
+          debugMessage("Deleted resource", index);
+          onResourceUpdate();
+        }
+        else {
+          error(PROGRAM_ERROR, "Invalid resource");
+        }
+      }
+      else {
+          error(PROGRAM_ERROR, "Invalid ID");
+      }
+    }
   }
 }
 
@@ -129,6 +185,10 @@ unsigned int PatchRegistry::getNumberOfPatches(){
   return patchCount+1;
 }
 
+unsigned int PatchRegistry::getNumberOfResources(){
+  return resourceCount;
+}
+
 bool PatchRegistry::hasPatches(){
   return patchCount > 0 || dynamicPatchDefinition != NULL;
 }
@@ -142,7 +202,7 @@ PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
     if(patchblocks[index].verify()){
       flashPatch.load(patchblocks[index].getData(), patchblocks[index].getDataSize());
       if(flashPatch.verify())
-	def = &flashPatch;
+        def = &flashPatch;
     }
   }
   if(def == &emptyPatch)
@@ -161,3 +221,7 @@ void PatchRegistry::registerPatch(PatchDefinition* def){
 //     nofPatches++;
 //   }
 // }
+
+void delete_resource(uint8_t index){
+  registry.setDeleted(index + MAX_NUMBER_OF_PATCHES + 1);
+}

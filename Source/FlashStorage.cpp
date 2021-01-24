@@ -57,11 +57,11 @@ StorageBlock FlashStorage::append(void* data, uint32_t size){
   }else{
     if(last.isValidSize()){
       if(count < STORAGE_MAX_BLOCKS){
-	// create a new block
-	blocks[count++] = createBlock((uint32_t)last.getBlock(), last.getBlockSize());
-	return append(data, size);
+        // create a new block
+        blocks[count++] = createBlock((uint32_t)last.getBlock(), last.getBlockSize());
+        return append(data, size);
       }else{
-	error(FLASH_ERROR, "No more blocks available");
+        error(FLASH_ERROR, "No more blocks available");
       }
     }else{
       error(FLASH_ERROR, "Invalid non-empty block");

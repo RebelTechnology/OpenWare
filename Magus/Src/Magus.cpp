@@ -7,11 +7,16 @@
 #include "HAL_TLC5946.h"
 #include "HAL_MAX11300.h"
 #include "HAL_Encoders.h"
+
 #define TLC5940_RED_DC 0x55
 #define TLC5940_GREEN_DC 0x55
 #define TLC5940_BLUE_DC 0x55
 
+const uint32_t* dyn_rainbowinputs = rainbowinputs;
+const uint32_t* dyn_rainbowoutputs = rainbowoutputs;
 Graphics graphics;
+
+extern "C" void onResourceUpdate(void);
 
 static bool updateMAX11300 = false;
 static uint8_t portMode[20];
@@ -33,6 +38,27 @@ uint8_t getPortMode(uint8_t index){
 
 void setLed(uint8_t led, uint32_t rgb){
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+}
+
+void onResourceUpdate(void){
+  extern const uint32_t rainbowinputs[];
+  extern const uint32_t rainbowoutputs[];
+  extern const uint32_t* dyn_rainbowinputs;
+  extern const uint32_t* dyn_rainbowoutputs;
+  ResourceHeader* res = registry.getResource("Rainbow.in");
+  if (res == NULL){
+    dyn_rainbowinputs = rainbowinputs;
+  }
+  else {
+    dyn_rainbowinputs = (uint32_t*)registry.getData(res);
+  }
+  res = registry.getResource("Rainbow.out");
+  if (res == NULL){
+    dyn_rainbowoutputs = rainbowoutputs;
+  }
+  else {
+    dyn_rainbowoutputs = (uint32_t*)registry.getData(res);
+  }
 }
 
 void setup(){
@@ -128,7 +154,7 @@ void loop(void){
     if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
       uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, rainbowinputs[val&0x3ff]);
+      setLed(i, dyn_rainbowinputs[val&0x3ff]);
     }else{
       // DACs
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
@@ -136,7 +162,7 @@ void loop(void){
       // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
       graphics.params.updateValue(i, 0);
       uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, rainbowoutputs[val&0x3ff]);
+      setLed(i, dyn_rainbowoutputs[val&0x3ff]);
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
   }

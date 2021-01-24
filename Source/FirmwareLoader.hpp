@@ -78,7 +78,7 @@ public:
     size = decodeInt(data+offset);
     offset += 5; // it takes five 7-bit values to encode four bytes
     // allocate memory
-    if(size > MAX_SYSEX_FIRMWARE_SIZE)
+    if(size > MAX_SYSEX_PAYLOAD_SIZE)
       return setError("SysEx too big");
 #ifdef USE_EXTERNAL_RAM
     extern char _EXTRAM; // defined in link script

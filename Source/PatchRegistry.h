@@ -18,6 +18,7 @@ public:
   const char* getResourceName(unsigned int index);
   PatchDefinition* getPatchDefinition(unsigned int index);
   unsigned int getNumberOfPatches();
+  unsigned int getNumberOfResources();
   bool hasPatches();
   void registerPatch(PatchDefinition* def);
   void setDynamicPatchDefinition(PatchDefinition* def){
@@ -25,14 +26,20 @@ public:
   }
   ResourceHeader* getResource(uint8_t index);
   ResourceHeader* getResource(const char* name);
+  unsigned int getSlot(ResourceHeader* resource);
+  void* getData(ResourceHeader* resource);
   void store(uint8_t index, uint8_t* data, size_t size);
+  void setDeleted(uint8_t index);
 private:
   bool isPresetBlock(StorageBlock block);
   StorageBlock patchblocks[MAX_NUMBER_OF_PATCHES];
   StorageBlock resourceblocks[MAX_NUMBER_OF_RESOURCES];
   PatchDefinition* defs[MAX_NUMBER_OF_PATCHES];
-  uint8_t patchCount;
+  uint8_t patchCount, resourceCount;
   PatchDefinition* dynamicPatchDefinition;
 };
+
+// Wrappers to be used as callbacks for service calls
+void delete_resource(uint8_t index);
 
 #endif // __PatchRegistry_h__

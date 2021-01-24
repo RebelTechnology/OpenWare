@@ -196,6 +196,8 @@ void Codec::init(){
 void Codec::reset(){
   // todo: this is called when blocksize is changed
   stop();
+  audio_tx_buffer.reset();
+  audio_rx_buffer.reset();
   start();
 }
 
@@ -233,8 +235,10 @@ float Codec::getAvg(){
 }
 
 void Codec::set(uint32_t value){
-  for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
+  for(int i=0; i<CODEC_BUFFER_SIZE; ++i){
     codec_txbuf[i] = value;
+    codec_rxbuf[i] = value;
+  }
 }
 
 void Codec::bypass(bool doBypass){

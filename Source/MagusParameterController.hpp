@@ -2,26 +2,39 @@
 #define __ParameterController_hpp__
 
 #include "device.h"
-#include "basicmaths.h"
 #include "errorhandlers.h"
 #include "ProgramVector.h"
 // #include "HAL_Encoders.h"
 #include "Owl.h"
 #include "OpenWareMidiControl.h"
 #include "PatchRegistry.h"
+#include "FlashStorage.h"
 #include "ApplicationSettings.h"
 #include "ProgramManager.h"
 #include "Codec.h"
 #include "message.h"
-#include "calibration.hpp"
+#include "VersionToken.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #define NOF_ENCODERS 6
 #define ENC_MULTIPLIER 6 // shift left by this many steps
-#define NOF_CONTROL_MODES 5
 #define SHOW_CALIBRATION_INFO  // This flag renders current values in calibration menu
 #define CALIBRATION_INFO_FLOAT // Display float values instead of raw integers
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+#ifndef abs
+#define abs(x) ((x)>0?(x):-(x))
+#endif
+
+#include "calibration.hpp"
+
+extern VersionToken* bootloader_token;
 
 /*    
 screen 128 x 64, font 5x7
@@ -69,10 +82,13 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, VOLUME, CALIBRATE, EXIT
+    PLAY, STATUS, PRESET, DATA, VOLUME, CALIBRATE, EXIT, NOF_CONTROL_MODES
   };
   ControlMode controlMode = PLAY;
   bool saveSettings;
+
+  bool resourceDelete;
+  bool resourceDeletePressed; // This is used to ensure that we don't delete current resourse on menu enter
 
   InputCalibration input_cal;
   OutputCalibration output_cal;
@@ -87,6 +103,7 @@ public:
     "  Play   >",
     "< Status >",
     "< Preset >",
+    "< Data   >",
     "< Volume >",
     "< V/Oct   " };
 
@@ -95,6 +112,7 @@ public:
   }
   void reset(){
     saveSettings = false;
+    resourceDelete = false;
     drawCallback = defaultDrawCallback;
     for(int i=0; i<SIZE; ++i){
       strcpy(names[i], "Parameter ");
@@ -133,6 +151,15 @@ public:
     ScreenBuffer screen(width, height);
     screen.setBuffer(pixels);
     draw(screen);
+  }
+
+  void drawLoadProgress(uint8_t progress, ScreenBuffer &screen){
+    // progress should be 0 - 127
+    screen.drawRectangle(0, 30, 128, 20, WHITE);
+    screen.setCursor(32, 40);
+    screen.setTextSize(1);
+    screen.print("Uploading...");
+    screen.fillRectangle(0, 44, progress, 5, WHITE);
   }
 
   void drawParameter(int pid, int y, ScreenBuffer& screen){
@@ -258,12 +285,47 @@ public:
       screen.print(mem);
       screen.print("k");
     }
-    // draw CPU load
-    screen.print(64, offset+8, "cpu ");
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
+
+    // draw flash usage
+    int flash_used = storage.getWrittenSize() / 1024;
+    int flash_total = storage.getTotalAllocatedSize() / 1024;
+    screen.print(64, offset + 8, "flash ");
+    screen.print(flash_used * 100 / flash_total);
     screen.print("%");
+    screen.setCursor(64, offset + 17);
+    if (flash_used > 999) {
+      screen.print(flash_used / 1024);
+      screen.print(".");
+      screen.print((int)((flash_used  % 1024) * 10 / 1024));
+      screen.print("M/");
+    }
+    else {
+      screen.print(flash_used);
+      screen.print("k/");
+    }
+    if (flash_total > 999) {
+      screen.print(flash_total / 1024);
+      screen.print(".");
+      screen.print((int)((flash_total  % 1024) * 10 / 1024));
+      screen.print("M");
+    }
+    else {
+      screen.print(flash_total);
+      screen.print("k");
+    }
+
+    // draw CPU load
+    screen.print(1, offset + 17, "cpu ");
+    screen.print((int)((pv->cycles_per_block) / pv->audio_blocksize) / 35);
+    screen.print("%");
+    
     // draw firmware version
-    screen.print(1, offset+16, getFirmwareVersion());
+    screen.print(1, offset+26, getFirmwareVersion());
+    if (bootloader_token->magic == BOOTLOADER_MAGIC){
+      screen.print(" (bt.");
+      screen.print(getBootloaderVersion());
+      screen.print(")");
+    }
   }
   
   void drawStats(ScreenBuffer& screen){
@@ -340,6 +402,40 @@ public:
       screen.print(registry.getPatchName(selected+1));
     }
     screen.invert(0, 25, 128, 10);
+  }
+
+  void drawResourceNames(int selected, ScreenBuffer &screen) {
+    screen.setTextSize(1);
+    if (resourceDelete)
+      selected = min(selected, registry.getNumberOfResources());
+    else
+      selected = min(selected, registry.getNumberOfResources() - 1);
+    if (resourceDelete && selected == 0)
+      screen.print(18, 24, "Delete:");
+    if (selected > 0 && registry.getNumberOfResources() > 0) {
+      screen.setCursor(1, 24);
+      screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
+      screen.print(".");
+      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + selected));
+    };
+    if (selected < (int)registry.getNumberOfResources()) {
+      screen.setCursor(1, 24 + 10);
+      screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print(".");
+      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+    }
+    else if (resourceDelete)
+      screen.print(18, 24 + 10, "Exit");
+    if (selected + 1 < (int)registry.getNumberOfResources()) {
+      screen.setCursor(1, 24 + 20);
+      screen.print((int)selected + 2 + MAX_NUMBER_OF_PATCHES);
+      screen.print(".");
+      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
+    }
+    if (resourceDelete)
+      screen.drawRectangle(0, 25, 128, 10, WHITE);
+    else
+      screen.invert(0, 25, 128, 10);
   }
 
   void drawVolume(uint8_t selected, ScreenBuffer& screen){
@@ -473,6 +569,10 @@ public:
       drawTitle(controlModeNames[controlMode], screen);    
       drawPresetNames(selectedPid[1], screen);
       break;
+    case DATA:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawResourceNames(selectedPid[1], screen);
+      break;
     case VOLUME:
       drawTitle(controlModeNames[controlMode], screen);    
       drawVolume(selectedPid[1], screen);
@@ -496,7 +596,12 @@ public:
     case STANDARD:
       // draw most recently changed parameter
       // drawParameter(selectedPid[selectedBlock], 44, screen);
-      drawParameter(selectedPid[selectedBlock], 54, screen);
+      if (owl.getOperationMode() == LOAD_MODE){
+        drawLoadProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen);
+      }
+      else {
+        drawParameter(selectedPid[selectedBlock], 54, screen);
+      }
       // use callback to draw title and message
       drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       break;
@@ -564,6 +669,10 @@ public:
     case PRESET:
       selectedPid[1] = settings.program_index;
       break;
+    case DATA:
+      selectedPid[1] = 0; // Go to beginning of resource list
+      resourceDelete = false;
+      break;
     case VOLUME:
       selectedPid[1] = settings.audio_output_gain; // todo: get current
       break;
@@ -588,12 +697,40 @@ public:
         setErrorStatus(NO_ERROR);
         break;
       case PRESET:
-	// load preset
-	settings.program_index = selectedPid[1];
-	program.loadProgram(settings.program_index);
-	program.resetProgram(false);
-	controlMode = EXIT;
-	break;
+        // load preset
+        settings.program_index = selectedPid[1];
+        program.loadProgram(settings.program_index);
+        program.resetProgram(false);
+        controlMode = EXIT;
+        break;
+      case DATA: {
+        if (resourceDelete) {
+          if (selectedPid[1] == registry.getNumberOfResources()){
+            // Exit on last menu item (exit link after resources list)
+            resourceDelete = false;
+            resourceDeletePressed = false;
+            controlMode = EXIT;
+          }
+          else if (!resourceDeletePressed) {
+            // Delete resource unless it's protected by "__" prefix
+            resourceDeletePressed = true;
+            ResourceHeader* res = registry.getResource(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+            if (res != NULL) {
+              if(res->name[0] == '_' && res->name[1] == '_'){
+                debugMessage("Resource protected");
+              }
+              else {
+                registry.setDeleted(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+              }
+            }
+          }
+        }
+        else {
+          resourceDelete = true;
+          resourceDeletePressed = true;
+        }
+        break;
+      }
       case VOLUME:
         controlMode = EXIT;
         break;
@@ -625,6 +762,9 @@ public:
 	  else
 	    calibrationConfirm = false;
 	}
+  else if (controlMode == DATA && resourceDeletePressed) {
+    resourceDeletePressed = false;
+  }
 	encoders[1] = value;
       }
     }
@@ -717,6 +857,12 @@ public:
       break;
     case PRESET:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
+      break;
+    case DATA:
+      if (resourceDelete)
+        selectedPid[1] = max(0, min(registry.getNumberOfResources(), value));
+      else
+        selectedPid[1] = max(0, min(registry.getNumberOfResources() - 1, value));
       break;
     case CALIBRATE:
       if (isCalibrationRunning && !isCalibrationModeSelected) {

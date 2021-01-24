@@ -27,9 +27,14 @@
    int eeprom_write_word(uint32_t address, uint32_t data);
    int eeprom_write_byte(uint32_t address, uint8_t data);
    int eeprom_erase(uint32_t address);
-
    int eeprom_wait();
    int eeprom_erase_sector(uint32_t sector);
+   /*
+    * Functions to lock/unlock pages will perform system reset unless flash is already in desired state
+    */
+   int eeprom_write_unlock(uint32_t wrp_sectors);
+   int eeprom_write_lock(uint32_t wrp_sectors);
+   uint32_t eeprom_write_protection(uint32_t wrp_sectors);
 
 #ifdef __cplusplus
 }

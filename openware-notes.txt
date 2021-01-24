@@ -186,20 +186,43 @@ amidi -p hw:2 -s Wizard.syx
 # set parameter A to value 63 on channel 0
 amidi -p hw:1 -S b0143f
 
+# request firmware configuration
+amidi -p hw:1 -S b04303
+
+# request firmware version
+amidi -p hw:1 -S b04320
+
 # request program message
 amidi -p hw:1 -S b04322
 
 # request device stats
-amidi -p hw:1 -S b04324
+amidi -p hw:1 -S b04323
 
 # request program stats
 amidi -p hw:1 -S b04324
+
+# request bootloader version
+amidi -p hw:1 -S b04325
+
+# unlock bootloader
+amidi -p hw:1 -S f07d5203424c30f7
+
+# lock bootloader
+amidi -p hw:1 -S f07d5203424c31f7
 
 # request button status
 amidi -p hw:1 -S b04319
 
 # dump all messages received
 amidi -p hw:1 -d -a
+
+# send patch and run
+amidi -p $OWLPORT -i 1 -s Ping_Pong_Lich.syx
+amidi -p $OWLPORT -S f07d5212f7
+# or store in slot 1
+amidi -p $OWLPORT -S f07d52110000000001f7
+
+OWLPORT=`amidi -l|grep OWL|sed 's/.*\(hw:.*\),.*/\1/g'`
 
 -----------------------------------------------------------------
 
@@ -337,4 +360,3 @@ todo:
 - fix Noctua bootloader
 
 -----------------------------------------------------------------
-
