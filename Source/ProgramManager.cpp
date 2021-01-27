@@ -334,22 +334,41 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
 #endif
 #ifdef PROGRAM_VECTOR_V13
   extern char _PATCHRAM_END;
+  uint8_t* end = (uint8_t*)def->getStackBase(); // program end
+  uint32_t remain = (uint32_t)&_PATCHRAM_END - (uint32_t)def->getStackBase(); // space left
 #ifdef USE_CCM_RAM
   extern char _CCMRAM, _CCMRAM_SIZE;
+#endif
+#ifdef USE_PLUS_RAM
+  extern char _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
+  extern char _PATCHRAM, _PATCHRAM_SIZE;
+  uint8_t* plusend = (uint8_t*)&_PLUSRAM;
+  uint32_t plusremain = (uint32_t)&_PLUSRAM_SIZE;
+  if(def->getLinkAddress() == (uint32_t*)&_PLUSRAM){
+    end = (uint8_t*)&_PATCHRAM;
+    remain = (uint32_t)&_PATCHRAM_SIZE;
+    plusend = (uint8_t*)def->getStackBase();
+    plusremain = (uint32_t)&_PLUSRAM_END - (uint32_t)def->getStackBase();
+  }
 #endif
 #ifdef USE_EXTERNAL_RAM
   extern char _EXTRAM, _EXTRAM_SIZE;
 #endif
-  static MemorySegment heapSegments[] = {
+  static MemorySegment heapSegments[5] = {};
+  size_t segments = 0;
 #ifdef USE_CCM_RAM
-    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) },
+  heapSegments[segments++] = 
+    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) };
 #endif
-    { (uint8_t*)def->getStackBase(), (uint32_t)&_PATCHRAM_END - (uint32_t)def->getStackBase() },
+  heapSegments[segments++] = { end, remain };
+#ifdef USE_PLUS_RAM
+  heapSegments[segments++] = { plusend, plusremain };
+#endif
 #ifdef USE_EXTERNAL_RAM
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
+  heapSegments[segments++] = 
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) };
 #endif
-    { NULL, 0 }
-  };
+  heapSegments[segments++] = { NULL, 0 };
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
