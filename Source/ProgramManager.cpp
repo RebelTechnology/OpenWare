@@ -360,9 +360,11 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   heapSegments[segments++] = 
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) };
 #endif
-  heapSegments[segments++] = { end, remain };
+  if(remain >= 32) // minimum heap segment size
+    heapSegments[segments++] = { end, remain };
 #ifdef USE_PLUS_RAM
-  heapSegments[segments++] = { plusend, plusremain };
+  if(plusremain >= 32)
+    heapSegments[segments++] = { plusend, plusremain };
 #endif
 #ifdef USE_EXTERNAL_RAM
   heapSegments[segments++] = 
