@@ -360,3 +360,20 @@ todo:
 - fix Noctua bootloader
 
 -----------------------------------------------------------------
+
+Multi channel support
+- fw initialises pv with 2 channels
+- patch code checks how many channels the patch supports (requires static channel count in Patch)
+- calls registerPatch() with max number of supported channels
+- if possible and requested, fw changes pv to add more channels
+- patch code calls patch ctor
+
+-----------------------------------------------------------------
+
+Create resources
+sox sample.wav -r 48k -c 1 -t f32 sample.raw
+play -c 1 -r 48k -t f32 sample.raw 
+FirmwareSender -in sample.raw -out "OWL*" -name "sample.wav"
+
+
+
