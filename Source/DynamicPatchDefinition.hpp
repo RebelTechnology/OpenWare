@@ -41,7 +41,7 @@ public:
     /* copy program to ram */
     if((linkAddress == (uint32_t*)&_PATCHRAM && programSize <= (uint32_t)(&_PATCHRAM_SIZE))){
       memcpy((void*)linkAddress, (void*)programAddress, programSize);
-      programAddress = linkAddress; 
+      programAddress = linkAddress;
     }else{
       programFunction = NULL;
     }
@@ -58,7 +58,8 @@ public:
   void run(){
     if(linkAddress != programAddress)
       copy();
-    programFunction();
+    if(programFunction != NULL)
+      programFunction();
   }
   uint32_t getProgramSize(){
     return programSize;

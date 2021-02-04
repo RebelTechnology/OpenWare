@@ -74,13 +74,13 @@
 /*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512U
 /*---------- -----------*/
-#define USBD_DEBUG_LEVEL     DEBUG_LEVEL
+#define USBD_DEBUG_LEVEL     0U
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     0U
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
 /*---------- -----------*/
-#define USBD_AUDIO_FREQ     AUDIO_SAMPLINGRATE
+#define USBD_AUDIO_FREQ     22100U
 
 /****************************************/
 /* #define for FS and HS identification */
@@ -116,25 +116,25 @@
 /* DEBUG macros */
 
 #if (USBD_DEBUG_LEVEL > 0)
-#define USBD_UsrLog(...)    do { printf(__VA_ARGS__);	\
-                            printf("\n"); } while(0)
+#define USBD_UsrLog(...)    printf(__VA_ARGS__);\
+                            printf("\n");
 #else
 #define USBD_UsrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 1)
 
-#define USBD_ErrLog(...)    do { printf("ERROR: ") ;\
+#define USBD_ErrLog(...)    printf("ERROR: ") ;\
                             printf(__VA_ARGS__);\
-                            printf("\n"); } while(0)
+                            printf("\n");
 #else
 #define USBD_ErrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 2)
-#define USBD_DbgLog(...)    do { printf("DEBUG : ") ;	\
+#define USBD_DbgLog(...)    printf("DEBUG : ") ;\
                             printf(__VA_ARGS__);\
-                            printf("\n"); } while(0)
+                            printf("\n");
 #else
 #define USBD_DbgLog(...)
 #endif
