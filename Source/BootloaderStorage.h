@@ -38,4 +38,6 @@ public:
 private:
     uint32_t bootloader_sectors;
 };
+
+extern BootloaderStorage bootloader;
 #endif

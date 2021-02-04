@@ -15,7 +15,6 @@
 #include "PatchRegistry.h"
 #ifndef USE_BOOTLOADER_MODE
 #include "BootloaderStorage.h"
-extern BootloaderStorage bootloader;
 #endif
 #ifdef USE_DIGITALBUS
 #include "bus.h"
@@ -102,7 +101,7 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     setButtonValue(PUSHBUTTON, value == 127 ? 4095 : 0);
     break;
   case PATCH_BUTTON_ON:
-    setButtonValue(value, 127);
+    setButtonValue(value, 4095);
     break;
   case PATCH_BUTTON_OFF:
     setButtonValue(value, 0);

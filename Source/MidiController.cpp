@@ -12,10 +12,7 @@
 #include "ProgramManager.h"
 #include "FlashStorage.h"
 #include "Owl.h"
-#ifdef DEBUG_BOOTLOADER
 #include "BootloaderStorage.h"
-extern BootloaderStorage bootloader;
-#endif
 
 void MidiController::sendPatchParameterValues(){
   sendCc(PATCH_PARAMETER_A, (uint8_t)(getParameterValue(PARAMETER_A)>>5) & 0x7f);
