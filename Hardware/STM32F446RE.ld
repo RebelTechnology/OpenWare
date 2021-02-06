@@ -14,7 +14,7 @@ MEMORY
 RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K    /* total RAM is 128kb */
 /* FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 512K */
-/* BOOTLOADER (rx) : ORIGIN = 0x08000000, LENGTH = 64K    /\* Sector 0 to 3 *\/ */
+BOOTLOADER (rx) : ORIGIN = 0x08000000, LENGTH = 64K    /* Sector 0 to 3 */
 /* FLASH (rx)      : ORIGIN = 0x08010000, LENGTH = 320K */
 FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 384K
 STORAGE (rw)    : ORIGIN = 0x08000000, LENGTH = 128K
@@ -30,7 +30,9 @@ SECTIONS
     PROVIDE ( _ISR_VECTOR = . );
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
+    PROVIDE ( _ISR_VECTOR_END = . );
   } >FLASH
+  _ISR_VECTOR_SIZE = _ISR_VECTOR_END - _ISR_VECTOR;
 
   /* The program code and other data goes into FLASH */
   .text :
@@ -129,7 +131,14 @@ SECTIONS
     . = ALIGN(8);
   } >RAM
   _estack = ORIGIN(RAM)+LENGTH(RAM); /* end of firmware RAM */
- 
+
+  /* Bootloader end will be used for finding bootloader token */
+  .bootloader (NOLOAD) :
+  {
+    PROVIDE (_BOOTLOADER = .);
+  } >BOOTLOADER
+  _BOOTLOADER_END = ORIGIN(BOOTLOADER) + LENGTH(BOOTLOADER);
+
   .patchram (NOLOAD) :
   {
     PROVIDE (_PATCHRAM = .);
