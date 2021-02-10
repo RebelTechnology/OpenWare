@@ -361,8 +361,8 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A
 
 extern "C" {
-  SAI_HandleTypeDef HSAI_RX;
-  SAI_HandleTypeDef HSAI_TX;
+  extern SAI_HandleTypeDef HSAI_RX;
+  extern SAI_HandleTypeDef HSAI_TX;
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
