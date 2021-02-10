@@ -7,6 +7,9 @@
 #define HARDWARE_ID                  PRISM_HARDWARE
 #define HARDWARE_VERSION             "PrismF7"
 
+#define NO_EXTERNAL_RAM
+#define NO_CCM_RAM
+
 #define OWL_ARCH_F7
 #define USE_USBD_HS
 #define OWL2

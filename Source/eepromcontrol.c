@@ -8,6 +8,7 @@ void eeprom_lock(){
   HAL_FLASH_Lock();
 }
 
+#ifndef STM32H743xx // todo: fix for H7!
 int eeprom_wait(){ 
   return FLASH_WaitForLastOperation(5000);
 }
@@ -74,7 +75,7 @@ int eeprom_erase(uint32_t address){
     ret = eeprom_erase_sector(FLASH_SECTOR_6);
   else if(address < ADDR_FLASH_SECTOR_8)
     ret = eeprom_erase_sector(FLASH_SECTOR_7);
-#ifndef OWL_ARCH_F7
+#ifdef FLASH_SECTOR_8
   else if(address < ADDR_FLASH_SECTOR_9)
     ret = eeprom_erase_sector(FLASH_SECTOR_8);
   else if(address < ADDR_FLASH_SECTOR_10)
@@ -139,3 +140,5 @@ uint32_t eeprom_write_protection(uint32_t wrp_sectors){
   HAL_FLASHEx_OBGetConfig(&OptionBytes);
   return ~OptionBytes.WRPSector & wrp_sectors;
 }
+
+#endif

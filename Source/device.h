@@ -67,10 +67,13 @@
 #ifndef MAX_SYSEX_BOOTLOADER_SIZE
 #define MAX_SYSEX_BOOTLOADER_SIZE    (64 * 1024) // OWL1 uses 32kb, must be overridden
 #endif
+#ifndef MAX_SYSEX_PROGRAM_SIZE
+#define MAX_SYSEX_PROGRAM_SIZE       (64 * 1024)
+#endif
 #ifdef USE_BOOTLOADER_MODE // Flag to choose if we're flashing firmware or bootloader from SySex
 #define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_FIRMWARE_SIZE
 #else
-#define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_BOOTLOADER_SIZE
+#define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_PROGRAM_SIZE
 #endif
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           "v0.1"
@@ -136,12 +139,19 @@
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
 
-#define CCM                          __attribute__ ((section (".ccmdata")))
-
 #define USE_IWDG                     // compile with support for IWDG watchdog
 
 #ifndef NO_EXTERNAL_RAM
 #define USE_EXTERNAL_RAM
+#endif
+
+#ifndef NO_CCM_RAM
+#define USE_CCM_RAM
+#define CCM_RAM                          __attribute__ ((section (".ccmdata")))
+#endif
+
+#ifndef DMA_RAM
+#define DMA_RAM
 #endif
 
 #if defined USE_USBD_FS

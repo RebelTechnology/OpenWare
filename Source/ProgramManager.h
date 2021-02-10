@@ -7,7 +7,7 @@
 #include "Owl.h"
 
 extern "C" {
-  void updateProgramVector(ProgramVector* pv);
+  void updateProgramVector(ProgramVector* pv, PatchDefinition* def);
   void onProgramReady(void);
   void onProgramStatus(ProgramVectorAudioStatus status);
   void onResourceUpdate(void);
