@@ -39,7 +39,7 @@ uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd);
 
 /* USER CODE END PV */
 
-PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 void Error_Handler(void);
 
 /* External functions --------------------------------------------------------*/
