@@ -370,7 +370,7 @@ Multi channel support
 
 -----------------------------------------------------------------
 
-Create resources
+Create and upload resource from wav:
 sox sample.wav -r 48k -c 1 -t f32 sample.raw
 play -c 1 -r 48k -t f32 sample.raw 
 FirmwareSender -in sample.raw -out "OWL*" -name "sample.wav"
