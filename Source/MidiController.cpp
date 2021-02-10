@@ -162,7 +162,6 @@ void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
   sendBootloaderVersion();
   sendProgramMessage();
-  //   sendProgramStats(); done by sendStatus() in case of no error
   sendDeviceStats();
   sendStatus();
 }
