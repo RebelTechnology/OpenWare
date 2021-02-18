@@ -84,7 +84,6 @@ void initLed(){
 }
 
 void setLed(uint8_t led, uint32_t rgb){
-  // uint32_t value = 1023 - ((rgb>>20)&0x3ff); // red
   uint32_t value = 1023 - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
   switch(led){
   case 0:
@@ -231,7 +230,7 @@ bool fiddle(int i, bool selected){
   LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_INPUT);
   // bool value = LL_GPIO_IsInputPinSet(port, llpin);
   bool value = HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET;
-  uint32_t portvalues = LL_GPIO_ReadOutputPort(port);
+  // uint32_t portvalues = LL_GPIO_ReadOutputPort(port);
   if(selected){
     LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_OUTPUT);
     // LL_GPIO_WriteOutputPort(port, portvalues & ~llpin); // switch pin off
@@ -258,6 +257,8 @@ static void update_preset(){
     setLed(6, counter > PATCH_RESET_COUNTER*0.4 ? 4095 : 0);
     setLed(3, counter > PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
     setLed(4, counter > PATCH_RESET_COUNTER*0.6 ? 4095 : 0);
+    if(getErrorStatus() != NO_ERROR || isModeButtonPressed())
+      owl.setOperationMode(ERROR_MODE);
     break;
   case RUN_MODE:
     if(isModeButtonPressed()){
@@ -274,14 +275,11 @@ static void update_preset(){
       setLed(2, getAnalogValue(ADC_C));
       setLed(3, getAnalogValue(ADC_E));
       setLed(4, getAnalogValue(ADC_G));
-      // setLed(1, getParameterValue(PARAMETER_A));
-      // setLed(2, getParameterValue(PARAMETER_B));
-      // setLed(3, getParameterValue(PARAMETER_C));
-      // setLed(4, getParameterValue(PARAMETER_D));
       setLed(5, getParameterValue(PARAMETER_F));
       setLed(6, getParameterValue(PARAMETER_G));
     }
     counter = 0;
+    break;
   case CONFIGURE_MODE:
     if(isModeButtonPressed()){
       uint8_t patchselect = program.getProgramIndex();
@@ -309,8 +307,11 @@ static void update_preset(){
     setLed(6, counter < PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
     setLed(3, counter > PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
     setLed(4, counter > PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
-    if(isModeButtonPressed())
-      program.resetProgram(false); // runAudioTask() changes to RUN_MODE
+    if(isModeButtonPressed()){
+      setErrorStatus(NO_ERROR);
+      owl.setOperationMode(RUN_MODE); // allows new patch selection if patch doesn't load
+      program.resetProgram(false);
+    }
     break;
   }
   if(++counter >= PATCH_RESET_COUNTER)
