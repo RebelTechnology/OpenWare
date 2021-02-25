@@ -25,6 +25,7 @@
 /* #define OLED_DMA */
 #define OLED_SOFT_CS
 #define OLED_SPI hspi2
+#define OLED_UPSIDE_DOWN
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
