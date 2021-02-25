@@ -7,8 +7,8 @@
 #include "ProgramManager.h"
 
 #include "SerialBuffer.hpp"
-SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer;
-SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer;
+SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer DMA_RAM;
+SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer DMA_RAM;
 
 extern "C" {
   uint16_t codec_blocksize = 0;
@@ -163,6 +163,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
   usbd_audio_write(data, len);
 #endif
 }
+#endif // USE_USBD_AUDIO
 
 void usbd_audio_mute_callback(int16_t gain){
   // todo!
@@ -175,7 +176,6 @@ void usbd_audio_gain_callback(int16_t gain){
 uint32_t usbd_audio_get_rx_count(){
   return 0; // todo!
 }
-#endif // USE_USBD_AUDIO
 
 uint16_t Codec::getBlockSize(){
   return codec_blocksize;
@@ -196,6 +196,8 @@ void Codec::init(){
 void Codec::reset(){
   // todo: this is called when blocksize is changed
   stop();
+  audio_tx_buffer.reset();
+  audio_rx_buffer.reset();
   start();
 }
 
@@ -233,8 +235,10 @@ float Codec::getAvg(){
 }
 
 void Codec::set(uint32_t value){
-  for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
+  for(int i=0; i<CODEC_BUFFER_SIZE; ++i){
     codec_txbuf[i] = value;
+    codec_rxbuf[i] = value;
+  }
 }
 
 void Codec::bypass(bool doBypass){
@@ -357,8 +361,8 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A
 
 extern "C" {
-  SAI_HandleTypeDef HSAI_RX;
-  SAI_HandleTypeDef HSAI_TX;
+  extern SAI_HandleTypeDef HSAI_RX;
+  extern SAI_HandleTypeDef HSAI_TX;
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }

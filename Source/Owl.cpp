@@ -11,6 +11,7 @@
 #include "ProgramVector.h"
 #include "ProgramManager.h"
 #include "ApplicationSettings.h"
+#include "VersionToken.h"
 #include "cmsis_os.h"
 #include "BitState.hpp"
 #include "errorhandlers.h"
@@ -68,7 +69,7 @@ ApplicationSettings settings;
 Codec codec;
 #endif
 #ifdef USE_ADC
-uint16_t adc_values[NOF_ADC_VALUES];
+uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM;
 #endif
 #ifdef USE_DAC
 extern DAC_HandleTypeDef hdac;
@@ -96,19 +97,6 @@ __weak void setAnalogValue(uint8_t ch, int16_t value){
 }
 
 __weak void setGateValue(uint8_t ch, int16_t value){
-#if defined OWL_PEDAL || defined OWL_MODULAR
-  if(ch == PUSHBUTTON){
-    HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-    HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-#ifdef OWL_MODULAR
-    HAL_GPIO_WritePin(PUSH_GATE_OUT_GPIO_Port, PUSH_GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
-#endif
-  }else if(ch == GREEN_BUTTON){
-    setLed(0, GREEN_COLOUR);
-  }else if(ch == RED_BUTTON){
-    setLed(0, RED_COLOUR);
-  }
-#endif
 }
 
 void midiSetInputChannel(int8_t channel){
@@ -126,25 +114,6 @@ __weak void setLed(uint8_t led, uint32_t rgb){
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM2->CCR2 = 1023 - ((rgb>>00)&0x3ff);
-#elif defined OWL_PEDAL || defined OWL_MODULAR
-  switch(rgb){
-  case RED_COLOUR:
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-    break;
-  case GREEN_COLOUR:
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-    break;
-  case YELLOW_COLOUR:
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-    break;
-  case NO_COLOUR:
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-    break;
-  }
 #elif defined OWL_BIOSIGNALS
   if(led == 0){
 #ifdef USE_LED_PWM
@@ -178,7 +147,7 @@ __weak void setLed(uint8_t led, uint32_t rgb){
     else
       HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
   }
-#endif
+#endif // OWL_BIOSIGNALS
 }
 
 __weak void initLed(){
@@ -240,24 +209,6 @@ __weak void pinChanged(uint16_t pin){
     bool isSet = !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin);
     setButtonValue(PUSHBUTTON, isSet);
     midi_tx.sendCc(PUSHBUTTON, isSet ? 127 : 0);
-#if defined OWL_PEDAL || defined OWL_MODULAR
-    setLed(0, isSet ? RED_COLOUR : GREEN_COLOUR);
-#endif
-    break;
-  }
-#endif
-#ifdef OWL_PEDAL
-  case BYPASS_Pin: {
-    bool isSet = !(BYPASS_GPIO_Port->IDR & BYPASS_Pin);
-    setLed(0, isSet ? NO_COLOUR : GREEN_COLOUR);
-    break;
-  }
-#endif
-#ifdef OWL_MODULAR
-  case PUSH_GATE_IN_Pin: {
-    bool isSet = !(PUSH_GATE_IN_GPIO_Port->IDR & PUSH_GATE_IN_Pin);
-    setButtonValue(PUSHBUTTON, isSet);
-    setLed(0, isSet ? RED_COLOUR : GREEN_COLOUR);
     break;
   }
 #endif
@@ -307,10 +258,17 @@ static TickType_t xFrequency;
 
 void Owl::setup(void){
 #ifdef USE_IWDG
+#ifdef STM32H743xx
+  IWDG1->KR = 0xCCCC; // Enable IWDG and turn on LSI
+  IWDG1->KR = 0x5555; // ensure watchdog register write is allowed
+  IWDG1->PR = 0x05;   // prescaler 128
+  IWDG1->RLR = 0x753; // reload 8 seconds
+#else
   IWDG->KR = 0xCCCC; // Enable IWDG and turn on LSI
   IWDG->KR = 0x5555; // ensure watchdog register write is allowed
   IWDG->PR = 0x05;   // prescaler 128
   IWDG->RLR = 0x753; // reload 8 seconds
+#endif
 #endif
   initLed();
   setLed(0, NO_COLOUR);
@@ -321,6 +279,7 @@ void Owl::setup(void){
   storage.init();
   registry.init();
   settings.init(); // settings need the registry to be initialised first
+  onResourceUpdate();
 #ifdef USE_CODEC
   codec.init();
   codec.set(0);
@@ -362,18 +321,6 @@ __weak void setup(){
 #ifdef OWL_BIOSIGNALS
   ble_init();
   setLed(1, NO_COLOUR);
-#endif
-  
-#ifdef OWL_PEDAL
-  /* STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported  */
-  // if (HAL_GetREVID() == 0x1001)
-  // {
-  //   /* Enable the Flash prefetch */
-  //   __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
-  // }
-  // enable expression pedal reference voltage
-  HAL_GPIO_WritePin(EXPRESSION_PEDAL_TIP_GPIO_Port, EXPRESSION_PEDAL_TIP_Pin, GPIO_PIN_SET);
-  // todo: on OWL Modular the ADC should read Exp pin PA2 instead of PA3
 #endif
 
 #ifdef USE_ENCODERS
@@ -566,7 +513,11 @@ void Owl::loop(){
 #endif
   midi_tx.transmit();
 #ifdef USE_IWDG
+#ifdef STM32H743xx
+  IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
+#else
   IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
+#endif
 #endif
   if(backgroundTask != NULL)
     backgroundTask->loop();
@@ -626,7 +577,11 @@ void jump_to_bootloader(void){
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
   /* Disable all interrupts */
+#ifdef STM32H743xx
+  RCC->CIER = 0x00000000;
+#else
   RCC->CIR = 0x00000000;
+#endif
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
@@ -639,7 +594,11 @@ void device_reset(){
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
   /* Disable all interrupts */
+#ifdef STM32H743xx
+  RCC->CIER = 0x00000000;
+#else
   RCC->CIR = 0x00000000;
+#endif
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
@@ -652,4 +611,17 @@ void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
+}
+
+extern char _BOOTLOADER, _ISR_VECTOR_SIZE;
+VersionToken* bootloader_token = reinterpret_cast<VersionToken*>(
+  (uint32_t)&_BOOTLOADER + (uint32_t)&_ISR_VECTOR_SIZE);
+
+const char* getBootloaderVersion(){
+  if (bootloader_token->magic == BOOTLOADER_MAGIC){
+    return bootloader_token->version;
+  }
+  else {
+    return "N/A";
+  }
 }

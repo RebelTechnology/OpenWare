@@ -192,6 +192,7 @@ static void update_preset(){
 	// press and hold to store settings
 	if(--counter == 0){
 	  counter = PATCH_RESET_COUNTER;
+	  settings.program_index = patchselect;
 	  settings.saveToFlash();
 	}else{
 	  setSegmentDisplay(patchselect % 10, counter*MAIN_LOOP_SLEEP_MS > 2000);

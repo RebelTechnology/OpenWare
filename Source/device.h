@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v21.0"
+#define FIRMWARE_VERSION "v21.1"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -38,11 +38,14 @@
 #define OWLBOOT_LOOP_NUMBER         0xDADADEAD
 #define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
 
+#ifndef STORAGE_MAX_BLOCKS
 #define STORAGE_MAX_BLOCKS           64
+#endif
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
-#define DEBUG_STORAGE
+/* #define DEBUG_STORAGE */
+#define DEBUG_BOOTLOADER
 
 #ifdef SSD1331
 #define OLED_WIDTH		     96
@@ -58,12 +61,34 @@
 #define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT/8)
 #endif
 
+#ifndef MAX_SYSEX_FIRMWARE_SIZE
 #define MAX_SYSEX_FIRMWARE_SIZE      ((16+16+64+128+128)*1024) // FLASH sectors 2-6
+#endif
+#ifndef MAX_SYSEX_BOOTLOADER_SIZE
+#define MAX_SYSEX_BOOTLOADER_SIZE    (64 * 1024) // OWL1 uses 32kb, must be overridden
+#endif
+#ifndef MAX_SYSEX_PROGRAM_SIZE
+#define MAX_SYSEX_PROGRAM_SIZE       (64 * 1024)
+#endif
+#ifdef USE_BOOTLOADER_MODE // Flag to choose if we're flashing firmware or bootloader from SySex
+#define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_FIRMWARE_SIZE
+#else
+#define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_PROGRAM_SIZE
+#endif
+#define BOOTLOADER_MAGIC             0xB007C0DE
+#define BOOTLOADER_VERSION           "v0.1"
+
 #define MAX_FACTORY_PATCHES          36
 #define MAX_USER_PATCHES             4
 
+#ifndef MAX_NUMBER_OF_PATCHES
 #define MAX_NUMBER_OF_PATCHES        40
+#endif
+#define APPLICATION_SETTINGS_RESOURCE_INDEX (MAX_NUMBER_OF_PATCHES + 1)
+#define APPLICATION_SETTINGS_NAME    "__SETTINGS__"
+#ifndef MAX_NUMBER_OF_RESOURCES
 #define MAX_NUMBER_OF_RESOURCES      12
+#endif
 
 #define CODEC_BLOCKSIZE              64
 #define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
@@ -104,18 +129,29 @@
 #define MAIN_LOOP_SLEEP_MS           2
 #endif
 
+#ifndef LOAD_INDICATOR_PARAMETER
+#define LOAD_INDICATOR_PARAMETER     PARAMETER_A
+#endif
+
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
 #define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
 
-#define CCM                          __attribute__ ((section (".ccmdata")))
-
 #define USE_IWDG                     // compile with support for IWDG watchdog
 
 #ifndef NO_EXTERNAL_RAM
 #define USE_EXTERNAL_RAM
+#endif
+
+#ifndef NO_CCM_RAM
+#define USE_CCM_RAM
+#define CCM_RAM                          __attribute__ ((section (".ccmdata")))
+#endif
+
+#ifndef DMA_RAM
+#define DMA_RAM
 #endif
 
 #if defined USE_USBD_FS

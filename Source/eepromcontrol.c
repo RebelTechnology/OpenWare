@@ -2,12 +2,19 @@
 #include <string.h> /* for memcpy */
 #include "device.h"
 
+extern void device_reset(void);
+
 void eeprom_lock(){
   HAL_FLASH_Lock();
 }
 
+#ifndef STM32H743xx // todo: fix for H7!
 int eeprom_wait(){ 
   return FLASH_WaitForLastOperation(5000);
+}
+
+int eeprom_get_error() {
+  return HAL_FLASH_GetError();
 }
 
 int eeprom_erase_sector(uint32_t sector) {
@@ -68,7 +75,7 @@ int eeprom_erase(uint32_t address){
     ret = eeprom_erase_sector(FLASH_SECTOR_6);
   else if(address < ADDR_FLASH_SECTOR_8)
     ret = eeprom_erase_sector(FLASH_SECTOR_7);
-#ifndef OWL_ARCH_F7
+#ifdef FLASH_SECTOR_8
   else if(address < ADDR_FLASH_SECTOR_9)
     ret = eeprom_erase_sector(FLASH_SECTOR_8);
   else if(address < ADDR_FLASH_SECTOR_10)
@@ -82,3 +89,56 @@ int eeprom_erase(uint32_t address){
     ret = -1;
   return ret;
 }
+
+int eeprom_write_unlock(uint32_t wrp_sectors){
+  int ret = HAL_OK;
+  FLASH_OBProgramInitTypeDef OptionBytes;
+  /* Disable write protected pages */
+  OptionBytes.OptionType = OPTIONBYTE_WRP;
+  OptionBytes.WRPState = OB_WRPSTATE_DISABLE;
+  OptionBytes.Banks = FLASH_BANK_1;
+  OptionBytes.WRPSector = wrp_sectors;
+  HAL_FLASH_OB_Unlock();
+  ret = HAL_FLASHEx_OBProgram(&OptionBytes);
+  /*
+  * This would perform system reset here unless an error is returned
+  */
+  if (ret == HAL_OK) {
+    ret |= HAL_FLASH_OB_Launch();
+    device_reset();
+  }
+  HAL_FLASH_OB_Lock();
+  return ret;
+}
+
+int eeprom_write_lock(uint32_t wrp_sectors){
+  int ret = HAL_OK;
+  FLASH_OBProgramInitTypeDef OptionBytes;
+  /* Enable write protection */
+  OptionBytes.OptionType = OPTIONBYTE_WRP;
+  OptionBytes.WRPState = OB_WRPSTATE_ENABLE;
+  OptionBytes.Banks = FLASH_BANK_1;
+  OptionBytes.WRPSector = wrp_sectors;
+  HAL_FLASH_OB_Unlock();
+  ret = HAL_FLASHEx_OBProgram(&OptionBytes);
+  /*
+  * We perform system reset here unless an error is returned
+  */
+  if (ret == HAL_OK) {
+    ret |= HAL_FLASH_OB_Launch();
+    device_reset();
+  }
+  HAL_FLASH_OB_Lock();
+    return ret;
+}
+
+/*
+ * Checks which sectors have write protection option byte set
+ */
+uint32_t eeprom_write_protection(uint32_t wrp_sectors){
+  FLASH_OBProgramInitTypeDef OptionBytes;
+  HAL_FLASHEx_OBGetConfig(&OptionBytes);
+  return ~OptionBytes.WRPSector & wrp_sectors;
+}
+
+#endif

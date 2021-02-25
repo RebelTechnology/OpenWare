@@ -12,6 +12,7 @@
 #include "ProgramManager.h"
 #include "FlashStorage.h"
 #include "Owl.h"
+#include "BootloaderStorage.h"
 
 void MidiController::sendPatchParameterValues(){
   sendCc(PATCH_PARAMETER_A, (uint8_t)(getParameterValue(PARAMETER_A)>>5) & 0x7f);
@@ -31,7 +32,7 @@ public:
   void loop(){
     switch(state++){
     case 0:
-      midi_tx.sendPc(settings.program_index);
+      midi_tx.sendPc(program.getProgramIndex());
       midi_tx.sendPatchParameterValues();
       midi_tx.sendCc(PUSHBUTTON, getButtonValue(PUSHBUTTON) ? 127 : 0);
       break;
@@ -45,6 +46,7 @@ public:
       midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_BYPASS, settings.audio_codec_bypass);
       midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_CODEC_SWAP, settings.audio_codec_swaplr);
       midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_PC_BUTTON, settings.program_change_button);
+      midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_BOOTLOADER_LOCK, bool(bootloader.getWriteProtectedSectors()));
       break;
     case 3:
       midi_tx.sendConfigurationSetting((const char*)SYSEX_CONFIGURATION_INPUT_OFFSET, settings.input_offset);
@@ -74,7 +76,7 @@ void MidiController::sendSettings(){
 }
 
 
-class SendRegistryTask : public BackgroundTask {
+class SendPatchNamesTask : public BackgroundTask {
 private:
   uint8_t state;
 public:
@@ -83,25 +85,52 @@ public:
   }
   void loop(){
     if(state < registry.getNumberOfPatches()){
-      midi_tx.sendPatchName(state, registry.getPatchName(state));
+      midi_tx.sendName(SYSEX_PRESET_NAME_COMMAND, state, registry.getPatchName(state));
       state++;
     }else{
-      midi_tx.sendPc(settings.program_index);
-      owl.setBackgroundTask(NULL);
+      midi_tx.sendPc(program.getProgramIndex());
+      owl.setBackgroundTask(NULL); // end this task
+    }
+  }
+};
+
+class SendResourceNamesTask : public BackgroundTask {
+private:
+  uint8_t state;
+public:
+  void begin(){
+    state = 0;
+  }
+  void loop(){
+    if(state < registry.getNumberOfResources()){
+      midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, state,
+		       registry.getResourceName(state+MAX_NUMBER_OF_PATCHES+1));
+      state++;
+    }else{
+      owl.setBackgroundTask(NULL); // end this task
     }
   }
 };
       
+void MidiController::sendPatchName(uint8_t slot){
+  sendName(SYSEX_PRESET_NAME_COMMAND, slot, registry.getPatchName(slot));
+}
+
 void MidiController::sendPatchNames(){
-  static SendRegistryTask task;
+  static SendPatchNamesTask task;
+  owl.setBackgroundTask(&task);
+}
+      
+void MidiController::sendResourceNames(){
+  static SendResourceNamesTask task;
   owl.setBackgroundTask(&task);
 }
 
-void MidiController::sendPatchName(uint8_t index, const char* name){
+void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name){
   if(name != NULL){
     uint8_t size = strnlen(name, 24);
     uint8_t buf[size+2];
-    buf[0] = SYSEX_PRESET_NAME_COMMAND;
+    buf[0] = cmd;
     buf[1] = index;
     memcpy(buf+2, name, size);
     sendSysEx(buf, sizeof(buf));
@@ -131,8 +160,8 @@ void MidiController::sendPatchParameterName(PatchParameterId pid, const char* na
 
 void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
+  sendBootloaderVersion();
   sendProgramMessage();
-  //   sendProgramStats(); done by sendStatus() in case of no error
   sendDeviceStats();
   sendStatus();
 }
@@ -167,6 +196,25 @@ void MidiController::sendDeviceStats(){
   p = stpcpy(p, msg_itoa(storage.getTotalAllocatedSize(), 10));
   sendSysEx((uint8_t*)buf, p-buf);
 #endif /* DEBUG_STORAGE */
+#ifdef DEBUG_BOOTLOADER
+  p = &buf[1];
+  p = stpcpy(p, (const char*)"Bootloader ");
+  p = stpcpy(p, getBootloaderVersion());
+  if (bootloader.getWriteProtectedSectors()){
+    p = stpcpy(p, (const char*)" is locked");
+    if (bootloader.isWriteProtected()){
+      p = stpcpy(p, (const char*)" (all sectors)");
+    }
+    else {
+      // We can get here in very weird situations, i.e. bootloader resizing
+      p = stpcpy(p, (const char*)" (some sectors)");
+    }
+  }
+  else {
+    p = stpcpy(p, (const char*)" is unlocked");
+  }
+  sendSysEx((uint8_t*)buf, p-buf);
+#endif /* DEBUG_BOOTLOADER */
 }
 
 void MidiController::sendProgramStats(){
@@ -233,6 +281,14 @@ void MidiController::sendFirmwareVersion(){
   buf[0] = SYSEX_FIRMWARE_VERSION;
   char* p = &buf[1];
   p = stpcpy(p, getFirmwareVersion());
+  sendSysEx((uint8_t*)buf, p-buf);
+}
+
+void MidiController::sendBootloaderVersion(){
+  char buf[16];
+  buf[0] = SYSEX_BOOTLOADER_VERSION;
+  char* p = &buf[1];
+  p = stpcpy(p, getBootloaderVersion());
   sendSysEx((uint8_t*)buf, p-buf);
 }
 

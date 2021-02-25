@@ -37,14 +37,9 @@ public:
     return true;
   }
   void copy(){
-    extern char _PATCHRAM, _PATCHRAM_SIZE;
     /* copy program to ram */
-    if((linkAddress == (uint32_t*)&_PATCHRAM && programSize <= (uint32_t)(&_PATCHRAM_SIZE))){
-      memcpy((void*)linkAddress, (void*)programAddress, programSize);
-      programAddress = linkAddress; 
-    }else{
-      programFunction = NULL;
-    }
+    memcpy((void*)linkAddress, (void*)programAddress, programSize);
+    programAddress = linkAddress;
   }
   bool verify(){
     // check we've got an entry function
@@ -53,7 +48,15 @@ public:
     // check magic
     if((*(uint32_t*)programAddress & 0xffffff00) != 0xDADAC000) // was: != 0xDADAC0DE
       return false;
-    return true;
+    extern char _PATCHRAM, _PATCHRAM_SIZE;
+    if((linkAddress == (uint32_t*)&_PATCHRAM && programSize <= (uint32_t)(&_PATCHRAM_SIZE)))
+      return true;
+#ifdef USE_PLUS_RAM
+    extern char _PLUSRAM, _PLUSRAM_SIZE;
+    if((linkAddress == (uint32_t*)&_PLUSRAM && programSize <= (uint32_t)(&_PLUSRAM_SIZE)))
+      return true;
+#endif
+    return false;
   }
   void run(){
     if(linkAddress != programAddress)
