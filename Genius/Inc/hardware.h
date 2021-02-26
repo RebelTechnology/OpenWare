@@ -43,8 +43,8 @@
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
 #define USE_USBD_AUDIO
-/* #define USE_USBD_AUDIO_TX  // microphone */
-/* #define USE_USBD_AUDIO_RX // speaker */
+#define USE_USBD_AUDIO_TX  // microphone
+#define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
