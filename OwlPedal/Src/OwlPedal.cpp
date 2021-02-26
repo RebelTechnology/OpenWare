@@ -60,8 +60,8 @@ void pinChanged(uint16_t pin){
 
 void setGateValue(uint8_t ch, int16_t value){
   if(ch == PUSHBUTTON){
-    HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-    HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, value ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
 #ifdef OWL_MODULAR
     HAL_GPIO_WritePin(PUSH_GATE_OUT_GPIO_Port, PUSH_GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
 #endif
@@ -89,6 +89,8 @@ void setup(){
  
 #define PATCH_RESET_COUNTER (1000/MAIN_LOOP_SLEEP_MS)
 
+static bool firstRun = true;
+
 void loop(){
   static uint32_t counter = PATCH_RESET_COUNTER;
   switch(owl.getOperationMode()){
@@ -99,7 +101,10 @@ void loop(){
   case RUN_MODE:
     if(getErrorStatus() != NO_ERROR)
       owl.setOperationMode(ERROR_MODE);
-    setLed(0, GREEN_COLOUR);
+    else if (firstRun){
+      firstRun = false;
+      setLed(0, GREEN_COLOUR);
+    }
     break;
   case CONFIGURE_MODE:
     owl.setOperationMode(RUN_MODE);
