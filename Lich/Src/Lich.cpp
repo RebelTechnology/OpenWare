@@ -109,6 +109,7 @@ void setGateValue(uint8_t ch, int16_t value){
     setLed(2, value);
     break;
   case PUSHBUTTON:
+    setLed(1, value);
   case BUTTON_C:
     HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
     break;
