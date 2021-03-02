@@ -46,6 +46,7 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
+#define CODEC_HP_FILTER
 
 #define NOF_ADC_VALUES               9
 #define NOF_PARAMETERS               40
