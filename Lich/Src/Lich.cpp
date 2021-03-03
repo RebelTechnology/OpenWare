@@ -157,7 +157,6 @@ static void update_preset(){
   switch(owl.getOperationMode()){
   case STARTUP_MODE:
     setSegmentDisplay(SEG_DISPLAY_BLANK, true);
-    owl.setOperationMode(RUN_MODE);
     patchselect = program.getProgramIndex();
     setEncoderValue(patchselect);
     break;
