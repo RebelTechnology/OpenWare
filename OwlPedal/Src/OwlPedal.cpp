@@ -89,8 +89,6 @@ void setup(){
  
 #define PATCH_RESET_COUNTER (1000/MAIN_LOOP_SLEEP_MS)
 
-static bool firstRun = true;
-
 void loop(){
   static uint32_t counter = PATCH_RESET_COUNTER;
   switch(owl.getOperationMode()){
@@ -101,10 +99,6 @@ void loop(){
   case RUN_MODE:
     if(getErrorStatus() != NO_ERROR)
       owl.setOperationMode(ERROR_MODE);
-    else if (firstRun){
-      firstRun = false;
-      setLed(0, GREEN_COLOUR);
-    }
     break;
   case CONFIGURE_MODE:
     owl.setOperationMode(RUN_MODE);
