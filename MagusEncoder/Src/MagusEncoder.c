@@ -7,11 +7,35 @@ extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 
-// Variables
-uint8_t seqA[7];
-uint8_t seqB[7];
+/* // Variables */
+/* uint8_t seqA[7]; */
+/* uint8_t seqB[7]; */
 
+uint8_t rgENC_State[7];
 uint16_t rgENC_Data[7];
+
+static const int8_t transitions[] = {0, 1,-1, 0,-1, 0, 0, 1, 1, 0, 0,-1, 0,-1, 1, 0};
+/* static const int8_t transitions[] = {0,-1, 1, 0, 1, 0, 0,-1,-1, 0, 0, 1, 0, 1,-1, 0}; */
+
+uint8_t getEncoderState(uint8_t eid){
+  uint8_t state;
+  // Read encoder pins
+  switch(eid){	
+  case 3:
+    state = HAL_GPIO_ReadPin(ENC3_A_GPIO_Port, ENC3_A_Pin) << 1 |
+      HAL_GPIO_ReadPin(ENC3_B_GPIO_Port, ENC3_B_Pin);
+    break;
+  case 5:
+    state = HAL_GPIO_ReadPin(ENC5_A_GPIO_Port, ENC5_A_Pin) << 1 |
+      HAL_GPIO_ReadPin(ENC5_B_GPIO_Port, ENC5_B_Pin);
+    break;
+  case 6:
+    state = HAL_GPIO_ReadPin(ENC6_A_GPIO_Port, ENC6_A_Pin) << 1 |
+      HAL_GPIO_ReadPin(ENC6_B_GPIO_Port, ENC6_B_Pin);
+    break;
+  }
+  return state;
+}
 
 void Encoders_Init (void)
 {
@@ -23,13 +47,17 @@ void Encoders_Init (void)
 	rgENC_Data[4]  = 0x3FFF;
 	rgENC_Data[5]  = 0x3FFF;
 	rgENC_Data[6]  = 0x3FFF;
-		
-		// Configure and start TIM Encoders
-  __HAL_TIM_SET_COUNTER(&htim1, INT16_MAX/2);
-  __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
-	__HAL_TIM_SET_COUNTER(&htim3, INT16_MAX/2);
+
+	rgENC_State[3] = getEncoderState(3)<<2 | getEncoderState(3);
+	rgENC_State[5] = getEncoderState(5)<<2 | getEncoderState(5);
+	rgENC_State[6] = getEncoderState(6)<<2 | getEncoderState(6);
+	
+	// Configure and start TIM Encoders
+	__HAL_TIM_SET_COUNTER(&htim1, rgENC_Data[1]);
+	__HAL_TIM_SET_COUNTER(&htim2, rgENC_Data[2]);
+	__HAL_TIM_SET_COUNTER(&htim3, rgENC_Data[4]);
 	HAL_TIM_Encoder_Start_IT(&htim1, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
 	HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
 }
 
@@ -49,39 +77,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin)
 		case SPI_NCS_Pin:	send_SPI(); 					break;
 	}
 }
-	
-void Encoder_Interrupt(uint8_t ENC_i)
+  
+void Encoder_Interrupt(uint8_t eid)
 {
-	uint8_t ucA_Val, ucB_Val;
-	
-	// Read Encoder pins
-	switch(ENC_i)
-	{	
-		// Read encoder pins
-		case 3: ucA_Val = HAL_GPIO_ReadPin(ENC3_A_GPIO_Port, ENC3_A_Pin);
-						ucB_Val = HAL_GPIO_ReadPin(ENC3_B_GPIO_Port, ENC3_B_Pin);		break;
+ /* https://electronics.stackexchange.com/questions/99915/stm32-rotary-encoder-with-hardware-interrupts */
 
-		case 5: ucA_Val = HAL_GPIO_ReadPin(ENC5_A_GPIO_Port, ENC5_A_Pin);
-						ucB_Val = HAL_GPIO_ReadPin(ENC5_B_GPIO_Port, ENC5_B_Pin);		break;
-	
-		case 6: ucA_Val = HAL_GPIO_ReadPin(ENC6_A_GPIO_Port, ENC6_A_Pin);
-						ucB_Val = HAL_GPIO_ReadPin(ENC6_B_GPIO_Port, ENC6_B_Pin);		break;
-	}
-	
-	// Record the A and B sequences
-	seqA[ENC_i] <<= 1;	
-	seqA[ENC_i]  |= ucA_Val; 
-
-	seqB[ENC_i] <<= 1;	
-	seqB[ENC_i]  |= ucB_Val; 
-
-	// Mask the MSB four bits
-	seqA[ENC_i] &= 0x0F;
-	seqB[ENC_i]	&= 0x0F;
-
-	// Check for a turn
-	if (seqA[ENC_i] == 0x09 && seqB[ENC_i] == 0x03) {rgENC_Data[ENC_i]-=2;}
-	if (seqA[ENC_i] == 0x03 && seqB[ENC_i] == 0x09) {rgENC_Data[ENC_i]+=2;}
+  uint8_t state = getEncoderState(eid);
+  uint8_t previous = rgENC_State[eid];
+  state |= (previous<<2)&0x0f;
+  rgENC_Data[eid] += transitions[state];
+  rgENC_State[eid] = state;
 }
 
 	
