@@ -33,14 +33,6 @@ void Encoders_Init (void)
 	HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
 }
 
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
-{
-	// Determine which encoder has changed and set value
-  if		  (htim == &htim1) rgENC_Data[1] = __HAL_TIM_GET_COUNTER(&htim1); 
-  else if (htim == &htim2) rgENC_Data[2] = __HAL_TIM_GET_COUNTER(&htim2);
-	else if (htim == &htim3) rgENC_Data[4] = __HAL_TIM_GET_COUNTER(&htim3);
-}
-
 void HAL_GPIO_EXTI_Callback(uint16_t pin)
 {
 	switch(pin)
@@ -97,8 +89,8 @@ void Encoders_Main (void)
 {
 	uint16_t usiSW_States;
 	
-	// Clear ChangeReady Pin
-	HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_RESET);
+	/* // Clear ChangeReady Pin (not used) */
+	/* HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_RESET); */
 	
 	// Read switches for a change
 	usiSW_States  = (1-HAL_GPIO_ReadPin(ENC1_SW_GPIO_Port, ENC1_SW_Pin))<<0;
@@ -110,6 +102,10 @@ void Encoders_Main (void)
 	
 	// Update Switch states
 	rgENC_Data[0] = usiSW_States;
+
+	rgENC_Data[1] = __HAL_TIM_GET_COUNTER(&htim1); 
+	rgENC_Data[2] = __HAL_TIM_GET_COUNTER(&htim2);
+	rgENC_Data[4] = __HAL_TIM_GET_COUNTER(&htim3);
 }
 
 void send_SPI(void)
