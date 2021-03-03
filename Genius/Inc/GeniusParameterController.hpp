@@ -32,7 +32,9 @@ public:
   ParameterController(){
     reset();
   }
-  void setTitle(const char* str){}
+  void setTitle(const char* str){
+    strncpy(title, str, 10);    
+  }
   void reset(){
     drawCallback = defaultDrawCallback;
     for(int i=0; i<SIZE; ++i){
@@ -53,29 +55,56 @@ public:
       drawStats(screen);
       // todo: show patch name and next/previous patch
     }else if(sw2()){
-      screen.setTextSize(1);
-      screen.print(2, 0, names[selected]);
-      screen.setTextSize(3);
-      screen.setCursor(30, 20);
-      screen.print(parameters[selected]/41); // assuming parameter value [0-4095]
-      screen.print("%");
+      screen.fill(BLACK);
+      drawGlobalParameterNames(42, screen);
+      // screen.setTextSize(1);
+      // screen.print(2, 0, names[selected]);
+      // screen.setTextSize(3);
+      // screen.setCursor(30, 20);
+      // screen.print(parameters[selected]/41); // assuming parameter value [0-4095]
+      // screen.print("%");
     }else if(getErrorStatus() != NO_ERROR && getErrorMessage() != NULL){
       screen.setTextSize(1);
       screen.print(2, 20, getErrorMessage());
     }else{
+#if 1
       drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       screen.setTextSize(1);
       screen.print(2, 56, names[selected]);
       screen.print(": ");
       screen.print((int)parameters[selected]/41);
-
-extern TIM_HandleTypeDef ENCODER_TIM1;
-extern TIM_HandleTypeDef ENCODER_TIM2;
+#else
+      extern TIM_HandleTypeDef ENCODER_TIM1;
+      extern TIM_HandleTypeDef ENCODER_TIM2;
       screen.print(2, 28, "enc ");
       screen.print((int)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1));
       screen.print(" : ");
       screen.print((int)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
+#endif
     }
+  }
+
+  void drawParameterNames(int y, int pid, const char names[][12], int size, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    // int selected = selectedPid[pid];
+    if(selected > 2)
+      screen.print(1, y-30, names[selected-3]);
+    if(selected > 1)
+      screen.print(1, y-20, names[selected-2]);
+    if(selected > 0)
+      screen.print(1, y-10, names[selected-1]);
+    screen.print(1, y, names[selected]);
+    if(selected < size-1)
+      screen.print(1, y+10, names[selected+1]);
+    if(selected < size-2)
+      screen.print(1, y+20, names[selected+2]);
+    if(selected < size-3)
+      screen.print(1, y+30, names[selected+3]);
+    screen.invert(0, y-9, screen.getWidth(), 10);
+  }
+
+  void drawGlobalParameterNames(int y, ScreenBuffer& screen){    
+    drawParameterNames(y, 0, names, SIZE, screen);
   }
 
   void drawStats(ScreenBuffer& screen){
@@ -141,7 +170,7 @@ extern TIM_HandleTypeDef ENCODER_TIM2;
     else
       drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
   }
-
+  
 private:
   void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
   bool sw1(){
