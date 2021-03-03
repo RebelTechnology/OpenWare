@@ -595,6 +595,21 @@ public:
     screen.setTextWrap(false);
     switch(displayMode){
     case STANDARD:
+#if 1
+      screen.setTextSize(1);
+      screen.print(2, 10, "enc ");
+      screen.print(encoders[0]);
+      screen.print(" : ");
+      screen.print(encoders[1]);
+      screen.print(2, 20, "enc ");
+      screen.print(encoders[2]);
+      screen.print(" : ");
+      screen.print(encoders[3]);
+      screen.print(2, 30, "enc ");
+      screen.print(encoders[4]);
+      screen.print(" : ");
+      screen.print(encoders[5]);
+#else
       // draw most recently changed parameter
       // drawParameter(selectedPid[selectedBlock], 44, screen);
       if (owl.getOperationMode() == LOAD_MODE){
@@ -605,6 +620,7 @@ public:
       }
       // use callback to draw title and message
       drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
+#endif
       break;
     case SELECTBLOCKPARAMETER:
       drawTitle(screen);
@@ -965,18 +981,18 @@ public:
             if(delta > 0)
               selectBlockParameter(i, selectedPid[i]+1);
           }
-          else{
-            if(encoders[i] != value){
-              selectedBlock = i;
-              encoders[i] = value;
-              // We must update encoder value before calculating user value, otherwise
-              // previous value would be displayed
-              user[selectedPid[i]] = getEncoderValue(i);
-            }
-            if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
-              displayMode = STANDARD;
-          }
-          encoders[i] = value;
+	else{
+	  if(encoders[i] != value){
+	    selectedBlock = i;
+	    encoders[i] = value;
+	    // We must update encoder value before calculating user value, otherwise
+	    // previous value would be displayed
+	    user[selectedPid[i]] = getEncoderValue(i);
+	  }
+	  if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
+	    displayMode = STANDARD;
+	}
+	encoders[i] = value;
       }
       if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
         displayMode = ERROR;    
