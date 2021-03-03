@@ -1,4 +1,5 @@
 #include "Owl.h"
+
 #include "Graphics.h"
 
 
@@ -28,8 +29,8 @@ extern "C"{
   }
 }  
 
-  extern TIM_HandleTypeDef ENCODER_TIM1;
-  extern TIM_HandleTypeDef ENCODER_TIM2;
+extern TIM_HandleTypeDef ENCODER_TIM1;
+extern TIM_HandleTypeDef ENCODER_TIM2;
 
 Graphics graphics;
 
@@ -55,10 +56,14 @@ void setup(){
 void updateEncoders(){
   static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
   int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
-  graphics.params.encoderChanged(0, value - encoder_values[0]);
+  int16_t delta = value - encoder_values[0];
+  if(delta)
+    graphics.params.encoderChanged(0, delta);
   encoder_values[0] = value;
   value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
-  graphics.params.encoderChanged(0, value - encoder_values[1]);
+  delta = value - encoder_values[1];
+  if(delta)
+    graphics.params.encoderChanged(1, delta);
   encoder_values[1] = value;
 }
 
