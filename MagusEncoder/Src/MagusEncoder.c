@@ -10,7 +10,6 @@ extern TIM_HandleTypeDef htim3;
 static uint8_t rgENC_State[7];
 static uint16_t rgENC_Data[7];
 
-/* static const int8_t transitions[] = {0, 1,-1, 0,-1, 0, 0, 1, 1, 0, 0,-1, 0,-1, 1, 0}; */
 static const int8_t transitions[] = {0,-1, 1, 0, 1, 0, 0,-1,-1, 0, 0, 1, 0, 1,-1, 0};
 
 uint8_t getEncoderState3(){
@@ -26,26 +25,6 @@ uint8_t getEncoderState5(){
 uint8_t getEncoderState6(){
   return HAL_GPIO_ReadPin(ENC6_A_GPIO_Port, ENC6_A_Pin) << 1 |
     HAL_GPIO_ReadPin(ENC6_B_GPIO_Port, ENC6_B_Pin);
-}
-
-uint8_t getEncoderState(uint8_t eid){
-  uint8_t state;
-  // Read encoder pins
-  switch(eid){	
-  case 3:
-    state = HAL_GPIO_ReadPin(ENC3_A_GPIO_Port, ENC3_A_Pin) << 1 |
-      HAL_GPIO_ReadPin(ENC3_B_GPIO_Port, ENC3_B_Pin);
-    break;
-  case 5:
-    state = HAL_GPIO_ReadPin(ENC5_A_GPIO_Port, ENC5_A_Pin) << 1 |
-      HAL_GPIO_ReadPin(ENC5_B_GPIO_Port, ENC5_B_Pin);
-    break;
-  case 6:
-    state = HAL_GPIO_ReadPin(ENC6_A_GPIO_Port, ENC6_A_Pin) << 1 |
-      HAL_GPIO_ReadPin(ENC6_B_GPIO_Port, ENC6_B_Pin);
-    break;
-  }
-  return state;
 }
 
 void Encoders_Init (void) {
