@@ -4,6 +4,7 @@
 
 
 extern "C"{
+#if 0
   void eeprom_unlock(){}
   int eeprom_write_block(uint32_t address, void* data, uint32_t size)
   {return 0;}
@@ -23,6 +24,7 @@ extern "C"{
   {return 0;}
   uint32_t eeprom_write_protection(uint32_t wrp_sectors)
   {return 0;}
+#endif
   void setPortMode(uint8_t index, uint8_t mode){}
   uint8_t getPortMode(uint8_t index){
     return 0;
