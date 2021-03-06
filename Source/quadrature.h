@@ -1,8 +1,5 @@
 /* https://electronics.stackexchange.com/questions/99915/stm32-rotary-encoder-with-hardware-interrupts */
 
-#define ENCODER_COUNT 7
-#define ENCODER_ERROR_TRACKING
-
 int16_t encoder_data[ENCODER_COUNT];
 static uint8_t encoder_state[ENCODER_COUNT];
 
@@ -17,7 +14,7 @@ void encoder_init(uint8_t eid, uint8_t state, int16_t value);
  */
 void encoder_interrupt(uint8_t eid, uint8_t state);
 
-#ifdef ENCODER_ERROR_TRACKING
+#ifdef ENCODER_ERROR_DETECTION
 // increments and decrements shifted <<1, error in LSB
 // illegal transitions are those where both pins change at once, e.g. from 0b10 to 0b01
 static const int8_t transitions[16] = {0, -2, 2, 1, 2, 0, 1, -2, -2, 1, 0, 2, 1, 2, -2, 0};
