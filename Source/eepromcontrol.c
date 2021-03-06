@@ -8,9 +8,15 @@ void eeprom_lock(){
   HAL_FLASH_Lock();
 }
 
-#ifndef STM32H743xx // todo: fix for H7!
 int eeprom_wait(){ 
+#ifndef STM32H743xx
   return FLASH_WaitForLastOperation(5000);
+#else
+  /*
+   * We're waiting for both banks here, but a better approach could be to track which one was erased / written
+   */
+  return FLASH_WaitForLastOperation(5000, FLASH_BANK_1) | FLASH_WaitForLastOperation(5000, FLASH_BANK_2);
+#endif
 }
 
 int eeprom_get_error() {
@@ -31,25 +37,48 @@ int eeprom_erase_sector(uint32_t sector) {
   return status;
 }
 
+/*
+ * Flash word is 32 bytes, so we'd have to pass pointer or address instead of raw object on H7
+ */
 int eeprom_write_word(uint32_t address, uint32_t data){
+#ifndef STM32H743xx
   HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
   return status;
+#else
+  // TODO: not implemented, this is just a stub to allow compiling Genius firmware.
+  // This is used to store patches, so we'd have to either change function signature
+  // or use block writes for patch storage.
+  return 0;
+#endif
 }
-
+/*
+ * This won't work on H7 and we don't use this function. Probably should be removed altogether.
+ */
+#ifndef STM32H743xx
 int eeprom_write_byte(uint32_t address, uint8_t data){
+
   HAL_StatusTypeDef status =  HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, data);
   return status;
 }
+#endif
 
 int eeprom_write_block(uint32_t address, void* data, uint32_t size){
   uint32_t* p32 = (uint32_t*)data;
-  uint32_t i=0; 
+  uint32_t i=0;
+  HAL_StatusTypeDef status = HAL_OK;
+#ifdef STM32H743xx
+  for(; i <= size; i += 32){
+    status |= HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address + i, (uint32_t)p32);
+    p32 += 32 / sizeof(void*);
+  }
+#else
   for(;i+4<=size; i+=4)
-    eeprom_write_word(address+i, *p32++);
+    status |= eeprom_write_word(address+i, *p32++);
   uint8_t* p8 = (uint8_t*)p32;
   for(;i<size; i++)
-    eeprom_write_byte(address+i, *p8++);
-  return eeprom_wait() == HAL_FLASH_ERROR_NONE ? 0 : -1;
+    status |= eeprom_write_byte(address+i, *p8++);
+#endif
+  return eeprom_wait() == HAL_FLASH_ERROR_NONE ? (status != HAL_OK) : -1;
 }
 
 void eeprom_unlock(){
@@ -140,5 +169,3 @@ uint32_t eeprom_write_protection(uint32_t wrp_sectors){
   HAL_FLASHEx_OBGetConfig(&OptionBytes);
   return ~OptionBytes.WRPSector & wrp_sectors;
 }
-
-#endif
