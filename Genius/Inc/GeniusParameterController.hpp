@@ -6,7 +6,9 @@
 #include "device.h"
 #include "errorhandlers.h"
 #include "ProgramVector.h"
+#include "VersionToken.h"
 #include "ScreenBuffer.h"
+#include "Owl.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -17,6 +19,8 @@
 #ifndef abs
 #define abs(x) ((x)>0?(x):-(x))
 #endif
+
+extern VersionToken* bootloader_token;
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -118,6 +122,13 @@ public:
     screen.print("% ");
     screen.print((int)(pv->heap_bytes_used)/1024);
     screen.print("kB");
+
+    // draw firmware version
+    screen.print(1, 56, getFirmwareVersion());
+    if (bootloader_token->magic == BOOTLOADER_MAGIC){
+      screen.print(" bt.");
+      screen.print(getBootloaderVersion());
+    }
   }
 
   void encoderChanged(uint8_t encoder, int32_t delta){
