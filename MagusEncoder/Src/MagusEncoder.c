@@ -3,7 +3,7 @@
 #include "main.h"
 
 #define ENCODER_COUNT 7
-#define ENCODER_ERROR_TRACKING
+#define ENCODER_ERROR_DETECTION
 #include "quadrature.h"
 
 extern SPI_HandleTypeDef hspi1;
