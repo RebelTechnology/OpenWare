@@ -57,30 +57,15 @@ public:
     }else if(sw2()){
       screen.fill(BLACK);
       drawGlobalParameterNames(42, screen);
-      // screen.setTextSize(1);
-      // screen.print(2, 0, names[selected]);
-      // screen.setTextSize(3);
-      // screen.setCursor(30, 20);
-      // screen.print(parameters[selected]/41); // assuming parameter value [0-4095]
-      // screen.print("%");
     }else if(getErrorStatus() != NO_ERROR && getErrorMessage() != NULL){
       screen.setTextSize(1);
       screen.print(2, 20, getErrorMessage());
     }else{
-#if 1
       drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       screen.setTextSize(1);
       screen.print(2, 56, names[selected]);
       screen.print(": ");
       screen.print((int)parameters[selected]/41);
-#else
-      extern TIM_HandleTypeDef ENCODER_TIM1;
-      extern TIM_HandleTypeDef ENCODER_TIM2;
-      screen.print(2, 28, "enc ");
-      screen.print((int)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1));
-      screen.print(" : ");
-      screen.print((int)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
-#endif
     }
   }
 
