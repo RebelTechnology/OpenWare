@@ -1,6 +1,9 @@
 #include "stm32f0xx_hal.h"
 #include "MagusEncoder.h"
 #include "main.h"
+
+#define ENCODER_COUNT 7
+#define ENCODER_ERROR_TRACKING
 #include "quadrature.h"
 
 extern SPI_HandleTypeDef hspi1;
@@ -65,21 +68,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 }
 	
 void Encoders_Main (void) {
-  uint16_t usiSW_States;
-	
-  /* // Clear ChangeReady Pin (not used) */
-  /* HAL_GPIO_WritePin(CHANGE_RDY_GPIO_Port, CHANGE_RDY_Pin, GPIO_PIN_RESET); */
-	
   // Read switches
-  usiSW_States  = (1-HAL_GPIO_ReadPin(ENC1_SW_GPIO_Port, ENC1_SW_Pin))<<0;
-  usiSW_States |= (1-HAL_GPIO_ReadPin(ENC2_SW_GPIO_Port, ENC2_SW_Pin))<<1;
-  usiSW_States |= (1-HAL_GPIO_ReadPin(ENC3_SW_GPIO_Port, ENC3_SW_Pin))<<2;
-  usiSW_States |= (1-HAL_GPIO_ReadPin(ENC4_SW_GPIO_Port, ENC4_SW_Pin))<<3;
-  usiSW_States |= (1-HAL_GPIO_ReadPin(ENC5_SW_GPIO_Port, ENC5_SW_Pin))<<4;
-  usiSW_States |= (1-HAL_GPIO_ReadPin(ENC6_SW_GPIO_Port, ENC6_SW_Pin))<<5;
+  uint16_t buttons;
+  buttons  = (1-HAL_GPIO_ReadPin(ENC1_SW_GPIO_Port, ENC1_SW_Pin))<<0;
+  buttons |= (1-HAL_GPIO_ReadPin(ENC2_SW_GPIO_Port, ENC2_SW_Pin))<<1;
+  buttons |= (1-HAL_GPIO_ReadPin(ENC3_SW_GPIO_Port, ENC3_SW_Pin))<<2;
+  buttons |= (1-HAL_GPIO_ReadPin(ENC4_SW_GPIO_Port, ENC4_SW_Pin))<<3;
+  buttons |= (1-HAL_GPIO_ReadPin(ENC5_SW_GPIO_Port, ENC5_SW_Pin))<<4;
+  buttons |= (1-HAL_GPIO_ReadPin(ENC6_SW_GPIO_Port, ENC6_SW_Pin))<<5;
 	
   // Update Switch states
-  encoder_data[0] = usiSW_States;
+  encoder_data[0] = buttons;
 
   // Update TIM encoders
   encoder_data[1] = __HAL_TIM_GET_COUNTER(&htim1); 
