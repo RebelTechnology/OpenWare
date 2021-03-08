@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -17,7 +17,7 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */  
+/* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __USBD_DESC__C__
 #define __USBD_DESC__C__
@@ -41,7 +41,7 @@
   * @brief Usb device descriptors module.
   * @{
   */
-  
+
 /** @defgroup USBD_DESC_Exported_Constants USBD_DESC_Exported_Constants
   * @brief Constants.
   * @{
