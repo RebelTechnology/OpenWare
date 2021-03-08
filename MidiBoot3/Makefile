@@ -25,8 +25,6 @@ endif
 
 PROJECT = MidiBoot-$(PLATFORM)
 
-C_SRC += usbd_desc.c usbd_conf.c
-
 ifeq ($(PLATFORM),Genius)
   CPPFLAGS += -Iusbd-fs -DOWL_GENIUS -DUSE_USBD_FS
   vpath %.c usbd-fs
@@ -56,7 +54,7 @@ erase-boot: # flash erase_sector num first last
 	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 0 1" -c "exit"
 
 erase-storage: # flash erase_sector num first last
-	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 1 4" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 1 3" -c "exit"
 
 dump: # flash read_bank num filename [offset [length]]
 	$(OPENOCD) -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"

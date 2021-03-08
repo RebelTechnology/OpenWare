@@ -19,11 +19,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "device.h"
-#include "usb_device.h"
 #include "errorhandlers.h"
 /* USER CODE END Includes */
 
@@ -141,7 +141,7 @@ int main(void)
     error(RUNTIME_ERROR, "No valid firmware");
   }else{
     // jump to application code
-
+      
       /* Disable all interrupts */
       __disable_irq();
 
@@ -175,19 +175,14 @@ int main(void)
   /* Clear magic */
   *OWLBOOT_MAGIC_ADDRESS = 0;
 
-#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
-  MX_FMC_Init();
-  SDRAM_Initialization_Sequence(&hsdram1);   
-#endif
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
   MX_FMC_Init();
-  MX_IWDG1_Init();
-  /* USER CODE BEGIN 2 */
   MX_USB_DEVICE_Init();
+  /* USER CODE BEGIN 2 */
+
+  SDRAM_Initialization_Sequence(&hsdram1);   
 
   // Initialise
   setup();
@@ -411,11 +406,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB0 PB1 PB2 PB10
-                           PB11 PB12 PB3 PB4
-                           PB7 PB8 PB9 */
+                           PB11 PB12 PB13 PB14
+                           PB15 PB3 PB4 PB7
+                           PB8 PB9 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
-                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_3|GPIO_PIN_4
-                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
+                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
+                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_7
+                          |GPIO_PIN_8|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
