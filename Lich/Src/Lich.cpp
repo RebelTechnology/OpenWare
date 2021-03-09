@@ -66,7 +66,7 @@ static void setSegmentDisplay(int value, bool dot=false){
     HAL_GPIO_WritePin(seg_ports[i], seg_pins[i], (bits & (1<<i)) ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
   case SW1_Pin:
   case GATE_IN1_Pin: {

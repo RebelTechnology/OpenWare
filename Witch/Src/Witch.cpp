@@ -18,7 +18,7 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
   case SW2_Pin:
     {
