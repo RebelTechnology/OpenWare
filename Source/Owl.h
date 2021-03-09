@@ -36,7 +36,7 @@ extern "C" {
   void loop(void);
   void initLed();
   void setLed(uint8_t led, uint32_t rgb);
-  void pinChanged(uint16_t pin);
+  void onChangePin(uint16_t pin);
   void setButtonValue(uint8_t ch, uint8_t value);
   void setAnalogValue(uint8_t ch, int16_t value);
   void setGateValue(uint8_t bid, int16_t value);

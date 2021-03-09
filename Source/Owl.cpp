@@ -186,11 +186,11 @@ __weak void initLed(){
 extern "C" {
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
-  pinChanged(pin);
+  onChangePin(pin);
 }
 }
 
-__weak void pinChanged(uint16_t pin){
+__weak void onChangePin(uint16_t pin){
   switch(pin){
 #ifdef OWL_BIOSIGNALS
   case ADC_DRDY_Pin: {

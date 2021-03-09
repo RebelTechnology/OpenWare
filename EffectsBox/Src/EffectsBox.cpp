@@ -78,7 +78,7 @@ void updateProgramSelector(uint8_t button, uint8_t led, uint8_t patch, bool valu
 #endif /* OWL_EFFECTSBOX */
 
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
 #ifdef OWL_EFFECTSBOX
   case SW1_BTN_Pin:
