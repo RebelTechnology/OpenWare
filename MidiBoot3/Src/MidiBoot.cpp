@@ -100,7 +100,8 @@ void saveToFlash(uint8_t sector, void* data, uint32_t length){
         eeprom_erase_sector(FLASH_SECTOR_3);
       }
     }
-    eeprom_write_block(ADDR_FLASH_SECTOR_1, data, length);
+    extern char _BOOTLOADER_END;
+    eeprom_write_block((uint32_t)&_BOOTLOADER_END, data, length);
     eeprom_lock();
   }else{
     error(RUNTIME_ERROR, "Firmware too big");
