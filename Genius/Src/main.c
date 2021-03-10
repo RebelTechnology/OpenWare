@@ -1185,12 +1185,14 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+  /* init code for USB_DEVICE */
+  /* NOTE: we get frequent boot failures if host is called first */
+  MX_USB_DEVICE_Init();
+  
 #ifdef USE_USB_HOST
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
 #endif
-  /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
 
   setup();
 
