@@ -40,7 +40,7 @@ extern "C" {
   void setButtonValue(uint8_t ch, uint8_t value);
   void setAnalogValue(uint8_t ch, int16_t value);
   void setGateValue(uint8_t bid, int16_t value);
-
+  void onChangeMode(OperationMode new_mode, OperationMode old_mode);
   
   int16_t getAnalogValue(uint8_t index);
   const char* getFirmwareVersion();

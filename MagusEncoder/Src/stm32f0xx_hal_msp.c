@@ -106,7 +106,6 @@ void HAL_MspInit(void)
 */
 void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(hspi->Instance==SPI1)
   {
@@ -161,10 +160,8 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 * @param hspi: SPI handle pointer
 * @retval None
 */
-
 void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
 {
-
   if(hspi->Instance==SPI1)
   {
   /* USER CODE BEGIN SPI1_MspDeInit 0 */
@@ -199,7 +196,6 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
 */
 void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(htim_encoder->Instance==TIM1)
   {
@@ -221,9 +217,6 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    /* TIM1 interrupt Init */
-    HAL_NVIC_SetPriority(TIM1_CC_IRQn, 3, 0);
-    HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
   /* USER CODE BEGIN TIM1_MspInit 1 */
 
   /* USER CODE END TIM1_MspInit 1 */
@@ -299,10 +292,8 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
 * @param htim_encoder: TIM_Encoder handle pointer
 * @retval None
 */
-
 void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* htim_encoder)
 {
-
   if(htim_encoder->Instance==TIM1)
   {
   /* USER CODE BEGIN TIM1_MspDeInit 0 */
@@ -317,8 +308,6 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* htim_encoder)
     */
     HAL_GPIO_DeInit(GPIOA, ENC1_A_Pin|ENC1_B_Pin);
 
-    /* TIM1 interrupt DeInit */
-    HAL_NVIC_DisableIRQ(TIM1_CC_IRQn);
   /* USER CODE BEGIN TIM1_MspDeInit 1 */
 
   /* USER CODE END TIM1_MspDeInit 1 */

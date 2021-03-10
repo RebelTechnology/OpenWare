@@ -371,8 +371,12 @@ OperationMode Owl::getOperationMode(){
   return operationMode;
 }
 
-void Owl::setOperationMode(OperationMode mode){
+__weak void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   setLed(0, YELLOW_COLOUR);
+}
+
+void Owl::setOperationMode(OperationMode mode){
+  onChangeMode(mode, operationMode);
   operationMode = mode;
 }
 
