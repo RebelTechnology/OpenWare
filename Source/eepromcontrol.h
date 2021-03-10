@@ -26,7 +26,7 @@
 #define ADDR_FLASH_SECTOR_5     ((uint32_t)0x080c0000) /* Base @ of Sector 5, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_6     ((uint32_t)0x080e0000) /* Base @ of Sector 6, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_7     ((uint32_t)0x08100000) /* Base @ of Sector 7, 128 Kbyte */
-#define ADDR_FLASH_SECTOR_8     ((uint32_t)0x0812000) /* Base @ of Sector 8, 128 Kbyte */
+#define ADDR_FLASH_SECTOR_8     ((uint32_t)0x08120000) /* Base @ of Sector 8, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_9     ((uint32_t)0x08140000) /* Base @ of Sector 9, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_10    ((uint32_t)0x08160000) /* Base @ of Sector 10, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_11    ((uint32_t)0x08180000) /* Base @ of Sector 11, 128 Kbyte */

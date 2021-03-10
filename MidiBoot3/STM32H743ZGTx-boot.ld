@@ -64,7 +64,7 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH1
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
   .ARM : {
     __exidx_start = .;
     *(.ARM.exidx*)
@@ -109,6 +109,7 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >DTCMRAM AT> FLASH
 
+  _BOOTLOADER_END = ORIGIN(FLASH) + LENGTH(FLASH);
   
   /* Uninitialized data section */
   . = ALIGN(4);
