@@ -18,7 +18,7 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
   case SW2_Pin:
     {
@@ -56,6 +56,19 @@ void setAnalogValue(uint8_t ch, int16_t value){
 
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
+    // todo: always fiddle pushbutton LEDs to allow toggle
+  // case BUTTON_A:
+  //   setLed(1, value);
+  //   break;
+  // case BUTTON_B:
+  //   setLed(2, value);
+  //   break;
+  // case BUTTON_C:
+  //   setLed(3, value);
+  //   break;
+  // case BUTTON_D:
+  //   setLed(f, value);
+  //   break;
   case PUSHBUTTON:
   case BUTTON_E:
     HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
@@ -111,10 +124,10 @@ void setLed(uint8_t led, uint32_t rgb){
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
   // IIR exponential filter with lambda 0.75
-  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A] + adc_values[ADC_B])>>2;
-  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_C] + adc_values[ADC_D])>>2;
-  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_E] + adc_values[ADC_F])>>2;
-  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_G] + adc_values[ADC_H])>>2;
+  parameter_values[0] = __USAT((parameter_values[0]*3 + adc_values[ADC_A] + adc_values[ADC_B])>>2, 12);
+  parameter_values[1] = __USAT((parameter_values[1]*3 + adc_values[ADC_C] + adc_values[ADC_D])>>2, 12);
+  parameter_values[2] = __USAT((parameter_values[2]*3 + adc_values[ADC_E] + adc_values[ADC_F])>>2, 12);
+  parameter_values[3] = __USAT((parameter_values[3]*3 + adc_values[ADC_G] + adc_values[ADC_H])>>2, 12);
   parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_I])>>2;
 }
 

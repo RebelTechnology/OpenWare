@@ -26,7 +26,7 @@ void setLed(uint8_t led, uint32_t rgb){
   TIM3->CCR4 = 1023 - ((rgb>>00)&0x3ff);
 }
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
   case SW1_Pin:
     setButtonValue(BUTTON_A, !(SW1_GPIO_Port->IDR & SW1_Pin));

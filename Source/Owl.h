@@ -2,6 +2,7 @@
 #define __OWL_H__
 #include <stdint.h>
 #include "device.h"
+#include "callbacks.h"
 #include "ProgramVector.h"
 
 #define RED_COLOUR    0x3ff00000
@@ -20,27 +21,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-  typedef enum {
-    STARTUP_MODE,
-    LOAD_MODE,
-    RUN_MODE,
-    CONFIGURE_MODE,
-    STREAM_MODE,
-    ERROR_MODE
-  } OperationMode;
-
-  /** functions with weak declarations that can be defined by subprojects
-   *  to implement device specific behaviour */
-  void setup(void);
-  void loop(void);
-  void initLed();
-  void setLed(uint8_t led, uint32_t rgb);
-  void pinChanged(uint16_t pin);
-  void setButtonValue(uint8_t ch, uint8_t value);
-  void setAnalogValue(uint8_t ch, int16_t value);
-  void setGateValue(uint8_t bid, int16_t value);
-  void onChangeMode(OperationMode new_mode, OperationMode old_mode);
   
   int16_t getAnalogValue(uint8_t index);
   const char* getFirmwareVersion();

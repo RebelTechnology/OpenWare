@@ -31,7 +31,7 @@ void setLed(uint8_t led, uint32_t rgb){
   }
 }
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
   case PUSHBUTTON_Pin: {
     bool isSet = !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin);
@@ -60,8 +60,8 @@ void pinChanged(uint16_t pin){
 
 void setGateValue(uint8_t ch, int16_t value){
   if(ch == PUSHBUTTON){
-    HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-    HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, value ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
 #ifdef OWL_MODULAR
     HAL_GPIO_WritePin(PUSH_GATE_OUT_GPIO_Port, PUSH_GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
 #endif
@@ -99,7 +99,6 @@ void loop(){
   case RUN_MODE:
     if(getErrorStatus() != NO_ERROR)
       owl.setOperationMode(ERROR_MODE);
-    setLed(0, GREEN_COLOUR);
     break;
   case CONFIGURE_MODE:
     owl.setOperationMode(RUN_MODE);
