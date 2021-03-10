@@ -161,6 +161,10 @@
 #define DMA_RAM
 #endif
 
+#ifndef CACHE_ALIGNED
+#define CACHE_ALIGNED
+#endif
+
 #if defined USE_USBD_FS
 #define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
 #elif defined USE_USBD_HS
