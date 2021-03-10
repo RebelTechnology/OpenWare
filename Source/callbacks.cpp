@@ -218,7 +218,7 @@ __weak void loop(void){
 }
 
 __weak void onChangeMode(OperationMode new_mode, OperationMode old_mode){
-  setLed(0, YELLOW_COLOUR);
+  setLed(0, mode == RUN_MODE ? GREEN_COLOUR : YELLOW_COLOUR);
 }
 
 __weak void setAnalogValue(uint8_t ch, int16_t value){
