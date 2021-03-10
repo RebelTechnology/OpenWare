@@ -19,7 +19,9 @@
 #ifdef USE_SCREEN
 #include "Graphics.h"
 #endif
-
+#ifdef USE_CODEC
+#include "Codec.h"
+#endif
 #ifdef OWL_BIOSIGNALS
 #include "ads.h"
 #ifdef USE_KX122
@@ -39,9 +41,99 @@ extern "C"{
 }
 #endif /* USE_USB_HOST */
 
+#ifdef USE_ENCODERS
+extern TIM_HandleTypeDef ENCODER_TIM1;
+extern TIM_HandleTypeDef ENCODER_TIM2;
+#endif
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+#ifndef abs
+#define abs(x) ((x)>0?(x):-(x))
+#endif
+
+#ifdef USE_ADC
+extern uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM;
+#endif
+
 #ifdef USE_DAC
 extern DAC_HandleTypeDef hdac;
 #endif
+
+#ifdef USE_RGB_LED
+void updateLed();
+#endif
+
+#ifdef USE_MODE_BUTTON
+bool isModeButtonPressed(){
+  return HAL_GPIO_ReadPin(MODE_BUTTON_PORT, MODE_BUTTON_PIN) == GPIO_PIN_RESET;
+}
+int getGainSelectionValue(){
+  return adc_values[MODE_BUTTON_GAIN]*128*4/4096;
+}
+int getPatchSelectionValue(){
+  return adc_values[MODE_BUTTON_PATCH]*(registry.getNumberOfPatches()-1)*4/4095;
+}
+
+void owl_mode_button(void){
+  static int patchselect = 0;
+  static int gainselect = 0;
+  switch(owl.getOperationMode()){
+  case STARTUP_MODE:
+    owl.setOperationMode(RUN_MODE);
+    break;
+  case LOAD_MODE:
+    setLed(0, getParameterValue(PARAMETER_A)*BLUE_COLOUR/4095);
+    break;
+  case RUN_MODE:
+    if(isModeButtonPressed()){
+      patchselect = getPatchSelectionValue();
+      gainselect = getGainSelectionValue();
+      owl.setOperationMode(CONFIGURE_MODE);
+      setLed(0, NO_COLOUR);
+    }else if(getErrorStatus() != NO_ERROR){
+      owl.setOperationMode(ERROR_MODE);
+    }else{
+#ifdef USE_RGB_LED
+      updateLed();
+#endif
+    }
+    break;
+  case CONFIGURE_MODE:
+    if(isModeButtonPressed()){
+      int value = getPatchSelectionValue();
+      if(abs(patchselect - value) > 1){
+	patchselect = value;
+	value = max(1, min((int)registry.getNumberOfPatches()-1, value/4 + 1));
+	if(program.getProgramIndex() != value){
+	  program.loadProgram(value);
+	  program.resetProgram(false);
+	  setLed(0, value & 0x01 ? BLUE_COLOUR : GREEN_COLOUR);
+	}
+      }
+      value = getGainSelectionValue();
+      if(abs(gainselect - value) > 2){
+	gainselect = value;
+	value = max(0, min(127, value/4));
+	codec.setOutputGain(value);    
+	setLed(0, value & 0x01 ? YELLOW_COLOUR : CYAN_COLOUR);
+      }
+    }else{
+      owl.setOperationMode(RUN_MODE);
+    }
+    break;
+  case ERROR_MODE:
+    setLed(0, RED_COLOUR);
+    if(isModeButtonPressed())
+      program.resetProgram(false); // runAudioTask() changes to RUN_MODE
+    break;
+  }
+}
+#endif /* USE_MODE_BUTTON */
 
 __weak void setup(){
 #ifdef OWL_BIOSIGNALS
@@ -66,9 +158,10 @@ __weak void setup(){
   if(ret != HAL_OK)
     error(CONFIG_ERROR, "ADC3 Start failed");
 #endif
+  initLed();
+  setLed(0, NO_COLOUR);
   owl.setup();
 }
-
 
 __weak void loop(void){
 #ifdef USE_MODE_BUTTON

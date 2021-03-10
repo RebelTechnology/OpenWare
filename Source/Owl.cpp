@@ -45,21 +45,6 @@ extern "C"{
 #include "bus.h"
 #endif /* USE_DIGITALBUS */
 
-#ifdef USE_ENCODERS
-extern TIM_HandleTypeDef ENCODER_TIM1;
-extern TIM_HandleTypeDef ENCODER_TIM2;
-#endif
-
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
-#ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
-#endif
-#ifndef abs
-#define abs(x) ((x)>0?(x):-(x))
-#endif
-
 Owl owl;
 uint32_t ledstatus;
 MidiController midi_tx;
@@ -149,8 +134,6 @@ void Owl::setup(void){
   IWDG->RLR = 0x753; // reload 8 seconds
 #endif
 #endif
-  initLed();
-  setLed(0, NO_COLOUR);
 #ifdef USE_BKPSRAM
   HAL_PWR_EnableBkUpAccess();
 #endif
@@ -229,73 +212,6 @@ void Owl::setOperationMode(OperationMode mode){
   operationMode = mode;
 }
 
-#ifdef USE_MODE_BUTTON
-bool isModeButtonPressed(){
-  return HAL_GPIO_ReadPin(MODE_BUTTON_PORT, MODE_BUTTON_PIN) == GPIO_PIN_RESET;
-}
-int getGainSelectionValue(){
-  return adc_values[MODE_BUTTON_GAIN]*128*4/4096;
-}
-int getPatchSelectionValue(){
-  return adc_values[MODE_BUTTON_PATCH]*(registry.getNumberOfPatches()-1)*4/4095;
-}
-
-void owl_mode_button(void){
-  static int patchselect = 0;
-  static int gainselect = 0;
-  switch(owl.getOperationMode()){
-  case STARTUP_MODE:
-    owl.setOperationMode(RUN_MODE);
-    break;
-  case LOAD_MODE:
-    setLed(0, getParameterValue(PARAMETER_A)*BLUE_COLOUR/4095);
-    break;
-  case RUN_MODE:
-    if(isModeButtonPressed()){
-      patchselect = getPatchSelectionValue();
-      gainselect = getGainSelectionValue();
-      owl.setOperationMode(CONFIGURE_MODE);
-      setLed(0, NO_COLOUR);
-    }else if(getErrorStatus() != NO_ERROR){
-      owl.setOperationMode(ERROR_MODE);
-    }else{
-#ifdef USE_RGB_LED
-      updateLed();
-#endif
-    }
-    break;
-  case CONFIGURE_MODE:
-    if(isModeButtonPressed()){
-      int value = getPatchSelectionValue();
-      if(abs(patchselect - value) > 1){
-	patchselect = value;
-	value = max(1, min((int)registry.getNumberOfPatches()-1, value/4 + 1));
-	if(program.getProgramIndex() != value){
-	  program.loadProgram(value);
-	  program.resetProgram(false);
-	  setLed(0, value & 0x01 ? BLUE_COLOUR : GREEN_COLOUR);
-	}
-      }
-      value = getGainSelectionValue();
-      if(abs(gainselect - value) > 2){
-	gainselect = value;
-	value = max(0, min(127, value/4));
-	codec.setOutputGain(value);    
-	setLed(0, value & 0x01 ? YELLOW_COLOUR : CYAN_COLOUR);
-      }
-    }else{
-      owl.setOperationMode(RUN_MODE);
-    }
-    break;
-  case ERROR_MODE:
-    setLed(0, RED_COLOUR);
-    if(isModeButtonPressed())
-      program.resetProgram(false); // runAudioTask() changes to RUN_MODE
-    break;
-  }
-}
-#endif /* USE_MODE_BUTTON */
-
 void Owl::loop(){
 #ifdef USE_DIGITALBUS
   busstatus = bus_status();
@@ -328,36 +244,6 @@ void Owl::setBackgroundTask(BackgroundTask* bt){
   backgroundTask = bt;
   if(backgroundTask != NULL)
     backgroundTask->begin();
-}
-
-extern "C"{
-
-#if 0 // ifdef USE_ENCODERS
-  int16_t getEncoderValue(uint8_t encoder){
-    if(encoder == 0)
-      return __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
-    else // if(encoder == 1)
-      return __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
-  }
-
-  void encoderReset(uint8_t encoder, int16_t value){
-    extern TIM_HandleTypeDef ENCODER_TIM1;
-    extern TIM_HandleTypeDef ENCODER_TIM2;
-    if(encoder == 0)
-      __HAL_TIM_SetCounter(&ENCODER_TIM1, value);
-    else if(encoder == 1)
-      __HAL_TIM_SetCounter(&ENCODER_TIM2, value);
-  }
-
-  void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-  extern TIM_HandleTypeDef ENCODER_TIM1;
-  extern TIM_HandleTypeDef ENCODER_TIM2;
-    if(htim == &ENCODER_TIM1)
-      encoderChanged(0, __HAL_TIM_GET_COUNTER(&ENCODER_TIM1));
-    else if(htim == &ENCODER_TIM2)
-      encoderChanged(1, __HAL_TIM_GET_COUNTER(&ENCODER_TIM2));
-  }
-#endif /* USE_ENCODERS */
 }
 
 void jump_to_bootloader(void){
