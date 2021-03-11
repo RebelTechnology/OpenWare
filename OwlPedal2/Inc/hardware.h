@@ -7,9 +7,9 @@
 #define HARDWARE_ID                  OWL_PEDAL_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal mkII"
 
-/* #define USE_USBD_AUDIO */
-/* #define USE_USBD_AUDIO_TX  // microphone */
-/* #define USE_USBD_AUDIO_RX // speaker */
+#define USE_USBD_AUDIO
+#define USE_USBD_AUDIO_TX  // microphone
+#define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_MIDI
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
@@ -36,6 +36,7 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
+/* #define ADC_E 4 */
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_HP_FILTER

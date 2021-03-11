@@ -157,6 +157,15 @@ void Error_Handler(void);
 #define CS_RST_Pin GPIO_PIN_11
 #define CS_RST_GPIO_Port GPIOB
 
+#define USBD_VBUS_Pin GPIO_PIN_9
+#define USBD_VBUS_GPIO_Port GPIOA
+#define USBD_ID_Pin GPIO_PIN_10
+#define USBD_ID_GPIO_Port GPIOA
+#define USBD_DM_Pin GPIO_PIN_11
+#define USBD_DM_GPIO_Port GPIOA
+#define USBD_DP_Pin GPIO_PIN_12
+#define USBD_DP_GPIO_Port GPIOA
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
