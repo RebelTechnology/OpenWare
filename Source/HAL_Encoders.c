@@ -47,6 +47,6 @@ int16_t* Encoders_get()
 void Encoders_init (SPI_HandleTypeDef *spiconfig)
 {
 	Encoders_SPIConfig = spiconfig;
-	pbarRST(1);
+	/* pbarRST(1); */
 }
 

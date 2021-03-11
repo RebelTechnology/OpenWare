@@ -14,6 +14,7 @@
 #include "Codec.h"
 #include "message.h"
 #include "VersionToken.h"
+#include "ScreenBuffer.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -964,18 +965,18 @@ public:
             if(delta > 0)
               selectBlockParameter(i, selectedPid[i]+1);
           }
-          else{
-            if(encoders[i] != value){
-              selectedBlock = i;
-              encoders[i] = value;
-              // We must update encoder value before calculating user value, otherwise
-              // previous value would be displayed
-              user[selectedPid[i]] = getEncoderValue(i);
-            }
-            if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
-              displayMode = STANDARD;
-          }
-          encoders[i] = value;
+	else{
+	  if(encoders[i] != value){
+	    selectedBlock = i;
+	    encoders[i] = value;
+	    // We must update encoder value before calculating user value, otherwise
+	    // previous value would be displayed
+	    user[selectedPid[i]] = getEncoderValue(i);
+	  }
+	  if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
+	    displayMode = STANDARD;
+	}
+	encoders[i] = value;
       }
       if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
         displayMode = ERROR;    

@@ -143,6 +143,7 @@ int main(void)
   __HAL_RCC_D2SRAM2_CLK_ENABLE();
   __HAL_RCC_D2SRAM3_CLK_ENABLE();
 
+
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
@@ -179,8 +180,8 @@ int main(void)
   MX_ADC1_Init();
   MX_DAC1_Init();
   MX_UART5_Init();
-  MX_USB_OTG_FS_PCD_Init();
-  MX_USB_OTG_HS_HCD_Init();
+  //MX_USB_OTG_FS_PCD_Init();
+  //MX_USB_OTG_HS_HCD_Init();
   /* USER CODE BEGIN 2 */
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);

@@ -2,7 +2,7 @@
 ENTRY(Reset_Handler)
 
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size  = 0x000; /* required amount of heap  */
+_Min_Heap_Size = 0x400;      /* required amount of heap  */
 _Min_Stack_Size = 0x200; /* required amount of stack */
 
 /* Specify the memory areas */
@@ -10,14 +10,14 @@ MEMORY
 {
 DTCMRAM (xrw)    : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K
-PLUSRAM  (xrw)   : ORIGIN = 0x24000000, LENGTH = 512K /* D1 RAM */
-RAM_D2  (xrw)    : ORIGIN = 0x30000000, LENGTH = 288K
-RAM_D3  (xrw)    : ORIGIN = 0x38000000, LENGTH = 64K
+RAM_D1 (xrw)     : ORIGIN = 0x24000000, LENGTH = 512K
+RAM_D2 (xrw)     : ORIGIN = 0x30000000, LENGTH = 288K
+RAM_D3 (xrw)     : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM (xrw)    : ORIGIN = 0x00000000, LENGTH = 64K
-EXTRAM  (rwx)    : ORIGIN = 0xD0000000, LENGTH = 8M
-BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K
-FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 384K
-STORAGE (rx)     : ORIGIN = 0x08100000, LENGTH = 512K
+EXTRAM (rwx)     : ORIGIN = 0xD0000000, LENGTH = 8M
+FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 128K
+FLASH1 (rx)      : ORIGIN = 0x08020000, LENGTH = 384K
+FLASH2 (rx)      : ORIGIN = 0x08100000, LENGTH = 512K
 }
 
 /* Define output sections */
@@ -30,9 +30,13 @@ SECTIONS
     PROVIDE ( _ISR_VECTOR = . );
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
-    PROVIDE ( _ISR_VECTOR_END = . );
   } >FLASH
-  _ISR_VECTOR_SIZE = _ISR_VECTOR_END - _ISR_VECTOR;
+
+  .bootloader_token :
+  {
+    . = ALIGN(4);
+    KEEP(*(.bootloader_token));
+  } > FLASH
 
   /* The program code and other data goes into FLASH */
   .text :
@@ -73,6 +77,7 @@ SECTIONS
     KEEP (*(.preinit_array*))
     PROVIDE_HIDDEN (__preinit_array_end = .);
   } >FLASH
+
   .init_array :
   {
     PROVIDE_HIDDEN (__init_array_start = .);
@@ -80,6 +85,7 @@ SECTIONS
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
   } >FLASH
+
   .fini_array :
   {
     PROVIDE_HIDDEN (__fini_array_start = .);
@@ -103,6 +109,7 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >DTCMRAM AT> FLASH
 
+  _BOOTLOADER_END = ORIGIN(FLASH) + LENGTH(FLASH);
   
   /* Uninitialized data section */
   . = ALIGN(4);
@@ -132,28 +139,6 @@ SECTIONS
   } >ITCMRAM
   _estack = ORIGIN(ITCMRAM)+LENGTH(ITCMRAM); /* end of firmware RAM */
 
-  /* CCM section, vars must be located here explicitly */
-  /* Example: int foo __attribute__ ((section (".ccmdata"))); */
-  .ccmdata (NOLOAD) :
-  {
-    *(.ccmdata)
-    . = ALIGN(8);
-    PROVIDE (_CCMRAM = .);
-  /* } >RAM_CCM */
-  /* _CCMRAM_END = ORIGIN(RAM_CCM) + LENGTH(RAM_CCM); */
-  /* } >RAM_D3 */
-  /* _CCMRAM_END = ORIGIN(RAM_D3) + LENGTH(RAM_D3); */
-  } >ITCMRAM
-  _CCMRAM_END = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM);
-  _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
-
-  /* Bootloader end will be used for finding bootloader token */
-  .bootloader (NOLOAD) :
-  {
-    PROVIDE (_BOOTLOADER = .);
-  } >BOOTLOADER
-  _BOOTLOADER_END = ORIGIN(BOOTLOADER) + LENGTH(BOOTLOADER);
-
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */
   .extdata (NOLOAD) :
@@ -174,25 +159,6 @@ SECTIONS
   } >PATCHRAM
   _PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
   _PATCHRAM_SIZE = LENGTH(PATCHRAM);
-
-  .plusram (NOLOAD) :
-  {
-    PROVIDE (_PLUSRAM = .);
-  } >PLUSRAM
-  _PLUSRAM_END = ORIGIN(PLUSRAM) + LENGTH(PLUSRAM);
-  _PLUSRAM_SIZE = LENGTH(PLUSRAM);
-
-  .dmadata (NOLOAD) :
-  {
-    *(.dmadata)
-  } >RAM_D2
-
-  .flash_storage (NOLOAD) :
-  {
-    PROVIDE (_FLASH_STORAGE_BEGIN = .);
-  } >STORAGE
-  _FLASH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);  
-  _FLASH_STORAGE_SIZE = LENGTH(STORAGE);
 
   /* Remove information from the standard libraries */
   /DISCARD/ :
