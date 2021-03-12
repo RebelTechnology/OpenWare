@@ -157,6 +157,7 @@ SH.FMC_D3_DA3.ConfNb=1
 PA6.GPIOParameters=GPIO_Label
 USB_DEVICE.VID-AUDIO_FS=0x1209
 PD6.GPIOParameters=GPIO_Label
+NVIC.EXTI4_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true
 SH.FMC_A4.0=FMC_A4,12b-sda1
 SH.FMC_A7.ConfNb=1
 RCC.PLLQoutputFreq_Value=48000000
