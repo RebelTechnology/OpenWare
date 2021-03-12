@@ -16,11 +16,6 @@ void setLed(uint8_t led, uint32_t rgb){
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
     break;
-  case YELLOW_COLOUR:
-    // not working
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-    break;
   case NO_COLOUR:
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
@@ -30,26 +25,32 @@ void setLed(uint8_t led, uint32_t rgb){
 
 void onChangePin(uint16_t pin){
   switch(pin){
-  case SW1_Pin: {
-    bool isSet = !(SW1_GPIO_Port->IDR & SW1_Pin);
-    setLed(0, isSet ? NO_COLOUR : GREEN_COLOUR);
+  case BYPASS_Pin: {
+    bool state = HAL_GPIO_ReadPin(BYPASS_GPIO_Port, BYPASS_Pin) == GPIO_PIN_RESET;
+    setLed(0, state ? NO_COLOUR : GREEN_COLOUR);
     break;
   }
-  case SW2_Pin: {
-    bool isSet = !(SW2_GPIO_Port->IDR & SW2_Pin);
-    setButtonValue(PUSHBUTTON, isSet);
-    midi_tx.sendCc(PUSHBUTTON, isSet ? 127 : 0);
-    setLed(0, isSet ? RED_COLOUR : GREEN_COLOUR);
+  case SW1_Pin: { // pushbutton
+    bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
+    setButtonValue(PUSHBUTTON, state);
+    setButtonValue(BUTTON_A, state);
+    midi_tx.sendCc(PUSHBUTTON, state ? 127 : 0);
+    setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
+    break;
+  }
+  case SW2_Pin: { // mode button
+    bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_B, state);
     break;
   }
   case SW3_Pin: {
-    bool isSet = !(SW3_GPIO_Port->IDR & SW3_Pin);
-    setButtonValue(BUTTON_B, isSet);
+    bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_C, state);
     break;
   }
   case SW4_Pin: {
-    bool isSet = !(SW4_GPIO_Port->IDR & SW4_Pin);
-    setButtonValue(BUTTON_C, isSet);
+    bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_D, state);
     break;
   }
   }

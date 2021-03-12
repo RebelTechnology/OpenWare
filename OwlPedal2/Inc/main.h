@@ -118,6 +118,8 @@ void Error_Handler(void);
 #define SW3_Pin GPIO_PIN_3
 #define SW3_GPIO_Port GPIOA
 #define SW3_EXTI_IRQn EXTI3_IRQn
+#define BYPASS_Pin GPIO_PIN_4
+#define BYPASS_GPIO_Port GPIOA
 #define SW1_Pin GPIO_PIN_5
 #define SW1_GPIO_Port GPIOA
 #define SW1_EXTI_IRQn EXTI9_5_IRQn
