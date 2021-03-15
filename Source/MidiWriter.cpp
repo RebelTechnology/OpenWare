@@ -161,7 +161,7 @@ public:
     }
   }
 };
-UartMidiTransmitter uart_midi;
+UartMidiTransmitter uart_midi DMA_RAM;
 #endif
 
 void MidiWriter::send(MidiMessage msg){
