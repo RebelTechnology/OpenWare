@@ -8,7 +8,6 @@
 /* #define NO_EXT_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
-#define CACHE_ALIGNED                __attribute__ ((aligned(32)))
 
 #define USE_PLUS_RAM
 #define USE_ICACHE
