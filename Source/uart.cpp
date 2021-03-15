@@ -2,12 +2,16 @@
 #include "device.h"
 #include "errorhandlers.h"
 #include "SerialBuffer.hpp"
+#ifdef STM32H743xx
+#include "stm32h7xx_hal.h"
+#else
 #include "stm32f4xx_hal.h"
+#endif
 
 #ifdef USE_UART_MIDI
 
 extern UART_HandleTypeDef UART_MIDI_HANDLE;
-static SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> bus_rx_buf;
+static SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> bus_rx_buf DMA_RAM;
 
 #define min(a,b) ((a)<(b)?(a):(b))
 
@@ -58,7 +62,7 @@ extern "C"{
 
   void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // what is the correct size if IDLE interrupts?
-    size_t size = huart->RxXferSize - huart->hdmarx->Instance->NDTR;
+    size_t size = huart->RxXferSize -  ((DMA_Stream_TypeDef*)huart->hdmarx->Instance)->NDTR;
     bus_rx_buf.incrementWriteHead(size);
     /* bus_rx_packets += size; */
     initiateBusRead();

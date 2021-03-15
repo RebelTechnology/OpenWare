@@ -58,19 +58,19 @@ void MPU_Config(void){
   MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_DISABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-  // SDRAM - write back with write allocate, no execute
+  // SDRAM - write back with no write allocate, no execute
   extern char _EXTRAM;
   MPU_InitStruct.IsCacheable  = MPU_ACCESS_CACHEABLE;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
   MPU_InitStruct.IsShareable  = MPU_ACCESS_NOT_SHAREABLE;
   MPU_InitStruct.Number       = MPU_REGION_NUMBER1;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
   MPU_InitStruct.Size         = MPU_REGION_SIZE_8MB;
   MPU_InitStruct.BaseAddress  = (uint32_t)&_EXTRAM;
   MPU_InitStruct.DisableExec  = MPU_INSTRUCTION_ACCESS_DISABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-  // AXISRAM D1 - write back with no write allocate, execute
+  // AXISRAM D1 (+RAM) - write back with no write allocate, execute
   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
   MPU_InitStruct.BaseAddress = 0x24000000;
   MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;
