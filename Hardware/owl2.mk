@@ -27,6 +27,7 @@ LDSCRIPT ?= $(OPENWARE)/Hardware/owl2.ld
 LDLIBS += -lc -lm
 # CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
+CPPFLAGS += -Wdouble-promotion -Werror=double-promotion
 CPPFLAGS += -fdata-sections
 CPPFLAGS += -ffunction-sections
 CPPFLAGS += -fno-builtin -ffreestanding

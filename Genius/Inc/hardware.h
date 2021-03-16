@@ -25,6 +25,7 @@
 /* #define OLED_DMA */
 #define OLED_SOFT_CS
 #define OLED_SPI hspi2
+#define OLED_UPSIDE_DOWN
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
@@ -39,10 +40,11 @@
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
 #define MAIN_LOOP_SLEEP_MS          20
+#define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
 #define USE_USBD_AUDIO
-/* #define USE_USBD_AUDIO_TX  // microphone */
-/* #define USE_USBD_AUDIO_RX // speaker */
+#define USE_USBD_AUDIO_TX  // microphone
+#define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS

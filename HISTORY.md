@@ -1,7 +1,13 @@
 21.1.0
 ------
 
-* Added MIDI commands for resource SAVE, NAME and DELETE 
+* Added MIDI commands for resource SAVE, NAME and DELETE
+
+Known Issues:
+* USB Host does not support reconnecting devices
+* Does not process incoming MIDI messages on USBH, though forwarding to patch works
+* USB Audio might 'click' due to synchronisation problems with host
+
 
 21.0.0
 ------

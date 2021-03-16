@@ -18,7 +18,7 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
   case SW2_Pin:
     {
@@ -56,6 +56,19 @@ void setAnalogValue(uint8_t ch, int16_t value){
 
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
+    // todo: always fiddle pushbutton LEDs to allow toggle
+  // case BUTTON_A:
+  //   setLed(1, value);
+  //   break;
+  // case BUTTON_B:
+  //   setLed(2, value);
+  //   break;
+  // case BUTTON_C:
+  //   setLed(3, value);
+  //   break;
+  // case BUTTON_D:
+  //   setLed(f, value);
+  //   break;
   case PUSHBUTTON:
   case BUTTON_E:
     HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
@@ -84,7 +97,6 @@ void initLed(){
 }
 
 void setLed(uint8_t led, uint32_t rgb){
-  // uint32_t value = 1023 - ((rgb>>20)&0x3ff); // red
   uint32_t value = 1023 - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
   switch(led){
   case 0:
@@ -112,10 +124,10 @@ void setLed(uint8_t led, uint32_t rgb){
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
   // IIR exponential filter with lambda 0.75
-  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A] + adc_values[ADC_B])>>2;
-  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_C] + adc_values[ADC_D])>>2;
-  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_E] + adc_values[ADC_F])>>2;
-  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_G] + adc_values[ADC_H])>>2;
+  parameter_values[0] = __USAT((parameter_values[0]*3 + adc_values[ADC_A] + adc_values[ADC_B])>>2, 12);
+  parameter_values[1] = __USAT((parameter_values[1]*3 + adc_values[ADC_C] + adc_values[ADC_D])>>2, 12);
+  parameter_values[2] = __USAT((parameter_values[2]*3 + adc_values[ADC_E] + adc_values[ADC_F])>>2, 12);
+  parameter_values[3] = __USAT((parameter_values[3]*3 + adc_values[ADC_G] + adc_values[ADC_H])>>2, 12);
   parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_I])>>2;
 }
 
@@ -231,7 +243,7 @@ bool fiddle(int i, bool selected){
   LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_INPUT);
   // bool value = LL_GPIO_IsInputPinSet(port, llpin);
   bool value = HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET;
-  uint32_t portvalues = LL_GPIO_ReadOutputPort(port);
+  // uint32_t portvalues = LL_GPIO_ReadOutputPort(port);
   if(selected){
     LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_OUTPUT);
     // LL_GPIO_WriteOutputPort(port, portvalues & ~llpin); // switch pin off
@@ -258,6 +270,8 @@ static void update_preset(){
     setLed(6, counter > PATCH_RESET_COUNTER*0.4 ? 4095 : 0);
     setLed(3, counter > PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
     setLed(4, counter > PATCH_RESET_COUNTER*0.6 ? 4095 : 0);
+    if(getErrorStatus() != NO_ERROR || isModeButtonPressed())
+      owl.setOperationMode(ERROR_MODE);
     break;
   case RUN_MODE:
     if(isModeButtonPressed()){
@@ -274,14 +288,11 @@ static void update_preset(){
       setLed(2, getAnalogValue(ADC_C));
       setLed(3, getAnalogValue(ADC_E));
       setLed(4, getAnalogValue(ADC_G));
-      // setLed(1, getParameterValue(PARAMETER_A));
-      // setLed(2, getParameterValue(PARAMETER_B));
-      // setLed(3, getParameterValue(PARAMETER_C));
-      // setLed(4, getParameterValue(PARAMETER_D));
       setLed(5, getParameterValue(PARAMETER_F));
       setLed(6, getParameterValue(PARAMETER_G));
     }
     counter = 0;
+    break;
   case CONFIGURE_MODE:
     if(isModeButtonPressed()){
       uint8_t patchselect = program.getProgramIndex();
@@ -309,8 +320,11 @@ static void update_preset(){
     setLed(6, counter < PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
     setLed(3, counter > PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
     setLed(4, counter > PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
-    if(isModeButtonPressed())
-      program.resetProgram(false); // runAudioTask() changes to RUN_MODE
+    if(isModeButtonPressed()){
+      setErrorStatus(NO_ERROR);
+      owl.setOperationMode(RUN_MODE); // allows new patch selection if patch doesn't load
+      program.resetProgram(false);
+    }
     break;
   }
   if(++counter >= PATCH_RESET_COUNTER)

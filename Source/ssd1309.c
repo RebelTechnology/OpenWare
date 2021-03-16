@@ -34,11 +34,20 @@ static const uint8_t OLED_initSequence[] =
 	0xae, 		// Display off
 	0xd5, 0xa0, 	// Clock divide ratio / Oscillator Frequency
 	0xa8, 0x3f, 	// Multiplex ratio 64
-	0xc8, 		// Scan direction: c0: scan dir normal, c8: reverse
+			// Scan direction: c0: scan dir normal, c8: reverse
+#ifdef OLED_UPSIDE_DOWN
+	0xc1,
+#else
+	0xc8,
+#endif
 	0xd3, 0x00, 	// Display offset
 	0x40, 		// Start line
-	0xa1, 		// Segment re-map: a0: col0 -> SEG0, a1: col127 -> SEG0
-	/* 0xa0,        // writes right-to-left */
+ 			// Segment re-map: a0: col0 -> SEG0, a1: col127 -> SEG0	
+#ifdef OLED_UPSIDE_DOWN
+	0xa0,
+#else
+	0xa1,
+#endif
 	0xda, 0x12, 	// COM pins
 	0x81, 0xcf, 	// Contrast control: 0 to 0xff. Current increases with contrast.
 	0xd9, 0x22, 	// Pre-charge period

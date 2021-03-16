@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v21.1"
+#define FIRMWARE_VERSION "v21.2"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -44,8 +44,8 @@
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
-/* #define DEBUG_STORAGE */
-#define DEBUG_BOOTLOADER
+#define DEBUG_STORAGE
+/* #define DEBUG_BOOTLOADER */
 
 #ifdef SSD1331
 #define OLED_WIDTH		     96
@@ -68,7 +68,7 @@
 #define MAX_SYSEX_BOOTLOADER_SIZE    (64 * 1024) // OWL1 uses 32kb, must be overridden
 #endif
 #ifndef MAX_SYSEX_PROGRAM_SIZE
-#define MAX_SYSEX_PROGRAM_SIZE       (64 * 1024)
+#define MAX_SYSEX_PROGRAM_SIZE       (144 * 1024)
 #endif
 #ifdef USE_BOOTLOADER_MODE // Flag to choose if we're flashing firmware or bootloader from SySex
 #define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_FIRMWARE_SIZE
@@ -122,8 +122,12 @@
 
 #define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
 #define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE
+#ifndef USBD_AUDIO_RX_CHANNELS
 #define USBD_AUDIO_RX_CHANNELS       AUDIO_CHANNELS
+#endif
+#ifndef USBD_AUDIO_TX_CHANNELS
 #define USBD_AUDIO_TX_CHANNELS       AUDIO_CHANNELS
+#endif
 
 #ifndef MAIN_LOOP_SLEEP_MS
 #define MAIN_LOOP_SLEEP_MS           2
@@ -137,7 +141,10 @@
 #define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
 #define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+
+#ifndef ARM_CYCLES_PER_SAMPLE
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
+#endif
 
 #define USE_IWDG                     // compile with support for IWDG watchdog
 

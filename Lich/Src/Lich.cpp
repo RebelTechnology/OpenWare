@@ -66,7 +66,7 @@ static void setSegmentDisplay(int value, bool dot=false){
     HAL_GPIO_WritePin(seg_ports[i], seg_pins[i], (bits & (1<<i)) ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
   case SW1_Pin:
   case GATE_IN1_Pin: {
@@ -109,6 +109,8 @@ void setGateValue(uint8_t ch, int16_t value){
     setLed(2, value);
     break;
   case PUSHBUTTON:
+    setLed(1, value);
+    // deliberate fall-through - this synchronizes LED to pushbutton value
   case BUTTON_C:
     HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
     break;
@@ -157,7 +159,6 @@ static void update_preset(){
   switch(owl.getOperationMode()){
   case STARTUP_MODE:
     setSegmentDisplay(SEG_DISPLAY_BLANK, true);
-    owl.setOperationMode(RUN_MODE);
     patchselect = program.getProgramIndex();
     setEncoderValue(patchselect);
     break;

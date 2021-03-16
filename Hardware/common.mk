@@ -56,7 +56,7 @@ $(BUILD)/%.o: %.c Makefile | $(BUILD)
 	@$(CC) -c $(CPPFLAGS) $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD)/$(notdir $(<:.c=.lst)) $< -o $@
 
 $(BUILD)/%.o: %.cpp Makefile | $(BUILD)
-	@$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) -Wa,-a,-ad,-alms=$(BUILD)/$(notdir $(<:.c=.lst)) $< -o $@
+	@$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) -Wa,-a,-ad,-alms=$(BUILD)/$(notdir $(<:.cpp=.lst)) $< -o $@
 
 $(BUILD)/%.o: %.s
 	@$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
