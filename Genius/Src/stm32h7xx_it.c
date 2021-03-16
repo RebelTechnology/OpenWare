@@ -251,14 +251,9 @@ void UART5_IRQHandler(void)
   if(huart->Instance->ISR & UART_FLAG_IDLE){
     /* This part is important */
     /* Clear IDLE flag by reading status and data registers */
-    //volatile uint32_t tmp;                  /* Must be volatile to prevent optimizations */
-    //tmp = huart->Instance->ISR;              /* Read status register */
-    //tmp = huart->Instance->RDR;              /* Read data register */
-    //(void)tmp;                              /* Prevent compiler warnings */
     __HAL_UART_CLEAR_IDLEFLAG(huart);
     if(huart->hdmarx != NULL)
-      ((DMA_Stream_TypeDef*)(huart->hdmarx->Instance))->CR &= ~DMA_SxCR_EN;       /* Disabling DMA will force transfer complete interrupt if enabled */
-    /* DMA1_Stream2->CR &= ~DMA_SxCR_EN;       /\* Disabling DMA will force transfer complete interrupt if enabled *\/ */
+      __HAL_DMA_DISABLE(huart->hdmarx);        /* Disabling DMA will force transfer complete interrupt if enabled */
   }
 
   /* USER CODE END UART5_IRQn 1 */
