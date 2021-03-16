@@ -541,7 +541,7 @@ void runManagerTask(void* p){
     }else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      xTaskCreate(eraseFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
+      xTaskCreate(eraseFlashTask, "Flash Erase", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
       // bool ret = utilityTask.create(eraseFlashTask, "Flash Erase", FLASH_TASK_PRIORITY);
       // if(!ret)
       // 	error(PROGRAM_ERROR, "Failed to start Flash Erase task");
