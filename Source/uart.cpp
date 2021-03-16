@@ -1,13 +1,13 @@
+#include "message.h"
 #include "uart.h"
 #include "device.h"
 #include "errorhandlers.h"
 #include "SerialBuffer.hpp"
-#include "stm32f4xx_hal.h"
 
 #ifdef USE_UART_MIDI
 
 extern UART_HandleTypeDef UART_MIDI_HANDLE;
-static SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> bus_rx_buf;
+static SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> bus_rx_buf DMA_RAM;
 
 #define min(a,b) ((a)<(b)?(a):(b))
 
@@ -58,7 +58,7 @@ extern "C"{
 
   void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // what is the correct size if IDLE interrupts?
-    size_t size = huart->RxXferSize - huart->hdmarx->Instance->NDTR;
+    size_t size = huart->RxXferSize - __HAL_DMA_GET_COUNTER(huart->hdmarx);
     bus_rx_buf.incrementWriteHead(size);
     /* bus_rx_packets += size; */
     initiateBusRead();
