@@ -43,13 +43,15 @@ void onChangePin(uint16_t pin){
 
 void setAnalogValue(uint8_t ch, int16_t value){
   extern DAC_HandleTypeDef hdac;
-  // todo set LEDs
+  value = __USAT(value, 12);
   switch(ch){
   case PARAMETER_F:
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
+    setLed(5, value);
     break;
   case PARAMETER_G:
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+    setLed(6, value);
     break;
   }
 }
@@ -260,8 +262,6 @@ static uint32_t counter = 0;
 static void update_preset(){
   switch(owl.getOperationMode()){
   case STARTUP_MODE:
-    owl.setOperationMode(RUN_MODE);
-    break;
   case STREAM_MODE:
   case LOAD_MODE:
     setLed(1, counter > PATCH_RESET_COUNTER*0.1 ? 4095 : 0);
@@ -276,10 +276,6 @@ static void update_preset(){
   case RUN_MODE:
     if(isModeButtonPressed()){
       program.exitProgram(false);
-      for(int i=1; i<=6; ++i)
-	setLed(i, 0);
-      setGateValue(BUTTON_E, 0);
-      setGateValue(BUTTON_F, 0);
       owl.setOperationMode(CONFIGURE_MODE);
     }else if(getErrorStatus() != NO_ERROR){
       owl.setOperationMode(ERROR_MODE);
@@ -288,10 +284,7 @@ static void update_preset(){
       setLed(2, getAnalogValue(ADC_C));
       setLed(3, getAnalogValue(ADC_E));
       setLed(4, getAnalogValue(ADC_G));
-      setLed(5, getParameterValue(PARAMETER_F));
-      setLed(6, getParameterValue(PARAMETER_G));
     }
-    counter = 0;
     break;
   case CONFIGURE_MODE:
     if(isModeButtonPressed()){
@@ -331,10 +324,18 @@ static void update_preset(){
     counter = 0;
 }
 
+void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+  for(int i=1; i<=6; ++i)
+    setLed(i, 0);
+  setGateValue(BUTTON_E, 0);
+  setGateValue(BUTTON_F, 0);
+  setAnalogValue(PARAMETER_F, 0);
+  setAnalogValue(PARAMETER_G, 0);
+  counter = 0;
+}
+
 void setup(){
-  HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LEDPWM1_GPIO_Port, LEDPWM1_Pin, GPIO_PIN_SET);
+  initLed();
   HAL_GPIO_WritePin(LEDPWM_GPIO_Port, LEDPWM_Pin, GPIO_PIN_SET);
   owl.setup();
 }
@@ -346,9 +347,6 @@ void loop(void){
       setButtonValue(PUSHBUTTON, state);
       setButtonValue(BUTTON_A, state);
   }
-  // state = HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
-  // if(state != getButtonValue(BUTTON_E))
-  //   setButtonValue(BUTTON_E, state); // todo: mode button
   update_preset();
   owl.loop();
 }
