@@ -35,6 +35,11 @@
 #define USE_USBH_MIDI
 #define USB_HOST_RX_BUFF_SIZE       256
 
+// Serial MIDI TX only (or digital bus with an extra pin)
+#define USE_UART_MIDI
+#define UART_MIDI_HANDLE huart2
+#define UART_MIDI_RX_BUFFER_SIZE 256
+
 #define TLC5946_SPI hspi6
 #define MAX11300_SPI hspi5
 #define ENCODERS_SPI hspi5
