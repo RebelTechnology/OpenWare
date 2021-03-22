@@ -23,6 +23,7 @@
 
 #include "usb_host.h"
 #include "usbh_core.h"
+#include "usbh_audio.h"
 
 /* USER CODE BEGIN Includes */
 #include "usbh_midi.h"
@@ -79,13 +80,13 @@ void MX_USB_HOST_Init(void)
   /* USER CODE BEGIN USB_HOST_Init_PreTreatment */
   
   /* USER CODE END USB_HOST_Init_PreTreatment */
-  
+
   /* Init host Library, add supported class and start the library. */
   if (USBH_Init(&hUsbHostHS, USBH_UserProcess, HOST_HS) != USBH_OK)
   {
     Error_Handler();
   }
-  if (USBH_RegisterClass(&hUsbHostHS, USBH_MIDI_CLASS) != USBH_OK)
+  if (USBH_RegisterClass(&hUsbHostHS, USBH_AUDIO_CLASS) != USBH_OK)
   {
     Error_Handler();
   }

@@ -30,12 +30,12 @@
   * @brief  Drive VBUS.
   * @param  state : VBUS state
   *          This parameter can be one of the these values:
-  *          - 0 : VBUS Active
-  *          - 1 : VBUS Inactive
+  *          - 1 : VBUS Active
+  *          - 0 : VBUS Inactive
   */
 void MX_DriverVbusHS(uint8_t state)
-{ 
-  uint8_t data = state; 
+{
+  uint8_t data = state;
   /* USER CODE BEGIN PREPARE_GPIO_DATA_VBUS_HS */
   if(state == 0)
   {

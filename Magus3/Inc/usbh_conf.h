@@ -32,8 +32,8 @@
 #include <string.h>
 #include "main.h"
 
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal.h"
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
 
@@ -64,33 +64,30 @@
 
 /*----------   -----------*/
 #define USBH_MAX_NUM_ENDPOINTS      10U
- 
+
 /*----------   -----------*/
 #define USBH_MAX_NUM_INTERFACES      10U
- 
+
 /*----------   -----------*/
 #define USBH_MAX_NUM_CONFIGURATION      1U
- 
+
 /*----------   -----------*/
 #define USBH_KEEP_CFG_DESCRIPTOR      1U
- 
+
 /*----------   -----------*/
 #define USBH_MAX_NUM_SUPPORTED_CLASS      1U
- 
+
 /*----------   -----------*/
 #define USBH_MAX_SIZE_CONFIGURATION      512U
- 
+
 /*----------   -----------*/
 #define USBH_MAX_DATA_BUFFER      512U
- 
+
 /*----------   -----------*/
 #define USBH_DEBUG_LEVEL      0U
- 
+
 /*----------   -----------*/
-#define USBH_USE_OS      0U
- 
- 
- 
+#define USBH_USE_OS      1U
 
 /****************************************/
 /* #define for FS and HS identification */

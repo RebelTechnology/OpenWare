@@ -58,7 +58,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_hal.h"
+#include "stm32h7xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -146,10 +146,6 @@ void Error_Handler(void);
 #define USB_HOST_PWR_EN_GPIO_Port GPIOC
 #define USB_HOST_PWR_FAULT_Pin GPIO_PIN_8
 #define USB_HOST_PWR_FAULT_GPIO_Port GPIOC
-#define SWDIO_Pin GPIO_PIN_13
-#define SWDIO_GPIO_Port GPIOA
-#define SWCLK_Pin GPIO_PIN_14
-#define SWCLK_GPIO_Port GPIOA
 #define TLC_BLANK_Pin GPIO_PIN_15
 #define TLC_BLANK_GPIO_Port GPIOA
 #define ENC_NRST_Pin GPIO_PIN_10
