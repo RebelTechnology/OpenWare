@@ -130,8 +130,8 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >ITCMRAM
-  _estack = ORIGIN(ITCMRAM)+LENGTH(ITCMRAM); /* end of firmware RAM */
+  } >DTCMRAM
+  _estack = ORIGIN(DTCMRAM)+LENGTH(DTCMRAM);
 
   /* CCM section, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".ccmdata"))); */
@@ -140,10 +140,6 @@ SECTIONS
     *(.ccmdata)
     . = ALIGN(8);
     PROVIDE (_CCMRAM = .);
-  /* } >RAM_CCM */
-  /* _CCMRAM_END = ORIGIN(RAM_CCM) + LENGTH(RAM_CCM); */
-  /* } >RAM_D3 */
-  /* _CCMRAM_END = ORIGIN(RAM_D3) + LENGTH(RAM_D3); */
   } >ITCMRAM
   _CCMRAM_END = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM);
   _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
