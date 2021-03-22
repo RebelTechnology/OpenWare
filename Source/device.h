@@ -155,6 +155,8 @@
 #ifndef NO_CCM_RAM
 #define USE_CCM_RAM
 #define CCM_RAM                          __attribute__ ((section (".ccmdata")))
+#else
+#define CCM_RAM
 #endif
 
 #ifndef DMA_RAM
