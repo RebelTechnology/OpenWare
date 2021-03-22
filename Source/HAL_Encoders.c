@@ -1,7 +1,5 @@
-#include "stm32f4xx_hal.h"
 #include "HAL_Encoders.h"
 #include "main.h"
-
 #include <string.h>
 
 SPI_HandleTypeDef* Encoders_SPIConfig;
