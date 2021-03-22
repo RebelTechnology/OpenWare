@@ -99,5 +99,11 @@ void loop(void){
   // SCB_CleanInvalidateDCache_by_Addr((uint32_t*)graphics.params.user, sizeof(graphics.params.user));
 #endif
   updateEncoders();
+
+#ifdef USE_SCREEN
+  graphics.draw();
+  graphics.display();
+#endif /* USE_SCREEN */
+
   owl.loop();
 }

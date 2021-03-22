@@ -127,6 +127,11 @@ void loop(void){
   }
 #endif
 
+#ifdef USE_SCREEN
+  graphics.draw();
+  graphics.display();
+#endif /* USE_SCREEN */
+
   owl.loop();
 
   if(updateMAX11300){
