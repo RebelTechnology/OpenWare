@@ -146,6 +146,17 @@ void USART2_IRQHandler(void)
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
 
+  /* MIDI is TX only, so this is only relevant if digital bus is used. */
+  UART_HandleTypeDef *huart = &huart2;
+  if(__HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE)){
+    /* This part is important */
+    /* Clear IDLE flag by reading status and data registers */
+    __HAL_UART_CLEAR_IDLEFLAG(huart);
+    if(huart->hdmarx != NULL)
+      __HAL_DMA_DISABLE(huart->hdmarx);
+      /* Disabling DMA will force transfer complete interrupt if enabled */
+  }
+
   /* USER CODE END USART2_IRQn 1 */
 }
 
@@ -277,6 +288,11 @@ void BDMA_Channel0_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void EXTI2_IRQHandler(void)
+{      
+//   Encoders_readSwitches();
+  __HAL_GPIO_EXTI_CLEAR_IT(ENC_CHGRDY_Pin);
+}
 
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

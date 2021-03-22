@@ -36,8 +36,6 @@ uint8_t getPortMode(uint8_t index){
   return PORT_UNI_INPUT;
 }
 
-#if 0
-
 void setLed(uint8_t led, uint32_t rgb){
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
 }
@@ -183,12 +181,3 @@ void loop(void){
   }
   // MAX11300_bulkwriteDAC();
 }
-
-#else
-void setup(){
-  owl.setup();
-}
-void loop(){
-  owl.loop();
-}
-#endif
