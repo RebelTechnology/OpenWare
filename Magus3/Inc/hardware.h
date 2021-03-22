@@ -1,5 +1,5 @@
 #include "main.h"
-#include "stm32f4xx_hal.h"
+#include "stm32h7xx_hal.h"
 
 #define OWL_MAGUS
 #define HARDWARE_ID                  MAGUS_HARDWARE
