@@ -89,6 +89,7 @@ FMC.WriteRecoveryTime1=2
 Dma.SAI1_A.0.SyncSignalID=NONE
 SPI5.CalculateBaudRate=7.5 MBits/s
 RCC.APB2CLKDivider=RCC_HCLK_DIV2
+NVIC.EXTI2_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true
 RCC.APB1TimFreq_Value=84000000
 RCC.LPUART1Freq_Value=120000000
 FMC.RowCycleDelay2=6

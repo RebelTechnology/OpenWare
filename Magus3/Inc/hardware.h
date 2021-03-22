@@ -5,7 +5,7 @@
 #define HARDWARE_ID                  MAGUS_HARDWARE
 #define HARDWARE_VERSION             "Magus"
 
-/* #define NO_EXT_RAM */
+#define NO_EXTERNAL_RAM
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 #define USE_PLUS_RAM
@@ -43,9 +43,9 @@
 #define USB_HOST_RX_BUFF_SIZE       256
 
 // Serial MIDI TX only (or digital bus with an extra pin)
-#define USE_UART_MIDI
-#define UART_MIDI_HANDLE huart2
-#define UART_MIDI_RX_BUFFER_SIZE 256
+/* #define USE_UART_MIDI */
+/* #define UART_MIDI_HANDLE huart2 */
+/* #define UART_MIDI_RX_BUFFER_SIZE 256 */
 
 #define TLC5946_SPI hspi6
 #define MAX11300_SPI hspi5
