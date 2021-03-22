@@ -36,6 +36,8 @@ uint8_t getPortMode(uint8_t index){
   return PORT_UNI_INPUT;
 }
 
+#if 0
+
 void setLed(uint8_t led, uint32_t rgb){
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
 }
@@ -63,6 +65,7 @@ void onResourceUpdate(void){
 
 void setup(){
   HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
+  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Reset encoders 
   {
     extern SPI_HandleTypeDef TLC5946_SPI;
@@ -102,7 +105,6 @@ void setup(){
     MAX11300_setDeviceControl(DCR_RESET);
   }
 
-  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
 
@@ -181,3 +183,12 @@ void loop(void){
   }
   // MAX11300_bulkwriteDAC();
 }
+
+#else
+void setup(){
+  owl.setup();
+}
+void loop(){
+  owl.loop();
+}
+#endif

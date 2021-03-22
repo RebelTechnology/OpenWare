@@ -146,6 +146,24 @@ int main(void)
     initialise_monitor_handles(); // remove when not semi-hosting
   printf("showtime\n");
 #endif
+#ifdef USE_ICACHE
+  /* Enable I-Cache-------------------------------------------------------------*/
+  /* After reset, you must invalidate each cache before enabling (SCB_EnableICache) it. */
+  SCB_InvalidateICache();
+  SCB_EnableICache();
+#endif
+#ifdef USE_DCACHE
+  /* Enable D-Cache-------------------------------------------------------------*/
+  /* Before enabling the data cache, you must invalidate the entire data cache (SCB_InvalidateDCache), because external memory might have changed from when the cache was disabled. */
+  SCB_InvalidateDCache();
+  SCB_EnableDCache();
+#endif
+
+  /* Enable D2 domain SRAM Clocks */
+  __HAL_RCC_D2SRAM1_CLK_ENABLE();
+  __HAL_RCC_D2SRAM2_CLK_ENABLE();
+  __HAL_RCC_D2SRAM3_CLK_ENABLE();
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -931,14 +949,18 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
+  /* USER CODE BEGIN 5 */
+  /* init code for USB_DEVICE */
+  /* NOTE: we get frequent boot failures if host is called first */
+  MX_USB_DEVICE_Init();
+  
+#ifdef USE_USB_HOST
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
+#endif
 
-  /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
-  /* USER CODE BEGIN 5 */
   setup();
- 
+
   /* Infinite loop */
   for(;;)
   {
