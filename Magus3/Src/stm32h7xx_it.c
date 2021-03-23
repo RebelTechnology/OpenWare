@@ -62,8 +62,6 @@ extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
 extern DMA_HandleTypeDef hdma_sai1_a;
 extern DMA_HandleTypeDef hdma_sai1_b;
-extern SAI_HandleTypeDef hsai_BlockA1;
-extern SAI_HandleTypeDef hsai_BlockB1;
 extern DMA_HandleTypeDef hdma_spi5_tx;
 extern DMA_HandleTypeDef hdma_spi6_tx;
 extern SPI_HandleTypeDef hspi5;
@@ -106,6 +104,20 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32h7xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles EXTI line2 interrupt.
+  */
+void EXTI2_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI2_IRQn 0 */
+
+  /* USER CODE END EXTI2_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
+  /* USER CODE BEGIN EXTI2_IRQn 1 */
+
+  /* USER CODE END EXTI2_IRQn 1 */
+}
 
 /**
   * @brief This function handles DMA1 stream5 global interrupt.
@@ -245,21 +257,6 @@ void SPI6_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles SAI1 global interrupt.
-  */
-void SAI1_IRQHandler(void)
-{
-  /* USER CODE BEGIN SAI1_IRQn 0 */
-
-  /* USER CODE END SAI1_IRQn 0 */
-  HAL_SAI_IRQHandler(&hsai_BlockA1);
-  HAL_SAI_IRQHandler(&hsai_BlockB1);
-  /* USER CODE BEGIN SAI1_IRQn 1 */
-
-  /* USER CODE END SAI1_IRQn 1 */
-}
-
-/**
   * @brief This function handles USB On The Go FS global interrupt.
   */
 void OTG_FS_IRQHandler(void)
@@ -288,11 +285,6 @@ void BDMA_Channel0_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-void EXTI2_IRQHandler(void)
-{      
-//   Encoders_readSwitches();
-  __HAL_GPIO_EXTI_CLEAR_IT(ENC_CHGRDY_Pin);
-}
 
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

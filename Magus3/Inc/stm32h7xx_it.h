@@ -48,6 +48,7 @@
 
 /* Exported functions prototypes ---------------------------------------------*/
 void SysTick_Handler(void);
+void EXTI2_IRQHandler(void);
 void DMA1_Stream5_IRQHandler(void);
 void DMA1_Stream6_IRQHandler(void);
 void USART2_IRQHandler(void);
@@ -57,7 +58,6 @@ void DMA2_Stream6_IRQHandler(void);
 void OTG_HS_IRQHandler(void);
 void SPI5_IRQHandler(void);
 void SPI6_IRQHandler(void);
-void SAI1_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
 void BDMA_Channel0_IRQHandler(void);
 /* USER CODE BEGIN EFP */

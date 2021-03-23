@@ -138,6 +138,7 @@ void Error_Handler(void);
 #define TLC_GSCLK_GPIO_Port GPIOB
 #define ENC_CHGRDY_Pin GPIO_PIN_2
 #define ENC_CHGRDY_GPIO_Port GPIOB
+#define ENC_CHGRDY_EXTI_IRQn EXTI2_IRQn
 #define CS_CS_Pin GPIO_PIN_10
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
