@@ -248,12 +248,13 @@ void UART5_IRQHandler(void)
 
   /* Check for IDLE flag */
   UART_HandleTypeDef *huart = &huart5;
-  if(huart->Instance->ISR & UART_FLAG_IDLE){
+  if(__HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE)){
     /* This part is important */
     /* Clear IDLE flag by reading status and data registers */
     __HAL_UART_CLEAR_IDLEFLAG(huart);
     if(huart->hdmarx != NULL)
-      __HAL_DMA_DISABLE(huart->hdmarx);        /* Disabling DMA will force transfer complete interrupt if enabled */
+      __HAL_DMA_DISABLE(huart->hdmarx);
+      /* Disabling DMA will force transfer complete interrupt if enabled */
   }
 
   /* USER CODE END UART5_IRQn 1 */
