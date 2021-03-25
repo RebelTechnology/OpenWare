@@ -10,7 +10,11 @@ SPI_HandleTypeDef* Encoders_SPIConfig;
 
 static int16_t rgENC_Values[7] = {0};
 
-static uint16_t NOP_CNT = 250; // doesn't work in Release build
+#ifdef STM32H743xx
+static uint16_t NOP_CNT = 250*4;
+#else
+static uint16_t NOP_CNT = 250; // 150 doesn't work in Release build
+#endif
 
 //_____ Functions _____________________________________________________________________________________________________
 // Port and Chip Setup
@@ -45,6 +49,6 @@ int16_t* Encoders_get()
 void Encoders_init (SPI_HandleTypeDef *spiconfig)
 {
 	Encoders_SPIConfig = spiconfig;
-	/* pbarRST(1); */
+	pbarRST(1);
 }
 
