@@ -37,7 +37,9 @@ uint8_t getPortMode(uint8_t index){
 }
 
 void setLed(uint8_t led, uint32_t rgb){
+#ifdef USE_TLC5946
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+#endif
 }
 
 void onResourceUpdate(void){
@@ -63,8 +65,9 @@ void onResourceUpdate(void){
 
 void setup(){
   HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
-  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
-  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Disable encoders 
+  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Reset encoders 
+
+#ifdef USE_TLC5946
   {
     extern SPI_HandleTypeDef TLC5946_SPI;
 
@@ -90,6 +93,7 @@ void setup(){
     HAL_TIM_Base_Start(&htim3);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
   }
+#endif
   {
     // Encoders
     extern SPI_HandleTypeDef ENCODERS_SPI;
@@ -103,15 +107,16 @@ void setup(){
     MAX11300_setDeviceControl(DCR_RESET);
   }
 
+  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
-
-  owl.setup();
 
 #ifdef USE_USB_HOST
   // enable USB Host power
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 #endif
+
+  owl.setup();
 }
 
 void loop(void){
@@ -151,7 +156,9 @@ void loop(void){
     }
     updateMAX11300 = false;
   }
+#ifdef USE_TLC5946
   TLC5946_Refresh_GS();
+#endif
   Encoders_readAll();
   graphics.params.updateEncoders(Encoders_get(), 7);
   MAX11300_bulkreadADC();
