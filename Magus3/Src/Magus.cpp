@@ -64,7 +64,7 @@ void onResourceUpdate(void){
 void setup(){
   HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
-  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Reset encoders 
+  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Disable encoders 
   {
     extern SPI_HandleTypeDef TLC5946_SPI;
 
@@ -106,12 +106,12 @@ void setup(){
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
 
+  owl.setup();
+
 #ifdef USE_USB_HOST
   // enable USB Host power
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 #endif
-
-  owl.setup();
 }
 
 void loop(void){
