@@ -38,7 +38,9 @@ uint8_t getPortMode(uint8_t index){
 }
 
 void setLed(uint8_t led, uint32_t rgb){
+#ifdef USE_TLC5946
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+#endif
 }
 
 void onResourceUpdate(void){
@@ -67,6 +69,8 @@ void setup(){
   Pin enc_nrst(ENC_NRST_GPIO_Port, ENC_NRST_Pin);
   enc_nrst.outputMode();
   enc_nrst.low();
+
+#ifdef USE_TLC5946
   {
     extern SPI_HandleTypeDef TLC5946_SPI;
 
@@ -91,6 +95,7 @@ void setup(){
     HAL_TIM_Base_Start(&htim3);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
   }
+#endif
   {
     // Encoders
     extern SPI_HandleTypeDef ENCODERS_SPI;
@@ -162,7 +167,9 @@ void loop(void){
     }
     updateMAX11300 = false;
   }
+#ifdef USE_TLC5946
   TLC5946_Refresh_GS();
+#endif
   Encoders_readAll();
   graphics.params.updateEncoders(Encoders_get(), 7);
   MAX11300_bulkreadADC();
