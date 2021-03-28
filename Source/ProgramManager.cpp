@@ -430,6 +430,7 @@ void eraseFlashTask(void* p){
   }else{
     registry.setDeleted(slot);
   }
+  taskEXIT_CRITICAL();
   storage.init();
   registry.init();
   settings.init();

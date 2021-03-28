@@ -18,9 +18,6 @@
 #include "message.h"
 #include "FlashStorage.h"
 #include "PatchRegistry.h"
-#ifdef USE_SCREEN
-#include "Graphics.h"
-#endif
 
 #ifdef OWL_BIOSIGNALS
 #include "ads.h"
@@ -216,10 +213,6 @@ void Owl::loop(){
 #ifdef USE_DIGITALBUS
   busstatus = bus_status();
 #endif
-#ifdef USE_SCREEN
-  graphics.draw();
-  graphics.display();
-#endif /* USE_SCREEN */
 #ifdef OLED_DMA
   // When using OLED_DMA this must delay for a minimum amount to allow screen to update
   vTaskDelay(xFrequency);
