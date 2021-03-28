@@ -11,6 +11,7 @@
 
 #if defined USE_MAX || defined USE_MAX_DMA
 #include "HAL_MAX11300.h"
+extern SPI_HandleTypeDef MAX11300_SPI;
 #endif
 
 /**
@@ -20,6 +21,7 @@
 
 extern "C" {
 #ifdef USE_TLC
+  extern SPI_HandleTypeDef TLC5946_SPI;
 #endif
   void setup(void);
   void run(void);
@@ -60,6 +62,9 @@ void setADC(uint8_t ch, int16_t value);
 uint8_t getChannelIndex(uint8_t ch);
 
 void setup(){
+  MAX11300_init(&MAX11300_SPI);
+  TLC5946_init(&TLC5946_SPI);
+
   // setPin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin); // bring BLANK high to turn LEDs off
 
   for(int ch=0; ch<MAX11300_CHANNELS; ++ch){

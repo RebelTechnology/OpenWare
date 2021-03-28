@@ -110,8 +110,6 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 	  
-  MAX11300_init(&hspi1);
-  TLC5946_init(&hspi2);
   setup();
 
   /* USER CODE END 2 */
