@@ -18,6 +18,8 @@
 
 #define MAX11300_SPI hspi2
 
+#define ENCODER_TIM1 htim2
+
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16

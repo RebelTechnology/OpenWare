@@ -40,20 +40,20 @@ void setup(){
   owl.setup();
 }
 
+template<uint8_t SIZE>
+void ParameterController<SIZE>::updateValue(uint8_t pid, int16_t value){
+  // todo
+}
+
 
 // int16_t* Encoders_get(){
 void updateEncoders(){
-  static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
+  static int16_t encoder_values[1] = {INT16_MAX/2};
   int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
   int16_t delta = value - encoder_values[0];
   if(delta)
     graphics.params.encoderChanged(0, delta);
   encoder_values[0] = value;
-  value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
-  delta = value - encoder_values[1];
-  if(delta)
-    graphics.params.encoderChanged(1, delta);
-  encoder_values[1] = value;
 }
 
 
@@ -75,22 +75,17 @@ void loop(void){
     }
     updateMAX11300 = false;
   }
-  TLC5946_Refresh_GS();
   
   MAX11300_bulkreadADC();
   for(int i=0; i<16; ++i){
     if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
-      uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, dyn_rainbowinputs[val&0x3ff]);
     }else{
       // DACs
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
       // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
       graphics.params.updateValue(i, 0);
-      uint16_t val = graphics.params.parameters[i]>>2;
-      setLed(i, dyn_rainbowoutputs[val&0x3ff]);
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
   }

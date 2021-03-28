@@ -58,10 +58,25 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define ENC_SW_Pin GPIO_PIN_13
+#define ENC_SW_GPIO_Port GPIOC
 #define MAX_CS_Pin GPIO_PIN_0
 #define MAX_CS_GPIO_Port GPIOC
+#define OLED_CS_Pin GPIO_PIN_6
+#define OLED_CS_GPIO_Port GPIOA
+#define OLED_DC_Pin GPIO_PIN_0
+#define OLED_DC_GPIO_Port GPIOB
+#define OLED_RST_Pin GPIO_PIN_9
+#define OLED_RST_GPIO_Port GPIOC
+#define USBH_PWR_FAULT_Pin GPIO_PIN_9
+#define USBH_PWR_FAULT_GPIO_Port GPIOA
+#define USBH_PWR_EN_Pin GPIO_PIN_10
+#define USBH_PWR_EN_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
+#define PIXI_nCS_GPIO_Port MAX_CS_GPIO_Port
+#define PIXI_nCS_Pin MAX_CS_Pin
+  
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
