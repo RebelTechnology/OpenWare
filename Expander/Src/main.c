@@ -425,7 +425,7 @@ static void MX_GPIO_Init(void)
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-//  if(hspi == &hspi2){TLC5946_TxINTCallback();}
+  if(hspi == &hspi2){TLC5946_TxINTCallback();}
 	if(hspi == &hspi1){MAX11300_TxINTCallback();}
 }
 
@@ -436,7 +436,7 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
-//  if(hspi == &hspi2){TLC5946_TxINTCallback();}
+  if(hspi == &hspi2){TLC5946_TxINTCallback();}
   if(hspi == &hspi1){MAX11300_TxRxINTCallback();}
 }
 
