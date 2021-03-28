@@ -13,9 +13,10 @@
 #define TLC_CONTINUOUS
 // #define MAX_CONTINUOUS
 
+#define MAX11300_SPI hspi1
+#define TLC5946_SPI hspi2
+
 /**
- * MAX11300 on SPI1
- * TLC5946 on SPI2
  * Digital Bus on USART1
  */
 /* #define USART_BAUDRATE               115200 */
