@@ -1,12 +1,11 @@
 #include <stdlib.h>
-#include "stm32f1xx_hal.h"
+#include "device.h"
 #include "HAL_TLC5946.h"
 #include "bus.h"
 #include "gpio.h"
 #include "clock.h"
 #include "message.h"
 #include "OpenWareMidiControl.h"
-#include "device.h"
 #include "basicmaths.h"
 #include "SmoothValue.h"
 
@@ -21,8 +20,6 @@ Pixi pixi;
  * MAX channel index goes from 0 at top left, to 8 at bottom right, to 15 at top right.
  * LED channel index is the inverse of MAX channel index.
  */
-
-#define USE_TLC
 
 extern "C" {
 #ifdef USE_TLC

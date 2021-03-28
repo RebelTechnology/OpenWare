@@ -10,7 +10,8 @@
 // #define USE_PIXI
 // #define USE_MAX
 #define USE_MAX_DMA
-//#define TLC_CONTINUOUS
+#define USE_TLC
+#define TLC_CONTINUOUS
 // #define MAX_CONTINUOUS
 
 /**
