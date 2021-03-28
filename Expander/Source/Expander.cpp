@@ -10,12 +10,6 @@
 #include "basicmaths.h"
 #include "SmoothValue.h"
 
-// #define USE_PIXI
-// #define USE_MAX
-#define USE_MAX_DMA
-#define TLC_CONTINUOUS
-// #define MAX_CONTINUOUS
-
 #ifdef USE_PIXI
 #include "Pixi.h"
 Pixi pixi;
@@ -52,7 +46,7 @@ enum ChannelMode {
   CHANNEL_MODES
 };
 
-#define TLC5940_CHANNELS 20
+#define TLC5940_CHANNELS 16
 #define MAX11300_CHANNELS 20
 
 uint8_t cc_values[MAX11300_CHANNELS] = {0};
@@ -173,9 +167,9 @@ void setDAC(uint8_t ch, int16_t value){
     if(cfg[ch] < DAC_MODE){
       // auto configure to output
       if(value < 0){
-	configureChannel(ch, DAC_5TO5);
+        configureChannel(ch, DAC_5TO5);
       }else{
-	configureChannel(ch, DAC_0TO10);
+        configureChannel(ch, DAC_0TO10);
       }
     }
     if(cfg[ch] == DAC_5TO5)
@@ -233,8 +227,8 @@ void loop(){
       setADC(ch, getPortValue(ch));
       uint8_t cc = adc[ch] >> 5;
       if(abs(cc - cc_values[ch]) > HYSTERESIS_DELTA){
-	bus_tx_parameter(getChannelIndex(PARAMETER_AA+ch), adc[ch]);
-	cc_values[ch] = cc;
+        bus_tx_parameter(getChannelIndex(PARAMETER_AA+ch), adc[ch]);
+        cc_values[ch] = cc;
       }
     }
   }
