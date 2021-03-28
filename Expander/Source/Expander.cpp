@@ -9,10 +9,7 @@
 #include "basicmaths.h"
 #include "SmoothValue.h"
 
-#ifdef USE_PIXI
-#include "Pixi.h"
-Pixi pixi;
-#elif defined USE_MAX || defined USE_MAX_DMA
+#if defined USE_MAX || defined USE_MAX_DMA
 #include "HAL_MAX11300.h"
 #endif
 
@@ -100,9 +97,7 @@ void setup(){
     HAL_Delay(delayms);
   }
 
-#ifdef USE_PIXI
-  pixi.begin();
-#elif defined USE_MAX || defined  USE_MAX_DMA
+#if defined USE_MAX || defined  USE_MAX_DMA
   MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep/*|DCR_BRST_Contextual*/);
 #endif
 #if defined USE_MAX_DMA && defined MAX_CONTINUOUS
@@ -112,20 +107,7 @@ void setup(){
 
 void configureChannel(uint8_t ch, ChannelMode mode){
   switch(mode){
-#ifdef USE_PIXI
-  case ADC_5TO5:
-    pixi.configChannel(CHANNEL_0+ch, CH_MODE_ADC_P, 0, CH_5N_TO_5P, ADC_MODE_CONT);
-    break;
-  case ADC_0TO10:
-    pixi.configChannel(CHANNEL_0+ch, CH_MODE_ADC_P, 0, CH_0_TO_10P, ADC_MODE_CONT);
-    break;
-  case DAC_5TO5:
-    pixi.configChannel(CHANNEL_0+ch, CH_MODE_DAC, 0, CH_5N_TO_5P, 0);
-    break;
-  case DAC_0TO10:
-    pixi.configChannel(CHANNEL_0+ch, CH_MODE_DAC, 0, CH_0_TO_10P, 0);
-    break;
-#elif defined USE_MAX || defined USE_MAX_DMA
+#if defined USE_MAX || defined USE_MAX_DMA
   case ADC_5TO5:
     MAX11300_setPortMode(PORT_1+ch, PCR_Range_ADC_M5_P5|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT);
     break;
@@ -195,9 +177,7 @@ uint8_t getChannelIndex(uint8_t ch){
 }
 
 uint16_t getPortValue(uint8_t ch){
-#ifdef USE_PIXI
-  return pixi.readAnalog(ch);
-#elif defined USE_MAX
+#if defined USE_MAX
   return MAX11300_readADC(ch);
 #elif defined USE_MAX_DMA
   return MAX11300_getADCValue(ch);
@@ -205,9 +185,7 @@ uint16_t getPortValue(uint8_t ch){
 }
 
 void setPortValue(uint8_t ch, uint16_t value){
-#ifdef USE_PIXI
-  pixi.writeAnalog(ch, value);
-#elif defined USE_MAX
+#if defined USE_MAX
   MAX11300_setDAC(ch, value);
 #elif defined USE_MAX_DMA
   MAX11300_setDACValue(ch, value);

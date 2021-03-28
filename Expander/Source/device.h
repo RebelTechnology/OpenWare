@@ -7,7 +7,6 @@
 
 #define MIDI_MAX_MESSAGE_SIZE        256
 
-// #define USE_PIXI
 // #define USE_MAX
 #define USE_MAX_DMA
 #define USE_TLC
