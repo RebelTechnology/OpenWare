@@ -206,10 +206,11 @@ void USART1_IRQHandler(void)
   { 
      serial_rx_callback((uint8_t)(huart->Instance->DR & (uint8_t)0x00FF));
   }
+#if 0
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
-
+#endif
   /* USER CODE END USART1_IRQn 1 */
 }
 
