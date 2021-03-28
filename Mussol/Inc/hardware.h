@@ -8,6 +8,17 @@
 #define NO_EXTERNAL_RAM
 #define NO_CCM_RAM
 
+#define USE_SCREEN
+#define SSD1309
+#define OLED_SOFT_CS
+#define OLED_SPI hspi1
+/* #define OLED_DMA */
+/* #define OLED_IT */
+/* #define OLED_BITBANG */
+
+#define MAX11300_SPI hspi2
+
+
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
