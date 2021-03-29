@@ -90,7 +90,9 @@
 #define MAX_NUMBER_OF_RESOURCES      12
 #endif
 
+#ifndef CODEC_BLOCKSIZE
 #define CODEC_BLOCKSIZE              64
+#endif
 #define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */
@@ -152,11 +154,11 @@
 #define USE_EXTERNAL_RAM
 #endif
 
-#ifndef NO_CCM_RAM
+#ifdef NO_CCM_RAM
+#define CCM_RAM
+#else
 #define USE_CCM_RAM
 #define CCM_RAM                          __attribute__ ((section (".ccmdata")))
-#else
-#define CCM_RAM
 #endif
 
 #ifndef DMA_RAM
