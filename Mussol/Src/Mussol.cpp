@@ -5,8 +5,15 @@
 
 #include "HAL_MAX11300.h"
 
+#ifdef USE_SCREEN
 #include "Graphics.h"
 Graphics graphics;
+
+template<uint8_t SIZE>
+void ParameterController<SIZE>::updateValue(uint8_t pid, int16_t value){
+  // todo
+}
+#endif /* USE_SCREEN */
 
 extern TIM_HandleTypeDef ENCODER_TIM1;
 
@@ -40,19 +47,16 @@ void setup(){
   owl.setup();
 }
 
-template<uint8_t SIZE>
-void ParameterController<SIZE>::updateValue(uint8_t pid, int16_t value){
-  // todo
-}
-
 
 // int16_t* Encoders_get(){
 void updateEncoders(){
   static int16_t encoder_values[1] = {INT16_MAX/2};
   int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
   int16_t delta = value - encoder_values[0];
+#ifdef USE_SCREEN
   if(delta)
     graphics.params.encoderChanged(0, delta);
+#endif
   encoder_values[0] = value;
 }
 
@@ -77,6 +81,7 @@ void loop(void){
   }
   
   MAX11300_bulkreadADC();
+#ifdef USE_SCREEN
   for(int i=0; i<16; ++i){
     if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
@@ -99,7 +104,6 @@ void loop(void){
   }
   updateEncoders();
 
-#ifdef USE_SCREEN
   graphics.draw();
   graphics.display();
 #endif /* USE_SCREEN */

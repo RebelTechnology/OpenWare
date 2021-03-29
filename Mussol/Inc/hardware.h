@@ -8,7 +8,7 @@
 #define NO_EXTERNAL_RAM
 #define NO_CCM_RAM
 
-#define USE_SCREEN
+/* #define USE_SCREEN */
 #define SSD1309
 #define OLED_SOFT_CS
 #define OLED_SPI hspi1
