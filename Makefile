@@ -59,6 +59,12 @@ noctua: ## build Noctua project
 biosignals: ## build BioSignals project
 	@$(MAKE) -C BioSignals all
 
+midio: ## build Midio project
+	@$(MAKE) -C Midio all
+
+expander: ## build Expander project
+	@$(MAKE) -C Expander all
+
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
 	@$(MAKE) -C Witch clean
@@ -75,6 +81,8 @@ clean: ## remove generated files
 	@$(MAKE) -C Noctua clean
 	@$(MAKE) -C BioSignals clean
 	@$(MAKE) -C MidiBoot clean
+	@$(MAKE) -C Midio clean
+	@$(MAKE) -C Expander clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile
