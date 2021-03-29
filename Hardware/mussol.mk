@@ -23,7 +23,7 @@ endif
 
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
-LDSCRIPT ?= $(OPENWARE)/Hardware/STM32F446RE.ld
+LDSCRIPT ?= $(OPENWARE)/Hardware/mussol.ld
 LDLIBS += -lc -lm
 # CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
