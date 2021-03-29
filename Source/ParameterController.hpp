@@ -105,6 +105,9 @@ public:
     parameters[ch] = value;
   }
 
+  // @param value is the modulation ADC value
+  void updateValue(uint8_t pid, int16_t value);
+
   void drawMessage(int16_t y, ScreenBuffer& screen){
     ProgramVector* pv = getProgramVector();
     if(pv->message != NULL){
