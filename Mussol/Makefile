@@ -8,11 +8,11 @@ C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
 C_SRC += $(OPENWARE)/Source/usbh_midi.c
-C_SRC += $(OPENWARE)/Source/ssd1309.c
 C_SRC += $(OPENWARE)/Source/HAL_MAX11300.c
-CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
-CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
-CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
+# C_SRC += $(OPENWARE)/Source/ssd1309.c
+# CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
+# CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
+# CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
