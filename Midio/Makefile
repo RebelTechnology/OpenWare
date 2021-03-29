@@ -1,4 +1,4 @@
-PROJECT = Mussol
+PROJECT = Midio
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
