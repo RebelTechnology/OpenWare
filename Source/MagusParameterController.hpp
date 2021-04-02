@@ -564,7 +564,7 @@ public:
     case STATUS:
       drawTitle(controlModeNames[controlMode], screen);    
       drawStatus(screen);
-      drawMessage(46, screen);
+      drawMessage(51, screen);
       break;
     case PRESET:
       drawTitle(controlModeNames[controlMode], screen);    
