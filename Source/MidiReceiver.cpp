@@ -11,9 +11,9 @@
 #include "usbh_midi.h"
 #endif /* USE_USB_HOST */
 
-#ifdef USE_USBD_MIDI
-static MidiReader mididevice;
-#endif
+static SystemMidiReader midiSystemDevice;
+static PerformanceMidiReader midiPerformanceDevice;
+
 #ifdef USE_UART_MIDI
 static MidiStreamReader midiuart(4); // use cable number 4 for serial midi
 #endif /* USE_UART_MIDI */
@@ -26,13 +26,19 @@ void MidiReceiver::init(){
 #endif /* USE_UART_MIDI */
 }
 
+static void handleMessage(MidiMessage msg){
+  midiPerformanceDevice.read(msg);
+  midi_rx_buffer.push(msg);
+}
+
 void MidiReceiver::setCallback(void *callback){
   midiCallback = (void (*)(uint8_t, uint8_t, uint8_t, uint8_t))callback;
 }
 
 void MidiReceiver::setInputChannel(int8_t channel){
   settings.midi_input_channel = channel;
-  mididevice.setInputChannel(channel);
+  midiSystemDevice.setInputChannel(channel);
+  midiPerformanceDevice.setInputChannel(channel);
 #ifdef USE_DIGITALBUS
   bus_set_input_channel(channel);
 #endif
@@ -57,13 +63,13 @@ extern "C" {
   // incoming data from USB device interface
   void usbd_midi_rx(uint8_t *buffer, uint32_t length){
     for(size_t i=0; i<length; i+=4){
-      if(mididevice.readMidiFrame(buffer+i)){
+      if(midiSystemDevice.readMidiFrame(buffer+i)){
 #ifdef USE_DIGITALBUS
 	bus_tx_frame(buffer+i);
 #endif /* USE_DIGITALBUS */
 	midi_rx_buffer.push(MidiMessage(buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]));
       }else{
-	mididevice.reset();
+	midiSystemDevice.reset();
       }
     }
   }
@@ -72,7 +78,7 @@ extern "C" {
 #ifdef USE_USB_HOST
   void usbh_midi_rx(uint8_t *buffer, uint32_t len){
     for(size_t i=0; i<len; i+=4)
-      midi_rx_buffer.push(MidiMessage(buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]));
+      handleMessage(MidiMessage(buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]));
   }
 #endif /* USE_USB_HOST */
 
@@ -82,7 +88,7 @@ extern "C" {
     for(size_t i=0; i<len; ++i){
       MidiMessage msg = midiuart.read(data[i]);
       if(msg.packed != 0)
-	midi_rx_buffer.push(msg);
+	handleMessage(msg);
     }
   }
 #endif /* USE_UART_MIDI */
