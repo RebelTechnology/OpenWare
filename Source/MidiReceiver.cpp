@@ -4,9 +4,9 @@
 #include "ApplicationSettings.h"
 #include "SerialBuffer.hpp"
 #include "errorhandlers.h"
-#ifdef USE_UART_MIDI
+#ifdef USE_UART_MIDI_RX
 #include "uart.h"
-#endif /* USE_UART_MIDI */
+#endif /* USE_UART_MIDI_RX */
 #ifdef USE_USB_HOST
 #include "usbh_midi.h"
 #endif /* USE_USB_HOST */
@@ -14,16 +14,16 @@
 static SystemMidiReader midiSystemDevice;
 static PerformanceMidiReader midiPerformanceDevice;
 
-#ifdef USE_UART_MIDI
+#ifdef USE_UART_MIDI_RX
 static MidiStreamReader midiuart(4); // use cable number 4 for serial midi
-#endif /* USE_UART_MIDI */
+#endif /* USE_UART_MIDI_RX */
 
 static SerialBuffer<MIDI_INPUT_BUFFER_SIZE, MidiMessage> midi_rx_buffer;
 
 void MidiReceiver::init(){
-#ifdef USE_UART_MIDI
+#ifdef USE_UART_MIDI_RX
   uart_init();
-#endif /* USE_UART_MIDI */
+#endif /* USE_UART_MIDI_RX */
 }
 
 static void handleMessage(MidiMessage msg){
@@ -83,7 +83,7 @@ extern "C" {
 #endif /* USE_USB_HOST */
 
   
-#ifdef USE_UART_MIDI
+#ifdef USE_UART_MIDI_RX
   void uart_rx_callback(uint8_t* data, size_t len){
     for(size_t i=0; i<len; ++i){
       MidiMessage msg = midiuart.read(data[i]);
@@ -91,5 +91,5 @@ extern "C" {
 	handleMessage(msg);
     }
   }
-#endif /* USE_UART_MIDI */
+#endif /* USE_UART_MIDI_RX */
 }
