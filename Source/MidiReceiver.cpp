@@ -26,18 +26,6 @@ void MidiReceiver::init(){
 #endif /* USE_UART_MIDI */
 }
 
-void MidiReceiver::handleMidiMessage(MidiMessage msg){
-  // process MIDI from usbd
-}
-
-void MidiReceiver::forwardMidiMessage(MidiMessage msg){
-  // send MIDI from all destinations to program callback
-#ifdef USE_MIDI_CALLBACK
-  if(midiCallback != NULL && (msg.data[0]&0x0f) >= USB_COMMAND_NOTE_OFF)
-    midiCallback(msg.data[0], msg.data[1], msg.data[2], msg.data[3]);
-#endif
-}
-
 void MidiReceiver::setCallback(void *callback){
   midiCallback = (void (*)(uint8_t, uint8_t, uint8_t, uint8_t))callback;
 }
@@ -54,8 +42,14 @@ void MidiReceiver::receive(){
 #ifdef USE_USB_HOST
   usbh_midi_push();
 #endif
-  while(midi_rx_buffer.notEmpty())
-    forwardMidiMessage(midi_rx_buffer.pull());
+  while(midi_rx_buffer.notEmpty()){
+      // send MIDI from all destinations to program callback
+    MidiMessage msg = midi_rx_buffer.pull();
+#ifdef USE_MIDI_CALLBACK
+  if(midiCallback != NULL && (msg.data[0]&0x0f) >= USB_COMMAND_NOTE_OFF)
+    midiCallback(msg.data[0], msg.data[1], msg.data[2], msg.data[3]);
+#endif
+  }
 }
 
 extern "C" {
