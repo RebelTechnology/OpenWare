@@ -10,10 +10,10 @@ MEMORY
 {
 RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K    /* total RAM is 128kb */
-BOOTLOADER (rx) : ORIGIN = 0x08000000, LENGTH = 64K    /* Sector 0 to 3 */
-/* FLASH (rx)      : ORIGIN = 0x08010000, LENGTH = 320K */
-FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 384K
-STORAGE (rw)    : ORIGIN = 0x08060000, LENGTH = 128K
+BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 64K
+FLASH (rx)       : ORIGIN = 0x08010000, LENGTH = 320K
+/* FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 384K */
+STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 128K
 }
 
 /* Define output sections */
