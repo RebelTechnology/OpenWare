@@ -10,7 +10,7 @@ bool midi_error(const char* str){
 bool PerformanceMidiReader::readMidiFrame(uint8_t* frame){
   // handle Note and CC messages only
   // ignore first byte
-  switch(frame[1] & 0x0f){ // accept any channel
+  switch(frame[1] & 0xf0){ // accept any channel
   case NOTE_OFF:
     handleNoteOff(frame[1], frame[2], frame[3]);
     break;
