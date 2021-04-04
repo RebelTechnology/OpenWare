@@ -17,6 +17,7 @@
 #define LICH_HARDWARE               0x1e
 #define WITCH_HARDWARE              0x1f
 #define GENIUS_HARDWARE             0x20
+#define MIDIO_HARDWARE              0x21
 #define OTHER_HARDWARE              0xf0
 
 #endif /* __HARDWARE_IDS_H */

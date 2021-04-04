@@ -1,9 +1,9 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
-#define OWL_NOCTUA
-#define HARDWARE_ID                  NOCTUA_HARDWARE
-#define HARDWARE_VERSION             "Mussol"
+#define OWL_MIDIO
+#define HARDWARE_ID                  MIDIO_HARDWARE
+#define HARDWARE_VERSION             "Midio"
 
 #define NO_EXTERNAL_RAM
 #define NO_CCM_RAM
