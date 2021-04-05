@@ -81,6 +81,11 @@
 #define MAX_FACTORY_PATCHES          36
 #define MAX_USER_PATCHES             4
 
+#ifndef DEBUG
+#define USE_FFT_TABLES
+#endif
+#define USE_FAST_POW
+
 #ifndef MAX_NUMBER_OF_PATCHES
 #define MAX_NUMBER_OF_PATCHES        40
 #endif
