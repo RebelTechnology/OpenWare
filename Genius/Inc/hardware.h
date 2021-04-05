@@ -60,7 +60,7 @@
 #define UART_MIDI_RX_BUFFER_SIZE 256
 // Digital bus
 #define USE_DIGITALBUS
-#define BUS_HUART huart5
+#define BUS_HUART huart2
 
 #define USE_ADC
 #define ADC_PERIPH hadc1

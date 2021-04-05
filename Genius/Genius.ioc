@@ -297,6 +297,7 @@ NVIC.SysTick_IRQn=true\:15\:0\:false\:false\:true\:true\:true\:true
 NVIC.TIM2_IRQn=true\:10\:0\:true\:false\:true\:false\:true\:true
 NVIC.TIM3_IRQn=true\:10\:0\:true\:false\:true\:false\:true\:true
 NVIC.UART5_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true
+NVIC.USART2_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true
 NVIC.UsageFault_IRQn=true\:0\:0\:false\:false\:false\:false\:true\:false
 PA0.GPIOParameters=GPIO_Label
 PA0.GPIO_Label=ADC0
