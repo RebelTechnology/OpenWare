@@ -90,13 +90,15 @@ extern "C" {
   }
 #endif /* USE_USB_HOST */
 
-  
 #ifdef USE_UART_MIDI_RX
   void uart_rx_callback(uint8_t* data, size_t len){
     for(size_t i=0; i<len; ++i){
       MidiMessage msg = midiuart.read(data[i]);
       if(msg.packed != 0)
         handleMessage(msg);
+#ifdef USE_DIGITALBUS
+      bus_tx_frame(msg.data);
+#endif /* USE_DIGITALBUS */
     }
   }
 #endif /* USE_UART_MIDI_RX */

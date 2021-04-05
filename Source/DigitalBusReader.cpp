@@ -93,7 +93,6 @@ bool DigitalBusReader::readBusFrame(uint8_t *frame) {
       break;
     default:
       return rxError("Invalid bus message");
-      break;
     }
   }
   return true;

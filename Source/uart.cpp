@@ -65,7 +65,7 @@ extern "C" {
   }
 #endif
   
-#if defined USE_UART_MIDI_TX || defined USE_UART_RX
+#if defined USE_UART_MIDI_TX || defined USE_UART_MIDI_RX || defined USE_DIGITALBUS
   void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
     error(RUNTIME_ERROR, "uart error");    
 #ifdef USE_UART_MIDI_RX
