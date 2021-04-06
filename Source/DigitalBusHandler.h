@@ -29,6 +29,7 @@ public:
   DigitalBusStatus getStatus(){
     return status;
   }
+  const char* getStatusString();
   uint32_t generateToken();
   uint8_t getPeers(){ return peers; }
   void startDiscover();

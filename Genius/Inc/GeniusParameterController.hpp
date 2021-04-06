@@ -9,6 +9,10 @@
 #include "VersionToken.h"
 #include "ScreenBuffer.h"
 #include "Owl.h"
+#ifdef USE_DIGITALBUS
+#include "DigitalBusReader.h"
+extern DigitalBusReader bus;
+#endif
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -100,8 +104,8 @@ public:
     screen.setTextSize(1);
     ProgramVector* pv = getProgramVector();
     if(pv->message != NULL)
-      screen.print(2, 36, pv->message);
-    screen.print(2, 46, "cpu/mem: ");
+      screen.print(2, 16, pv->message);
+    screen.print(2, 26, "cpu/mem: ");
     float percent = (pv->cycles_per_block/pv->audio_blocksize) / (float)ARM_CYCLES_PER_SAMPLE;
     screen.print((int)(percent*100));
     screen.print("% ");
@@ -109,11 +113,20 @@ public:
     screen.print("kB");
 
     // draw firmware version
-    screen.print(1, 56, getFirmwareVersion());
+    screen.print(1, 36, getFirmwareVersion());
     if (bootloader_token->magic == BOOTLOADER_MAGIC){
       screen.print(" bt.");
       screen.print(getBootloaderVersion());
     }
+#ifdef USE_DIGITALBUS
+    screen.print(1, 56, "Bus: ");
+    screen.print(bus.getStatusString());
+    if (bus.getStatus() == BUS_STATUS_CONNECTED) {
+      screen.print(", ");
+      screen.print(bus.getPeers());
+      screen.print(" peers");
+    }
+#endif
   }
 
   void encoderChanged(uint8_t encoder, int32_t delta){
