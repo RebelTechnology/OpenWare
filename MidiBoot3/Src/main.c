@@ -87,7 +87,7 @@ int testButton(){
 }
 
 static int testNoProgram(){  
-  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x00000000;
+  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x20000000;
   /* Check Vector Table: Test if valid stack pointer to ITCMRAM is programmed at APPLICATION_ADDRESS */
 }
 
