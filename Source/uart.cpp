@@ -7,14 +7,14 @@
 #if defined USE_UART_MIDI_TX || defined USE_UART_RX
 #include "uart_midi.h"
 extern UART_HandleTypeDef UART_MIDI_HANDLE;
-extern SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> uart_rx_buf DMA_RAM;
+extern SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> uart_rx_buf;
 #endif
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #include "DigitalBusReader.h"
 extern UART_HandleTypeDef BUS_HUART;
-extern SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf DMA_RAM;
-extern SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf DMA_RAM;
+extern SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
+extern SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
 extern DigitalBusReader bus;
 extern uint32_t bus_tx_packets;
 extern uint32_t bus_rx_packets;
