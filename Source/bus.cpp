@@ -57,8 +57,7 @@ void bus_write(uint8_t* data, uint16_t size){
 }
 
 uint8_t* bus_deviceid(){
-  // return ((uint8_t*)0x1ffff7e8); /* STM32F1 */
-  return ((uint8_t *)0x1FFF7A10); /* STM32F4, STM32F0 */ 
+  return ((uint8_t *)UID_BASE_ADDRESS);
 }
 
 void bus_setup(){
