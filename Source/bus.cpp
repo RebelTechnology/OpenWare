@@ -57,7 +57,7 @@ void bus_write(uint8_t* data, uint16_t size){
 }
 
 uint8_t* bus_deviceid(){
-  return ((uint8_t *)UID_BASE_ADDRESS);
+  return ((uint8_t *)UID_BASE);
 }
 
 void bus_setup(){
