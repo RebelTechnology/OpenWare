@@ -24,6 +24,8 @@
 
 #define USE_DIGITALBUS
 #define BUS_HUART huart2
+#define DIGITAL_BUS_ENABLED 1
+#define DIGITAL_BUS_FORWARD_MIDI 0
 
 #define USE_BKPSRAM
 
