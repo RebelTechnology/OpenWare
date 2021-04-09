@@ -105,9 +105,6 @@ enum ChannelMode {
   CHANNEL_MODES
 };
 
-#define TLC5940_CHANNELS 16
-#define MAX11300_CHANNELS 20
-
 uint8_t cc_values[MAX11300_CHANNELS] = {0};
 ChannelMode cfg[MAX11300_CHANNELS];
 SmoothFloat dac[MAX11300_CHANNELS];
