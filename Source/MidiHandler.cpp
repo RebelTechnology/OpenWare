@@ -334,15 +334,15 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
       else
 	slot = registry.getSlot(res);
       data = loader.getData();
-      size = loader.getSize();
-      memmove(data+sizeof(ResourceHeader), data, size); // make space for resource header
+      size_t datasize = loader.getSize();
+      memmove(data+sizeof(ResourceHeader), data, datasize); // make space for resource header
       memset(data, 0, sizeof(ResourceHeader)); // zero fill header
       res = (ResourceHeader*)data;
       res->magic = 0xDADADEED;
-      res->size = size;
+      res->size = datasize;
       strcpy(res->name, name);
-      size += sizeof(ResourceHeader);
-      program.saveToFlash(slot, data, size);
+      datasize += sizeof(ResourceHeader);
+      program.saveToFlash(slot, data, datasize);
       loader.clear();
     }else{
       error(PROGRAM_ERROR, "Invalid SAVE name");
