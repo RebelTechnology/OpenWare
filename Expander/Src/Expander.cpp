@@ -14,6 +14,70 @@
 extern SPI_HandleTypeDef MAX11300_SPI;
 #endif
 
+ApplicationSettings settings;
+
+#if 0
+#include "DigitalBusStreamReader.h"
+extern DigitalBusStreamReader bus;
+// c functions used in interrupts
+void serial_rx_callback(uint8_t c){
+  bus.read(c);
+}
+
+uint8_t serial_tx_available(){
+  return bus_tx_buf.notEmpty();
+}
+
+uint8_t serial_tx_pull(){
+  return bus_tx_buf.pull();
+}
+#endif
+
+#include "MidiHandler.h"
+
+extern "C"  void setParameterValue(uint8_t pid, int16_t value);
+
+MidiHandler::MidiHandler(){
+  // memset(midi_values, 0, NOF_PARAMETERS*sizeof(uint16_t));
+}
+
+void MidiHandler::handlePitchBend(uint8_t status, uint16_t value){
+  // setParameter(PARAMETER_G, ((int16_t)value - 8192)>>1);
+}
+
+void MidiHandler::handleNoteOn(uint8_t status, uint8_t note, uint8_t velocity){
+  // setButton(MIDI_NOTE_BUTTON+note, velocity<<5);
+}
+
+void MidiHandler::handleNoteOff(uint8_t status, uint8_t note, uint8_t velocity){
+  // setButton(MIDI_NOTE_BUTTON+note, 0);
+}
+
+void MidiHandler::handleProgramChange(uint8_t status, uint8_t pid){
+}
+
+void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value){
+  if(cc >= PATCH_PARAMETER_AA && cc <= PATCH_PARAMETER_BH)
+    setParameterValue(PARAMETER_AA+(cc-PATCH_PARAMETER_AA), value<<5);
+}
+
+void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){}
+
+void MidiHandler::handleSystemRealTime(uint8_t cmd){
+}
+
+void MidiHandler::handleSystemCommon(uint8_t cmd1, uint8_t cmd2){
+}
+
+void MidiHandler::handleSystemCommon(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3){
+}
+
+void MidiHandler::handleChannelPressure(uint8_t status, uint8_t value){
+}
+
+void MidiHandler::handlePolyKeyPressure(uint8_t status, uint8_t note, uint8_t value){
+}
+
 /**
  * MAX channel index goes from 0 at top left, to 8 at bottom right, to 15 at top right.
  * LED channel index is the inverse of MAX channel index.
@@ -25,7 +89,6 @@ extern "C" {
 #endif
   void setup(void);
   void run(void);
-  void setParameter(uint8_t pid, int16_t value);
 }
 
 // #define HYSTERESIS_DELTA 3
@@ -83,7 +146,7 @@ void setup(){
   bus_setup();
 
   for(int ch=0; ch<TLC5940_CHANNELS; ++ch)
-    TLC5946_SetOutput_DC(ch, 0xff);
+    TLC5946_SetOutput_DC(0, ch, 0xff);
 
 #ifdef USE_TLC
   TLC5946_Refresh_DC();
@@ -139,9 +202,9 @@ void setLed(uint8_t ch, int16_t value){
   if(ch < TLC5940_CHANNELS){
     // note that LED channel index is inverse of MAX channel index
     if(cfg[ch] == DAC_5TO5 || cfg[ch] == ADC_5TO5)
-      TLC5946_SetOutput_GS(15-ch, max(0, min(4095, abs(value-2048)*2)));
+      TLC5946_SetOutput_GS(0, 15-ch, max(0, min(4095, abs(value-2048)*2)));
     else
-      TLC5946_SetOutput_GS(15-ch, max(0, min(4095, value)));
+      TLC5946_SetOutput_GS(0, 15-ch, max(0, min(4095, value)));
   }
 #endif
 }
@@ -233,16 +296,9 @@ void run(){
   }
 }
 
-void setParameter(uint8_t pid, int16_t value){
+void setParameterValue(uint8_t pid, int16_t value){
   uint8_t ch = getChannelIndex(pid-PARAMETER_AA);
   setDAC(ch, value);
-}
-
-void bus_rx_parameter(uint8_t pid, int16_t value){
-  // debug << "rx parameter [" << pid << "][" << value << "]\r\n" ;
-  if(pid >= PARAMETER_AA && pid <= PARAMETER_BH){
-    setParameter(pid, value);
-  }
 }
 
 void bus_rx_command(uint8_t cmd, int16_t data){

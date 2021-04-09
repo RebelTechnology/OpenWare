@@ -149,6 +149,7 @@ void SPI2_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
+#if 0
   UART_HandleTypeDef *huart = &huart1;
   uint32_t tmp_flag = 0, tmp_it_source = 0;
 
@@ -206,7 +207,7 @@ void USART1_IRQHandler(void)
   { 
      serial_rx_callback((uint8_t)(huart->Instance->DR & (uint8_t)0x00FF));
   }
-#if 0
+#else
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
