@@ -109,6 +109,7 @@ uint8_t cc_values[MAX11300_CHANNELS] = {0};
 ChannelMode cfg[MAX11300_CHANNELS];
 SmoothFloat dac[MAX11300_CHANNELS];
 int adc[MAX11300_CHANNELS];
+extern TIM_HandleTypeDef htim1;
 
 // #define USE_TEMP
 #ifdef USE_TEMP
@@ -122,10 +123,15 @@ void setADC(uint8_t ch, int16_t value);
 uint8_t getChannelIndex(uint8_t ch);
 
 void setup(){
+  HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // bring BLANK high to turn LEDs off
+
   MAX11300_init(&MAX11300_SPI);
   TLC5946_init(&TLC5946_SPI);
 
-  // setPin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin); // bring BLANK high to turn LEDs off
+  // start TLC GSCLK timer
+  HAL_TIM_Base_Start(&htim1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_2);
 
   for(int ch=0; ch<MAX11300_CHANNELS; ++ch){
     adc[ch] = 0;

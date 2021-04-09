@@ -90,7 +90,8 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-
+  // toggle TLC BLANK pin (todo: put on a timer!)
+  HAL_GPIO_TogglePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin);
   /* USER CODE END SysTick_IRQn 1 */
 }
 
