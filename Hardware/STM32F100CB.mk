@@ -13,7 +13,7 @@ endif
 
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
-LDSCRIPT = $(BUILDROOT)/STM32F100CB_FLASH.ld
+LDSCRIPT = $(OPENWARE)/Hardware/STM32F100CB_FLASH.ld
 CPPFLAGS += --specs=nano.specs
 CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
@@ -24,8 +24,8 @@ CPPFLAGS += -ffunction-sections
 CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
 CFLAGS  += -std=gnu99
-ARCH_FLAGS = -mcpu=cortex-m0 -mthumb # -mfloat-abi=hard -mfpu=fpv4-sp-d16
+ARCH_FLAGS = -mcpu=cortex-m3 -mthumb -mfloat-abi=soft
 ARCH_FLAGS += -fsingle-precision-constant
-DEF_FLAGS = -DSTM32F100xB -DARM_MATH_CM0
+DEF_FLAGS = -DSTM32F100xB -DARM_MATH_CM3
 DEF_FLAGS += -D__FPU_PRESENT=0U
 S_SRC = $(BUILDROOT)/Src/startup_stm32f100xb.s
