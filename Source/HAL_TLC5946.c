@@ -1,9 +1,11 @@
 #include "HAL_TLC5946.h"
 #include <string.h>
-#include "main.h"
+#include "device.h"
 
 // #define TLC_CONTINUOUS
+#ifndef TLC_DEVICES
 #define TLC_DEVICES 	3
+#endif
 
 static uint8_t rgGSbuf[TLC_DEVICES][24];
 static uint8_t rgDCbuf[TLC_DEVICES][12];

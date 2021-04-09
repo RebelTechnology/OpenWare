@@ -100,7 +100,7 @@ bool DigitalBusReader::readBusFrame(uint8_t* frame){
 }
 
 void DigitalBusReader::reset(){
-  PerformanceMidiReader::reset();
+  SystemMidiReader::reset();
   peers = 0;
   parameterOffset = 0;
   status = DigitalBusHandler::IDLE;

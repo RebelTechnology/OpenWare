@@ -13,7 +13,7 @@ public:
     return readMidiFrame(msg.data);
   }
   bool readMidiFrame(uint8_t* frame);
-  void reset(){}
+  virtual void reset(){}
 };
 
 
@@ -28,7 +28,7 @@ public:
     return readMidiFrame(msg.data);
   }
   bool readMidiFrame(uint8_t* frame);
-  void reset();
+  virtual void reset();
 };
 
 #endif /* _MidiReader_h_ */

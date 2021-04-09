@@ -1,6 +1,7 @@
 #ifndef __OWL_H__
 #define __OWL_H__
 #include <stdint.h>
+#include <stddef.h>
 #include "device.h"
 #include "callbacks.h"
 #include "ProgramVector.h"

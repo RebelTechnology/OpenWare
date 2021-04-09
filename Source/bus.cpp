@@ -4,7 +4,6 @@
 #include "message.h"
 #include "SerialBuffer.hpp"
 #include "DigitalBusReader.h"
-#include "cmsis_os.h"
 #include "errorhandlers.h"
 #include "basicmaths.h"
 #include "Owl.h"
@@ -60,7 +59,7 @@ extern "C" {
   void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // what is the correct size if IDLE interrupts?
     // int size = huart->RxXferSize - huart->RxXferCount;
-    int size = huart->RxXferSize - huart->hdmarx->Instance->NDTR;
+    size_t size = huart->RxXferSize - __HAL_DMA_GET_COUNTER(huart->hdmarx);
     bus_rx_buf.incrementWriteHead(size);
     bus_rx_packets += size/4;
     initiateBusRead();
@@ -106,7 +105,7 @@ void bus_setup(){
 
 int bus_status(){
   // incoming data
-  while(bus_rx_buf.available() >= 4){
+  while(bus_rx_buf.getReadCapacity() >= 4){
     uint8_t frame[4];
     bus_rx_buf.pull(frame, 4);
     if(frame[0] == OWL_COMMAND_RESET){
@@ -122,9 +121,9 @@ int bus_status(){
   
   if(settings.bus_enabled){
     static uint32_t lastpolled = 0;
-    if(osKernelSysTick() > lastpolled + BUS_IDLE_INTERVAL){
+    if(HAL_GetTick() > lastpolled + BUS_IDLE_INTERVAL){
       bus.connected();
-      lastpolled = osKernelSysTick();
+      lastpolled = HAL_GetTick();
     }
   }
   return bus.getStatus();
@@ -154,17 +153,20 @@ void bus_tx_error(const char* reason){
   bus_tx_buf.reset();
 }
 
-void bus_rx_parameter(uint8_t pid, int16_t value){
+__weak void bus_rx_parameter(uint8_t pid, int16_t value){
   setParameterValue(pid, value);
   debug << "rx par[" << pid << "]";
 }
-void bus_rx_command(uint8_t cmd, int16_t data){
+
+__weak void bus_rx_command(uint8_t cmd, int16_t data){
   debug << "rx cmd[" << cmd << "]";
 }
-void bus_rx_message(const char* msg){
+
+__weak void bus_rx_message(const char* msg){
   debug << "rx msg[" << msg << "]";
 }
-void bus_rx_data(const uint8_t* data, uint16_t size){
+
+__weak void bus_rx_data(const uint8_t* data, uint16_t size){
   debug << "rx data[" << size << "]";
 }
 

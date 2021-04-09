@@ -1,12 +1,12 @@
 #ifndef __HAL_TLC5946_H
 #define __HAL_TLC5946_H
 
+#include <stdint.h>
+#include "device.h"
+
 #ifdef __cplusplus
 	extern "C" {
 #endif
-
-#include <stdint.h>
-#include "stm32f4xx_hal.h"
 
 // Modes
 #define Mode_GS 	0

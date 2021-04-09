@@ -10,7 +10,7 @@ class DigitalBusReader : public DigitalBusHandler {
 public:
   // read a 4-byte data frame
   bool readBusFrame(uint8_t* frame);
-  void reset();
+  virtual void reset();
 protected:
   void appendFrame(uint8_t* frame);
   uint8_t txuid = NO_UID;
