@@ -7,11 +7,12 @@
 
 #define USE_DIGITALBUS
 #define BUS_HUART                    huart1
+#define BUS_UART_BAUDRATE            115200
 
 #define USE_TLC
 #define TLC_CONTINUOUS
 #define TLC_DEVICES 	             1
-#define TLC5940_CHANNELS             16
+#define TLC5946_CHANNELS             16
 #define TLC5946_SPI                  hspi2
 
 #define USE_MAX

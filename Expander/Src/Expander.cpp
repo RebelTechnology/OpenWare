@@ -8,34 +8,19 @@
 #include "OpenWareMidiControl.h"
 #include "basicmaths.h"
 #include "SmoothValue.h"
-
-#if defined USE_MAX || defined USE_MAX_DMA
 #include "HAL_MAX11300.h"
-extern SPI_HandleTypeDef MAX11300_SPI;
-#endif
+#include "MidiHandler.h"
 
 ApplicationSettings settings;
 
-#if 0
-#include "DigitalBusStreamReader.h"
-extern DigitalBusStreamReader bus;
-// c functions used in interrupts
-void serial_rx_callback(uint8_t c){
-  bus.read(c);
+extern "C" {
+  extern SPI_HandleTypeDef MAX11300_SPI;
+  extern SPI_HandleTypeDef TLC5946_SPI;
+  extern TIM_HandleTypeDef htim1;
+  void setParameterValue(uint8_t pid, int16_t value);
+  void setup(void);
+  void run(void);
 }
-
-uint8_t serial_tx_available(){
-  return bus_tx_buf.notEmpty();
-}
-
-uint8_t serial_tx_pull(){
-  return bus_tx_buf.pull();
-}
-#endif
-
-#include "MidiHandler.h"
-
-extern "C"  void setParameterValue(uint8_t pid, int16_t value);
 
 MidiHandler::MidiHandler(){
   // memset(midi_values, 0, NOF_PARAMETERS*sizeof(uint16_t));
@@ -78,18 +63,29 @@ void MidiHandler::handleChannelPressure(uint8_t status, uint8_t value){
 void MidiHandler::handlePolyKeyPressure(uint8_t status, uint8_t note, uint8_t value){
 }
 
+
+extern "C" {
+
+  void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
+    if(hspi == &TLC5946_SPI){TLC5946_TxINTCallback();}
+    if(hspi == &MAX11300_SPI){MAX11300_TxINTCallback();}
+  }
+
+  void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi){
+    if(hspi == &TLC5946_SPI){}
+    if(hspi == &MAX11300_SPI){MAX11300_RxINTCallback();}
+  }
+
+  void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
+    if(hspi == &TLC5946_SPI){TLC5946_TxINTCallback();}
+    if(hspi == &MAX11300_SPI){MAX11300_TxRxINTCallback();}
+  }
+}
+
 /**
  * MAX channel index goes from 0 at top left, to 8 at bottom right, to 15 at top right.
  * LED channel index is the inverse of MAX channel index.
  */
-
-extern "C" {
-#ifdef USE_TLC
-  extern SPI_HandleTypeDef TLC5946_SPI;
-#endif
-  void setup(void);
-  void run(void);
-}
 
 // #define HYSTERESIS_DELTA 3
 static uint16_t HYSTERESIS_DELTA = 7;
@@ -109,7 +105,6 @@ uint8_t cc_values[MAX11300_CHANNELS] = {0};
 ChannelMode cfg[MAX11300_CHANNELS];
 SmoothFloat dac[MAX11300_CHANNELS];
 int adc[MAX11300_CHANNELS];
-extern TIM_HandleTypeDef htim1;
 
 // #define USE_TEMP
 #ifdef USE_TEMP
@@ -148,7 +143,7 @@ void setup(){
 
   bus_setup();
 
-  for(int ch=0; ch<TLC5940_CHANNELS; ++ch)
+  for(int ch=0; ch<TLC5946_CHANNELS; ++ch)
     TLC5946_SetOutput_DC(0, ch, 0xff);
 
 #ifdef USE_TLC
@@ -160,7 +155,7 @@ void setup(){
   int delayms = 1;
   // for(int i=0; i<8192; ++i){
   for(int i=0; i<=4096; ++i){
-    for(int ch=0; ch<TLC5940_CHANNELS; ++ch)
+    for(int ch=0; ch<TLC5946_CHANNELS; ++ch)
       setLed(ch, i&0x0fff);
 #ifndef TLC_CONTINUOUS
     TLC5946_Refresh_GS();
@@ -202,7 +197,7 @@ void configureChannel(uint8_t ch, ChannelMode mode){
 
 void setLed(uint8_t ch, int16_t value){
 #ifdef USE_TLC
-  if(ch < TLC5940_CHANNELS){
+  if(ch < TLC5946_CHANNELS){
     // note that LED channel index is inverse of MAX channel index
     if(cfg[ch] == DAC_5TO5 || cfg[ch] == ADC_5TO5)
       TLC5946_SetOutput_GS(0, 15-ch, max(0, min(4095, abs(value-2048)*2)));
