@@ -5,12 +5,13 @@
 #define HARDWARE_ID                  GENIUS_HARDWARE
 #define HARDWARE_VERSION             "Genius"
 
-/* #define NO_EXT_RAM */
+/* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
+
 #define USE_PLUS_RAM
-/* #define USE_ICACHE */
-/* #define USE_DCACHE */
+#define USE_ICACHE
+#define USE_DCACHE
 
 #define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
 
@@ -51,6 +52,13 @@
 #define USE_USB_HOST
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
+
+// Serial MIDI
+#define USE_UART_MIDI_RX
+#define USE_UART_MIDI_TX
+#define UART_MIDI_HANDLE huart5
+#define UART_MIDI_RX_BUFFER_SIZE 256
+// Digital bus will use huart2
 
 #define USE_ADC
 #define ADC_PERIPH hadc1

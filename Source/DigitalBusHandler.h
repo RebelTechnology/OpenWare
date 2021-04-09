@@ -4,7 +4,7 @@
 #include "bus.h"
 #include "MidiReader.h"
 
-class DigitalBusHandler : public MidiReader {
+class DigitalBusHandler : public PerformanceMidiReader {
 public:
   enum DigitalBusStatus {
     IDLE = BUS_STATUS_IDLE,

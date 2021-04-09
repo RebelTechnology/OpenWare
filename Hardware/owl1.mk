@@ -25,7 +25,7 @@ endif
 LDFLAGS += -Wl,--gc-sections
 LDSCRIPT ?= $(OPENWARE)/Hardware/owl1.ld
 LDLIBS += -lc -lm
-CPPFLAGS += -Wdouble-promotion
+CPPFLAGS += -Wdouble-promotion -Werror=double-promotion
 CPPFLAGS += -fdata-sections
 CPPFLAGS += -ffunction-sections
 CPPFLAGS += -fno-builtin -ffreestanding

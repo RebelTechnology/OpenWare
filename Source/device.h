@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v21.2"
+#define FIRMWARE_VERSION "v21.2-pre1"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -155,6 +155,8 @@
 #ifndef NO_CCM_RAM
 #define USE_CCM_RAM
 #define CCM_RAM                          __attribute__ ((section (".ccmdata")))
+#else
+#define CCM_RAM
 #endif
 
 #ifndef DMA_RAM

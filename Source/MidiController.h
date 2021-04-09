@@ -36,9 +36,6 @@ public:
   void sendDeviceId();
   void sendProgramMessage();
   void sendErrorMessage();
-
-  void handleMidiMessage(MidiMessage msg); // process MIDI from usbd
-  void forwardMidiMessage(MidiMessage msg); // send MIDI from all destinations to program callback
 };
 
 #endif /* __MIDI_CONTROLLER_H */

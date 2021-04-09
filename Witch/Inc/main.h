@@ -180,6 +180,11 @@ void Error_Handler(void);
 #define USBD_DM_GPIO_Port GPIOA
 #define USBD_DP_Pin GPIO_PIN_12
 #define USBD_DP_GPIO_Port GPIOA
+
+#define USBH_PWR_EN_Pin GPIO_PIN_12
+#define USBH_PWR_EN_GPIO_Port GPIOB
+#define USBH_PWR_FAULT_Pin GPIO_PIN_13
+#define USBH_PWR_FAULT_GPIO_Port GPIOB
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
