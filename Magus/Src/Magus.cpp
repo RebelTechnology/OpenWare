@@ -7,10 +7,12 @@
 #include "HAL_TLC5946.h"
 #include "HAL_MAX11300.h"
 #include "HAL_Encoders.h"
+#include "Pin.h"
 
 #define TLC5940_RED_DC 0x55
 #define TLC5940_GREEN_DC 0x55
 #define TLC5940_BLUE_DC 0x55
+// 63, 19, 60 // TODO: balance levels, fix TLC5946_setRGB_DC
 
 const uint32_t* dyn_rainbowinputs = rainbowinputs;
 const uint32_t* dyn_rainbowoutputs = rainbowoutputs;
@@ -30,6 +32,7 @@ void setPortMode(uint8_t index, uint8_t mode){
     }
   }
 }
+
 uint8_t getPortMode(uint8_t index){
   if(index < 20)
     return portMode[index];
@@ -63,14 +66,16 @@ void onResourceUpdate(void){
 
 void setup(){
   HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
-  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Reset encoders 
+  Pin enc_nrst(ENC_NRST_GPIO_Port, ENC_NRST_Pin);
+  enc_nrst.outputMode();
+  enc_nrst.low();
   {
     extern SPI_HandleTypeDef TLC5946_SPI;
 
     // LEDs
     TLC5946_init(&TLC5946_SPI);
-    // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
-    TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
+    // use defaults until TLC5946_setRGB_DC is fixed
+    // TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
     TLC5946_setAll(0x10, 0x10, 0x10);
 
     HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
@@ -93,7 +98,6 @@ void setup(){
     // Encoders
     extern SPI_HandleTypeDef ENCODERS_SPI;
     Encoders_init(&ENCODERS_SPI);
-    Encoders_readAll();
   }
   {
     // Pixi
@@ -112,6 +116,12 @@ void setup(){
 #endif
 
   owl.setup();
+
+  // enable pull-up resistors to un-reset encoder
+  // allows us to program chip with SWD
+  enc_nrst.inputMode();
+  enc_nrst.setPull(PIN_PULL_UP);
+  Encoders_readAll();
 }
 
 void loop(void){
