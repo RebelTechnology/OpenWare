@@ -361,6 +361,7 @@ public:
       screen.print(0, 26, getErrorMessage());
       screen.setTextWrap(false);
     }
+    drawMessage(51, screen);
   }
 
   void drawTitle(ScreenBuffer& screen){
