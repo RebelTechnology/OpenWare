@@ -6,7 +6,12 @@
 #define TLC_DEVICES 	3
 
 static uint8_t rgGSbuf[TLC_DEVICES][24];
-static uint8_t rgDCbuf[TLC_DEVICES][12];
+static uint8_t rgDCbuf[TLC_DEVICES][12] =
+  {
+   {12, 48, 195, 12, 48, 195, 12, 48, 195, 12, 48, 195 }, // DC=3 Red
+   {8, 32, 130, 8, 32, 130, 8, 32, 130, 8, 32, 130 },     // DC=2 Blue
+   {4, 16, 65, 4, 16, 65, 4, 16, 65, 4, 16, 65}           // DC=1 Green
+  };
 static SPI_HandleTypeDef* TLC5946_SPIConfig;
 
 static const uint8_t rgLED_R[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
@@ -55,6 +60,8 @@ void TLC5946_SetOutput_GS(uint8_t IC, uint8_t LED_ID, uint16_t value)
 
 void TLC5946_SetOutput_DC(uint8_t IC, uint8_t LED_ID, uint8_t value)
 {
+  // 6-bit dot correction
+  // aaaaaabb bbbbcccc ccdddddd
 #if 0
   uint8_t temp;
   /* uint8_t ucBuffLoc = (uint8_t)(LED_ID*0.75); */
@@ -99,7 +106,7 @@ void TLC5946_SetOutput_DC(uint8_t IC, uint8_t LED_ID, uint8_t value)
     rgDCbuf[IC][ucBuffLoc]   |= (temp&0x03);
     break;
   }               
-#elif 1
+#elif 0
   uint32_t bitshift = LED_ID*6;
   uint32_t word = bitshift/8;
   uint32_t bit = bitshift % 8;
