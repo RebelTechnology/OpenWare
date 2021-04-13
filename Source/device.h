@@ -137,6 +137,10 @@
 #define LOAD_INDICATOR_PARAMETER     PARAMETER_A
 #endif
 
+#ifndef LEDS_BRIGHTNESS
+#define LEDS_BRIGHTNESS              20 /* default value - 0 = off, 63 = supernova */
+#endif
+
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
 #define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))

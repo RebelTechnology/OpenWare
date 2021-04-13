@@ -8,10 +8,8 @@
 #include "HAL_MAX11300.h"
 #include "HAL_Encoders.h"
 #include "Pin.h"
+#include "ApplicationSettings.h"
 
-#define TLC5940_RED_DC   4
-#define TLC5940_GREEN_DC 1
-#define TLC5940_BLUE_DC  2
 // 63, 19, 60 // TODO: balance levels
 
 const uint32_t* dyn_rainbowinputs = rainbowinputs;
@@ -74,7 +72,7 @@ void setup(){
 
     // LEDs
     TLC5946_init(&TLC5946_SPI);
-    TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
+    TLC5946_setRGB_DC(0, 0, 0); // Start with 0 brightness here, update from settings later
     TLC5946_setAll(0x10, 0x10, 0x10);
 
     HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
@@ -115,6 +113,10 @@ void setup(){
 #endif
 
   owl.setup();
+
+  // Update LEDs brighness from settings
+  TLC5946_setRGB_DC(settings.leds_brightness,settings.leds_brightness, settings.leds_brightness);
+  TLC5946_Refresh_DC();
 
   // enable pull-up resistors to un-reset encoder
   // allows us to program chip with SWD
