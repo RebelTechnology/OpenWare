@@ -9,10 +9,10 @@
 #include "HAL_Encoders.h"
 #include "Pin.h"
 
-#define TLC5940_RED_DC 0x55
-#define TLC5940_GREEN_DC 0x55
-#define TLC5940_BLUE_DC 0x55
-// 63, 19, 60 // TODO: balance levels, fix TLC5946_setRGB_DC
+#define TLC5940_RED_DC   4
+#define TLC5940_GREEN_DC 1
+#define TLC5940_BLUE_DC  2
+// 63, 19, 60 // TODO: balance levels
 
 const uint32_t* dyn_rainbowinputs = rainbowinputs;
 const uint32_t* dyn_rainbowoutputs = rainbowoutputs;
@@ -74,8 +74,7 @@ void setup(){
 
     // LEDs
     TLC5946_init(&TLC5946_SPI);
-    // use defaults until TLC5946_setRGB_DC is fixed
-    // TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
+    TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
     TLC5946_setAll(0x10, 0x10, 0x10);
 
     HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
