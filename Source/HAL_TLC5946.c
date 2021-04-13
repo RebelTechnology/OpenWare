@@ -82,9 +82,6 @@ void TLC5946_Refresh_GS(void)
 	HAL_SPI_Transmit_IT(TLC5946_SPIConfig, rgGSbuf, TLC_GS_BYTES*TLC_DEVICES);
 #else
 	HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf, TLC_GS_BYTES*TLC_DEVICES, 100);
-	/* HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf[0], TLC_GS_BYTES, 100);	// IC 0  */
-	/* HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf[1], TLC_GS_BYTES, 100);	// IC 1 */
-	/* HAL_SPI_Transmit(TLC5946_SPIConfig, rgGSbuf[2], TLC_GS_BYTES, 100);	// IC 2 */
 	
 	// Latch pulse
 	pXLAT(1);
@@ -100,9 +97,6 @@ void TLC5946_Refresh_DC(void)
 	
 	// Update Dot Correction
 	HAL_SPI_Transmit(TLC5946_SPIConfig, (uint8_t*)rgDCbuf, TLC_DC_BYTES*TLC_DEVICES, 100);
-	/* HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf[0], TLC_DC_BYTES, 100);	// IC 0 */
-	/* HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf[1], TLC_DC_BYTES, 100);	// IC 1 */
-	/* HAL_SPI_Transmit(TLC5946_SPIConfig, rgDCbuf[2], TLC_DC_BYTES, 100);	// IC 2 */
 	
 	// Latch pulse
 	pXLAT(1);
