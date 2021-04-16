@@ -48,11 +48,11 @@ void TLC5946_SetOutput_DC(uint8_t ic, uint8_t led, uint8_t value)
   uint32_t bitshift = led*6;
   uint32_t word = bitshift/8;
   uint32_t pos = bitshift % 8;
-  uint8_t mask = 0x3fu >> pos;
+  uint8_t mask = 0xfcu >> pos;
   uint8_t* data = rgDCbuf+ic*TLC_DC_BYTES+word;
   *data = (*data & ~mask) | ((value >> pos) & mask);
   pos = 8 - pos;
-  mask = 0x3fu << pos;
+  mask = 0xfcu << pos;
   data++;
   *data = (*data & ~mask) | ((value << pos) & mask);
 }

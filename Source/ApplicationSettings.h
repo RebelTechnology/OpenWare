@@ -27,6 +27,9 @@ public:
   uint32_t output_scalar;
   uint8_t midi_input_channel;
   uint8_t midi_output_channel;
+#ifdef USE_TLC5946
+  uint8_t leds_brightness;
+#endif
 public:
   void init();
   void reset();

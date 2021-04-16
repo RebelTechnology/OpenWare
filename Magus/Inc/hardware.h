@@ -38,8 +38,10 @@
 // Serial MIDI TX only
 #define USE_UART_MIDI_TX
 #define UART_MIDI_HANDLE huart2
-#define UART_MIDI_RX_BUFFER_SIZE 256
+#define UART_MIDI_RX_BUFFER_SIZE    256
 
+#define USE_TLC5946
+#define LEDS_BRIGTHNESS             20
 #define TLC5946_SPI hspi6
 #define MAX11300_SPI hspi5
 #define ENCODERS_SPI hspi5
