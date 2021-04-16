@@ -90,5 +90,5 @@ extern "C"{
     bus_rx_buf.reset();
 #endif
   }
-}
 #endif
+}
