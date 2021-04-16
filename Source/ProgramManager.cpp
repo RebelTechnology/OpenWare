@@ -414,6 +414,7 @@ void programFlashTask(void* p){
     }
   }
   program.resetProgram(false);
+  owl.setOperationMode(RUN_MODE); // in case no program available
   utilityTask = NULL;
   vTaskDelete(NULL);
 }

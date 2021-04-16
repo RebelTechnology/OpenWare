@@ -179,4 +179,4 @@ void bus_set_input_channel(uint8_t ch){
   bus.setInputChannel(ch);
 }
 
-#endif /* USE_UART */
+#endif /* USE_DIGITALBUS */

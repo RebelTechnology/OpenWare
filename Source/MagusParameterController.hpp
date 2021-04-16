@@ -361,6 +361,7 @@ public:
       screen.print(0, 26, getErrorMessage());
       screen.setTextWrap(false);
     }
+    drawMessage(51, screen);
   }
 
   void drawTitle(ScreenBuffer& screen){
@@ -564,7 +565,7 @@ public:
     case STATUS:
       drawTitle(controlModeNames[controlMode], screen);    
       drawStatus(screen);
-      drawMessage(46, screen);
+      drawMessage(51, screen);
       break;
     case PRESET:
       drawTitle(controlModeNames[controlMode], screen);    

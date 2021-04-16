@@ -13,10 +13,8 @@ PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 144K    /* total RAM is 192kb *
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
 EXTRAM (rwx)     : ORIGIN = 0xD0000000, LENGTH = 8M
 BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 64K    /* Sector 0 to 3 */
-/* FLASH (rx)       : ORIGIN = 0x08010000, LENGTH = 320K   /\* Sector 4 to 6 *\/ */
-/* STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 640K   /\* Sector 7 to 11 *\/ */
-FLASH (rx)       : ORIGIN = 0x08010000, LENGTH = 448K
-STORAGE (rw)     : ORIGIN = 0x08080000, LENGTH = 512K
+FLASH (rx)       : ORIGIN = 0x08010000, LENGTH = 320K   /* Sector 4 to 6 */
+STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 640K   /* Sector 7 to 11 */
 }
 
 /* Define output sections */

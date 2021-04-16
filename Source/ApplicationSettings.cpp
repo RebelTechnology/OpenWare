@@ -41,7 +41,13 @@ void ApplicationSettings::reset(){
 bool ApplicationSettings::settingsInFlash(){
   // return eeprom_read_word(APPLICATION_SETTINGS_ADDR) == checksum;
   // return false;
-  return registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX) != NULL;
+  ResourceHeader* resource = registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX);
+  if(resource == NULL)
+    return false;
+  ApplicationSettings* data = (ApplicationSettings*)((uint8_t*)resource + sizeof(ResourceHeader));
+  if(data->checksum != checksum)
+    return false;
+  return true;
 }
 
 void ApplicationSettings::loadFromFlash(){
