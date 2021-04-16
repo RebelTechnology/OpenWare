@@ -7,9 +7,9 @@
 #define TLC_DEVICES 	3
 #endif
 
-#define TLC_DC_CHANNELS 16
-#define TLC_DC_BYTES    (TLC_DC_CHANNELS * 3 / 4)
-#define TLC_GS_BYTES    (TLC_DC_CHANNELS * 3 / 2)
+#define TLC_CHANNELS 16
+#define TLC_DC_BYTES    (TLC_CHANNELS * 3 / 4)
+#define TLC_GS_BYTES    (TLC_CHANNELS * 3 / 2)
 
 static uint8_t rgGSbuf[TLC_DEVICES*TLC_GS_BYTES+1];
 static uint8_t rgDCbuf[TLC_DEVICES*TLC_DC_BYTES+1] =
@@ -134,16 +134,16 @@ void TLC5946_setRGB(uint8_t LED_ID, uint16_t val_R, uint16_t val_G, uint16_t val
 
 void TLC5946_setRGB_DC(uint8_t val_R, uint8_t val_G, uint8_t val_B)
 {
-	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_DC_CHANNELS, val_R);
-	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES, TLC_DC_CHANNELS, val_G);
-	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES * 2, TLC_DC_CHANNELS, val_B);
+	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_CHANNELS, val_R);
+	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES, TLC_CHANNELS, val_G);
+	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES * 2, TLC_CHANNELS, val_B);
 	
 	TLC5946_Refresh_DC();
 }
 
 void TLC5946_setAll_DC(uint8_t value)
 {
-	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_DC_CHANNELS * TLC_DEVICES, value);
+	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_CHANNELS * TLC_DEVICES, value);
 	TLC5946_Refresh_DC();
 }
 
