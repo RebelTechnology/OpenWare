@@ -155,7 +155,6 @@ void TLC5946_setAll(uint16_t val_R, uint16_t val_G, uint16_t val_B){
   }
 }
 
-
 //_____ Initialisaion _________________________________________________________________________________________________
 void TLC5946_init (SPI_HandleTypeDef *spiconfig)
 {
