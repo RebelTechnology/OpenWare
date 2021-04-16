@@ -15,6 +15,7 @@
 #include "message.h"
 #include "VersionToken.h"
 #include "ScreenBuffer.h"
+#include "HAL_TLC5946.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -83,7 +84,7 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, DATA, VOLUME, CALIBRATE, EXIT, NOF_CONTROL_MODES
+    PLAY, STATUS, PRESET, DATA, VOLUME, LEDS, CALIBRATE, EXIT, NOF_CONTROL_MODES
   };
   ControlMode controlMode = PLAY;
   bool saveSettings;
@@ -106,6 +107,7 @@ public:
     "< Preset >",
     "< Data   >",
     "< Volume >",
+    "< LEDs   >",
     "< V/Oct   " };
 
   ParameterController(){
@@ -449,6 +451,15 @@ public:
     screen.invert(0, 24, 40, 10);
   }
 
+  void drawLeds(uint8_t selected, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    screen.print(1, 24 + 10, "Level  ");
+    screen.print((int)settings.leds_brightness);
+    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
+    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.leds_brightness, 4, WHITE);
+    screen.invert(0, 24, 40, 10);
+  }  
+
   void drawCalibration(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
     if (isCalibrationRunning) {
@@ -579,6 +590,10 @@ public:
       drawTitle(controlModeNames[controlMode], screen);    
       drawVolume(selectedPid[1], screen);
       break;
+    case LEDS:
+      drawTitle(controlModeNames[controlMode], screen);    
+      drawLeds(selectedPid[1], screen);
+      break;
     case CALIBRATE:
       drawTitle(controlModeNames[controlMode], screen);
       drawCalibration(selectedPid[1], screen);
@@ -680,6 +695,9 @@ public:
     case VOLUME:
       selectedPid[1] = settings.audio_output_gain; // todo: get current
       break;
+    case LEDS:
+      selectedPid[1] = settings.leds_brightness;
+      break;
     case CALIBRATE:
       selectedPid[1] = 2;
       resetCalibration();
@@ -736,6 +754,9 @@ public:
         break;
       }
       case VOLUME:
+        controlMode = EXIT;
+        break;
+      case LEDS:
         controlMode = EXIT;
         break;
       case CALIBRATE:
@@ -857,6 +878,13 @@ public:
       selectedPid[1] = max(0, min(127, value));
       codec.setOutputGain(selectedPid[1]);
       settings.audio_output_gain = selectedPid[1];
+      saveSettings = true;
+      break;
+    case LEDS:
+      selectedPid[1] = max(0, min(63, value));
+      TLC5946_setRGB_DC(selectedPid[1], selectedPid[1], selectedPid[1]);
+      TLC5946_Refresh_DC();      
+      settings.leds_brightness = selectedPid[1];
       saveSettings = true;
       break;
     case PRESET:
