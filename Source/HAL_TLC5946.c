@@ -3,10 +3,13 @@
 #include "main.h"
 
 // #define TLC_CONTINUOUS
+#ifndef TLC_DEVICES
 #define TLC_DEVICES 	3
+#endif
 
-#define TLC_GS_BYTES 24
-#define TLC_DC_BYTES 12
+#define TLC_CHANNELS 16
+#define TLC_DC_BYTES    (TLC_CHANNELS * 3 / 4)
+#define TLC_GS_BYTES    (TLC_CHANNELS * 3 / 2)
 
 static uint8_t rgGSbuf[TLC_DEVICES*TLC_GS_BYTES+1];
 static uint8_t rgDCbuf[TLC_DEVICES*TLC_DC_BYTES+1] =
@@ -57,6 +60,19 @@ void TLC5946_SetOutput_DC(uint8_t ic, uint8_t led, uint8_t value)
   *data = (*data & ~mask) | ((value << pos) & mask);
 }
 
+// Set the same value on one or more TLC clips. This is not called outside of this file.
+static void TLC5946_SetOutput_DC_Many(uint8_t* data, uint8_t num_values, uint8_t value)
+{
+    uint8_t* last_data = data + num_values * 3 / 4;
+    uint8_t byte1 = value << 2 | value >> 4;
+    uint8_t byte2 = value << 4 | value >> 2;
+    uint8_t byte3 = value << 6 | value;
+	while (data < last_data) {
+		*data++ = byte1;
+		*data++ = byte2;
+		*data++ = byte3;
+	}
+}
 
 void TLC5946_TxINTCallback(void)
 {
@@ -110,14 +126,18 @@ void TLC5946_setRGB(uint8_t LED_ID, uint16_t val_R, uint16_t val_G, uint16_t val
 	TLC5946_SetOutput_GS(1, rgLED_B[LED_ID-1], val_B);
 }
 
-void TLC5946_setRGB_DC(uint16_t val_R, uint16_t val_G, uint16_t val_B)
+void TLC5946_setRGB_DC(uint8_t val_R, uint8_t val_G, uint8_t val_B)
 {
-	uint8_t x;
+	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_CHANNELS, val_R);
+	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES, TLC_CHANNELS, val_G);
+	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES * 2, TLC_CHANNELS, val_B);
 	
-	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(0, x, val_R);}
-	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(2, x, val_G);}
-	for(x=0; x<16; x++)	{TLC5946_SetOutput_DC(1, x, val_B);}
-	
+	TLC5946_Refresh_DC();
+}
+
+void TLC5946_setAll_DC(uint8_t value)
+{
+	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_CHANNELS * TLC_DEVICES, value);
 	TLC5946_Refresh_DC();
 }
 
@@ -128,7 +148,6 @@ void TLC5946_setAll(uint16_t val_R, uint16_t val_G, uint16_t val_B){
     TLC5946_SetOutput_GS(1, i, val_B);
   }
 }
-
 
 //_____ Initialisaion _________________________________________________________________________________________________
 void TLC5946_init (SPI_HandleTypeDef *spiconfig)
