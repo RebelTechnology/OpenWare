@@ -72,7 +72,7 @@ void setup(){
 
     // LEDs
     TLC5946_init(&TLC5946_SPI);
-    TLC5946_setRGB_DC(0, 0, 0); // Start with 0 brightness here, update from settings later
+    TLC5946_setAll_DC(0); // Start with 0 brightness here, update from settings later
     TLC5946_setAll(0x10, 0x10, 0x10);
 
     HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
@@ -115,7 +115,7 @@ void setup(){
   owl.setup();
 
   // Update LEDs brighness from settings
-  TLC5946_setRGB_DC(settings.leds_brightness,settings.leds_brightness, settings.leds_brightness);
+  TLC5946_setAll_DC(settings.leds_brightness);
   TLC5946_Refresh_DC();
 
   // enable pull-up resistors to un-reset encoder

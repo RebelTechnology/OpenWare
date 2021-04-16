@@ -26,8 +26,9 @@ void TLC5946_Refresh_DC(void);
 void TLC5946_TxINTCallback(void);
 
 void TLC5946_setRGB(uint8_t LED_ID, uint16_t val_R, uint16_t val_G, uint16_t val_B);
-void TLC5946_setRGB_DC(uint16_t val_R, uint16_t val_G, uint16_t val_B);
+void TLC5946_setRGB_DC(uint8_t val_R, uint8_t val_G, uint8_t val_B);
 void TLC5946_setAll(uint16_t val_R, uint16_t val_G, uint16_t val_B);
+void TLC5946_setAll_DC(uint8_t value);
 
 #ifdef __cplusplus
 }

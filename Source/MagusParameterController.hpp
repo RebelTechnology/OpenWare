@@ -882,7 +882,7 @@ public:
       break;
     case LEDS:
       selectedPid[1] = max(0, min(63, value));
-      TLC5946_setRGB_DC(selectedPid[1], selectedPid[1], selectedPid[1]);
+      TLC5946_setAll_DC(selectedPid[1]);
       TLC5946_Refresh_DC();      
       settings.leds_brightness = selectedPid[1];
       saveSettings = true;
