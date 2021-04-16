@@ -2,11 +2,11 @@
 #include "bus.h"
 #include <string.h>
 
-void DigitalBusReader::appendFrame(uint8_t *frame) {}
+void DigitalBusReader::appendFrame(uint8_t* frame) {}
 
 // read a 4-byte data frame
 // may be a bus message or a USB MIDI message
-bool DigitalBusReader::readBusFrame(uint8_t *frame) {
+bool DigitalBusReader::readBusFrame(uint8_t* frame) {
   // OWL Digital Bus Protocol
   if (isMidiFrame(frame)) {
     if (!readMidiFrame(frame))
@@ -43,7 +43,7 @@ bool DigitalBusReader::readBusFrame(uint8_t *frame) {
         // ignore if we are not exclusively listening to long messages from this
         // uid
         if (pos + 3 < size) {
-          strncpy((char *)buffer + pos, (char *)frame + 1, 3);
+          strncpy((char*)buffer + pos, (char*)frame + 1, 3);
           pos += 3;
         } else {
           // buffer overflow
@@ -51,7 +51,7 @@ bool DigitalBusReader::readBusFrame(uint8_t *frame) {
         if (frame[3] == '\0') {
           pos = 0;
           txuid = NO_UID;
-          handleMessage((const char *)buffer);
+          handleMessage((const char*)buffer);
         }
       }
       if (settings.bus_enabled && seq > 1)
