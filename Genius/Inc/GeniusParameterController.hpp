@@ -121,6 +121,11 @@ public:
 #ifdef USE_DIGITALBUS
     screen.print(1, 56, "Bus: ");
     screen.print(bus.getStatusString());
+    screen.print(" ");
+    extern uint32_t bus_tx_packets, bus_rx_packets;
+    screen.print((int)bus_tx_packets);
+    screen.print("/");
+    screen.print((int)bus_rx_packets);
     if (bus.getStatus() == BUS_STATUS_CONNECTED) {
       screen.print(", ");
       screen.print(bus.getPeers());
