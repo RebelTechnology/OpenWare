@@ -57,7 +57,7 @@ public:
 };
 
 TakeoverControls<10, int16_t> takeover;
-int16_t dac_values[2];
+int16_t dac_values[2] = {0, 0};
 
 void onChangePin(uint16_t pin){
   if(owl.getOperationMode() == RUN_MODE){
@@ -94,7 +94,7 @@ void setAnalogValue(uint8_t ch, int16_t value){
       dac_values[0] = value;
       break;
     case PARAMETER_G:
-      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, value);
       dac_values[1] = value;
       break;
     }
@@ -389,9 +389,7 @@ static void update_preset(){
 	program.loadProgram(patchselect); // enters load mode
 	program.resetProgram(false);
 	owl.setOperationMode(CONFIGURE_MODE);
-	// reset CV outputs to initial values
-	setAnalogValue(PARAMETER_F, 0);
-	setAnalogValue(PARAMETER_G, 0);
+	dac_values[0] = dac_values[1] = 0; // reset CV outputs to initial values
       }
       if(takeover.taken(9)){
 	int16_t value = takeover.get(9)>>5;
@@ -429,7 +427,7 @@ static void update_preset(){
 void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   for(int i=1; i<=6; ++i)
     setLed(i, 0);
-  setGateValue(BUTTON_E, 0);
+  setGateValue(BUTTON_E, 0); // this will only have an effect in RUN mode
   setGateValue(BUTTON_F, 0);
   counter = 0;
 }
