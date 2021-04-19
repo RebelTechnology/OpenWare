@@ -72,6 +72,7 @@ public:
       return setError("Invalid SysEx package");
     // stop running program and free its memory
     program.exitProgram(true);
+    owl.setOperationMode(LOAD_MODE);
     // program.loadProgram(2); // load progress bar
     // program.resetProgram(true);
     // get firmware data size (decoded)
