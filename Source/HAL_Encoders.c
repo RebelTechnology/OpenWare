@@ -1,5 +1,5 @@
 #include "HAL_Encoders.h"
-#include "main.h"
+#include "device.h"
 #include <string.h>
 
 SPI_HandleTypeDef* Encoders_SPIConfig;
@@ -11,7 +11,7 @@ SPI_HandleTypeDef* Encoders_SPIConfig;
 static int16_t rgENC_Values[7] = {0};
 
 #ifdef STM32H743xx
-static uint16_t NOP_CNT = 250*4;
+static volatile uint16_t NOP_CNT = 600;
 #else
 static uint16_t NOP_CNT = 250; // 150 doesn't work in Release build
 #endif
