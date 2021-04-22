@@ -352,7 +352,7 @@ static void update_preset(){
   case STARTUP_MODE:
   case STREAM_MODE:
   case LOAD_MODE: {
-    uint32_t value = counter & 0xfff;    
+    uint32_t value = counter*0xfff/PATCH_RESET_COUNTER;
     setLed(1, counter > PATCH_RESET_COUNTER*0.1 ? value : 0);
     setLed(2, counter > PATCH_RESET_COUNTER*0.2 ? value : 0);
     setLed(5, counter > PATCH_RESET_COUNTER*0.3 ? value : 0);
