@@ -305,13 +305,15 @@ const char* getBootloaderVersion(){
 }
 
 const char* getDeviceName(){
-  static char name[18];
+  static char name[22];
   static char* ptr = 0;
   if(ptr == 0){
     uint32_t* id = (uint32_t*)UID_BASE; // get a pointer to the 96-bit unique device id
-    unsigned int hash = id[0]^id[1]^id[2]; // hash into 32 bit value
-    char* p = stpcpy(ptr, "OWL-");
+    unsigned int hash = id[0]^id[1]^id[2]; // hash into 32-bit value
+    hash = (hash>>16)^(hash&0xffff); // hash into 16-bit value
+    char* p = stpcpy(name, "OWL-" HARDWARE_VERSION "-");
     stpcpy(p, msg_itoa(hash, 16));
+    ptr = name;
   }
   return ptr;
 }
