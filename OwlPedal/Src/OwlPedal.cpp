@@ -35,6 +35,7 @@ void onChangePin(uint16_t pin){
   switch(pin){
   case PUSHBUTTON_Pin: {
     bool isSet = !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin);
+    setButtonValue(BUTTON_A, isSet);
     setButtonValue(PUSHBUTTON, isSet);
     midi_tx.sendCc(PUSHBUTTON, isSet ? 127 : 0);
     setLed(0, isSet ? RED_COLOUR : GREEN_COLOUR);
@@ -59,15 +60,22 @@ void onChangePin(uint16_t pin){
 }
 
 void setGateValue(uint8_t ch, int16_t value){
-  if(ch == PUSHBUTTON){
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, value ? GPIO_PIN_RESET : GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  switch (ch) {
+  case BUTTON_A:
+    setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
+    break;
+  case PUSHBUTTON:
+    setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
+    // deliberate fall-through - this synchronizes LED to pushbutton value
+  case BUTTON_B:
 #ifdef OWL_MODULAR
-    HAL_GPIO_WritePin(PUSH_GATE_OUT_GPIO_Port, PUSH_GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
+    HAL_GPIO_WritePin(PUSH_GATE_OUT_GPIO_Port, PUSH_GATE_OUT_Pin, value ? GPIO_PIN_RESET : GPIO_PIN_SET);
 #endif
-  }else if(ch == GREEN_BUTTON){
+    break;
+  case GREEN_BUTTON:
     setLed(0, GREEN_COLOUR);
-  }else if(ch == RED_BUTTON){
+    break;
+  case RED_BUTTON:
     setLed(0, RED_COLOUR);
   }
 }
