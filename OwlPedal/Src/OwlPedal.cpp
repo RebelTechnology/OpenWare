@@ -96,13 +96,18 @@ inline int16_t getProgramSelection(){
   // it won't be running in a separate OS task. So we won't be waiting for
   // usable patch being selected. Instead of that, we return -1 for invalid
   // selection - it should be ignored by the caller.
-  // NOTE: getParameterValue is used instead of getAnalogValue to avoid
-  // dealing with the whole inverted ADC issue
+  // NOTE: Bank/prog must be static as they act as feedback values for hysteresis
+  #ifdef OWL_MODULAR
   static int bank = (4095 - getAnalogValue(PARAMETER_A)) * 5 / 4096;
   static int prog = (4095 - getAnalogValue(PARAMETER_B)) * 8 / 4096 + 1;
-  // Bank/prog must be static as they act as feedback values for hysteresis
   float a = (4095 - getAnalogValue(PARAMETER_A)) * 5 / 4096.0 - 0.5 / 5;
   float b = (4095 - getAnalogValue(PARAMETER_B)) * 8 / 4096.0 - 0.5 / 8;
+  #else
+  static int bank = getAnalogValue(PARAMETER_A) * 5 / 4096;
+  static int prog = getAnalogValue(PARAMETER_B) * 8 / 4096 + 1;
+  float a = getAnalogValue(PARAMETER_A) * 5 / 4096.0 - 0.5 / 5;
+  float b = getAnalogValue(PARAMETER_B) * 8 / 4096.0 - 0.5 / 8;
+  #endif
   //if(a - (int)a < 0.8) // deadband each segment: [0.8-1.0)
   if(a > 0 && abs(a - (int)a - 0.1) > 0.2) // deadband each segment: [0.9-1.1]
     bank = (int)a;
