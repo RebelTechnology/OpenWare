@@ -17,7 +17,7 @@ void DigitalBusHandler::sendFrame(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4
 }
 
 void DigitalBusHandler::sendFrame(uint8_t* frame){
-  serial_write(frame, 4);
+  bus_write(frame, 4);
 }
 
 uint32_t DigitalBusHandler::generateToken(){
@@ -40,6 +40,21 @@ bool DigitalBusHandler::connected(){
     break;
   }
   return status == CONNECTED;
+}
+
+const char* DigitalBusHandler::getStatusString(){
+  switch (status) {
+    case BUS_STATUS_IDLE:
+      return "IDLE";
+    case BUS_STATUS_CONNECTED:
+      return "CONNECT";
+    case BUS_STATUS_DISCOVER:
+      return "DISCO";
+    case BUS_STATUS_ERROR:
+      return "ERROR";
+    default:
+      return "UNKNOWN";
+  }
 }
 
 bool DigitalBusHandler::rxError(const char* reason){
@@ -98,7 +113,7 @@ void DigitalBusHandler::handleCommand(uint8_t cmd, int16_t data){
 }
 
 void DigitalBusHandler::sendMessage(const char* msg){
-  uint16_t len = strnlen(msg, sizeof(buffer));
+  uint16_t len = strnlen(msg, DIGITAL_BUS_BUFFER_SIZE);
   uint16_t cnt = len/3;
   while(cnt--){
     sendFrame(OWL_COMMAND_MESSAGE|peers, msg[0], msg[1], msg[2]);

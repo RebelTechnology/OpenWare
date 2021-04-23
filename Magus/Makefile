@@ -15,6 +15,7 @@ C_SRC += $(OPENWARE)/Source/HAL_Encoders.c
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
 CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
+CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
 CPP_SRC += $(OPENWARE)/Source/Graphics.cpp

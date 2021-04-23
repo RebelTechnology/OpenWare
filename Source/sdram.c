@@ -21,13 +21,13 @@
 #define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE     ((uint16_t)0x0200)
 
 void MPU_Config(void){
-  MPU_Region_InitTypeDef MPU_InitStruct;
-  
   /* Disable the MPU */
   HAL_MPU_Disable();
 
 #ifdef STM32H743xx
 #if defined USE_ICACHE || defined USE_DCACHE
+  MPU_Region_InitTypeDef MPU_InitStruct;
+
   // D2 DMA buffers - cache off, no execute
   extern char _DMA_DATA;
   MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
@@ -56,34 +56,20 @@ void MPU_Config(void){
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
   // AXISRAM D1 (+RAM) - write back with no write allocate, execute
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.BaseAddress = 0x24000000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;
+  extern char _PLUSRAM;
+  MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
+  MPU_InitStruct.BaseAddress      = (uint32_t)&_PLUSRAM ;
+  MPU_InitStruct.Size             = MPU_REGION_SIZE_512KB;
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER2;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+  MPU_InitStruct.IsBufferable     = MPU_ACCESS_BUFFERABLE;
+  MPU_InitStruct.IsCacheable      = MPU_ACCESS_CACHEABLE;
+  MPU_InitStruct.IsShareable      = MPU_ACCESS_NOT_SHAREABLE;
+  MPU_InitStruct.Number           = MPU_REGION_NUMBER2;
+  MPU_InitStruct.TypeExtField     = MPU_TEX_LEVEL0;
   MPU_InitStruct.SubRegionDisable = 0x00;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_ENABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 #endif /* USE_ICACHE || USE_DCACHE */
-#else
-  /* Configure the MPU attributes as WB for SDRAM */
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.BaseAddress = SDRAM_BANK2_ADDR;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_32MB;
-  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-  MPU_InitStruct.SubRegionDisable = 0x00;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
 #endif /* STM32H743xx */
 
   /* Enable the MPU */

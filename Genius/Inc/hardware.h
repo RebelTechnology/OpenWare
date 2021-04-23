@@ -58,7 +58,11 @@
 #define USE_UART_MIDI_TX
 #define UART_MIDI_HANDLE huart5
 #define UART_MIDI_RX_BUFFER_SIZE 256
-// Digital bus will use huart2
+// Digital bus
+#define USE_DIGITALBUS
+#define DIGITAL_BUS_ENABLED 1
+#define DIGITAL_BUS_FORWARD_MIDI 0
+#define BUS_HUART huart2
 
 #define USE_ADC
 #define ADC_PERIPH hadc1
