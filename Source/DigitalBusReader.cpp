@@ -7,6 +7,7 @@ void DigitalBusReader::appendFrame(uint8_t* frame) {}
 // read a 4-byte data frame
 // may be a bus message or a USB MIDI message
 bool DigitalBusReader::readBusFrame(uint8_t* frame) {
+#ifdef USE_DIGITALBUS
   // OWL Digital Bus Protocol
   if (isMidiFrame(frame)) {
     if (!readMidiFrame(frame))
@@ -95,6 +96,7 @@ bool DigitalBusReader::readBusFrame(uint8_t* frame) {
       return rxError("Invalid bus message");
     }
   }
+#endif
   return true;
 }
 
