@@ -64,11 +64,23 @@ void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URB
 void HAL_HCD_MspInit(HCD_HandleTypeDef* hcdHandle)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
   if(hcdHandle->Instance==USB_OTG_HS)
   {
   /* USER CODE BEGIN USB_OTG_HS_MspInit 0 */
 
   /* USER CODE END USB_OTG_HS_MspInit 0 */
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB;
+    PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+      Error_Handler();
+    }
+  /** Enable USB Voltage detector
+  */
+    HAL_PWREx_EnableUSBVoltageDetector();
 
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**USB_OTG_HS GPIO Configuration
