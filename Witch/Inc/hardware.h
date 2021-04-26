@@ -33,7 +33,7 @@
 #define ADC_G 6
 #define ADC_H 7
 #define ADC_I 8
-#define AUDIO_OUTPUT_GAIN            112
+#define AUDIO_OUTPUT_GAIN            103
 
 #define TRIG1_Pin GP7_Pin 	/* A17 */
 #define TRIG1_GPIO_Port GP7_GPIO_Port

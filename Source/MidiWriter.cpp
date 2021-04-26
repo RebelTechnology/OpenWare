@@ -10,7 +10,7 @@
 #include "ble_midi.h"
 #endif /* USE_BLE_MIDI */
 #ifdef USE_UART_MIDI_TX
-#include "uart.h"
+#include "uart_midi.h"
 #endif
 #include "SerialBuffer.hpp"
 

@@ -6,22 +6,26 @@
 #include "DigitalBusReader.h"
 #include "cmsis_os.h"
 #include "errorhandlers.h"
-#include "basicmaths.h"
 #include "Owl.h"
 
 #ifdef USE_DIGITALBUS
 
-#define DIGITAL_BUS_BUFFER_SIZE 512
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
 
 // static uint8_t busframe[4];
 DigitalBusReader bus;
-static SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf;
-static SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf;
+SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_tx_buf DMA_RAM;
+SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf DMA_RAM;
 // todo: store data in 32bit frame buffers
 uint32_t bus_tx_packets = 0;
 uint32_t bus_rx_packets = 0;
 
-static void initiateBusRead(){
+void initiateBusRead(){
 #ifndef OWL_RACK // currently we suppress all returning messages
   extern UART_HandleTypeDef BUS_HUART;
   UART_HandleTypeDef *huart = &BUS_HUART;
@@ -34,7 +38,7 @@ static void initiateBusRead(){
 #endif
 }
 
-static void initiateBusWrite(){
+void initiateBusWrite(){
   if(bus_tx_buf.notEmpty()){
     /* Check that a tx process is not already ongoing */
     extern UART_HandleTypeDef BUS_HUART;
@@ -48,38 +52,12 @@ static void initiateBusWrite(){
   }
 }
 
-extern "C" {
-  void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
-    // /* Disable TXEIE and TCIE interrupts */
-    // CLEAR_BIT(huart->Instance->CR1, (USART_CR1_TXEIE | USART_CR1_TCIE));
-    int size = huart->TxXferSize; // - huart->TxXferCount;
-    bus_tx_buf.incrementReadHead(size);
-    bus_tx_packets += size/4;
-    initiateBusWrite();
-  }
-  void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-    // what is the correct size if IDLE interrupts?
-    // int size = huart->RxXferSize - huart->RxXferCount;
-    int size = huart->RxXferSize - huart->hdmarx->Instance->NDTR;
-    bus_rx_buf.incrementWriteHead(size);
-    bus_rx_packets += size/4;
-    initiateBusRead();
-  }
-  void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
-    error(RUNTIME_ERROR, "uart error");    
-    bus.reset();
-    bus_tx_buf.reset();
-    bus_rx_buf.reset();
-  }
-
-  void serial_write(uint8_t* data, uint16_t size){
-    bus_tx_buf.push(data, size);
-  }
+void bus_write(uint8_t* data, uint16_t size){
+  bus_tx_buf.push(data, size);
 }
 
 uint8_t* bus_deviceid(){
-  // return ((uint8_t*)0x1ffff7e8); /* STM32F1 */
-  return ((uint8_t *)0x1FFF7A10); /* STM32F4, STM32F0 */ 
+  return ((uint8_t *)UID_BASE);
 }
 
 void bus_setup(){
@@ -106,7 +84,7 @@ void bus_setup(){
 
 int bus_status(){
   // incoming data
-  while(bus_rx_buf.available() >= 4){
+  while(bus_rx_buf.getReadCapacity() >= 4){
     uint8_t frame[4];
     bus_rx_buf.pull(frame, 4);
     if(frame[0] == OWL_COMMAND_RESET){

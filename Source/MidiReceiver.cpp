@@ -5,11 +5,14 @@
 #include "SerialBuffer.hpp"
 #include "errorhandlers.h"
 #ifdef USE_UART_MIDI_RX
-#include "uart.h"
+#include "uart_midi.h"
 #endif /* USE_UART_MIDI_RX */
 #ifdef USE_USB_HOST
 #include "usbh_midi.h"
 #endif /* USE_USB_HOST */
+#ifdef USE_DIGITALBUS
+#include "bus.h"
+#endif
 
 static SystemMidiReader midiSystemDevice;
 static PerformanceMidiReader midiPerformanceDevice;
@@ -18,10 +21,10 @@ static PerformanceMidiReader midiPerformanceDevice;
 static MidiStreamReader midiuart(4); // use cable number 4 for serial midi
 #endif /* USE_UART_MIDI_RX */
 
-static SerialBuffer<MIDI_INPUT_BUFFER_SIZE, MidiMessage> midi_rx_buffer;
+static SerialBuffer<MIDI_INPUT_BUFFER_SIZE, MidiMessage> midi_rx_buffer DMA_RAM;
 
 void MidiReceiver::init(){
-#ifdef USE_UART_MIDI_RX
+#if defined USE_UART_MIDI_RX
   uart_init();
 #endif /* USE_UART_MIDI_RX */
 }
@@ -65,11 +68,12 @@ extern "C" {
     for(size_t i=0; i<length; i+=4){
       if(midiSystemDevice.readMidiFrame(buffer+i)){
 #ifdef USE_DIGITALBUS
-	bus_tx_frame(buffer+i);
+        bus_tx_frame(buffer+i);
 #endif /* USE_DIGITALBUS */
-	midi_rx_buffer.push(MidiMessage(buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]));
-      }else{
-	midiSystemDevice.reset();
+        midi_rx_buffer.push(MidiMessage(buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]));
+      }
+      else{
+	      midiSystemDevice.reset();
       }
     }
   }
@@ -77,18 +81,24 @@ extern "C" {
 
 #ifdef USE_USB_HOST
   void usbh_midi_rx(uint8_t *buffer, uint32_t len){
-    for(size_t i=0; i<len; i+=4)
+    for(size_t i=0; i<len; i+=4) {
       handleMessage(MidiMessage(buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]));
+#ifdef USE_DIGITALBUS
+      bus_tx_frame(buffer+i);
+#endif /* USE_DIGITALBUS */
+    }
   }
 #endif /* USE_USB_HOST */
 
-  
 #ifdef USE_UART_MIDI_RX
   void uart_rx_callback(uint8_t* data, size_t len){
     for(size_t i=0; i<len; ++i){
       MidiMessage msg = midiuart.read(data[i]);
       if(msg.packed != 0)
-	handleMessage(msg);
+        handleMessage(msg);
+#ifdef USE_DIGITALBUS
+      bus_tx_frame(msg.data);
+#endif /* USE_DIGITALBUS */
     }
   }
 #endif /* USE_UART_MIDI_RX */

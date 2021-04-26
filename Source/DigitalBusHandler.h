@@ -4,7 +4,7 @@
 #include "bus.h"
 #include "MidiReader.h"
 
-class DigitalBusHandler : public PerformanceMidiReader {
+class DigitalBusHandler : public SystemMidiReader {
 public:
   enum DigitalBusStatus {
     IDLE = BUS_STATUS_IDLE,
@@ -29,6 +29,7 @@ public:
   DigitalBusStatus getStatus(){
     return status;
   }
+  const char* getStatusString();
   uint32_t generateToken();
   uint8_t getPeers(){ return peers; }
   void startDiscover();

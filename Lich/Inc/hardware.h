@@ -22,6 +22,11 @@
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
 
+#define USE_DIGITALBUS
+#define BUS_HUART huart2
+#define DIGITAL_BUS_ENABLED 1
+#define DIGITAL_BUS_FORWARD_MIDI 0
+
 #define USE_BKPSRAM
 
 #define ADC_A 0
