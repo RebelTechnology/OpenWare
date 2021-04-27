@@ -205,8 +205,9 @@ OperationMode Owl::getOperationMode(){
 }
 
 void Owl::setOperationMode(OperationMode mode){
-  onChangeMode(mode, operationMode);
+  OperationMode old_mode = operationMode;
   operationMode = mode;
+  onChangeMode(mode, old_mode);
 }
 
 void Owl::loop(){
