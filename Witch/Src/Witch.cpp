@@ -80,39 +80,39 @@ public:
 
 TakeoverControls<10, int16_t> takeover;
 int16_t dac_values[2] = {0, 0};
+uint8_t patchselect;
 
-void onChangePin(uint16_t pin){
+bool updatePin(size_t bid, Pin pin){
+  // button id 'bid' goes from 1 to 4
+  bool state = !pin.get();
   if(owl.getOperationMode() == RUN_MODE){
-    switch(pin){
-    case SW1_Pin:
-      {
-	bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
-	setButtonValue(PUSHBUTTON, state);
-	setButtonValue(BUTTON_A, state);
-	setLed(7, state ? RED_COLOUR : NO_COLOUR);
-	break;
+    setButtonValue(bid+3, state);
+    setLed(bid+6, state ? RED_COLOUR : NO_COLOUR);
+  }else if(owl.getOperationMode() == CONFIGURE_MODE && state){
+    if(patchselect == bid){
+      if(bid+4 <  registry.getNumberOfPatches()){
+	patchselect = bid+4;
       }
-    case SW2_Pin:
-      {
-	bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
-	setButtonValue(BUTTON_B, state);
-	setLed(8, state ? RED_COLOUR : NO_COLOUR);
-	break;
+    }else{
+      if(bid < registry.getNumberOfPatches()){
+	patchselect = bid;
       }
-    case SW3_Pin:
-      {
-	bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
-	setButtonValue(BUTTON_C, state);
-	setLed(9, state ? RED_COLOUR : NO_COLOUR);
-	break;
-      }
-    // case SW4_Pin:
-    //   {
-    // 	bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
-    // 	setButtonValue(BUTTON_D, state);
-    // 	break;
-    //   }
     }
+  }
+  return state;
+}
+  
+void onChangePin(uint16_t pin){
+  switch(pin){
+  case SW1_Pin:
+    setButtonValue(PUSHBUTTON, updatePin(1, sw1));
+    break;
+  case SW2_Pin:
+    updatePin(2, sw2);
+    break;
+  case SW3_Pin:
+    updatePin(3, sw3);
+    break;
   }
 }
 
@@ -176,6 +176,18 @@ void initLed(){
   HAL_TIM_PWM_Start(&htim13, TIM_CHANNEL_1);
 }
 
+void setButtonLed(Pin pin, uint32_t rgb){
+  if(rgb == RED_COLOUR){
+    ledpwm.high();
+    pin.low();
+  }else if(rgb == YELLOW_COLOUR){
+    ledpwm.low();
+    pin.high();
+  }else{
+    pin.set(ledpwm.get());
+  }
+}
+
 void setLed(uint8_t led, uint32_t rgb){
   uint32_t value = 1023 - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
   switch(led){
@@ -200,48 +212,16 @@ void setLed(uint8_t led, uint32_t rgb){
     TIM1->CCR1 = value;
     break;
   case 7:
-    if(rgb == RED_COLOUR){
-      ledpwm.high();
-      led7.low();
-    }else if(rgb == YELLOW_COLOUR){
-      ledpwm.low();
-      led7.high();
-    }else{
-      led7.set(ledpwm.get());
-    }
+    setButtonLed(led7, rgb);
     break;
   case 8:
-    if(rgb == RED_COLOUR){
-      ledpwm.high();
-      led8.low();
-    }else if(rgb == YELLOW_COLOUR){
-      ledpwm.low();
-      led8.high();
-    }else{
-      led8.set(ledpwm.get());
-    }
+    setButtonLed(led8, rgb);
     break;
   case 9:
-    if(rgb == RED_COLOUR){
-      ledpwm.high();
-      led9.low();
-    }else if(rgb == YELLOW_COLOUR){
-      ledpwm.low();
-      led9.high();
-    }else{
-      led9.set(ledpwm.get());
-    }
+    setButtonLed(led9, rgb);
     break;
   case 10:
-    if(rgb == RED_COLOUR){
-      ledpwm.high();
-      led10.low();
-    }else if(rgb == YELLOW_COLOUR){
-      ledpwm.low();
-      led10.high();
-    }else{
-      led10.set(ledpwm.get());
-    }
+    setButtonLed(led10, rgb);
     break;
   }
 }
@@ -321,7 +301,6 @@ static void update_preset(){
   }
   case RUN_MODE:
     if(isModeButtonPressed()){
-      takeover.reset(false);
       owl.setOperationMode(CONFIGURE_MODE);
     }else if(getErrorStatus() != NO_ERROR){
       owl.setOperationMode(ERROR_MODE);
@@ -329,42 +308,23 @@ static void update_preset(){
     break;
   case CONFIGURE_MODE:
     if(isModeButtonPressed()){
-      uint8_t patchselect = program.getProgramIndex();
-      if(!sw1.get())
-      	patchselect = 1;
-      else if(!sw2.get())
-      	patchselect = 2;
-      else if(!sw3.get())
-      	patchselect = 3;
-      else if(!sw4.get())
-      	patchselect = 4;
-      if(patchselect >= registry.getNumberOfPatches())
-	patchselect = program.getProgramIndex();
-      for(int i=0; i<4; ++i){
-	// if(getButtonValue(BUTTON_A+i))
-	//   patchselect = i+1;
-	if(patchselect == i+1)
-	  setLed(7+i, YELLOW_COLOUR);
+      for(int i=1; i<=4; ++i){
+	if(patchselect == i)
+	  setLed(6+i, YELLOW_COLOUR);
+	else if(patchselect == i+4)
+	  setLed(6+i, RED_COLOUR);
 	else
-	  setLed(7+i, NO_COLOUR);
-      }
-      if(program.getProgramIndex() != patchselect){
-	program.loadProgram(patchselect); // enters load mode
-	program.resetProgram(false);
-	owl.setOperationMode(CONFIGURE_MODE);
-	dac_values[0] = dac_values[1] = 0; // reset CV outputs to initial values
+	  setLed(6+i, NO_COLOUR);
       }
       if(takeover.taken(9)){
-	int16_t value = takeover.get(9)>>5;
-	settings.audio_output_gain = value;
-	codec.setOutputGain(value);
+	uint8_t value = takeover.get(9)>>5;
+	if(settings.audio_output_gain != value){
+	  settings.audio_output_gain = value;
+	  codec.setOutputGain(value);
+	}
       }
     }else{
-      takeover.reset(false);
       owl.setOperationMode(RUN_MODE);
-      // reset CV outputs to previous values
-      setAnalogValue(PARAMETER_F, dac_values[0]);
-      setAnalogValue(PARAMETER_G, dac_values[1]);
     }
     break;
   case ERROR_MODE:
@@ -390,6 +350,21 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
     setLed(i, NO_COLOUR);
   setGateValue(BUTTON_E, 0); // this will only have an effect in RUN mode
   setGateValue(BUTTON_F, 0);
+  if(new_mode == CONFIGURE_MODE){
+    takeover.reset(false);
+    patchselect = program.getProgramIndex();
+  }else if(old_mode == CONFIGURE_MODE){
+    if(program.getProgramIndex() != patchselect &&
+       patchselect < registry.getNumberOfPatches()){
+      program.loadProgram(patchselect); // enters load mode
+      program.resetProgram(false);
+      dac_values[0] = dac_values[1] = 0; // reset CV outputs to initial values
+    }
+    // reset CV outputs to previous values
+    setAnalogValue(PARAMETER_F, dac_values[0]);
+    setAnalogValue(PARAMETER_G, dac_values[1]);
+    takeover.reset(false);
+  }
   counter = 0;
 }
 
@@ -400,14 +375,14 @@ void setup(){
    for(size_t i=5; i<9; ++i)
     takeover.set(i, 2048); // set CV attenuation to 1
   takeover.set(9, settings.audio_output_gain<<5);
+  patchselect = program.getProgramIndex();
 }
 
 void loop(void){
   MX_USB_HOST_Process(); // todo: enable PWR management
-  bool state = !sw4.get(); // HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
+  bool state = !sw4.get();
   if(state != getButtonValue(BUTTON_D)){
-    setButtonValue(BUTTON_D, state);
-    setLed(10, state ? RED_COLOUR : NO_COLOUR);
+    updatePin(4, sw4);
   }
   update_preset();
   owl.loop();
