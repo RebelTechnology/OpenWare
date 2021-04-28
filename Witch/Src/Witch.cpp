@@ -231,7 +231,8 @@ bool isModeButtonPressed(){
 }
 
 int16_t getAttenuatedCV(uint8_t index, uint16_t* adc_values){
-  return Q15_MUL_Q15(adc_values[index*2], takeover.get(index+5)<<1);
+  // Q12 multiplication
+  return (uint32_t(adc_values[index*2]) * uint32_t(takeover.get(index+5)<<1)) >> 12;
 }
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
