@@ -3,6 +3,7 @@
 
 #include "PatchDefinition.hpp"
 #include "ProgramHeader.h"
+#include "Storage.h"
 
 class DynamicPatchDefinition : public PatchDefinition {
 private:
@@ -10,20 +11,14 @@ private:
   ProgramFunction programFunction;
   uint32_t* linkAddress;
   uint32_t* jumpAddress;
-  uint32_t* programAddress;
   uint32_t programSize;
   ProgramHeader* header;
   char programName[24];
-public:
-  DynamicPatchDefinition() :
-    PatchDefinition(programName, 2, 2) {}
-  DynamicPatchDefinition(void* addr, uint32_t sz) :
-    PatchDefinition(programName, 2, 2) {
-    load(addr, sz);
-  }
-  bool load(void* addr, uint32_t sz){
-    programAddress = (uint32_t*)addr;
-    header = (ProgramHeader*)addr;
+  Resource* sourceResource = NULL;
+  void* sourceAddress = NULL;
+  
+  bool load(ProgramHeader* header, uint32_t sz){
+    this->header = header;
     linkAddress = header->linkAddress;
     programSize = (uint32_t)header->endAddress - (uint32_t)header->linkAddress;
     if(sz != programSize)
@@ -37,16 +32,46 @@ public:
     return true;
   }
   void copy(){
-    /* copy program to ram */
-    memcpy((void*)linkAddress, (void*)programAddress, programSize);
-    programAddress = linkAddress;
+    if(sourceResource){
+      if(sourceResource->isMemoryMapped()){
+	/* copy program to ram */
+	memcpy(linkAddress, sourceResource->getData(), programSize);
+      }else{
+	storage.readResource(sourceResource, linkAddress, programSize);
+      }
+    }else if(sourceAddress){
+      memcpy(linkAddress, sourceAddress, programSize);
+    }
+  }
+public:
+  DynamicPatchDefinition() :
+    PatchDefinition(programName, 2, 2) {}
+  // called on program load from flash
+  bool load(Resource* resource){
+    sourceAddress = NULL;
+    sourceResource = resource;
+    if(resource->isMemoryMapped()){
+      return load((ProgramHeader*)resource->getData(), resource->getDataSize());
+    }else{
+      ProgramHeader header;
+      storage.readResource(resource, &header, sizeof(header));
+      return load(&header, resource->getDataSize());
+    }
+    return false;
+  }
+  // called on program RUN from RAM
+  bool load(void* address, uint32_t sz){
+    sourceAddress = address;
+    sourceResource = NULL;
+    ProgramHeader* header = (ProgramHeader*)address;
+    return load(header, sz);
   }
   bool verify(){
     // check we've got an entry function
     if(programFunction == NULL)
       return false;
     // check magic
-    if((*(uint32_t*)programAddress & 0xffffff00) != 0xDADAC000) // was: != 0xDADAC0DE
+    if((*(uint32_t*)linkAddress) != 0xDADAC0DE)
       return false;
     extern char _PATCHRAM, _PATCHRAM_SIZE;
     if((linkAddress == (uint32_t*)&_PATCHRAM && programSize <= (uint32_t)(&_PATCHRAM_SIZE)))
@@ -59,8 +84,7 @@ public:
     return false;
   }
   void run(){
-    if(linkAddress != programAddress)
-      copy();
+    copy();
     programFunction();
   }
   uint32_t getProgramSize(){

@@ -7,6 +7,7 @@
 #include "ApplicationSettings.h"
 #include "errorhandlers.h"
 #include "VersionToken.h"
+#include "ProgramHeader.h"
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
@@ -307,22 +308,28 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t slot = loader.decodeInt(data);
-    if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
+    if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES){
       data = loader.getData();
       size_t datasize = loader.getSize();
-      char name[] = "patch00";
-      name[5] = '0'+((slot*10)%10);
-      name[6] = '0'+(slot%10);
+      // char name[] = "patch00";
+      // name[5] = '0'+((slot*10)%10);
+      // name[6] = '0'+(slot%10);
       memmove(data+sizeof(ResourceHeader), data, datasize); // make space for resource header
-      storage.writeResourceHeader(data, name, datasize, RESOURCE_USER_PATCH|slot);
-      program.saveToFlash(0, data, datasize+sizeof(ResourceHeader));
-      loader.clear();
+      ProgramHeader* header = (ProgramHeader*)(data+sizeof(ResourceHeader));
+      if(header->magic == 0XDADAC0DE){	
+	storage.writeResourceHeader(data, header->programName, datasize,
+				    RESOURCE_PORT_MAPPED|RESOURCE_USER_PATCH|slot);
+	program.saveToFlash(0, data, datasize+sizeof(ResourceHeader));
+      }else{
+	error(PROGRAM_ERROR, "Invalid patch magic");
+      }
     }else{
       error(PROGRAM_ERROR, "Invalid STORE slot");
     }
   }else{
     error(PROGRAM_ERROR, "Invalid STORE command");
   }
+  loader.clear();
 }
 
 void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){

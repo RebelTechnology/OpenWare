@@ -412,6 +412,7 @@ void programFlashTask(void* p){
   }else{
     ResourceHeader* header = (ResourceHeader*)flashAddressToWrite;
     storage.writeResource(header);
+    registry.init();
     if(index > MAX_NUMBER_OF_PATCHES){
       onResourceUpdate();
     }else{
@@ -440,7 +441,6 @@ void eraseFlashTask(void* p){
     storage.eraseResource(resource);
   }
   taskEXIT_CRITICAL();
-  storage.init();
   registry.init();
   settings.init();
   if(slot > MAX_NUMBER_OF_PATCHES)

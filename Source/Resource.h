@@ -15,6 +15,12 @@
 #define RESOURCE_ERASED_MAGIC    0xDADA0000
 #define RESOURCE_FREE_MAGIC      0xffffffff
 
+#define INTERNAL_FLASH_BEGIN ((uint32_t)&_FLASH_STORAGE_BEGIN)
+#define INTERNAL_FLASH_END   ((uint32_t)&_FLASH_STORAGE_END)
+#define INTERNAL_FLASH_SIZE  (INTERNAL_FLASH_END - INTERNAL_FLASH_BEGIN)
+extern char _FLASH_STORAGE_BEGIN;
+extern char _FLASH_STORAGE_END;
+
 class Resource {
 private:
   ResourceHeader* header;
@@ -31,25 +37,27 @@ public:
     return header && header->magic == RESOURCE_FREE_MAGIC;
   }
   bool isPatch(){
-    return header->flags & RESOURCE_USER_PATCH;
+    return isValid() && (header->flags & RESOURCE_USER_PATCH);
   }
   bool isMemoryMapped(){
-    return header->flags & RESOURCE_MEMORY_MAPPED;
+    // we can't look at the flags because they will be all ones if isFree() is true
+    return uint32_t(header) >= INTERNAL_FLASH_BEGIN && uint32_t(header) < INTERNAL_FLASH_END;
+    // return isValid() && (header->flags & RESOURCE_MEMORY_MAPPED);
   }
   bool isSystemResource(){
-    return header->flags & RESOURCE_SYSTEM_RESOURCE;
+    return isValid() && (header->flags & RESOURCE_SYSTEM_RESOURCE);
   }
   /*
    * Returns true if resource only has flags that are set in @param mask
    */
   bool flagsMatch(uint32_t mask){
-    return (header->flags & mask) == header->flags;
+    return isValid() && (header->flags & mask) == header->flags;
   }
   /*
    * Returns true if resource has at least those flags that are set in @param mask
    */
   bool flagsContain(uint32_t mask){
-    return (header->flags & mask) == mask;
+    return isValid() && (header->flags & mask) == mask;
   }
   /**
    * Get data pointer to memory-mapped resource

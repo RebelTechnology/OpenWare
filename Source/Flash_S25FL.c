@@ -306,7 +306,7 @@ void Flash_S25FL_init (SPI_HandleTypeDef *spiconfig)
 	// Copy SPI configuration to local variable
 	FLASH_SPIConfig = spiconfig;
 		
-	Flash_Deselect();		  			// Deslect chip
+	Flash_Deselect();		  			// Deselect chip
 	Flash_Release();	  				// Disable Hold
 	Flash_WP_Enable();		  		// Enable Write Protect
 }

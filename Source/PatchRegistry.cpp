@@ -166,10 +166,16 @@ const char* PatchRegistry::getResourceName(unsigned int index){
 }
 
 const char* PatchRegistry::getPatchName(unsigned int index){
-  PatchDefinition* def = getPatchDefinition(index);
-  if(def == NULL)
-    return emptyPatch.getName();
-  return def->getName();
+  if(index == 0){
+    PatchDefinition *def = dynamicPatchDefinition;
+    if(def)
+      return def->getName();    
+  }else{
+    Resource* resource = getPatch(index-1);
+    if(resource)
+      return resource->getName();
+  }
+  return emptyPatch.getName();
 }
 
 unsigned int PatchRegistry::getNumberOfPatches(){
@@ -195,8 +201,7 @@ PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
     static DynamicPatchDefinition flashPatch;
     Resource* resource = patches[index];
     if(resource && resource->isValid()){
-      flashPatch.load(resource->getData(), resource->getDataSize());
-      if(flashPatch.verify())
+      if(flashPatch.load(resource) && flashPatch.verify())
         def = &flashPatch;
     }
   }

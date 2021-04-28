@@ -29,7 +29,6 @@ void Flash_writeString(unsigned long address, unsigned char *string);
 unsigned char Flash_readStatusReg (unsigned char reg);
 void Flash_writeStatusReg (unsigned char reg, unsigned char data);
 void Flash_S25FL_init(SPI_HandleTypeDef *spiconfig);
-void Flash_S25FL_Test(void);
 
 /* 4kByte subsector 64kByte sector */
 void Flash_erase (uint32_t address, uint8_t cmd);

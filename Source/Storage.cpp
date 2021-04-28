@@ -5,15 +5,12 @@
 #include "Storage.h"
 #include "eepromcontrol.h"
 
-extern char _FLASH_STORAGE_BEGIN;
-extern char _FLASH_STORAGE_END;
-#define INTERNAL_FLASH_BEGIN ((uint32_t)&_FLASH_STORAGE_BEGIN)
-#define INTERNAL_FLASH_END   ((uint32_t)&_FLASH_STORAGE_END)
-#define INTERNAL_FLASH_SIZE  (INTERNAL_FLASH_END - INTERNAL_FLASH_BEGIN)
-
 #ifdef USE_SPI_FLASH
 #include "Flash_S25FL.h"
 #define MAX_SPI_FLASH_HEADERS 32
+
+extern char _FLASH_STORAGE_BEGIN;
+extern char _FLASH_STORAGE_END;
 
 struct NorHeader : ResourceHeader {
   uint32_t address;
@@ -24,33 +21,44 @@ static NorHeader nor_index[MAX_SPI_FLASH_HEADERS];
 
 Storage storage;
 
+void Storage::init(){
+#ifdef USE_SPI_FLASH
+  extern SPI_HandleTypeDef SPI_FLASH_HSPI;
+  Flash_S25FL_init(&SPI_FLASH_HSPI);
+  memset(nor_index, 0, sizeof(nor_index));
+#endif
+  index();
+}
+
 void Storage::index(){
   memset(resources, 0, sizeof(resources));
   size_t i = 0;
 #ifdef USE_FLASH
   resources[i].setHeader((ResourceHeader*)(INTERNAL_FLASH_BEGIN));
-  while(i<MAX_RESOURCE_HEADERS && !resources[i].isFree()){
-    ResourceHeader* next = resources[i++].getNextHeader();
-    resources[i].setHeader(next);
-    // if(resources[i].isErased())
-    //   resources[i].setHeader(next); // reuse current resource
-    // else if(i+1<MAX_RESOURCE_HEADERS)
-    //   resources[++i].setHeader(next);
+  // while(i<MAX_RESOURCE_HEADERS && !resources[i].isFree()){
+  while(i<MAX_RESOURCE_HEADERS && resources[i].isValid()){
+    ResourceHeader* next = resources[i].getNextHeader();
+    resources[i++].setHeader(next);
   }
+  if(!resources[i].isFree())
+    error(FLASH_ERROR, "Invalid flash resource");
 #endif
 #ifdef USE_SPI_FLASH
   uint32_t address = 0;
   NorHeader* header = &nor_index[0];
+  header->address = address;
   do{
     Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+    resources[++i].setHeader(header++);
+    address += resources[i].getTotalSize();
     header->address = address;
-    resources[i].setHeader(header++);
-    address += resources[i++].getTotalSize();
-  }while(i<MAX_RESOURCE_HEADERS && !resources[i].isFree()
+  }while(i<MAX_RESOURCE_HEADERS && resources[i].isValid()
 	 && header < &nor_index[MAX_SPI_FLASH_HEADERS]);
+  if(!resources[i].isFree())
+    error(FLASH_ERROR, "Invalid SPI resource");
   // todo: also check address < sizeof flash
 #endif
-  resource_count = i;
+  resource_count = i+1;
 }
 
 size_t Storage::readResource(Resource* resource, void* data, size_t length){
@@ -70,6 +78,13 @@ size_t Storage::readResource(Resource* resource, void* data, size_t length){
     }
   }
   return ret;    
+}
+
+bool Storage::eraseResource(const char* name){
+  Resource* resource = getResource(name);
+  if(resource)
+    return eraseResource(resource);
+  return false;
 }
 
 // mark as deleted
@@ -104,7 +119,7 @@ bool Storage::eraseResource(Resource* resource){
  */
 Resource* Storage::getResource(const char* name){
   for(size_t i=0; i<resource_count; ++i){
-    if((resources[i].isValid())
+    if(resources[i].isValid()
        && strcmp(name, resources[i].getName()) == 0)
       return &resources[i];
   }
@@ -112,9 +127,28 @@ Resource* Storage::getResource(const char* name){
 }
 
 Resource* Storage::getFreeResource(uint32_t flags){
+//   size_t i = 0;
+//   Resource* resource = NULL;
+// #ifdef USE_FLASH
+//   for(size_t i=0; i<MAX_RESOURCE_HEADERS; ++i){
+//     if(resources[i]->isFree()) // get first free resource
+//       resource = resources[i++];
+//   }
+//   if(flags & RESOURCE_MEMORY_MAPPED)
+//     return resource;
+// #endif
+// #ifdef USE_SPI_FLASH
+//   for(; i<MAX_RESOURCE_HEADERS; ++i){
+//     if(resources[i]->isFree())
+//       resource = resources[i++];
+//   }
+//   if(flags & RESOURCE_PORT_MAPPED)
+//     return resource;
+// #endif
+  bool mapped = flags & RESOURCE_MEMORY_MAPPED;
   for(size_t i=0; i<MAX_RESOURCE_HEADERS; ++i)
-    if(resources[i].isFree() && resources[i].flagsContain(flags))
-      return &resources[i]; // todo: check there's enough space
+    if(resources[i].isFree() && resources[i].isMemoryMapped() == mapped)
+      return &resources[i];
   return NULL;
 }
 
@@ -133,6 +167,7 @@ void Storage::erase(uint32_t flags){
     Flash_BulkErase();
   }
 #endif
+  index();
 }
 
 void Storage::defrag(void* buffer, size_t size, uint32_t flags){
@@ -184,35 +219,49 @@ size_t Storage::writeResourceHeader(uint8_t* dest, const char* name, size_t size
 
 // assume 'data' and 'length' already include ResourceHeader
 size_t Storage::writeResource(const char* name, uint8_t* data, size_t length, uint32_t flags){
-  Resource* dest = getResource(name);
-  if(dest)
-    eraseResource(dest); // mark as deleted
-  dest = getFreeResource(flags);
   writeResourceHeader(data, name, length, flags);  
+  return writeResource((ResourceHeader*)data);
+}
+
+size_t Storage::writeResource(ResourceHeader* header){
+  size_t length = Resource(header).getTotalSize();
+  uint32_t flags = header->flags;
+  uint8_t* data = (uint8_t*)header;
+  eraseResource(header->name); // mark as deleted if it exists
   size_t capacity = getFreeSize(flags);
-  if(length > capacity){ // assuming 'data' is located in extram
-    extern char _EXTRAM, _EXTRAM_SIZE;
+  if(length > capacity){ // assuming 'header' is located in extram
+    extern char _EXTRAM_SIZE;
     defrag(data + length, _EXTRAM_SIZE - length, flags);
   }
-  
+  Resource* dest = getFreeResource(flags);
+  if(!dest){
+    error(FLASH_ERROR, "No free resources");
+    return 0;
+  }
+
   // 1. if exists, erase
   // 2. if no space, defrag
   // 3. write
   // 4. verify
   // 5. rebuild index
-  
+
+  int status = -1;
 #ifdef USE_SPI_FLASH
-  if(!(flags & RESOURCE_MEMORY_MAPPED)){
+  if(!dest->isMemoryMapped()){
     uint32_t address = dest->getAddress();
     Flash_write(address, data, length);
-    // todo: read back and verify
-    return length;
+    status = 0;
   }
 #endif
-  eeprom_unlock();
-  eeprom_wait();
-  int status = eeprom_write_block((uint32_t)dest->getData(), data, length);
-  eeprom_lock();
+#ifdef USE_SPI_FLASH
+  if(dest->isMemoryMapped()){
+    eeprom_unlock();
+    eeprom_wait();
+    status = eeprom_write_block((uint32_t)dest->getData(), data, length);
+    eeprom_lock();
+  }
+#endif
+  index(); // rebuild index
   if(status){
     error(FLASH_ERROR, "Flash write failed");
     return 0;
@@ -221,12 +270,11 @@ size_t Storage::writeResource(const char* name, uint8_t* data, size_t length, ui
     error(FLASH_ERROR, "Size verification failed");
     return 0;
   }
-  if(memcmp(data, dest->getData(), length) != 0){
+  if(dest->isMemoryMapped() && memcmp(data, dest->getData(), length) != 0){
+    // todo: verify port mapped data
     error(FLASH_ERROR, "Data verification failed");
     return 0;
   }
-  // rebuild index
-  index();
   return length;
 }
 
