@@ -4,9 +4,6 @@
 // ____ SPI Config 
 SPI_HandleTypeDef* FLASH_SPIConfig;
 
-// ____ Test Variables
-unsigned char ucTestData, rgTestData[255];
-
 //_____ Byte and String Functions
 unsigned char Flash_readByte(unsigned long address)
 {
@@ -70,11 +67,98 @@ void Flash_writeByte(unsigned long address, unsigned char data)
 	while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
 }
 
+void Flash_read(uint32_t address, uint8_t* data, size_t length){
+  uint8_t rgAddress[3];
+  uint8_t ucInstruction;
+
+  Flash_Select();
+	
+  __nop();__nop();__nop();
+/* The address can start at any byte location of the memory array. The address is automatically incremented to the next higher address */
+/* in sequential order after each byte of data is shifted out. The entire memory can therefore be read out with one single read */
+/* instruction and address 000000h provided. When the highest address is reached, the address counter will wrap around and roll back */
+/* to 000000h, allowing the read sequence to be continued indefinitely. */
+
+  /* There is also a FAST_READ 0xb instruction which requires dummy cycles after address, 
+     default 8 cycles */
+
+  // Build address array
+  rgAddress[0] = (address & 0xFF0000) >> 16;
+  rgAddress[1] = (address & 0x00FF00) >> 8;
+  rgAddress[2] = (address & 0x0000FF) >> 0;
+
+#if 1
+  // READ 1-1-1, 0x03, no dummy cycles, up to 50Mhz
+  ucInstruction = INST_READ_EN;
+  Flash_WP_Disable(); // why?
+  // Send and receive data
+  HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
+  HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
+  HAL_SPI_Receive(FLASH_SPIConfig,  data, length, 100);
+  Flash_WP_Enable(); // why?
+#else // if this works, turn SPI speed up to max 108MHz
+  // FAST_READ 1-1-1, 0x0b, up to 108Mhz
+  ucInstruction = INST_FAST_READ_EN;
+  HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
+  HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
+  HAL_SPI_Receive(FLASH_SPIConfig,  data, 1, 100); // 8 dummy cycles
+  HAL_SPI_Receive(FLASH_SPIConfig,  data, length, 100);
+#endif
+  
+  Flash_Deselect();
+}
+
+// address must be on a 256-byte boundary
+/* The Page Program command accepts from 1-byte up to 256 consecutive bytes of data (page) to be programmed in one operation. Programming means that bits can either be left at 1, or programmed from 1 to 0. Changing bits from 0 to 1 requires an erase operation. */  
+void Flash_write(uint32_t address, uint8_t* data, size_t length){
+  uint8_t rgAddress[3];
+
+  // PP Page Program 1-1-1, 0x02, up to 108Mhz
+  uint8_t ucInstruction = INST_PAGE_PROGRAM;
+		
+  _Flash_writeEN();
+  Flash_WP_Disable();
+	
+  // wait for write enable latch WEL
+  while (!(Flash_readStatusReg(1) & 0x02)){}
+
+  while(length){
+    size_t len = min(256, length);
+
+    // Build address array
+    rgAddress[0] = (address & 0xFF0000) >> 16;
+    rgAddress[1] = (address & 0x00FF00) >> 8;
+    rgAddress[2] = (address & 0x0000FF) >> 0;
+
+    Flash_Select();
+    __nop();__nop();__nop();
+
+    // Send and receive data
+    HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
+    HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
+    HAL_SPI_Transmit(FLASH_SPIConfig, data, len, 100);
+
+    __nop();__nop();__nop();
+    Flash_Deselect();
+
+    length -= len;
+    data += len;
+    address += len;
+
+    // Wait for write to finish
+    while (Flash_readStatusReg(1) & 0x01){}
+  }
+	
+  Flash_WP_Enable();
+		
+  // Check that the write enable latch has been cleared
+  while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
+}
+
 void Flash_writeString(unsigned long address, unsigned char *string)
 {
-	unsigned char rgAddress[3] = "", rgString[255];
+	unsigned char rgAddress[3] = "", rgString[256];
 	unsigned char ucData, ucInstruction = INST_PAGE_PROGRAM;
-	unsigned char ucTest;
 	
 	strcpy(rgString, string);
 		
@@ -109,7 +193,7 @@ void Flash_writeString(unsigned long address, unsigned char *string)
 
 void Flash_readString(unsigned long address, unsigned char *rxBuffer, unsigned char length)
 {
-	unsigned char rgAddress[3] = "", ucData[255] = "";
+	unsigned char rgAddress[3] = "", ucData[256] = "";
 	unsigned char ucInstruction = INST_READ_EN;
 		
 	// Build address array
@@ -202,50 +286,8 @@ void Flash_S25FL_init (SPI_HandleTypeDef *spiconfig)
 	Flash_WP_Enable();		  		// Enable Write Protect
 }
 
-void Flash_S25FL_Test(void)
-{
-	unsigned short usiMemLoc = 0;
-	unsigned char ucTestNumber = 1;
-	
-	switch (ucTestNumber)
-	{
-		// Byte read
-		case 0:
-			ucTestData = Flash_readByte(usiMemLoc);
-			break;
-		
-		// Byte read & write
-		case 1:
-			Flash_writeByte(usiMemLoc, 0xAB);
-			ucTestData = Flash_readByte(usiMemLoc);
-			break;
-		
-		// String read & write
-		case 2:
-			Flash_writeString(usiMemLoc, "Testing Testing 123");
-			Flash_readString(usiMemLoc, rgTestData, 20);
-			break;
-		
-		// 4k SubSector Erase
-		case 10:
-			Flash_SubSectorErase(0);
-			break;
-		
-		// 64k Sector Erase
-		case 11:
-			Flash_SectorErase(0);
-			break;
-		
-		// Bulk Erase
-		case 12:
-			Flash_BulkErase();
-			break;
-	}
-
-	__nop();
-}
-
 //_____ Erase Functions 
+/* entire chip erase */
 void Flash_BulkErase (void)
 {	
 	unsigned char ucInstruction = INST_ERASE_CHIP;
@@ -269,6 +311,30 @@ void Flash_BulkErase (void)
 	
 	// Check that the write enable latch has been cleared
 	while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();__nop();}
+}
+
+/* individual 4 KB sector erase, 32 KB half block sector, 64 KB block sector erase */		
+void Flash_erase(uint32_t address, uint8_t cmd){
+  // Build address array
+  rgAddress[0] = (address & 0xFF0000) >> 16;
+  rgAddress[1] = (address & 0x00FF00) >> 8;
+  rgAddress[2] = (address & 0x0000FF) >> 0;
+	
+  _Flash_writeEN();
+  Flash_WP_Disable();
+  Flash_Select();
+	
+  HAL_SPI_Transmit(FLASH_SPIConfig, &cmd, 1, 100);
+  HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
+	
+  Flash_WP_Enable();
+  Flash_Deselect();
+	
+  // Wait for write to finish
+  while (Flash_readStatusReg(1) & 0x01){}
+	
+  // Check that the write enable latch has been cleared
+  while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
 }
 
 void Flash_SectorErase (unsigned char index)

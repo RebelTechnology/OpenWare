@@ -19,3 +19,4 @@ CPP_SRC += $(OPENWARE)/Source/BootloaderStorage.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiReceiver.cpp
+CPP_SRC += $(OPENWARE)/Source/Storage.cpp

@@ -75,6 +75,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
 #ifdef USE_EXTERNAL_RAM
   extern char _EXTRAM_END, _FLASH_STORAGE_SIZE;
   if(size > storage.getFreeSize())
+    // use last part of ext ram to ensure we don't clobber the data we want to store
     storage.defrag(
       (uint8_t*)&_EXTRAM_END - (uint32_t)(&_FLASH_STORAGE_SIZE),
       (uint32_t)(&_FLASH_STORAGE_SIZE));
