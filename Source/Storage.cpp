@@ -127,24 +127,6 @@ Resource* Storage::getResource(const char* name){
 }
 
 Resource* Storage::getFreeResource(uint32_t flags){
-//   size_t i = 0;
-//   Resource* resource = NULL;
-// #ifdef USE_FLASH
-//   for(size_t i=0; i<MAX_RESOURCE_HEADERS; ++i){
-//     if(resources[i]->isFree()) // get first free resource
-//       resource = resources[i++];
-//   }
-//   if(flags & RESOURCE_MEMORY_MAPPED)
-//     return resource;
-// #endif
-// #ifdef USE_SPI_FLASH
-//   for(; i<MAX_RESOURCE_HEADERS; ++i){
-//     if(resources[i]->isFree())
-//       resource = resources[i++];
-//   }
-//   if(flags & RESOURCE_PORT_MAPPED)
-//     return resource;
-// #endif
   bool mapped = flags & RESOURCE_MEMORY_MAPPED;
   for(size_t i=0; i<MAX_RESOURCE_HEADERS; ++i)
     if(resources[i].isFree() && resources[i].isMemoryMapped() == mapped)
@@ -184,28 +166,21 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
       }
     }
   }
+  erase(flags);
   if(flags & RESOURCE_MEMORY_MAPPED){
-    erase(flags);
+#ifdef USE_FLASH
     eeprom_unlock();
     eeprom_write_block(INTERNAL_FLASH_BEGIN, buffer, offset);
     eeprom_lock();
+#endif
   }else{
-    erase(flags);
+#ifdef USE_SPI_FLASH
     // Flash_erase(address, ERASE_64KB);
     Flash_write(0, (uint8_t*)buffer, offset);
+#endif
   }
   index();
 }
-
-// Resource* Storage::createResource(const char* name, size_t length, uint32_t flags){
-//   Resource resource = getFreeResource(flags);
-//   if(resource){
-//     resource->setName(name);
-//     resource->getHeader()->length = length;
-//     resource->getHeader()->flags = flags;
-//   }
-//   return resource;
-// }
 
 size_t Storage::writeResourceHeader(uint8_t* dest, const char* name, size_t size, uint32_t flags){
   ResourceHeader header;
@@ -226,6 +201,9 @@ size_t Storage::writeResource(const char* name, uint8_t* data, size_t length, ui
 size_t Storage::writeResource(ResourceHeader* header){
   size_t length = Resource(header).getTotalSize();
   uint32_t flags = header->flags;
+#ifndef USE_SPI_FLASH
+  flags |= RESOURCE_MEMORY_MAPPED; // save everything mem mapped
+#endif
   uint8_t* data = (uint8_t*)header;
   eraseResource(header->name); // mark as deleted if it exists
   size_t capacity = getFreeSize(flags);
@@ -246,21 +224,20 @@ size_t Storage::writeResource(ResourceHeader* header){
   // 5. rebuild index
 
   int status = -1;
+  if(dest->isMemoryMapped()){
+#ifdef USE_FLASH
+    eeprom_unlock();
+    eeprom_wait();
+    status = eeprom_write_block((uint32_t)dest->getHeader(), data, length);
+    eeprom_lock();
+#endif
+  }else{
 #ifdef USE_SPI_FLASH
-  if(!dest->isMemoryMapped()){
     uint32_t address = dest->getAddress();
     Flash_write(address, data, length);
     status = 0;
-  }
 #endif
-#ifdef USE_SPI_FLASH
-  if(dest->isMemoryMapped()){
-    eeprom_unlock();
-    eeprom_wait();
-    status = eeprom_write_block((uint32_t)dest->getData(), data, length);
-    eeprom_lock();
   }
-#endif
   index(); // rebuild index
   if(status){
     error(FLASH_ERROR, "Flash write failed");

@@ -57,7 +57,7 @@ public:
    * Returns true if resource has at least those flags that are set in @param mask
    */
   bool flagsContain(uint32_t mask){
-    return isValid() && (header->flags & mask) == mask;
+    return isValid() && (header->flags & mask);
   }
   /**
    * Get data pointer to memory-mapped resource

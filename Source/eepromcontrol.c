@@ -69,8 +69,9 @@ int eeprom_write_block(uint32_t address, void* data, uint32_t size){
 #ifdef STM32H743xx
   for(; i <= size; i += 32){
     status |= HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address + i, (uint32_t)p32);
-    p32 += 32 / sizeof(void*);
+    p32 += 32 / sizeof(uint32_t);
   }
+  // todo: gather remaining bytes in a 32-byte block and flash it
 #else
   for(;i+4<=size; i+=4)
     status |= eeprom_write_word(address+i, *p32++);
@@ -138,7 +139,7 @@ int eeprom_erase_address(uint32_t address){
     ret = ADDR_FLASH_END - FLASH_SECTOR_15;
 #else
   }else if(address < ADDR_FLASH_END){
-    ret = eeprom_erase_sector(FLASH_SECTOR_11);
+    eeprom_erase_sector(FLASH_SECTOR_11);
     ret = ADDR_FLASH_SECTOR_11 - FLASH_SECTOR_10;
 #endif
   }
@@ -152,6 +153,7 @@ int eeprom_erase(uint32_t address, uint32_t size){
     remain -= len;
     address += len;
   }
+  return eeprom_wait() == HAL_FLASH_ERROR_NONE ? 0 : -1;
 }
 
 int eeprom_write_unlock(uint32_t wrp_sectors){

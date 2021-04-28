@@ -12,13 +12,11 @@ private:
   uint32_t* linkAddress;
   uint32_t* jumpAddress;
   uint32_t programSize;
-  ProgramHeader* header;
   char programName[24];
   Resource* sourceResource = NULL;
   void* sourceAddress = NULL;
   
   bool load(ProgramHeader* header, uint32_t sz){
-    this->header = header;
     linkAddress = header->linkAddress;
     programSize = (uint32_t)header->endAddress - (uint32_t)header->linkAddress;
     if(sz != programSize)

@@ -6,8 +6,10 @@
 #include "Resource.h"
 
 #define MAX_RESOURCE_HEADERS 40
+
 #define USE_SPI_FLASH
 #define SPI_FLASH_HSPI hspi1
+
 #define USE_FLASH
 #define EXTERNAL_FLASH_SIZE     (8*1024*1024)
 
