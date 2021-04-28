@@ -14,7 +14,7 @@
 #include "Codec.h"
 #endif
 #include "ServiceCall.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "BitState.hpp"
 #include "MidiReceiver.h"
 #include "MidiController.h"
@@ -391,22 +391,27 @@ void programFlashTask(void* p){
   uint8_t index = flashSectorToWrite;
   uint32_t size = flashSizeToWrite;
   uint8_t* source = (uint8_t*)flashAddressToWrite;
-  if(index == 0xff && size <= MAX_SYSEX_FIRMWARE_SIZE){
+  if(index == 0xff){
     error(PROGRAM_ERROR, "Enter bootloader to flash firmware");
-  }else if (index == 0xfe && size <= MAX_SYSEX_BOOTLOADER_SIZE){
-    taskENTER_CRITICAL();
-    bootloader.erase();
-    extern char _BOOTLOADER, _BOOTLOADER_END;
-    if(*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
-        *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(VersionToken)) != 0xFFFFFFFF){
-      error(PROGRAM_ERROR, "Bootloader not erased");
+  }else if(index == 0xfe){
+    if(size <= MAX_SYSEX_BOOTLOADER_SIZE){
+      taskENTER_CRITICAL();
+      bootloader.erase();
+      extern char _BOOTLOADER, _BOOTLOADER_END;
+      if(*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
+	 *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(VersionToken)) != 0xFFFFFFFF){
+	error(PROGRAM_ERROR, "Bootloader not erased");
+      }else{
+	if(!bootloader.store((void*)source, size))
+	  error(PROGRAM_ERROR, "Bootloader write error");
+      }
+      taskEXIT_CRITICAL();
     }else{
-      if(!bootloader.store((void*)source, size))
-        error(PROGRAM_ERROR, "Bootloader write error");
+      error(PROGRAM_ERROR, "Bootloader too big");
     }
-    taskEXIT_CRITICAL();
   }else{
-    registry.store(index, source, size);
+    ResourceHeader* header = (ResourceHeader*)flashAddressToWrite;
+    storage.writeResource(header);
     if(index > MAX_NUMBER_OF_PATCHES){
       onResourceUpdate();
     }else{
@@ -423,13 +428,16 @@ void eraseFlashTask(void* p){
   uint8_t slot = flashSectorToWrite;
   taskENTER_CRITICAL();
   if(slot == 0xff){
-    storage.erase();
+#ifdef USE_SPI_FLASH
+    storage.erase(RESOURCE_PORT_MAPPED);
+#else
+    storage.erase(RESOURCE_MEMORY_MAPPED);
+#endif
     taskEXIT_CRITICAL();
     // debugMessage("Erased flash storage");
-    registry.init();
-    onResourceUpdate();
   }else{
-    registry.setDeleted(slot);
+    Resource* resource = registry.getPatch(slot);
+    storage.eraseResource(resource);
   }
   taskEXIT_CRITICAL();
   storage.init();

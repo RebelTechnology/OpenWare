@@ -1,9 +1,9 @@
 #include "PatchRegistry.h"
-#include "FlashStorage.h"
 #include "ProgramManager.h"
 #include "ResourceHeader.h"
 #include "ProgramHeader.h"
 #include "DynamicPatchDefinition.hpp"
+#include "Storage.h"
 #include "message.h"
 
 #ifndef max
@@ -17,40 +17,44 @@ PatchRegistry::PatchRegistry() {}
 void PatchRegistry::init() {
   patchCount = 0;
   resourceCount = 0;
-  for(int i=0; i<storage.getBlocksTotal(); ++i){
-    StorageBlock block = storage.getBlock(i);
-    if(block.verify() && block.getDataSize() > 4){
-      uint32_t magic = *(uint32_t*)block.getData();
-      int id = magic&0x00ff;
-      if(id > 0 && id <= MAX_NUMBER_OF_PATCHES){
-        patchblocks[id-1] = block;
+
+  memset(patches, 0, sizeof(patches));
+  memset(resources, 0, sizeof(resources));
+
+  for(size_t i=0; i<storage.getNumberOfResources(); ++i){
+    Resource* resource = storage.getResource(i);
+    if(resource->isValid()){
+      uint8_t id = resource->getFlags() & 0xff;
+      if(resource->isPatch() && id <= MAX_NUMBER_OF_PATCHES){
+        patches[id-1] = resource;
         patchCount = max(patchCount, id);
-      }else if(id > MAX_NUMBER_OF_PATCHES && id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
-        resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
-        resourceCount = max(resourceCount, id - MAX_NUMBER_OF_PATCHES);
+      }else if(!resource->isSystemResource() && resourceCount < MAX_NUMBER_OF_RESOURCES){
+        resources[resourceCount++] = resource;
       }
     }
   }
 }
 
-ResourceHeader* PatchRegistry::getResource(uint8_t index){
-  index = index - 1 - MAX_NUMBER_OF_PATCHES;
-  if(index < MAX_NUMBER_OF_RESOURCES && resourceblocks[index].verify())
-    return (ResourceHeader*)resourceblocks[index].getData();
+Resource* PatchRegistry::getResource(uint8_t index){
+  if(index < MAX_NUMBER_OF_RESOURCES)
+    return resources[index];
   return NULL;
 }
 
-ResourceHeader* PatchRegistry::getResource(const char* name){
-  for(int i=0; i<MAX_NUMBER_OF_RESOURCES; ++i){
-    if(resourceblocks[i].verify()){
-      ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
-      if(strcmp(name, hdr->name) == 0)
-        return hdr;
-    }
-  }
+Resource* PatchRegistry::getPatch(uint8_t index){
+  if(index < MAX_NUMBER_OF_PATCHES)
+    return patches[index];
   return NULL;
 }
 
+// ResourceHeader* PatchRegistry::getResource(const char* name){
+//   Resource resource = storage.getResource(name);
+//   if(resource)
+//     return resource->getHeader();
+//   return NULL;
+// }
+
+#if 0
 unsigned int PatchRegistry::getSlot(ResourceHeader* resource){
   const char* name = resource->name;
   for(int i=0; i<MAX_NUMBER_OF_RESOURCES; ++i){
@@ -152,12 +156,13 @@ void PatchRegistry::setDeleted(uint8_t index) {
     }
   }
 }
+#endif
 
 const char* PatchRegistry::getResourceName(unsigned int index){
-  ResourceHeader* hdr = getResource(index);
+  Resource* hdr = getResource(index);
   if(hdr == NULL)
     return emptyPatch.getName();
-  return hdr->name;
+  return hdr->getName();
 }
 
 const char* PatchRegistry::getPatchName(unsigned int index){
@@ -188,8 +193,9 @@ PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
     def = dynamicPatchDefinition;
   else if(--index < MAX_NUMBER_OF_PATCHES){
     static DynamicPatchDefinition flashPatch;
-    if(patchblocks[index].verify()){
-      flashPatch.load(patchblocks[index].getData(), patchblocks[index].getDataSize());
+    Resource* resource = patches[index];
+    if(resource && resource->isValid()){
+      flashPatch.load(resource->getData(), resource->getDataSize());
       if(flashPatch.verify())
         def = &flashPatch;
     }
@@ -211,6 +217,6 @@ void PatchRegistry::registerPatch(PatchDefinition* def){
 //   }
 // }
 
-void delete_resource(uint8_t index){
-  registry.setDeleted(index + MAX_NUMBER_OF_PATCHES + 1);
-}
+// void delete_resource(uint8_t index){
+//   registry.setDeleted(index + MAX_NUMBER_OF_PATCHES + 1);
+// }

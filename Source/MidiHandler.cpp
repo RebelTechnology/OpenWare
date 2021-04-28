@@ -11,8 +11,7 @@
 #include "Codec.h"
 #endif
 #include "Owl.h"
-#include "FlashStorage.h"
-#include "PatchRegistry.h"
+#include "Storage.h"
 #ifndef USE_BOOTLOADER_MODE
 #include "BootloaderStorage.h"
 #endif
@@ -309,7 +308,14 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t slot = loader.decodeInt(data);
     if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
-      program.saveToFlash(slot, loader.getData(), loader.getSize());
+      data = loader.getData();
+      size_t datasize = loader.getSize();
+      char name[] = "patch00";
+      name[5] = '0'+((slot*10)%10);
+      name[6] = '0'+(slot%10);
+      memmove(data+sizeof(ResourceHeader), data, datasize); // make space for resource header
+      storage.writeResourceHeader(data, name, datasize, RESOURCE_USER_PATCH|slot);
+      program.saveToFlash(0, data, datasize+sizeof(ResourceHeader));
       loader.clear();
     }else{
       error(PROGRAM_ERROR, "Invalid STORE slot");
@@ -327,22 +333,11 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
       // todo: create ResourceHeader in FirmwareLoader::beginFirmwareUpload()
       // stop patch or check if running
       // flash in background task
-      uint32_t slot;
-      ResourceHeader* res = registry.getResource(name);
-      if(res == NULL)
-	slot = registry.getNumberOfResources()+MAX_NUMBER_OF_PATCHES+1;
-      else
-	slot = registry.getSlot(res);
       data = loader.getData();
       size_t datasize = loader.getSize();
       memmove(data+sizeof(ResourceHeader), data, datasize); // make space for resource header
-      memset(data, 0, sizeof(ResourceHeader)); // zero fill header
-      res = (ResourceHeader*)data;
-      res->magic = 0xDADADEED;
-      res->size = datasize;
-      strcpy(res->name, name);
-      datasize += sizeof(ResourceHeader);
-      program.saveToFlash(slot, data, datasize);
+      storage.writeResourceHeader(data, name, datasize, RESOURCE_PORT_MAPPED);
+      program.saveToFlash(0, data, datasize+sizeof(ResourceHeader));
       loader.clear();
     }else{
       error(PROGRAM_ERROR, "Invalid SAVE name");

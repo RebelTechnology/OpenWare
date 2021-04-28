@@ -85,38 +85,73 @@ void eeprom_unlock(){
   HAL_FLASH_Unlock();
 }
 
-int eeprom_erase(uint32_t address){
-  int ret = -1;
-  if(address < ADDR_FLASH_SECTOR_1)
-    ret = -1;  // protect boot sector
-    /* eeprom_erase_sector(FLASH_SECTOR_0, VoltageRange_3); */
-  else if(address < ADDR_FLASH_SECTOR_2)
-    ret = eeprom_erase_sector(FLASH_SECTOR_1);
-  else if(address < ADDR_FLASH_SECTOR_3)
-    ret = eeprom_erase_sector(FLASH_SECTOR_2);
-  else if(address < ADDR_FLASH_SECTOR_4)
-    ret = eeprom_erase_sector(FLASH_SECTOR_3);
-  else if(address < ADDR_FLASH_SECTOR_5)
-    ret = eeprom_erase_sector(FLASH_SECTOR_4);
-  else if(address < ADDR_FLASH_SECTOR_6)
-    ret = eeprom_erase_sector(FLASH_SECTOR_5);
-  else if(address < ADDR_FLASH_SECTOR_7)
-    ret = eeprom_erase_sector(FLASH_SECTOR_6);
-  else if(address < ADDR_FLASH_SECTOR_8)
-    ret = eeprom_erase_sector(FLASH_SECTOR_7);
-#ifdef FLASH_SECTOR_8
-  else if(address < ADDR_FLASH_SECTOR_9)
-    ret = eeprom_erase_sector(FLASH_SECTOR_8);
-  else if(address < ADDR_FLASH_SECTOR_10)
-    ret = eeprom_erase_sector(FLASH_SECTOR_9);
-  else if(address < ADDR_FLASH_SECTOR_11)
-    ret = eeprom_erase_sector(FLASH_SECTOR_10);
-  else if(address < 0x08100000)
+int eeprom_erase_address(uint32_t address){
+  int ret = 0;
+  if(address < ADDR_FLASH_SECTOR_1){
+    eeprom_erase_sector(FLASH_SECTOR_0);
+    ret = ADDR_FLASH_SECTOR_1 - FLASH_SECTOR_0;
+  }else if(address < ADDR_FLASH_SECTOR_2){
+    eeprom_erase_sector(FLASH_SECTOR_1);
+    ret = ADDR_FLASH_SECTOR_2 - FLASH_SECTOR_1;
+  }else if(address < ADDR_FLASH_SECTOR_3){
+    eeprom_erase_sector(FLASH_SECTOR_2);
+    ret = ADDR_FLASH_SECTOR_3 - FLASH_SECTOR_2;
+  }else if(address < ADDR_FLASH_SECTOR_4){
+    eeprom_erase_sector(FLASH_SECTOR_3);
+    ret = ADDR_FLASH_SECTOR_4 - FLASH_SECTOR_3;
+  }else if(address < ADDR_FLASH_SECTOR_5){
+    eeprom_erase_sector(FLASH_SECTOR_4);
+    ret = ADDR_FLASH_SECTOR_5 - FLASH_SECTOR_4;
+  }else if(address < ADDR_FLASH_SECTOR_6){
+    eeprom_erase_sector(FLASH_SECTOR_5);
+    ret = ADDR_FLASH_SECTOR_6 - FLASH_SECTOR_5;
+  }else if(address < ADDR_FLASH_SECTOR_7){
+    eeprom_erase_sector(FLASH_SECTOR_6);
+    ret = ADDR_FLASH_SECTOR_7 - FLASH_SECTOR_6;
+  }else if(address < ADDR_FLASH_SECTOR_8){
+    eeprom_erase_sector(FLASH_SECTOR_7);
+    ret = ADDR_FLASH_SECTOR_8 - FLASH_SECTOR_7;
+  }else if(address < ADDR_FLASH_SECTOR_9){
+    eeprom_erase_sector(FLASH_SECTOR_8);
+    ret = ADDR_FLASH_SECTOR_9 - FLASH_SECTOR_8;
+  }else if(address < ADDR_FLASH_SECTOR_10){
+    eeprom_erase_sector(FLASH_SECTOR_9);
+    ret = ADDR_FLASH_SECTOR_10 - FLASH_SECTOR_9;
+  }else if(address < ADDR_FLASH_SECTOR_11){
+    eeprom_erase_sector(FLASH_SECTOR_10);
+    ret = ADDR_FLASH_SECTOR_11 - FLASH_SECTOR_10;
+#ifdef ADDR_FLASH_SECTOR_12
+  }else if(address < ADDR_FLASH_SECTOR_12){
+    eeprom_erase_sector(FLASH_SECTOR_11);
+    ret = ADDR_FLASH_SECTOR_12 - FLASH_SECTOR_11;
+  }else if(address < ADDR_FLASH_SECTOR_13){
+    eeprom_erase_sector(FLASH_SECTOR_12);
+    ret = ADDR_FLASH_SECTOR_13 - FLASH_SECTOR_12;
+  }else if(address < ADDR_FLASH_SECTOR_14){
+    eeprom_erase_sector(FLASH_SECTOR_13);
+    ret = ADDR_FLASH_SECTOR_14 - FLASH_SECTOR_13;
+  }else if(address < ADDR_FLASH_SECTOR_15){
+    eeprom_erase_sector(FLASH_SECTOR_14);
+    ret = ADDR_FLASH_SECTOR_15 - FLASH_SECTOR_14;
+  }else if(address < ADDR_FLASH_END){
+    eeprom_erase_sector(FLASH_SECTOR_15);
+    ret = ADDR_FLASH_END - FLASH_SECTOR_15;
+#else
+  }else if(address < ADDR_FLASH_END){
     ret = eeprom_erase_sector(FLASH_SECTOR_11);
+    ret = ADDR_FLASH_SECTOR_11 - FLASH_SECTOR_10;
 #endif
-  else
-    ret = -1;
+  }
   return ret;
+}
+
+int eeprom_erase(uint32_t address, uint32_t size){
+  int32_t remain = size;
+  while(remain > 0){
+    size_t len = eeprom_erase_address(address);
+    remain -= len;
+    address += len;
+  }
 }
 
 int eeprom_write_unlock(uint32_t wrp_sectors){

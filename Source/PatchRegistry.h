@@ -3,8 +3,9 @@
 
 #include "device.h"
 #include "PatchDefinition.hpp"
-#include "StorageBlock.h"
-#include "ResourceHeader.h"
+#include "Resource.h"
+// #include "StorageBlock.h"
+// #include "ResourceHeader.h"
 
 class PatchRegistry;
 extern PatchRegistry registry;
@@ -24,22 +25,26 @@ public:
   void setDynamicPatchDefinition(PatchDefinition* def){
     dynamicPatchDefinition = def;
   }
-  ResourceHeader* getResource(uint8_t index);
-  ResourceHeader* getResource(const char* name);
-  unsigned int getSlot(ResourceHeader* resource);
-  void* getData(ResourceHeader* resource);
-  void store(uint8_t index, uint8_t* data, size_t size);
-  void setDeleted(uint8_t index);
+  Resource* getPatch(uint8_t index);
+  Resource* getResource(uint8_t index);
+  // ResourceHeader* getResource(const char* name);
+
+  // void* getData(ResourceHeader* resource);
+  // void store(uint8_t index, uint8_t* data, size_t size);
+  // unsigned int getSlot(ResourceHeader* resource);
+  // void setDeleted(uint8_t index);
 private:
-  bool isPresetBlock(StorageBlock block);
-  StorageBlock patchblocks[MAX_NUMBER_OF_PATCHES];
-  StorageBlock resourceblocks[MAX_NUMBER_OF_RESOURCES];
+  // bool isPresetBlock(StorageBlock block);
+  Resource* patches[MAX_NUMBER_OF_PATCHES];
+  Resource* resources[MAX_NUMBER_OF_RESOURCES];
+  // StorageBlock patchblocks[MAX_NUMBER_OF_PATCHES];
+  // StorageBlock resourceblocks[MAX_NUMBER_OF_RESOURCES];
   PatchDefinition* defs[MAX_NUMBER_OF_PATCHES];
   uint8_t patchCount, resourceCount;
   PatchDefinition* dynamicPatchDefinition;
 };
 
-// Wrappers to be used as callbacks for service calls
-void delete_resource(uint8_t index);
+// // Wrappers to be used as callbacks for service calls
+// void delete_resource(uint8_t index);
 
 #endif // __PatchRegistry_h__

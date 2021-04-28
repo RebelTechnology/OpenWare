@@ -5,6 +5,12 @@
 #include "Storage.h"
 #include "eepromcontrol.h"
 
+extern char _FLASH_STORAGE_BEGIN;
+extern char _FLASH_STORAGE_END;
+#define INTERNAL_FLASH_BEGIN ((uint32_t)&_FLASH_STORAGE_BEGIN)
+#define INTERNAL_FLASH_END   ((uint32_t)&_FLASH_STORAGE_END)
+#define INTERNAL_FLASH_SIZE  (INTERNAL_FLASH_END - INTERNAL_FLASH_BEGIN)
+
 #ifdef USE_SPI_FLASH
 #include "Flash_S25FL.h"
 #define MAX_SPI_FLASH_HEADERS 32
@@ -16,10 +22,13 @@ struct NorHeader : ResourceHeader {
 static NorHeader nor_index[MAX_SPI_FLASH_HEADERS];
 #endif
 
+Storage storage;
+
 void Storage::index(){
-  size_t i=0;
+  memset(resources, 0, sizeof(resources));
+  size_t i = 0;
 #ifdef USE_FLASH
-  resources[i].setHeader((ResourceHeader*)(EEPROM_PAGE_BEGIN));
+  resources[i].setHeader((ResourceHeader*)(INTERNAL_FLASH_BEGIN));
   while(i<MAX_RESOURCE_HEADERS && !resources[i].isFree()){
     ResourceHeader* next = resources[i++].getNextHeader();
     resources[i].setHeader(next);
@@ -44,7 +53,7 @@ void Storage::index(){
   resource_count = i;
 }
 
-size_t Storage::readResource(Resource* resource, uint8_t* data, size_t length){
+size_t Storage::readResource(Resource* resource, void* data, size_t length){
   size_t ret = 0;
   if(resource){
     if(resource->isMemoryMapped()){
@@ -55,7 +64,7 @@ size_t Storage::readResource(Resource* resource, uint8_t* data, size_t length){
 #ifdef USE_SPI_FLASH
       uint32_t address = resource->getAddress();
       size_t len = std::min(resource->getDataSize(), length);
-      Flash_read(address+sizeof(ResourceHeader), data, len);
+      Flash_read(address+sizeof(ResourceHeader), (uint8_t*)data, len);
       ret = len;
 #endif
     }
@@ -64,7 +73,7 @@ size_t Storage::readResource(Resource* resource, uint8_t* data, size_t length){
 }
 
 // mark as deleted
-bool Storage::erase(Resource* resource){
+bool Storage::eraseResource(Resource* resource){
   bool status = false;  
   if(resource->isMemoryMapped()){
 #ifdef USE_FLASH
@@ -73,17 +82,17 @@ bool Storage::erase(Resource* resource){
     eeprom_wait(); // clear flash flags
 #ifdef STM32H743xx
     ResourceHeader copy = *header;
-    copy->magic = 0x00000000;
+    copy->magic = RESOURCE_ERASED_MAGIC;
     status = eeprom_write_block((uint32_t)header, copy, sizeof(ResourceHeader));
 #else
-    status = eeprom_write_word((uint32_t)header, 0x00000000);
+    status = eeprom_write_word((uint32_t)header, RESOURCE_ERASED_MAGIC);
 #endif
     eeprom_lock();
 #endif
   }else{
 #ifdef USE_SPI_FLASH
     uint32_t address = resource->getAddress();
-    resource->getHeader()->magic = 0x00000000;
+    resource->getHeader()->magic = RESOURCE_ERASED_MAGIC;
     Flash_write(address, (uint8_t*)resource->getHeader(), 4); // write new magic
 #endif
   }
@@ -103,73 +112,86 @@ Resource* Storage::getResource(const char* name){
 }
 
 Resource* Storage::getFreeResource(uint32_t flags){
-  bool mapped = flags & STORAGE_MEMORY_MAPPED;
   for(size_t i=0; i<MAX_RESOURCE_HEADERS; ++i)
-    if(resources[i].isFree() && mapped == resources[i].isMemoryMapped())
+    if(resources[i].isFree() && resources[i].flagsContain(flags))
       return &resources[i]; // todo: check there's enough space
   return NULL;
 }
 
-// erase entire allocated FLASH memory
+// erase entire FLASH memory
 void Storage::erase(uint32_t flags){
-  if(flags & STORAGE_MEMORY_MAPPED){  
 #ifdef USE_FLASH
-    uint32_t page = EEPROM_PAGE_BEGIN;
+  // tbd: keep system resources
+  if(flags & RESOURCE_MEMORY_MAPPED){
     eeprom_unlock();
-    while(page < EEPROM_PAGE_END){
-      eeprom_erase(page);
-      page += EEPROM_PAGE_SIZE;
-    }
+    eeprom_erase(INTERNAL_FLASH_BEGIN, INTERNAL_FLASH_SIZE);
     eeprom_lock();
-#endif
-  }else{
-#ifdef USE_SPI_FLASH
-    Flash_BulkErase();
-#endif
   }
+#endif
+#ifdef USE_SPI_FLASH
+  if(flags & RESOURCE_PORT_MAPPED){
+    Flash_BulkErase();
+  }
+#endif
 }
 
 void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   uint8_t* ptr = (uint8_t*)buffer;
-  if(getDeletedSize() > 0 && getWrittenSize() > 0){
-    uint32_t offset = 0;
-    for(uint8_t i=0; i<resource_count && offset<size; ++i){
-      if(resources[i].isValid()){
+  if(getWrittenSize(flags) > size)
+    debugMessage("Not enough RAM to defrag");
+
+  uint32_t offset = 0;
+  for(uint8_t i=0; i<resource_count; ++i){
+    if(resources[i].isValid() && resources[i].flagsContain(flags)){
+      if(offset+resources[i].getTotalSize() < size){
 	readResource(&resources[i], ptr+offset,  resources[i].getTotalSize());
 	offset += resources[i].getTotalSize();
       }
     }
-    if(flags & STORAGE_MEMORY_MAPPED){
-      erase(flags);
-      eeprom_unlock();
-      eeprom_write_block(EEPROM_PAGE_BEGIN, buffer, offset);
-      eeprom_lock();
-    }else{
-      erase(flags);
-  // Flash_erase(address, ERASE_64KB);
-      Flash_write(0, (uint8_t*)buffer, offset);
-    }
-    index();
   }
+  if(flags & RESOURCE_MEMORY_MAPPED){
+    erase(flags);
+    eeprom_unlock();
+    eeprom_write_block(INTERNAL_FLASH_BEGIN, buffer, offset);
+    eeprom_lock();
+  }else{
+    erase(flags);
+    // Flash_erase(address, ERASE_64KB);
+    Flash_write(0, (uint8_t*)buffer, offset);
+  }
+  index();
+}
+
+// Resource* Storage::createResource(const char* name, size_t length, uint32_t flags){
+//   Resource resource = getFreeResource(flags);
+//   if(resource){
+//     resource->setName(name);
+//     resource->getHeader()->length = length;
+//     resource->getHeader()->flags = flags;
+//   }
+//   return resource;
+// }
+
+size_t Storage::writeResourceHeader(uint8_t* dest, const char* name, size_t size, uint32_t flags){
+  ResourceHeader header;
+  header.magic = RESOURCE_VALID_MAGIC;
+  header.size = size;
+  strncpy(header.name, name, sizeof(header.name));
+  header.flags = flags;
+  memcpy(dest, &header, sizeof(header));
+  return sizeof(header);
 }
 
 // assume 'data' and 'length' already include ResourceHeader
 size_t Storage::writeResource(const char* name, uint8_t* data, size_t length, uint32_t flags){
-// size_t Storage::writeResource(Resource* resource, uint32_t flags){
-  Resource* resource = getResource(name);
-  size_t ret = 0;
-  if(resource)
-    erase(resource); // mark as deleted
-  resource = getFreeResource(flags);
-
-  size_t capacity = 0;
-  if(resource && resource->isMemoryMapped())
-    capacity = EEPROM_PAGE_END - (uint32_t)resource->getData();
-  else if(resource)
-    capacity = NOR_FLASH_SIZE - resource->getAddress() - sizeof(ResourceHeader);
-
-  extern char _EXTRAM, _EXTRAM_SIZE;
-  if(length > capacity){
+  Resource* dest = getResource(name);
+  if(dest)
+    eraseResource(dest); // mark as deleted
+  dest = getFreeResource(flags);
+  writeResourceHeader(data, name, length, flags);  
+  size_t capacity = getFreeSize(flags);
+  if(length > capacity){ // assuming 'data' is located in extram
+    extern char _EXTRAM, _EXTRAM_SIZE;
     defrag(data + length, _EXTRAM_SIZE - length, flags);
   }
   
@@ -177,10 +199,11 @@ size_t Storage::writeResource(const char* name, uint8_t* data, size_t length, ui
   // 2. if no space, defrag
   // 3. write
   // 4. verify
+  // 5. rebuild index
   
 #ifdef USE_SPI_FLASH
-  if(!(flags & STORAGE_MEMORY_MAPPED)){
-    uint32_t address = resource->getAddress();
+  if(!(flags & RESOURCE_MEMORY_MAPPED)){
+    uint32_t address = dest->getAddress();
     Flash_write(address, data, length);
     // todo: read back and verify
     return length;
@@ -188,19 +211,34 @@ size_t Storage::writeResource(const char* name, uint8_t* data, size_t length, ui
 #endif
   eeprom_unlock();
   eeprom_wait();
-  int status = eeprom_write_block((uint32_t)resource->getData(), data, length);
+  int status = eeprom_write_block((uint32_t)dest->getData(), data, length);
   eeprom_lock();
   if(status){
     error(FLASH_ERROR, "Flash write failed");
     return 0;
   }
-  if(length != resource->getTotalSize()){
+  if(length != dest->getTotalSize()){
     error(FLASH_ERROR, "Size verification failed");
     return 0;
   }
-  if(memcmp(data, resource->getData(), length) != 0){
+  if(memcmp(data, dest->getData(), length) != 0){
     error(FLASH_ERROR, "Data verification failed");
     return 0;
   }
+  // rebuild index
+  index();
   return length;
+}
+
+size_t Storage::getTotalAllocatedSize(uint32_t flags){
+  size_t total = 0;
+#ifdef USE_FLASH
+  if(flags & RESOURCE_MEMORY_MAPPED)
+    total += INTERNAL_FLASH_SIZE;
+#endif
+#ifdef USE_SPI_FLASH
+  if(flags & RESOURCE_PORT_MAPPED)
+    total += EXTERNAL_FLASH_SIZE;
+#endif
+  return total;
 }

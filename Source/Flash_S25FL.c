@@ -1,5 +1,30 @@
+#include "main.h"
 #include "Flash_S25FL.h"
 #include <string.h>
+
+//_____ External Definitions _______________________________________________________________________
+// Pin Mappings
+#define Flash_Select()				HAL_GPIO_WritePin(FLASH_nCS_GPIO_Port,  FLASH_nCS_Pin, 	GPIO_PIN_RESET)
+#define Flash_Deselect()			HAL_GPIO_WritePin(FLASH_nCS_GPIO_Port,  FLASH_nCS_Pin, 	GPIO_PIN_SET)	
+#define Flash_Hold()					HAL_GPIO_WritePin(FLASH_HOLD_GPIO_Port, FLASH_HOLD_Pin, GPIO_PIN_RESET)
+#define Flash_Release()				HAL_GPIO_WritePin(FLASH_HOLD_GPIO_Port, FLASH_HOLD_Pin, GPIO_PIN_SET)
+#define Flash_WP_Disable()		HAL_GPIO_WritePin(FLASH_WP_GPIO_Port,  	FLASH_WP_Pin, 	GPIO_PIN_RESET)
+#define Flash_WP_Enable()			HAL_GPIO_WritePin(FLASH_WP_GPIO_Port,  	FLASH_WP_Pin, 	GPIO_PIN_SET)
+
+// Instruction Commands
+#define INST_WRITE_STATREG			0x01
+#define INST_PAGE_PROGRAM			0x02
+#define INST_READ_EN				0x03
+#define INST_FAST_READ_EN			0x0b
+#define INST_WRITE_DIS				0x04
+#define INST_READ_STATREG_1			0x05
+#define INST_WRITE_EN				0x06
+#define INST_READ_STATREG_3			0x33
+#define INST_READ_STATREG_2			0x35
+#define INST_WRITE_EN_VSTATREG			0x50
+#define INST_BURSTWRAP_SET			0x77
+
+#define __nop() __asm("NOP")
 
 // ____ SPI Config 
 SPI_HandleTypeDef* FLASH_SPIConfig;
@@ -123,7 +148,7 @@ void Flash_write(uint32_t address, uint8_t* data, size_t length){
   while (!(Flash_readStatusReg(1) & 0x02)){}
 
   while(length){
-    size_t len = min(256, length);
+    size_t len = length > 256 ? 256 : length;
 
     // Build address array
     rgAddress[0] = (address & 0xFF0000) >> 16;
@@ -315,6 +340,7 @@ void Flash_BulkErase (void)
 
 /* individual 4 KB sector erase, 32 KB half block sector, 64 KB block sector erase */		
 void Flash_erase(uint32_t address, uint8_t cmd){
+  uint8_t rgAddress[3];
   // Build address array
   rgAddress[0] = (address & 0xFF0000) >> 16;
   rgAddress[1] = (address & 0x00FF00) >> 8;
