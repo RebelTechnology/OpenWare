@@ -3,15 +3,8 @@
 
 #include <stdint.h>
 #include <cstddef>
+#include "device.h"
 #include "Resource.h"
-
-#define MAX_RESOURCE_HEADERS 40
-
-#define USE_SPI_FLASH
-#define SPI_FLASH_HSPI hspi1
-
-#define USE_FLASH
-#define EXTERNAL_FLASH_SIZE     (8*1024*1024)
 
 class Storage {
 private:
@@ -31,17 +24,16 @@ public:
       return &resources[index];
     return NULL;
   }
-  Resource* getResource(const char* name);  
+  Resource* getResourceByName(const char* name);  
+  Resource* getResourceBySlot(uint8_t slot);  
   size_t readResource(Resource* resource, void* data, size_t length);
   size_t writeResource(ResourceHeader* header);
-  // size_t writeResource(Resource resource);
-  size_t writeResource(const char* name, uint8_t* data, size_t length, uint32_t flags);
+  size_t writeResource(const char* name, uint8_t* data, size_t datasize, uint32_t flags);
+  size_t writeResourceHeader(uint8_t* dest, const char* name, size_t datasize, uint32_t flags);
+  bool eraseResource(uint8_t slot);
   bool eraseResource(const char* name);
   bool eraseResource(Resource* resource);
   void erase(uint32_t flags);
-
-  size_t writeResourceHeader(uint8_t* dest, const char* name, size_t size, uint32_t flags);
-  // Resource* createResource(const char* name, size_t length, uint32_t flags);
 
   size_t getTotalAllocatedSize(uint32_t flags = RESOURCE_MEMORY_MAPPED | RESOURCE_PORT_MAPPED);    
   /** 

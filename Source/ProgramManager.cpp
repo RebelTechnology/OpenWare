@@ -413,7 +413,7 @@ void programFlashTask(void* p){
     ResourceHeader* header = (ResourceHeader*)flashAddressToWrite;
     storage.writeResource(header);
     registry.init();
-    if(index > MAX_NUMBER_OF_PATCHES){
+    if(index == 0){
       onResourceUpdate();
     }else{
       program.loadProgram(index);
@@ -478,9 +478,6 @@ void bootstrap(){
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   uint8_t lastprogram = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
-  // uint8_t lastprogram = RTC->BKP1R;
-  // uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
-  // uint8_t lastprogram = *bkpsram_addr;
 #else    
   uint8_t lastprogram = 0;
 #endif

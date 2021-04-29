@@ -137,7 +137,7 @@ static int handleLoadResource(void** params, int len){
     uint8_t** buffer = (uint8_t**)params[1];
     uint32_t offset = *(uint32_t*)params[2];
     uint32_t* max_size = (uint32_t*)params[3];
-    Resource* res = storage.getResource(name);
+    Resource* res = storage.getResourceByName(name);
     // We require offset to be aligned to 4 bytes
     if (res != NULL && !(offset & 0b11)) {
       if (*buffer == NULL) {

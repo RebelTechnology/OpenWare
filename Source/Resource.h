@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <cstddef>
 #include <cstring>
+#include "device.h"
 #include "ResourceHeader.h"
 
 #define RESOURCE_SYSTEM_RESOURCE 0x0100 // System settings
@@ -27,44 +28,56 @@ private:
 public:
   Resource() : header(NULL){}
   Resource(ResourceHeader* header) : header(header){}
-  bool isValid(){
-    return header && header->magic == RESOURCE_VALID_MAGIC && isValidSize();
-  }
-  bool isValidSize(){
-    return isMemoryMapped()
-#ifdef USE_SPI_FLASH
-      || getAddress() < EXTERNAL_FLASH_SIZE
-#endif
-    ;
-  }
-  bool isErased(){
-    return header && header->magic == RESOURCE_ERASED_MAGIC;
-  }
   bool isFree(){
     return header && header->magic == RESOURCE_FREE_MAGIC;
   }
+  bool isUsed(){
+    return isValid() || isErased();
+  }
+  /**
+   * A valid resource is not erased and not free.
+   */
+  bool isValid(){
+    return header && header->magic == RESOURCE_VALID_MAGIC && isValidSize();
+  }
+  bool isErased(){
+    return header && header->magic == RESOURCE_ERASED_MAGIC && isValidSize();
+  }
+  /**
+   * The resource size is valid if it is within the boundaries of its storage.
+   */
+  bool isValidSize(){
+    return isMemoryMapped()
+#ifdef USE_SPI_FLASH
+      || (getAddress() < EXTERNAL_FLASH_SIZE)
+#endif
+    ;
+  }
+  /**
+   * A used resource may be erased but always has a correct size. It is not free.
+   */
   bool isPatch(){
     return isValid() && (header->flags & RESOURCE_USER_PATCH);
+  }
+  bool isSystemResource(){
+    return isValid() && (header->flags & RESOURCE_SYSTEM_RESOURCE);
   }
   bool isMemoryMapped(){
     // we can't look at the flags because they will be all ones if isFree() is true
     return uint32_t(header) >= INTERNAL_FLASH_BEGIN && uint32_t(header) < INTERNAL_FLASH_END;
     // return isValid() && (header->flags & RESOURCE_MEMORY_MAPPED);
   }
-  bool isSystemResource(){
-    return isValid() && (header->flags & RESOURCE_SYSTEM_RESOURCE);
-  }
   /*
    * Returns true if resource only has flags that are set in @param mask
    */
   bool flagsMatch(uint32_t mask){
-    return isValid() && (header->flags & mask) == header->flags;
+    return isUsed() && (header->flags & mask) == header->flags;
   }
   /*
    * Returns true if resource has at least those flags that are set in @param mask
    */
   bool flagsContain(uint32_t mask){
-    return isValid() && (header->flags & mask);
+    return isUsed() && (header->flags & mask);
   }
   /**
    * Get data pointer to memory-mapped resource
@@ -72,13 +85,15 @@ public:
   uint8_t* getData(){
     return ((uint8_t*)header)+sizeof(ResourceHeader);
   }
+#ifdef USE_SPI_FLASH
   /**
-   * Get address of non-memory-mapped resource. 
+   * Get address of port-mapped resource. 
    * Assumes header is immediately followed by a 32-bit address value.
    */
   uint32_t getAddress(){
     return *(uint32_t*)getData();
   }
+#endif
   size_t getDataSize(){
     return header->size;
   }

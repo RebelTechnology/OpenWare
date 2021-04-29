@@ -42,7 +42,7 @@ void ApplicationSettings::reset(){
 }
 
 bool ApplicationSettings::settingsInFlash(){
-  Resource* resource = storage.getResource(APPLICATION_SETTINGS_NAME);
+  Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
   if(resource && resource->isMemoryMapped()){
     ApplicationSettings* data = (ApplicationSettings*)resource->getData();
     return data->checksum == checksum;
@@ -51,7 +51,7 @@ bool ApplicationSettings::settingsInFlash(){
 }
 
 void ApplicationSettings::loadFromFlash(){
-  Resource* resource = storage.getResource(APPLICATION_SETTINGS_NAME);
+  Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
   if(resource)
     storage.readResource(resource, this, sizeof(*this));
 }
@@ -60,5 +60,5 @@ void ApplicationSettings::saveToFlash(){
   uint16_t totalsize = sizeof(ResourceHeader) + sizeof(*this);
   uint8_t buffer[totalsize];
   memcpy(buffer+sizeof(ResourceHeader), this, sizeof(*this));
-  storage.writeResource(APPLICATION_SETTINGS_NAME, buffer, totalsize, RESOURCE_SYSTEM_RESOURCE|RESOURCE_MEMORY_MAPPED);
+  storage.writeResource(APPLICATION_SETTINGS_NAME, buffer, sizeof(*this), RESOURCE_SYSTEM_RESOURCE|RESOURCE_MEMORY_MAPPED);
 }

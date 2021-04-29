@@ -7,7 +7,6 @@
 
 #ifdef USE_SPI_FLASH
 #include "Flash_S25FL.h"
-#define MAX_SPI_FLASH_HEADERS 32
 
 extern char _FLASH_STORAGE_BEGIN;
 extern char _FLASH_STORAGE_END;
@@ -21,6 +20,35 @@ static NorHeader nor_index[MAX_SPI_FLASH_HEADERS];
 
 Storage storage;
 
+void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
+  // search backwards for last block that is not written
+  uint32_t* p = (uint32_t*)end;
+  p -= 2*align/sizeof(uint32_t); // start at two alignment units from end
+  while(p > begin && *p == RESOURCE_FREE_MAGIC)
+    p -= align/sizeof(uint32_t);
+  p += align/sizeof(uint32_t);
+  p = (uint32_t*)((uint32_t)p & ~(align-1));
+  if(*p == RESOURCE_FREE_MAGIC)
+    return p;
+  return NULL;
+}
+
+#ifdef USE_SPI_FLASH
+uint32_t findFirstFreePage(uint32_t begin, uint32_t end, size_t pagesize){
+  uint32_t page[pagesize/sizeof(uint32_t)];
+  uint32_t address = end-pagesize;
+  while(address > begin){
+    Flash_read(address, (uint8_t*)page, pagesize);
+    if(page[0] != RESOURCE_FREE_MAGIC ||
+       memcmp(&page[0], &page[1], pagesize-sizeof(uint32_t)) != 0)
+      break;
+  }
+  if(address > begin)
+    return address+pagesize;
+  return end;
+}
+#endif
+  
 void Storage::init(){
 #ifdef USE_SPI_FLASH
   extern SPI_HandleTypeDef SPI_FLASH_HSPI;
@@ -35,28 +63,43 @@ void Storage::index(){
   size_t i = 0;
 #ifdef USE_FLASH
   resources[i].setHeader((ResourceHeader*)(INTERNAL_FLASH_BEGIN));
-  // while(i<MAX_RESOURCE_HEADERS && !resources[i].isFree()){
-  while(i<MAX_RESOURCE_HEADERS && resources[i].isValid()){
+  while(i<MAX_RESOURCE_HEADERS && resources[i].isUsed()){
     ResourceHeader* next = resources[i].getNextHeader();
-    resources[i++].setHeader(next);
+    if(resources[i].isValid())
+      i++;
+    resources[i].setHeader(next);
   }
-  if(!resources[i].isFree())
+  if(!resources[i].isFree()){
     error(FLASH_ERROR, "Invalid flash resource");
+    // set resource to point to first free block, or NULL
+    void* p = findFirstFreeBlock(resources[i].getHeader(), (void*)INTERNAL_FLASH_END, 32);
+    resources[i].setHeader((ResourceHeader*)p);
+  }
 #endif
 #ifdef USE_SPI_FLASH
   uint32_t address = 0;
   NorHeader* header = &nor_index[0];
   header->address = address;
-  do{
-    Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
-    resources[++i].setHeader(header++);
+  resources[++i].setHeader(header);
+  Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+  while(i<MAX_RESOURCE_HEADERS && resources[i].isUsed() &&
+	address < EXTERNAL_FLASH_SIZE &&
+	header < &nor_index[MAX_SPI_FLASH_HEADERS]){
     address += resources[i].getTotalSize();
+    if(resources[i].isValid())
+      resources[++i].setHeader(++header);
     header->address = address;
-  }while(i<MAX_RESOURCE_HEADERS && resources[i].isValid()
-	 && header < &nor_index[MAX_SPI_FLASH_HEADERS]);
-  if(!resources[i].isFree())
+    Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+  }
+  if(!resources[i].isFree()){
     error(FLASH_ERROR, "Invalid SPI resource");
-  // todo: also check address < sizeof flash
+    // set resource to point to first free block, or NULL
+    address = findFirstFreePage(resources[i].getAddress(), EXTERNAL_FLASH_SIZE, 256);
+    if(address < EXTERNAL_FLASH_SIZE)
+      ((NorHeader*)resources[i].getHeader())->address = address;
+    else
+      resources[i].setHeader(NULL);
+  }
 #endif
   resource_count = i+1;
 }
@@ -80,8 +123,15 @@ size_t Storage::readResource(Resource* resource, void* data, size_t length){
   return ret;    
 }
 
+bool Storage::eraseResource(uint8_t slot){
+  Resource* resource = getResourceBySlot(slot);
+  if(resource)
+    return eraseResource(resource);
+  return false;
+}
+
 bool Storage::eraseResource(const char* name){
-  Resource* resource = getResource(name);
+  Resource* resource = getResourceByName(name);
   if(resource)
     return eraseResource(resource);
   return false;
@@ -117,7 +167,7 @@ bool Storage::eraseResource(Resource* resource){
 /**
  * Get patch or resource with the given name
  */
-Resource* Storage::getResource(const char* name){
+Resource* Storage::getResourceByName(const char* name){
   for(size_t i=0; i<resource_count; ++i){
     if(resources[i].isValid()
        && strcmp(name, resources[i].getName()) == 0)
@@ -126,6 +176,23 @@ Resource* Storage::getResource(const char* name){
   return NULL;
 }
 
+/**
+ * Get patch or resource with the given slot number
+ */
+Resource* Storage::getResourceBySlot(uint8_t slot){
+  for(size_t i=0; i<resource_count; ++i){
+    if(resources[i].isValid() &&
+       (resources[i].getFlags() & 0xff) == slot)
+      return &resources[i];
+  }
+  return NULL;
+}
+
+/**
+ * Returns first free resource in either memory-mapped or port-mapped storage,
+ * depending on @param flags.
+ * @return NULL if no free resource found.
+ */
 Resource* Storage::getFreeResource(uint32_t flags){
   bool mapped = flags & RESOURCE_MEMORY_MAPPED;
   for(size_t i=0; i<MAX_RESOURCE_HEADERS; ++i)
@@ -182,30 +249,42 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   index();
 }
 
-size_t Storage::writeResourceHeader(uint8_t* dest, const char* name, size_t size, uint32_t flags){
+size_t Storage::writeResourceHeader(uint8_t* dest, const char* name, size_t datasize, uint32_t flags){
   ResourceHeader header;
   header.magic = RESOURCE_VALID_MAGIC;
-  header.size = size;
+  header.size = datasize;
   strncpy(header.name, name, sizeof(header.name));
   header.flags = flags;
   memcpy(dest, &header, sizeof(header));
   return sizeof(header);
 }
 
-// assume 'data' and 'length' already include ResourceHeader
-size_t Storage::writeResource(const char* name, uint8_t* data, size_t length, uint32_t flags){
-  writeResourceHeader(data, name, length, flags);  
+// data length must already include space for ResourceHeader
+size_t Storage::writeResource(const char* name, uint8_t* data, size_t datasize, uint32_t flags){
+  writeResourceHeader(data, name, datasize, flags);  
   return writeResource((ResourceHeader*)data);
 }
 
+/**
+ * Write new or overwrite existing resource. Steps:
+ * 1. if it exists, erase (indexed by slot number, if present, or name)
+ * 2. if there is not enough remaining storage space, defrag
+ * 3. flash header and data
+ * 4. verify written data
+ * 5. rebuild index
+ */
 size_t Storage::writeResource(ResourceHeader* header){
-  size_t length = Resource(header).getTotalSize();
+  size_t length = header->size+sizeof(ResourceHeader);
   uint32_t flags = header->flags;
 #ifndef USE_SPI_FLASH
   flags |= RESOURCE_MEMORY_MAPPED; // save everything mem mapped
 #endif
+  if(flags & 0xff){ // there's a slot number
+    eraseResource(flags & 0xff); // mark as deleted if it exists
+  }else{
+    eraseResource(header->name); // mark as deleted if it exists
+  }
   uint8_t* data = (uint8_t*)header;
-  eraseResource(header->name); // mark as deleted if it exists
   size_t capacity = getFreeSize(flags);
   if(length > capacity){ // assuming 'header' is located in extram
     extern char _EXTRAM_SIZE;
@@ -216,12 +295,6 @@ size_t Storage::writeResource(ResourceHeader* header){
     error(FLASH_ERROR, "No free resources");
     return 0;
   }
-
-  // 1. if exists, erase
-  // 2. if no space, defrag
-  // 3. write
-  // 4. verify
-  // 5. rebuild index
 
   int status = -1;
   if(dest->isMemoryMapped()){

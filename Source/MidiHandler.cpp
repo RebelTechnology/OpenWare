@@ -319,7 +319,7 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
       if(header->magic == 0XDADAC0DE){	
 	storage.writeResourceHeader(data, header->programName, datasize,
 				    RESOURCE_PORT_MAPPED|RESOURCE_USER_PATCH|slot);
-	program.saveToFlash(0, data, datasize+sizeof(ResourceHeader));
+	program.saveToFlash(slot, data, datasize+sizeof(ResourceHeader));
       }else{
 	error(PROGRAM_ERROR, "Invalid patch magic");
       }
