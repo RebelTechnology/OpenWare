@@ -26,71 +26,11 @@
 
 #define __nop() __asm("NOP")
 
+void _Flash_writeEN (void);
+void _Flash_writeDIS (void);
+
 // ____ SPI Config 
 SPI_HandleTypeDef* FLASH_SPIConfig;
-
-//_____ Byte and String Functions
-unsigned char Flash_readByte(unsigned long address)
-{
-	unsigned char rgAddress[3] = "";
-	unsigned char ucData, ucInstruction = INST_READ_EN;
-		
-	// Build address array
-	rgAddress[0] = (address & 0xFF0000) >> 16;
-	rgAddress[1] = (address & 0x00FF00) >> 8;
-	rgAddress[2] = (address & 0x0000FF) >> 0;
-	
-	Flash_Select();									// Select device
-	Flash_WP_Disable();							// Disable write protect	
-	
-	__nop();__nop();__nop();
-	
-	// Send and receive data
-	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
-	HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 			3, 100);
-	HAL_SPI_Receive(FLASH_SPIConfig,  &ucData,  	 		1, 100);
-
-	__nop();__nop();__nop();
-	
-	Flash_WP_Enable();							// Enable write protect
-	Flash_Deselect();								// Deselect device
-	
-	return ucData;									// Return received value
-}
-
-void Flash_writeByte(unsigned long address, unsigned char data)
-{
-	unsigned char rgAddress[3] = "";
-	unsigned char ucData = data, ucInstruction = INST_PAGE_PROGRAM;
-		
-	// Build address array
-	rgAddress[0] = (address & 0xFF0000) >> 16;
-	rgAddress[1] = (address & 0x00FF00) >> 8;
-	rgAddress[2] = (address & 0x0000FF) >> 0;
-		
-	_Flash_writeEN();								// Write enable sequence
-
-	Flash_Select();									// Select device
-	Flash_WP_Disable();							// Disable write protect	
-	
-	__nop();__nop();__nop();
-	
-	// Send and receive data
-	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
-	HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 			3, 100);
-	HAL_SPI_Transmit(FLASH_SPIConfig, &ucData,  	 		1, 100);
-
-	__nop();__nop();__nop();
-	
-	Flash_WP_Enable();							// Enable write protect
-	Flash_Deselect();								// Deselect device
-	
-	// Wait for write to finish
-	while (Flash_readStatusReg(1) & 0x01){}
-	
-	// Check that the write enable latch has been cleared
-	while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
-}
 
 void Flash_read(uint32_t address, uint8_t* data, size_t length){
   uint8_t rgAddress[3];
@@ -112,7 +52,7 @@ void Flash_read(uint32_t address, uint8_t* data, size_t length){
   rgAddress[1] = (address & 0x00FF00) >> 8;
   rgAddress[2] = (address & 0x0000FF) >> 0;
 
-#if 1
+#if 0
   // READ 1-1-1, 0x03, no dummy cycles, up to 50Mhz
   ucInstruction = INST_READ_EN;
   Flash_WP_Disable(); // why?
@@ -178,70 +118,6 @@ void Flash_write(uint32_t address, uint8_t* data, size_t length){
 		
   // Check that the write enable latch has been cleared
   while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
-}
-
-void Flash_writeString(unsigned long address, unsigned char *string)
-{
-	unsigned char rgAddress[3] = "", rgString[256];
-	unsigned char ucData, ucInstruction = INST_PAGE_PROGRAM;
-	
-	strcpy(rgString, string);
-		
-	// Build address array
-	rgAddress[0] = (address & 0xFF0000) >> 16;
-	rgAddress[1] = (address & 0x00FF00) >> 8;
-	rgAddress[2] = (address & 0x0000FF) >> 0;
-		
-	_Flash_writeEN();								// Write enable sequence
-
-	Flash_Select();									// Select device
-	Flash_WP_Disable();							// Disable write protect	
-	
-	__nop();__nop();__nop();
-	
-	// Send and receive data
-	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
-	HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 			3, 100);
-	HAL_SPI_Transmit(FLASH_SPIConfig, rgString, 			sizeof rgString, 100);
-
-	__nop();__nop();__nop();
-	
-	Flash_WP_Enable();							// Enable write protect
-	Flash_Deselect();								// Deselect device
-	
-	// Wait for write to finish
-	while (Flash_readStatusReg(1) & 0x01){}
-	
-	// Check that the write enable latch has been cleared
-	while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
-}
-
-void Flash_readString(unsigned long address, unsigned char *rxBuffer, unsigned char length)
-{
-	unsigned char rgAddress[3] = "", ucData[256] = "";
-	unsigned char ucInstruction = INST_READ_EN;
-		
-	// Build address array
-	rgAddress[0] = (address & 0xFF0000) >> 16;
-	rgAddress[1] = (address & 0x00FF00) >> 8;
-	rgAddress[2] = (address & 0x0000FF) >> 0;
-	
-	Flash_Select();									// Select device
-	Flash_WP_Disable();							// Disable write protect	
-	
-	__nop();__nop();__nop();
-	
-	// Send and receive data
-	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
-	HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 			3, 100);
-	HAL_SPI_Receive(FLASH_SPIConfig,  ucData,  	 length, 100);
-	
-	__nop();__nop();__nop();
-	
-	Flash_WP_Enable();						// Enable write protect
-	Flash_Deselect();							// Deselect device
-
-	strcpy(rxBuffer, ucData);			// Return received value
 }
 
 //_____ Service Functions
@@ -361,68 +237,6 @@ void Flash_erase(uint32_t address, uint8_t cmd){
 	
   // Check that the write enable latch has been cleared
   while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
-}
-
-void Flash_SectorErase (unsigned char index)
-{	
-	unsigned long address 	= (index*0x10000)+1;
-	unsigned char rgAddress[3] = "";
-	unsigned char ucData, ucInstruction = INST_ERASE_BLOCK;
-		
-	// Build address array
-	rgAddress[0] = (address & 0xFF0000) >> 16;
-	rgAddress[1] = (address & 0x00FF00) >> 8;
-	rgAddress[2] = (address & 0x0000FF) >> 0;
-	
-	_Flash_writeEN();
-	
-	Flash_WP_Disable();						// Disable write protect	
-	Flash_Select();								// Select device
-	
-	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
-	HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 			3, 100);
-	
-	Flash_WP_Enable();						// Enable write protect
-	Flash_Deselect();							// Deselect device
-	
-	// Wait for write to finish
-	while (Flash_readStatusReg(1) & 0x01){}
-	
-	// Check that the write enable latch has been cleared
-	while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
-}
-
-void Flash_SubSectorErase (unsigned char index)
-{	
-	unsigned long address 	= (index*0x1000)+1;
-	unsigned char rgAddress[3] = "";
-	unsigned char ucData, ucInstruction = INST_ERASE_SECTOR;
-		
-	// Build address array
-	rgAddress[0] = (address & 0xFF0000) >> 16;
-	rgAddress[1] = (address & 0x00FF00) >> 8;
-	rgAddress[2] = (address & 0x0000FF) >> 0;
-		
-	_Flash_writeEN();								// Write enable sequence
-
-	Flash_Select();									// Select device
-	Flash_WP_Disable();							// Disable write protect	
-	
-	__nop();__nop();__nop();
-	
-	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
-	HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 			3, 100);
-	
-	__nop();__nop();__nop();
-	
-	Flash_WP_Enable();						// Enable write protect
-	Flash_Deselect();							// Deselect device
-	
-	// Wait for write to finish
-	while (Flash_readStatusReg(1) & 0x01){__nop();__nop();__nop();}
-	
-	// Check that the write enable latch has been cleared
-	while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();__nop();}
 }
 
 //_____ Sub Functions
