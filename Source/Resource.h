@@ -28,7 +28,14 @@ public:
   Resource() : header(NULL){}
   Resource(ResourceHeader* header) : header(header){}
   bool isValid(){
-    return header && header->magic == RESOURCE_VALID_MAGIC;
+    return header && header->magic == RESOURCE_VALID_MAGIC && isValidSize();
+  }
+  bool isValidSize(){
+    return isMemoryMapped()
+#ifdef USE_SPI_FLASH
+      || getAddress() < EXTERNAL_FLASH_SIZE
+#endif
+    ;
   }
   bool isErased(){
     return header && header->magic == RESOURCE_ERASED_MAGIC;
@@ -66,7 +73,8 @@ public:
     return ((uint8_t*)header)+sizeof(ResourceHeader);
   }
   /**
-   * Get address of non-memory-mapped resource
+   * Get address of non-memory-mapped resource. 
+   * Assumes header is immediately followed by a 32-bit address value.
    */
   uint32_t getAddress(){
     return *(uint32_t*)getData();
