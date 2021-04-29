@@ -201,7 +201,7 @@ PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
     static DynamicPatchDefinition flashPatch;
     Resource* resource = patches[index];
     if(resource && resource->isValid()){
-      if(flashPatch.load(resource) && flashPatch.verify())
+      if(flashPatch.load(resource))
         def = &flashPatch;
     }
   }

@@ -5,6 +5,9 @@
 #include "ProgramHeader.h"
 #include "Storage.h"
 
+// todo: put implementation straight into PatchDefinition base class
+// 'load' functions should be renamed
+// 'verify' should be called 'load'
 class DynamicPatchDefinition : public PatchDefinition {
 private:
   typedef void (*ProgramFunction)(void);
@@ -67,6 +70,7 @@ public:
     return load(header, sz);
   }
   bool verify(){
+    copy();
     // check we've got an entry function
     if(programFunction == NULL)
       return false;
@@ -84,7 +88,6 @@ public:
     return false;
   }
   void run(){
-    copy();
     programFunction();
   }
   uint32_t getProgramSize(){
