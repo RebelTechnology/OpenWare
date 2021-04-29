@@ -52,7 +52,7 @@ void Flash_read(uint32_t address, uint8_t* data, size_t length){
   rgAddress[1] = (address & 0x00FF00) >> 8;
   rgAddress[2] = (address & 0x0000FF) >> 0;
 
-#if 0
+#if 1
   // READ 1-1-1, 0x03, no dummy cycles, up to 50Mhz
   ucInstruction = INST_READ_EN;
   Flash_WP_Disable(); // why?
