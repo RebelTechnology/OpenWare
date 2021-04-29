@@ -37,8 +37,10 @@ private:
       }else{
 	storage.readResource(sourceResource, linkAddress, programSize);
       }
+      sourceResource = NULL;
     }else if(sourceAddress){
       memcpy(linkAddress, sourceAddress, programSize);
+      sourceAddress = NULL;
     }
   }
 public:
