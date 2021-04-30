@@ -49,9 +49,8 @@ public:
    */
   bool isValidSize(){
     if(header && header->magic != RESOURCE_FREE_MAGIC){
-      if(header->flags & RESOURCE_MEMORY_MAPPED)
-	return uint32_t(header) >= INTERNAL_STORAGE_BEGIN &&
-	  uint32_t(header) + getTotalSize() < INTERNAL_STORAGE_END;    
+      if(uint32_t(header) >= INTERNAL_STORAGE_BEGIN)
+	return uint32_t(header) + getTotalSize() < INTERNAL_STORAGE_END;
 #ifdef USE_SPI_FLASH
       else
 	return getAddress() < EXTERNAL_STORAGE_SIZE;
@@ -74,18 +73,27 @@ public:
     else
       return header && (header->flags & RESOURCE_MEMORY_MAPPED);
   }
-  /*
+  /**
    * Returns true if resource only has flags that are set in @param mask
    */
   bool flagsMatch(uint32_t mask){
     return isUsed() && (header->flags & mask) == header->flags;
   }
-  /*
+  /**
    * Returns true if resource has at least those flags that are set in @param mask
    */
   bool flagsContain(uint32_t mask){
     return isUsed() && (header->flags & mask);
   }
+  /**
+   * Get slot number (stored in the flags), or 0 if not applicable.
+   */
+  uint8_t getSlot(){
+    if(isValid())
+      return header->flags & 0xff;
+    // todo: if we use MSB instead of LSB for slot then name will always have a terminating 0
+    return 0;
+  }  
   /**
    * Get data pointer to memory-mapped resource
    */

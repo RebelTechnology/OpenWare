@@ -281,11 +281,11 @@ size_t Storage::writeResource(const char* name, uint8_t* data, size_t datasize, 
  * 5. rebuild index
  */
 size_t Storage::writeResource(ResourceHeader* header){
+#ifndef USE_SPI_FLASH
+  header->flags |= RESOURCE_MEMORY_MAPPED; // save everything mem mapped
+#endif
   size_t length = header->size+sizeof(ResourceHeader);
   uint32_t flags = header->flags;
-#ifndef USE_SPI_FLASH
-  flags |= RESOURCE_MEMORY_MAPPED; // save everything mem mapped
-#endif
   if(flags & 0xff){ // there's a slot number
     eraseResource(flags & 0xff); // mark as deleted if it exists
   }else{
@@ -323,7 +323,7 @@ size_t Storage::writeResource(ResourceHeader* header){
     error(FLASH_ERROR, "Flash write failed");
     return 0;
   }
-  if(length != dest->getTotalSize()){
+  if(dest->getTotalSize() >= length){ // allow for storage-specific alignment
     error(FLASH_ERROR, "Size verification failed");
     return 0;
   }

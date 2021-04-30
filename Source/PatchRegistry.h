@@ -21,25 +21,16 @@ public:
   unsigned int getNumberOfPatches();
   unsigned int getNumberOfResources();
   bool hasPatches();
-  void registerPatch(PatchDefinition* def);
+  // void registerPatch(PatchDefinition* def);
   void setDynamicPatchDefinition(PatchDefinition* def){
     dynamicPatchDefinition = def;
   }
   Resource* getPatch(uint8_t index);
   Resource* getResource(uint8_t index);
-  // ResourceHeader* getResource(const char* name);
-
-  // void* getData(ResourceHeader* resource);
-  // void store(uint8_t index, uint8_t* data, size_t size);
-  // unsigned int getSlot(ResourceHeader* resource);
-  // void setDeleted(uint8_t index);
 private:
-  // bool isPresetBlock(StorageBlock block);
   Resource* patches[MAX_NUMBER_OF_PATCHES];
   Resource* resources[MAX_NUMBER_OF_RESOURCES];
-  // StorageBlock patchblocks[MAX_NUMBER_OF_PATCHES];
-  // StorageBlock resourceblocks[MAX_NUMBER_OF_RESOURCES];
-  PatchDefinition* defs[MAX_NUMBER_OF_PATCHES];
+  // PatchDefinition* defs[MAX_NUMBER_OF_PATCHES];
   uint8_t patchCount, resourceCount;
   PatchDefinition* dynamicPatchDefinition;
 };
