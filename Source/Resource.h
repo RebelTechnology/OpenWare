@@ -16,9 +16,9 @@
 #define RESOURCE_ERASED_MAGIC    0xDADA0000
 #define RESOURCE_FREE_MAGIC      0xffffffff
 
-#define INTERNAL_FLASH_BEGIN ((uint32_t)&_FLASH_STORAGE_BEGIN)
-#define INTERNAL_FLASH_END   ((uint32_t)&_FLASH_STORAGE_END)
-#define INTERNAL_FLASH_SIZE  (INTERNAL_FLASH_END - INTERNAL_FLASH_BEGIN)
+#define INTERNAL_STORAGE_BEGIN ((uint32_t)&_FLASH_STORAGE_BEGIN)
+#define INTERNAL_STORAGE_END   ((uint32_t)&_FLASH_STORAGE_END)
+#define INTERNAL_STORAGE_SIZE  (INTERNAL_STORAGE_END - INTERNAL_STORAGE_BEGIN)
 extern char _FLASH_STORAGE_BEGIN;
 extern char _FLASH_STORAGE_END;
 
@@ -38,20 +38,26 @@ public:
    * A valid resource is not erased and not free.
    */
   bool isValid(){
-    return header && header->magic == RESOURCE_VALID_MAGIC && isValidSize();
+    return isValidSize() && header->magic == RESOURCE_VALID_MAGIC;
   }
   bool isErased(){
-    return header && header->magic == RESOURCE_ERASED_MAGIC && isValidSize();
+    return isValidSize() && header->magic == RESOURCE_ERASED_MAGIC;
   }
   /**
    * The resource size is valid if it is within the boundaries of its storage.
+   * @return false if the resource is null, free, or corrupt.
    */
   bool isValidSize(){
-    return isMemoryMapped()
+    if(header && header->magic != RESOURCE_FREE_MAGIC){
+      if(header->flags & RESOURCE_MEMORY_MAPPED)
+	return uint32_t(header) >= INTERNAL_STORAGE_BEGIN &&
+	  uint32_t(header) + getTotalSize() < INTERNAL_STORAGE_END;    
 #ifdef USE_SPI_FLASH
-      || (getAddress() < EXTERNAL_FLASH_SIZE)
+      else
+	return getAddress() < EXTERNAL_STORAGE_SIZE;
 #endif
-    ;
+    }
+    return false;
   }
   /**
    * A used resource may be erased but always has a correct size. It is not free.
@@ -63,9 +69,10 @@ public:
     return isValid() && (header->flags & RESOURCE_SYSTEM_RESOURCE);
   }
   bool isMemoryMapped(){
-    // we can't look at the flags because they will be all ones if isFree() is true
-    return uint32_t(header) >= INTERNAL_FLASH_BEGIN && uint32_t(header) < INTERNAL_FLASH_END;
-    // return isValid() && (header->flags & RESOURCE_MEMORY_MAPPED);
+    if(isFree()) // we can't look at the flags because they will be all ones 
+      return uint32_t(header) >= INTERNAL_STORAGE_BEGIN && uint32_t(header) < INTERNAL_STORAGE_END;
+    else
+      return header && (header->flags & RESOURCE_MEMORY_MAPPED);
   }
   /*
    * Returns true if resource only has flags that are set in @param mask
@@ -97,9 +104,14 @@ public:
   size_t getDataSize(){
     return header->size;
   }
-  // get size, including header, aligned to 32 or 256 bytes
+  /**
+   * Get size, including header, aligned to 32 or 256 bytes
+   * @return 0 if resource is null or free
+   */
   size_t getTotalSize(){
-    if(isMemoryMapped())
+    if(!header || header->magic == RESOURCE_FREE_MAGIC)
+      return 0;
+    if(header->flags & RESOURCE_MEMORY_MAPPED)
       return (header->size+sizeof(ResourceHeader)+31) & ~31;
     else
       return (header->size+sizeof(ResourceHeader)+255) & ~255;

@@ -4,6 +4,7 @@
 #include "message.h"
 #include "Storage.h"
 #include "eepromcontrol.h"
+#include "callbacks.h"
 
 #ifdef USE_SPI_FLASH
 #include "Flash_S25FL.h"
@@ -24,8 +25,10 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
   // search backwards for last block that is not written
   uint32_t* p = (uint32_t*)end;
   p -= 2*align/sizeof(uint32_t); // start at two alignment units from end
-  while(p > begin && *p == RESOURCE_FREE_MAGIC)
-    p -= align/sizeof(uint32_t);
+  while(p > begin && *p == RESOURCE_FREE_MAGIC){
+    setProgress(((uint32_t)end-(uint32_t)p)*4095/((uint32_t)end-(uint32_t)begin));
+    p--;
+  }
   p += align/sizeof(uint32_t);
   p = (uint32_t*)((uint32_t)p & ~(align-1));
   if(*p == RESOURCE_FREE_MAGIC)
@@ -34,17 +37,18 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
 }
 
 #ifdef USE_SPI_FLASH
-uint32_t findFirstFreePage(uint32_t begin, uint32_t end, size_t pagesize){
-  uint32_t page[pagesize/sizeof(uint32_t)];
-  uint32_t address = end-pagesize;
+uint32_t findFirstFreePage(uint32_t begin, uint32_t end, size_t align){
+  uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
+  uint32_t address = end-align;
   while(address > begin){
-    Flash_read(address, (uint8_t*)page, pagesize);
-    if(page[0] != RESOURCE_FREE_MAGIC ||
-       memcmp(&page[0], &page[1], pagesize-sizeof(uint32_t)) != 0)
+    setProgress((end-address)*4095/(end-begin));
+    Flash_read(address, (uint8_t*)quad, sizeof(quad));
+    if(RESOURCE_FREE_MAGIC != (quad[0] & quad[1] & quad[2] & quad[3]))
       break;
+    address -= sizeof(quad);
   }
   if(address > begin)
-    return address+pagesize;
+    return (address+sizeof(quad) + (align-1)) & ~(align-1) ;
   return end;
 }
 #endif
@@ -61,18 +65,20 @@ void Storage::init(){
 void Storage::index(){
   memset(resources, 0, sizeof(resources));
   size_t i = 0;
+  size_t progress = 0;
 #ifdef USE_FLASH
-  resources[i].setHeader((ResourceHeader*)(INTERNAL_FLASH_BEGIN));
+  resources[i].setHeader((ResourceHeader*)(INTERNAL_STORAGE_BEGIN));
   while(i<MAX_RESOURCE_HEADERS && resources[i].isUsed()){
     ResourceHeader* next = resources[i].getNextHeader();
     if(resources[i].isValid())
       i++;
     resources[i].setHeader(next);
+    setProgress(progress += MAX_RESOURCE_HEADERS/4095);
   }
   if(!resources[i].isFree()){
     error(FLASH_ERROR, "Invalid flash resource");
     // set resource to point to first free block, or NULL
-    void* p = findFirstFreeBlock(resources[i].getHeader(), (void*)INTERNAL_FLASH_END, 32);
+    void* p = findFirstFreeBlock(resources[i].getHeader(), (void*)INTERNAL_STORAGE_END, 32);
     resources[i].setHeader((ResourceHeader*)p);
   }
 #endif
@@ -83,19 +89,20 @@ void Storage::index(){
   resources[++i].setHeader(header);
   Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
   while(i<MAX_RESOURCE_HEADERS && resources[i].isUsed() &&
-	address < EXTERNAL_FLASH_SIZE &&
+	address < EXTERNAL_STORAGE_SIZE &&
 	header < &nor_index[MAX_SPI_FLASH_HEADERS]){
     address += resources[i].getTotalSize();
     if(resources[i].isValid())
       resources[++i].setHeader(++header);
     header->address = address;
     Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+    setProgress(progress += MAX_RESOURCE_HEADERS/4095);
   }
   if(!resources[i].isFree()){
     error(FLASH_ERROR, "Invalid SPI resource");
     // set resource to point to first free block, or NULL
-    address = findFirstFreePage(resources[i].getAddress(), EXTERNAL_FLASH_SIZE, 256);
-    if(address < EXTERNAL_FLASH_SIZE)
+    address = findFirstFreePage(resources[i].getAddress(), EXTERNAL_STORAGE_SIZE, 256);
+    if(address < EXTERNAL_STORAGE_SIZE)
       ((NorHeader*)resources[i].getHeader())->address = address;
     else
       resources[i].setHeader(NULL);
@@ -207,7 +214,7 @@ void Storage::erase(uint32_t flags){
   // tbd: keep system resources
   if(flags & RESOURCE_MEMORY_MAPPED){
     eeprom_unlock();
-    eeprom_erase(INTERNAL_FLASH_BEGIN, INTERNAL_FLASH_SIZE);
+    eeprom_erase(INTERNAL_STORAGE_BEGIN, INTERNAL_STORAGE_SIZE);
     eeprom_lock();
   }
 #endif
@@ -237,7 +244,7 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   if(flags & RESOURCE_MEMORY_MAPPED){
 #ifdef USE_FLASH
     eeprom_unlock();
-    eeprom_write_block(INTERNAL_FLASH_BEGIN, buffer, offset);
+    eeprom_write_block(INTERNAL_STORAGE_BEGIN, buffer, offset);
     eeprom_lock();
 #endif
   }else{
@@ -332,11 +339,11 @@ size_t Storage::getTotalAllocatedSize(uint32_t flags){
   size_t total = 0;
 #ifdef USE_FLASH
   if(flags & RESOURCE_MEMORY_MAPPED)
-    total += INTERNAL_FLASH_SIZE;
+    total += INTERNAL_STORAGE_SIZE;
 #endif
 #ifdef USE_SPI_FLASH
   if(flags & RESOURCE_PORT_MAPPED)
-    total += EXTERNAL_FLASH_SIZE;
+    total += EXTERNAL_STORAGE_SIZE;
 #endif
   return total;
 }

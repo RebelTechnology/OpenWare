@@ -9,7 +9,7 @@
 #define USE_FLASH
 /* #define USE_SPI_FLASH */
 #define SPI_FLASH_HSPI               hspi1
-#define EXTERNAL_FLASH_SIZE          (1*1024*1024)
+#define EXTERNAL_STORAGE_SIZE        (1*1024*1024)
 #define MAX_RESOURCE_HEADERS         40
 #define MAX_SPI_FLASH_HEADERS        32
 
