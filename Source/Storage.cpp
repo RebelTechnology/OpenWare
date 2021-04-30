@@ -154,8 +154,8 @@ bool Storage::eraseResource(Resource* resource){
     eeprom_wait(); // clear flash flags
 #ifdef STM32H743xx
     ResourceHeader copy = *header;
-    copy->magic = RESOURCE_ERASED_MAGIC;
-    status = eeprom_write_block((uint32_t)header, copy, sizeof(ResourceHeader));
+    copy.magic = RESOURCE_ERASED_MAGIC;
+    status = eeprom_write_block((uint32_t)header, &copy, sizeof(ResourceHeader));
 #else
     status = eeprom_write_word((uint32_t)header, RESOURCE_ERASED_MAGIC);
 #endif
@@ -294,8 +294,14 @@ size_t Storage::writeResource(ResourceHeader* header){
   uint8_t* data = (uint8_t*)header;
   size_t capacity = getFreeSize(flags);
   if(length > capacity){ // assuming 'header' is located in extram
+#ifdef USE_EXTERNAL_RAM
     extern char _EXTRAM_SIZE;
     defrag(data + length, _EXTRAM_SIZE - length, flags);
+#else
+    // required by devices with no ext mem
+    extern char _PATCHRAM_SIZE;
+    defrag(data + length, _PATCHRAM_SIZE - length, flags);
+#endif
   }
   Resource* dest = getFreeResource(flags);
   if(!dest){

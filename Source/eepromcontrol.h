@@ -21,7 +21,6 @@
 #define ADDR_FLASH_SECTOR_13    ((uint32_t)0x081a0000) /* Base @ of Sector 13, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_14    ((uint32_t)0x081c0000) /* Base @ of Sector 14, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_15    ((uint32_t)0x081e0000) /* Base @ of Sector 15, 128 Kbyte */
-#define ADDR_FLASH_END          ((uint32_t)0x08200000)
 #else
 #define ADDR_FLASH_SECTOR_0     ((uint32_t)0x08000000) /* Base @ of Sector 0, 16 Kbyte */
 #define ADDR_FLASH_SECTOR_1     ((uint32_t)0x08004000) /* Base @ of Sector 1, 16 Kbyte */
@@ -35,7 +34,6 @@
 #define ADDR_FLASH_SECTOR_9     ((uint32_t)0x080A0000) /* Base @ of Sector 9, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_10    ((uint32_t)0x080C0000) /* Base @ of Sector 10, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_11    ((uint32_t)0x080E0000) /* Base @ of Sector 11, 128 Kbyte */
-#define ADDR_FLASH_END          ((uint32_t)0x08100000)
 #endif
 
 #ifdef __cplusplus
