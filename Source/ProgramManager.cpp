@@ -391,6 +391,7 @@ void programFlashTask(void* p){
   uint8_t index = flashSectorToWrite;
   uint32_t size = flashSizeToWrite;
   uint8_t* source = (uint8_t*)flashAddressToWrite;
+  owl.setOperationMode(LOAD_MODE);
   if(index == 0xff){
     error(PROGRAM_ERROR, "Enter bootloader to flash firmware");
   }else if(index == 0xfe){
@@ -427,6 +428,7 @@ void programFlashTask(void* p){
 
 void eraseFlashTask(void* p){
   uint8_t slot = flashSectorToWrite;
+  owl.setOperationMode(LOAD_MODE);
   taskENTER_CRITICAL();
   if(slot == 0xff){
 #ifdef USE_SPI_FLASH
