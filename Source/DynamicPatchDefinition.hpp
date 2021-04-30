@@ -22,7 +22,7 @@ private:
   bool load(ProgramHeader* header, uint32_t sz){
     linkAddress = header->linkAddress;
     programSize = (uint32_t)header->endAddress - (uint32_t)header->linkAddress;
-    if(sz != programSize)
+    if(header->magic != 0xDADAC0DE || sz != programSize)
       return false;
     stackBase = header->stackBegin;
     stackSize = (uint32_t)header->stackEnd - (uint32_t)header->stackBegin;
