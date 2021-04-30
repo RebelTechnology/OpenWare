@@ -342,3 +342,6 @@ __weak void onChangePin(uint16_t pin){
   }
 }
 
+__weak void setProgress(uint16_t value){
+  setParameterValue(LOAD_INDICATOR_PARAMETER, 4095);
+}

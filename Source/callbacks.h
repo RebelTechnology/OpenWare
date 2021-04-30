@@ -26,6 +26,7 @@ extern "C" {
   void setGateValue(uint8_t bid, int16_t value);
   void onChangePin(uint16_t pin);
   void onChangeMode(OperationMode new_mode, OperationMode old_mode);
+  void setProgress(uint16_t value); // sets a progress bar (if available) to a value from 0 to 4095
 
 #ifdef __cplusplus
 } /* extern C */
