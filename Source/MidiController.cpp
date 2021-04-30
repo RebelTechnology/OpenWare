@@ -10,7 +10,8 @@
 #include "ApplicationSettings.h"
 #include "ProgramVector.h"
 #include "ProgramManager.h"
-#include "FlashStorage.h"
+// #include "FlashStorage.h"
+#include "Storage.h"
 #include "Owl.h"
 #include "BootloaderStorage.h"
 
@@ -104,7 +105,7 @@ public:
   void loop(){
     if(state < registry.getNumberOfResources()){
       midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, state,
-		       registry.getResourceName(state+MAX_NUMBER_OF_PATCHES+1));
+		       registry.getResourceName(state));
       state++;
     }else{
       owl.setBackgroundTask(NULL); // end this task

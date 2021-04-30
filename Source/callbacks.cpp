@@ -14,7 +14,6 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 #include "message.h"
-#include "FlashStorage.h"
 #include "PatchRegistry.h"
 #ifdef USE_SCREEN
 #include "Graphics.h"
@@ -343,3 +342,6 @@ __weak void onChangePin(uint16_t pin){
   }
 }
 
+__weak void setProgress(uint16_t value){
+  setParameterValue(LOAD_INDICATOR_PARAMETER, 4095);
+}

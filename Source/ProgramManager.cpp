@@ -14,7 +14,7 @@
 #include "Codec.h"
 #endif
 #include "ServiceCall.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "BitState.hpp"
 #include "MidiReceiver.h"
 #include "MidiController.h"
@@ -391,23 +391,30 @@ void programFlashTask(void* p){
   uint8_t index = flashSectorToWrite;
   uint32_t size = flashSizeToWrite;
   uint8_t* source = (uint8_t*)flashAddressToWrite;
-  if(index == 0xff && size <= MAX_SYSEX_FIRMWARE_SIZE){
+  owl.setOperationMode(LOAD_MODE);
+  if(index == 0xff){
     error(PROGRAM_ERROR, "Enter bootloader to flash firmware");
-  }else if (index == 0xfe && size <= MAX_SYSEX_BOOTLOADER_SIZE){
-    taskENTER_CRITICAL();
-    bootloader.erase();
-    extern char _BOOTLOADER, _BOOTLOADER_END;
-    if(*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
-        *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(VersionToken)) != 0xFFFFFFFF){
-      error(PROGRAM_ERROR, "Bootloader not erased");
+  }else if(index == 0xfe){
+    if(size <= MAX_SYSEX_BOOTLOADER_SIZE){
+      taskENTER_CRITICAL();
+      bootloader.erase();
+      extern char _BOOTLOADER, _BOOTLOADER_END;
+      if(*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
+	 *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(VersionToken)) != 0xFFFFFFFF){
+	error(PROGRAM_ERROR, "Bootloader not erased");
+      }else{
+	if(!bootloader.store((void*)source, size))
+	  error(PROGRAM_ERROR, "Bootloader write error");
+      }
+      taskEXIT_CRITICAL();
     }else{
-      if(!bootloader.store((void*)source, size))
-        error(PROGRAM_ERROR, "Bootloader write error");
+      error(PROGRAM_ERROR, "Bootloader too big");
     }
-    taskEXIT_CRITICAL();
   }else{
-    registry.store(index, source, size);
-    if(index > MAX_NUMBER_OF_PATCHES){
+    ResourceHeader* header = (ResourceHeader*)flashAddressToWrite;
+    storage.writeResource(header);
+    registry.init();
+    if(index == 0){
       onResourceUpdate();
     }else{
       program.loadProgram(index);
@@ -421,18 +428,21 @@ void programFlashTask(void* p){
 
 void eraseFlashTask(void* p){
   uint8_t slot = flashSectorToWrite;
+  owl.setOperationMode(LOAD_MODE);
   taskENTER_CRITICAL();
   if(slot == 0xff){
-    storage.erase();
+#ifdef USE_SPI_FLASH
+    storage.erase(RESOURCE_PORT_MAPPED);
+#else
+    storage.erase(RESOURCE_MEMORY_MAPPED);
+#endif
     taskEXIT_CRITICAL();
     // debugMessage("Erased flash storage");
-    registry.init();
-    onResourceUpdate();
   }else{
-    registry.setDeleted(slot);
+    Resource* resource = registry.getPatch(slot);
+    storage.eraseResource(resource);
   }
   taskEXIT_CRITICAL();
-  storage.init();
   registry.init();
   settings.init();
   if(slot > MAX_NUMBER_OF_PATCHES)
@@ -470,9 +480,6 @@ void bootstrap(){
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   uint8_t lastprogram = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
-  // uint8_t lastprogram = RTC->BKP1R;
-  // uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
-  // uint8_t lastprogram = *bkpsram_addr;
 #else    
   uint8_t lastprogram = 0;
 #endif
@@ -656,8 +663,8 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
 void ProgramManager::loadProgram(uint8_t pid){
   // We must always force loading patch definition, because it uses cached value that
   // is also updated in other places
-  PatchDefinition* def = registry.getPatchDefinition(pid);
   if(patchindex != pid){
+    PatchDefinition* def = registry.getPatchDefinition(pid);
     if(def != NULL && def->getProgramVector() != NULL){
       patchdef = def;
       updateProgramIndex(pid);
