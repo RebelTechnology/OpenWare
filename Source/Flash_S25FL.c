@@ -152,7 +152,7 @@ unsigned char Flash_readStatusReg (unsigned char reg)
 
 void Flash_writeStatusReg (unsigned char reg, unsigned char data)
 {	
-	unsigned char ucData, ucInstruction = INST_WRITE_STATREG;
+	unsigned char ucInstruction = INST_WRITE_STATREG;
 	
 	_Flash_writeEN();
 	
@@ -163,7 +163,7 @@ void Flash_writeStatusReg (unsigned char reg, unsigned char data)
 	
 	// Send and receive data
 	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, sizeof ucInstruction, 1000);
-	HAL_SPI_Transmit(FLASH_SPIConfig, &ucData,  	 		sizeof ucData, 				1000);
+	HAL_SPI_Transmit(FLASH_SPIConfig, &data, sizeof data, 1000);
 	
 	__nop();__nop();__nop();
 	
