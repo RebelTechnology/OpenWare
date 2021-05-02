@@ -24,7 +24,7 @@ void MPU_Config(void){
   /* Disable the MPU */
   HAL_MPU_Disable();
 
-#ifdef STM32H743xx
+#ifdef STM32H7xx
 #if defined USE_ICACHE || defined USE_DCACHE
   MPU_Region_InitTypeDef MPU_InitStruct;
 
@@ -70,7 +70,7 @@ void MPU_Config(void){
   MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_ENABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 #endif /* USE_ICACHE || USE_DCACHE */
-#endif /* STM32H743xx */
+#endif /* STM32H7xx */
 
   /* Enable the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);

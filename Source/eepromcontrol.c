@@ -9,7 +9,7 @@ void eeprom_lock(){
 }
 
 int eeprom_wait(){ 
-#ifndef STM32H743xx
+#ifndef STM32H7xx
   return FLASH_WaitForLastOperation(5000);
 #else
   /*
@@ -41,7 +41,7 @@ int eeprom_erase_sector(uint32_t sector) {
  * Flash word is 32 bytes, so we'd have to pass pointer or address instead of raw object on H7
  */
 int eeprom_write_word(uint32_t address, uint32_t data){
-#ifndef STM32H743xx
+#ifndef STM32H7xx
   HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
   return status;
 #else
@@ -54,7 +54,7 @@ int eeprom_write_word(uint32_t address, uint32_t data){
 /*
  * This won't work on H7 and we don't use this function. Probably should be removed altogether.
  */
-#ifndef STM32H743xx
+#ifndef STM32H7xx
 int eeprom_write_byte(uint32_t address, uint8_t data){
 
   HAL_StatusTypeDef status =  HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, data);
@@ -66,7 +66,7 @@ int eeprom_write_block(uint32_t address, void* data, uint32_t size){
   uint32_t* p32 = (uint32_t*)data;
   uint32_t i=0;
   HAL_StatusTypeDef status = HAL_OK;
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   for(; i <= size; i += 32){
     status |= HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address + i, (uint32_t)p32);
     p32 += 32 / sizeof(void*);
