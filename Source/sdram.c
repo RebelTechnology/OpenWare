@@ -342,4 +342,4 @@ void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
   /* USER CODE END SDRAM_MspDeInit 1 */
 }
 #endif /* USE_EXTERNAL_RAM */
-#endif /* OWL_PLAYERF7 */
+#endif /* INIT_FMC */
