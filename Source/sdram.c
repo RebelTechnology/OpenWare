@@ -44,6 +44,7 @@ void MPU_Config(void){
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
   // SDRAM - write back with no write allocate, no execute
+#ifdef USE_EXTERNAL_RAM
   extern char _EXTRAM;
   MPU_InitStruct.IsCacheable  = MPU_ACCESS_CACHEABLE;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
@@ -54,6 +55,7 @@ void MPU_Config(void){
   MPU_InitStruct.BaseAddress  = (uint32_t)&_EXTRAM;
   MPU_InitStruct.DisableExec  = MPU_INSTRUCTION_ACCESS_DISABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+#endif
 
   // AXISRAM D1 (+RAM) - write back with no write allocate, execute
   extern char _PLUSRAM;
