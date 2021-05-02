@@ -78,6 +78,7 @@ void MPU_Config(void){
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 }
 
+#ifdef USE_EXTERNAL_RAM
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram){
   __enable_irq(); // must enable SysTick IRQ for call to HAL_Delay()
   FMC_SDRAM_CommandTypeDef command;
@@ -340,4 +341,5 @@ void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
 
   /* USER CODE END SDRAM_MspDeInit 1 */
 }
+#endif /* USE_EXTERNAL_RAM */
 #endif /* OWL_PLAYERF7 */
