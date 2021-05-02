@@ -18,7 +18,7 @@ ITCMRAM (xrw)    : ORIGIN = 0x00000008, LENGTH = 65528 /* 64K - 8 to avoid start
 EXTRAM  (rwx)    : ORIGIN = 0xD0000000, LENGTH = 8M
 BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K
 FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 384K
-STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 1536K /* Assuming 2Mb FLASH */
+STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 512K /* 1Mb FLASH */
 }
 
 /* Define output sections */
