@@ -3,16 +3,15 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v21.2-pre2"
+#define FIRMWARE_VERSION "v21.2-pre3"
 
-// todo: these are project dependent
-#define USE_FLASH
-/* #define USE_SPI_FLASH */
-#define SPI_FLASH_HSPI               hspi1
-#define EXTERNAL_STORAGE_SIZE        (1*1024*1024)
-#define MAX_RESOURCE_HEADERS         40
+#ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
-
+#else
+#define MAX_SPI_FLASH_HEADERS        0
+#endif
+#define USE_FLASH
+#define MAX_RESOURCE_HEADERS         (16+MAX_SPI_FLASH_HEADERS)
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
