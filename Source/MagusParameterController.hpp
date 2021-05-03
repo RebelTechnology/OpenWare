@@ -736,13 +736,13 @@ public:
           else if (!resourceDeletePressed) {
             // Delete resource unless it's protected by "__" prefix
             resourceDeletePressed = true;
-            ResourceHeader* res = registry.getResource(selectedPid[1]);
+            Resource* res = registry.getResource(selectedPid[1]);
             if (res != NULL) {
-              if(res->name[0] == '_' && res->name[1] == '_'){
+              if(res->getName()[0] == '_' && res->getName()[1] == '_'){
                 debugMessage("Resource protected");
               }
               else {
-                registry.setDeleted(selectedPid[1] + 1);
+		storage.eraseResource(res);
               }
             }
           }

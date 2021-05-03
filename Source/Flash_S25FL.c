@@ -1,6 +1,8 @@
-#include "main.h"
+#include "device.h"
 #include "Flash_S25FL.h"
 #include <string.h>
+
+#ifdef USE_SPI_FLASH
 
 //_____ External Definitions _______________________________________________________________________
 // Pin Mappings
@@ -275,3 +277,5 @@ void _Flash_writeDIS (void)
 	Flash_WP_Enable();						// Enable write protect
 	Flash_Deselect();							// Deselect device
 }
+
+#endif
