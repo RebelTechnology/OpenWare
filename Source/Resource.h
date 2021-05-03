@@ -31,14 +31,17 @@ public:
   bool isFree(){
     return header && header->magic == RESOURCE_FREE_MAGIC;
   }
-  bool isUsed(){
-    return isValid() || isErased();
-  }
   /**
    * A valid resource is not erased and not free.
    */
   bool isValid(){
     return isValidSize() && header->magic == RESOURCE_VALID_MAGIC;
+  }
+  /**
+   * A used resource may be erased but always has a correct size. It is not free.
+   */
+  bool isUsed(){
+    return isValid() || isErased();
   }
   bool isErased(){
     return isValidSize() && header->magic == RESOURCE_ERASED_MAGIC;
@@ -48,19 +51,15 @@ public:
    * @return false if the resource is null, free, or corrupt.
    */
   bool isValidSize(){
-    if(header && header->magic != RESOURCE_FREE_MAGIC){
-      if(uint32_t(header) >= INTERNAL_STORAGE_BEGIN)
-	return uint32_t(header) + getTotalSize() < INTERNAL_STORAGE_END;
+    if(isMemoryMapped()){
+      return uint32_t(header) + getTotalSize() < INTERNAL_STORAGE_END;
 #ifdef USE_SPI_FLASH
-      else
-	return getAddress() < EXTERNAL_STORAGE_SIZE;
+    }else{
+      return getAddress() < EXTERNAL_STORAGE_SIZE;
 #endif
     }
     return false;
   }
-  /**
-   * A used resource may be erased but always has a correct size. It is not free.
-   */
   bool isPatch(){
     return isValid() && (header->flags & RESOURCE_USER_PATCH);
   }
