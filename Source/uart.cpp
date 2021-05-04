@@ -67,18 +67,26 @@ extern "C" {
   
 #if defined USE_UART_MIDI_TX || defined USE_UART_MIDI_RX || defined USE_DIGITALBUS
   void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
-    error(RUNTIME_ERROR, "uart error");    
 #ifdef USE_UART_MIDI_RX
-    if (huart == &UART_MIDI_HANDLE)
+    if (huart == &UART_MIDI_HANDLE) {
       uart_rx_buf.reset();
+#ifndef DEBUG
+      return;
+#endif
+    }
 #endif
 #ifdef USE_DIGITALBUS
     if (huart == &BUS_HUART) {
       bus.reset();
       bus_tx_buf.reset();
       bus_rx_buf.reset();
+#ifndef DEBUG
+      return;
+#endif
     }
 #endif
+    // We don't want to show this to users in case of hotplug
+    error(RUNTIME_ERROR, "uart error");
   }
 #endif
 }
