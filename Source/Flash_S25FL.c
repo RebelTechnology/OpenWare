@@ -25,6 +25,7 @@
 #define INST_READ_STATREG_2			0x35
 #define INST_WRITE_EN_VSTATREG			0x50
 #define INST_BURSTWRAP_SET			0x77
+#define INST_READ_RDID   			0x9F
 
 #define __nop() __asm("NOP")
 
@@ -33,6 +34,9 @@ void _Flash_writeDIS (void);
 
 // ____ SPI Config 
 SPI_HandleTypeDef* FLASH_SPIConfig;
+#ifdef DEBUG
+uint32_t flash_rdid = 0;
+#endif
 
 void Flash_read(uint32_t address, uint8_t* data, size_t length){
   uint8_t rgAddress[3];
@@ -87,7 +91,7 @@ void Flash_write(uint32_t address, uint8_t* data, size_t length){
   Flash_WP_Disable();
 	
   // wait for write enable latch WEL
-  while (!(Flash_readStatusReg(1) & 0x02)){}
+  while (!(Flash_readStatusReg(INST_READ_STATREG_1) & 0x02)){}
 
   while(length){
     size_t len = length > 256 ? 256 : length;
@@ -113,48 +117,58 @@ void Flash_write(uint32_t address, uint8_t* data, size_t length){
     address += len;
 
     // Wait for write to finish
-    while (Flash_readStatusReg(1) & 0x01){}
+    while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x01){}
   }
 	
   Flash_WP_Enable();
 		
   // Check that the write enable latch has been cleared
-  while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
+  while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_Flash_writeDIS();}
+}
+
+uint32_t Flash_readIdentification(){
+  uint32_t ucData = 0;
+  uint8_t ucInstruction = INST_READ_RDID;
+  Flash_Select();
+  Flash_WP_Disable();
+  __nop();__nop();__nop();
+	
+  // Send and receive data
+  HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, sizeof ucInstruction, 1000);
+  HAL_SPI_Receive(FLASH_SPIConfig,  (uint8_t*)&ucData, sizeof ucData, 1000);
+	
+  __nop();__nop();__nop();
+	
+  Flash_WP_Enable();
+  Flash_Deselect();
+	
+  return ucData;
 }
 
 //_____ Service Functions
-unsigned char Flash_readStatusReg (unsigned char reg)
+uint8_t Flash_readStatusReg (uint8_t ucInstruction)
 {
-	unsigned char ucData = 0, ucInstruction;
+  uint8_t ucData = 0;
 		
-	Flash_Select();										// Select device
-	Flash_WP_Disable();								// Disable write protect	
-
-	__nop();__nop();__nop();
+  Flash_Select();
+  Flash_WP_Disable();
+  __nop();__nop();__nop();
 	
-	// Write enable sequence
-	switch(reg)
-	{
-		case 1: ucInstruction = INST_READ_STATREG_1; break;
-		case 2: ucInstruction = INST_READ_STATREG_2; break;
-		case 3: ucInstruction = INST_READ_STATREG_3; break;
-	}
+  // Send and receive data
+  HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, sizeof ucInstruction, 1000);
+  HAL_SPI_Receive(FLASH_SPIConfig,  &ucData, sizeof ucData, 1000);
 	
-	// Send and receive data
-	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, sizeof ucInstruction, 1000);
-	HAL_SPI_Receive(FLASH_SPIConfig,  &ucData,  	 		sizeof ucData, 				1000);								
+  __nop();__nop();__nop();
 	
-	__nop();__nop();__nop();
+  Flash_WP_Enable();
+  Flash_Deselect();
 	
-	Flash_WP_Enable();						// Enable write protect
-	Flash_Deselect();							// Deselect device
-	
-	return ucData;
+  return ucData;
 }
 
-void Flash_writeStatusReg (unsigned char reg, unsigned char data)
+void Flash_writeStatusReg (uint8_t reg, uint8_t data)
 {	
-	unsigned char ucInstruction = INST_WRITE_STATREG;
+	uint8_t ucInstruction = INST_WRITE_STATREG;
 	
 	_Flash_writeEN();
 	
@@ -173,10 +187,10 @@ void Flash_writeStatusReg (unsigned char reg, unsigned char data)
 	Flash_Deselect();							// Deselect device
 	
 	// Wait for write to finish
-	while (Flash_readStatusReg(1) & 0x01){}
+	while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x01){}
 	
 	// Check that the write enable latch has been cleared
-	while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
+	while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_Flash_writeDIS();}
 }
 
 void Flash_S25FL_init (SPI_HandleTypeDef *spiconfig)
@@ -187,13 +201,17 @@ void Flash_S25FL_init (SPI_HandleTypeDef *spiconfig)
 	Flash_Deselect();		  			// Deselect chip
 	Flash_Release();	  				// Disable Hold
 	Flash_WP_Enable();		  		// Enable Write Protect
+
+#ifdef DEBUG
+	flash_rdid = Flash_readIdentification();
+#endif
 }
 
 //_____ Erase Functions 
 /* entire chip erase */
 void Flash_BulkErase (void)
 {	
-	unsigned char ucInstruction = INST_ERASE_CHIP;
+	uint8_t ucInstruction = INST_ERASE_CHIP;
 	
 	_Flash_writeEN();								// Write enable sequence
 	
@@ -210,10 +228,10 @@ void Flash_BulkErase (void)
 	Flash_Deselect();								// Deselect device
 	
 	// Wait for write to finish
-	while (Flash_readStatusReg(1) & 0x01){__nop();__nop();__nop();}
+	while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x01){__nop();__nop();__nop();}
 	
 	// Check that the write enable latch has been cleared
-	while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();__nop();}
+	while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_Flash_writeDIS();__nop();}
 }
 
 /* individual 4 KB sector erase, 32 KB half block sector, 64 KB block sector erase */		
@@ -235,16 +253,16 @@ void Flash_erase(uint32_t address, uint8_t cmd){
   Flash_Deselect();
 	
   // Wait for write to finish
-  while (Flash_readStatusReg(1) & 0x01){}
+  while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x01){}
 	
   // Check that the write enable latch has been cleared
-  while (Flash_readStatusReg(1) & 0x02) {_Flash_writeDIS();}
+  while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_Flash_writeDIS();}
 }
 
 //_____ Sub Functions
 void _Flash_writeEN (void)
 {
-	unsigned char ucInstruction = INST_WRITE_EN;
+	uint8_t ucInstruction = INST_WRITE_EN;
 	
 	Flash_Select();								// Select device
 	Flash_WP_Disable();						// Disable write protect	
@@ -262,7 +280,7 @@ void _Flash_writeEN (void)
 
 void _Flash_writeDIS (void)
 {	
-	unsigned char ucInstruction = INST_WRITE_DIS;
+	uint8_t ucInstruction = INST_WRITE_DIS;
 	
 	Flash_Select();								// Select device
 	Flash_WP_Disable();						// Disable write protect	
