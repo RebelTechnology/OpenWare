@@ -282,6 +282,10 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 }
 
 #define PATCH_RESET_COUNTER (600/MAIN_LOOP_SLEEP_MS)
+uint16_t progress = 0;
+void setProgress(uint16_t value){
+  progress = value == 4095 ? 0 : value*6;
+}
 
 static uint32_t counter = 0;
 static void update_preset(){
@@ -289,13 +293,15 @@ static void update_preset(){
   case STARTUP_MODE:
   case STREAM_MODE:
   case LOAD_MODE: {
-    uint32_t value = counter*0xfff/PATCH_RESET_COUNTER;
-    setLed(1, counter > PATCH_RESET_COUNTER*0.1 ? value : 0);
-    setLed(2, counter > PATCH_RESET_COUNTER*0.2 ? value : 0);
-    setLed(5, counter > PATCH_RESET_COUNTER*0.3 ? value : 0);
-    setLed(6, counter > PATCH_RESET_COUNTER*0.4 ? value : 0);
-    setLed(3, counter > PATCH_RESET_COUNTER*0.5 ? value : 0);
-    setLed(4, counter > PATCH_RESET_COUNTER*0.6 ? value : 0);
+    uint16_t value = progress;
+    if(value == 0)
+      value = counter*4095*6/PATCH_RESET_COUNTER;
+    setLed(1, 4095 - __USAT(4095*0-value, 12));
+    setLed(2, 4095 - __USAT(4095*1-value, 12));
+    setLed(5, 4095 - __USAT(4095*2-value, 12));
+    setLed(6, 4095 - __USAT(4095*3-value, 12));
+    setLed(3, 4095 - __USAT(4095*4-value, 12));
+    setLed(4, 4095 - __USAT(4095*5-value, 12));
     if(getErrorStatus() != NO_ERROR || isModeButtonPressed())
       owl.setOperationMode(ERROR_MODE);
     break;
