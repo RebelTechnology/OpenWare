@@ -7,7 +7,7 @@
 
 #define USE_SPI_FLASH
 #define SPI_FLASH_HSPI               hspi1
-#define EXTERNAL_STORAGE_SIZE        (1*1024*1024)
+#define EXTERNAL_STORAGE_SIZE        (8*1024*1024)
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
