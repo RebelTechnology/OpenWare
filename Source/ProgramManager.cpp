@@ -438,15 +438,19 @@ void eraseFlashTask(void* p){
 #endif
     taskEXIT_CRITICAL();
     // debugMessage("Erased flash storage");
-  }else{
+  }else if(slot < MAX_NUMBER_OF_PATCHES){
     Resource* resource = registry.getPatch(slot);
-    storage.eraseResource(resource);
+    if(resource != NULL)
+      storage.eraseResource(resource);
+  }else if(slot < MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
+    Resource* resource = registry.getResource(slot-MAX_NUMBER_OF_PATCHES);
+    if(resource != NULL)
+      storage.eraseResource(resource);
+    onResourceUpdate();
   }
   taskEXIT_CRITICAL();
   registry.init();
   settings.init();
-  if(slot > MAX_NUMBER_OF_PATCHES)
-    onResourceUpdate();
   program.resetProgram(false);
   utilityTask = NULL;
   vTaskDelete(NULL);
