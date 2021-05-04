@@ -14,6 +14,7 @@
 #include "Storage.h"
 #include "Owl.h"
 #include "BootloaderStorage.h"
+#include "sysex.h"
 
 void MidiController::sendPatchParameterValues(){
   sendCc(PATCH_PARAMETER_A, (uint8_t)(getParameterValue(PARAMETER_A)>>5) & 0x7f);
@@ -86,7 +87,7 @@ public:
   }
   void loop(){
     if(state < registry.getNumberOfPatches()){
-      midi_tx.sendName(SYSEX_PRESET_NAME_COMMAND, state, registry.getPatchName(state));
+      midi_tx.sendPatchName(state);
       state++;
     }else{
       midi_tx.sendPc(program.getProgramIndex());
@@ -104,8 +105,10 @@ public:
   }
   void loop(){
     if(state < registry.getNumberOfResources()){
-      midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, state,
-		       registry.getResourceName(state));
+      Resource* resource = registry.getResource(state);
+      if(resource)
+	midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, state+MAX_NUMBER_OF_PATCHES,
+			 resource->getName(), resource->getDataSize());
       state++;
     }else{
       owl.setBackgroundTask(NULL); // end this task
@@ -114,7 +117,9 @@ public:
 };
       
 void MidiController::sendPatchName(uint8_t slot){
-  sendName(SYSEX_PRESET_NAME_COMMAND, slot, registry.getPatchName(slot));
+  Resource* resource = registry.getPatch(slot);
+  if(resource)
+    sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize());
 }
 
 void MidiController::sendPatchNames(){
@@ -127,27 +132,18 @@ void MidiController::sendResourceNames(){
   owl.setBackgroundTask(&task);
 }
 
-void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name){
+void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name, size_t datasize){
   if(name != NULL){
-    uint8_t size = strnlen(name, 24);
-    uint8_t buf[size+2];
+    datasize = __REV(datasize); // make it big-endian
+    uint8_t len = strnlen(name, 24);
+    uint8_t buf[len+3+5];
     buf[0] = cmd;
     buf[1] = index;
-    memcpy(buf+2, name, size);
+    memcpy(buf+2, name, len);
+    buf[len+2] = 0;
+    data_to_sysex((uint8_t*)&datasize, buf+len+3, 4);
     sendSysEx(buf, sizeof(buf));
   }
-}
-
-void MidiController::sendPatchParameterNames(){
-  // PatchProcessor* processor = patches.getActivePatchProcessor();
-  // for(int i=0; i<NOF_ADC_VALUES; ++i){
-  //   PatchParameterId pid = (PatchParameterId)i;
-  //   const char* name = processor->getParameterName(pid);
-  //   if(name != NULL)
-  //     sendPatchParameterName(pid, name);
-  //   else
-  //     sendPatchParameterName(pid, "");
-  // }
 }
 
 void MidiController::sendPatchParameterName(PatchParameterId pid, const char* name){
