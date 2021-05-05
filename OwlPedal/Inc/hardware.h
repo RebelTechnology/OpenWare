@@ -46,7 +46,7 @@
 #endif
 
 #define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  6
+#define NOF_BUTTONS                  (4 + 1)
 
 #if 0
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
