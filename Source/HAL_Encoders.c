@@ -10,7 +10,7 @@ SPI_HandleTypeDef* Encoders_SPIConfig;
 
 static int16_t rgENC_Values[7] = {0};
 
-#ifdef STM32H743xx
+#ifdef STM32H7xx
 static volatile uint16_t NOP_CNT = 600;
 #else
 static uint16_t NOP_CNT = 250; // 150 doesn't work in Release build

@@ -47,7 +47,7 @@ public:
   void toggle(){
     port->ODR ^= 1<<pin;
   }
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   void analogMode(){
     // Analog mode is used by ADC and DAC
     uint32_t tmp = port->MODER;
