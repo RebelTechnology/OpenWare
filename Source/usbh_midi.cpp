@@ -168,7 +168,8 @@ void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URB
   MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
   if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
      MIDI_Handle->state == MIDI_TRANSFER_DATA){
-    size_t len = USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
+    // size_t len = USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
+    size_t len = 4; // xfer_count is always 64 at this point, even if only 4 bytes of data is transferred
     USBH_MIDI_ReceiveCallback(phost, MIDI_Handle->pRxData, len);
   }
 }
