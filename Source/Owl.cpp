@@ -119,7 +119,7 @@ static TickType_t xFrequency;
 
 void Owl::setup(void){
 #ifdef USE_IWDG
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   IWDG1->KR = 0xCCCC; // Enable IWDG and turn on LSI
   IWDG1->KR = 0x5555; // ensure watchdog register write is allowed
   IWDG1->PR = 0x05;   // prescaler 128
@@ -221,7 +221,7 @@ void Owl::loop(){
 #endif
   midi_tx.transmit();
 #ifdef USE_IWDG
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
 #else
   IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
@@ -255,7 +255,7 @@ void jump_to_bootloader(void){
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
   /* Disable all interrupts */
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   RCC->CIER = 0x00000000;
 #else
   RCC->CIR = 0x00000000;
@@ -272,7 +272,7 @@ void device_reset(){
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
   /* Disable all interrupts */
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   RCC->CIER = 0x00000000;
 #else
   RCC->CIR = 0x00000000;

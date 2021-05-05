@@ -24,7 +24,7 @@ void MPU_Config(void){
   /* Disable the MPU */
   HAL_MPU_Disable();
 
-#ifdef STM32H743xx
+#ifdef STM32H7xx
 #if defined USE_ICACHE || defined USE_DCACHE
   MPU_Region_InitTypeDef MPU_InitStruct;
 
@@ -44,6 +44,7 @@ void MPU_Config(void){
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
   // SDRAM - write back with no write allocate, no execute
+#ifdef USE_EXTERNAL_RAM
   extern char _EXTRAM;
   MPU_InitStruct.IsCacheable  = MPU_ACCESS_CACHEABLE;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
@@ -54,6 +55,7 @@ void MPU_Config(void){
   MPU_InitStruct.BaseAddress  = (uint32_t)&_EXTRAM;
   MPU_InitStruct.DisableExec  = MPU_INSTRUCTION_ACCESS_DISABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+#endif
 
   // AXISRAM D1 (+RAM) - write back with no write allocate, execute
   extern char _PLUSRAM;
@@ -70,12 +72,13 @@ void MPU_Config(void){
   MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_ENABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 #endif /* USE_ICACHE || USE_DCACHE */
-#endif /* STM32H743xx */
+#endif /* STM32H7xx */
 
   /* Enable the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 }
 
+#ifdef USE_EXTERNAL_RAM
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram){
   __enable_irq(); // must enable SysTick IRQ for call to HAL_Delay()
   FMC_SDRAM_CommandTypeDef command;
@@ -338,4 +341,5 @@ void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
 
   /* USER CODE END SDRAM_MspDeInit 1 */
 }
-#endif /* OWL_PLAYERF7 */
+#endif /* USE_EXTERNAL_RAM */
+#endif /* INIT_FMC */
