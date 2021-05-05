@@ -148,6 +148,15 @@ void setup(){
 
 #define PATCH_RESET_COUNTER (4000/MAIN_LOOP_SLEEP_MS)
 
+static uint16_t progress = 0;
+void setProgress(uint16_t value){
+  progress = value;
+}
+
+void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+  progress = 0;
+}
+
 static void update_preset(){
   static int patchselect = 0;
   static uint32_t counter = PATCH_RESET_COUNTER;
@@ -158,7 +167,7 @@ static void update_preset(){
     setEncoderValue(patchselect);
     break;
   case LOAD_MODE:
-    setSegmentDisplay(SEG_DISPLAY_L);
+    setSegmentDisplay(SEG_DISPLAY_L); // todo: spin with progress, or just spin
     patchselect = program.getProgramIndex();
     setEncoderValue(patchselect);
     break;
@@ -191,10 +200,10 @@ static void update_preset(){
 	  settings.program_index = patchselect;
 	  settings.saveToFlash();
 	}else{
-	  setSegmentDisplay(patchselect % 10, counter*MAIN_LOOP_SLEEP_MS > 2000);
+	  setSegmentDisplay(patchselect % 16, counter*MAIN_LOOP_SLEEP_MS > 2000);
 	}
       }else{
-	setSegmentDisplay(patchselect % 10, true);
+	setSegmentDisplay(patchselect % 16, true);
 	counter = PATCH_RESET_COUNTER;
       }
     }

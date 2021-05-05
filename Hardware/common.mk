@@ -24,7 +24,6 @@ GDB=$(TOOLROOT)arm-none-eabi-gdb
 OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
-OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd.cfg
 MKDIR=mkdir
 
 # Generate dependency information
