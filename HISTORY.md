@@ -1,6 +1,7 @@
 21.2.0
 ------
 
+* Display patch slots up to 16 on Lich (in hexadecimal)
 * Bootloader flash/lock/unlock functionality
 * New Pin class for GPIO handling
 * Refactored code with project-specific callbacks
