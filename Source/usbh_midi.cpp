@@ -169,6 +169,10 @@ void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URB
   if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
      MIDI_Handle->state == MIDI_TRANSFER_DATA){
     size_t len = USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
+    if(MIDI_Handle->pRxData[4] == 0)
+      len = 4;
+    // xfer_count is always 64 at this point, even if only 4 bytes of data is transferred
+    // it appears some drivers (e.g. WinXP) send 0-padded 64-length packets
     USBH_MIDI_ReceiveCallback(phost, MIDI_Handle->pRxData, len);
   }
 }

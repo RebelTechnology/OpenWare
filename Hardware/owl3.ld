@@ -16,9 +16,12 @@ DMA_D2  (xrw)    : ORIGIN = 0x30040000, LENGTH = 32K
 RAM_D3  (xrw)    : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM (xrw)    : ORIGIN = 0x00000008, LENGTH = 65528 /* 64K - 8 to avoid starting at 0x0 - FreeRTOS fails if stack address is NULL */
 EXTRAM  (rwx)    : ORIGIN = 0xD0000000, LENGTH = 8M
+/* BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 0K */
+/* FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 512K */
 BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K
 FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 384K
-STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 1536K /* Assuming 2Mb FLASH */
+STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 512K  /* Assuming 1Mb FLASH */
+/* STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 1536K /\* Assuming 2Mb FLASH *\/ */
 }
 
 /* Define output sections */

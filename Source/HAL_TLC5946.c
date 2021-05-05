@@ -1,5 +1,6 @@
 #include "HAL_TLC5946.h"
 #include <string.h>
+#include "device.h"
 #include "main.h"
 
 // #define TLC_CONTINUOUS

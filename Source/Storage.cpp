@@ -329,7 +329,7 @@ size_t Storage::writeResource(ResourceHeader* header){
     error(FLASH_ERROR, "Flash write failed");
     return 0;
   }
-  if(dest->getTotalSize() >= length){ // allow for storage-specific alignment
+  if(dest->getTotalSize() < length){ // allow for storage-specific alignment
     error(FLASH_ERROR, "Size verification failed");
     return 0;
   }

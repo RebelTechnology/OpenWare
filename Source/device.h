@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v21.2-witch2"
+#define FIRMWARE_VERSION "v22.0-pre"
 
 #ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32

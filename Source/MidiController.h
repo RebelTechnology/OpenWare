@@ -20,13 +20,12 @@ public:
   }
   void sendSettings();
   void sendConfigurationSetting(const char* name, uint32_t value);
-  void sendPatchParameterNames();
   void sendPatchParameterName(PatchParameterId pid, const char* name);
   void sendPatchParameterValues();
   void sendPatchName(uint8_t slot);
   void sendPatchNames();
   void sendResourceNames();
-  void sendName(uint8_t cmd, uint8_t index, const char* name);
+  void sendName(uint8_t cmd, uint8_t index, const char* name, size_t size);
   void sendDeviceInfo();
   void sendDeviceStats();
   void sendProgramStats();

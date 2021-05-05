@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /* Base address of the Flash sectors */
-#ifdef STM32H743xx
+#ifdef STM32H7xx
 #define ADDR_FLASH_SECTOR_0     ((uint32_t)0x08000000) /* Base @ of Sector 0, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_1     ((uint32_t)0x08020000) /* Base @ of Sector 1, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_2     ((uint32_t)0x08040000) /* Base @ of Sector 2, 128 Kbyte */

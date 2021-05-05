@@ -4,6 +4,9 @@ LIBROOT=$(OPENWARE)/Libraries/Drivers
 # Build path
 BUILD=$(BUILDROOT)/Build
 
+# Tool path
+OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_f4.cfg
+
 # Code Paths
 DRIVERS=$(LIBROOT)/STM32F4xx_HAL_Driver
 CMSIS_DEVICE=$(LIBROOT)/CMSIS/Device/ST/STM32F4xx

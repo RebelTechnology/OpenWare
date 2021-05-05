@@ -112,9 +112,6 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     case SYSEX_PRESET_NAME_COMMAND:
       midi_tx.sendPatchNames();
       break;
-    case SYSEX_PARAMETER_NAME_COMMAND:
-      midi_tx.sendPatchParameterNames();
-      break;
     case SYSEX_CONFIGURATION_COMMAND:
       midi_tx.sendSettings();
       break;

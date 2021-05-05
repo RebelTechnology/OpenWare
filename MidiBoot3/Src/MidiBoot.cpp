@@ -20,6 +20,7 @@ ProgramManager::ProgramManager(){}
 void ProgramManager::exitProgram(bool isr){}
 void setParameterValue(uint8_t ch, int16_t value){}
 void SystemMidiReader::reset(){}
+void Owl::setOperationMode(OperationMode mode){}
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
@@ -76,9 +77,13 @@ void sendMessage(){
 void eraseFromFlash(uint8_t sector){
   eeprom_unlock();
   if(sector == 0xff){
-    eeprom_erase_sector(FLASH_SECTOR_1);
-    eeprom_erase_sector(FLASH_SECTOR_2);
-    eeprom_erase_sector(FLASH_SECTOR_3);
+    extern char _FLASH_STORAGE_BEGIN, _FLASH_STORAGE_END;
+    uint32_t address = (uint32_t)&_FLASH_STORAGE_BEGIN;
+    uint32_t sector = FLASH_SECTOR_4;
+    while (address < (uint32_t)&_FLASH_STORAGE_END) {
+      eeprom_erase_sector(sector++);
+      address += FLASH_SECTOR_SIZE;
+    }
     setMessage("Erased patch storage");
     led_green();
   }else{
@@ -152,14 +157,14 @@ extern "C" {
     if(counter){
       switch(counter-- % 1200){
       case 600:
-	led_red();
-	break;
+        led_red();
+        break;
       case 0:
-	led_green();
-	break;
+        led_green();
+        break;
       default:
-	HAL_Delay(1);
-	break;
+        HAL_Delay(1);
+        break;
       }
     }
 #endif

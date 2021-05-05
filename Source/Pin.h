@@ -47,7 +47,60 @@ public:
   void toggle(){
     port->ODR ^= 1<<pin;
   }
+#ifdef STM32H7xx
   void analogMode(){
+    // Analog mode is used by ADC and DAC
+    uint32_t tmp = port->MODER;
+    tmp |= GPIO_MODER_MODE0 << (pin*2U);
+    port->MODER = tmp;
+  }
+  void inputMode(){
+    uint32_t tmp = port->MODER;
+    tmp &= ~(GPIO_MODER_MODE0 << (pin*2U));
+    port->MODER = tmp;
+  }
+  void outputMode(){
+    uint32_t tmp = port->MODER;
+    tmp |= GPIO_MODER_MODE0_0 << (pin*2U);
+    tmp &= ~(GPIO_MODER_MODE0_1 << (pin*2U));
+    port->MODER = tmp;
+  }
+  void afMode(){
+    uint32_t tmp = port->MODER;
+    tmp &= ~(GPIO_MODER_MODE0_0 << (pin*2U));
+    tmp |= GPIO_MODER_MODE0_1 << (pin*2U);
+    port->MODER = tmp;
+  }
+  void setAlternateFunction(uint32_t af){
+    /* Configure Alternate function mapped with the current IO */
+    uint32_t tmp = port->AFR[pin >> 3U];
+    tmp &= ~(0xFU << ((pin & 0x07U) * 4U));
+    tmp |= (af << ((pin & 0x07U) * 4U));
+    port->AFR[pin >> 3U] = tmp;
+  }
+  void pushPullMode(){
+    port->OTYPER |= 1<<pin;
+  }
+  void openDrainMode(){
+    port->OTYPER |= 1<<pin;
+  }
+  void setPull(uint32_t pull){
+    uint32_t tmp = port->PUPDR;
+    tmp &= ~(GPIO_PUPDR_PUPD0 << (pin*2U));
+    tmp |= (pull << (pin*2U));
+    port->PUPDR = tmp;
+  }
+  uint32_t getPull(){
+    return (port->PUPDR & (GPIO_PUPDR_PUPD0 << (pin*2U))) >> (pin*2U);
+  }
+  void setSpeed(PinSpeed speed){
+    uint32_t tmp = port->OSPEEDR; 
+    tmp &= ~(GPIO_OSPEEDR_OSPEED0 << (pin * 2U));
+    tmp |= (speed << (pin * 2U));
+    port->OSPEEDR = tmp;
+  }
+#else
+    void analogMode(){
     // Analog mode is used by ADC and DAC
     uint32_t tmp = port->MODER;
     tmp |= GPIO_MODER_MODER0 << (pin*2U);
@@ -98,6 +151,7 @@ public:
     tmp |= (speed << (pin * 2U));
     port->OSPEEDR = tmp;
   }
+#endif
 };
 
 // typedef uint8_t pin_t;

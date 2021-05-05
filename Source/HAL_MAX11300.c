@@ -1,8 +1,7 @@
-#include "stm32f4xx_hal.h"
 #include "HAL_MAX11300.h"
 #include "main.h"
-
 #include <string.h>
+
 //#define Pixi_SPIDMA_CTRL
 
 static SPI_HandleTypeDef* MAX11300_SPIConfig;
