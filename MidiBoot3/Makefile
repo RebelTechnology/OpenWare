@@ -1,6 +1,5 @@
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
-OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_h7.cfg
 
 LDSCRIPT = STM32H743ZGTx-boot.ld
 include $(OPENWARE)/Hardware/owl3.mk

@@ -1,12 +1,25 @@
+21.2.0
+------
+
+* Display patch slots up to 16 on Lich (in hexadecimal)
+* Bootloader flash/lock/unlock functionality
+* New Pin class for GPIO handling
+* Refactored code with project-specific callbacks
+* Magus TRS MIDI output enabled
+* Updated Magus LED handling, new LED brightness menu
+* Update parameters with MIDI messages from USBH
+* USB devices renamed OWL-Magus, OWL-Wizard et c.
+* MIDI command to retrieve resource names
+
+Known Issues:
+* USB Host does not support reconnecting devices
+* USB Audio might 'click' due to synchronisation problems with host
+
+
 21.1.0
 ------
 
 * Added MIDI commands for resource SAVE, NAME and DELETE
-
-Known Issues:
-* USB Host does not support reconnecting devices
-* Does not process incoming MIDI messages on USBH, though forwarding to patch works
-* USB Audio might 'click' due to synchronisation problems with host
 
 
 21.0.0

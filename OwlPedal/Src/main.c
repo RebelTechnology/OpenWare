@@ -524,7 +524,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|FLASH_nCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(PUSH_GATE_OUT_GPIO_Port, PUSH_GATE_OUT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(PUSH_GATE_OUT_GPIO_Port, PUSH_GATE_OUT_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : PUSHBUTTON_Pin BYPASS_Pin */
   GPIO_InitStruct.Pin = PUSHBUTTON_Pin|BYPASS_Pin;
