@@ -22,6 +22,9 @@
 
 extern TIM_HandleTypeDef htim2;
 
+static uint16_t progress = 0;
+static int patchselect = 0;
+
 #define SEG_DISPLAY_A     10
 #define SEG_DISPLAY_B     11
 #define SEG_DISPLAY_C     12
@@ -148,28 +151,24 @@ void setup(){
 
 #define PATCH_RESET_COUNTER (4000/MAIN_LOOP_SLEEP_MS)
 
-static uint16_t progress = 0;
 void setProgress(uint16_t value){
   progress = value;
 }
 
 void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   progress = 0;
+  patchselect = program.getProgramIndex();
+  setEncoderValue(patchselect);
 }
 
 static void update_preset(){
-  static int patchselect = 0;
   static uint32_t counter = PATCH_RESET_COUNTER;
   switch(owl.getOperationMode()){
   case STARTUP_MODE:
     setSegmentDisplay(SEG_DISPLAY_BLANK, true);
-    patchselect = program.getProgramIndex();
-    setEncoderValue(patchselect);
     break;
   case LOAD_MODE:
     setSegmentDisplay(SEG_DISPLAY_L); // todo: spin with progress, or just spin
-    patchselect = program.getProgramIndex();
-    setEncoderValue(patchselect);
     break;
   case RUN_MODE:
     if(getErrorStatus() != NO_ERROR){
