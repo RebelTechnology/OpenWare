@@ -49,9 +49,9 @@ Resource* PatchRegistry::getPatch(uint8_t index){
 
 const char* PatchRegistry::getResourceName(unsigned int index){
   Resource* hdr = getResource(index);
-  if(hdr == NULL)
-    return emptyPatch.getName();
-  return hdr->getName();
+  if(hdr)
+    return hdr->getName();
+  return emptyPatch.getName();
 }
 
 const char* PatchRegistry::getPatchName(unsigned int index){

@@ -11,6 +11,7 @@ private:
   Resource resources[MAX_RESOURCE_HEADERS];
   size_t resource_count = 0;
   Resource* getFreeResource(uint32_t flags);
+  bool verifyData(Resource* resource, void* data, size_t length);
 public:
   Storage(){}
   void init();
