@@ -34,12 +34,7 @@ private:
   }
   void copy(){
     if(sourceResource){
-      if(sourceResource->isMemoryMapped()){
-	/* copy program to ram */
-	memcpy(linkAddress, sourceResource->getData(), programSize);
-      }else{
-	storage.readResource(sourceResource, linkAddress, programSize);
-      }
+      storage.readResource(sourceResource, linkAddress, programSize);
       sourceResource = NULL;
     }else if(sourceAddress){
       memcpy(linkAddress, sourceAddress, programSize);
