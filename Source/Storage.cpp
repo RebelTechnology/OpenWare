@@ -321,24 +321,41 @@ size_t Storage::writeResource(ResourceHeader* header){
 #ifdef USE_SPI_FLASH
     uint32_t address = dest->getAddress();
     Flash_write(address, data, length);
+    Flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)); // read back resource header
     status = 0;
 #endif
   }
-  index(); // rebuild index
   if(status){
     error(FLASH_ERROR, "Flash write failed");
-    return 0;
-  }
-  if(dest->getTotalSize() < length){ // allow for storage-specific alignment
+  }else if(dest->getTotalSize() < length){ // allow for storage-specific alignment
     error(FLASH_ERROR, "Size verification failed");
-    return 0;
-  }
-  if(dest->isMemoryMapped() && memcmp(data, dest->getData(), length) != 0){
-    // todo: verify port mapped data
+  }else if(!verifyData(dest, data, length)){
     error(FLASH_ERROR, "Data verification failed");
-    return 0;
   }
+  index(); // rebuild index
   return length;
+}
+
+bool Storage::verifyData(Resource* resource, void* data, size_t length){
+  if(resource->isMemoryMapped()){
+    return memcmp(data, resource->getHeader(), length) == 0;
+#ifdef USE_SPI_FLASH
+  }else{
+    uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
+    uint32_t address = resource->getAddress();
+    size_t blocks = length/sizeof(quad);
+    uint32_t* src = (uint32_t*)data;
+    while(blocks--){
+      Flash_read(address, (uint8_t*)quad, sizeof(quad));
+      if(quad[0] != *src++ || quad[1] != *src++ ||
+	 quad[2] != *src++ || quad[3] != *src++)
+	return false;
+      address += sizeof(quad);
+    }
+    return true;
+#endif
+  }
+  return false;
 }
 
 size_t Storage::getTotalAllocatedSize(uint32_t flags){
