@@ -117,9 +117,15 @@ public:
 };
       
 void MidiController::sendPatchName(uint8_t slot){
-  Resource* resource = registry.getPatch(slot);
-  if(resource)
-    sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize());
+  if(slot == 0){
+    PatchDefinition* def = registry.getPatchDefinition(0);
+    if(def)
+      sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getProgramSize());
+  }else{
+    Resource* resource = registry.getPatch(slot-1);
+    if(resource)
+      sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize());
+  }
 }
 
 void MidiController::sendPatchNames(){
