@@ -24,9 +24,9 @@ public:
   virtual uint32_t* getLinkAddress(){
     return NULL;
   }
-  // uint32_t getSize(){
-  //   return size;
-  // }
+  virtual uint32_t getProgramSize(){
+    return 0;
+  }
   uint32_t* getStackBase(){
     return stackBase;
   }

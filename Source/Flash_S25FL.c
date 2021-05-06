@@ -80,20 +80,21 @@ void Flash_read(uint32_t address, uint8_t* data, size_t length){
 }
 
 // address must be on a 256-byte boundary
-/* The Page Program command accepts from 1-byte up to 256 consecutive bytes of data (page) to be programmed in one operation. Programming means that bits can either be left at 1, or programmed from 1 to 0. Changing bits from 0 to 1 requires an erase operation. */  
+/* "The Page Program command accepts from 1-byte up to 256 consecutive bytes of data (page) to be programmed in one operation. Programming means that bits can either be left at 1, or programmed from 1 to 0. Changing bits from 0 to 1 requires an erase operation." */  
 void Flash_write(uint32_t address, uint8_t* data, size_t length){
   uint8_t rgAddress[3];
 
   // PP Page Program 1-1-1, 0x02, up to 108Mhz
   uint8_t ucInstruction = INST_PAGE_PROGRAM;
-		
-  _Flash_writeEN();
-  Flash_WP_Disable();
-	
-  // wait for write enable latch WEL
-  while (!(Flash_readStatusReg(INST_READ_STATREG_1) & 0x02)){}
 
   while(length){
+
+    _Flash_writeEN();
+    Flash_WP_Disable();
+	
+    // wait for write enable latch WEL
+    while (!(Flash_readStatusReg(INST_READ_STATREG_1) & 0x02)){}
+
     size_t len = length > 256 ? 256 : length;
 
     // Build address array
@@ -118,12 +119,18 @@ void Flash_write(uint32_t address, uint8_t* data, size_t length){
 
     // Wait for write to finish
     while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x01){}
-  }
-	
-  Flash_WP_Enable();
+
+    /* While not obvious from the data sheet, multiple page programming only works if enable command is also sent. */
+    /* "After a programming command is issued, the programming operation status can be checked using the  */
+    /*    Read Status Register 1 command. The WIP bit (SR1V[0]) will indicate  when the programming operation  */
+    /*    is completed. The P_ERR bit (SR2V[5]) will indicate if an error occurs in the programming operation */
+    /*    that prevents successful completion of programming" */
+											   	
+    Flash_WP_Enable();
 		
-  // Check that the write enable latch has been cleared
-  while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_Flash_writeDIS();}
+    // Check that the write enable latch has been cleared
+    while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_Flash_writeDIS();}
+  }
 }
 
 uint32_t Flash_readIdentification(){
