@@ -5,9 +5,7 @@
 #define HARDWARE_ID                  WITCH_HARDWARE
 #define HARDWARE_VERSION             "Witch"
 
-/* #define USE_SPI_FLASH */
-/* #define SPI_FLASH_HSPI               hspi1 */
-/* #define EXTERNAL_STORAGE_SIZE        (8*1024*1024) */
+#define USE_SPI_FLASH
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
