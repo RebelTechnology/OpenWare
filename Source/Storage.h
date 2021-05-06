@@ -36,30 +36,19 @@ public:
   bool eraseResource(Resource* resource);
   void erase(uint32_t flags);
 
-  size_t getTotalAllocatedSize(uint32_t flags = RESOURCE_MEMORY_MAPPED | RESOURCE_PORT_MAPPED);    
+  size_t getTotalAllocatedSize(uint32_t flags = FLASH_DEFAULT_FLAGS);
   /** 
-   * returns bytes used by written and deleted blocks
+   * returns number of bytes in use by valid resources
    */
-  size_t getTotalUsedSize(uint32_t flags = RESOURCE_MEMORY_MAPPED | RESOURCE_PORT_MAPPED){
+  size_t getUsedSize(uint32_t flags = FLASH_DEFAULT_FLAGS){
     size_t size = 0;
     for(size_t i=0; i<resource_count; ++i)
-      if(!resources[i].isFree() && resources[i].flagsContain(flags))
+      if(resources[i].isValid() && resources[i].flagsContain(flags))
 	size += resources[i].getTotalSize();
     return size;
   }
-  size_t getDeletedSize(uint32_t flags = RESOURCE_MEMORY_MAPPED | RESOURCE_PORT_MAPPED){
-    // returns bytes used by deleted blocks
-    size_t size = 0;
-    for(size_t i=0; i<resource_count; ++i)
-      if(resources[i].isErased() && resources[i].flagsContain(flags))
-	size += resources[i].getTotalSize();
-    return size;
-  }
-  size_t getWrittenSize(uint32_t flags = RESOURCE_MEMORY_MAPPED | RESOURCE_PORT_MAPPED){
-    return getTotalUsedSize(flags) - getDeletedSize(flags);
-  }
-  size_t getFreeSize(uint32_t flags = RESOURCE_MEMORY_MAPPED | RESOURCE_PORT_MAPPED){
-    return getTotalAllocatedSize(flags) - getTotalUsedSize(flags);
+  size_t getFreeSize(uint32_t flags = FLASH_DEFAULT_FLAGS){
+    return getTotalAllocatedSize(flags) - getUsedSize(flags);
   }
 };
 

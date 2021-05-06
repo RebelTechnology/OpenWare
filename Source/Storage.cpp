@@ -228,7 +228,7 @@ void Storage::erase(uint32_t flags){
 
 void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   uint8_t* ptr = (uint8_t*)buffer;
-  if(getWrittenSize(flags) > size)
+  if(getUsedSize(flags) > size)
     debugMessage("Not enough RAM to defrag");
 
   uint32_t offset = 0;
@@ -241,6 +241,7 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
     }
   }
   erase(flags);
+  // osThreadYield(); // allow main task to run in between
   if(flags & RESOURCE_MEMORY_MAPPED){
 #ifdef USE_FLASH
     eeprom_unlock();
