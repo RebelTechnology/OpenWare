@@ -6,8 +6,6 @@
 #define HARDWARE_VERSION             "Magus"
 
 #define USE_SPI_FLASH
-#define EXTERNAL_STORAGE_SIZE        (8*1024*1024)
-#define SPI_FLASH_HSPI               hspi1
 
 #define USE_SCREEN
 #define SSD1309
