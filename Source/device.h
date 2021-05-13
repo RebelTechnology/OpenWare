@@ -90,9 +90,6 @@
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           "v0.1"
 
-#define MAX_FACTORY_PATCHES          36
-#define MAX_USER_PATCHES             4
-
 #ifndef DEBUG
 #define USE_FFT_TABLES
 #endif
