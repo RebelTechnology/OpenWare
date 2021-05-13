@@ -287,8 +287,9 @@ size_t Storage::writeResource(ResourceHeader* header){
 #endif
   size_t length = header->size+sizeof(ResourceHeader);
   uint32_t flags = header->flags;
-  if(flags & 0xff){ // there's a slot number
-    eraseResource(flags & 0xff); // mark as deleted if it exists
+  uint8_t slot = flags & 0xff;
+  if(slot){ // if there is a slot number
+    eraseResource(slot); // mark as deleted if it exists
   }else{
     eraseResource(header->name); // mark as deleted if it exists
   }
@@ -359,7 +360,26 @@ bool Storage::verifyData(Resource* resource, void* data, size_t length){
   return false;
 }
 
-size_t Storage::getTotalAllocatedSize(uint32_t flags){
+size_t Storage::getFreeSize(uint32_t flags){
+  size_t total = 0;
+#ifdef USE_FLASH
+  if(flags & RESOURCE_MEMORY_MAPPED){
+    Resource* resource = getFreeResource(RESOURCE_MEMORY_MAPPED);
+    if(resource)
+      total += INTERNAL_STORAGE_END - (uint32_t)resource->getHeader();
+  }
+#endif
+#ifdef USE_SPI_FLASH
+  if(flags & RESOURCE_PORT_MAPPED){
+    Resource* resource = getFreeResource(RESOURCE_PORT_MAPPED);
+    if(resource)
+      total += EXTERNAL_STORAGE_SIZE - resource->getAddress();
+  }
+#endif
+  return total;
+}
+
+size_t Storage::getTotalCapacity(uint32_t flags){
   size_t total = 0;
 #ifdef USE_FLASH
   if(flags & RESOURCE_MEMORY_MAPPED)

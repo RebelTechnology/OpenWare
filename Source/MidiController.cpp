@@ -192,7 +192,7 @@ void MidiController::sendDeviceStats(){
   p = stpcpy(p, (const char*)"Storage ");
   p = stpcpy(p, msg_itoa(storage.getUsedSize(), 10));
   p = stpcpy(p, (const char*)"/");
-  p = stpcpy(p, msg_itoa(storage.getTotalAllocatedSize(), 10));
+  p = stpcpy(p, msg_itoa(storage.getTotalCapacity(), 10));
   sendSysEx((uint8_t*)buf, p-buf);
 #endif /* DEBUG_STORAGE */
 #ifdef DEBUG_BOOTLOADER

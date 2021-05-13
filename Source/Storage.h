@@ -36,9 +36,8 @@ public:
   bool eraseResource(Resource* resource);
   void erase(uint32_t flags);
 
-  size_t getTotalAllocatedSize(uint32_t flags = FLASH_DEFAULT_FLAGS);
   /** 
-   * returns number of bytes in use by valid resources
+   * returns number of bytes in use by valid resources.
    */
   size_t getUsedSize(uint32_t flags = FLASH_DEFAULT_FLAGS){
     size_t size = 0;
@@ -47,9 +46,14 @@ public:
 	size += resources[i].getTotalSize();
     return size;
   }
-  size_t getFreeSize(uint32_t flags = FLASH_DEFAULT_FLAGS){
-    return getTotalAllocatedSize(flags) - getUsedSize(flags);
-  }
+  /**
+   * returns number of bytes available to write without erasing or defragmenting.
+   */
+  size_t getFreeSize(uint32_t flags = FLASH_DEFAULT_FLAGS);
+  /**
+   * returns number of bytes of storage there are in total.
+   */
+  size_t getTotalCapacity(uint32_t flags = FLASH_DEFAULT_FLAGS);
 };
 
 extern Storage storage;
