@@ -283,7 +283,8 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 
 #define PATCH_RESET_COUNTER (600/MAIN_LOOP_SLEEP_MS)
 uint16_t progress = 0;
-void setProgress(uint16_t value){
+void setProgress(uint16_t value, const char* msg){
+  // debugMessage(msg, (int)(100*value/4095));
   progress = value == 4095 ? 0 : value*6;
 }
 
@@ -331,7 +332,20 @@ static void update_preset(){
 	}
       }
     }else{
-      owl.setOperationMode(RUN_MODE);
+      if(program.getProgramIndex() != patchselect &&
+	 patchselect < registry.getNumberOfPatches()){
+	// change patch on mode button release
+	program.loadProgram(patchselect); // enters load mode
+	program.resetProgram(false);
+	dac_values[0] = dac_values[1] = 0; // reset CV outputs to initial values
+      }else{
+	owl.setOperationMode(RUN_MODE);
+      }
+      // reset CV outputs to previous values
+      setAnalogValue(PARAMETER_F, dac_values[0]);
+      setAnalogValue(PARAMETER_G, dac_values[1]);
+      // todo: reset gates and leds (for toggles) to previous values
+      takeover.reset(false);
     }
     break;
   case ERROR_MODE:
@@ -360,17 +374,15 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   if(new_mode == CONFIGURE_MODE){
     takeover.reset(false);
     patchselect = program.getProgramIndex();
-  }else if(old_mode == CONFIGURE_MODE){
-    if(program.getProgramIndex() != patchselect &&
-       patchselect < registry.getNumberOfPatches()){
-      program.loadProgram(patchselect); // enters load mode
-      program.resetProgram(false);
-      dac_values[0] = dac_values[1] = 0; // reset CV outputs to initial values
-    }
-    // reset CV outputs to previous values
-    setAnalogValue(PARAMETER_F, dac_values[0]);
-    setAnalogValue(PARAMETER_G, dac_values[1]);
-    takeover.reset(false);
+  }else if(new_mode == LOAD_MODE){
+    // new patch selected or loaded
+    // for(size_t i=0; i<4; ++i)
+    //   takeover.set(i, getAnalogValue(i*2+1));      
+    takeover.set(0, getAnalogValue(ADC_B));
+    takeover.set(1, getAnalogValue(ADC_D));
+    takeover.set(2, getAnalogValue(ADC_F));
+    takeover.set(3, getAnalogValue(ADC_H));
+    takeover.set(4, getAnalogValue(ADC_I));
   }
   counter = 0;
 }
@@ -379,7 +391,14 @@ void setup(){
   initLed();
   HAL_GPIO_WritePin(LEDPWM_GPIO_Port, LEDPWM_Pin, GPIO_PIN_SET);
   owl.setup();
-   for(size_t i=5; i<9; ++i)
+  // for(size_t i=0; i<5; ++i)
+  //   takeover.set(i, getAnalogValue(i*2+1));      
+  takeover.set(0, getAnalogValue(ADC_B));
+  takeover.set(1, getAnalogValue(ADC_D));
+  takeover.set(2, getAnalogValue(ADC_F));
+  takeover.set(3, getAnalogValue(ADC_H));
+  takeover.set(4, getAnalogValue(ADC_I));
+  for(size_t i=5; i<9; ++i)
     takeover.set(i, 2048); // set CV attenuation to 1
   takeover.set(9, settings.audio_output_gain<<5);
   patchselect = program.getProgramIndex();
