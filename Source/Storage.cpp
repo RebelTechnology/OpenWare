@@ -1,5 +1,6 @@
 #include <cstring>
 #include <algorithm>
+#include "cmsis_os.h"
 #include "device.h"
 #include "message.h"
 #include "Storage.h"
@@ -26,7 +27,7 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
   uint32_t* p = (uint32_t*)end;
   p -= 2*align/sizeof(uint32_t); // start at two alignment units from end
   while(p > begin && *p == RESOURCE_FREE_MAGIC){
-    setProgress(((uint32_t)end-(uint32_t)p)*4095/((uint32_t)end-(uint32_t)begin));
+    setProgress(((uint32_t)end-(uint32_t)p)*4095/((uint32_t)end-(uint32_t)begin), "Index");
     p--;
   }
   p += align/sizeof(uint32_t);
@@ -41,7 +42,7 @@ uint32_t findFirstFreePage(uint32_t begin, uint32_t end, size_t align){
   uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
   uint32_t address = end-align;
   while(address > begin){
-    setProgress((end-address)*4095/(end-begin));
+    setProgress((end-address)*4095/(end-begin), "Index");
     Flash_read(address, (uint8_t*)quad, sizeof(quad));
     if(RESOURCE_FREE_MAGIC != (quad[0] & quad[1] & quad[2] & quad[3]))
       break;
@@ -73,7 +74,7 @@ void Storage::index(){
     if(resources[i].isValid())
       i++;
     resources[i].setHeader(next);
-    setProgress(progress += MAX_RESOURCE_HEADERS/4095);
+    setProgress(progress += MAX_RESOURCE_HEADERS/4095, "Indexing");
   }
   if(!resources[i].isFree()){
     error(FLASH_ERROR, "Invalid flash resource");
@@ -96,7 +97,7 @@ void Storage::index(){
       resources[++i].setHeader(++header);
     header->address = address;
     Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
-    setProgress(progress += MAX_RESOURCE_HEADERS/4095);
+    setProgress(progress += MAX_RESOURCE_HEADERS/4095, "Indexing");
   }
   if(!resources[i].isFree()){
     error(FLASH_ERROR, "Invalid SPI resource");
@@ -220,7 +221,14 @@ void Storage::erase(uint32_t flags){
 #endif
 #ifdef USE_SPI_FLASH
   if(flags & RESOURCE_PORT_MAPPED){
-    Flash_BulkErase();
+    size_t blocksize = (64*1024);
+    size_t blocks = EXTERNAL_STORAGE_SIZE/blocksize;
+    for(size_t i=0; i<blocks; ++i){
+      // Flash_BulkErase(); // 55 to 150 seconds!
+      setProgress(i*4096/blocks, "Erasing");
+      Flash_erase(i*blocksize, ERASE_64KB); // 450 to 1150 mS each
+      vTaskDelay(1); // delay for 1 tick
+    }
   }
 #endif
   index();
@@ -241,7 +249,6 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
     }
   }
   erase(flags);
-  // osThreadYield(); // allow main task to run in between
   if(flags & RESOURCE_MEMORY_MAPPED){
 #ifdef USE_FLASH
     eeprom_unlock();
@@ -250,7 +257,6 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
 #endif
   }else{
 #ifdef USE_SPI_FLASH
-    // Flash_erase(address, ERASE_64KB);
     Flash_write(0, (uint8_t*)buffer, offset);
 #endif
   }

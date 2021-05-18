@@ -10,6 +10,7 @@
 #include "errorhandlers.h"
 #include "BootloaderStorage.h"
 #include "VersionToken.h"
+#include "message.h"
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
@@ -33,7 +34,7 @@
 // #define MANAGER_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_PRIORITY  (AUDIO_TASK_PRIORITY | portPRIVILEGE_BIT)
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
-#define FLASH_TASK_PRIORITY 5
+#define FLASH_TASK_PRIORITY 1 // allow default task to run when FLASH task yields
 
 #define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
 
@@ -63,26 +64,6 @@ uint16_t button_values;
 uint16_t timestamps[NOF_BUTTONS]; 
 
 ProgramVector* getProgramVector() { return programVector; }
-
-#if 0
-static int16_t encoders[NOF_ENCODERS] = {INT16_MAX/2, INT16_MAX/2};
-static int16_t deltas[NOF_ENCODERS] = {0, 0};
-void encoderChanged(uint8_t encoder, int16_t value){
-  // // todo: debounce
-  // // pass encoder change event to patch
-  int32_t delta = value - encoders[encoder];
-  encoders[encoder] = value;
-  deltas[encoder] = delta;
-
-#if defined USE_SCREEN && !defined OWL_PRISM
-  graphics.params.encoderChanged(encoder, delta);
-#endif
-
-  // todo: save changes and pass at programReady()
-  // if(getProgramVector()->encoderChangedCallback != NULL)
-  //   getProgramVector()->encoderChangedCallback(encoder, delta, 0);
-}
-#endif
 
 PatchDefinition* getPatchDefinition(){
   return program.getPatchDefinition();
@@ -429,15 +410,9 @@ void programFlashTask(void* p){
 void eraseFlashTask(void* p){
   uint8_t slot = flashSectorToWrite;
   owl.setOperationMode(LOAD_MODE);
-  taskENTER_CRITICAL();
   if(slot == 0xff){
-#ifdef USE_SPI_FLASH
-    storage.erase(RESOURCE_PORT_MAPPED);
-#else
-    storage.erase(RESOURCE_MEMORY_MAPPED);
-#endif
-    taskEXIT_CRITICAL();
-    // debugMessage("Erased flash storage");
+    storage.erase();
+    debugMessage("Erased flash storage");
   }else if(slot < MAX_NUMBER_OF_PATCHES){
     Resource* resource = registry.getPatch(slot);
     if(resource != NULL)
@@ -447,11 +422,12 @@ void eraseFlashTask(void* p){
     if(resource != NULL)
       storage.eraseResource(resource);
     onResourceUpdate();
+    debugMessage("Erased resource");    
   }
-  taskEXIT_CRITICAL();
   registry.init();
   settings.init();
   program.resetProgram(false);
+  owl.setOperationMode(RUN_MODE);
   utilityTask = NULL;
   vTaskDelete(NULL);
 }

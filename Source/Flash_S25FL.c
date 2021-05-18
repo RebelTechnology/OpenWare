@@ -243,27 +243,28 @@ void Flash_BulkErase (void)
 
 /* individual 4 KB sector erase, 32 KB half block sector, 64 KB block sector erase */		
 void Flash_erase(uint32_t address, uint8_t cmd){
-  uint8_t rgAddress[3];
-  // Build address array
-  rgAddress[0] = (address & 0xFF0000) >> 16;
-  rgAddress[1] = (address & 0x00FF00) >> 8;
-  rgAddress[2] = (address & 0x0000FF) >> 0;
+  uint8_t data[4];
+  data[0] = cmd;
+  data[1] =  (address & 0xFF0000) >> 16;
+  data[2] =  (address & 0x00FF00) >> 8;
+  data[3] =  (address & 0x0000FF) >> 0;
 	
   _Flash_writeEN();
-  Flash_WP_Disable();
   Flash_Select();
+  Flash_WP_Disable();
 	
-  HAL_SPI_Transmit(FLASH_SPIConfig, &cmd, 1, 100);
-  HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
+  __nop();__nop();__nop();
+  HAL_SPI_Transmit(FLASH_SPIConfig, data, sizeof(data), 100);
+  __nop();__nop();__nop();
 	
   Flash_WP_Enable();
   Flash_Deselect();
 	
   // Wait for write to finish
-  while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x01){}
+  while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x01){__nop();__nop();__nop();}
 	
   // Check that the write enable latch has been cleared
-  while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_Flash_writeDIS();}
+  while (Flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_Flash_writeDIS();__nop();}
 }
 
 //_____ Sub Functions
