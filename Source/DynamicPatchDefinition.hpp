@@ -47,22 +47,29 @@ public:
   // called on program load from flash
   bool load(Resource* resource){
     sourceAddress = NULL;
-    sourceResource = resource;
+    sourceResource = NULL;
     if(resource->isMemoryMapped()){
       return load((ProgramHeader*)resource->getData(), resource->getDataSize());
     }else{
       ProgramHeader header;
       storage.readResource(resource, &header, sizeof(header));
-      return load(&header, resource->getDataSize());
+      if(load(&header, resource->getDataSize())){
+	sourceResource = resource;
+	return true;
+      }
     }
     return false;
   }
   // called on program RUN from RAM
   bool load(void* address, uint32_t sz){
-    sourceAddress = address;
+    sourceAddress = NULL;
     sourceResource = NULL;
     ProgramHeader* header = (ProgramHeader*)address;
-    return load(header, sz);
+    if(load(header, sz)){
+      sourceAddress = address;
+      return true;
+    }
+    return false;
   }
   bool verify(){
     copy();

@@ -630,8 +630,7 @@ void ProgramManager::updateProgramIndex(uint8_t index){
 }
 
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
-  dynamo.load(address, length);
-  if(dynamo.getProgramVector() != NULL){
+  if(dynamo.load(address, length) && dynamo.getProgramVector() != NULL){
     patchdef = &dynamo;
     registry.setDynamicPatchDefinition(patchdef);
     updateProgramIndex(0);
@@ -664,12 +663,13 @@ uint32_t ProgramManager::getProgramStackUsed(){
 }
 
 uint32_t ProgramManager::getProgramStackAllocation(){
-  uint32_t ss = 0;
-  if(patchdef != NULL)
-    ss = patchdef->getStackSize();
-  if(ss == 0)
-    ss = PROGRAMSTACK_SIZE;
-  return ss;
+  // uint32_t ss = 0;
+  // if(patchdef != NULL)
+  //   ss = patchdef->getStackSize();
+  // if(ss == 0)
+  //   ss = PROGRAMSTACK_SIZE;
+  // return ss;
+  return PROGRAMSTACK_SIZE;
 }
 
 uint32_t ProgramManager::getManagerStackUsed(){
@@ -698,10 +698,8 @@ uint8_t ProgramManager::getProgramIndex(){
 
 extern "C" {
   void vApplicationMallocFailedHook(void) {
-    error(PROGRAM_ERROR, "malloc failed");
     program.exitProgram(false);
-    HAL_Delay(5000);
-    assert_param(0);
+    error(PROGRAM_ERROR, "malloc failed");
   }
   void vApplicationIdleHook(void) {
   }
@@ -711,10 +709,8 @@ extern "C" {
     /* Run time stack overflow checking is performed if
        configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
        function is called from PendSV ISR if a stack overflow is detected. */
-    error(PROGRAM_ERROR, "Stack overflow");
     program.exitProgram(true);
-    HAL_Delay(5000);
-    assert_param(0);
+    error(PROGRAM_ERROR, "stack overflow");
   }
 }
 
