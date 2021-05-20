@@ -74,7 +74,7 @@ void Storage::index(){
     if(resources[i].isValid())
       i++;
     resources[i].setHeader(next);
-    setProgress(progress += MAX_RESOURCE_HEADERS/4095, "Indexing");
+    setProgress(progress += 4095/MAX_RESOURCE_HEADERS, "Indexing");
   }
   if(!resources[i].isFree()){
     error(FLASH_ERROR, "Invalid flash resource");
@@ -97,7 +97,7 @@ void Storage::index(){
       resources[++i].setHeader(++header);
     header->address = address;
     Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
-    setProgress(progress += MAX_RESOURCE_HEADERS/4095, "Indexing");
+    setProgress(progress += 4095/MAX_RESOURCE_HEADERS, "Indexing");
   }
   if(!resources[i].isFree()){
     error(FLASH_ERROR, "Invalid SPI resource");
@@ -109,6 +109,7 @@ void Storage::index(){
       resources[i].setHeader(NULL);
   }
 #endif
+  setProgress(4095, "Indexing");
   resource_count = i+1;
 }
 
@@ -221,14 +222,17 @@ void Storage::erase(uint32_t flags){
 #endif
 #ifdef USE_SPI_FLASH
   if(flags & RESOURCE_PORT_MAPPED){
-    size_t blocksize = (64*1024);
-    size_t blocks = EXTERNAL_STORAGE_SIZE/blocksize;
-    for(size_t i=0; i<blocks; ++i){
-      // Flash_BulkErase(); // 55 to 150 seconds!
-      setProgress(i*4096/blocks, "Erasing");
-      Flash_erase(i*blocksize, ERASE_64KB); // 450 to 1150 mS each
+    const size_t blocksize = (64*1024);
+    uint32_t endaddress = EXTERNAL_STORAGE_SIZE;
+    Resource* last = getFreeResource(RESOURCE_PORT_MAPPED);
+    if(last)
+      endaddress = last->getAddress();
+    for(uint32_t address=0; address < endaddress; address += blocksize){
+      setProgress(address*4095/endaddress, "Erasing");
+      Flash_erase(address, ERASE_64KB); // 450 to 1150 mS each
       vTaskDelay(1); // delay for 1 tick
     }
+    setProgress(4095, "Erasing");
   }
 #endif
   index();
