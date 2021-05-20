@@ -291,7 +291,7 @@ public:
 
     // draw flash usage
     int flash_used = storage.getUsedSize() / 1024;
-    int flash_total = storage.getTotalAllocatedSize() / 1024;
+    int flash_total = storage.getTotalCapacity() / 1024;
     screen.print(64, offset + 8, "flash ");
     screen.print(flash_used * 100 / flash_total);
     screen.print("%");
