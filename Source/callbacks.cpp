@@ -346,3 +346,7 @@ __weak void setProgress(uint16_t value, const char* msg){
   debugMessage(msg, (int)(100*value/4095));
   setParameterValue(LOAD_INDICATOR_PARAMETER, value);
 }
+
+// Called on init, resource operation, storage erase
+__weak void onResourceUpdate(void){
+}
