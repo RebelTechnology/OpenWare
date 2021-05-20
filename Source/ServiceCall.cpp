@@ -149,7 +149,7 @@ static int handleLoadResource(void** params, int len){
       }else{
 	uint32_t copy_size = min(*max_size, res->getDataSize() - offset);
         // Buffer pointer is given. We'll copy no more than max_size data into it.
-	storage.readResource(res, *buffer, copy_size);
+	storage.readResource(res, *buffer, offset, copy_size);
 	*max_size = copy_size; // update max_size parameter with amount of data actually copied
       }
       ret = OWL_SERVICE_OK;

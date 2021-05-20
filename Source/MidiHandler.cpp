@@ -8,6 +8,7 @@
 #include "errorhandlers.h"
 #include "VersionToken.h"
 #include "ProgramHeader.h"
+#include "PatchRegistry.h"
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
@@ -252,7 +253,6 @@ void MidiHandler::handleFirmwareRunCommand(uint8_t* data, uint16_t size){
 
 void MidiHandler::runProgram(){
   if(loader.isReady()){
-    // program.exitProgram(true); // exit progress bar
     program.loadDynamicProgram(loader.getData(), loader.getSize());
     loader.clear();
     // program.startProgram(true);
@@ -300,6 +300,19 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   }else{
     error(PROGRAM_ERROR, "Invalid FLASH command");
   }
+}
+
+void MidiHandler::handleFirmwareSendCommand(uint8_t* data, uint16_t size){
+  uint32_t slot = loader.decodeInt(data);
+  Resource* resource = NULL;
+  if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES)
+    resource = registry.getPatch(slot-1);
+  else if(slot-MAX_NUMBER_OF_PATCHES < MAX_NUMBER_OF_RESOURCES)
+    resource = registry.getResource(slot-MAX_NUMBER_OF_PATCHES);
+  if(resource != NULL)
+    program.sendResource(resource);
+  else
+    error(PROGRAM_ERROR, "Invalid SEND command");
 }
 
 void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
@@ -375,6 +388,9 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     break;
   case SYSEX_FIRMWARE_STORE:
     handleFirmwareStoreCommand(data+4, size-5);
+    break;
+  case SYSEX_FIRMWARE_SEND:
+    handleFirmwareSendCommand(data+4, size-5);
     break;
   case SYSEX_FIRMWARE_FLASH:
     handleFirmwareFlashCommand(data+4, size-5);

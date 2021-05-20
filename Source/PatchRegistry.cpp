@@ -2,15 +2,13 @@
 #include "ProgramManager.h"
 #include "ResourceHeader.h"
 #include "ProgramHeader.h"
-#include "DynamicPatchDefinition.hpp"
+#include "PatchDefinition.hpp"
 #include "Storage.h"
 #include "message.h"
 
 #ifndef max
 #define max(a,b) ((a)>(b)?(a):(b))
 #endif
-
-static PatchDefinition emptyPatch("---", 0, 0);
 
 PatchRegistry::PatchRegistry() {}
 
@@ -51,20 +49,18 @@ const char* PatchRegistry::getResourceName(unsigned int index){
   Resource* hdr = getResource(index);
   if(hdr)
     return hdr->getName();
-  return emptyPatch.getName();
+  return "---";
 }
 
 const char* PatchRegistry::getPatchName(unsigned int index){
   if(index == 0){
-    PatchDefinition *def = dynamicPatchDefinition;
-    if(def)
-      return def->getName();    
+    patchDefinition.getName();
   }else{
     Resource* resource = getPatch(index-1);
     if(resource)
       return resource->getName();
   }
-  return emptyPatch.getName();
+  return "---";
 }
 
 unsigned int PatchRegistry::getNumberOfPatches(){
@@ -77,31 +73,16 @@ unsigned int PatchRegistry::getNumberOfResources(){
 }
 
 bool PatchRegistry::hasPatches(){
-  return patchCount > 0 || dynamicPatchDefinition != NULL;
+  return patchCount > 0;
 }
 
-PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
-  PatchDefinition *def = NULL;
-  if(index == 0)
-    def = dynamicPatchDefinition;
-  else if(--index < MAX_NUMBER_OF_PATCHES){
-    static DynamicPatchDefinition flashPatch;
-    Resource* resource = patches[index];
-    if(resource && resource->isValid()){
-      if(flashPatch.load(resource))
-        def = &flashPatch;
-    }
-  }
-  if(def == &emptyPatch)
-    def = NULL;
-  return def;
+bool PatchRegistry::loadProgram(uint8_t index){
+  Resource* resource = getPatch(index-1);  
+  if(resource && resource->isValid())
+    return patchDefinition.load(resource) && patchDefinition.isValid();
+  return false;
 }
 
-// void PatchRegistry::registerPatch(PatchDefinition* def){
-//   if(patchCount < MAX_NUMBER_OF_PATCHES)
-//     defs[patchCount++] = def;
-// }
-
-// void delete_resource(uint8_t index){
-//   registry.setDeleted(index + MAX_NUMBER_OF_PATCHES + 1);
-// }
+bool PatchRegistry::loadProgram(void* address, uint32_t length){
+  return patchDefinition.load(address, length) && patchDefinition.isValid();  
+}

@@ -18,7 +18,6 @@ extern "C" {
 class ProgramManager {
 private:
   uint8_t patchindex = 0;
-  PatchDefinition* patchdef = NULL;
   void notifyManager(uint32_t ulValue);
   void notifyManagerFromISR(uint32_t ulValue);
 public:
@@ -40,15 +39,13 @@ public:
   uint32_t getManagerStackAllocation();
   uint32_t getFreeHeapSize();
 
+  void sendResource(Resource* resource);
   void eraseFromFlash(uint8_t sector);
   void saveToFlash(uint8_t sector, void* address, uint32_t length);
 
   uint32_t getCyclesPerBlock();
   uint32_t getHeapMemoryUsed();
   uint8_t getProgramIndex();
-  PatchDefinition* getPatchDefinition(){
-    return patchdef;
-  }
 private:
   void updateProgramIndex(uint8_t index);
 };

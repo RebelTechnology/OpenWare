@@ -55,8 +55,8 @@
 #endif
 
 #define DEBUG_DWT
-/* #define DEBUG_STACK */
-#define DEBUG_STORAGE
+#define DEBUG_STACK
+/* #define DEBUG_STORAGE */
 /* #define DEBUG_BOOTLOADER */
 
 #ifdef SSD1331
@@ -156,7 +156,7 @@
 #endif
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
+#define MANAGER_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
 #define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
 
