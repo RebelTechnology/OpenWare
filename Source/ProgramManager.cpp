@@ -5,7 +5,7 @@
 #include "PatchRegistry.h"
 #include "ProgramManager.h"
 #include "ProgramVector.h"
-#include "DynamicPatchDefinition.hpp"
+#include "PatchDefinition.hpp"
 #include "ApplicationSettings.h"
 #include "errorhandlers.h"
 #include "BootloaderStorage.h"
@@ -42,6 +42,7 @@
 #define STOP_PROGRAM_NOTIFICATION   0x02
 #define PROGRAM_FLASH_NOTIFICATION  0x04
 #define ERASE_FLASH_NOTIFICATION    0x08
+#define SEND_RESOURCE_NOTIFICATION  0x10
 
 ProgramManager program;
 PatchRegistry registry;
@@ -51,7 +52,6 @@ BootloaderStorage bootloader;
 static volatile TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
-static DynamicPatchDefinition dynamo;
 
 #ifdef USE_ADC
 extern uint16_t adc_values[NOF_ADC_VALUES];
@@ -66,7 +66,7 @@ uint16_t timestamps[NOF_BUTTONS];
 ProgramVector* getProgramVector() { return programVector; }
 
 PatchDefinition* getPatchDefinition(){
-  return program.getPatchDefinition();
+  return registry.getPatchDefinition();
 }
 
 void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
@@ -365,9 +365,11 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->message = NULL;
 }
 
-volatile uint8_t flashSectorToWrite;
-volatile void* flashAddressToWrite;
-volatile uint32_t flashSizeToWrite;
+uint8_t flashSectorToWrite;
+void* flashAddressToWrite;
+uint32_t flashSizeToWrite;
+Resource* flashResourceToSend;
+
 void programFlashTask(void* p){
   uint8_t index = flashSectorToWrite;
   uint32_t size = flashSizeToWrite;
@@ -432,28 +434,36 @@ void eraseFlashTask(void* p){
   vTaskDelete(NULL);
 }
 
+void sendResourceTask(void* p){
+  Resource* resource = flashResourceToSend;
+  owl.setOperationMode(LOAD_MODE);
+  midi_tx.sendResource(resource);
+  utilityTask = NULL;
+  vTaskDelete(NULL);
+}
+
 void runAudioTask(void* p){
 #ifdef USE_SCREEN
-    graphics.params.reset();
+  graphics.params.reset();
 #endif
-    PatchDefinition* def = getPatchDefinition();
-    ProgramVector* pv = def == NULL ? NULL : def->getProgramVector();
-    if(pv != NULL && def->verify()){
-      updateProgramVector(pv, def);
-      programVector = pv;
-      setErrorStatus(NO_ERROR);
-      owl.setOperationMode(RUN_MODE);
+  PatchDefinition* def = getPatchDefinition();
+  if(def->isValid()){
+    def->copy();
+    ProgramVector* pv = def->getProgramVector();
+    updateProgramVector(pv, def);
+    programVector = pv;
+    setErrorStatus(NO_ERROR);
+    owl.setOperationMode(RUN_MODE);
 #ifdef USE_CODEC
-	codec.clear();
+    codec.clear();
 #endif
-      def->run();
-      error(PROGRAM_ERROR, "Program exited");
-    }else{
-      error(PROGRAM_ERROR, "Invalid program");
-    }
-    audioTask = NULL;
-    vTaskDelete(NULL);
-    for(;;);
+    def->run();
+    error(PROGRAM_ERROR, "Program exited");
+  }else{
+    error(PROGRAM_ERROR, "Invalid program");
+  }
+  audioTask = NULL;
+  vTaskDelete(NULL);
 }
 
 void bootstrap(){
@@ -524,21 +534,18 @@ void runManagerTask(void* p){
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
       xTaskCreate(programFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
-      // bool ret = utilityTask.create(programFlashTask, "Flash Write", FLASH_TASK_PRIORITY);
-      // if(!ret)
-      // 	error(PROGRAM_ERROR, "Failed to start Flash Write task");
     }else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
       xTaskCreate(eraseFlashTask, "Flash Erase", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
-      // bool ret = utilityTask.create(eraseFlashTask, "Flash Erase", FLASH_TASK_PRIORITY);
-      // if(!ret)
-      // 	error(PROGRAM_ERROR, "Failed to start Flash Erase task");
+    }else if(ulNotifiedValue & SEND_RESOURCE_NOTIFICATION){
+      if(utilityTask != NULL)
+        error(PROGRAM_ERROR, "Utility task already running");
+      xTaskCreate(sendResourceTask, "Send Resource", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
     }
     // vTaskDelay(20);
     if(ulNotifiedValue & START_PROGRAM_NOTIFICATION){ // start
-      PatchDefinition* def = getPatchDefinition();
-      if(audioTask == NULL && def != NULL){
+      if(audioTask == NULL && getPatchDefinition()->isValid()){
       	static StaticTask_t audioTaskBuffer;
 #ifdef USE_ICACHE
 	SCB_InvalidateICache();
@@ -627,31 +634,20 @@ void ProgramManager::updateProgramIndex(uint8_t index){
     HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
   }
 #endif
+#ifndef USE_SCREEN
+  // todo: move to onLoadProgram() callback
+  memset(parameter_values, 0, sizeof(parameter_values));
+#endif
 }
 
-void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
-  if(dynamo.load(address, length) && dynamo.getProgramVector() != NULL){
-    patchdef = &dynamo;
-    registry.setDynamicPatchDefinition(patchdef);
+void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  
+  if(registry.loadProgram(address, length))
     updateProgramIndex(0);
-  }else{
-    registry.setDynamicPatchDefinition(NULL);
-  }
 }
 
 void ProgramManager::loadProgram(uint8_t pid){
-  // We must always force loading patch definition, because it uses cached value that
-  // is also updated in other places
-  if(patchindex != pid){
-    PatchDefinition* def = registry.getPatchDefinition(pid);
-    if(def != NULL && def->getProgramVector() != NULL){
-      patchdef = def;
-      updateProgramIndex(pid);
-#ifndef USE_SCREEN
-      memset(parameter_values, 0, sizeof(parameter_values));
-#endif
-    }
-  }
+  if(patchindex != pid && registry.loadProgram(pid))
+    updateProgramIndex(pid);
 }
 
 #ifdef DEBUG_STACK
@@ -712,6 +708,11 @@ extern "C" {
     program.exitProgram(true);
     error(PROGRAM_ERROR, "stack overflow");
   }
+}
+
+void ProgramManager::sendResource(Resource* resource){
+  // todo!
+  notifyManagerFromISR(STOP_PROGRAM_NOTIFICATION|SEND_RESOURCE_NOTIFICATION);
 }
 
 void ProgramManager::eraseFromFlash(uint8_t sector){

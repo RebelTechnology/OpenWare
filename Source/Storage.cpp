@@ -112,18 +112,18 @@ void Storage::index(){
   resource_count = i+1;
 }
 
-size_t Storage::readResource(Resource* resource, void* data, size_t length){
+size_t Storage::readResource(Resource* resource, void* data, size_t offset, size_t length){
   size_t ret = 0;
   if(resource){
     if(resource->isMemoryMapped()){
-      size_t len = std::min(resource->getDataSize(), length);
-      memcpy(data, resource->getData(), len);
+      size_t len = std::min(resource->getDataSize()-offset, length);
+      memcpy(data, resource->getData()+offset, len);
       ret = len;
     }else{
 #ifdef USE_SPI_FLASH
       uint32_t address = resource->getAddress();
-      size_t len = std::min(resource->getDataSize(), length);
-      Flash_read(address+sizeof(ResourceHeader), (uint8_t*)data, len);
+      size_t len = std::min(resource->getDataSize()-offset, length);
+      Flash_read(address+sizeof(ResourceHeader)+offset, (uint8_t*)data, len);
       ret = len;
 #endif
     }
@@ -243,7 +243,7 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   for(uint8_t i=0; i<resource_count; ++i){
     if(resources[i].isValid() && resources[i].flagsContain(flags)){
       if(offset+resources[i].getTotalSize() < size){
-	readResource(&resources[i], ptr+offset,  resources[i].getTotalSize());
+	readResource(&resources[i], ptr+offset,  0, resources[i].getTotalSize());
 	offset += resources[i].getTotalSize();
       }
     }

@@ -17,22 +17,21 @@ public:
   /* const char* getName(unsigned int index); */
   const char* getPatchName(unsigned int index);
   const char* getResourceName(unsigned int index);
-  PatchDefinition* getPatchDefinition(unsigned int index);
+  PatchDefinition* getPatchDefinition(){
+    return &patchDefinition;
+  }
   unsigned int getNumberOfPatches();
   unsigned int getNumberOfResources();
   bool hasPatches();
-  // void registerPatch(PatchDefinition* def);
-  void setDynamicPatchDefinition(PatchDefinition* def){
-    dynamicPatchDefinition = def;
-  }
   Resource* getPatch(uint8_t index);
   Resource* getResource(uint8_t index);
+  bool loadProgram(uint8_t slot); // load program from storage
+  bool loadProgram(void* address, uint32_t length); // load program from RAM
 private:
   Resource* patches[MAX_NUMBER_OF_PATCHES];
   Resource* resources[MAX_NUMBER_OF_RESOURCES];
-  // PatchDefinition* defs[MAX_NUMBER_OF_PATCHES];
   uint8_t patchCount, resourceCount;
-  PatchDefinition* dynamicPatchDefinition;
+  PatchDefinition patchDefinition;
 };
 
 // // Wrappers to be used as callbacks for service calls

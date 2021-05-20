@@ -1,16 +1,15 @@
 #include <string.h>
 #include <math.h> /* for ceilf */
+#include "cmsis_os.h"
 #include "message.h"
 #include "midi.h"
 #include "errorhandlers.h"
 #include "MidiStatus.h"
 #include "PatchRegistry.h"
 #include "MidiController.h"
-// #include "Codec.h"
 #include "ApplicationSettings.h"
 #include "ProgramVector.h"
 #include "ProgramManager.h"
-// #include "FlashStorage.h"
 #include "Storage.h"
 #include "Owl.h"
 #include "BootloaderStorage.h"
@@ -118,7 +117,7 @@ public:
       
 void MidiController::sendPatchName(uint8_t slot){
   if(slot == 0){
-    PatchDefinition* def = registry.getPatchDefinition(0);
+    PatchDefinition* def = registry.getPatchDefinition();
     if(def)
       sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getProgramSize());
   }else{
@@ -136,6 +135,25 @@ void MidiController::sendPatchNames(){
 void MidiController::sendResourceNames(){
   static SendResourceNamesTask task;
   owl.setBackgroundTask(&task);
+}
+
+void MidiController::sendResource(Resource* resource){
+  size_t len = resource->getTotalSize();
+  const size_t msgsize = 210; // number of resource bytes we send with each SysEx
+  uint8_t data[msgsize];
+  uint8_t msg[msgsize*8/7+1];
+  msg[0] = SYSEX_FIRMWARE_UPLOAD;
+  size_t offset = 0;
+  while(len){
+    size_t sz = len > msgsize ? msgsize : len;
+    len -= sz;
+    storage.readResource(resource, data, offset, sz);
+    offset += sz;
+    sz = data_to_sysex(data, msg+1, sz);
+    sendSysEx(data, sz);
+    vTaskDelay(1); // delay for 1 tick
+    setProgress(len*4095/resource->getTotalSize(), "sending");
+  }
 }
 
 void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name, size_t datasize){
