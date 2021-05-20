@@ -54,15 +54,14 @@ void onChangePin(uint16_t pin){
       // Rising edge
       pushButtonPressDuration = 0;
       pushButtonAnimation = 0x96;
-      owlSelectedProgramId = settings.program_index;
+      owlSelectedProgramId = program.getProgramIndex();
     }
     else {
       // Falling edge
       if (pushButtonPressDuration > PROGRAM_CHANGE_PUSHBUTTON_TICKS &&
-        settings.program_index != owlSelectedProgramId) {
+        program.getProgramIndex() != owlSelectedProgramId) {
         // This runs unless button was depressed too early or the same
         // patch as before was selected.
-        settings.program_index = owlSelectedProgramId;
         program.loadProgram(owlSelectedProgramId);
         program.resetProgram(false);
       }
@@ -116,10 +115,10 @@ inline int16_t getProgramSelection(){
   int pc = bank * 8 + prog;
   // We must check that patch exist and verify that it's considered valid
   // to avoid loading from a gap in the patches list
-  if (pc < (int)registry.getNumberOfPatches() && registry.getPatchDefinition(pc) != NULL)
+  // if (pc < (int)registry.getNumberOfPatches() && registry.getPatchDefinition(pc) != NULL)
+  if (pc < (int)registry.getNumberOfPatches()) // or just wing it
     return pc;
-  else
-    return -1;
+  return -1;
 }
 
 void setGateValue(uint8_t ch, int16_t value){
