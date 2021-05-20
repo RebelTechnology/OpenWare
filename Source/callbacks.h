@@ -28,6 +28,7 @@ extern "C" {
   void onChangeMode(OperationMode new_mode, OperationMode old_mode);
   // sets a progress bar (if available) to a value from 0 to 4095
   void setProgress(uint16_t value, const char* reason);
+  void onResourceUpdate(void);
 
 #ifdef __cplusplus
 } /* extern C */

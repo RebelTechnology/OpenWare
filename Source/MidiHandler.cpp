@@ -305,7 +305,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFirmwareSendCommand(uint8_t* data, uint16_t size){
   uint32_t slot = loader.decodeInt(data);
   Resource* resource = NULL;
-  if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES)
+  if(slot-1 < MAX_NUMBER_OF_PATCHES)
     resource = registry.getPatch(slot-1);
   else if(slot-MAX_NUMBER_OF_PATCHES < MAX_NUMBER_OF_RESOURCES)
     resource = registry.getResource(slot-MAX_NUMBER_OF_PATCHES);

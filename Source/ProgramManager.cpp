@@ -52,6 +52,8 @@ BootloaderStorage bootloader;
 static volatile TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
+static StaticTask_t audioTaskBuffer;
+static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] CCM_RAM; // use CCM if available
 
 #ifdef USE_ADC
 extern uint16_t adc_values[NOF_ADC_VALUES];
@@ -278,10 +280,6 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #endif /* OWL_MAGUS */
 }
 
-// Called on init, resource operation, storage erase
-__weak void onResourceUpdate(void){
-}
-
 void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
@@ -368,7 +366,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
 uint8_t flashSectorToWrite;
 void* flashAddressToWrite;
 uint32_t flashSizeToWrite;
-Resource* flashResourceToSend;
+Resource* flashResourceToSend = NULL;
 
 void programFlashTask(void* p){
   uint8_t index = flashSectorToWrite;
@@ -415,16 +413,19 @@ void eraseFlashTask(void* p){
   if(slot == 0xff){
     storage.erase();
     debugMessage("Erased flash storage");
-  }else if(slot < MAX_NUMBER_OF_PATCHES){
-    Resource* resource = registry.getPatch(slot);
-    if(resource != NULL)
+  }else if(slot-1 < MAX_NUMBER_OF_PATCHES){
+    Resource* resource = registry.getPatch(slot-1);
+    if(resource != NULL){
       storage.eraseResource(resource);
-  }else if(slot < MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
+      debugMessage("Erased patch");
+    }
+  }else if(slot-MAX_NUMBER_OF_PATCHES < MAX_NUMBER_OF_RESOURCES){
     Resource* resource = registry.getResource(slot-MAX_NUMBER_OF_PATCHES);
-    if(resource != NULL)
+    if(resource != NULL){
       storage.eraseResource(resource);
-    onResourceUpdate();
-    debugMessage("Erased resource");    
+      onResourceUpdate();
+      debugMessage("Erased resource");
+    }
   }
   registry.init();
   settings.init();
@@ -436,8 +437,11 @@ void eraseFlashTask(void* p){
 
 void sendResourceTask(void* p){
   Resource* resource = flashResourceToSend;
-  owl.setOperationMode(LOAD_MODE);
-  midi_tx.sendResource(resource);
+  flashResourceToSend = NULL;
+  if(resource != NULL){
+    owl.setOperationMode(LOAD_MODE);
+    midi_tx.sendResource(resource);
+  }
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
@@ -533,33 +537,34 @@ void runManagerTask(void* p){
     if(ulNotifiedValue & PROGRAM_FLASH_NOTIFICATION){ // program flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      xTaskCreate(programFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
+      utilityTask = xTaskCreateStatic(programFlashTask, "Flash Write",
+				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
+				      NULL, FLASH_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
     }else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      xTaskCreate(eraseFlashTask, "Flash Erase", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
+      utilityTask = xTaskCreateStatic(eraseFlashTask, "Flash Erase", 
+				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
+				      NULL, FLASH_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
     }else if(ulNotifiedValue & SEND_RESOURCE_NOTIFICATION){
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      xTaskCreate(sendResourceTask, "Send Resource", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
+      utilityTask = xTaskCreateStatic(sendResourceTask, "Send Resource", 
+				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
+				      NULL, FLASH_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
     }
     // vTaskDelay(20);
     if(ulNotifiedValue & START_PROGRAM_NOTIFICATION){ // start
       if(audioTask == NULL && getPatchDefinition()->isValid()){
-      	static StaticTask_t audioTaskBuffer;
 #ifdef USE_ICACHE
 	SCB_InvalidateICache();
 #endif
 #ifdef USE_DCACHE
 	SCB_CleanInvalidateDCache();
 #endif
-	static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] CCM_RAM; // use CCM if available
-	memset(PROGRAMSTACK, 0xda, PROGRAMSTACK_SIZE);
 	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
 				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
-				      NULL, AUDIO_TASK_PRIORITY, 
-				      (StackType_t*)PROGRAMSTACK, 
-				      &audioTaskBuffer);
+				      NULL, AUDIO_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
       }
       if(audioTask == NULL && registry.hasPatches())
 	error(PROGRAM_ERROR, "Failed to start program task");
@@ -628,12 +633,13 @@ void ProgramManager::updateProgramIndex(uint8_t index){
   patchindex = index;
   midi_tx.sendPc(index);
   midi_tx.sendPatchName(index);
-#ifdef USE_BKPSRAM
   if(index != 0){
+    settings.program_index = index;
+#ifdef USE_BKPSRAM
     extern RTC_HandleTypeDef hrtc;
     HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
-  }
 #endif
+  }
 #ifndef USE_SCREEN
   // todo: move to onLoadProgram() callback
   memset(parameter_values, 0, sizeof(parameter_values));
@@ -705,13 +711,19 @@ extern "C" {
     /* Run time stack overflow checking is performed if
        configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
        function is called from PendSV ISR if a stack overflow is detected. */
-    program.exitProgram(true);
+    vTaskDelete(pxTask);
+    if(pxTask == utilityTask)
+      utilityTask = NULL;
+    if(pxTask == audioTask)
+      audioTask = NULL;
     error(PROGRAM_ERROR, "stack overflow");
+    if(pxTask == managerTask)
+      program.startManager();
   }
 }
 
 void ProgramManager::sendResource(Resource* resource){
-  // todo!
+  flashResourceToSend = resource;
   notifyManagerFromISR(STOP_PROGRAM_NOTIFICATION|SEND_RESOURCE_NOTIFICATION);
 }
 

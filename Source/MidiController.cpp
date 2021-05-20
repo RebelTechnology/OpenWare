@@ -1,6 +1,5 @@
 #include <string.h>
 #include <math.h> /* for ceilf */
-#include "cmsis_os.h"
 #include "message.h"
 #include "midi.h"
 #include "errorhandlers.h"
@@ -14,6 +13,11 @@
 #include "Owl.h"
 #include "BootloaderStorage.h"
 #include "sysex.h"
+#include "crc32.h"
+
+#ifndef USE_BOOTLOADER_MODE
+#include "cmsis_os.h"
+#endif
 
 void MidiController::sendPatchParameterValues(){
   sendCc(PATCH_PARAMETER_A, (uint8_t)(getParameterValue(PARAMETER_A)>>5) & 0x7f);
@@ -138,22 +142,48 @@ void MidiController::sendResourceNames(){
 }
 
 void MidiController::sendResource(Resource* resource){
-  size_t len = resource->getTotalSize();
-  const size_t msgsize = 210; // number of resource bytes we send with each SysEx
+#ifndef USE_BOOTLOADER_MODE
+  const size_t msgsize = 203; // number of resource bytes we send with each SysEx
   uint8_t data[msgsize];
-  uint8_t msg[msgsize*8/7+1];
+  uint8_t msg[msgsize*8/7+6];
+  // prepare and send first message with zero index and resource size
+  size_t len = 0;
   msg[0] = SYSEX_FIRMWARE_UPLOAD;
+  data_to_sysex((uint8_t*)&len, msg+1, 4);
+  len = __REV(resource->getDataSize());
+  data_to_sysex((uint8_t*)&len, msg+6, 4);
+  sendSysEx(msg, 11);
+  // prepare and send data messages with incrementing index
+  size_t index = 0;
   size_t offset = 0;
-  while(len){
-    size_t sz = len > msgsize ? msgsize : len;
-    len -= sz;
+  len = resource->getDataSize();
+  uint32_t crc = 0;
+  while(offset < len){
+    setProgress(offset*4095/len, "Sending");
+    midi_tx.transmit();
+    vTaskDelay(10);
+    size_t sz = len-offset;
+    if(sz > msgsize)
+      sz = msgsize;
     storage.readResource(resource, data, offset, sz);
     offset += sz;
-    sz = data_to_sysex(data, msg+1, sz);
-    sendSysEx(data, sz);
-    vTaskDelay(1); // delay for 1 tick
-    setProgress(len*4095/resource->getTotalSize(), "sending");
+    crc = crc32(data, sz, crc);
+    index = __REV(__REV(index)+1); // increment and byteswap
+    data_to_sysex((uint8_t*)&index, msg+1, 4);
+    sz = data_to_sysex(data, msg+6, sz);
+    sendSysEx(msg, sz+6);
   }
+  // prepare and send CRC message
+  midi_tx.transmit();
+  vTaskDelay(10);
+  index = __REV(__REV(index)+1);
+  data_to_sysex((uint8_t*)&index, msg+1, 4);
+  crc = __REV(crc);
+  data_to_sysex((uint8_t*)&crc, msg+6, 4);
+  sendSysEx(msg, 11);
+  setProgress(4095, "Sending");
+  program.resetProgram(false);
+#endif
 }
 
 void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name, size_t datasize){
