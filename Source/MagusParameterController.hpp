@@ -768,29 +768,32 @@ public:
       default:
         break;
       }
-    }else{
+    }
+    else{
       if(controlMode == EXIT){
-	displayMode = STANDARD;
-	sensitivitySelected = false;
-	if(saveSettings)
-	  settings.saveToFlash();
-      }else{
-	int16_t delta = value - encoders[1];
-	if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
-	  setControlMode(controlMode+1);
-	}else if(delta < 0 && controlMode > 0){
-	  setControlMode(controlMode-1);
-	}
-	if (controlMode == CALIBRATE) {
-	  if (continueCalibration)
-	    updateCalibration();
-	  else
-	    calibrationConfirm = false;
-	}
-  else if (controlMode == DATA && resourceDeletePressed) {
-    resourceDeletePressed = false;
-  }
-	encoders[1] = value;
+        displayMode = STANDARD;
+        sensitivitySelected = false;
+        if(saveSettings)
+          settings.saveToFlash();
+      }
+      else{
+        int16_t delta = value - encoders[1];
+        if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
+          setControlMode(controlMode+1);
+        }
+        else if(delta < 0 && controlMode > 0){
+          setControlMode(controlMode-1);
+        }
+        if (controlMode == CALIBRATE) {
+          if (continueCalibration)
+            updateCalibration();
+          else
+            calibrationConfirm = false;
+        }
+        else if (controlMode == DATA && resourceDeletePressed) {
+          resourceDeletePressed = false;
+        }
+        encoders[1] = value;
       }
     }
   }
@@ -996,18 +999,18 @@ public:
             if(delta > 0)
               selectBlockParameter(i, selectedPid[i]+1);
           }
-	else{
-	  if(encoders[i] != value){
-	    selectedBlock = i;
-	    encoders[i] = value;
-	    // We must update encoder value before calculating user value, otherwise
-	    // previous value would be displayed
-	    user[selectedPid[i]] = getEncoderValue(i);
-	  }
-	  if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
-	    displayMode = STANDARD;
-	}
-	encoders[i] = value;
+        else{
+          if(encoders[i] != value){
+            selectedBlock = i;
+            encoders[i] = value;
+            // We must update encoder value before calculating user value, otherwise
+            // previous value would be displayed
+            user[selectedPid[i]] = getEncoderValue(i);
+          }
+          if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
+            displayMode = STANDARD;
+        }
+        encoders[i] = value;
       }
       if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
         displayMode = ERROR;    
