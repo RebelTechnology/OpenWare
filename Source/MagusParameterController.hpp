@@ -963,14 +963,14 @@ public:
         // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
         displayMode = SELECTGLOBALPARAMETER;
         int16_t delta = value - encoders[0];
+        selectedPid[0] = selectedPid[selectedBlock];
+        selectedBlock = 0;
         if(delta < 0) {
           selectGlobalParameter(selectedPid[selectedBlock] - 1);
-          selectedBlock = 0;
       }
         else {
           if(delta > 0) {              
             selectGlobalParameter(selectedPid[selectedBlock] + 1);
-            selectedBlock = 0;
           }
         }
       }
