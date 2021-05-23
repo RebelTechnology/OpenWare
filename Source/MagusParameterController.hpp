@@ -772,6 +772,7 @@ public:
     else{
       if(controlMode == EXIT){
         displayMode = STANDARD;
+        //selectedBlock = 0;
         sensitivitySelected = false;
         if(saveSettings)
           settings.saveToFlash();
@@ -928,6 +929,7 @@ public:
 
     // update encoder 1 top right
     int16_t value = data[2];
+    int16_t right_enc = encoders[1]; // Save old value for encoder scrolling in main menu
     if(displayMode == CONTROL){
       selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
       if(pressed&0x3c) // exit status mode if any other encoder is pressed
@@ -962,23 +964,38 @@ public:
         displayMode = SELECTGLOBALPARAMETER;
         int16_t delta = value - encoders[0];
         if(delta < 0) {
-          selectGlobalParameter(selectedPid[0]-1);
-        }
+          selectGlobalParameter(selectedPid[selectedBlock] - 1);
+          selectedBlock = 0;
+      }
         else {
           if(delta > 0) {              
-            selectGlobalParameter(selectedPid[0]+1);
+            selectGlobalParameter(selectedPid[selectedBlock] + 1);
+            selectedBlock = 0;
           }
-          selectedBlock = 0;
         }
       }
       else{
+        if (displayMode == STANDARD) {
+          // Quick selection of global parameter by right encoder - without popover menu
+          int16_t delta = data[2] - right_enc;
+          encoders[1] = data[2];
+          if(delta < 0) {
+            selectGlobalParameter(selectedPid[selectedBlock] - 1);
+            selectedBlock = 0;
+          }
+          else
+            if(delta > 0) {
+              selectGlobalParameter(selectedPid[selectedBlock] + 1);
+              selectedBlock = 0;
+            }
+        }
         if(encoders[0] != value){
-          selectedBlock = 0;
           encoders[0] = value;
           // We must update encoder value before calculating user value, otherwise
           // previous value would be displayed
           user[selectedPid[0]] = getEncoderValue(0);
         }
+
         if(displayMode == SELECTGLOBALPARAMETER)
           displayMode = STANDARD;
       }
