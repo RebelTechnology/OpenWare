@@ -80,6 +80,7 @@ public:
 
 TakeoverControls<10, int16_t> takeover;
 int16_t dac_values[2] = {0, 0};
+bool button_led_values[4] = {false};
 uint8_t patchselect;
 
 bool updatePin(size_t bid, Pin pin){
@@ -335,9 +336,8 @@ static void update_preset(){
       if(program.getProgramIndex() != patchselect &&
 	 patchselect < registry.getNumberOfPatches()){
 	// change patch on mode button release
-	program.loadProgram(patchselect); // enters load mode
+	program.loadProgram(patchselect); // enters load mode (calls onChangeMode)
 	program.resetProgram(false);
-	dac_values[0] = dac_values[1] = 0; // reset CV outputs to initial values
       }else{
 	owl.setOperationMode(RUN_MODE);
       }
@@ -366,23 +366,32 @@ static void update_preset(){
 }
 
 void onChangeMode(OperationMode new_mode, OperationMode old_mode){
-  ledpwm.high(); // switch button leds to red
-  for(int i=1; i<=10; ++i)
-    setLed(i, NO_COLOUR);
-  setGateValue(BUTTON_E, 0); // this will only have an effect in RUN mode
-  setGateValue(BUTTON_F, 0);
   if(new_mode == CONFIGURE_MODE){
+    // entering config mode
+    HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
     takeover.reset(false);
     patchselect = program.getProgramIndex();
+    button_led_values[0] = !led7.get();
+    button_led_values[1] = !led8.get();
+    button_led_values[2] = !led9.get();
+    button_led_values[3] = !led10.get();
   }else if(new_mode == LOAD_MODE){
     // new patch selected or loaded
-    // for(size_t i=0; i<4; ++i)
-    //   takeover.set(i, getAnalogValue(i*2+1));      
     takeover.set(0, getAnalogValue(ADC_B));
     takeover.set(1, getAnalogValue(ADC_D));
     takeover.set(2, getAnalogValue(ADC_F));
     takeover.set(3, getAnalogValue(ADC_H));
     takeover.set(4, getAnalogValue(ADC_I));
+    dac_values[0] = dac_values[1] = 0; // reset CV outputs to initial values
+    memset(button_led_values, 0, sizeof(button_led_values)); // reset leds
+  }else if(new_mode == RUN_MODE){
+    // we are either returning to the same patch or starting a new one
+    ledpwm.high(); // switch button leds to red
+    for(int i=1; i<7; ++i)
+      setLed(i, NO_COLOUR);
+    for(int i=7; i<=10; ++i)
+      setLed(i, button_led_values[i-7] ? RED_COLOUR : NO_COLOUR);
   }
   counter = 0;
 }
@@ -390,9 +399,9 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
 void setup(){
   initLed();
   HAL_GPIO_WritePin(LEDPWM_GPIO_Port, LEDPWM_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
   owl.setup();
-  // for(size_t i=0; i<5; ++i)
-  //   takeover.set(i, getAnalogValue(i*2+1));      
   takeover.set(0, getAnalogValue(ADC_B));
   takeover.set(1, getAnalogValue(ADC_D));
   takeover.set(2, getAnalogValue(ADC_F));
@@ -406,10 +415,9 @@ void setup(){
 
 void loop(void){
   MX_USB_HOST_Process(); // todo: enable PWR management
-  bool state = !sw4.get();
-  if(state != getButtonValue(BUTTON_D)){
-    updatePin(4, sw4);
-  }
+  static bool sw4_state = false;
+  if(sw4_state != !sw4.get())
+    sw4_state = updatePin(4, sw4);
   update_preset();
   owl.loop();
 }
