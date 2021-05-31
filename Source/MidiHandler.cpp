@@ -243,7 +243,7 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
   int32_t ret = loader.handleFirmwareUpload(data, size);
   if(ret == 0){
     owl.setOperationMode(LOAD_MODE);
-    setProgress(loader.index*4095/loader.size, "Loading");
+    setProgress((uint64_t)loader.index*4095/loader.size, "Loading");
   }
 }
 
