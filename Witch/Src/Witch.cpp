@@ -69,6 +69,10 @@ public:
   bool taken(uint8_t index){
     return takeover[index];
   }
+  /**
+   * If @param state is true, then the control is taken.
+   * If the control is taken it reflects the current knob setting.
+   */
   void reset(uint8_t index, bool state){
     takeover[index] = state;
   }
@@ -236,18 +240,32 @@ int16_t getAttenuatedCV(uint8_t index, uint16_t* adc_values){
   return (uint32_t(adc_values[index*2]) * uint32_t(takeover.get(index+5)<<1)) >> 12;
 }
 
+static uint16_t smooth_adc_values[NOF_ADC_VALUES];
+extern "C"{
+  void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+    // this runs at apprx 7.5kHz
+    // with 144 cycles sample time and PCLK2 = 84MHz, div 8
+    // giving a filter settling time of less than 3ms
+    extern uint16_t adc_values[NOF_ADC_VALUES];
+    for(size_t i=0; i<NOF_ADC_VALUES; ++i){
+      // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+      smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
+    }
+  }
+}
+
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
   // cv inputs are ADC_A, C, E, G
   // knobs are ADC_B, D, F, H, I
   if(isModeButtonPressed()){
     for(size_t i=0; i<4; ++i){
-      takeover.update(i+5, adc_values[i*2+1], 31);
+      takeover.update(i+5, smooth_adc_values[i*2+1], 31);
       if(takeover.taken(i+5))
         setLed(i+1, 0);
       else
         setLed(i+1, 4095);
     }
-    takeover.update(9, adc_values[ADC_I], 31);
+    takeover.update(9, smooth_adc_values[ADC_I], 31);
     if(takeover.taken(9)){
       setLed(5, 0);
       setLed(6, 0);
@@ -257,28 +275,26 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
     }      
   }else{
     for(size_t i=0; i<4; ++i){
-      takeover.update(i, adc_values[i*2+1], 31);
+      takeover.update(i, smooth_adc_values[i*2+1], 31);
       if(takeover.taken(i))
-        setLed(i+1, getAttenuatedCV(i, adc_values));
+        setLed(i+1, getAttenuatedCV(i, smooth_adc_values));
       else
         setLed(i+1, 4095);
     }
-    takeover.update(4, adc_values[ADC_I], 31);
-    if(!takeover.taken(4)){
-      setLed(5, 4095);
-      setLed(6, 4095);
-    }else{
+    takeover.update(4, smooth_adc_values[ADC_I], 31);
+    if(takeover.taken(4)){
       setLed(5, dac_values[0]);
       setLed(6, dac_values[1]);
+    }else{
+      setLed(5, 4095);
+      setLed(6, 4095);
     }
-    // IIR exponential filter with lambda 0.75
     for(size_t i=0; i<4; ++i){
-      int16_t xn = parameter_values[i]*3;
       int16_t x = takeover.get(i);
-      int16_t cv = getAttenuatedCV(i, adc_values);
-      parameter_values[i] = __USAT((xn+x+cv)>>2, 12);
+      int16_t cv = getAttenuatedCV(i, smooth_adc_values);
+      parameter_values[i] = __USAT(x+cv, 12);
     }
-    parameter_values[4] = __USAT((parameter_values[4]*3+takeover.get(4))>>2, 12);
+    parameter_values[4] = __USAT(takeover.get(4), 12);
   }
 }
 
@@ -407,8 +423,10 @@ void setup(){
   takeover.set(2, getAnalogValue(ADC_F));
   takeover.set(3, getAnalogValue(ADC_H));
   takeover.set(4, getAnalogValue(ADC_I));
-  for(size_t i=5; i<9; ++i)
+  for(size_t i=5; i<9; ++i){
     takeover.set(i, 2048); // set CV attenuation to 1
+    takeover.reset(i, false);
+  }
   takeover.set(9, settings.audio_output_gain<<5);
   patchselect = program.getProgramIndex();
 }
