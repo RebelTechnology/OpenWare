@@ -58,6 +58,30 @@ void onChangePin(uint16_t pin){
   }
 }
 
+void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
+#ifdef OWL_EUROWIZARD
+  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
+#else
+  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
+#endif
+  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
+  parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_E])>>2;
+  // poll buttons SW4 and SW5
+  if(getButtonValue(BUTTON_D) != !(SW4_GPIO_Port->IDR & SW4_Pin)){
+    setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
+    extern uint32_t ledstatus;
+    ledstatus ^= 0x3ff003ff;
+  }
+  // if(getButtonValue(BUTTON_E) != !(SW5_GPIO_Port->IDR & SW5_Pin)){
+  //   setButtonValue(BUTTON_E, !(SW5_GPIO_Port->IDR & SW5_Pin));
+  //   extern uint32_t ledstatus;
+  //   ledstatus = 0;
+  // }
+}
+
 void setup(){
   HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_RESET); // Trigger out off
   owl.setup();

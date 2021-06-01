@@ -29,6 +29,7 @@ extern "C" {
   // sets a progress bar (if available) to a value from 0 to 4095
   void setProgress(uint16_t value, const char* reason);
   void onResourceUpdate(void);
+  void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len);
 
 #ifdef __cplusplus
 } /* extern C */
