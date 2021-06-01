@@ -389,11 +389,13 @@ void runAudioTask(void* p){
 #ifdef USE_CODEC
     codec.clear();
 #endif
+    // zero-fill heap memory
+    for(size_t i=0; i<5 && pv->heapSegments[i].location != NULL; ++i)
+      memset(pv->heapSegments[i].location, 0, pv->heapSegments[i].size);
+    // run program
     def->run();
-    error(PROGRAM_ERROR, "Program exited");
-  }else{
-    error(PROGRAM_ERROR, "Invalid program");
   }
+  error(PROGRAM_ERROR, "Program error");
   audioTask = NULL;
   vTaskDelete(NULL);
 }
