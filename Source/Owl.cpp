@@ -220,8 +220,6 @@ void Owl::loop(){
 #else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
 #endif
-  midi_rx.receive();
-  midi_tx.transmit();
 #ifdef USE_IWDG
 #ifdef STM32H7xx
   IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
