@@ -95,6 +95,23 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   case MIDI_CC_EFFECT_CTRL_2:
     setParameterValue(PARAMETER_H, value<<5);
     break;
+#ifdef USE_ADC
+  case PATCH_CONTROL:
+    /* Remote control: 0=local, 127=MIDI */
+    if(value){
+      extern ADC_HandleTypeDef ADC_PERIPH;
+      extern uint16_t adc_values[NOF_ADC_VALUES];
+      HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES);
+      if(ret != HAL_OK)
+	error(CONFIG_ERROR, "ADC Start failed");
+    }else{
+      extern ADC_HandleTypeDef ADC_PERIPH;
+      HAL_StatusTypeDef ret = HAL_ADC_Stop_DMA(&ADC_PERIPH);
+      if(ret != HAL_OK)
+	error(CONFIG_ERROR, "ADC Stop failed");
+    }
+    break;
+#endif
   case PATCH_BUTTON:
     setButtonValue(PUSHBUTTON, value < 64 ? 0 : 255);
     break;
@@ -171,61 +188,83 @@ void MidiHandler::updateCodecSettings(){
   program.resetProgram(true);
 }
 
+#define HEXCODE(x) ((uint16_t)(((x)[1]<<8)|(x)[0]))
+
 void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   if(size < 3) // size may be 3 or more depending on number of digits in value
     return;
-  char* p = (char*)data;
-  int32_t value = strtol(p+2, NULL, 16);
-  if(strncmp(SYSEX_CONFIGURATION_AUDIO_RATE, p, 2) == 0){
+  uint16_t hex = HEXCODE(data);
+  int32_t value = strtol((char*)data+2, NULL, 16);
+  switch(hex){
+  case HEXCODE(SYSEX_CONFIGURATION_AUDIO_RATE):
     settings.audio_samplingrate = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_BLOCKSIZE, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_AUDIO_BLOCKSIZE):
     settings.audio_blocksize = value;
     updateCodecSettings();
-  }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_BITDEPTH, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_AUDIO_BITDEPTH):
     settings.audio_bitdepth = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_AUDIO_DATAFORMAT, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_AUDIO_DATAFORMAT):
     settings.audio_dataformat = value;
+    break;
 #ifdef USE_CODEC
-  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_SWAP, p, 2) == 0){
+  case HEXCODE(SYSEX_CONFIGURATION_CODEC_SWAP):
     settings.audio_codec_swaplr = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_BYPASS, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_CODEC_BYPASS):
     settings.audio_codec_bypass = value;
     codec.bypass(value);
-  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_INPUT_GAIN, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_CODEC_INPUT_GAIN):
     settings.audio_input_gain = value;  
     codec.setInputGain(settings.audio_input_gain);
-  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_CODEC_OUTPUT_GAIN):
     settings.audio_output_gain = value;  
     codec.setOutputGain(settings.audio_output_gain);
-  }else if(strncmp(SYSEX_CONFIGURATION_CODEC_HIGHPASS, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_CODEC_HIGHPASS):
     codec.setHighPass(value);
+    break;
 #endif
-  }else if(strncmp(SYSEX_CONFIGURATION_PC_BUTTON, p, 2) == 0){
+  case HEXCODE(SYSEX_CONFIGURATION_PC_BUTTON):
     settings.program_change_button = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_INPUT_OFFSET, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_INPUT_OFFSET):
     settings.input_offset = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_INPUT_SCALAR, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_INPUT_SCALAR):
     settings.input_scalar = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_OFFSET, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_OUTPUT_OFFSET):
     settings.output_offset = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_OUTPUT_SCALAR):
     settings.output_scalar = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_MIDI_INPUT_CHANNEL, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_MIDI_INPUT_CHANNEL):
     midiSetInputChannel(max(-1, min(15, value)));
-  }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL):
     midiSetOutputChannel(max(-1, min(15, value)));
+    break;
 #ifndef USE_BOOTLOADER_MODE
-  }else if(strncmp(SYSEX_CONFIGURATION_BOOTLOADER_LOCK, p, 2) == 0){
+  case HEXCODE(SYSEX_CONFIGURATION_BOOTLOADER_LOCK):
     if (value)
       bootloader.lock();
     else
       bootloader.unlock();
+    break;
 #endif
 #ifdef USE_DIGITALBUS
-  }else if(strncmp(SYSEX_CONFIGURATION_BUS_ENABLE, p, 2) == 0){
+  case HEXCODE(SYSEX_CONFIGURATION_BUS_ENABLE):
     settings.bus_enabled = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_BUS_FORWARD_MIDI, p, 2) == 0){
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_BUS_FORWARD_MIDI):
     settings.bus_forward_midi = value;
+    break;
 #endif
   }
 }
