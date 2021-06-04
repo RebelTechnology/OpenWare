@@ -8,10 +8,13 @@
 #include "ProgramManager.h"
 
 #define PROGRAM_CHANGE_PUSHBUTTON_TICKS 2000
-// Number of buffers before patch switching kicks in, takes 2.66s
+// Number of buffers before patch switching kicks in, with 2 ms loop delay this should take 5.23 seconds
 
 #ifndef abs
 #define abs(x) ((x)>0?(x):-(x))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
 #endif
 
 extern uint32_t ledstatus;
@@ -23,6 +26,8 @@ static bool pushButtonPressed = 0;
 static uint16_t pushButtonPressDuration = 0;
 static uint16_t pushButtonAnimation = 0;
 static uint8_t owlSelectedProgramId = 0;
+static uint16_t bank = 0;
+static uint16_t prog = 0;
 
 void setLed(uint8_t led, uint32_t rgb){
   // rgb should be a 3x 10 bit value
@@ -33,10 +38,6 @@ void setLed(uint8_t led, uint32_t rgb){
     break;
   case GREEN_COLOUR:
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-    break;
-  case YELLOW_COLOUR:
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
     break;
   case NO_COLOUR:
@@ -52,19 +53,16 @@ void onChangePin(uint16_t pin){
     pushButtonPressed = !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin);
     if (pushButtonPressed) {
       // Rising edge
-      pushButtonPressDuration = 0;
       pushButtonAnimation = 0x96;
-      owlSelectedProgramId = settings.program_index;
     }
     else {
       // Falling edge
-      if (pushButtonPressDuration > PROGRAM_CHANGE_PUSHBUTTON_TICKS &&
-        settings.program_index != owlSelectedProgramId) {
+      if (pushButtonPressDuration > PROGRAM_CHANGE_PUSHBUTTON_TICKS && owlSelectedProgramId > 0) {
         // This runs unless button was depressed too early or the same
         // patch as before was selected.
-        settings.program_index = owlSelectedProgramId;
         program.loadProgram(owlSelectedProgramId);
-        program.resetProgram(false);
+        program.resetProgram(true);
+        pushButtonPressDuration = 0;
       }
     }
     setButtonValue(BUTTON_A, pushButtonPressed);
@@ -91,35 +89,42 @@ void onChangePin(uint16_t pin){
   }
 }
 
-inline int16_t getProgramSelection(){
+inline uint16_t getProgramSelection(){
   // This code is copied from original firmware. The only difference is that
   // it won't be running in a separate OS task. So we won't be waiting for
   // usable patch being selected. Instead of that, we return -1 for invalid
   // selection - it should be ignored by the caller.
-  // NOTE: Bank/prog must be static as they act as feedback values for hysteresis
   #ifdef OWL_MODULAR
-  static int bank = (4095 - getAnalogValue(PARAMETER_A)) * 5 / 4096;
-  static int prog = (4095 - getAnalogValue(PARAMETER_B)) * 8 / 4096 + 1;
-  float a = (4095 - getAnalogValue(PARAMETER_A)) * 5 / 4096.0 - 0.5 / 5;
-  float b = (4095 - getAnalogValue(PARAMETER_B)) * 8 / 4096.0 - 0.5 / 8;
+  float a = (4095 - getAnalogValue(PARAMETER_A)) * 5 / 4096.0;// - 0.5 / 5;
+  float b = (4095 - getAnalogValue(PARAMETER_B)) * 8 / 4096.0;// - 0.5 / 8;
   #else
-  static int bank = getAnalogValue(PARAMETER_A) * 5 / 4096;
-  static int prog = getAnalogValue(PARAMETER_B) * 8 / 4096 + 1;
-  float a = getAnalogValue(PARAMETER_A) * 5 / 4096.0 - 0.5 / 5;
-  float b = getAnalogValue(PARAMETER_B) * 8 / 4096.0 - 0.5 / 8;
+  float a = getAnalogValue(PARAMETER_A) * 5 / 4096.0;// - 0.5 / 5;
+  float b = getAnalogValue(PARAMETER_B) * 8 / 4096.0;// - 0.5 / 8;
   #endif
-  //if(a - (int)a < 0.8) // deadband each segment: [0.8-1.0)
-  if(a > 0 && abs(a - (int)a - 0.1) > 0.2) // deadband each segment: [0.9-1.1]
-    bank = (int)a;
-  if(b > 0 && abs(b - (int)b - 0.1) > 0.2)
-    prog = (int)b+1;
-  int pc = bank * 8 + prog;
-  // We must check that patch exist and verify that it's considered valid
+  // deadband each segment: [0.9-1.1]
+  if(a > 0.f && abs(a - (uint16_t)(a + 0.1f)) > 0.1f)
+    bank = (uint16_t)a;
+  else if (a <= 0.1f)
+    bank = 0; // Ignore bottom dead zone
+  else if (a >= 5.0f - 0.1f)
+    bank = 4; // Ignore top dead zone
+
+  // deadband each segment: [0.85-1.15]
+  // larger deadband because we have the same amount of noise spread over more zones
+  if(b > 0.f && abs(b - (uint16_t)(b + 0.15f)) > 0.15f)
+    prog = (uint16_t)b + 1;
+  else if (b <= 0.15f)
+    prog = 1;  // Ignore bottom dead zone
+  else if (b >= 8.0f - 0.15f)
+    prog = 8; // Ignore top dead zone
+
+  uint16_t pc = max(bank * 8 + prog, 1);
+  // We must check that patch exists and verify that it's considered valid
   // to avoid loading from a gap in the patches list
-  if (pc < (int)registry.getNumberOfPatches() && registry.getPatchDefinition(pc) != NULL)
+  if (pc <= registry.getNumberOfPatches() && registry.getPatchDefinition(pc) != NULL)
     return pc;
   else
-    return -1;
+    return 0;
 }
 
 void setGateValue(uint8_t ch, int16_t value){
@@ -172,22 +177,47 @@ void loop(){
       owl.setOperationMode(ERROR_MODE);
     else if (pushButtonPressed) {
       if (pushButtonPressDuration++> PROGRAM_CHANGE_PUSHBUTTON_TICKS){
-        pushButtonPressDuration &= 0x3fff;
         // Pushbutton kept pressed above threshold, overflow is prevented
+        pushButtonPressDuration = PROGRAM_CHANGE_PUSHBUTTON_TICKS + 1;
         if (pushButtonAnimation){
           // Pulse as we unlock patch selection
           if ((pushButtonAnimation-- & 0xf) == 0){
             HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
             HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
           }
+          if (!pushButtonAnimation){
+            // Animation just finished and we're ready to select patches on next cycle
+            owlSelectedProgramId = 0;
+#ifdef OWL_MODULAR
+            bank = (4095 - getAnalogValue(PARAMETER_A)) * 5 / 4096;
+            prog = (4095 - getAnalogValue(PARAMETER_B)) * 8 / 4096 + 1;
+#else
+            bank = getAnalogValue(PARAMETER_A) * 5 / 4096;
+            prog = getAnalogValue(PARAMETER_B) * 8 / 4096 + 1;
+#endif
+          }
         }
-        // Ready to check for patch selection
-        int16_t newOwlProgramId = getProgramSelection();
-        if (newOwlProgramId != owlSelectedProgramId && newOwlProgramId >= 0){
-          owlSelectedProgramId = newOwlProgramId;
-          // Toggle pushbutton LEDs if patch number was changed
-          HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-          HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+        else {
+          // Ready to check for patch selection
+          uint16_t newOwlProgramId = getProgramSelection();
+          if (!owlSelectedProgramId) {
+            // No program selected yet
+            if (!newOwlProgramId) {
+              // No color if nothing is selected
+              setLed(0, NO_COLOUR);
+            }
+            else {
+              // First selection, color chosen based on patch number
+              owlSelectedProgramId = newOwlProgramId;
+              setLed(0, (owlSelectedProgramId & 1) ? GREEN_COLOUR : RED_COLOUR);
+            }
+          }
+          else if (newOwlProgramId != owlSelectedProgramId && newOwlProgramId > 0){
+            // Toggle pushbutton LEDs if patch number was changed
+            owlSelectedProgramId = newOwlProgramId;
+            HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+            HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+          }
         }
       }
     }
