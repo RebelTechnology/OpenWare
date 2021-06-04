@@ -22,6 +22,8 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+#define CV_ATTENUATION_DEFAULT 2186 // calibrated to provide 1V/oct over 5V
+
 // LEDs
 // 1, 2, 3, 4: CV level A, B, C, D
 // 5, 6: DAC out F, G
@@ -424,7 +426,7 @@ void setup(){
   takeover.set(3, getAnalogValue(ADC_H));
   takeover.set(4, getAnalogValue(ADC_I));
   for(size_t i=5; i<9; ++i){
-    takeover.set(i, 2048); // set CV attenuation to 1
+    takeover.set(i, CV_ATTENUATION_DEFAULT);
     takeover.reset(i, false);
   }
   takeover.set(9, settings.audio_output_gain<<5);
