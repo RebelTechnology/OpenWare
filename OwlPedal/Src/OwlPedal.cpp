@@ -141,10 +141,10 @@ void setGateValue(uint8_t ch, int16_t value){
 #endif
     break;
   case GREEN_BUTTON:
-    setLed(0, GREEN_COLOUR);
+    setLed(0, value ? GREEN_COLOUR : NO_COLOUR);
     break;
   case RED_BUTTON:
-    setLed(0, RED_COLOUR);
+    setLed(0, value ? RED_COLOUR : NO_COLOUR);
   }
 }
 
