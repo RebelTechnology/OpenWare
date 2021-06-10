@@ -73,7 +73,7 @@ void onChangePin(uint16_t pin){
   }
 #ifdef OWL_PEDAL
   case BYPASS_Pin: {
-    bool isSet = !(BYPASS_GPIO_Port->IDR & BYPASS_Pin);
+    bool isSet = BYPASS_GPIO_Port->IDR & BYPASS_Pin;
     setLed(0, isSet ? NO_COLOUR : GREEN_COLOUR);
     break;
   }
