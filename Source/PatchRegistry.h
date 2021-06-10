@@ -23,6 +23,10 @@ public:
   unsigned int getNumberOfPatches();
   unsigned int getNumberOfResources();
   bool hasPatches();
+  /**
+   * @return true if registry has a patch with given 1-based index.
+   */
+  bool hasPatch(uint8_t index);
   Resource* getPatch(uint8_t index);
   Resource* getResource(uint8_t index);
   bool loadProgram(uint8_t slot); // load program from storage
