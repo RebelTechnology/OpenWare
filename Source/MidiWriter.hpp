@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 #include "MidiStatus.h"
-#include "serial.h"
+#include "uart_midi.h"
 #include "midi.h"
 #include "device.h"
 
@@ -66,7 +66,7 @@ public:
 //     midi_tx_usb_buffer(data, length);
 // #endif
 #ifdef USE_DIGITALBUS
-    serial_write(data, length);
+    bus_write(data, length);
 #endif
   }
 

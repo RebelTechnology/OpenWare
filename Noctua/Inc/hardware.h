@@ -31,6 +31,8 @@
 /* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(__REV16(x))<<8) */
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
+#define USBD_AUDIO_RX_CHANNELS       4
+#define USBD_AUDIO_TX_CHANNELS       4
 
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX           // microphone
@@ -43,7 +45,8 @@
 #define USB_HOST_RX_BUFF_SIZE       256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
 
-#define USE_UART_MIDI
+#define USE_UART_MIDI_RX
+#define USE_UART_MIDI_TX
 #define UART_MIDI_HANDLE            huart2
 #define UART_MIDI_RX_BUFFER_SIZE    256
 

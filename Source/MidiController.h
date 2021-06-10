@@ -23,19 +23,19 @@ public:
   void sendPatchParameterNames();
   void sendPatchParameterName(PatchParameterId pid, const char* name);
   void sendPatchParameterValues();
+  void sendPatchName(uint8_t slot);
   void sendPatchNames();
-  void sendPatchName(uint8_t index, const char* name);
+  void sendResourceNames();
+  void sendName(uint8_t cmd, uint8_t index, const char* name);
   void sendDeviceInfo();
   void sendDeviceStats();
   void sendProgramStats();
   void sendStatus();
   void sendFirmwareVersion();
+  void sendBootloaderVersion();
   void sendDeviceId();
   void sendProgramMessage();
   void sendErrorMessage();
-
-  void handleMidiMessage(MidiMessage msg); // process MIDI from usbd
-  void forwardMidiMessage(MidiMessage msg); // send MIDI from all destinations to program callback
 };
 
 #endif /* __MIDI_CONTROLLER_H */

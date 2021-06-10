@@ -177,8 +177,11 @@ amidi -p hw:2 -S f07d527df7
 # reset to bootloader
 amidi -p hw:2 -S f07d527ef7
 
-# erase flash storage sectors
-amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d52140000000009f7f07d52140000000010f7
+# erase flash storage sectors 7-10
+amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d52140000000009f7f07d5214000000000af7
+
+# erase patch storage
+amidi -p "hw:1,0,0" -S f07d5214f7
 
 # flash Wizard firmware
 amidi -p hw:2 -s Wizard.syx
@@ -186,14 +189,29 @@ amidi -p hw:2 -s Wizard.syx
 # set parameter A to value 63 on channel 0
 amidi -p hw:1 -S b0143f
 
+# request firmware configuration
+amidi -p hw:1 -S b04303
+
+# request firmware version
+amidi -p hw:1 -S b04320
+
 # request program message
 amidi -p hw:1 -S b04322
 
 # request device stats
-amidi -p hw:1 -S b04324
+amidi -p hw:1 -S b04323
 
 # request program stats
 amidi -p hw:1 -S b04324
+
+# request bootloader version
+amidi -p hw:1 -S b04325
+
+# unlock bootloader
+amidi -p hw:1 -S f07d5203424c30f7
+
+# lock bootloader
+amidi -p hw:1 -S f07d5203424c31f7
 
 # request button status
 amidi -p hw:1 -S b04319
@@ -343,5 +361,21 @@ todo:
 - disable all: sysex rule
 - IWDG->KR = 0xaaaa only if watchog is enabled, otherwise it hangs
 - fix Noctua bootloader
+
+-----------------------------------------------------------------
+
+Multi channel support
+- fw initialises pv with 2 channels
+- patch code checks how many channels the patch supports (requires static channel count in Patch)
+- calls registerPatch() with max number of supported channels
+- if possible and requested, fw changes pv to add more channels
+- patch code calls patch ctor
+
+-----------------------------------------------------------------
+
+Create and upload resource from wav:
+sox sample.wav -r 48k -c 1 -t f32 sample.raw
+play -c 1 -r 48k -t f32 sample.raw 
+FirmwareSender -in sample.raw -out "OWL*" -name "sample.wav"
 
 -----------------------------------------------------------------

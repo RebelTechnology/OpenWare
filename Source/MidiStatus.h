@@ -35,22 +35,26 @@ enum MidiStatus {
 };
 
 enum MidiControlChange {
-  MIDI_CC_MODULATION    = 0x01,
-  MIDI_CC_BREATH        = 0x02,
-  MIDI_CC_VOLUME        = 0x07,
-  MIDI_CC_BALANCE       = 0x08,
-  MIDI_CC_PAN           = 0x0a,
-  MIDI_CC_EXPRESSION    = 0x0b,
-  MIDI_CC_EFFECT_CTRL_1 = 0x0c,
-  MIDI_CC_EFFECT_CTRL_2 = 0x0d,
-  MIDI_ALL_SOUND_OFF    = 0x78,
-  MIDI_RESET_ALL_CTRLS  = 0x79,
-  MIDI_LOCAL_CONTROL    = 0x7a,
-  MIDI_ALL_NOTES_OFF    = 0x7b,
-  MIDI_OMNI_MODE_OFF    = 0x7c,
-  MIDI_OMNI_MODE_ON     = 0x7d,
-  MIDI_MONO_MODE_ON     = 0x7e,
-  MIDI_POLY_MODE_ON     = 0x7f
+  MIDI_CC_MODULATION       = 0x01,
+  MIDI_CC_BREATH           = 0x02,
+  MIDI_CC_VOLUME           = 0x07,
+  MIDI_CC_BALANCE          = 0x08,
+  MIDI_CC_PAN              = 0x0a,
+  MIDI_CC_EXPRESSION       = 0x0b,
+  MIDI_CC_EFFECT_CTRL_1    = 0x0c,
+  MIDI_CC_EFFECT_CTRL_2    = 0x0d,
+  MIDI_CC_SUSTAIN_PEDAL    = 0x40,
+  MIDI_CC_PORTAMENTO       = 0x41,
+  MIDI_CC_FILTER_RESONANCE = 0x47,
+  MIDI_CC_FREQUENCY_CUTOFF = 0x4a, /* CC74 also used by MPE */
+  MIDI_ALL_SOUND_OFF       = 0x78,
+  MIDI_RESET_ALL_CTRLS     = 0x79,
+  MIDI_LOCAL_CONTROL       = 0x7a,
+  MIDI_ALL_NOTES_OFF       = 0x7b,
+  MIDI_OMNI_MODE_OFF       = 0x7c,
+  MIDI_OMNI_MODE_ON        = 0x7d,
+  MIDI_MONO_MODE_ON        = 0x7e,
+  MIDI_POLY_MODE_ON        = 0x7f
 };
 
 enum UsbMidi {

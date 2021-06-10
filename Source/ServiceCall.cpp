@@ -7,9 +7,6 @@
 #include "PatchRegistry.h"
 #include "Owl.h"
 
-#define USE_FFT_TABLES
-#define USE_FAST_POW
-
 #ifdef USE_FFT_TABLES
 #include "arm_const_structs.h"
 #endif /* USE_FFT_TABLES */

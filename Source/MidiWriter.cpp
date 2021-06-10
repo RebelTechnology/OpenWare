@@ -9,8 +9,8 @@
 #ifdef USE_BLE_MIDI
 #include "ble_midi.h"
 #endif /* USE_BLE_MIDI */
-#ifdef USE_UART_MIDI
-#include "uart.h"
+#ifdef USE_UART_MIDI_TX
+#include "uart_midi.h"
 #endif
 #include "SerialBuffer.hpp"
 
@@ -145,7 +145,7 @@ public:
 BleMidiTransmitter ble_midi;
 #endif
 
-#ifdef USE_UART_MIDI
+#ifdef USE_UART_MIDI_TX
 class UartMidiTransmitter : public MidiTransmitter {
 private:
   SerialBuffer<MIDI_OUTPUT_BUFFER_SIZE> buffer;
@@ -161,7 +161,7 @@ public:
     }
   }
 };
-UartMidiTransmitter uart_midi;
+UartMidiTransmitter uart_midi DMA_RAM;
 #endif
 
 void MidiWriter::send(MidiMessage msg){
@@ -174,7 +174,7 @@ void MidiWriter::send(MidiMessage msg){
 #ifdef USE_BLE
   ble_midi.write(msg);
 #endif
-#ifdef USE_UART_MIDI
+#ifdef USE_UART_MIDI_TX
   uart_midi.write(msg);
 #endif
 // #ifdef USE_DIGITALBUS
@@ -186,13 +186,13 @@ void MidiWriter::transmit(){
 #ifdef USE_USBD_MIDI
   usbd_midi.transmit();
 #endif
+#ifdef USE_USBH_MIDI
+  usbh_midi.transmit();
+#endif
 #ifdef USE_BLE
   ble_midi.transmit();
 #endif
-#ifdef USE_SERIAL_MIDI
-  serial_midi.transmit();
-#endif
-#ifdef USE_UART_MIDI
+#ifdef USE_UART_MIDI_TX
   uart_midi.transmit();
 #endif
 }

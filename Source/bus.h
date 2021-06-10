@@ -2,9 +2,11 @@
 #define __BUS_H
 
 #include <stdint.h>
+#define DIGITAL_BUS_BUFFER_SIZE 512
 
 #ifdef __cplusplus
 #include "ApplicationSettings.h"
+
  extern "C" {
 #endif
 
@@ -35,8 +37,10 @@
    void bus_set_input_channel(uint8_t ch);
 
    void bus_tx_frame(uint8_t* data);
-   void serial_write(uint8_t* data, uint16_t len);
+   void bus_write(uint8_t* data, uint16_t len);
    
+   void initiateBusRead();
+   void initiateBusWrite();
 #ifdef __cplusplus
 }
 #endif

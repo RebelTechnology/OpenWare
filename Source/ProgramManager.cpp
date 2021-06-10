@@ -8,6 +8,8 @@
 #include "DynamicPatchDefinition.hpp"
 #include "ApplicationSettings.h"
 #include "errorhandlers.h"
+#include "BootloaderStorage.h"
+#include "VersionToken.h"
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
@@ -34,7 +36,6 @@
 #define FLASH_TASK_PRIORITY 5
 
 #define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
-// const uint32_t PROGRAMSTACK_SIZE = PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE); // size in bytes
 
 #define START_PROGRAM_NOTIFICATION  0x01
 #define STOP_PROGRAM_NOTIFICATION   0x02
@@ -45,6 +46,7 @@ ProgramManager program;
 PatchRegistry registry;
 ProgramVector staticVector;
 ProgramVector* programVector = &staticVector;
+BootloaderStorage bootloader;
 static volatile TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
@@ -290,18 +292,16 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 
 // called from program
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
-#if defined OWL_MAGUS || defined OWL_PRISM
+#if defined USE_SCREEN
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
-  midi_tx.sendPatchName(program.getProgramIndex(), name);
 }
 
 // Called on init, resource operation, storage erase
 __weak void onResourceUpdate(void){
 }
 
-
-void updateProgramVector(ProgramVector* pv){
+void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
 #ifdef USE_SCREEN
@@ -333,30 +333,44 @@ void updateProgramVector(ProgramVector* pv){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
+  extern char _PATCHRAM_END;
+  uint8_t* end = (uint8_t*)def->getStackBase(); // program end
+  uint32_t remain = (uint32_t)&_PATCHRAM_END - (uint32_t)def->getStackBase(); // space left
+#ifdef USE_CCM_RAM
+  extern char _CCMRAM, _CCMRAM_SIZE;
+#endif
+#ifdef USE_PLUS_RAM
+  extern char _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
+  extern char _PATCHRAM, _PATCHRAM_SIZE;
+  uint8_t* plusend = (uint8_t*)&_PLUSRAM;
+  uint32_t plusremain = (uint32_t)&_PLUSRAM_SIZE;
+  if(def->getLinkAddress() == (uint32_t*)&_PLUSRAM){
+    end = (uint8_t*)&_PATCHRAM;
+    remain = (uint32_t)&_PATCHRAM_SIZE;
+    plusend = (uint8_t*)def->getStackBase();
+    plusremain = (uint32_t)&_PLUSRAM_END - (uint32_t)def->getStackBase();
+  }
+#endif
 #ifdef USE_EXTERNAL_RAM
   extern char _EXTRAM, _EXTRAM_SIZE;
-  extern char _CCMRAM, _CCMRAM_SIZE;
-  static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
-    // todo: add remaining program space
-    { NULL, 0 }
-  };
-#elif defined OWL_ARCH_F7
-  extern char _EXTRAM, _EXTRAM_SIZE;
-  static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
-    { NULL, 0 }
-  };
-#else
-  extern char _CCMRAM, _CCMRAM_SIZE;
-  static MemorySegment heapSegments[] = {
-    // { start, size }
-    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) - PROGRAMSTACK_SIZE },
-    // todo: add remaining program space
-    { NULL, 0 }
-  };  
 #endif
+  static MemorySegment heapSegments[5] = {};
+  size_t segments = 0;
+#ifdef USE_CCM_RAM
+  heapSegments[segments++] = 
+    { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) };
+#endif
+  if(remain >= 32) // minimum heap segment size
+    heapSegments[segments++] = { end, remain };
+#ifdef USE_PLUS_RAM
+  if(plusremain >= 32)
+    heapSegments[segments++] = { plusend, plusremain };
+#endif
+#ifdef USE_EXTERNAL_RAM
+  heapSegments[segments++] = 
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) };
+#endif
+  heapSegments[segments++] = { NULL, 0 };
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
@@ -377,33 +391,53 @@ void programFlashTask(void* p){
   uint8_t index = flashSectorToWrite;
   uint32_t size = flashSizeToWrite;
   uint8_t* source = (uint8_t*)flashAddressToWrite;
-  if(index == 0xff && size < MAX_SYSEX_FIRMWARE_SIZE){
-    // flashFirmware(source, size); 
-    error(PROGRAM_ERROR, "Flash firmware TODO");
+  if(index == 0xff && size <= MAX_SYSEX_FIRMWARE_SIZE){
+    error(PROGRAM_ERROR, "Enter bootloader to flash firmware");
+  }else if (index == 0xfe && size <= MAX_SYSEX_BOOTLOADER_SIZE){
+    taskENTER_CRITICAL();
+    bootloader.erase();
+    extern char _BOOTLOADER, _BOOTLOADER_END;
+    if(*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
+        *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(VersionToken)) != 0xFFFFFFFF){
+      error(PROGRAM_ERROR, "Bootloader not erased");
+    }else{
+      if(!bootloader.store((void*)source, size))
+        error(PROGRAM_ERROR, "Bootloader write error");
+    }
+    taskEXIT_CRITICAL();
   }else{
     registry.store(index, source, size);
-    program.loadProgram(index);
-    program.resetProgram(false);
+    if(index > MAX_NUMBER_OF_PATCHES){
+      onResourceUpdate();
+    }else{
+      program.loadProgram(index);
+    }
   }
-  if (index > MAX_NUMBER_OF_PATCHES)
-    onResourceUpdate();
-  // midi_tx.sendProgramMessage();
-  // midi_tx.sendDeviceStats();
+  program.resetProgram(false);
+  owl.setOperationMode(RUN_MODE); // in case no program available
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
 
-
 void eraseFlashTask(void* p){
-  int sector = flashSectorToWrite;
-  if(sector == 0xff){
+  uint8_t slot = flashSectorToWrite;
+  taskENTER_CRITICAL();
+  if(slot == 0xff){
     storage.erase();
+    taskEXIT_CRITICAL();
     // debugMessage("Erased flash storage");
     registry.init();
     onResourceUpdate();
+  }else{
+    registry.setDeleted(slot);
   }
-  // midi_tx.sendProgramMessage();
-  // midi_tx.sendDeviceStats();
+  taskEXIT_CRITICAL();
+  storage.init();
+  registry.init();
+  settings.init();
+  if(slot > MAX_NUMBER_OF_PATCHES)
+    onResourceUpdate();
+  program.resetProgram(false);
   utilityTask = NULL;
   vTaskDelete(NULL);
 }
@@ -415,7 +449,7 @@ void runAudioTask(void* p){
     PatchDefinition* def = getPatchDefinition();
     ProgramVector* pv = def == NULL ? NULL : def->getProgramVector();
     if(pv != NULL && def->verify()){
-      updateProgramVector(pv);
+      updateProgramVector(pv, def);
       programVector = pv;
       setErrorStatus(NO_ERROR);
       owl.setOperationMode(RUN_MODE);
@@ -442,7 +476,7 @@ void bootstrap(){
 #else    
   uint8_t lastprogram = 0;
 #endif
-  if(lastprogram == settings.program_index){
+  if(lastprogram != 0 && lastprogram == settings.program_index){
     error(CONFIG_ERROR, "Preventing reset program from starting");
 #ifdef USE_BKPSRAM
     // reset for next time
@@ -501,15 +535,15 @@ void runManagerTask(void* p){
     vTaskDelay(20);
     if(ulNotifiedValue & PROGRAM_FLASH_NOTIFICATION){ // program flash
       if(utilityTask != NULL)
-	error(PROGRAM_ERROR, "Utility task already running");
+        error(PROGRAM_ERROR, "Utility task already running");
       xTaskCreate(programFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
       // bool ret = utilityTask.create(programFlashTask, "Flash Write", FLASH_TASK_PRIORITY);
       // if(!ret)
       // 	error(PROGRAM_ERROR, "Failed to start Flash Write task");
     }else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
       if(utilityTask != NULL)
-	error(PROGRAM_ERROR, "Utility task already running");
-      xTaskCreate(eraseFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
+        error(PROGRAM_ERROR, "Utility task already running");
+      xTaskCreate(eraseFlashTask, "Flash Erase", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
       // bool ret = utilityTask.create(eraseFlashTask, "Flash Erase", FLASH_TASK_PRIORITY);
       // if(!ret)
       // 	error(PROGRAM_ERROR, "Failed to start Flash Erase task");
@@ -519,13 +553,13 @@ void runManagerTask(void* p){
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
-#ifdef OWL_ARCH_F7
-	extern char _PATCHRAM, _PATCHRAM_SIZE;
-	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
-#else
-	extern char _CCMRAM_END;
-	uint8_t* PROGRAMSTACK = ((uint8_t*)&_CCMRAM_END) - PROGRAMSTACK_SIZE;
+#ifdef USE_ICACHE
+	SCB_InvalidateICache();
 #endif
+#ifdef USE_DCACHE
+	SCB_CleanInvalidateDCache();
+#endif
+	static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] CCM_RAM; // use CCM if available
 	memset(PROGRAMSTACK, 0xda, PROGRAMSTACK_SIZE);
 	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
 				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
@@ -552,7 +586,7 @@ ProgramManager::ProgramManager(){
 }
 
 void ProgramManager::startManager(){
-  updateProgramVector(getProgramVector());
+  // updateProgramVector(getProgramVector(), NULL);
 // #ifdef USE_SCREEN
 //   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
 // #endif
@@ -598,15 +632,13 @@ void ProgramManager::resetProgram(bool isr){
 void ProgramManager::updateProgramIndex(uint8_t index){
   owl.setOperationMode(LOAD_MODE);
   patchindex = index;
-  settings.program_index = index;
   midi_tx.sendPc(index);
-  midi_tx.sendPatchName(index, registry.getPatchName(index));
+  midi_tx.sendPatchName(index);
 #ifdef USE_BKPSRAM
-  extern RTC_HandleTypeDef hrtc;
-  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
-  // RTC->BKP1R = index;
-// uint8_t* bkpsram_addr = (uint8_t*)BKPSRAM_BASE;
-  // *bkpsram_addr = index;
+  if(index != 0){
+    extern RTC_HandleTypeDef hrtc;
+    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
+  }
 #endif
 }
 
@@ -649,7 +681,7 @@ uint32_t ProgramManager::getProgramStackAllocation(){
   if(patchdef != NULL)
     ss = patchdef->getStackSize();
   if(ss == 0)
-    ss = PROGRAMSTACK_SIZE; // PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE);
+    ss = PROGRAMSTACK_SIZE;
   return ss;
 }
 

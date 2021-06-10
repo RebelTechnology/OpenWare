@@ -33,7 +33,7 @@
 #define ADC_G 6
 #define ADC_H 7
 #define ADC_I 8
-#define AUDIO_OUTPUT_GAIN            127
+#define AUDIO_OUTPUT_GAIN            103
 
 #define TRIG1_Pin GP7_Pin 	/* A17 */
 #define TRIG1_GPIO_Port GP7_GPIO_Port
@@ -46,6 +46,7 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
+#define CODEC_HP_FILTER
 
 #define NOF_ADC_VALUES               9
 #define NOF_PARAMETERS               40

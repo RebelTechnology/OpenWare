@@ -13,6 +13,9 @@
 #include "ProgramManager.h"
 #include "Codec.h"
 #include "message.h"
+#include "VersionToken.h"
+#include "ScreenBuffer.h"
+#include "HAL_TLC5946.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -32,6 +35,8 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 #endif
 
 #include "calibration.hpp"
+
+extern VersionToken* bootloader_token;
 
 /*    
 screen 128 x 64, font 5x7
@@ -79,7 +84,7 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, DATA, VOLUME, CALIBRATE, EXIT, NOF_CONTROL_MODES
+    PLAY, STATUS, PRESET, DATA, VOLUME, LEDS, CALIBRATE, EXIT, NOF_CONTROL_MODES
   };
   ControlMode controlMode = PLAY;
   bool saveSettings;
@@ -102,6 +107,7 @@ public:
     "< Preset >",
     "< Data   >",
     "< Volume >",
+    "< LEDs   >",
     "< V/Oct   " };
 
   ParameterController(){
@@ -318,6 +324,11 @@ public:
     
     // draw firmware version
     screen.print(1, offset+26, getFirmwareVersion());
+    if (bootloader_token->magic == BOOTLOADER_MAGIC){
+      screen.print(" (bt.");
+      screen.print(getBootloaderVersion());
+      screen.print(")");
+    }
   }
   
   void drawStats(ScreenBuffer& screen){
@@ -352,6 +363,7 @@ public:
       screen.print(0, 26, getErrorMessage());
       screen.setTextWrap(false);
     }
+    drawMessage(51, screen);
   }
 
   void drawTitle(ScreenBuffer& screen){
@@ -438,6 +450,15 @@ public:
     screen.fillRectangle(64, 24 + 1 + 2, (int)settings.audio_output_gain >> 1, 4, WHITE);
     screen.invert(0, 24, 40, 10);
   }
+
+  void drawLeds(uint8_t selected, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    screen.print(1, 24 + 10, "Level  ");
+    screen.print((int)settings.leds_brightness);
+    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
+    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.leds_brightness, 4, WHITE);
+    screen.invert(0, 24, 40, 10);
+  }  
 
   void drawCalibration(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
@@ -555,7 +576,7 @@ public:
     case STATUS:
       drawTitle(controlModeNames[controlMode], screen);    
       drawStatus(screen);
-      drawMessage(46, screen);
+      drawMessage(51, screen);
       break;
     case PRESET:
       drawTitle(controlModeNames[controlMode], screen);    
@@ -569,12 +590,18 @@ public:
       drawTitle(controlModeNames[controlMode], screen);    
       drawVolume(selectedPid[1], screen);
       break;
+    case LEDS:
+      drawTitle(controlModeNames[controlMode], screen);    
+      drawLeds(selectedPid[1], screen);
+      break;
     case CALIBRATE:
       drawTitle(controlModeNames[controlMode], screen);
       drawCalibration(selectedPid[1], screen);
       break;
     case EXIT:
       drawTitle("done", screen);
+      break;
+    default:
       break;
     }
     // todo!
@@ -668,6 +695,9 @@ public:
     case VOLUME:
       selectedPid[1] = settings.audio_output_gain; // todo: get current
       break;
+    case LEDS:
+      selectedPid[1] = settings.leds_brightness;
+      break;
     case CALIBRATE:
       selectedPid[1] = 2;
       resetCalibration();
@@ -724,6 +754,9 @@ public:
         break;
       }
       case VOLUME:
+        controlMode = EXIT;
+        break;
+      case LEDS:
         controlMode = EXIT;
         break;
       case CALIBRATE:
@@ -847,6 +880,13 @@ public:
       settings.audio_output_gain = selectedPid[1];
       saveSettings = true;
       break;
+    case LEDS:
+      selectedPid[1] = max(0, min(63, value));
+      TLC5946_setAll_DC(selectedPid[1]);
+      TLC5946_Refresh_DC();      
+      settings.leds_brightness = selectedPid[1];
+      saveSettings = true;
+      break;
     case PRESET:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
       break;
@@ -956,18 +996,18 @@ public:
             if(delta > 0)
               selectBlockParameter(i, selectedPid[i]+1);
           }
-          else{
-            if(encoders[i] != value){
-              selectedBlock = i;
-              encoders[i] = value;
-              // We must update encoder value before calculating user value, otherwise
-              // previous value would be displayed
-              user[selectedPid[i]] = getEncoderValue(i);
-            }
-            if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
-              displayMode = STANDARD;
-          }
-          encoders[i] = value;
+	else{
+	  if(encoders[i] != value){
+	    selectedBlock = i;
+	    encoders[i] = value;
+	    // We must update encoder value before calculating user value, otherwise
+	    // previous value would be displayed
+	    user[selectedPid[i]] = getEncoderValue(i);
+	  }
+	  if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
+	    displayMode = STANDARD;
+	}
+	encoders[i] = value;
       }
       if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
         displayMode = ERROR;    

@@ -4,6 +4,9 @@ LIBROOT=$(OPENWARE)/Libraries/Drivers/
 # Build path
 BUILD=$(BUILDROOT)/Build
 
+# Tool path
+OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_f0.cfg
+
 # Code Paths
 DRIVERS=$(LIBROOT)/STM32F0xx_HAL_Driver
 CMSIS_DEVICE=$(LIBROOT)/CMSIS/Device/ST/STM32F0xx
@@ -12,7 +15,7 @@ DSPLIB=$(LIBROOT)/CMSIS/DSP_Lib/Source
 FREERTOS_DIR=$(OPENWARE)/Libraries/Middlewares/Third_Party/FreeRTOS/Source
 
 INC_FLAGS = -I$(CMSIS_CORE) -I$(CMSIS_DEVICE)/Include -I$(DRIVERS)/Inc 
-INC_FLAGS += -I$(BUILDROOT)/Source -I$(BUILDROOT)/Inc
+INC_FLAGS += -I$(OPENWARE)/Source -I$(BUILDROOT)/Inc
 INC_FLAGS += -I$(USB_HOST_FILE)/Core/Inc
 INC_FLAGS += -I$(USB_DEVICE_FILE)/Core/Inc
 INC_FLAGS += -I$(USB_HOST_FILE)/Class/CDC/Inc -I$(USB_HOST_FILE)/Class/AUDIO/Inc

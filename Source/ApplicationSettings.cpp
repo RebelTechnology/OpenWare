@@ -36,12 +36,21 @@ void ApplicationSettings::reset(){
   output_scalar = AUDIO_OUTPUT_SCALAR;
   midi_input_channel = MIDI_INPUT_CHANNEL;
   midi_output_channel = MIDI_OUTPUT_CHANNEL;
+#ifdef USE_TLC5946
+  leds_brightness = LEDS_BRIGHTNESS;
+#endif
 }
 
 bool ApplicationSettings::settingsInFlash(){
   // return eeprom_read_word(APPLICATION_SETTINGS_ADDR) == checksum;
   // return false;
-  return registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX) != NULL;
+  ResourceHeader* resource = registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX);
+  if(resource == NULL)
+    return false;
+  ApplicationSettings* data = (ApplicationSettings*)((uint8_t*)resource + sizeof(ResourceHeader));
+  if(data->checksum != checksum)
+    return false;
+  return true;
 }
 
 void ApplicationSettings::loadFromFlash(){

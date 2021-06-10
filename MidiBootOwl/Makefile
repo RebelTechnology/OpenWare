@@ -1,4 +1,3 @@
-PROJECT = MidiBootOwl
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 DFUUTIL ?= dfu-util
@@ -17,10 +16,13 @@ C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/message.c
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
+CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
 
 ifndef PLATFORM
 PLATFORM = Pedal
 endif
+
+PROJECT = MidiBoot-${PLATFORM}
 
 ifeq ($(PLATFORM),Pedal)
   CPPFLAGS += -Iusbd-fs -DOWL_PEDAL
@@ -64,11 +66,14 @@ dump: # flash read_bank num filename [offset [length]]
 	$(OPENOCD) -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"
 
 upload:
-	$(OPENOCD) -c "program Build/MidiBootOwl.elf verify reset exit"
+	$(OPENOCD) -c "program Build/${PROJECT}.elf verify reset exit"
 
 lock:
 	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 1 on" -c "flash info 0" -c "exit"
 
-dfu: Build/MidiBootOwl.elf
+dfu: Build/${PROJECT}.elf
 	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s 0x8000000 -D $<
 	@echo Uploaded $< to OWL bootsector
+
+sysex:
+	FirmwareSender -in "Build/${PROJECT}.bin" -flash `crc32 "Build/${PROJECT}.bin"` -save "Build/${PROJECT}.syx"

@@ -141,10 +141,12 @@ void Error_Handler(void);
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
 #define CS_RST_GPIO_Port GPIOB
-#define LEDPWM2_Pin GPIO_PIN_6
-#define LEDPWM2_GPIO_Port GPIOC
-#define LEDPWM1_Pin GPIO_PIN_8
+#define LEDPWM_Pin GPIO_PIN_12
+#define LEDPWM_GPIO_Port GPIOB
+#define LEDPWM1_Pin GPIO_PIN_6
 #define LEDPWM1_GPIO_Port GPIOC
+#define LEDPWM2_Pin GPIO_PIN_8
+#define LEDPWM2_GPIO_Port GPIOC
 #define LEDPWM5_Pin GPIO_PIN_9
 #define LEDPWM5_GPIO_Port GPIOC
 #define LEDPWM6_Pin GPIO_PIN_8
@@ -178,6 +180,11 @@ void Error_Handler(void);
 #define USBD_DM_GPIO_Port GPIOA
 #define USBD_DP_Pin GPIO_PIN_12
 #define USBD_DP_GPIO_Port GPIOA
+
+#define USBH_PWR_EN_Pin GPIO_PIN_12
+#define USBH_PWR_EN_GPIO_Port GPIOB
+#define USBH_PWR_FAULT_Pin GPIO_PIN_13
+#define USBH_PWR_FAULT_GPIO_Port GPIOB
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

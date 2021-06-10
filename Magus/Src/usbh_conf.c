@@ -25,6 +25,8 @@
 
 /* USER CODE BEGIN Includes */
 
+#include "message.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +48,7 @@ void Error_Handler(void);
 /* Private function prototypes -----------------------------------------------*/
 
 USBH_StatusTypeDef USBH_Get_USB_Status(HAL_StatusTypeDef hal_status);
+void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URBStateTypeDef urb_state);
 
 /* USER CODE END PFP */
 
@@ -142,6 +145,7 @@ void HAL_HCD_SOF_Callback(HCD_HandleTypeDef *hhcd)
   */
 void HAL_HCD_Connect_Callback(HCD_HandleTypeDef *hhcd)
 {
+  debugMessage("USBH Connect");
   USBH_LL_Connect(hhcd->pData);
 }
 
@@ -152,10 +156,10 @@ void HAL_HCD_Connect_Callback(HCD_HandleTypeDef *hhcd)
   */
 void HAL_HCD_Disconnect_Callback(HCD_HandleTypeDef *hhcd)
 {
+  debugMessage("USBH Disconnect");
   USBH_LL_Disconnect(hhcd->pData);
 }
 
-void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URBStateTypeDef urb_state);
 /**
   * @brief  Notify URB state change callback.
   * @param  hhcd: HCD handle

@@ -8,7 +8,7 @@
 #include "eepromcontrol.h"
 #include "MidiController.h"
 
-static MidiReader midi_rx;
+static SystemMidiReader midi_rx;
 MidiController midi_tx;
 FirmwareLoader loader;
 ProgramManager program;
@@ -19,7 +19,8 @@ MidiHandler::MidiHandler(){}
 ProgramManager::ProgramManager(){}
 void ProgramManager::exitProgram(bool isr){}
 void setParameterValue(uint8_t ch, int16_t value){}
-void MidiReader::reset(){}
+void SystemMidiReader::reset(){}
+void Owl::setOperationMode(OperationMode mode){}
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
@@ -98,7 +99,7 @@ void saveToFlash(uint8_t sector, void* data, uint32_t length){
     if(length > 64*1024){
       eeprom_erase_sector(FLASH_SECTOR_5);
       if(length > (64+128)*1024){
-	eeprom_erase_sector(FLASH_SECTOR_6);
+        eeprom_erase_sector(FLASH_SECTOR_6);
       }
     }
     eeprom_write_block(ADDR_FLASH_SECTOR_4, data, length);
@@ -256,7 +257,7 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
   }
 }
 
-bool MidiReader::readMidiFrame(uint8_t* frame){
+bool SystemMidiReader::readMidiFrame(uint8_t* frame){
   switch(frame[0] & 0x0f){ // accept any cable number /  port
   case USB_COMMAND_SINGLE_BYTE:
     // Single Byte: in some special cases, an application may prefer not to use parsed MIDI events. Using CIN=0xF, a MIDI data stream may be transferred by placing each individual byte in one 32 Bit USB-MIDI Event Packet. This way, any MIDI data may be transferred without being parsed.

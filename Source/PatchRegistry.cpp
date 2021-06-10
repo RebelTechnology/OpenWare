@@ -1,13 +1,10 @@
 #include "PatchRegistry.h"
 #include "FlashStorage.h"
-// #include "FactoryPatches.h"
 #include "ProgramManager.h"
 #include "ResourceHeader.h"
 #include "ProgramHeader.h"
 #include "DynamicPatchDefinition.hpp"
 #include "message.h"
-
-// #define REGISTER_PATCH(T, STR, UNUSED, UNUSED2) registerPatch(STR, Register<T>::construct)
 
 #ifndef max
 #define max(a,b) ((a)>(b)?(a):(b))
@@ -20,15 +17,6 @@ PatchRegistry::PatchRegistry() {}
 void PatchRegistry::init() {
   patchCount = 0;
   resourceCount = 0;
-  // FactoryPatchDefinition::init();
-  // PatchDefinition* def;
-  // for(int i=0; i<MAX_USER_PATCHES; ++i){
-  //   def = program.getPatchDefinitionFromFlash(i);
-  //   if(def == NULL)
-  //     registerPatch(&emptyPatch);
-  //   else
-  //     registerPatch(def);
-  // }
   for(int i=0; i<storage.getBlocksTotal(); ++i){
     StorageBlock block = storage.getBlock(i);
     if(block.verify() && block.getDataSize() > 4){
@@ -61,6 +49,18 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
     }
   }
   return NULL;
+}
+
+unsigned int PatchRegistry::getSlot(ResourceHeader* resource){
+  const char* name = resource->name;
+  for(int i=0; i<MAX_NUMBER_OF_RESOURCES; ++i){
+    if(resourceblocks[i].verify()){
+      ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
+      if(strcmp(name, hdr->name) == 0)
+        return i+MAX_NUMBER_OF_PATCHES+1;
+    }
+  }
+  return 0;
 }
 
 void* PatchRegistry::getData(ResourceHeader* resource){

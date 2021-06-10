@@ -21,9 +21,9 @@ public:
   virtual bool verify(){
     return false;
   }
-  // uint32_t* getAddress(){
-  //   return address;
-  // }
+  virtual uint32_t* getLinkAddress(){
+    return NULL;
+  }
   // uint32_t getSize(){
   //   return size;
   // }

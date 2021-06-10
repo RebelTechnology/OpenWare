@@ -4,6 +4,9 @@ LIBROOT=$(OPENWARE)/Libraries/Drivers
 # Build path
 BUILD=$(BUILDROOT)/Build
 
+# Tool path
+OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_f4.cfg
+
 # Code Paths
 DRIVERS=$(LIBROOT)/STM32F4xx_HAL_Driver
 CMSIS_DEVICE=$(LIBROOT)/CMSIS/Device/ST/STM32F4xx
@@ -15,16 +18,13 @@ USB_OTG_FILE=$(LIBROOT)/STM32_USB_OTG_Driver
 FREERTOS_DIR=$(OPENWARE)/Libraries/Middlewares/Third_Party/FreeRTOS/Source
 
 INC_FLAGS = -I$(CMSIS_CORE) -I$(CMSIS_DEVICE)/Include -I$(DRIVERS)/Inc
-INC_FLAGS += -I$(OPENWARE)/Source -I$(OPENWARE)/LibSource -I$(BUILDROOT)/Inc
+INC_FLAGS += -I$(OPENWARE)/Source -I$(BUILDROOT)/Inc
 INC_FLAGS += -I$(USB_HOST_FILE)/Core/Inc
 INC_FLAGS += -I$(USB_DEVICE_FILE)/Core/Inc
-# INC_FLAGS += -I$(USB_HOST_FILE)/Class/CDC/Inc
-# INC_FLAGS += -I$(USB_DEVICE_FILE)/Class/CDC/Inc
 INC_FLAGS += -I$(USB_OTG_FILE)/inc
 INC_FLAGS += -I$(FREERTOS_DIR)/include
 INC_FLAGS += -I$(FREERTOS_DIR)/portable/GCC/ARM_CM4F/
 INC_FLAGS += -I$(FREERTOS_DIR)/CMSIS_RTOS
-INC_FLAGS += -I$(FREERTOS_DIR)/CMSIS_RTOS_V2
 INC_FLAGS += -I$(LIBROOT)/CMSIS/DSP/Include
 
 CPPFLAGS += -mtune=cortex-m4

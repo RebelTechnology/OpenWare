@@ -28,6 +28,12 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+  .bootloader_token :
+  {
+    . = ALIGN(4);
+    KEEP(*(.bootloader_token));
+  } > FLASH
+
   /* The program code and other data goes into FLASH */
   .text :
   {
@@ -97,7 +103,6 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
 
-  
   /* Uninitialized data section */
   . = ALIGN(4);
   .bss :

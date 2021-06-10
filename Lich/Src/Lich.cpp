@@ -8,6 +8,7 @@
 #include "PatchRegistry.h"
 #include "OpenWareMidiControl.h"
 #include "ApplicationSettings.h"
+#include "Pin.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -21,52 +22,51 @@
 
 extern TIM_HandleTypeDef htim2;
 
-#define SEG_DISPLAY_BLANK 10
-#define SEG_DISPLAY_E     11
-#define SEG_DISPLAY_U     12
-#define SEG_DISPLAY_L     13
+static uint16_t progress = 0;
+static int patchselect = 0;
+
+#define SEG_DISPLAY_A     10
+#define SEG_DISPLAY_B     11
+#define SEG_DISPLAY_C     12
+#define SEG_DISPLAY_D     13
+#define SEG_DISPLAY_E     14
+#define SEG_DISPLAY_F     15
+#define SEG_DISPLAY_BLANK 16
+#define SEG_DISPLAY_U     17
+#define SEG_DISPLAY_L     18
 const uint8_t seg_bits[] =
   {
 /*    0,    1,    2,    3,    4,    5,    6,    7,    8,    9 */
    0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x67,
-/*      blank,          E,          U,          L */
-   0b00000000, 0b01111001, 0b00111110, 0b00111000
-   // E: A D E F G: 1 0 0 1 1 1 1 0
-   // U: B C D E F: 0 1 1 1 1 1 0 0
-   // L: D E F:     0 0 0 1 1 1 0 0
+/*          A,          b,          C,          d,          E,          F */
+   0b01110111, 0b01111100, 0b00111001, 0b01011110, 0b01111001, 0b01110001,
+/*      blank,          U,          L */
+   0b00000000, 0b00111110, 0b00111000
   };
-GPIO_TypeDef* seg_ports[8] =
+
+Pin seg_pins[8] =
   {
-   DISPLAY_A_GPIO_Port,
-   DISPLAY_B_GPIO_Port,
-   DISPLAY_C_GPIO_Port,
-   DISPLAY_D_GPIO_Port,
-   DISPLAY_E_GPIO_Port,
-   DISPLAY_F_GPIO_Port,
-   DISPLAY_G_GPIO_Port,
-   DISPLAY_DP_GPIO_Port
-  };
-const uint16_t seg_pins[8] =
-  {
-   DISPLAY_A_Pin,
-   DISPLAY_B_Pin,
-   DISPLAY_C_Pin,
-   DISPLAY_D_Pin,
-   DISPLAY_E_Pin,
-   DISPLAY_F_Pin,
-   DISPLAY_G_Pin,
-   DISPLAY_DP_Pin
+   Pin(DISPLAY_A_GPIO_Port, DISPLAY_A_Pin), 
+   Pin(DISPLAY_B_GPIO_Port, DISPLAY_B_Pin), 
+   Pin(DISPLAY_C_GPIO_Port, DISPLAY_C_Pin), 
+   Pin(DISPLAY_D_GPIO_Port, DISPLAY_D_Pin), 
+   Pin(DISPLAY_E_GPIO_Port, DISPLAY_E_Pin), 
+   Pin(DISPLAY_F_GPIO_Port, DISPLAY_F_Pin), 
+   Pin(DISPLAY_G_GPIO_Port, DISPLAY_G_Pin), 
+   Pin(DISPLAY_DP_GPIO_Port, DISPLAY_DP_Pin), 
   };
 
 // set value to 10 for no display
 static void setSegmentDisplay(int value, bool dot=false){
-  HAL_GPIO_WritePin(seg_ports[7], seg_pins[7], dot ? GPIO_PIN_RESET : GPIO_PIN_SET);
+  seg_pins[7].set(!dot);
+  // HAL_GPIO_WritePin(seg_ports[7], seg_pins[7], dot ? GPIO_PIN_RESET : GPIO_PIN_SET);
   uint8_t bits = seg_bits[value % sizeof(seg_bits)];
   for(int i=0; i<7; ++i)
-    HAL_GPIO_WritePin(seg_ports[i], seg_pins[i], (bits & (1<<i)) ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    seg_pins[i].set(!(bits & (1<<i)));
+    // HAL_GPIO_WritePin(seg_ports[i], seg_pins[i], (bits & (1<<i)) ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
   case SW1_Pin:
   case GATE_IN1_Pin: {
@@ -151,20 +151,24 @@ void setup(){
 
 #define PATCH_RESET_COUNTER (4000/MAIN_LOOP_SLEEP_MS)
 
+void setProgress(uint16_t value){
+  progress = value;
+}
+
+void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+  progress = 0;
+  patchselect = program.getProgramIndex();
+  setEncoderValue(patchselect);
+}
+
 static void update_preset(){
-  static int patchselect = 0;
   static uint32_t counter = PATCH_RESET_COUNTER;
   switch(owl.getOperationMode()){
   case STARTUP_MODE:
     setSegmentDisplay(SEG_DISPLAY_BLANK, true);
-    owl.setOperationMode(RUN_MODE);
-    patchselect = program.getProgramIndex();
-    setEncoderValue(patchselect);
     break;
   case LOAD_MODE:
-    setSegmentDisplay(SEG_DISPLAY_L);
-    patchselect = program.getProgramIndex();
-    setEncoderValue(patchselect);
+    setSegmentDisplay(SEG_DISPLAY_L); // todo: spin with progress, or just spin
     break;
   case RUN_MODE:
     if(getErrorStatus() != NO_ERROR){
@@ -176,7 +180,7 @@ static void update_preset(){
 	setEncoderValue(patchselect);
     }
     if(program.getProgramIndex() != patchselect){
-      setSegmentDisplay(patchselect % 10, false);
+      setSegmentDisplay(patchselect % 16, false);
       if(isModeButtonPressed()){
 	// switch patches
 	program.loadProgram(patchselect);
@@ -192,12 +196,13 @@ static void update_preset(){
 	// press and hold to store settings
 	if(--counter == 0){
 	  counter = PATCH_RESET_COUNTER;
+	  settings.program_index = patchselect;
 	  settings.saveToFlash();
 	}else{
-	  setSegmentDisplay(patchselect % 10, counter*MAIN_LOOP_SLEEP_MS > 2000);
+	  setSegmentDisplay(patchselect % 16, counter*MAIN_LOOP_SLEEP_MS > 2000);
 	}
       }else{
-	setSegmentDisplay(patchselect % 10, true);
+	setSegmentDisplay(patchselect % 16, true);
 	counter = PATCH_RESET_COUNTER;
       }
     }

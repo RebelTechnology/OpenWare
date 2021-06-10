@@ -56,14 +56,14 @@ public:
   void skipUntilLast(char c){
     T* src = getReadHead();
     size_t rem = size-readpos;
-    for(int i=0; i<rem; ++i){
+    for(size_t i=0; i<rem; ++i){
       if(src[i] != c){
 	readpos += i;
 	return;
       }
     }
     rem = writepos;
-    for(int i=0; i<rem; ++i){
+    for(size_t i=0; i<rem; ++i){
       if(buffer[i] != c){
 	readpos = i;
 	return;
