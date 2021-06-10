@@ -8,8 +8,9 @@
 * Magus TRS MIDI output enabled
 * Updated Magus LED handling, new LED brightness menu
 * Update parameters with MIDI messages from USBH
-* USB devices renamed OWL-Magus, OWL-Wizard et c.
-* MIDI command to retrieve resource names
+* USB devices renamed OWL-MAGUS, OWL-WIZARD et c.
+* MIDI command to retrieve resource names and sizes
+* MIDI command to delete resources
 
 Known Issues:
 * USB Host does not support reconnecting devices
