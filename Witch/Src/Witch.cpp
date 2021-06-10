@@ -87,7 +87,7 @@ public:
 TakeoverControls<10, int16_t> takeover;
 int16_t dac_values[2] = {0, 0};
 bool button_led_values[4] = {false};
-uint8_t patchselect;
+volatile uint8_t patchselect;
 
 bool updatePin(size_t bid, Pin pin){
   // button id 'bid' goes from 1 to 4
@@ -334,12 +334,12 @@ static void update_preset(){
   case CONFIGURE_MODE:
     if(isModeButtonPressed()){
       for(int i=1; i<=4; ++i){
+	uint32_t colour = NO_COLOUR;
 	if(patchselect == i)
-	  setLed(6+i, YELLOW_COLOUR);
+	  colour = YELLOW_COLOUR;
 	else if(patchselect == i+4)
-	  setLed(6+i, RED_COLOUR);
-	else
-	  setLed(6+i, NO_COLOUR);
+	  colour = RED_COLOUR;
+	setLed(6+i, colour);
       }
       if(takeover.taken(9)){
 	uint8_t value = takeover.get(9)>>5;
@@ -357,11 +357,6 @@ static void update_preset(){
       }else{
 	owl.setOperationMode(RUN_MODE);
       }
-      // reset CV outputs to previous values
-      setAnalogValue(PARAMETER_F, dac_values[0]);
-      setAnalogValue(PARAMETER_G, dac_values[1]);
-      // todo: reset gates and leds (for toggles) to previous values
-      takeover.reset(false);
     }
     break;
   case ERROR_MODE:
@@ -388,6 +383,7 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
     HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
     takeover.reset(false);
     patchselect = program.getProgramIndex();
+    // store current LED settings
     button_led_values[0] = !led7.get();
     button_led_values[1] = !led8.get();
     button_led_values[2] = !led9.get();
@@ -399,7 +395,7 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
     takeover.set(2, getAnalogValue(ADC_F));
     takeover.set(3, getAnalogValue(ADC_H));
     takeover.set(4, getAnalogValue(ADC_I));
-    dac_values[0] = dac_values[1] = 0; // reset CV outputs to initial values
+    memset(dac_values, 0, sizeof(dac_values)); // reset CV outputs to initial values
     memset(button_led_values, 0, sizeof(button_led_values)); // reset leds
   }else if(new_mode == RUN_MODE){
     // we are either returning to the same patch or starting a new one
@@ -408,6 +404,11 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
       setLed(i, NO_COLOUR);
     for(int i=7; i<=10; ++i)
       setLed(i, button_led_values[i-7] ? RED_COLOUR : NO_COLOUR);
+    // reset CV outputs to previous values
+    setAnalogValue(PARAMETER_F, dac_values[0]);
+    setAnalogValue(PARAMETER_G, dac_values[1]);
+    // todo: reset gates and leds (for toggles) to previous values
+    takeover.reset(false);
   }
   counter = 0;
 }
