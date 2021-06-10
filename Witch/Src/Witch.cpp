@@ -97,13 +97,11 @@ bool updatePin(size_t bid, Pin pin){
     setLed(bid+6, state ? RED_COLOUR : NO_COLOUR);
   }else if(owl.getOperationMode() == CONFIGURE_MODE && state){
     if(patchselect == bid){
-      if(bid+4 <  registry.getNumberOfPatches()){
+      if(registry.hasPatch(bid+4))
 	patchselect = bid+4;
-      }
     }else{
-      if(bid < registry.getNumberOfPatches()){
+      if(registry.hasPatch(bid))
 	patchselect = bid;
-      }
     }
   }
   return state;
@@ -352,7 +350,7 @@ static void update_preset(){
       }
     }else{
       if(program.getProgramIndex() != patchselect &&
-	 patchselect < registry.getNumberOfPatches()){
+	 registry.hasPatch(patchselect)){
 	// change patch on mode button release
 	program.loadProgram(patchselect); // enters load mode (calls onChangeMode)
 	program.resetProgram(false);
