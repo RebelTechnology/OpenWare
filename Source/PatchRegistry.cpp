@@ -72,6 +72,10 @@ unsigned int PatchRegistry::getNumberOfResources(){
   return resourceCount;
 }
 
+bool PatchRegistry::hasPatch(uint8_t index){
+  return getPatch(index - 1) != NULL;
+}
+
 bool PatchRegistry::hasPatches(){
   return patchCount > 0;
 }
