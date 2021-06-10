@@ -46,7 +46,9 @@
 #define USBD_MAX_POWER               100 // 200mA
 #endif
 
+#ifndef OWLBOOT_MAGIC_NUMBER
 #define OWLBOOT_MAGIC_NUMBER        0xDADAB007
+#endif
 #define OWLBOOT_LOOP_NUMBER         0xDADADEAD
 #define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
 

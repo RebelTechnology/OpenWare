@@ -29,5 +29,7 @@
   #error Invalid configuration
 #endif
 
+#define OWLBOOT_MAGIC_NUMBER  0xF00B4400
+
 /* #define USE_IWDG */
 /* #define INIT_FMC */
