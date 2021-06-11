@@ -7,12 +7,12 @@
 #define HARDWARE_ID                  OWL_RACK_HARDWARE
 #define HARDWARE_VERSION             "OWL Rack"
 #elif defined OWL_MODULAR
-#define HARDWARE_ID                  OWL_MODULAR_HARDWARE
+#define HARDWARE_ID                  OWL_MODULAR_LEGACY_HARDWARE
 #define HARDWARE_VERSION             "OWL Modular"
 #define AUDIO_INPUT_GAIN             92
 #define AUDIO_OUTPUT_GAIN            121
 #elif defined OWL_PEDAL
-#define HARDWARE_ID                  OWL_PEDAL_HARDWARE
+#define HARDWARE_ID                  OWL_PEDAL_LEGACY_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal"
 #define AUDIO_INPUT_GAIN             108
 #define AUDIO_OUTPUT_GAIN            115
