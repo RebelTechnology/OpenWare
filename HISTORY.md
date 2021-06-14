@@ -1,3 +1,12 @@
+21.2.1
+------
+
+* Change hardware ID for legacy devices to prevent parameter inversion
+
+Known Issues:
+* USB Host does not support reconnecting devices
+* USB Audio might 'click' due to synchronisation problems with host
+
 21.2.0
 ------
 
@@ -11,10 +20,6 @@
 * USB devices renamed OWL-MAGUS, OWL-WIZARD et c.
 * MIDI command to retrieve resource names and sizes
 * MIDI command to delete resources
-
-Known Issues:
-* USB Host does not support reconnecting devices
-* USB Audio might 'click' due to synchronisation problems with host
 
 
 21.1.0
