@@ -9,12 +9,17 @@
   #define HARDWARE_ID         OWL_MODULAR_HARDWARE
   #define USE_USBD_FS
   #define APPLICATION_ADDRESS 0x08008000
+  #define USE_BOOT1_PIN
+  #define BOOT1_Pin           PUSHBUTTON_Pin
+  #define BOOT1_GPIO_Port     PUSHBUTTON_GPIO_Port
 #elif defined OWL_PEDAL
   #define HARDWARE_VERSION    "OWL Pedal Boot"
   #define HARDWARE_ID         OWL_PEDAL_HARDWARE
   #define USE_USBD_FS
   #define APPLICATION_ADDRESS 0x08008000
   #define USE_BOOT1_PIN
+  #define BOOT1_Pin           PUSHBUTTON_Pin
+  #define BOOT1_GPIO_Port     PUSHBUTTON_GPIO_Port
 #elif defined OWL_RACK
   #define HARDWARE_VERSION    "OWL Rack Boot"
   #define HARDWARE_ID         OWL_RACK_HARDWARE
@@ -23,6 +28,8 @@
 #else
   #error Invalid configuration
 #endif
+
+#define OWLBOOT_MAGIC_NUMBER  0xF00B4400
 
 /* #define USE_IWDG */
 /* #define INIT_FMC */

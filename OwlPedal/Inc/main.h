@@ -98,6 +98,7 @@ void Error_Handler(void);
 #define LED_RED_GPIO_Port GPIOE
 #define BYPASS_Pin GPIO_PIN_4
 #define BYPASS_GPIO_Port GPIOE
+#define BYPASS_EXTI_IRQn EXTI4_IRQn
 #define LED_GREEN_Pin GPIO_PIN_5
 #define LED_GREEN_GPIO_Port GPIOE
 #define ADC1_Pin GPIO_PIN_0
