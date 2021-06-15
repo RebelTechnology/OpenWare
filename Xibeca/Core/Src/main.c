@@ -635,7 +635,7 @@ static void MX_SPI2_Init(void)
   hspi2.Instance = SPI2;
   hspi2.Init.Mode = SPI_MODE_MASTER;
   hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi2.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
@@ -644,7 +644,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   hspi2.Init.CRCPolynomial = 0x0;
-  hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  hspi2.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
   hspi2.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
   hspi2.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
   hspi2.Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
@@ -1197,26 +1197,15 @@ static void MX_GPIO_Init(void)
   * @param  argument: Not used
   * @retval None
   */
-#if 0
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
-  /* init code for USB_HOST */
-  MX_USB_HOST_Init();
-
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
-  /* USER CODE BEGIN 5 */
-#else
-void StartDefaultTask(void const * argument)
-{
-  /* NOTE: we get frequent boot failures if host is called first */
-  MX_USB_DEVICE_Init();
-  
-#ifdef USE_USB_HOST
+
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
-#endif
+  /* USER CODE BEGIN 5 */
 
   setup();
 
@@ -1225,7 +1214,6 @@ void StartDefaultTask(void const * argument)
   {
     loop();
   }
-#endif
   /* USER CODE END 5 */
 }
 

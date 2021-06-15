@@ -35,7 +35,7 @@
 
 /* USER CODE END PV */
 
-HCD_HandleTypeDef hhcd_USB_OTG_FS;
+HCD_HandleTypeDef hhcd_USB_OTG_HS;
 void Error_Handler(void);
 
 /* USER CODE BEGIN 0 */
@@ -63,11 +63,11 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef* hcdHandle)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-  if(hcdHandle->Instance==USB_OTG_FS)
+  if(hcdHandle->Instance==USB_OTG_HS)
   {
-  /* USER CODE BEGIN USB_OTG_FS_MspInit 0 */
+  /* USER CODE BEGIN USB_OTG_HS_MspInit 0 */
 
-  /* USER CODE END USB_OTG_FS_MspInit 0 */
+  /* USER CODE END USB_OTG_HS_MspInit 0 */
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB;
@@ -80,59 +80,59 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef* hcdHandle)
   */
     HAL_PWREx_EnableUSBVoltageDetector();
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**USB_OTG_FS GPIO Configuration
-    PA12     ------> USB_OTG_FS_DP
-    PA11     ------> USB_OTG_FS_DM
-    PA9     ------> USB_OTG_FS_VBUS
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    /**USB_OTG_HS GPIO Configuration
+    PB13     ------> USB_OTG_HS_VBUS
+    PB14     ------> USB_OTG_HS_DM
+    PB15     ------> USB_OTG_HS_DP
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_11;
+    GPIO_InitStruct.Pin = GPIO_PIN_13;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF10_OTG1_FS;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    GPIO_InitStruct.Alternate = GPIO_AF12_OTG2_FS;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* Peripheral clock enable */
-    __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
+    __HAL_RCC_USB_OTG_HS_CLK_ENABLE();
 
     /* Peripheral interrupt init */
-    HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
-  /* USER CODE BEGIN USB_OTG_FS_MspInit 1 */
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+  /* USER CODE BEGIN USB_OTG_HS_MspInit 1 */
 
-  /* USER CODE END USB_OTG_FS_MspInit 1 */
+  /* USER CODE END USB_OTG_HS_MspInit 1 */
   }
 }
 
 void HAL_HCD_MspDeInit(HCD_HandleTypeDef* hcdHandle)
 {
-  if(hcdHandle->Instance==USB_OTG_FS)
+  if(hcdHandle->Instance==USB_OTG_HS)
   {
-  /* USER CODE BEGIN USB_OTG_FS_MspDeInit 0 */
+  /* USER CODE BEGIN USB_OTG_HS_MspDeInit 0 */
 
-  /* USER CODE END USB_OTG_FS_MspDeInit 0 */
+  /* USER CODE END USB_OTG_HS_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_USB_OTG_FS_CLK_DISABLE();
+    __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
 
-    /**USB_OTG_FS GPIO Configuration
-    PA12     ------> USB_OTG_FS_DP
-    PA11     ------> USB_OTG_FS_DM
-    PA9     ------> USB_OTG_FS_VBUS
+    /**USB_OTG_HS GPIO Configuration
+    PB13     ------> USB_OTG_HS_VBUS
+    PB14     ------> USB_OTG_HS_DM
+    PB15     ------> USB_OTG_HS_DP
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_12|GPIO_PIN_11|GPIO_PIN_9);
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15);
 
     /* Peripheral interrupt Deinit*/
-    HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
+    HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
 
-  /* USER CODE BEGIN USB_OTG_FS_MspDeInit 1 */
+  /* USER CODE BEGIN USB_OTG_HS_MspDeInit 1 */
 
-  /* USER CODE END USB_OTG_FS_MspDeInit 1 */
+  /* USER CODE END USB_OTG_HS_MspDeInit 1 */
   }
 }
 
@@ -212,23 +212,25 @@ void HAL_HCD_PortDisabled_Callback(HCD_HandleTypeDef *hhcd)
 USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
 {
   /* Init USB_IP */
-  if (phost->id == HOST_FS) {
+  if (phost->id == HOST_HS) {
   /* Link the driver to the stack. */
-  hhcd_USB_OTG_FS.pData = phost;
-  phost->pData = &hhcd_USB_OTG_FS;
+  hhcd_USB_OTG_HS.pData = phost;
+  phost->pData = &hhcd_USB_OTG_HS;
 
-  hhcd_USB_OTG_FS.Instance = USB_OTG_FS;
-  hhcd_USB_OTG_FS.Init.Host_channels = 16;
-  hhcd_USB_OTG_FS.Init.speed = HCD_SPEED_FULL;
-  hhcd_USB_OTG_FS.Init.dma_enable = DISABLE;
-  hhcd_USB_OTG_FS.Init.phy_itface = HCD_PHY_EMBEDDED;
-  hhcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
-  if (HAL_HCD_Init(&hhcd_USB_OTG_FS) != HAL_OK)
+  hhcd_USB_OTG_HS.Instance = USB_OTG_HS;
+  hhcd_USB_OTG_HS.Init.Host_channels = 16;
+  hhcd_USB_OTG_HS.Init.speed = HCD_SPEED_FULL;
+  hhcd_USB_OTG_HS.Init.dma_enable = DISABLE;
+  hhcd_USB_OTG_HS.Init.phy_itface = USB_OTG_EMBEDDED_PHY;
+  hhcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
+  hhcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
+  hhcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
+  if (HAL_HCD_Init(&hhcd_USB_OTG_HS) != HAL_OK)
   {
     Error_Handler( );
   }
 
-  USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG_FS));
+  USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG_HS));
   }
   return USBH_OK;
 }
@@ -462,23 +464,23 @@ USBH_StatusTypeDef USBH_LL_DriverVBUS(USBH_HandleTypeDef *phost, uint8_t state)
 
   /* USER CODE END 0*/
 
-  if (phost->id == HOST_FS)
+  if (phost->id == HOST_HS)
   {
     if (state == 0)
     {
       /* Drive high Charge pump */
       /* ToDo: Add IOE driver control */
-      /* USER CODE BEGIN DRIVE_HIGH_CHARGE_FOR_FS */
+      /* USER CODE BEGIN DRIVE_HIGH_CHARGE_FOR_HS */
 
-      /* USER CODE END DRIVE_HIGH_CHARGE_FOR_FS */
+      /* USER CODE END DRIVE_HIGH_CHARGE_FOR_HS */
     }
     else
     {
       /* Drive low Charge pump */
       /* ToDo: Add IOE driver control */
-      /* USER CODE BEGIN DRIVE_LOW_CHARGE_FOR_FS */
+      /* USER CODE BEGIN DRIVE_LOW_CHARGE_FOR_HS */
 
-      /* USER CODE END DRIVE_LOW_CHARGE_FOR_FS */
+      /* USER CODE END DRIVE_LOW_CHARGE_FOR_HS */
     }
   }
   HAL_Delay(200);
