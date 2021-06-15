@@ -9,7 +9,7 @@ CPP_SRC = $(wildcard Core/Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/pcm3168a.c
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
-# CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
+CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
 
 # C_SRC += $(OPENWARE)/Source/ssd1309.c
 # CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
@@ -26,6 +26,7 @@ C_SRC += $(BUILDROOT)/USB_DEVICE/App/usbd_desc.c
 C_SRC += $(BUILDROOT)/USB_DEVICE/Target/usbd_conf.c
 
 C_SRC += $(BUILDROOT)/USB_HOST/Target/usbh_conf.c
+C_SRC += $(BUILDROOT)/USB_HOST/App/usb_host.c
 
 include $(OPENWARE)/Hardware/sources.mk
 

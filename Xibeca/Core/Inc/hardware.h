@@ -40,9 +40,9 @@
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
 /* #define USBD_MAX_POWER              100 // 200mA for iPad compatibility */
-/* #define USE_USB_HOST */
-/* #define USB_HOST_RX_BUFF_SIZE       256  /\* Max Received data 64 bytes *\/ */
-/* #define USE_USBH_MIDI */
+#define USE_USB_HOST
+#define USB_HOST_RX_BUFF_SIZE       256  /* Max Received data 64 bytes */
+#define USE_USBH_MIDI
 #define USBH_HANDLE                 hUsbHostHS
 
 /* #define USE_UART_MIDI_RX */

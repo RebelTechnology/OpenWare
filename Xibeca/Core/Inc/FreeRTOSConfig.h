@@ -44,7 +44,11 @@
  *----------------------------------------------------------*/
 
 /* USER CODE BEGIN Includes */
-/* Section where include file can be added */
+#include "device.h"
+#ifdef DEBUG_STACK
+#define configUSE_TRACE_FACILITY                1
+#define INCLUDE_uxTaskGetStackHighWaterMark     1
+#endif /* DEBUG_STACK */
 /* USER CODE END Includes */
 
 /* Ensure definitions are only used by the compiler, and not by the assembler. */

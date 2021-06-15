@@ -13,10 +13,10 @@ C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_flash.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_flash_ex.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_tim_ex.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_tim.c
+C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_lptim.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_cortex.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_spi.c
 # C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_rng.c
-# C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_qspi.c
 # C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_dma2d.c
 
 # optionals
@@ -29,6 +29,7 @@ C_SRC_RTC = $(DRIVERS)/Src/stm32h7xx_hal_rtc.c
 C_SRC_RTC += $(DRIVERS)/Src/stm32h7xx_hal_pwr.c
 C_SRC_RTC += $(DRIVERS)/Src/stm32h7xx_hal_rtc_ex.c
 C_SRC_IWDG = $(DRIVERS)/Src/stm32h7xx_hal_iwdg.c
+C_SRC_QSPI = $(DRIVERS)/Src/stm32h7xx_hal_qspi.c
 
 # required by OWL 2
 C_SRC_SAI = $(DRIVERS)/Src/stm32h7xx_hal_sai.c

@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -23,7 +23,7 @@
 
 #include "usb_host.h"
 #include "usbh_core.h"
-#include "usbh_audio.h"
+#include "usbh_midi.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -59,7 +59,11 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
  * -- Insert your external function declaration here --
  */
 /* USER CODE BEGIN 1 */
-
+void MX_USB_HOST_Process() 
+{
+  /* USB Host Background task */
+    USBH_Process(&hUsbHostHS); 						
+}
 /* USER CODE END 1 */
 
 /**
@@ -77,7 +81,7 @@ void MX_USB_HOST_Init(void)
   {
     Error_Handler();
   }
-  if (USBH_RegisterClass(&hUsbHostHS, USBH_AUDIO_CLASS) != USBH_OK)
+  if (USBH_RegisterClass(&hUsbHostHS, USBH_MIDI_CLASS) != USBH_OK)
   {
     Error_Handler();
   }
