@@ -39,16 +39,16 @@
 #define USE_USBD_AUDIO_RX           // speaker
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
+/* #define USBD_MAX_POWER              100 // 200mA for iPad compatibility */
+/* #define USE_USB_HOST */
+/* #define USB_HOST_RX_BUFF_SIZE       256  /\* Max Received data 64 bytes *\/ */
+/* #define USE_USBH_MIDI */
 #define USBH_HANDLE                 hUsbHostHS
-#define USBD_MAX_POWER              100 // 200mA for iPad compatibility
-#define USE_USB_HOST
-#define USB_HOST_RX_BUFF_SIZE       256  /* Max Received data 64 bytes */
-#define USE_USBH_MIDI
 
-#define USE_UART_MIDI_RX
-#define USE_UART_MIDI_TX
-#define UART_MIDI_HANDLE            huart2
-#define UART_MIDI_RX_BUFFER_SIZE    256
+/* #define USE_UART_MIDI_RX */
+/* #define USE_UART_MIDI_TX */
+/* #define UART_MIDI_HANDLE            huart2 */
+/* #define UART_MIDI_RX_BUFFER_SIZE    256 */
 
 #define AUDIO_SAMPLINGRATE          48000
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
