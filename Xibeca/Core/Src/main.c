@@ -183,7 +183,9 @@ int main(void)
   MX_LPTIM1_Init();
   /* USER CODE BEGIN 2 */
 
+#ifdef USE_EXTERNAL_RAM
   SDRAM_Initialization_Sequence(&hsdram1);   
+#endif
 
   /* USER CODE END 2 */
 

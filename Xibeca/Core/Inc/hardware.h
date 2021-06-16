@@ -1,14 +1,20 @@
 #include "main.h"
 #include "stm32h7xx_hal.h"
 
-#define OWL_NOCTUA
+#define OWL_XIBECA
 #define HARDWARE_ID                  XIBECA_HARDWARE
 #define HARDWARE_VERSION             "Xibeca"
-/* #define NO_EXTERNAL_RAM */
+#define NO_EXTERNAL_RAM
+#define DMA_RAM                      __attribute__ ((section (".dmadata")))
+#define USE_PLUS_RAM
+/* #define USE_ICACHE */
+/* #define USE_DCACHE */
 
-/* #define USE_BKPSRAM enable to prevent reset loops */ 
+/* #define USE_SCREEN */
+/* #define SSD1309 */
+/* #define OLED_SOFT_CS */
+/* #define OLED_SPI hspi6 */
 
-/* #define USE_RGB_LED */
 /* #define USE_ADC */
 #define ADC_PERIPH hadc1
 #define ADC_A 0
@@ -19,9 +25,11 @@
 #define ADC_F 5
 #define ADC_G 6
 #define ADC_H 7
+
 #define USE_CODEC
-/* #define USE_IIS3DWB */
 #define USE_PCM3168A
+/* #define CODEC_HP_FILTER */
+#define CODEC_SPI hspi2
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
@@ -52,10 +60,6 @@
 
 #define AUDIO_SAMPLINGRATE          48000
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
-
-/* #define USE_PCM3168A */
-/* #define CODEC_HP_FILTER */
-#define CODEC_SPI hspi2
 
 #define USB_HOST_PWR_EN_GPIO_Port GPIOB
 #define USB_HOST_PWR_EN_Pin GPIO_PIN_0 // PB0 is unused
