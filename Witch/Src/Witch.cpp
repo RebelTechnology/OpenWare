@@ -357,6 +357,7 @@ static void update_preset(){
       }else{
 	owl.setOperationMode(RUN_MODE);
       }
+      takeover.reset(false);
     }
     break;
   case ERROR_MODE:
@@ -407,8 +408,7 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
     // reset CV outputs to previous values
     setAnalogValue(PARAMETER_F, dac_values[0]);
     setAnalogValue(PARAMETER_G, dac_values[1]);
-    // todo: reset gates and leds (for toggles) to previous values
-    takeover.reset(false);
+    // todo: reset gates to previous values
   }
   counter = 0;
 }
