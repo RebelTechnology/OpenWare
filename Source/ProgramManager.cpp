@@ -711,7 +711,7 @@ extern "C" {
     /* Run time stack overflow checking is performed if
        configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
        function is called from PendSV ISR if a stack overflow is detected. */
-    vTaskDelete(pxTask);
+    // vTaskDelete(pxTask); // seems to just get stuck
     if(pxTask == utilityTask)
       utilityTask = NULL;
     if(pxTask == audioTask)
