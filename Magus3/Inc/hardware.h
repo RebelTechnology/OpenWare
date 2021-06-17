@@ -3,14 +3,14 @@
 
 #define OWL_MAGUS
 #define HARDWARE_ID                  MAGUS_HARDWARE
-#define HARDWARE_VERSION             "Magus"
+#define HARDWARE_VERSION             "Magus3"
 
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 #define USE_PLUS_RAM
-/* #define USE_ICACHE */
-/* #define USE_DCACHE */
+#define USE_ICACHE
+#define USE_DCACHE
 
 #define USE_SCREEN
 #define SSD1309
