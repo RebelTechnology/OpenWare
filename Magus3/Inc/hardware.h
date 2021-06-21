@@ -12,6 +12,8 @@
 #define USE_ICACHE
 #define USE_DCACHE
 
+#define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
+
 #define USE_SCREEN
 #define SSD1309
 /* #define OLED_DMA */

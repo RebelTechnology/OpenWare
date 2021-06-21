@@ -199,30 +199,33 @@ int main(void)
   MX_SPI6_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_SAI_DeInit(&hsai_BlockA1);
-  HAL_SAI_DeInit(&hsai_BlockB1);
-  hsai_BlockA1.Instance = SAI1_Block_A;
-  hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_TX;
-  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
-  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
-  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
-  hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
-  hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
-  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
-  hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
-    Error_Handler();
-  hsai_BlockB1.Instance = SAI1_Block_B;
-  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
-  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
-  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
-  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
-  hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
-  hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
-  hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
-  hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
-    Error_Handler();
+  /* HAL_SAI_DeInit(&hsai_BlockA1); */
+  /* HAL_SAI_DeInit(&hsai_BlockB1); */
+  /* hsai_BlockA1.Instance = SAI1_Block_A; */
+  /* hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_TX; */
+  /* hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS; */
+  /* hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE; */
+  /* hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY; */
+  /* hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE; */
+  /* hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE; */
+  /* hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING; */
+  /* hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED; */
+  /* if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK) */
+  /*   Error_Handler(); */
+  /* hsai_BlockB1.Instance = SAI1_Block_B; */
+  /* hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX; */
+  /* hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS; */
+  /* hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE; */
+  /* hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY; */
+  /* hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE; */
+  /* hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE; */
+  /* hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING; */
+  /* hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED; */
+  /* if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK) */
+  /*   Error_Handler(); */
+
+  /* HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0); */
+  /* HAL_NVIC_EnableIRQ(EXTI2_IRQn); */
 
   SDRAM_Initialization_Sequence(&hsdram1);   
 
