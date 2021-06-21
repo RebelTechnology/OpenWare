@@ -429,6 +429,7 @@ void setup(){
     takeover.reset(i, false);
   }
   takeover.set(9, settings.audio_output_gain<<5);
+  takeover.reset(9, false);
   patchselect = program.getProgramIndex();
 }
 
