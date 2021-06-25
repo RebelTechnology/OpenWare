@@ -6,15 +6,10 @@
 #include <cstring>
 #include "ProgramManager.h"
 
-#include "SerialBuffer.hpp"
-SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer DMA_RAM;
-SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer DMA_RAM;
+#include "CircularBuffer.h"
 
-extern "C" {
-  uint16_t codec_blocksize = 0;
-  int32_t* codec_rxbuf;
-  int32_t* codec_txbuf;
-}
+CircularBuffer<int32_t> audio_rx_buffer;
+CircularBuffer<int32_t> audio_tx_buffer;
 
 #ifdef USE_CS4271
 #define HSAI_RX hsai_BlockB1
@@ -27,6 +22,14 @@ extern "C" {
 #define HDMA_RX hdma_sai1_a
 #define HDMA_TX hdma_sai1_b
 #endif
+
+extern "C" {
+  uint16_t codec_blocksize = 0;
+  int32_t codec_rxbuf[CODEC_BUFFER_SIZE] DMA_RAM;
+  int32_t codec_txbuf[CODEC_BUFFER_SIZE] DMA_RAM;
+  extern DMA_HandleTypeDef HDMA_TX;
+  extern DMA_HandleTypeDef HDMA_RX;
+}
 
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
@@ -43,31 +46,43 @@ typedef int8_t audio_t;
 
 static void update_rx_read_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A
-  extern DMA_HandleTypeDef HDMA_RX;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  size_t pos = audio_rx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX);
+  size_t pos = audio_rx_buffer.getSize() - __HAL_DMA_GET_COUNTER(&HDMA_RX);
+  // // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
+  // audio_rx_buffer.setReadIndex(pos & ~(AUDIO_CHANNELS-1));
   audio_rx_buffer.setReadIndex(pos);
 #endif
 }
 
 static void update_tx_write_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A
-  extern DMA_HandleTypeDef HDMA_TX;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  size_t pos = audio_tx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  size_t pos = audio_tx_buffer.getSize() - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  // // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
+  // audio_tx_buffer.setWriteIndex(pos & ~(AUDIO_CHANNELS-1));
   audio_tx_buffer.setWriteIndex(pos);
 #endif
 }
 
-void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels){
+void usbd_audio_tx_start_callback(size_t rate, uint8_t channels){
 #if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
-  // set read head at half a ringbuffer distance from write head
   update_tx_write_index();
-  size_t pos = audio_tx_buffer.getWriteIndex();
-  size_t len = audio_tx_buffer.getCapacity();
-  pos = (pos + len/2) % len;
-  pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
+  int32_t pos = audio_tx_buffer.getWriteIndex(); // not always aligned to AUDIO_CHANNELS samples
+  // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
+  pos &= ~(AUDIO_CHANNELS-1);
+  // position read head at one USB transfer block back from write head
+  pos -= AUDIO_CHANNELS*rate/1000;
+  // // position read head at half a ringbuffer distance from write head
+  // pos -= audio_tx_buffer.getSize()/2;
   audio_tx_buffer.setReadIndex(pos);
+
+  // // set read head at half a ringbuffer distance from write head
+  // update_tx_write_index();
+  // size_t pos = audio_tx_buffer.getWriteIndex();
+  // size_t len = audio_tx_buffer.getSize();
+  // pos = (pos + len/2) % len;
+  // pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
+  // audio_tx_buffer.setReadIndex(pos);
 #ifdef DEBUG
   printf("start tx %d %d %d\n", rate, channels, pos);
 #endif
@@ -75,17 +90,20 @@ void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels){
 }
 
 void usbd_audio_tx_stop_callback(){
+#if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
 #ifdef DEBUG
   printf("stop tx\n");
 #endif
+#endif
 }
 
-void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
+void usbd_audio_rx_start_callback(size_t rate, uint8_t channels){
 #if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
-  audio_rx_buffer.setAll(0);
+  __HAL_DMA_DISABLE(&HDMA_RX); // stop codec transfers
+  audio_rx_buffer.clear();
   update_rx_read_index();
   size_t pos = audio_rx_buffer.getWriteIndex();
-  size_t len = audio_rx_buffer.getCapacity();
+  size_t len = audio_rx_buffer.getSize();
   pos = (pos + len/2) % len;
   pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
   audio_rx_buffer.setWriteIndex(pos);
@@ -99,7 +117,8 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
 
 void usbd_audio_rx_stop_callback(){
 #if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
-  audio_rx_buffer.setAll(0);
+  __HAL_DMA_ENABLE(&HDMA_RX); // restart codec transfers
+  audio_rx_buffer.clear();
   program.loadProgram(program.getProgramIndex());
   program.startProgram(true);
   owl.setOperationMode(RUN_MODE);
@@ -131,7 +150,7 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
   	*dst++ = AUDIO_SAMPLE_TO_INT32(*src++);
       // should we leave in place or zero out any remaining channels?
       memset(dst, 0, (AUDIO_CHANNELS-USBD_AUDIO_RX_CHANNELS)*sizeof(int32_t));
-      audio_rx_buffer.incrementWriteHead(AUDIO_CHANNELS);
+      audio_rx_buffer.moveWriteHead(AUDIO_CHANNELS);
   }
   // available = audio_rx_buffer.getWriteCapacity()*AUDIO_BYTES_PER_SAMPLE*USBD_AUDIO_RX_CHANNELS/AUDIO_CHANNELS;
   // if(available < AUDIO_RX_PACKET_SIZE)
@@ -145,8 +164,8 @@ static int32_t usbd_audio_tx_flow = 0;
 void usbd_audio_tx_callback(uint8_t* data, size_t len){
 #if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
   update_tx_write_index();
-  size_t blocksize = len / (USBD_AUDIO_TX_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
   size_t available = audio_tx_buffer.getReadCapacity()/AUDIO_CHANNELS;
+  size_t blocksize = len / (USBD_AUDIO_TX_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
   if(available < blocksize){
     usbd_audio_tx_flow += blocksize-available;
     blocksize = available;
@@ -158,7 +177,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
     size_t ch = USBD_AUDIO_TX_CHANNELS;
     while(ch--)
       *dst++ = AUDIO_INT32_TO_SAMPLE(*src++); // shift, round, dither, clip, truncate, bitswap
-    audio_tx_buffer.incrementReadHead(AUDIO_CHANNELS);
+    audio_tx_buffer.moveReadHead(AUDIO_CHANNELS);
   }
   usbd_audio_write(data, len);
 #endif
@@ -186,10 +205,10 @@ uint16_t Codec::getBlockSize(){
 #endif
 
 void Codec::init(){
+  audio_tx_buffer = CircularBuffer<int32_t>(codec_txbuf, CODEC_BUFFER_SIZE);
   audio_tx_buffer.reset();
-  codec_rxbuf = audio_tx_buffer.getWriteHead();
+  audio_rx_buffer = CircularBuffer<int32_t>(codec_rxbuf, CODEC_BUFFER_SIZE);
   audio_rx_buffer.reset();
-  codec_txbuf = audio_rx_buffer.getReadHead();
   codec_init();
 }
 
