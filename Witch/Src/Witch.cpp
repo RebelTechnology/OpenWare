@@ -124,15 +124,28 @@ void onChangePin(uint16_t pin){
 void setAnalogValue(uint8_t ch, int16_t value){
   if(owl.getOperationMode() == RUN_MODE){
     extern DAC_HandleTypeDef hdac;
-    value = __USAT(value, 12);
     switch(ch){
     case PARAMETER_F:
+      value = __USAT(value, 12);
       HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
       dac_values[0] = value;
       break;
     case PARAMETER_G:
+      value = __USAT(value, 12);
       HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, value);
       dac_values[1] = value;
+      break;
+    case PARAMETER_BA:
+      takeover.set(5, value);
+      break;
+    case PARAMETER_BB:
+      takeover.set(6, value);
+      break;
+    case PARAMETER_BC:
+      takeover.set(7, value);
+      break;
+    case PARAMETER_BD:
+      takeover.set(8, value);
       break;
     }
   }
@@ -237,7 +250,7 @@ bool isModeButtonPressed(){
 
 int16_t getAttenuatedCV(uint8_t index, uint16_t* adc_values){
   // Q12 multiplication
-  return (uint32_t(adc_values[index*2]) * uint32_t(takeover.get(index+5)<<1)) >> 12;
+  return (uint32_t(adc_values[index*2]) * uint32_t(takeover.get(index+5))) >> 12;
 }
 
 static uint16_t smooth_adc_values[NOF_ADC_VALUES];
@@ -259,7 +272,14 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   // knobs are ADC_B, D, F, H, I
   if(isModeButtonPressed()){
     for(size_t i=0; i<4; ++i){
-      takeover.update(i+5, smooth_adc_values[i*2+1], 31);
+      int32_t value = smooth_adc_values[i*2+1] - 2048;
+      // attenuvert from -2x to +2x
+      if(value > 0){
+	value = (value*value) >> 9;
+      }else{
+	value = - (value*value) >> 9;
+      }
+      takeover.update(i+5, value, 31);
       if(takeover.taken(i+5))
         setLed(i+1, 0);
       else
@@ -277,7 +297,7 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
     for(size_t i=0; i<4; ++i){
       takeover.update(i, smooth_adc_values[i*2+1], 31);
       if(takeover.taken(i))
-        setLed(i+1, getAttenuatedCV(i, smooth_adc_values));
+        setLed(i+1, abs(getAttenuatedCV(i, smooth_adc_values)));
       else
         setLed(i+1, 4095);
     }
@@ -342,7 +362,7 @@ static void update_preset(){
 	setLed(6+i, colour);
       }
       if(takeover.taken(9)){
-	uint8_t value = takeover.get(9)>>5;
+	uint8_t value = (takeover.get(9) >> 6) + 63;
 	if(settings.audio_output_gain != value){
 	  settings.audio_output_gain = value;
 	  codec.setOutputGain(value);
