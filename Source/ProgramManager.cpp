@@ -100,7 +100,7 @@ void onProgramStatus(ProgramVectorAudioStatus status){
   for(;;);
 }
 
-int16_t getParameterValue(uint8_t pid){
+__weak int16_t getParameterValue(uint8_t pid){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
     return graphics.params.parameters[pid];
@@ -111,7 +111,7 @@ int16_t getParameterValue(uint8_t pid){
 }
 
 // called from program, MIDI, or (potentially) digital bus
-void setParameterValue(uint8_t pid, int16_t value){
+__weak void setParameterValue(uint8_t pid, int16_t value){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
     graphics.params.setValue(pid, value);

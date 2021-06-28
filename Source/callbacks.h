@@ -31,6 +31,9 @@ extern "C" {
   void onResourceUpdate(void);
   void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len);
 
+  int16_t getParameterValue(uint8_t pid);
+  void setParameterValue(uint8_t pid, int16_t value);
+
 #ifdef __cplusplus
 } /* extern C */
 #endif
