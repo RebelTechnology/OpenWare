@@ -89,6 +89,28 @@ int16_t dac_values[2] = {0, 0};
 bool button_led_values[4] = {false};
 volatile uint8_t patchselect;
 
+extern int16_t parameter_values[NOF_PARAMETERS];
+
+extern "C" {
+int16_t getParameterValue(uint8_t pid){
+  if(pid < 5)
+    return takeover.get(pid);
+  else if(pid < NOF_PARAMETERS)
+    return parameter_values[pid];
+  return 0;
+}
+
+// called from program, MIDI, or (potentially) digital bus
+void setParameterValue(uint8_t pid, int16_t value){
+  if(pid < 5){
+    takeover.set(pid, value);
+    takeover.reset(pid, false);
+  }else if(pid < NOF_PARAMETERS){
+    parameter_values[pid] = value;
+  }
+}
+}
+
 bool updatePin(size_t bid, Pin pin){
   // button id 'bid' goes from 1 to 4
   bool state = !pin.get();
