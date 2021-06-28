@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 import itertools
 import multiprocessing
@@ -20,7 +20,7 @@ PROJECTS = {
     'MidiBoot3': [
         'Genius'
     ],
-    #None: ['Expander'] - expander currently won't build
+    #None: ['Expander'] #- expander currently won't build
     #, 'MagusEncoder' - no F0 HAL in libraries
 }
 
@@ -43,47 +43,62 @@ def get_platform_alias(platform):
     if '=' in platform:
         platform, platform_alias = platform.split('=')
     else:
-        platform_alias = platform    
+        platform_alias = platform
     return platform, platform_alias
 
 def build_bootloader(dst, bootloader, data):
-    print()
+    print() or ''
     for project, platform in data:
         platform, platform_alias = get_platform_alias(platform)
         print(
-            f'{bootloader} for {project}'
-            if platform == project else
-            f'{bootloader} for {project}-{platform}')
+            (
+                '{bootloader} for {project}'
+                if platform == project else
+                '{bootloader} for {project}-{platform}'
+            ).format(
+                bootloader=bootloader, project=project, platform=platform))
         env = os.environ.copy()
         env['PLATFORM'] = platform
-        subprocess.run(
+        subprocess.check_call(
             ['make', 'clean', 'all', 'sysex'], cwd=bootloader, env=env)
         shutil.copy(
-            f'{bootloader}/Build/MidiBoot-{platform}.bin',
-            f'{dst}/MidiBoot-{platform_alias}.bin')
+            '{bootloader}/Build/MidiBoot-{platform}.bin'.format(
+                bootloader=bootloader, platform=platform),
+            '{dst}/MidiBoot-{platform_alias}.bin'.format(
+                dst=dst, platform_alias=platform_alias))
         shutil.copy(
-            f'{bootloader}/Build/MidiBoot-{platform}.syx',
-            f'{dst}/MidiBoot-{platform_alias}.syx')
+            '{bootloader}/Build/MidiBoot-{platform}.syx'.format(
+                bootloader=bootloader, platform=platform),
+            '{dst}/MidiBoot-{platform_alias}.syx'.format(
+                dst=dst, platform_alias=platform_alias))
 
 def build_project(dst, project, platforms):
-    print()
+    print() or ''
     for platform in platforms:
         env = os.environ.copy()
         platform, platform_alias = get_platform_alias(platform)
         env['PLATFORM'] = platform
         print(
-            f'Firmware for {platform}'
-            if project == platform else
-            f'Firmware for {project}-{platform}')
-        subprocess.run(
+            (
+                'Firmware for {platform}'
+                if project == platform else
+                'Firmware for {project}-{platform}'
+            ).format(platform=platform, project=project))
+        subprocess.check_call(
             ['make', 'clean', 'all', 'sysex'],
-            cwd=project, env=env)        
+            cwd=project, env=env)
         shutil.copy(
-            f'{project}/Build/{platform_alias}.bin',
-            f'{dst}/{platform_alias}.bin')
+            '{project}/Build/{platform_alias}.bin'.format(
+                project=project, platform_alias=platform_alias
+            ),
+            '{dst}/{platform_alias}.bin'.format(
+                dst=dst, platform_alias=platform_alias
+            ))
         shutil.copy(
-            f'{project}/Build/{platform_alias}.syx',
-            f'{dst}/{platform_alias}.syx')
+            '{project}/Build/{platform_alias}.syx'.format(
+                project=project, platform_alias=platform_alias),
+            '{dst}/{platform_alias}.syx'.format(
+                dst=dst, platform_alias=platform_alias))
 
 def get_version():
     for line in open('Source/device.h'):
@@ -95,13 +110,15 @@ def get_version():
 
 def main(config, smp):
     os.environ['CONFIG'] = config
-    print(f'Config set to {config}')
+    print('Config set to {config}'.format(config=config))
 
     version = get_version()
-    print(f'Firmware version {version}')
+    print('Firmware version {version}'.format(version=version))
 
-    dst = f'Build/{config}/{version}'
-    os.makedirs(dst, exist_ok=True)
+    dst = 'Build/{config}/{version}'.format(config=config, version=version)
+
+    shutil.rmtree(dst)
+    os.makedirs(dst)
 
     data = list(get_projects())
     processes = []
@@ -131,8 +148,9 @@ def main(config, smp):
     for p in processes:
         p.join()
 
-    print()
-    print(f'Results stored in Build/{config}/{version}/')
+    print() or ''
+    print('Results stored in Build/{config}/{version}/'.format(
+        config=config, version=version))
 
 if __name__ == '__main__':
     import argparse
