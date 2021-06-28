@@ -374,15 +374,22 @@ void sendResourceTask(void* p){
   vTaskDelete(NULL);
 }
 
-void runAudioTask(void* p){
+__weak void onStartProgram(){
 #ifdef USE_SCREEN
   graphics.params.reset();
 #endif
+#ifndef USE_SCREEN
+  memset(parameter_values, 0, sizeof(parameter_values));
+#endif
+}
+
+void runAudioTask(void* p){
   PatchDefinition* def = getPatchDefinition();
   if(def->isValid()){
     def->copy();
     ProgramVector* pv = def->getProgramVector();
     updateProgramVector(pv, def);
+    onStartProgram();
     programVector = pv;
     setErrorStatus(NO_ERROR);
     owl.setOperationMode(RUN_MODE);
@@ -570,10 +577,6 @@ void ProgramManager::updateProgramIndex(uint8_t index){
     HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
 #endif
   }
-#ifndef USE_SCREEN
-  // todo: move to onLoadProgram() callback
-  memset(parameter_values, 0, sizeof(parameter_values));
-#endif
 }
 
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  

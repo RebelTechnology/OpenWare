@@ -91,7 +91,6 @@ volatile uint8_t patchselect;
 
 extern int16_t parameter_values[NOF_PARAMETERS];
 
-extern "C" {
 int16_t getParameterValue(uint8_t pid){
   if(pid < 5)
     return takeover.get(pid);
@@ -108,7 +107,6 @@ void setParameterValue(uint8_t pid, int16_t value){
   }else if(pid < NOF_PARAMETERS){
     parameter_values[pid] = value;
   }
-}
 }
 
 bool updatePin(size_t bid, Pin pin){
@@ -419,6 +417,22 @@ static void update_preset(){
     counter = 0;
 }
 
+void onStartProgram(){
+  // new patch selected or loaded
+  takeover.set(0, getAnalogValue(ADC_B));
+  takeover.set(1, getAnalogValue(ADC_D));
+  takeover.set(2, getAnalogValue(ADC_F));
+  takeover.set(3, getAnalogValue(ADC_H));
+  takeover.set(4, getAnalogValue(ADC_I));
+  takeover.reset(0, true);
+  takeover.reset(1, true);
+  takeover.reset(2, true);
+  takeover.reset(3, true);
+  takeover.reset(4, true);
+  memset(dac_values, 0, sizeof(dac_values)); // reset CV outputs to initial values
+  memset(button_led_values, 0, sizeof(button_led_values)); // reset leds
+}
+
 void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   if(new_mode == CONFIGURE_MODE){
     // entering config mode
@@ -431,15 +445,6 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
     button_led_values[1] = !led8.get();
     button_led_values[2] = !led9.get();
     button_led_values[3] = !led10.get();
-  }else if(new_mode == LOAD_MODE){
-    // new patch selected or loaded
-    takeover.set(0, getAnalogValue(ADC_B));
-    takeover.set(1, getAnalogValue(ADC_D));
-    takeover.set(2, getAnalogValue(ADC_F));
-    takeover.set(3, getAnalogValue(ADC_H));
-    takeover.set(4, getAnalogValue(ADC_I));
-    memset(dac_values, 0, sizeof(dac_values)); // reset CV outputs to initial values
-    memset(button_led_values, 0, sizeof(button_led_values)); // reset leds
   }else if(new_mode == RUN_MODE){
     // we are either returning to the same patch or starting a new one
     ledpwm.high(); // switch button leds to red
@@ -461,11 +466,6 @@ void setup(){
   HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
   owl.setup();
-  takeover.set(0, getAnalogValue(ADC_B));
-  takeover.set(1, getAnalogValue(ADC_D));
-  takeover.set(2, getAnalogValue(ADC_F));
-  takeover.set(3, getAnalogValue(ADC_H));
-  takeover.set(4, getAnalogValue(ADC_I));
   for(size_t i=5; i<9; ++i){
     takeover.set(i, CV_ATTENUATION_DEFAULT);
     takeover.reset(i, false);

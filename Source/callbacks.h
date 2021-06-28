@@ -34,6 +34,8 @@ extern "C" {
   int16_t getParameterValue(uint8_t pid);
   void setParameterValue(uint8_t pid, int16_t value);
 
+  void onStartProgram();
+
 #ifdef __cplusplus
 } /* extern C */
 #endif
