@@ -68,7 +68,6 @@ void setup(){
 #endif
 }
 
-
 void loop(void){
 #ifdef USE_USB_HOST
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
@@ -80,6 +79,6 @@ void loop(void){
     MX_USB_HOST_Process();
   }
 #endif
-
+  owl_mode_button();
   owl.loop();
 }

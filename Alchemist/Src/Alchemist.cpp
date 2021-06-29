@@ -44,3 +44,8 @@ void onChangePin(uint16_t pin){
     break;
   }
 }
+
+void loop(void){
+  owl_mode_button();
+  owl.loop();
+}
