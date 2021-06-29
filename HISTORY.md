@@ -1,11 +1,17 @@
+21.2.2
+------
+
+* Fix mode button and LED issue in Wizard
+* Capitalise all USB device names
+
+Known Issues:
+* USB Host does not support reconnecting devices
+* USB Audio might 'click' due to synchronisation with host
+
 21.2.1
 ------
 
 * Change hardware ID for legacy devices to prevent parameter inversion
-
-Known Issues:
-* USB Host does not support reconnecting devices
-* USB Audio might 'click' due to synchronisation problems with host
 
 21.2.0
 ------

@@ -4,6 +4,7 @@
 #include "errorhandlers.h"
 
 extern uint32_t ledstatus;
+void owl_mode_button(void);
 
 void setGateValue(uint8_t ch, int16_t value){
   if(ch == BUTTON_F || ch == PUSHBUTTON)
@@ -30,31 +31,24 @@ void setLed(uint8_t led, uint32_t rgb){
 }
 
 void onChangePin(uint16_t pin){
+  bool value;
   switch(pin){
   case SW1_Pin:
-    setButtonValue(BUTTON_A, !(SW1_GPIO_Port->IDR & SW1_Pin));
-    setButtonValue(PUSHBUTTON, !(SW1_GPIO_Port->IDR & SW1_Pin));
-    ledstatus ^= 0x000003ff;
+    value = !(SW1_GPIO_Port->IDR & SW1_Pin);
+    setButtonValue(BUTTON_A, value);
+    setButtonValue(PUSHBUTTON, value);
+    ledstatus = value ? ledstatus |= 0x000003ff : ledstatus &= ~0x000003ff;
     break;
   case SW2_Pin:
-    setButtonValue(BUTTON_B, !(SW2_GPIO_Port->IDR & SW2_Pin));
-    // setParameterValue(PARAMETER_E, (SW2_GPIO_Port->IDR & SW2_Pin) == 0 ? 4095 : 0);
-    ledstatus ^= 0x000ffc00; // getButtonValue(BUTTON_B) ? 0x000ffc00 : 0;
+    value = !(SW2_GPIO_Port->IDR & SW2_Pin);
+    setButtonValue(BUTTON_B, value);
+    ledstatus = value ? ledstatus |= 0x000ffc00 : ledstatus &= ~0x000ffc00;
     break;
   case SW3_Pin:
-    setButtonValue(BUTTON_C, !(SW3_GPIO_Port->IDR & SW3_Pin));
-    ledstatus ^= 0x3ff00000; // getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
+    value = !(SW3_GPIO_Port->IDR & SW3_Pin);
+    setButtonValue(BUTTON_C, value);
+    ledstatus = value ? ledstatus |= 0x3ff00000 : ledstatus &= ~0x3ff00000;
     break;
-// #ifdef OWL_WIZARD // done in ProgramManager::onProgramReady()
-//   case SW4_Pin:
-//     setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
-//     ledstatus ^= 0x3ff003ff;
-//     break;
-//   case SW5_Pin:
-//     setButtonValue(BUTTON_E, !(SW5_GPIO_Port->IDR & SW5_Pin));
-//     ledstatus = 0;
-//     break;
-// #endif
   }
 }
 
@@ -70,11 +64,13 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
   parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_E])>>2;
   // poll buttons SW4 and SW5
-  if(getButtonValue(BUTTON_D) != !(SW4_GPIO_Port->IDR & SW4_Pin)){
-    setButtonValue(BUTTON_D, !(SW4_GPIO_Port->IDR & SW4_Pin));
-    extern uint32_t ledstatus;
-    ledstatus ^= 0x3ff003ff;
+  bool value = !(SW4_GPIO_Port->IDR & SW4_Pin);
+  if(getButtonValue(BUTTON_D) != value){
+    setButtonValue(BUTTON_D, value);
+    ledstatus = value ? ledstatus |= 0x3ff003ff : ledstatus &= ~0x3ff003ff;
+    // ledstatus ^= 0x3ff003ff;
   }
+  // mode button is read in owl_mode_button()
   // if(getButtonValue(BUTTON_E) != !(SW5_GPIO_Port->IDR & SW5_Pin)){
   //   setButtonValue(BUTTON_E, !(SW5_GPIO_Port->IDR & SW5_Pin));
   //   extern uint32_t ledstatus;
@@ -84,6 +80,8 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 
 void setup(){
   HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_RESET); // Trigger out off
+  initLed();
+  setLed(0, NO_COLOUR);
   owl.setup();
 
 #ifdef USE_USB_HOST
@@ -91,7 +89,6 @@ void setup(){
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 #endif
 }
-
 
 void loop(void){
 #ifdef USE_USB_HOST
@@ -104,6 +101,6 @@ void loop(void){
     MX_USB_HOST_Process();
   }
 #endif
-
+  owl_mode_button();
   owl.loop();
 }
