@@ -8,9 +8,6 @@
 
 #include "CircularBuffer.h"
 
-CircularBuffer<int32_t> audio_rx_buffer;
-CircularBuffer<int32_t> audio_tx_buffer;
-
 #ifdef USE_CS4271
 #define HSAI_RX hsai_BlockB1
 #define HSAI_TX hsai_BlockA1
@@ -31,6 +28,9 @@ extern "C" {
   extern DMA_HandleTypeDef HDMA_RX;
 }
 
+CircularBuffer<int32_t> audio_rx_buffer(codec_rxbuf, CODEC_BUFFER_SIZE);
+CircularBuffer<int32_t> audio_tx_buffer(codec_txbuf, CODEC_BUFFER_SIZE);;
+
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
 
@@ -47,7 +47,9 @@ typedef int8_t audio_t;
 static void update_rx_read_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  size_t pos = audio_rx_buffer.getSize() - __HAL_DMA_GET_COUNTER(&HDMA_RX);
+  // use HDMA_TX position in case we have stopped HDMA_RX
+  // todo: if(wet) then read position is incremented by audioCallback ?
+  size_t pos = audio_rx_buffer.getSize() - __HAL_DMA_GET_COUNTER(&HDMA_TX);
   // // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
   // audio_rx_buffer.setReadIndex(pos & ~(AUDIO_CHANNELS-1));
   audio_rx_buffer.setReadIndex(pos);
@@ -99,6 +101,7 @@ void usbd_audio_tx_stop_callback(){
 
 void usbd_audio_rx_start_callback(size_t rate, uint8_t channels){
 #if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
+  // todo: if(wet) { disable RX dma }
   __HAL_DMA_DISABLE(&HDMA_RX); // stop codec transfers
   audio_rx_buffer.clear();
   update_rx_read_index();
@@ -205,9 +208,13 @@ uint16_t Codec::getBlockSize(){
 #endif
 
 void Codec::init(){
-  audio_tx_buffer = CircularBuffer<int32_t>(codec_txbuf, CODEC_BUFFER_SIZE);
+  // todo: if(wet):
+  // audio_tx_buffer = CircularBuffer<int32_t>(codec_txbuf, CODEC_BUFFER_SIZE);
+  // audio_rx_buffer = CircularBuffer<int32_t>(codec_rxbuf, CODEC_BUFFER_SIZE);
+  // todo: else
+  // audio_tx_buffer = CircularBuffer<int32_t>(codec_rxbuf, CODEC_BUFFER_SIZE);
+  // audio_rx_buffer = CircularBuffer<int32_t>(codec_txbuf, CODEC_BUFFER_SIZE);
   audio_tx_buffer.reset();
-  audio_rx_buffer = CircularBuffer<int32_t>(codec_rxbuf, CODEC_BUFFER_SIZE);
   audio_rx_buffer.reset();
   codec_init();
 }
