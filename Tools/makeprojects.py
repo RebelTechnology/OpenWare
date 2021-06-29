@@ -117,7 +117,8 @@ def main(config, smp):
 
     dst = 'Build/{config}/{version}'.format(config=config, version=version)
 
-    shutil.rmtree(dst)
+    if os.path.exists(dst):
+        shutil.rmtree(dst)
     os.makedirs(dst)
 
     data = list(get_projects())
