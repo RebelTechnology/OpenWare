@@ -4,6 +4,7 @@
 #include "errorhandlers.h"
 
 extern uint32_t ledstatus;
+void owl_mode_button(void);
 
 void initLed(){
   // Initialise RGB LED PWM timers
