@@ -22,6 +22,9 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+// unsigned 12x12 bit multiplication
+#define U12_MUL_U12(a,b) (__USAT(((uint32_t)(a)*(b))>>12, 12))
+
 #define CV_ATTENUATION_DEFAULT 2186 // calibrated to provide 1V/oct over 5V
 
 // LEDs
@@ -141,18 +144,20 @@ void onChangePin(uint16_t pin){
   }
 }
 
+static uint16_t scaleForDac(int16_t value){
+  return U12_MUL_U12(value + 70, 3521);
+}
+
 void setAnalogValue(uint8_t ch, int16_t value){
   if(owl.getOperationMode() == RUN_MODE){
     extern DAC_HandleTypeDef hdac;
     switch(ch){
     case PARAMETER_F:
-      value = __USAT(value, 12);
-      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
+      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, scaleForDac(value));
       dac_values[0] = value;
       break;
     case PARAMETER_G:
-      value = __USAT(value, 12);
-      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, value);
+      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, scaleForDac(value));
       dac_values[1] = value;
       break;
     case PARAMETER_BA:
@@ -269,8 +274,7 @@ bool isModeButtonPressed(){
 }
 
 int16_t getAttenuatedCV(uint8_t index, uint16_t* adc_values){
-  // Q12 multiplication
-  return (uint32_t(adc_values[index*2]) * uint32_t(takeover.get(index+5))) >> 12;
+  return U12_MUL_U12(adc_values[index*2], takeover.get(index+5));
 }
 
 static uint16_t smooth_adc_values[NOF_ADC_VALUES];
