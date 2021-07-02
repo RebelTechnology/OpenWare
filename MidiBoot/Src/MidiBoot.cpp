@@ -7,6 +7,7 @@
 #include "errorhandlers.h"
 #include "eepromcontrol.h"
 #include "MidiController.h"
+#include "Storage.h"
 
 static SystemMidiReader midi_rx;
 MidiController midi_tx;
@@ -61,6 +62,14 @@ extern "C" void setMessage(const char* msg){
   message = msg;
 }
 
+void sendMessage(uint8_t cmd, const char* msg){  
+  char buffer[64];
+  buffer[0] = cmd;
+  char* p = &buffer[1];
+  p = stpncpy(p, msg, 62);
+  midi_tx.sendSysEx((uint8_t*)buffer, p-buffer);
+}
+
 void sendMessage(){
   if(getErrorStatus() != NO_ERROR)
     message = getErrorMessage() == NULL ? "Error" : getErrorMessage();
@@ -74,19 +83,25 @@ void sendMessage(){
   }
 }
 
+void setProgress(uint16_t value, const char* msg){
+  // debugMessage(msg, (int)(100*value/4095));
+  led_toggle();
+}
+
 void eraseFromFlash(uint8_t sector){
   eeprom_unlock();
   if(sector == 0xff){
-    eeprom_erase_sector(FLASH_SECTOR_7);
-    eeprom_erase_sector(FLASH_SECTOR_8);
-    eeprom_erase_sector(FLASH_SECTOR_9);
-    eeprom_erase_sector(FLASH_SECTOR_10);
-    eeprom_erase_sector(FLASH_SECTOR_11);
-    setMessage("Erased patch storage");
+    storage.erase();
+    // eeprom_erase_sector(FLASH_SECTOR_7);
+    // eeprom_erase_sector(FLASH_SECTOR_8);
+    // eeprom_erase_sector(FLASH_SECTOR_9);
+    // eeprom_erase_sector(FLASH_SECTOR_10);
+    // eeprom_erase_sector(FLASH_SECTOR_11);
+    sendMessage(SYSEX_PROGRAM_MESSAGE, "Erased patch storage");
     led_green();
   }else{
     eeprom_erase_sector(sector);
-    setMessage("Erased flash sector");
+    sendMessage(SYSEX_PROGRAM_MESSAGE, "Erased flash sector");
     led_green();
   }
   eeprom_lock();
@@ -104,6 +119,7 @@ void saveToFlash(uint8_t sector, void* data, uint32_t length){
     }
     eeprom_write_block(ADDR_FLASH_SECTOR_4, data, length);
     eeprom_lock();
+    sendMessage(SYSEX_PROGRAM_MESSAGE, "Firmware flashed");
   }else{
     error(RUNTIME_ERROR, "Firmware too big");
   }
@@ -143,7 +159,8 @@ extern "C" {
     led_green();
     midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
     midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
-    setMessage("OWL Bootloader Ready");
+    storage.init();
+    sendMessage(SYSEX_PROGRAM_MESSAGE, "OWL Bootloader Ready");
   }
 
   void loop(void){
@@ -336,13 +353,25 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   case REQUEST_SETTINGS:
     switch(value){
     case 0:
+    case 127:
       sendMessage();
+      // midi_tx.sendDeviceInfo();
+      break;
+    // case SYSEX_RESOURCE_NAME_COMMAND:
+    //   midi_tx.sendResourceNames();
+    //   break;
     case SYSEX_FIRMWARE_VERSION:
       midi_tx.sendFirmwareVersion();
       break;
     case SYSEX_DEVICE_ID:
       midi_tx.sendDeviceId();
       break;
+    // case SYSEX_DEVICE_STATS:
+    //   midi_tx.sendDeviceStats();
+    //   break;
+    // case SYSEX_BOOTLOADER_VERSION:
+    //   midi_tx.sendBootloaderVersion();
+    //   break;
     case SYSEX_PROGRAM_MESSAGE:
       sendMessage();
       break;

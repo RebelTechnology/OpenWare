@@ -1,11 +1,13 @@
 #include <cstring>
 #include <algorithm>
-#include "cmsis_os.h"
 #include "device.h"
 #include "message.h"
 #include "Storage.h"
 #include "eepromcontrol.h"
 #include "callbacks.h"
+#ifndef USE_BOOTLOADER_MODE
+#include "cmsis_os.h"
+#endif
 
 #ifdef USE_SPI_FLASH
 #include "Flash_S25FL.h"
@@ -38,17 +40,17 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
 }
 
 #ifdef USE_SPI_FLASH
-uint32_t findFirstFreePage(uint32_t begin, uint32_t end, size_t align){
+uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
   uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
-  uint32_t address = end-align;
-  while(address > begin){
-    setProgress((end-address)*4095/(end-begin), "Index");
+  uint32_t address = end-align; // start at the end
+  while(address > start){
+    setProgress((end-address)*4095/(end-start), "Index");
     Flash_read(address, (uint8_t*)quad, sizeof(quad));
     if(RESOURCE_FREE_MAGIC != (quad[0] & quad[1] & quad[2] & quad[3]))
       break;
     address -= sizeof(quad);
   }
-  if(address > begin)
+  if(address > start)
     return (address+sizeof(quad) + (align-1)) & ~(align-1) ;
   return end;
 }
@@ -223,14 +225,13 @@ void Storage::erase(uint32_t flags){
 #ifdef USE_SPI_FLASH
   if(flags & RESOURCE_PORT_MAPPED){
     const size_t blocksize = (64*1024);
-    uint32_t endaddress = EXTERNAL_STORAGE_SIZE;
-    Resource* last = getFreeResource(RESOURCE_PORT_MAPPED);
-    if(last)
-      endaddress = last->getAddress();
+    uint32_t endaddress = findFirstFreePage(0, EXTERNAL_STORAGE_SIZE, blocksize);
     for(uint32_t address=0; address < endaddress; address += blocksize){
       setProgress(address*4095/endaddress, "Erasing");
       Flash_erase(address, ERASE_64KB); // 450 to 1150 mS each
+#ifndef USE_BOOTLOADER_MODE
       vTaskDelay(1); // delay for 1 tick
+#endif
     }
     setProgress(4095, "Erasing");
   }

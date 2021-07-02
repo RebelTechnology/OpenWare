@@ -72,9 +72,9 @@ public:
       return setError("Invalid SysEx package");
     // stop running program and free its memory
     program.exitProgram(true);
+#ifndef USE_BOOTLOADER_MODE
     owl.setOperationMode(LOAD_MODE);
-    // program.loadProgram(2); // load progress bar
-    // program.resetProgram(true);
+#endif
     // get firmware data size (decoded)
     size = decodeInt(data+offset);
     offset += 5; // it takes five 7-bit values to encode four bytes
