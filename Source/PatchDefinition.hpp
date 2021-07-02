@@ -42,7 +42,8 @@ public:
       storage.readResource(sourceResource, linkAddress, 0, programSize);
       sourceResource = NULL;
     }else if(sourceAddress){
-      memcpy(linkAddress, sourceAddress, programSize);
+      if(linkAddress != sourceAddress)
+	memcpy(linkAddress, sourceAddress, programSize);
       sourceAddress = NULL;
     }
   }
