@@ -91,12 +91,10 @@ void setProgress(uint16_t value, const char* msg){
 void eraseFromFlash(uint8_t sector){
   eeprom_unlock();
   if(sector == 0xff){
-    storage.erase();
-    // eeprom_erase_sector(FLASH_SECTOR_7);
-    // eeprom_erase_sector(FLASH_SECTOR_8);
-    // eeprom_erase_sector(FLASH_SECTOR_9);
-    // eeprom_erase_sector(FLASH_SECTOR_10);
-    // eeprom_erase_sector(FLASH_SECTOR_11);
+#ifdef USE_SPI_FLASH
+    storage.erase(RESOURCE_PORT_MAPPED);
+#endif
+    storage.erase(RESOURCE_MEMORY_MAPPED);
     sendMessage(SYSEX_PROGRAM_MESSAGE, "Erased patch storage");
     led_green();
   }else{
