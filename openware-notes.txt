@@ -183,6 +183,9 @@ amidi -p hw:2 -S f07d5214f7
 # erase resource 40
 amidi -p hw:2 -S f07d52140000000028f7
 
+# request resource 41
+amidi -p hw:2 -S f07d52180000000029f7
+
 # flash Wizard firmware
 amidi -p hw:2 -s Wizard.syx
 
