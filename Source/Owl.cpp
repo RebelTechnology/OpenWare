@@ -43,7 +43,9 @@ extern "C"{
 #endif /* USE_DIGITALBUS */
 
 Owl owl;
+#ifdef USE_RGB_LED
 uint32_t ledstatus;
+#endif
 MidiController midi_tx;
 MidiReceiver midi_rx;
 ApplicationSettings settings;
@@ -134,7 +136,9 @@ void Owl::setup(void){
 #ifdef USE_BKPSRAM
   HAL_PWR_EnableBkUpAccess();
 #endif
+#ifdef USE_RGB_LED
   ledstatus = 0;
+#endif
   storage.init();
   registry.init();
   settings.init(); // settings need the registry to be initialised first
