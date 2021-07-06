@@ -5,6 +5,7 @@
 #include "Storage.h"
 #include "eepromcontrol.h"
 #include "callbacks.h"
+#include "crc32.h"
 #ifndef USE_BOOTLOADER_MODE
 #include "cmsis_os.h"
 #endif
@@ -113,6 +114,27 @@ void Storage::index(){
 #endif
   setProgress(4095, "Indexing");
   resource_count = i+1;
+}
+
+uint32_t Storage::getChecksum(Resource* resource){
+  uint32_t crc = 0;
+  if(resource->isMemoryMapped()){
+    crc = crc32(resource->getData(), resource->getDataSize(), 0);
+  }else{
+#ifdef USE_SPI_FLASH
+    uint8_t data[64]; // read chunk of bytes at a time
+    uint32_t address = resource->getAddress();
+    uint32_t end = address + resource->getDataSize();
+    // uint32_t start = address;
+    while(address < end){
+      size_t len = std::min(sizeof(data), (size_t)(end-address));
+      Flash_read(address, data, len);
+      crc = crc32(data, len, crc);
+      address += len;
+    }
+#endif
+  }
+  return crc;
 }
 
 size_t Storage::readResource(Resource* resource, void* data, size_t offset, size_t length){
@@ -243,7 +265,6 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   uint8_t* ptr = (uint8_t*)buffer;
   if(getUsedSize(flags) > size)
     debugMessage("Not enough RAM to defrag");
-
   uint32_t offset = 0;
   for(uint8_t i=0; i<resource_count; ++i){
     if(resources[i].isValid() && resources[i].flagsContain(flags)){
@@ -299,12 +320,26 @@ size_t Storage::writeResource(ResourceHeader* header){
   size_t length = header->size+sizeof(ResourceHeader);
   uint32_t flags = header->flags;
   uint8_t slot = flags & 0xff;
-  if(slot){ // if there is a slot number
-    eraseResource(slot); // mark as deleted if it exists
-  }else{
-    eraseResource(header->name); // mark as deleted if it exists
-  }
   uint8_t* data = (uint8_t*)header;
+  Resource* old = NULL;
+  if(slot){ // if there is a slot number
+    old = getResourceBySlot(slot);
+  }else{
+    old = getResourceByName(header->name);
+  }      
+  if(old){
+    // compare CRC
+    uint32_t crc = crc32(data+sizeof(ResourceHeader), header->size, 0);
+    if(old->getDataSize() == header->size){
+      if(crc == getChecksum(old))
+	debugMessage("Resource checksum match");
+      if(verifyData(old, data, length)){
+	debugMessage("Resource identical");
+	return 0;
+      }
+    }
+    eraseResource(old); // mark as deleted if it exists but is non-identical
+  }
   size_t capacity = getFreeSize(flags);
   if(length > capacity){ // assuming 'header' is located in extram
 #ifdef USE_EXTERNAL_RAM

@@ -19,10 +19,10 @@ private:
   // };
   // SysExFirmwareStatus status = NORMAL;
 public:
-  uint16_t packageIndex = 0;
+  size_t packageIndex = 0;
   uint8_t* buffer = NULL;
-  uint32_t size;
-  uint32_t index;
+  size_t size;
+  size_t index;
   uint32_t crc;
   bool ready;
 public:
@@ -48,14 +48,38 @@ public:
     return -1;
   }
 
-  uint8_t* getData(){
-    return buffer;
-  }
-
-  uint32_t getSize(){
+  size_t getDataSize(){
     return size;
   }
 
+  size_t getLoadedSize(){
+    return index - sizeof(ResourceHeader);
+  }
+
+  size_t getTotalSize(){
+    return size + sizeof(ResourceHeader);
+  }
+
+  uint8_t* getData(){
+    return buffer + sizeof(ResourceHeader);
+  }
+
+  ResourceHeader* getResourceHeader(){
+    return (ResourceHeader*)buffer;
+  }
+
+  void allocateBuffer(size_t size){
+#ifdef USE_EXTERNAL_RAM
+    extern char _EXTRAM; // defined in link script
+    buffer = (uint8_t*)&_EXTRAM;
+#else
+    // required by devices with no ext mem
+    extern char _PATCHRAM;
+    buffer = (uint8_t*)&_PATCHRAM; 
+#endif
+    index = sizeof(ResourceHeader); // start writing data after resource header
+  }
+  
   /* decode a 32-bit unsigned integer from 5 bytes of sysex encoded data */
   uint32_t decodeInt(uint8_t *data){
     uint8_t buf[4];
@@ -64,7 +88,7 @@ public:
     return result;
   }
 
-  int32_t beginFirmwareUpload(uint8_t* data, uint16_t length, uint16_t offset){
+  int32_t beginFirmwareUpload(uint8_t* data, size_t length, size_t offset){
     clear();
     setErrorStatus(NO_ERROR);
     // first package
@@ -81,26 +105,19 @@ public:
     // allocate memory
     if(size > MAX_SYSEX_PAYLOAD_SIZE)
       return setError("SysEx too big");
-#ifdef USE_EXTERNAL_RAM
-    extern char _EXTRAM; // defined in link script
-    buffer = (uint8_t*)&_EXTRAM;
-#else
-    // required by devices with no ext mem
-    extern char _PATCHRAM;
-    buffer = (uint8_t*)&_PATCHRAM; 
-#endif
+    allocateBuffer(size);
     packageIndex = 1;
     return 0;
   }
 
-  int32_t receiveFirmwarePackage(uint8_t* data, uint16_t length, uint16_t offset){
-    int len = sysex_to_data(data+offset, buffer+index, length-offset);
+  int32_t receiveFirmwarePackage(uint8_t* data, size_t length, size_t offset){
+    size_t len = sysex_to_data(data+offset, buffer+index, length-offset);
     index += len;
     packageIndex++;
     return 0;
   }
 
-  int32_t finishFirmwareUpload(uint8_t* data, uint16_t length, uint16_t offset){
+  int32_t finishFirmwareUpload(uint8_t* data, size_t length, size_t offset){
     // last package: package index and checksum
     // check crc
     crc = crc32(buffer, size, 0);
@@ -112,9 +129,9 @@ public:
     return index;
   }
 
-  int32_t handleFirmwareUpload(uint8_t* data, uint16_t length){
-    uint16_t offset = 3;
-    uint16_t idx = decodeInt(data+offset);
+  int32_t handleFirmwareUpload(uint8_t* data, size_t length){
+    size_t offset = 3;
+    size_t idx = decodeInt(data+offset);
     offset += 5;
     if(idx == 0)
       return beginFirmwareUpload(data, length, offset);
@@ -122,10 +139,10 @@ public:
       return setError("SysEx package out of sequence"); // out of sequence package
     int len = floor((length-offset)*7/8.0f);
     // wait for program to exit before writing to buffer
-    if(index+len <= size)
+    if(getLoadedSize()+len <= size)
       // mid package
       return receiveFirmwarePackage(data, length, offset);
-    else if(index == size)
+    else if(getLoadedSize() == getDataSize())
       return finishFirmwareUpload(data, length, offset);
     return setError("Invalid SysEx size"); // wrong size
   }

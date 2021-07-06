@@ -271,7 +271,7 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
   int32_t ret = loader.handleFirmwareUpload(data, size);
   if(ret == 0){
     owl.setOperationMode(LOAD_MODE);
-    setProgress((uint64_t)loader.index*4095/loader.size, "Loading");
+    setProgress((uint64_t)loader.getLoadedSize()*4095/loader.getDataSize(), "Loading");
   }
 }
 
@@ -281,7 +281,7 @@ void MidiHandler::handleFirmwareRunCommand(uint8_t* data, uint16_t size){
 
 void MidiHandler::runProgram(){
   if(loader.isReady()){
-    program.loadDynamicProgram(loader.getData(), loader.getSize());
+    program.loadDynamicProgram(loader.getData(), loader.getDataSize());
     loader.clear();
     // program.startProgram(true);
     program.resetProgram(true);
@@ -318,8 +318,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
       }
       else {
         //program.eraseFromFlash(-2);
-        program.saveToFlash(-2, loader.getData(), loader.getSize());
-        loader.clear();
+        program.saveToFlash(-2, loader.getData(), loader.getDataSize());
         program.resetProgram(true);
       }
     }else{
@@ -328,6 +327,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   }else{
     error(PROGRAM_ERROR, "Invalid FLASH command");
   }
+  loader.clear();
 }
 
 void MidiHandler::handleFirmwareSendCommand(uint8_t* data, uint16_t size){
@@ -347,17 +347,13 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t slot = loader.decodeInt(data);
     if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES){
-      data = loader.getData();
-      size_t datasize = loader.getSize();
-      // char name[] = "patch00";
-      // name[5] = '0'+((slot*10)%10);
-      // name[6] = '0'+(slot%10);
-      memmove(data+sizeof(ResourceHeader), data, datasize); // make space for resource header
-      ProgramHeader* header = (ProgramHeader*)(data+sizeof(ResourceHeader));
+      data = (uint8_t*)loader.getResourceHeader();
+      size_t datasize = loader.getDataSize();
+      ProgramHeader* header = (ProgramHeader*)loader.getData();
       if(header->magic == 0XDADAC0DE){	
 	storage.writeResourceHeader(data, header->programName, datasize,
-				    RESOURCE_PORT_MAPPED|RESOURCE_USER_PATCH|slot);
-	program.saveToFlash(slot, data, datasize+sizeof(ResourceHeader));
+				    FLASH_DEFAULT_FLAGS|RESOURCE_USER_PATCH|slot);
+	program.saveToFlash(slot, data, loader.getTotalSize());
       }else{
 	error(PROGRAM_ERROR, "Invalid patch magic");
       }
@@ -379,17 +375,16 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
       // stop patch or check if running
       // flash in background task
       data = loader.getData();
-      size_t datasize = loader.getSize();
-      memmove(data+sizeof(ResourceHeader), data, datasize); // make space for resource header
-      storage.writeResourceHeader(data, name, datasize, RESOURCE_PORT_MAPPED);
-      program.saveToFlash(0, data, datasize+sizeof(ResourceHeader));
-      loader.clear();
+      size_t datasize = loader.getDataSize();
+      storage.writeResourceHeader(data, name, datasize, FLASH_DEFAULT_FLAGS);
+      program.saveToFlash(0, data, loader.getTotalSize());
     }else{
       error(PROGRAM_ERROR, "Invalid SAVE name");
     }
   }else{
     error(PROGRAM_ERROR, "Invalid SAVE command");
   }
+  loader.clear();
 }
 
 void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){

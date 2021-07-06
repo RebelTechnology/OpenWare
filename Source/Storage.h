@@ -35,6 +35,7 @@ public:
   bool eraseResource(const char* name);
   bool eraseResource(Resource* resource);
   void erase(uint32_t flags = FLASH_DEFAULT_FLAGS);
+  uint32_t getChecksum(Resource* resource);  
 
   /** 
    * returns number of bytes in use by valid resources.

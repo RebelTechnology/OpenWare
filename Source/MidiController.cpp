@@ -111,23 +111,23 @@ public:
       Resource* resource = registry.getResource(state);
       if(resource)
 	midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, state+MAX_NUMBER_OF_PATCHES,
-			 resource->getName(), resource->getDataSize());
+			 resource->getName(), resource->getDataSize(), storage.getChecksum(resource));
       state++;
     }else{
       owl.setBackgroundTask(NULL); // end this task
     }
   }
 };
-      
+
 void MidiController::sendPatchName(uint8_t slot){
   if(slot == 0){
     PatchDefinition* def = registry.getPatchDefinition();
     if(def)
-      sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getProgramSize());
+      sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getProgramSize(), 0);
   }else{
     Resource* resource = registry.getPatch(slot-1);
     if(resource)
-      sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize());
+      sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize(), storage.getChecksum(resource));
   }
 }
 
@@ -160,8 +160,8 @@ void MidiController::sendResource(Resource* resource){
   uint32_t crc = 0;
   while(offset < len){
     setProgress(offset*4095/len, "Sending");
+    vTaskDelay(MAIN_LOOP_SLEEP_MS*2);
     midi_tx.transmit();
-    vTaskDelay(10);
     size_t sz = len-offset;
     if(sz > msgsize)
       sz = msgsize;
@@ -175,7 +175,7 @@ void MidiController::sendResource(Resource* resource){
   }
   // prepare and send CRC message
   midi_tx.transmit();
-  vTaskDelay(10);
+  vTaskDelay(MAIN_LOOP_SLEEP_MS*2);
   index = __REV(__REV(index)+1);
   data_to_sysex((uint8_t*)&index, msg+1, 4);
   crc = __REV(crc);
@@ -186,16 +186,19 @@ void MidiController::sendResource(Resource* resource){
 #endif
 }
 
-void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name, size_t datasize){
+void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name, size_t datasize, uint32_t crc){
   if(name != NULL){
-    datasize = __REV(datasize); // make it big-endian
-    uint8_t len = strnlen(name, 24);
-    uint8_t buf[len+3+5];
+     // make the numbers big-endian
+    datasize = __REV(datasize);
+    crc = __REV(crc);
+    size_t len = strnlen(name, 24);
+    uint8_t buf[len+3+5+5];
     buf[0] = cmd;
     buf[1] = index;
     memcpy(buf+2, name, len);
     buf[len+2] = 0;
     data_to_sysex((uint8_t*)&datasize, buf+len+3, 4);
+    data_to_sysex((uint8_t*)&crc, buf+len+3+5, 4);
     sendSysEx(buf, sizeof(buf));
   }
 }

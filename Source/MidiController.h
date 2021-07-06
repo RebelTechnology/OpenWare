@@ -27,7 +27,7 @@ public:
   void sendPatchNames();
   void sendResourceNames();
   void sendResource(Resource* resource);
-  void sendName(uint8_t cmd, uint8_t index, const char* name, size_t size);
+  void sendName(uint8_t cmd, uint8_t index, const char* name, size_t size, uint32_t crc);
   void sendDeviceInfo();
   void sendDeviceStats();
   void sendProgramStats();
