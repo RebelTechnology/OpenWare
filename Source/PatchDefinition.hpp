@@ -43,7 +43,7 @@ public:
       sourceResource = NULL;
     }else if(sourceAddress){
       if(linkAddress != sourceAddress)
-	memcpy(linkAddress, sourceAddress, programSize);
+	memmove(linkAddress, sourceAddress, programSize);
       sourceAddress = NULL;
     }
   }
