@@ -484,8 +484,8 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Init.PdmInit.MicPairsNbr = 1;
   hsai_BlockA1.Init.PdmInit.ClockEnable = SAI_PDM_CLOCK1_ENABLE;
   hsai_BlockA1.FrameInit.FrameLength = 256;
-  hsai_BlockA1.FrameInit.ActiveFrameLength = 1;
-  hsai_BlockA1.FrameInit.FSDefinition = SAI_FS_STARTFRAME;
+  hsai_BlockA1.FrameInit.ActiveFrameLength = 128;
+  hsai_BlockA1.FrameInit.FSDefinition = SAI_FS_CHANNEL_IDENTIFICATION;
   hsai_BlockA1.FrameInit.FSPolarity = SAI_FS_ACTIVE_HIGH;
   hsai_BlockA1.FrameInit.FSOffset = SAI_FS_BEFOREFIRSTBIT;
   hsai_BlockA1.SlotInit.FirstBitOffset = 0;
@@ -513,8 +513,8 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.PdmInit.MicPairsNbr = 1;
   hsai_BlockB1.Init.PdmInit.ClockEnable = SAI_PDM_CLOCK1_ENABLE;
   hsai_BlockB1.FrameInit.FrameLength = 256;
-  hsai_BlockB1.FrameInit.ActiveFrameLength = 1;
-  hsai_BlockB1.FrameInit.FSDefinition = SAI_FS_STARTFRAME;
+  hsai_BlockB1.FrameInit.ActiveFrameLength = 128;
+  hsai_BlockB1.FrameInit.FSDefinition = SAI_FS_CHANNEL_IDENTIFICATION;
   hsai_BlockB1.FrameInit.FSPolarity = SAI_FS_ACTIVE_HIGH;
   hsai_BlockB1.FrameInit.FSOffset = SAI_FS_BEFOREFIRSTBIT;
   hsai_BlockB1.SlotInit.FirstBitOffset = 0;
@@ -1121,11 +1121,11 @@ void StartDefaultTask(void const * argument)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -1138,10 +1138,13 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{
+{ 
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

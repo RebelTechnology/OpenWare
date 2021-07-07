@@ -43,8 +43,8 @@
 #define USBD_AUDIO_TX_CHANNELS       4
 
 #define USE_USBD_AUDIO
-#define USE_USBD_AUDIO_TX           // microphone
-#define USE_USBD_AUDIO_RX           // speaker
+/* #define USE_USBD_AUDIO_TX           // microphone */
+/* #define USE_USBD_AUDIO_RX           // speaker */
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
 /* #define USBD_MAX_POWER              100 // 200mA for iPad compatibility */
@@ -59,7 +59,6 @@
 /* #define UART_MIDI_RX_BUFFER_SIZE    256 */
 
 #define AUDIO_SAMPLINGRATE          48000
-#define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
 #define USB_HOST_PWR_EN_GPIO_Port GPIOB
 #define USB_HOST_PWR_EN_Pin GPIO_PIN_0 // PB0 is unused
