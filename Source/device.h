@@ -90,7 +90,7 @@
 #define MAX_SYSEX_PAYLOAD_SIZE       (1 * 1024 * 1024) // Maximum resource size
 #endif
 #define BOOTLOADER_MAGIC             0xB007C0DE
-#define BOOTLOADER_VERSION           "v0.1"
+#define BOOTLOADER_VERSION           FIRMWARE_VERSION
 
 #ifndef DEBUG
 #define USE_FFT_TABLES
