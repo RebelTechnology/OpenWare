@@ -333,12 +333,13 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFirmwareSendCommand(uint8_t* data, uint16_t size){
   uint32_t slot = loader.decodeInt(data);
   Resource* resource = NULL;
-  if(slot-1 < MAX_NUMBER_OF_PATCHES)
+  if(slot-1 < MAX_NUMBER_OF_PATCHES-1)
     resource = registry.getPatch(slot-1);
   else if(slot-MAX_NUMBER_OF_PATCHES < MAX_NUMBER_OF_RESOURCES)
     resource = registry.getResource(slot-MAX_NUMBER_OF_PATCHES);
   if(resource != NULL)
-    program.sendResource(resource);
+    midi_tx.sendResource(resource);
+    // program.sendResource(resource);
   else
     error(PROGRAM_ERROR, "Invalid SEND command");
 }
@@ -371,10 +372,7 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
     const char* name = (const char*)data;
     size_t len = strnlen(name, 20);
     if(len > 0 && len < 20){
-      // todo: create ResourceHeader in FirmwareLoader::beginFirmwareUpload()
-      // stop patch or check if running
-      // flash in background task
-      data = loader.getData();
+      data = (uint8_t*)loader.getResourceHeader();
       size_t datasize = loader.getDataSize();
       storage.writeResourceHeader(data, name, datasize, FLASH_DEFAULT_FLAGS);
       program.saveToFlash(0, data, loader.getTotalSize());
