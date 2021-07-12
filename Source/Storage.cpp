@@ -123,7 +123,7 @@ uint32_t Storage::getChecksum(Resource* resource){
   }else{
 #ifdef USE_SPI_FLASH
     uint8_t data[64]; // read chunk of bytes at a time
-    uint32_t address = resource->getAddress();
+    uint32_t address = resource->getAddress() + sizeof(ResourceHeader);
     uint32_t end = address + resource->getDataSize();
     // uint32_t start = address;
     while(address < end){

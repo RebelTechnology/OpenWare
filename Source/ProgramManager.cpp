@@ -341,7 +341,7 @@ void eraseFlashTask(void* p){
   if(slot == 0xff){
     storage.erase();
     debugMessage("Erased flash storage");
-  }else if(slot-1 < MAX_NUMBER_OF_PATCHES){
+  }else if(slot-1 < MAX_NUMBER_OF_PATCHES-1){
     Resource* resource = registry.getPatch(slot-1);
     if(resource != NULL){
       storage.eraseResource(resource);
