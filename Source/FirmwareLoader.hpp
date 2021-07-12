@@ -6,18 +6,11 @@
 #include "sysex.h"
 #include "device.h"
 #include <stdint.h>
-// #include "owlcontrol.h"
 #include "errorhandlers.h"
 #include "ProgramManager.h"
+#include "ResourceHeader.h"
 
 class FirmwareLoader {
-private:
-  // enum SysExFirmwareStatus {
-  //   NORMAL = 0,
-  //   UPLOADING,
-  //   ERROR = 0xff
-  // };
-  // SysExFirmwareStatus status = NORMAL;
 public:
   size_t packageIndex = 0;
   uint8_t* buffer = NULL;
@@ -31,7 +24,7 @@ public:
     index = 0;
     packageIndex = 0;
     ready = false;
-    crc = -1;
+    crc = 0;
   }
 
   uint32_t getChecksum(){
@@ -112,17 +105,18 @@ public:
 
   int32_t receiveFirmwarePackage(uint8_t* data, size_t length, size_t offset){
     size_t len = sysex_to_data(data+offset, buffer+index, length-offset);
+    crc = crc32(buffer+index, len, crc);
     index += len;
     packageIndex++;
     return 0;
   }
 
   int32_t finishFirmwareUpload(uint8_t* data, size_t length, size_t offset){
-    // last package: package index and checksum
-    // check crc
-    crc = crc32(buffer, size, 0);
-    // get checksum: last 4 bytes of buffer
-    uint32_t checksum = decodeInt(data+length-5);
+    // last package: index and checksum
+    // crc = crc32(getData(), getDataSize(), 0);
+    if(length < 5)
+      return setError("Missing checksum");
+    uint32_t checksum = decodeInt(data+offset);
     if(crc != checksum)
       return setError("Invalid SysEx checksum");
     ready = true;
@@ -134,17 +128,15 @@ public:
     size_t idx = decodeInt(data+offset);
     offset += 5;
     if(idx == 0)
-      return beginFirmwareUpload(data, length, offset);
-    if(packageIndex != idx)
+      return beginFirmwareUpload(data, length, offset); // first package
+    else if(packageIndex != idx)
       return setError("SysEx package out of sequence"); // out of sequence package
-    int len = floor((length-offset)*7/8.0f);
-    // wait for program to exit before writing to buffer
-    if(getLoadedSize()+len <= size)
-      // mid package
-      return receiveFirmwarePackage(data, length, offset);
+    else if(getLoadedSize() < getDataSize())
+      return receiveFirmwarePackage(data, length, offset); // mid transfer package
     else if(getLoadedSize() == getDataSize())
-      return finishFirmwareUpload(data, length, offset);
-    return setError("Invalid SysEx size"); // wrong size
+      return finishFirmwareUpload(data, length, offset); // last package
+    else
+      return setError("Invalid SysEx size"); // wrong size
   }
 };
 
