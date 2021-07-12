@@ -49,7 +49,7 @@ static void update_rx_read_index(){
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   // use HDMA_TX position in case we have stopped HDMA_RX
   // todo: if(wet) then read position is incremented by audioCallback ?
-  size_t pos = audio_rx_buffer.getSize() - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
   // // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
   // audio_rx_buffer.setReadIndex(pos & ~(AUDIO_CHANNELS-1));
   audio_rx_buffer.setReadIndex(pos);
@@ -59,7 +59,7 @@ static void update_rx_read_index(){
 static void update_tx_write_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  size_t pos = audio_tx_buffer.getSize() - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
   // // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
   // audio_tx_buffer.setWriteIndex(pos & ~(AUDIO_CHANNELS-1));
   audio_tx_buffer.setWriteIndex(pos);
@@ -69,7 +69,7 @@ static void update_tx_write_index(){
 void usbd_audio_tx_start_callback(size_t rate, uint8_t channels){
 #if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
   update_tx_write_index();
-  int32_t pos = audio_tx_buffer.getWriteIndex(); // not always aligned to AUDIO_CHANNELS samples
+  size_t pos = audio_tx_buffer.getWriteIndex(); // not always aligned to AUDIO_CHANNELS samples
   // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
   pos &= ~(AUDIO_CHANNELS-1);
   // position read head at one USB transfer block back from write head
@@ -86,7 +86,7 @@ void usbd_audio_tx_start_callback(size_t rate, uint8_t channels){
   // pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
   // audio_tx_buffer.setReadIndex(pos);
 #ifdef DEBUG
-  printf("start tx %d %d %d\n", rate, channels, pos);
+  printf("start tx %u %u %u\n", rate, channels, pos);
 #endif
 #endif
 }
@@ -113,7 +113,7 @@ void usbd_audio_rx_start_callback(size_t rate, uint8_t channels){
   program.exitProgram(true);
   owl.setOperationMode(STREAM_MODE);
 #ifdef DEBUG
-  printf("start rx %d %d %d\n", rate, channels, pos);
+  printf("start rx %u %u %u\n", rate, channels, pos);
 #endif
 #endif
 }
