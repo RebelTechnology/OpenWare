@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h> // for memcpy
 
-#ifdef DEBUG
+#ifdef DEBUG_CIRCULAR_BUFFER
 #define FLOW_ASSERT(x, y) ASSERT(x, y)
 #else
 #define FLOW_ASSERT(x, y)
