@@ -30,7 +30,7 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
   uint32_t* p = (uint32_t*)end;
   p -= 2*align/sizeof(uint32_t); // start at two alignment units from end
   while(p > begin && *p == RESOURCE_FREE_MAGIC){
-    setProgress(((uint32_t)end-(uint32_t)p)*4095/((uint32_t)end-(uint32_t)begin), "Index");
+    setProgress(((uint32_t)end-(uint32_t)p)*4095LL/((uint32_t)end-(uint32_t)begin), "Index");
     p--;
   }
   p += align/sizeof(uint32_t);
@@ -44,12 +44,18 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
 uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
   uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
   uint32_t address = end-align; // start at the end
+  uint16_t progress = 0;
   while(address > start){
-    setProgress((end-address)*4095/(end-start), "Index");
+    setProgress(progress, "Index");
     Flash_read(address, (uint8_t*)quad, sizeof(quad));
     if(RESOURCE_FREE_MAGIC != (quad[0] & quad[1] & quad[2] & quad[3]))
       break;
     address -= sizeof(quad);
+    progress = (end-address)*4095LL/(end-start);
+#ifndef USE_BOOTLOADER_MODE
+    if(progress % 128 == 0)
+      vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
+#endif
   }
   if(address > start)
     return (address+sizeof(quad) + (align-1)) & ~(align-1) ;
@@ -249,10 +255,10 @@ void Storage::erase(uint32_t flags){
     const size_t blocksize = (64*1024);
     uint32_t endaddress = findFirstFreePage(0, EXTERNAL_STORAGE_SIZE, blocksize);
     for(uint32_t address=0; address < endaddress; address += blocksize){
-      setProgress(address*4095/endaddress, "Erasing");
+      setProgress(address*4095LL/endaddress, "Erasing");
       Flash_erase(address, ERASE_64KB); // 450 to 1150 mS each
 #ifndef USE_BOOTLOADER_MODE
-      vTaskDelay(1); // delay for 1 tick
+      vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
 #endif
     }
     setProgress(4095, "Erasing");
