@@ -269,7 +269,6 @@ MS USB hardware verifier
 https://www.usb.org/usb2tools
 http://www.testusb.com/Ch8ck.html
 
-
 -----------------------------------------------------------------
 
 enable semihosting:

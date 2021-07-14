@@ -1,3 +1,9 @@
+22.0.0
+
+* Prevent rewriting resources and patches
+* Support SPI flash storage
+* Rewritten storage code
+
 21.2.2
 ------
 
