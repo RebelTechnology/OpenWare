@@ -22,7 +22,7 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
-// unsigned 12x12 bit multiplication
+// 12x12 bit multiplication with unsigned operands and result
 #define U12_MUL_U12(a,b) (__USAT(((uint32_t)(a)*(b))>>12, 12))
 
 #define CV_ATTENUATION_DEFAULT 2186 // calibrated to provide 1V/oct over 5V
@@ -274,7 +274,8 @@ bool isModeButtonPressed(){
 }
 
 int16_t getAttenuatedCV(uint8_t index, uint16_t* adc_values){
-  return U12_MUL_U12(adc_values[index*2], takeover.get(index+5));
+  // 12x12 bit multiplication with signed operands and no saturation
+  return ((int32_t)adc_values[index*2] * takeover.get(index+5)) >> 12;
 }
 
 static uint16_t smooth_adc_values[NOF_ADC_VALUES];
