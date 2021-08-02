@@ -5,6 +5,7 @@
 * Provide resource size and CRC with name
 * Support SPI flash storage
 * Rewritten storage code
+* Support for new Witch device
 
 21.2.2
 ------
