@@ -31,7 +31,7 @@ CPPFLAGS += -fdata-sections
 CPPFLAGS += -ffunction-sections
 CPPFLAGS += -fno-builtin -ffreestanding
 LDFLAGS += -fno-builtin -ffreestanding
-CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
+CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant

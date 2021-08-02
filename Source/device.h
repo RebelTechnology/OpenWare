@@ -3,7 +3,19 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v21.2.2"
+#define FIRMWARE_VERSION "v22.0.0"
+
+#ifdef USE_SPI_FLASH
+#define MAX_SPI_FLASH_HEADERS        32
+#define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
+#define SPI_FLASH_HSPI               hspi1
+#define EXTERNAL_STORAGE_SIZE        (8*1024*1024)
+#else
+#define MAX_SPI_FLASH_HEADERS        0
+#define FLASH_DEFAULT_FLAGS          RESOURCE_MEMORY_MAPPED
+#endif
+#define USE_FLASH
+#define MAX_RESOURCE_HEADERS         (16+MAX_SPI_FLASH_HEADERS)
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -26,7 +38,7 @@
 #define USE_USBD_MIDI
 #define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
-#define MIDI_OUTPUT_BUFFER_SIZE      128
+#define MIDI_OUTPUT_BUFFER_SIZE      1024
 #define MIDI_INPUT_BUFFER_SIZE       64
 #define MIDI_SYSEX_BUFFER_SIZE       256
 
@@ -75,13 +87,10 @@
 #ifdef USE_BOOTLOADER_MODE // Flag to choose if we're flashing firmware or bootloader from SySex
 #define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_FIRMWARE_SIZE
 #else
-#define MAX_SYSEX_PAYLOAD_SIZE       (512 * 1024) // Maximum resource size
+#define MAX_SYSEX_PAYLOAD_SIZE       (1 * 1024 * 1024) // Maximum resource size
 #endif
 #define BOOTLOADER_MAGIC             0xB007C0DE
-#define BOOTLOADER_VERSION           "v0.1"
-
-#define MAX_FACTORY_PATCHES          36
-#define MAX_USER_PATCHES             4
+#define BOOTLOADER_VERSION           FIRMWARE_VERSION
 
 #ifndef DEBUG
 #define USE_FFT_TABLES
@@ -149,9 +158,7 @@
 #endif
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
-#define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
-#define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+#define MANAGER_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
 
 #ifndef ARM_CYCLES_PER_SAMPLE
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */

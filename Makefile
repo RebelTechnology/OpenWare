@@ -81,6 +81,9 @@ clean: ## remove generated files
 	@$(MAKE) -C Noctua clean
 	@$(MAKE) -C BioSignals clean
 	@$(MAKE) -C MidiBoot clean
+	@$(MAKE) -C MidiBoot3 clean
+	@$(MAKE) -C MidiBootOwl clean
+	@$(MAKE) -C Genius clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile

@@ -92,6 +92,8 @@ private:
   SerialBuffer<MIDI_OUTPUT_BUFFER_SIZE> buffer;
 public:
   void write(MidiMessage msg){
+    if(buffer.getContiguousWriteCapacity() <= 4)
+      transmit();
     buffer.push(msg.data, 4);
   }
   void transmit(){

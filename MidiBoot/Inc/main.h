@@ -70,6 +70,9 @@ void Error_Handler(void);
 #define FLASH_SCK_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
+#define FLASH_WP_Pin GPIO_PIN_0
+#define FLASH_WP_GPIO_Port GPIOB
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

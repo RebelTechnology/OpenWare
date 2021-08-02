@@ -16,7 +16,7 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 #include "message.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "PatchRegistry.h"
 
 #ifdef OWL_BIOSIGNALS
@@ -209,8 +209,9 @@ OperationMode Owl::getOperationMode(){
 }
 
 void Owl::setOperationMode(OperationMode mode){
-  onChangeMode(mode, operationMode);
+  OperationMode old_mode = operationMode;
   operationMode = mode;
+  onChangeMode(mode, old_mode);
 }
 
 void Owl::loop(){
@@ -223,8 +224,6 @@ void Owl::loop(){
 #else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
 #endif
-  midi_rx.receive();
-  midi_tx.transmit();
 #ifdef USE_IWDG
 #ifdef STM32H7xx
   IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
