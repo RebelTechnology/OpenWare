@@ -7,15 +7,15 @@
 * Rewritten storage code
 * Support for new Witch device
 
+Known Issues:
+* USB Host does not support reconnecting devices
+* USB Audio might 'click' due to synchronisation with host
+
 21.2.2
 ------
 
 * Fix mode button and LED issue in Wizard
 * Capitalise all USB device names
-
-Known Issues:
-* USB Host does not support reconnecting devices
-* USB Audio might 'click' due to synchronisation with host
 
 21.2.1
 ------
