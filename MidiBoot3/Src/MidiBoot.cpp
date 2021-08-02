@@ -205,7 +205,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t checksum = loader.decodeInt(data);
     if(checksum == loader.getChecksum()){
-      saveToFlash(FIRMWARE_SECTOR, loader.getData(), loader.getSize());
+      saveToFlash(FIRMWARE_SECTOR, loader.getData(), loader.getDataSize());
       loader.clear();
     }else{
       error(PROGRAM_ERROR, "Invalid FLASH checksum");
