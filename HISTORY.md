@@ -1,6 +1,8 @@
 22.0.0
+------
 
 * Prevent rewriting resources and patches
+* Provide resource size and CRC with name
 * Support SPI flash storage
 * Rewritten storage code
 
