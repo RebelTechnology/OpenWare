@@ -195,5 +195,8 @@ void loop(void){
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
   }
+  for(int i=20; i < 40; i++) {
+    graphics.params.updateValue(i, 0);
+  }
   // MAX11300_bulkwriteDAC();
 }
