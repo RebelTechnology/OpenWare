@@ -7,7 +7,30 @@ bool midi_error(const char* str){
   return false;
 }
 
-bool MidiReader::readMidiFrame(uint8_t* frame){
+bool PerformanceMidiReader::readMidiFrame(uint8_t* frame){
+  // handle Note and CC messages only
+  // ignore first byte
+  switch(frame[1] & 0xf0){ // accept any channel
+  case NOTE_OFF:
+    handleNoteOff(frame[1], frame[2], frame[3]);
+    break;
+  case NOTE_ON:
+    if(frame[3] == 0)
+      handleNoteOff(frame[1], frame[2], frame[3]);
+    else
+      handleNoteOn(frame[1], frame[2], frame[3]);
+    break;
+  case CONTROL_CHANGE:
+    handleControlChange(frame[1], frame[2], frame[3]);
+    break;
+  default:
+    return false; // Invalid USB MIDI message, ignore
+    break;
+  }
+  return true;
+}
+
+bool SystemMidiReader::readMidiFrame(uint8_t* frame){
   // apparently no running status in USB MIDI frames
   // The Cable Number (CN) is a value ranging from 0x0 to 0xF indicating the number assignment of the Embedded MIDI Jack associated with the endpoint that is transferring the data.
   switch(frame[0] & 0x0f){ // accept any cable number /  port
@@ -131,6 +154,6 @@ bool MidiReader::readMidiFrame(uint8_t* frame){
   return true;
 }
 
-void MidiReader::reset(){
+void SystemMidiReader::reset(){
   pos = 0;
 }

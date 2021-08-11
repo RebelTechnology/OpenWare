@@ -1,9 +1,19 @@
 #ifndef __ParameterController_hpp__
 #define __ParameterController_hpp__
 
-#include "basicmaths.h"
+#include <string.h>
 #include "errorhandlers.h"
 #include "ProgramVector.h"
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+#ifndef abs
+#define abs(x) ((x)>0?(x):-(x))
+#endif
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -19,6 +29,7 @@ public:
   ParameterController(){
     reset();
   }
+  void setTitle(const char* str){}
   void reset(){
     drawCallback = defaultDrawCallback;
     for(int i=0; i<SIZE; ++i){
@@ -34,13 +45,11 @@ public:
   }
 
   void draw(ScreenBuffer& screen){
-    drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
+    screen.clear();
     if(sw1()){
-      screen.clear();
       drawStats(screen);
       // todo: show patch name and next/previous patch
     }else if(sw2()){
-      screen.clear();
       screen.setTextSize(1);
       screen.print(2, 0, names[selected]);
       screen.setTextSize(3);
@@ -48,14 +57,14 @@ public:
       screen.print(parameters[selected]/41); // assuming parameter value [0-4095]
       screen.print("%");
     }else if(getErrorStatus() != NO_ERROR && getErrorMessage() != NULL){
-      screen.clear();
       screen.setTextSize(1);
       screen.print(2, 20, getErrorMessage());
     }else{
+      drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       screen.setTextSize(1);
       screen.print(2, 56, names[selected]);
       screen.print(": ");
-      screen.print(parameters[selected]/41);
+      screen.print((int)parameters[selected]/41);
     }
   }
 
@@ -65,7 +74,8 @@ public:
     if(pv->message != NULL)
       screen.print(2, 36, pv->message);
     screen.print(2, 46, "cpu/mem: ");
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
+    float percent = (pv->cycles_per_block/pv->audio_blocksize) / (float)ARM_CYCLES_PER_SAMPLE;
+    screen.print((int)(percent*100));
     screen.print("% ");
     screen.print((int)(pv->heap_bytes_used)/1024);
     screen.print("kB");

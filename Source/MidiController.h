@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "device.h"
+#include "Resource.h"
 #include "MidiMessage.h"
 #include "MidiWriter.h"
 #include "OpenWareMidiControl.h"
@@ -20,13 +21,13 @@ public:
   }
   void sendSettings();
   void sendConfigurationSetting(const char* name, uint32_t value);
-  void sendPatchParameterNames();
   void sendPatchParameterName(PatchParameterId pid, const char* name);
   void sendPatchParameterValues();
   void sendPatchName(uint8_t slot);
   void sendPatchNames();
   void sendResourceNames();
-  void sendName(uint8_t cmd, uint8_t index, const char* name);
+  void sendResource(Resource* resource);
+  void sendName(uint8_t cmd, uint8_t index, const char* name, size_t size, uint32_t crc);
   void sendDeviceInfo();
   void sendDeviceStats();
   void sendProgramStats();
@@ -36,9 +37,6 @@ public:
   void sendDeviceId();
   void sendProgramMessage();
   void sendErrorMessage();
-
-  void handleMidiMessage(MidiMessage msg); // process MIDI from usbd
-  void forwardMidiMessage(MidiMessage msg); // send MIDI from all destinations to program callback
 };
 
 #endif /* __MIDI_CONTROLLER_H */

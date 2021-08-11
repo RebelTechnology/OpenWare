@@ -9,7 +9,7 @@ _Min_Stack_Size = 0x600; /* required amount of stack */
 MEMORY
 {
 RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
-PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 64K    /* total RAM is 112kb */
+PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K    /* total RAM is 128kb */
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
 EXTRAM (rwx)     : ORIGIN = 0x68000000, LENGTH = 1M
 /* configured for no bootloader */
@@ -125,6 +125,7 @@ SECTIONS
   {
     . = ALIGN(4);
     PROVIDE ( _end = . );
+    PROVIDE ( end = . );
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(4);
@@ -135,8 +136,8 @@ SECTIONS
   /* Example: int foo __attribute__ ((section (".ccmdata"))); */
   .ccmdata (NOLOAD) :
   {
-    /* *(.ccmdata) */
-    /* . = ALIGN(8); */
+    *(.ccmdata)
+    . = ALIGN(8);
     PROVIDE (_CCMRAM = .);
   } >CCMRAM
   _CCMRAM_END = ORIGIN(CCMRAM) + LENGTH(CCMRAM);

@@ -177,8 +177,14 @@ amidi -p hw:2 -S f07d527df7
 # reset to bootloader
 amidi -p hw:2 -S f07d527ef7
 
-# erase flash storage sectors
-amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d52140000000009f7f07d52140000000010f7
+# erase flash storage
+amidi -p hw:2 -S f07d5214f7
+
+# erase resource 40
+amidi -p hw:2 -S f07d52140000000028f7
+
+# request resource 41
+amidi -p hw:2 -S f07d52180000000029f7
 
 # flash Wizard firmware
 amidi -p hw:2 -s Wizard.syx
@@ -262,7 +268,6 @@ MS USB hardware verifier
 
 https://www.usb.org/usb2tools
 http://www.testusb.com/Ch8ck.html
-
 
 -----------------------------------------------------------------
 
@@ -358,5 +363,21 @@ todo:
 - disable all: sysex rule
 - IWDG->KR = 0xaaaa only if watchog is enabled, otherwise it hangs
 - fix Noctua bootloader
+
+-----------------------------------------------------------------
+
+Multi channel support
+- fw initialises pv with 2 channels
+- patch code checks how many channels the patch supports (requires static channel count in Patch)
+- calls registerPatch() with max number of supported channels
+- if possible and requested, fw changes pv to add more channels
+- patch code calls patch ctor
+
+-----------------------------------------------------------------
+
+Create and upload resource from wav:
+sox sample.wav -r 48k -c 1 -t f32 sample.raw
+play -c 1 -r 48k -t f32 sample.raw 
+FirmwareSender -in sample.raw -out "OWL*" -name "sample.wav"
 
 -----------------------------------------------------------------

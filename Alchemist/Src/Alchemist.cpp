@@ -4,6 +4,7 @@
 #include "errorhandlers.h"
 
 extern uint32_t ledstatus;
+void owl_mode_button(void);
 
 void initLed(){
   // Initialise RGB LED PWM timers
@@ -26,21 +27,29 @@ void setLed(uint8_t led, uint32_t rgb){
   TIM3->CCR4 = 1023 - ((rgb>>00)&0x3ff);
 }
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
+  bool value;
   switch(pin){
   case SW1_Pin:
-    setButtonValue(BUTTON_A, !(SW1_GPIO_Port->IDR & SW1_Pin));
-    setButtonValue(PUSHBUTTON, !(SW1_GPIO_Port->IDR & SW1_Pin));
-    ledstatus ^= 0x000003ff;
+    value = !(SW1_GPIO_Port->IDR & SW1_Pin);
+    setButtonValue(BUTTON_A, value);
+    setButtonValue(PUSHBUTTON, value);
+    ledstatus = value ? ledstatus |= 0x000003ff : ledstatus &= ~0x000003ff;
     break;
   case SW2_Pin:
-    setButtonValue(BUTTON_B, !(SW2_GPIO_Port->IDR & SW2_Pin));
-    // setParameterValue(PARAMETER_E, (SW2_GPIO_Port->IDR & SW2_Pin) == 0 ? 4095 : 0);
-    ledstatus ^= 0x000ffc00; // getButtonValue(BUTTON_B) ? 0x000ffc00 : 0;
+    value = !(SW2_GPIO_Port->IDR & SW2_Pin);
+    setButtonValue(BUTTON_B, value);
+    ledstatus = value ? ledstatus |= 0x000ffc00 : ledstatus &= ~0x000ffc00;
     break;
   case SW3_Pin:
-    setButtonValue(BUTTON_C, !(SW3_GPIO_Port->IDR & SW3_Pin));
-    ledstatus ^= 0x3ff00000; // getButtonValue(BUTTON_C) ? 0x3ff00000 : 0;
+    value = !(SW3_GPIO_Port->IDR & SW3_Pin);
+    setButtonValue(BUTTON_C, value);
+    ledstatus = value ? ledstatus |= 0x3ff00000 : ledstatus &= ~0x3ff00000;
     break;
   }
+}
+
+void loop(void){
+  owl_mode_button();
+  owl.loop();
 }

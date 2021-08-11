@@ -7,10 +7,10 @@
 #include "HAL_TLC5946.h"
 #include "HAL_MAX11300.h"
 #include "HAL_Encoders.h"
+#include "Pin.h"
+#include "ApplicationSettings.h"
 
-#define TLC5940_RED_DC 0x55
-#define TLC5940_GREEN_DC 0x55
-#define TLC5940_BLUE_DC 0x55
+// 63, 19, 60 // TODO: balance levels
 
 const uint32_t* dyn_rainbowinputs = rainbowinputs;
 const uint32_t* dyn_rainbowoutputs = rainbowoutputs;
@@ -30,6 +30,7 @@ void setPortMode(uint8_t index, uint8_t mode){
     }
   }
 }
+
 uint8_t getPortMode(uint8_t index){
   if(index < 20)
     return portMode[index];
@@ -37,7 +38,9 @@ uint8_t getPortMode(uint8_t index){
 }
 
 void setLed(uint8_t led, uint32_t rgb){
+#ifdef USE_TLC5946
   TLC5946_setRGB(led+1, ((rgb>>20)&0x3ff)<<2, ((rgb>>10)&0x3ff)<<2, ((rgb>>00)&0x3ff)<<2);
+#endif
 }
 
 void onResourceUpdate(void){
@@ -45,32 +48,33 @@ void onResourceUpdate(void){
   extern const uint32_t rainbowoutputs[];
   extern const uint32_t* dyn_rainbowinputs;
   extern const uint32_t* dyn_rainbowoutputs;
-  ResourceHeader* res = registry.getResource("Rainbow.in");
-  if (res == NULL){
+  Resource* res = storage.getResourceByName("Rainbow.in");
+  if(res && res->isMemoryMapped()){
+    dyn_rainbowinputs = (uint32_t*)res->getData();
+  }else{
     dyn_rainbowinputs = rainbowinputs;
   }
-  else {
-    dyn_rainbowinputs = (uint32_t*)registry.getData(res);
-  }
-  res = registry.getResource("Rainbow.out");
-  if (res == NULL){
+  res = storage.getResourceByName("Rainbow.out");
+  if(res && res->isMemoryMapped()){
+    dyn_rainbowoutputs = (uint32_t*)res->getData();
+  }else{
     dyn_rainbowoutputs = rainbowoutputs;
-  }
-  else {
-    dyn_rainbowoutputs = (uint32_t*)registry.getData(res);
   }
 }
 
 void setup(){
   HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
-  HAL_GPIO_WritePin(ENC_NRST_GPIO_Port, ENC_NRST_Pin, GPIO_PIN_RESET); // Reset encoders 
+  Pin enc_nrst(ENC_NRST_GPIO_Port, ENC_NRST_Pin);
+  enc_nrst.outputMode();
+  enc_nrst.low();
+
+#ifdef USE_TLC5946
   {
     extern SPI_HandleTypeDef TLC5946_SPI;
 
     // LEDs
     TLC5946_init(&TLC5946_SPI);
-    // TLC5946_setRGB_DC(63, 19, 60); // TODO: balance levels
-    TLC5946_setRGB_DC(TLC5940_RED_DC, TLC5940_GREEN_DC, TLC5940_BLUE_DC);
+    TLC5946_setAll_DC(0); // Start with 0 brightness here, update from settings later
     TLC5946_setAll(0x10, 0x10, 0x10);
 
     HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
@@ -89,11 +93,11 @@ void setup(){
     HAL_TIM_Base_Start(&htim3);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
   }
+#endif
   {
     // Encoders
     extern SPI_HandleTypeDef ENCODERS_SPI;
     Encoders_init(&ENCODERS_SPI);
-    Encoders_readAll();
   }
   {
     // Pixi
@@ -112,6 +116,16 @@ void setup(){
 #endif
 
   owl.setup();
+
+  // Update LEDs brighness from settings
+  TLC5946_setAll_DC(settings.leds_brightness);
+  TLC5946_Refresh_DC();
+
+  // enable pull-up resistors to un-reset encoder
+  // allows us to program chip with SWD
+  enc_nrst.inputMode();
+  enc_nrst.setPull(PIN_PULL_UP);
+  Encoders_readAll();
 }
 
 void loop(void){
@@ -126,6 +140,11 @@ void loop(void){
     MX_USB_HOST_Process();
   }
 #endif
+
+#ifdef USE_SCREEN
+  graphics.draw();
+  graphics.display();
+#endif /* USE_SCREEN */
 
   owl.loop();
 
@@ -146,7 +165,9 @@ void loop(void){
     }
     updateMAX11300 = false;
   }
+#ifdef USE_TLC5946
   TLC5946_Refresh_GS();
+#endif
   Encoders_readAll();
   graphics.params.updateEncoders(Encoders_get(), 7);
   MAX11300_bulkreadADC();
@@ -173,6 +194,9 @@ void loop(void){
       graphics.params.updateValue(i, 0);
       MAX11300_setDAC(i+1, graphics.params.parameters[i]);
     }
+  }
+  for(int i=20; i < 40; i++) {
+    graphics.params.updateValue(i, 0);
   }
   // MAX11300_bulkwriteDAC();
 }

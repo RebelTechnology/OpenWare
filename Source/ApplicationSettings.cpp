@@ -1,7 +1,7 @@
 #include "ApplicationSettings.h"
 // #include "eepromcontrol.h"
 #include "MidiStatus.h"
-#include "PatchRegistry.h"
+#include "Storage.h"
 #include <string.h>
 
 // #define APPLICATION_SETTINGS_ADDR ADDR_FLASH_SECTOR_1
@@ -36,30 +36,29 @@ void ApplicationSettings::reset(){
   output_scalar = AUDIO_OUTPUT_SCALAR;
   midi_input_channel = MIDI_INPUT_CHANNEL;
   midi_output_channel = MIDI_OUTPUT_CHANNEL;
+#ifdef USE_TLC5946
+  leds_brightness = LEDS_BRIGHTNESS;
+#endif
 }
 
 bool ApplicationSettings::settingsInFlash(){
-  // return eeprom_read_word(APPLICATION_SETTINGS_ADDR) == checksum;
-  // return false;
-  return registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX) != NULL;
+  Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
+  if(resource && resource->isMemoryMapped()){
+    ApplicationSettings* data = (ApplicationSettings*)resource->getData();
+    return data->checksum == checksum;
+  }
+  return false;
 }
 
 void ApplicationSettings::loadFromFlash(){
-  // eeprom_read_block(APPLICATION_SETTINGS_ADDR, this, sizeof(*this));
-  ResourceHeader* resource = registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX);
-  uint8_t* data = (uint8_t*)resource + sizeof(ResourceHeader);
-  if(resource != NULL){
-    memcpy(this, data, sizeof(*this));
-  }
+  Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
+  if(resource)
+    storage.readResource(resource, this, 0, sizeof(*this));
 }
 
 void ApplicationSettings::saveToFlash(){
   uint16_t totalsize = sizeof(ResourceHeader) + sizeof(*this);
   uint8_t buffer[totalsize];
-  ResourceHeader* resource = (ResourceHeader*)buffer;
-  resource->magic = 0XDADADEED;
-  resource->size = sizeof(*this);
-  strcpy(resource->name, APPLICATION_SETTINGS_NAME);  
   memcpy(buffer+sizeof(ResourceHeader), this, sizeof(*this));
-  registry.store(APPLICATION_SETTINGS_RESOURCE_INDEX, buffer, totalsize);
+  storage.writeResource(APPLICATION_SETTINGS_NAME, buffer, sizeof(*this), RESOURCE_SYSTEM_RESOURCE|RESOURCE_MEMORY_MAPPED);
 }

@@ -22,10 +22,10 @@ CPPFLAGS += -ffunction-sections
 #CPPFLAGS +=  -mno-unaligned-access
 #CPPFLAGS  += -fno-omit-frame-pointer
 CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
-CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
+CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m0 -mthumb # -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32F051x8 -DARM_MATH_CM0
 DEF_FLAGS += -D__FPU_PRESENT=0U
-S_SRC = startup_stm32f051x8.s
+S_SRC = $(BUILDROOT)/Src/startup_stm32f051x8.s

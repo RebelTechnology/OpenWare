@@ -376,7 +376,12 @@ bool usbh_midi_ready(void){
 }
 
 void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost, uint8_t* data, size_t len){
-  rxbuffer.incrementWriteHead(len);
+  // len is always 64 at this point, even if only 4 bytes of data is transferred
+  // it appears some drivers (e.g. WinXP) send 0-padded 64-length packets
+  size_t sz = 0;
+  while(sz<len && data[sz] != 0)
+    sz += 4;
+  rxbuffer.incrementWriteHead(sz);
   USBH_MIDI_Receive(phost, rxbuffer.getWriteHead(), rxbuffer.getContiguousWriteCapacity());
 }
 

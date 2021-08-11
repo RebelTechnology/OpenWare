@@ -25,7 +25,7 @@
 #include "usbd_conf.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+const char* getDeviceName();
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/

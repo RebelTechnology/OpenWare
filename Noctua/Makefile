@@ -11,6 +11,7 @@ C_SRC += $(OPENWARE)/Source/iis3dwb_reg.c
 C_SRC += $(OPENWARE)/Source/pcm3168a.c
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
+CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp
 CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
 

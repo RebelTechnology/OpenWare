@@ -155,8 +155,8 @@ static int testButton(){
 }
 
 static int testNoProgram(){
-  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x20000000;
-  /* Check Vector Table: Test if valid stack pointer is programmed at APPLICATION_ADDRESS */
+  return ((*(__IO uint32_t*)(APPLICATION_ADDRESS + 4)) & 0xFFF00000 ) != 0x08000000;
+  /* Check Vector Table: Test if valid Reset_Handler pointer is programmed after APPLICATION_ADDRESS */
 }
 
 static int testWatchdogReset(){
@@ -354,11 +354,8 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|FLASH_nCS_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(PUSH_GATE_OUT_GPIO_Port, PUSH_GATE_OUT_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : PUSHBUTTON_Pin BYPASS_Pin */
-  GPIO_InitStruct.Pin = PUSHBUTTON_Pin|BYPASS_Pin;
+  /*Configure GPIO pins : PUSHBUTTON_Pin */
+  GPIO_InitStruct.Pin = PUSHBUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
@@ -423,12 +420,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BOOT1_Pin */
-  GPIO_InitStruct.Pin = BOOT1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BOOT1_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PG6 PG7 PG8 PG9 
                            PG11 PG12 PG13 PG14 
                            PG15 */
@@ -444,19 +435,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PUSH_GATE_IN_Pin */
-  GPIO_InitStruct.Pin = PUSH_GATE_IN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(PUSH_GATE_IN_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PUSH_GATE_OUT_Pin */
-  GPIO_InitStruct.Pin = PUSH_GATE_OUT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(PUSH_GATE_OUT_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI2_IRQn, 10, 0);

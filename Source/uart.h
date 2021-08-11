@@ -9,10 +9,6 @@
 extern "C" {
 #endif
 
-  void uart_init();
-  bool uart_ready();
-  void uart_tx(uint8_t* data, size_t len);
-  void uart_rx_callback(uint8_t* data, size_t len);
 
 #ifdef __cplusplus
 }

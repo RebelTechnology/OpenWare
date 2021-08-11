@@ -1,7 +1,47 @@
+22.0.0
+------
+
+* Prevent rewriting resources and patches
+* Provide resource size and CRC with name
+* Support SPI flash storage
+* Rewritten storage code
+* Support for new Witch device
+
+Known Issues:
+* USB Host does not support reconnecting devices
+* USB Audio might 'click' due to synchronisation with host
+
+21.2.2
+------
+
+* Fix mode button and LED issue in Wizard
+* Capitalise all USB device names
+
+21.2.1
+------
+
+* Change hardware ID for legacy devices to prevent parameter inversion
+
+21.2.0
+------
+
+* Display patch slots up to 16 on Lich (in hexadecimal)
+* Bootloader flash/lock/unlock functionality
+* New Pin class for GPIO handling
+* Refactored code with project-specific callbacks
+* Magus TRS MIDI output enabled
+* Updated Magus LED handling, new LED brightness menu
+* Update parameters with MIDI messages from USBH
+* USB devices renamed OWL-MAGUS, OWL-WIZARD et c.
+* MIDI command to retrieve resource names and sizes
+* MIDI command to delete resources
+
+
 21.1.0
 ------
 
-* Added MIDI commands for resource SAVE, NAME and DELETE 
+* Added MIDI commands for resource SAVE, NAME and DELETE
+
 
 21.0.0
 ------

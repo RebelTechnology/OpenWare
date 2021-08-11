@@ -17,15 +17,45 @@ class MidiMessage {
     data[2] = d1;
     data[3] = d2;
   }
-  /* The port, or Cable Number (CN), is a value ranging from 0x0 to 0xF indicating the number assignment of the Embedded MIDI Jack associated with the endpoint that is transferring the data. */
   uint8_t getPort(){
-    return data[0]>>4;
+    return data[0] >> 4;
   }
   uint8_t getChannel(){
     return (data[1] & MIDI_CHANNEL_MASK);
   }
   uint8_t getStatus(){
     return (data[1] & MIDI_STATUS_MASK);
+  }
+  uint8_t getSize(){
+    uint8_t sz;
+    switch(data[0] & 0x0f){
+    case USB_COMMAND_SINGLE_BYTE:
+    case USB_COMMAND_SYSEX_EOX1:
+      sz = 1;
+      break;
+    case USB_COMMAND_PROGRAM_CHANGE:
+    case USB_COMMAND_CHANNEL_PRESSURE:
+    case USB_COMMAND_2BYTE_SYSTEM_COMMON:
+    case USB_COMMAND_SYSEX_EOX2:
+      sz = 2;
+      break;
+    case USB_COMMAND_NOTE_OFF:
+    case USB_COMMAND_NOTE_ON:
+    case USB_COMMAND_POLY_KEY_PRESSURE:
+    case USB_COMMAND_CONTROL_CHANGE:
+    case USB_COMMAND_PITCH_BEND_CHANGE:
+    case USB_COMMAND_SYSEX:
+    case USB_COMMAND_SYSEX_EOX3:
+    case USB_COMMAND_3BYTE_SYSTEM_COMMON:
+      sz = 3;
+      break;
+    case USB_COMMAND_MISC:
+    case USB_COMMAND_CABLE_EVENT:
+    default:
+      sz = 0;
+      break;
+    }
+    return sz;
   }
   uint8_t getNote(){
     return data[2];
@@ -55,6 +85,12 @@ class MidiMessage {
   bool isNoteOff(){
     return ((data[1] & MIDI_STATUS_MASK) == NOTE_OFF) || (((data[1] & MIDI_STATUS_MASK) == NOTE_ON) && getVelocity() == 0);
   }
+  bool isSysEx(){
+    return data[0] == USB_COMMAND_SYSEX ||
+      data[0] == USB_COMMAND_SYSEX_EOX1 ||
+      data[0] == USB_COMMAND_SYSEX_EOX2 ||
+      data[0] == USB_COMMAND_SYSEX_EOX3;
+  }      
   bool isControlChange(){
     return (data[1] & MIDI_STATUS_MASK) == CONTROL_CHANGE;
   }
