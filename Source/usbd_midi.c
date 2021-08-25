@@ -391,7 +391,6 @@ static volatile int midi_tx_lock = 0;
 void usbd_midi_tx(uint8_t* buf, uint32_t len) {
   extern USBD_HandleTypeDef hUsbDeviceHS;
   if(hUsbDeviceHS.dev_state == USBD_STATE_CONFIGURED){
-    while(midi_tx_lock);
     midi_tx_lock = 1;
     USBD_LL_Transmit(&hUsbDeviceHS, MIDI_IN_EP, buf, len);
   }
@@ -406,7 +405,6 @@ uint8_t usbd_midi_connected(void){
 void usbd_midi_tx(uint8_t* buf, uint32_t len) {
   extern USBD_HandleTypeDef hUsbDeviceFS;
   if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED){
-    while(midi_tx_lock);
     midi_tx_lock = 1;
     USBD_LL_Transmit(&hUsbDeviceFS, MIDI_IN_EP, buf, len);
   }

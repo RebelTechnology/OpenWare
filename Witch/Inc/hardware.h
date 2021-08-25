@@ -5,6 +5,8 @@
 #define HARDWARE_ID                  WITCH_HARDWARE
 #define HARDWARE_VERSION             "Witch"
 
+#define USE_SPI_FLASH
+
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)

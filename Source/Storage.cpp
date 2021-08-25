@@ -1,11 +1,14 @@
 #include <cstring>
 #include <algorithm>
-#include "cmsis_os.h"
 #include "device.h"
 #include "message.h"
 #include "Storage.h"
 #include "eepromcontrol.h"
 #include "callbacks.h"
+#include "crc32.h"
+#ifndef USE_BOOTLOADER_MODE
+#include "cmsis_os.h"
+#endif
 
 #ifdef USE_SPI_FLASH
 #include "Flash_S25FL.h"
@@ -27,7 +30,7 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
   uint32_t* p = (uint32_t*)end;
   p -= 2*align/sizeof(uint32_t); // start at two alignment units from end
   while(p > begin && *p == RESOURCE_FREE_MAGIC){
-    setProgress(((uint32_t)end-(uint32_t)p)*4095/((uint32_t)end-(uint32_t)begin), "Index");
+    setProgress(((uint32_t)end-(uint32_t)p)*4095LL/((uint32_t)end-(uint32_t)begin), "Index");
     p--;
   }
   p += align/sizeof(uint32_t);
@@ -38,17 +41,23 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
 }
 
 #ifdef USE_SPI_FLASH
-uint32_t findFirstFreePage(uint32_t begin, uint32_t end, size_t align){
+uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
   uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
-  uint32_t address = end-align;
-  while(address > begin){
-    setProgress((end-address)*4095/(end-begin), "Index");
+  uint32_t address = end-align; // start at the end
+  uint16_t progress = 0;
+  while(address > start){
+    setProgress(progress, "Index");
     Flash_read(address, (uint8_t*)quad, sizeof(quad));
     if(RESOURCE_FREE_MAGIC != (quad[0] & quad[1] & quad[2] & quad[3]))
       break;
     address -= sizeof(quad);
+    progress = (end-address)*4095LL/(end-start);
+#ifndef USE_BOOTLOADER_MODE
+    if(progress % 128 == 0)
+      vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
+#endif
   }
-  if(address > begin)
+  if(address > start)
     return (address+sizeof(quad) + (align-1)) & ~(align-1) ;
   return end;
 }
@@ -111,6 +120,27 @@ void Storage::index(){
 #endif
   setProgress(4095, "Indexing");
   resource_count = i+1;
+}
+
+uint32_t Storage::getChecksum(Resource* resource){
+  uint32_t crc = 0;
+  if(resource->isMemoryMapped()){
+    crc = crc32(resource->getData(), resource->getDataSize(), 0);
+  }else{
+#ifdef USE_SPI_FLASH
+    uint8_t data[64]; // read chunk of bytes at a time
+    uint32_t address = resource->getAddress() + sizeof(ResourceHeader);
+    uint32_t end = address + resource->getDataSize();
+    // uint32_t start = address;
+    while(address < end){
+      size_t len = std::min(sizeof(data), (size_t)(end-address));
+      Flash_read(address, data, len);
+      crc = crc32(data, len, crc);
+      address += len;
+    }
+#endif
+  }
+  return crc;
 }
 
 size_t Storage::readResource(Resource* resource, void* data, size_t offset, size_t length){
@@ -223,14 +253,13 @@ void Storage::erase(uint32_t flags){
 #ifdef USE_SPI_FLASH
   if(flags & RESOURCE_PORT_MAPPED){
     const size_t blocksize = (64*1024);
-    uint32_t endaddress = EXTERNAL_STORAGE_SIZE;
-    Resource* last = getFreeResource(RESOURCE_PORT_MAPPED);
-    if(last)
-      endaddress = last->getAddress();
+    uint32_t endaddress = findFirstFreePage(0, EXTERNAL_STORAGE_SIZE, blocksize);
     for(uint32_t address=0; address < endaddress; address += blocksize){
-      setProgress(address*4095/endaddress, "Erasing");
+      setProgress(address*4095LL/endaddress, "Erasing");
       Flash_erase(address, ERASE_64KB); // 450 to 1150 mS each
-      vTaskDelay(1); // delay for 1 tick
+#ifndef USE_BOOTLOADER_MODE
+      vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
+#endif
     }
     setProgress(4095, "Erasing");
   }
@@ -242,7 +271,6 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   uint8_t* ptr = (uint8_t*)buffer;
   if(getUsedSize(flags) > size)
     debugMessage("Not enough RAM to defrag");
-
   uint32_t offset = 0;
   for(uint8_t i=0; i<resource_count; ++i){
     if(resources[i].isValid() && resources[i].flagsContain(flags)){
@@ -298,12 +326,26 @@ size_t Storage::writeResource(ResourceHeader* header){
   size_t length = header->size+sizeof(ResourceHeader);
   uint32_t flags = header->flags;
   uint8_t slot = flags & 0xff;
-  if(slot){ // if there is a slot number
-    eraseResource(slot); // mark as deleted if it exists
-  }else{
-    eraseResource(header->name); // mark as deleted if it exists
-  }
   uint8_t* data = (uint8_t*)header;
+  Resource* old = NULL;
+  if(slot){ // if there is a slot number
+    old = getResourceBySlot(slot);
+  }else{
+    old = getResourceByName(header->name);
+  }      
+  if(old){
+    // compare CRC
+    uint32_t crc = crc32(data+sizeof(ResourceHeader), header->size, 0);
+    if(old->getDataSize() == header->size){
+      if(crc == getChecksum(old))
+	debugMessage("Resource checksum match");
+      if(verifyData(old, data, length)){
+	debugMessage("Resource identical");
+	return 0;
+      }
+    }
+    eraseResource(old); // mark as deleted if it exists but is non-identical
+  }
   size_t capacity = getFreeSize(flags);
   if(length > capacity){ // assuming 'header' is located in extram
 #ifdef USE_EXTERNAL_RAM

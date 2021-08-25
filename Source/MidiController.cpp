@@ -1,4 +1,5 @@
 #include <string.h>
+#include <algorithm>
 #include <math.h> /* for ceilf */
 #include "message.h"
 #include "midi.h"
@@ -111,23 +112,23 @@ public:
       Resource* resource = registry.getResource(state);
       if(resource)
 	midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, state+MAX_NUMBER_OF_PATCHES,
-			 resource->getName(), resource->getDataSize());
+			 resource->getName(), resource->getDataSize(), storage.getChecksum(resource));
       state++;
     }else{
       owl.setBackgroundTask(NULL); // end this task
     }
   }
 };
-      
+
 void MidiController::sendPatchName(uint8_t slot){
   if(slot == 0){
     PatchDefinition* def = registry.getPatchDefinition();
     if(def)
-      sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getProgramSize());
+      sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getProgramSize(), 0);
   }else{
     Resource* resource = registry.getPatch(slot-1);
     if(resource)
-      sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize());
+      sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize(), storage.getChecksum(resource));
   }
 }
 
@@ -141,61 +142,77 @@ void MidiController::sendResourceNames(){
   owl.setBackgroundTask(&task);
 }
 
-void MidiController::sendResource(Resource* resource){
-#ifndef USE_BOOTLOADER_MODE
-  const size_t msgsize = 203; // number of resource bytes we send with each SysEx
-  uint8_t data[msgsize];
-  uint8_t msg[msgsize*8/7+6];
-  // prepare and send first message with zero index and resource size
-  size_t len = 0;
-  msg[0] = SYSEX_FIRMWARE_UPLOAD;
-  data_to_sysex((uint8_t*)&len, msg+1, 4);
-  len = __REV(resource->getDataSize());
-  data_to_sysex((uint8_t*)&len, msg+6, 4);
-  sendSysEx(msg, 11);
-  // prepare and send data messages with incrementing index
-  size_t index = 0;
-  size_t offset = 0;
-  len = resource->getDataSize();
-  uint32_t crc = 0;
-  while(offset < len){
-    setProgress(offset*4095/len, "Sending");
-    midi_tx.transmit();
-    vTaskDelay(10);
-    size_t sz = len-offset;
-    if(sz > msgsize)
-      sz = msgsize;
-    storage.readResource(resource, data, offset, sz);
-    offset += sz;
-    crc = crc32(data, sz, crc);
-    index = __REV(__REV(index)+1); // increment and byteswap
-    data_to_sysex((uint8_t*)&index, msg+1, 4);
-    sz = data_to_sysex(data, msg+6, sz);
-    sendSysEx(msg, sz+6);
+class SendResourceTask : public BackgroundTask {
+private:
+  size_t index;
+  uint32_t crc;
+  Resource* resource;
+  static constexpr size_t msgsize = 203; // number of resource bytes we send with each SysEx
+public:
+  void setResource(Resource* resource){
+    this->resource = resource;
   }
-  // prepare and send CRC message
-  midi_tx.transmit();
-  vTaskDelay(10);
-  index = __REV(__REV(index)+1);
-  data_to_sysex((uint8_t*)&index, msg+1, 4);
-  crc = __REV(crc);
-  data_to_sysex((uint8_t*)&crc, msg+6, 4);
-  sendSysEx(msg, 11);
-  setProgress(4095, "Sending");
-  program.resetProgram(false);
-#endif
+  void begin(){
+    index = 0;
+    crc = 0;
+  }
+  void loop(){
+    if(!resource){      
+      owl.setBackgroundTask(NULL); // end this task
+      return;
+    }
+    size_t len = resource->getDataSize();
+    size_t offset = msgsize*(index-1);
+    uint8_t data[msgsize];
+    uint8_t msg[msgsize*8/7+6];
+    msg[0] = SYSEX_FIRMWARE_UPLOAD;
+    uint32_t word = __REV(index);
+    data_to_sysex((uint8_t*)&word, msg+1, 4);
+    setProgress(offset*4095/len, "Sending");
+    if(index == 0){
+      // prepare and send first message with zero index and resource size
+      word = __REV(resource->getDataSize());
+      data_to_sysex((uint8_t*)&word, msg+6, 4);
+      midi_tx.sendSysEx(msg, 11);
+    }else if(offset < len){
+      // data message
+      size_t sz = std::min(msgsize, len-offset);
+      storage.readResource(resource, data, offset, sz);
+      offset += sz;
+      crc = crc32(data, sz, crc);
+      sz = data_to_sysex(data, msg+6, sz);
+      midi_tx.sendSysEx(msg, sz+6);
+    }else{
+      // last message with CRC checksum
+      word = __REV(crc);
+      data_to_sysex((uint8_t*)&word, msg+6, 4);
+      midi_tx.sendSysEx(msg, 11);
+      owl.setBackgroundTask(NULL); // end this task
+      resource = NULL; // done
+    }
+    index++;
+  }
+};
+
+void MidiController::sendResource(Resource* resource){
+  static SendResourceTask task;
+  task.setResource(resource);
+  owl.setBackgroundTask(&task);
 }
 
-void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name, size_t datasize){
+void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name, size_t datasize, uint32_t crc){
   if(name != NULL){
-    datasize = __REV(datasize); // make it big-endian
-    uint8_t len = strnlen(name, 24);
-    uint8_t buf[len+3+5];
+     // make the numbers big-endian
+    datasize = __REV(datasize);
+    crc = __REV(crc);
+    size_t len = strnlen(name, 24);
+    uint8_t buf[len+3+5+5];
     buf[0] = cmd;
     buf[1] = index;
     memcpy(buf+2, name, len);
     buf[len+2] = 0;
     data_to_sysex((uint8_t*)&datasize, buf+len+3, 4);
+    data_to_sysex((uint8_t*)&crc, buf+len+3+5, 4);
     sendSysEx(buf, sizeof(buf));
   }
 }

@@ -1,7 +1,7 @@
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-LDSCRIPT = STM32F427ZI-boot.ld
+LDSCRIPT = owl2-boot.ld
 include $(OPENWARE)/Hardware/owl2.mk
 
 C_SRC = $(wildcard Src/*.c)
@@ -14,8 +14,10 @@ C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/crc32.c
 C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/message.c
+C_SRC += $(OPENWARE)/Source/Flash_S25FL.c
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
+CPP_SRC += $(OPENWARE)/Source/Storage.cpp
 # S_SRC = startup_openboot.s
 
 ifndef PLATFORM

@@ -100,7 +100,7 @@ void onProgramStatus(ProgramVectorAudioStatus status){
   for(;;);
 }
 
-int16_t getParameterValue(uint8_t pid){
+__weak int16_t getParameterValue(uint8_t pid){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
     return graphics.params.parameters[pid];
@@ -111,7 +111,7 @@ int16_t getParameterValue(uint8_t pid){
 }
 
 // called from program, MIDI, or (potentially) digital bus
-void setParameterValue(uint8_t pid, int16_t value){
+__weak void setParameterValue(uint8_t pid, int16_t value){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
     graphics.params.setValue(pid, value);
@@ -138,56 +138,9 @@ void setButtonValue(uint8_t ch, uint8_t value){
   button_values |= (bool(value)<<ch);
 }
 
-#ifdef USE_ADC
-__weak void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-  // IIR exponential filter with lambda 0.75
-#if defined OWL_MODULAR || defined OWL_TESSERACT || defined OWL_LICH /* inverting ADCs */
-  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
-  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
-  parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
-  parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
-#elif defined OWL_WAVETABLE
-  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
-  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
-  // parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
-  // parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
-  parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
-  parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
-  parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_E])>>2;
-  parameter_values[5] = (parameter_values[5]*3 + 4095-adc_values[ADC_F])>>2;
-  parameter_values[6] = (parameter_values[6]*3 + 4095-adc_values[ADC_G])>>2;
-  parameter_values[7] = (parameter_values[7]*3 + 4095-adc_values[ADC_H])>>2;  
-#elif defined USE_SCREEN
-  // Player todo: route input CVs to parameters
-#else
-#ifdef ADC_A
-  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
-#endif
-#ifdef ADC_B
-  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
-#endif
-#ifdef ADC_C
-  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
-#endif
-#ifdef ADC_D
-  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
-#endif
-#ifdef ADC_E
-  parameter_values[4] = adc_values[ADC_E];
-#endif
-  // parameter_values[0] = 4095-adc_values[0];
-  // parameter_values[1] = 4095-adc_values[1];
-  // parameter_values[2] = 4095-adc_values[2];
-  // parameter_values[3] = 4095-adc_values[3];
-#endif
-}
-#else
-__weak void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-}
-#endif
-
 /* called by the program when a block has been processed */
 void onProgramReady(){
+  midi_tx.transmit();
   ProgramVector* pv = getProgramVector();
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
@@ -198,11 +151,6 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
 #endif
-  // if(ulNotifiedValue > 16){
-  //   // midi_tx.sendProgramStats();
-  //   error(PROGRAM_ERROR, "CPU overrun");
-  //   program.exitProgram(false);
-  // }
   midi_rx.receive(); // push queued up MIDI messages through to patch
 #ifdef USE_ADC
 #ifdef USE_SCREEN
@@ -393,7 +341,7 @@ void eraseFlashTask(void* p){
   if(slot == 0xff){
     storage.erase();
     debugMessage("Erased flash storage");
-  }else if(slot-1 < MAX_NUMBER_OF_PATCHES){
+  }else if(slot-1 < MAX_NUMBER_OF_PATCHES-1){
     Resource* resource = registry.getPatch(slot-1);
     if(resource != NULL){
       storage.eraseResource(resource);
@@ -426,26 +374,35 @@ void sendResourceTask(void* p){
   vTaskDelete(NULL);
 }
 
-void runAudioTask(void* p){
+__weak void onStartProgram(){
 #ifdef USE_SCREEN
   graphics.params.reset();
 #endif
+#ifndef USE_SCREEN
+  memset(parameter_values, 0, sizeof(parameter_values));
+#endif
+}
+
+void runAudioTask(void* p){
   PatchDefinition* def = getPatchDefinition();
   if(def->isValid()){
     def->copy();
     ProgramVector* pv = def->getProgramVector();
     updateProgramVector(pv, def);
+    onStartProgram();
     programVector = pv;
     setErrorStatus(NO_ERROR);
     owl.setOperationMode(RUN_MODE);
 #ifdef USE_CODEC
     codec.clear();
 #endif
+    // zero-fill heap memory
+    for(size_t i=0; i<5 && pv->heapSegments[i].location != NULL; ++i)
+      memset(pv->heapSegments[i].location, 0, pv->heapSegments[i].size);
+    // run program
     def->run();
-    error(PROGRAM_ERROR, "Program exited");
-  }else{
-    error(PROGRAM_ERROR, "Invalid program");
   }
+  error(PROGRAM_ERROR, "Program error");
   audioTask = NULL;
   vTaskDelete(NULL);
 }
@@ -620,10 +577,6 @@ void ProgramManager::updateProgramIndex(uint8_t index){
     HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
 #endif
   }
-#ifndef USE_SCREEN
-  // todo: move to onLoadProgram() callback
-  memset(parameter_values, 0, sizeof(parameter_values));
-#endif
 }
 
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  
