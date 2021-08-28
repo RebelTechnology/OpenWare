@@ -25,26 +25,11 @@ void setup(){
   graphics.begin(&OLED_SPI);
 #endif
   
-// #ifdef USE_USB_HOST
-//   // enable USB Host power
-//   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
-// #endif
 
   owl.setup();
 }
 
 void loop(void){
-
-// #ifdef USE_USB_HOST
-//   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
-//     if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
-//       HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
-//       error(USB_ERROR, "USBH PWR Fault");
-//     }
-//   }else{
-//     MX_USB_HOST_Process();
-//   }
-// #endif
 
 #ifdef USE_SCREEN
   graphics.draw();

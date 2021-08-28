@@ -11,24 +11,13 @@
 /* #define USE_ICACHE */
 /* #define USE_DCACHE */
 
-/* #define USE_SCREEN */
-/* #define SSD1309 */
-/* #define OLED_SOFT_CS */
-/* #define OLED_SPI hspi3 */
+#define USE_SCREEN
+#define SSD1309
+#define SSD1306
+#define OLED_SPI hspi3
 
 // todo: quad SPI
 /* #define USE_SPI_FLASH */
-
-/* #define USE_ADC */
-#define ADC_PERIPH hadc1
-#define ADC_A 0
-#define ADC_B 1
-#define ADC_C 2
-#define ADC_D 3
-#define ADC_E 4
-#define ADC_F 5
-#define ADC_G 6
-#define ADC_H 7
 
 #define USE_CODEC
 #define USE_PCM3168A
@@ -52,10 +41,6 @@
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
 /* #define USBD_MAX_POWER              100 // 200mA for iPad compatibility */
-#define USE_USB_HOST
-#define USB_HOST_RX_BUFF_SIZE       256  /* Max Received data 64 bytes */
-#define USE_USBH_MIDI
-#define USBH_HANDLE                 hUsbHostHS
 
 /* #define USE_UART_MIDI_RX */
 /* #define USE_UART_MIDI_TX */
@@ -64,10 +49,16 @@
 
 #define AUDIO_SAMPLINGRATE          48000
 
-#define USB_HOST_PWR_EN_GPIO_Port GPIOB
-#define USB_HOST_PWR_EN_Pin GPIO_PIN_0 // PB0 is unused
-#define USB_HOST_PWR_FAULT_GPIO_Port GPIOB
-#define USB_HOST_PWR_FAULT_Pin GPIO_PIN_1 // PB1 is unused
+#define USE_ADC
+#define ADC_PERIPH hadc1
+#define ADC_A 0
+#define ADC_B 1
+#define ADC_C 2
+#define ADC_D 3
+#define ADC_E 4
+#define ADC_F 5
+#define ADC_G 6
+#define ADC_H 7
   
 #define NOF_ADC_VALUES               8
 #define NOF_PARAMETERS               40
