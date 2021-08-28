@@ -5,15 +5,19 @@
 #define HARDWARE_ID                  XIBECA_HARDWARE
 #define HARDWARE_VERSION             "Xibeca"
 #define NO_EXTERNAL_RAM
+/* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 #define USE_PLUS_RAM
 /* #define USE_ICACHE */
 /* #define USE_DCACHE */
 
-#define USE_SCREEN
-#define SSD1309
-#define OLED_SOFT_CS
-#define OLED_SPI hspi3
+/* #define USE_SCREEN */
+/* #define SSD1309 */
+/* #define OLED_SOFT_CS */
+/* #define OLED_SPI hspi3 */
+
+// todo: quad SPI
+/* #define USE_SPI_FLASH */
 
 /* #define USE_ADC */
 #define ADC_PERIPH hadc1
@@ -43,7 +47,7 @@
 #define USBD_AUDIO_TX_CHANNELS       4
 
 #define USE_USBD_AUDIO
-/* #define USE_USBD_AUDIO_TX           // microphone */
+#define USE_USBD_AUDIO_TX           // microphone
 /* #define USE_USBD_AUDIO_RX           // speaker */
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS

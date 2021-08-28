@@ -131,9 +131,11 @@ int main(void)
 #endif
 
   /* Enable D2 domain SRAM Clocks */
-  __HAL_RCC_D2SRAM1_CLK_ENABLE();
-  __HAL_RCC_D2SRAM2_CLK_ENABLE();
-  __HAL_RCC_D2SRAM3_CLK_ENABLE();
+  /* presumably done in SystemInit by setting DATA_IN_D2_SRAM ? */
+  /* should be started before libc_init_array and LoopCopyData in startup.s */
+  /* __HAL_RCC_D2SRAM1_CLK_ENABLE(); */
+  /* __HAL_RCC_D2SRAM2_CLK_ENABLE(); */
+  /* __HAL_RCC_D2SRAM3_CLK_ENABLE(); */
 
   /* USER CODE END 1 */
 

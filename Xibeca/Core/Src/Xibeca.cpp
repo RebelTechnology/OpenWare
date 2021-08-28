@@ -1,11 +1,13 @@
 #include "Owl.h"
 #include "device.h"
 #include "errorhandlers.h"
-#include "Graphics.h"
 #include "Pin.h"
 #include "ApplicationSettings.h"
 
+#ifdef USE_SCREEN
+#include "Graphics.h"
 Graphics graphics;
+#endif
 
 extern "C" void onResourceUpdate(void);
 
@@ -17,10 +19,12 @@ void onResourceUpdate(void){
 
 void setup(){
 
+#ifdef USE_SCREEN
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
-
+#endif
+  
 // #ifdef USE_USB_HOST
 //   // enable USB Host power
 //   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
