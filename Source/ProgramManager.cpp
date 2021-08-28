@@ -140,7 +140,6 @@ void setButtonValue(uint8_t ch, uint8_t value){
 
 /* called by the program when a block has been processed */
 void onProgramReady(){
-  midi_tx.transmit();
   ProgramVector* pv = getProgramVector();
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
@@ -151,7 +150,6 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
 #endif
-  midi_rx.receive(); // push queued up MIDI messages through to patch
 #ifdef USE_ADC
 #ifdef USE_SCREEN
   updateParameters(graphics.params.parameters, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
@@ -281,11 +279,8 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
-#elif defined OWL_BIOSIGNALS || defined OWL_NOCTUA
-  pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
 #else
-  pv->audio_format = AUDIO_FORMAT_24B32;
-  // pv->audio_format = AUDIO_FORMAT_24B32_2X;
+  pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
 #endif
 #endif /* PROGRAM_VECTOR_V13 */
   pv->message = NULL;
