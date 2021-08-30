@@ -11,6 +11,8 @@
 /* #define USE_ICACHE */
 /* #define USE_DCACHE */
 
+#define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
+
 #define USE_SCREEN
 #define SSD1309
 #define SSD1306
