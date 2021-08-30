@@ -55,11 +55,7 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
-#define ADC_E 4
-#define ADC_F 5
-#define ADC_G 6
-#define ADC_H 7
   
-#define NOF_ADC_VALUES               8
+#define NOF_ADC_VALUES               4
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (2+4)

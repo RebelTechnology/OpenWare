@@ -21,7 +21,6 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "usb_device.h"
-#include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -341,9 +340,9 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
   hadc1.Init.Resolution = ADC_RESOLUTION_16B;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.NbrOfConversion = 4;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -995,9 +994,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(ADC_SPI_NCS_GPIO_Port, ADC_SPI_NCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PB8 PB4 PB9 PB2
-                           PB12 */
+                           PB12 PB13 PB14 PB15 */
   GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_4|GPIO_PIN_9|GPIO_PIN_2
-                          |GPIO_PIN_12;
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -1125,9 +1124,6 @@ void StartDefaultTask(void const * argument)
 {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
-
-  /* init code for USB_HOST */
-  MX_USB_HOST_Init();
   /* USER CODE BEGIN 5 */
 
   setup();
