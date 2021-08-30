@@ -1040,9 +1040,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(EXTI10_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : EXTI13_Pin EXTI14_Pin EXTI15_Pin PC9
-                           PC8 */
+                           PC8 PC4 */
   GPIO_InitStruct.Pin = EXTI13_Pin|EXTI14_Pin|EXTI15_Pin|GPIO_PIN_9
-                          |GPIO_PIN_8;
+                          |GPIO_PIN_8|GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -1071,11 +1071,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(EXTI11_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : EXTI4_Pin */
-  GPIO_InitStruct.Pin = EXTI4_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pins : PH4 PH6 PH7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(EXTI4_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ADC_RST_Pin */
   GPIO_InitStruct.Pin = ADC_RST_Pin;
@@ -1084,14 +1084,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(ADC_RST_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PH6 PH7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : EXTI0_Pin EXTI3_Pin EXTI7_Pin */
-  GPIO_InitStruct.Pin = EXTI0_Pin|EXTI3_Pin|EXTI7_Pin;
+  /*Configure GPIO pins : EXTI0_Pin PA6 EXTI3_Pin EXTI7_Pin */
+  GPIO_InitStruct.Pin = EXTI0_Pin|GPIO_PIN_6|EXTI3_Pin|EXTI7_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);

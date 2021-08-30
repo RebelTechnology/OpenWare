@@ -72,8 +72,6 @@ void Error_Handler(void);
 #define EXTI11_GPIO_Port GPIOI
 #define EXTI15_Pin GPIO_PIN_15
 #define EXTI15_GPIO_Port GPIOC
-#define EXTI4_Pin GPIO_PIN_4
-#define EXTI4_GPIO_Port GPIOH
 #define FLASH_NCS_Pin GPIO_PIN_6
 #define FLASH_NCS_GPIO_Port GPIOG
 #define FLASH_DQ3_Pin GPIO_PIN_6
@@ -86,6 +84,10 @@ void Error_Handler(void);
 #define FLASH_DQ1_GPIO_Port GPIOF
 #define FLASH_DQ0_Pin GPIO_PIN_8
 #define FLASH_DQ0_GPIO_Port GPIOF
+#define ADC1_Pin GPIO_PIN_0
+#define ADC1_GPIO_Port GPIOC
+#define ADC5_Pin GPIO_PIN_1
+#define ADC5_GPIO_Port GPIOC
 #define ADC_SPI_MISO_Pin GPIO_PIN_2
 #define ADC_SPI_MISO_GPIO_Port GPIOC
 #define ADC_SPI_MOSI_Pin GPIO_PIN_3
@@ -94,10 +96,18 @@ void Error_Handler(void);
 #define EXTI0_GPIO_Port GPIOA
 #define OLED_RST_Pin GPIO_PIN_4
 #define OLED_RST_GPIO_Port GPIOA
+#define ADC2_Pin GPIO_PIN_2
+#define ADC2_GPIO_Port GPIOA
+#define ADC4_Pin GPIO_PIN_5
+#define ADC4_GPIO_Port GPIOC
 #define EXTI3_Pin GPIO_PIN_3
 #define EXTI3_GPIO_Port GPIOA
 #define EXTI7_Pin GPIO_PIN_7
 #define EXTI7_GPIO_Port GPIOA
+#define ADC3_Pin GPIO_PIN_1
+#define ADC3_GPIO_Port GPIOB
+#define ADC7_Pin GPIO_PIN_0
+#define ADC7_GPIO_Port GPIOB
 #define ADC_SPI_CLK_Pin GPIO_PIN_10
 #define ADC_SPI_CLK_GPIO_Port GPIOB
 #define ADC_SPI_NCS_Pin GPIO_PIN_11
@@ -112,6 +122,9 @@ void Error_Handler(void);
 
 #define ADC_RESET_Pin ADC_RST_Pin
 #define ADC_RESET_GPIO_Port ADC_RST_GPIO_Port
+
+  
+
 
 /* USER CODE END Private defines */
 
