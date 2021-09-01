@@ -15,6 +15,8 @@
 #include "EffectsBoxParameterController.hpp"
 #elif defined OWL_GENIUS
 #include "GeniusParameterController.hpp"
+#elif defined OWL_XIBECA
+#include "XibecaParameterController.hpp"
 #else
 #include "ParameterController.hpp"
 #endif

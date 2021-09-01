@@ -39,10 +39,14 @@ static const uint8_t OLED_initSequence[] =
     0x40, // Set start line to zero
     0x8D, // Set charge pump
     0x14,
-    0x20, // Set memory mode
-    0x00,
-    0xA0 | 0x1, // Set segment remapping
-    0xC8,       // Set command Scan decode
+    0x20, 0x01, // Vertical addressing mode
+#ifdef OLED_UPSIDE_DOWN
+    0xa0,
+    0xc1,
+#else
+    0xa1,
+    0xc8,
+#endif
     0xDA,       // Set Comm pins
     0x12,
     0x81, // Set contrast
@@ -61,18 +65,15 @@ static const uint8_t OLED_initSequence[] =
 	0xa8, 0x3f, 	// Multiplex ratio 64
 			// Scan direction: c0: scan dir normal, c8: reverse
 #ifdef OLED_UPSIDE_DOWN
+	0xa0,
 	0xc1,
 #else
+	0xa1,
 	0xc8,
 #endif
 	0xd3, 0x00, 	// Display offset
 	0x40, 		// Start line
  			// Segment re-map: a0: col0 -> SEG0, a1: col127 -> SEG0	
-#ifdef OLED_UPSIDE_DOWN
-	0xa0,
-#else
-	0xa1,
-#endif
 	0xda, 0x12, 	// COM pins
 	0x81, 0xcf, 	// Contrast control: 0 to 0xff. Current increases with contrast.
 	0xd9, 0x22, 	// Pre-charge period
