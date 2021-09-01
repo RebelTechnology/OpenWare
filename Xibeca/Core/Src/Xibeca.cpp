@@ -19,8 +19,6 @@
 #define XIBECA_PIN13 GPIOA, GPIO_PIN_7
 #define XIBECA_PIN14 GPIOA, GPIO_PIN_3
 
-#endif
-
 #define PUSH_A_Pin GPIO_PIN_0
 #define PUSH_A_GPIO_Port GPIOA
 #define PUSH_B_Pin GPIO_PIN_4
@@ -38,6 +36,7 @@
 #define PUSH_NOTES_GPIO_Port GPIOB
 #define PUSH_CV_Pin GPIO_PIN_14
 #define PUSH_CV_GPIO_Port GPIOB
+#endif
 
 #define SYNC_OUT_A_Pin GPIO_PIN_2
 #define SYNC_OUT_A_GPIO_Port GPIOD
@@ -52,6 +51,24 @@
 #include "Graphics.h"
 Graphics graphics;
 #endif
+
+#define ENCODER_TIM1 htim4
+extern TIM_HandleTypeDef ENCODER_TIM1;
+
+// void updateEncoders(){
+//   static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
+//   int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
+//   int16_t delta = value - encoder_values[0];
+//   if(delta)
+//     graphics.params.encoderChanged(0, delta);
+//   encoder_values[0] = value;
+//   value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
+//   delta = value - encoder_values[1];
+//   if(delta)
+//     graphics.params.encoderChanged(1, delta);
+//   encoder_values[1] = value;
+// }
+//   updateEncoders();
 
 extern "C" void onResourceUpdate(void);
 
@@ -77,6 +94,7 @@ Pin push_b(GPIOB, GPIO_PIN_4);
 Pin push_c(GPIOA, GPIO_PIN_6);
 Pin push_d(GPIOC, GPIO_PIN_4);
 Pin push_options(GPIOB, GPIO_PIN_5);
+Pin push_enc(GPIOB, GPIO_PIN_12);
 
 // Pin led_d(PIN30_GPIO_Port, PIN30_Pin);
 // Pin led_d(XIBECA_PIN30);
@@ -120,6 +138,34 @@ void setLed(uint8_t led, uint32_t rgb){
   }
 }
 
+uint16_t adc = 0;
+extern "C"{
+  void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+    adc = hadc->State;
+    // 
+  }
+}
+
+#define MIN_PERIOD ((AUDIO_SAMPLINGRATE * ARM_CYCLES_PER_SAMPLE) / 32000)
+#define MAX_PERIOD ((AUDIO_SAMPLINGRATE * ARM_CYCLES_PER_SAMPLE) / 20)
+static uint32_t periods[4] = {};
+void updatePeriod(uint8_t idx){
+  static uint32_t times[4] = {};
+  uint32_t previous = times[idx];
+  uint32_t now = DWT->CYCCNT;
+  if(now > previous){
+    uint32_t elapsed = now - previous;
+    if(elapsed > MIN_PERIOD && elapsed < MAX_PERIOD){
+      periods[idx] = elapsed;
+    // AUDIO_SAMPLINGRATE
+    //   ARM_CYCLES_PER_SAMPLE  
+      setParameterValue(PARAMETER_AA + idx, (AUDIO_SAMPLINGRATE * ARM_CYCLES_PER_SAMPLE) / elapsed);
+      led_tune.toggle();
+    }
+  }
+  times[idx] = now;
+}
+
 void onChangePin(uint16_t pin){
   switch(pin){
   // case PUSH_TUNE_Pin:
@@ -139,12 +185,16 @@ void onChangePin(uint16_t pin){
   // case PUSH_D_Pin:
   //     break;
   case SYNC_OUT_A_Pin:
-      break;
+    updatePeriod(0);
+    break;
   case SYNC_OUT_B_Pin:
+    updatePeriod(1);
       break;
   case SYNC_OUT_C_Pin:
+    updatePeriod(2);
       break;
   case SYNC_OUT_D_Pin:
+    updatePeriod(3);
       break;
   }
 }
@@ -169,6 +219,16 @@ void setGateValue(uint8_t ch, int16_t value){
 }
 
 void setup(){
+  // DWT cycle count enable
+  // do it here because DEBUG_DWT is disabled
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+  // __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
+  __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, 2048);
+  HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
+
   led_tune.outputMode();
   led_mod.outputMode();
   led_notes.outputMode();
@@ -188,6 +248,7 @@ void setup(){
   push_c.inputMode();
   push_d.inputMode();
   push_options.inputMode();
+  push_enc.inputMode();
 
   push_tune.setPull(PIN_PULL_UP);
   push_mod.setPull(PIN_PULL_UP);
@@ -197,26 +258,32 @@ void setup(){
   push_b.setPull(PIN_PULL_UP);
   push_c.setPull(PIN_PULL_UP);
   push_d.setPull(PIN_PULL_UP);
-  options.setPull(PIN_PULL_UP);
+  push_options.setPull(PIN_PULL_UP);
+  push_enc.setPull(PIN_PULL_UP);
   
 #ifdef USE_SCREEN
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
 #endif
-  
 
   owl.setup();
 }
 
 void loop(void){
-  if(push_a.get())
-    led_a.low();
-  else
-    led_a.high();
-  led_b.set(push_b.get());
-  led_c.set(push_c.get());
-  led_d.set(push_d.get());
+  led_a.set(!push_a.get());
+  led_b.set(!push_b.get());
+  led_c.set(!push_c.get());
+  led_d.set(!push_d.get());
+
+  // led_tune.set(!push_tune.get());
+  led_mod.set(!push_mod.get());
+  led_notes.set(!push_notes.get());
+  led_cv.set(!push_cv.get());
+  led_options.set(!push_options.get());
+
+  setButtonValue(BUTTON_A, !push_enc.get());
+  setParameterValue(PARAMETER_A, __HAL_TIM_GET_COUNTER(&ENCODER_TIM1) / 2);
 
 #ifdef USE_SCREEN
   graphics.draw();

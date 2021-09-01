@@ -12,6 +12,7 @@
 /* #define USE_DCACHE */
 
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
+#define MAIN_LOOP_SLEEP_MS          20
 
 #define USE_SCREEN
 #define SSD1309

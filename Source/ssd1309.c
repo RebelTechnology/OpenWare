@@ -21,15 +21,40 @@
 #define pDC_Clr()		HAL_GPIO_WritePin(OLED_DC_GPIO_Port, 	OLED_DC_Pin, 	GPIO_PIN_RESET)
 #define pCS_Clr()		HAL_GPIO_WritePin(OLED_CS_GPIO_Port, 	OLED_CS_Pin, 	GPIO_PIN_RESET)
 
-#define OLED_DAT	1
-#define OLED_CMD	0
-
 // _____ Prototypes ____________________________________________________________________
 static void OLED_writeCMD(const uint8_t* data, uint16_t length);
 
 // _____ Variables _____________________________________________________________________
-static const uint8_t OLED_initSequence[] = 
-{
+#define SCREEN_OFFSET 0
+static const uint8_t OLED_initSequence[] =
+  {
+#ifdef SSD1306
+    0xAE, // Display off
+    0xD5, // Set display clock divider
+    0x80,
+    0xA8, // Set multiplex
+    0x3F,
+    0xD3, // Set display offset
+    SCREEN_OFFSET,
+    0x40, // Set start line to zero
+    0x8D, // Set charge pump
+    0x14,
+    0x20, // Set memory mode
+    0x00,
+    0xA0 | 0x1, // Set segment remapping
+    0xC8,       // Set command Scan decode
+    0xDA,       // Set Comm pins
+    0x12,
+    0x81, // Set contrast
+    0xCF,
+    0xd9, // Set precharge
+    0xF1,
+    0xDB, // Set Vcom detect
+    0x30,//40,
+    0xA4, // Allow display resume
+    0xA6, // Set normal display
+    0xAF  // Display On
+#else
 	0xfd, 0x12, 	// Command unlock
 	0xae, 		// Display off
 	0xd5, 0xa0, 	// Clock divide ratio / Oscillator Frequency
@@ -52,13 +77,14 @@ static const uint8_t OLED_initSequence[] =
 	0x81, 0xcf, 	// Contrast control: 0 to 0xff. Current increases with contrast.
 	0xd9, 0x22, 	// Pre-charge period
 	0xdb, 0x34, 	// VCOMH deselect level
-	/* 0xa4, 		// Entire display on/off */
-	0xa6, 		// Normal / inverse display
+	/* 0xa4, 		// Entire display on/off : A4 / A5 */
+	0xa6, 		// Normal / inverse display : A6 / A7
 	0x20, 0x01,     // Vertical addressing mode
 	0x21, 0x00, 0x7f, // Set column address
 	0x22, 0x00, 0x07, // Set page address
 	0xaf, 		// Display on
 	/* 0xa6,		// Set Normal/Inverse Display */
+#endif
 };
 
 /* static unsigned char* OLED_Buffer; */

@@ -56,7 +56,9 @@
 #define STORAGE_MAX_BLOCKS           64
 #endif
 
+#ifndef OWL_XIBECA
 #define DEBUG_DWT
+#endif
 /* #define DEBUG_STACK */
 #define DEBUG_STORAGE
 /* #define DEBUG_BOOTLOADER */
