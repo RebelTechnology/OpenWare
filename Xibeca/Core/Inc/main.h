@@ -115,9 +115,6 @@ void Error_Handler(void);
 #define ADC_RESET_Pin ADC_RST_Pin
 #define ADC_RESET_GPIO_Port ADC_RST_GPIO_Port
 
-  
-
-
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

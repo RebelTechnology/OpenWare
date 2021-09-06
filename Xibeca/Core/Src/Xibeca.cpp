@@ -4,6 +4,7 @@
 #include "Pin.h"
 #include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
+#include "message.h"
 
 #if 0
 #define XIBECA_PIN3  GPIOD, GPIO_PIN_2
@@ -251,7 +252,7 @@ void setup(){
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
   DWT->CYCCNT = 0;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-
+  
   // __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, 2048);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);

@@ -59,6 +59,7 @@ void TIM4_IRQHandler(void);
 void EXTI15_10_IRQHandler(void);
 void SPI3_IRQHandler(void);
 void SAI1_IRQHandler(void);
+void QUADSPI_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
