@@ -104,6 +104,10 @@ Pin push_enc(GPIOB, GPIO_PIN_12);
 // Pin hard_sync_c(PIN21_GPIO_Port, PIN21_Pin);
 // Pin hard_sync_d(PIN22_GPIO_Port, PIN22_Pin);
 
+Pin hard_sync_a(GPIOG, GPIO_PIN_12);
+Pin hard_sync_b(GPIOA, GPIO_PIN_15);
+Pin hard_sync_c(GPIOC, GPIO_PIN_6);
+Pin hard_sync_d(GPIOD, GPIO_PIN_7);
 
 void setLed(uint8_t led, uint32_t rgb){
   bool value = rgb;
@@ -144,6 +148,9 @@ extern "C"{
     adc = hadc->State;
     // 
   }
+  void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc){
+    error(CONFIG_ERROR, "ADC error");
+  }
 }
 
 #define MIN_PERIOD ((AUDIO_SAMPLINGRATE * ARM_CYCLES_PER_SAMPLE) / 32000)
@@ -159,11 +166,18 @@ void updatePeriod(uint8_t idx){
       periods[idx] = elapsed;
     // AUDIO_SAMPLINGRATE
     //   ARM_CYCLES_PER_SAMPLE  
-      setParameterValue(PARAMETER_AA + idx, (AUDIO_SAMPLINGRATE * ARM_CYCLES_PER_SAMPLE) / elapsed);
-      led_tune.toggle();
+      setParameterValue(PARAMETER_BB + idx, (AUDIO_SAMPLINGRATE * ARM_CYCLES_PER_SAMPLE) / elapsed);
+      // led_tune.toggle();
     }
   }
   times[idx] = now;
+}
+
+void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
+  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
+  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
 }
 
 void onChangePin(uint16_t pin){
@@ -202,8 +216,21 @@ void onChangePin(uint16_t pin){
 void setGateValue(uint8_t ch, int16_t value){
   int idx = 1 + ch - BUTTON_A;
   setLed(idx, value ? RED_COLOUR : NO_COLOUR);
+  switch(ch){
+  case BUTTON_E:
+    hard_sync_a.set(value ? true : false);
+    break;
+  case BUTTON_F:
+    hard_sync_b.set(value ? true : false);
+    break;
+  case BUTTON_G:
+    hard_sync_c.set(value ? true : false);
+    break;
+  case BUTTON_H:
+    hard_sync_d.set(value ? true : false);
+    break;
+  }
     // switch(ch){
-    // case BUTTON_A:
     //   setLed(1, value ? RED_COLOUR : NO_COLOUR);
     //   break;
     // case BUTTON_B:
@@ -239,6 +266,11 @@ void setup(){
   led_d.outputMode();
   led_options.outputMode();
 
+  hard_sync_a.outputMode();
+  hard_sync_b.outputMode();
+  hard_sync_c.outputMode();
+  hard_sync_d.outputMode();
+  
   push_tune.inputMode();
   push_mod.inputMode();
   push_notes.inputMode();
@@ -271,19 +303,19 @@ void setup(){
 }
 
 void loop(void){
+
+  led_tune.set(!push_tune.get());
+  led_mod.set(!push_mod.get());
+  led_notes.set(!push_notes.get());
+  led_cv.set(!push_cv.get());
+  led_options.set(!push_options.get());
   led_a.set(!push_a.get());
   led_b.set(!push_b.get());
   led_c.set(!push_c.get());
   led_d.set(!push_d.get());
 
-  // led_tune.set(!push_tune.get());
-  led_mod.set(!push_mod.get());
-  led_notes.set(!push_notes.get());
-  led_cv.set(!push_cv.get());
-  led_options.set(!push_options.get());
-
   setButtonValue(BUTTON_A, !push_enc.get());
-  setParameterValue(PARAMETER_A, __HAL_TIM_GET_COUNTER(&ENCODER_TIM1) / 2);
+  setParameterValue(PARAMETER_BA, __HAL_TIM_GET_COUNTER(&ENCODER_TIM1) / 2);
 
 #ifdef USE_SCREEN
   graphics.draw();

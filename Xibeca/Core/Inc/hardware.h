@@ -15,6 +15,7 @@
 #define MAIN_LOOP_SLEEP_MS          20
 
 #define USE_SCREEN
+#define OLED_UPSIDE_DOWN
 #define SSD1309
 #define SSD1306
 #define OLED_SPI hspi3
