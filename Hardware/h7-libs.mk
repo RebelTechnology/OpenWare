@@ -30,6 +30,7 @@ C_SRC_RTC += $(DRIVERS)/Src/stm32h7xx_hal_pwr.c
 C_SRC_RTC += $(DRIVERS)/Src/stm32h7xx_hal_rtc_ex.c
 C_SRC_IWDG = $(DRIVERS)/Src/stm32h7xx_hal_iwdg.c
 C_SRC_QSPI = $(DRIVERS)/Src/stm32h7xx_hal_qspi.c
+C_SRC_MDMA = $(DRIVERS)/Src/stm32h7xx_hal_mdma.c
 
 # required by OWL 2
 C_SRC_SAI = $(DRIVERS)/Src/stm32h7xx_hal_sai.c
