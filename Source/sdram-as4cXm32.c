@@ -2,7 +2,7 @@
 #include "sdram.h"
 
 /**
- * Alliance Memory DRAM 256Mbits, 3.3V, 8Mx32 SDRAM AS4C8M32SA-6BIN
+ * Alliance Memory DRAM 256Mbits, 3.3V, 8Mx32 AS4C8M32SA-6BIN
  */
 
 #define SDRAM_MODEREG_BURST_LENGTH_2               (1 << 0)
