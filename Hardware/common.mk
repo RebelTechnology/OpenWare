@@ -7,6 +7,7 @@ SYX=$(BUILD)/$(PROJECT).syx
 # Flags
 GIT_REVISION = $(shell git rev-parse --abbrev-ref HEAD) $(shell git rev-parse --short HEAD) $(CONFIG)
 CPPFLAGS += -DGIT_REVISION='"$(GIT_REVISION)"'
+CPPFLAGS += -D__PROGRAM_START=1 # prevent compilation of __cmsis_start function
 
 # Tool path
 # TOOLROOT ?= ~/bin/gcc-arm-none-eabi-9-2020-q2-update/bin/
@@ -23,7 +24,6 @@ GDB=$(TOOLROOT)arm-none-eabi-gdb
 OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
-OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd.cfg
 MKDIR=mkdir
 
 # Generate dependency information
@@ -56,7 +56,7 @@ $(BUILD)/%.o: %.c Makefile | $(BUILD)
 	@$(CC) -c $(CPPFLAGS) $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD)/$(notdir $(<:.c=.lst)) $< -o $@
 
 $(BUILD)/%.o: %.cpp Makefile | $(BUILD)
-	@$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) -Wa,-a,-ad,-alms=$(BUILD)/$(notdir $(<:.c=.lst)) $< -o $@
+	@$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) -Wa,-a,-ad,-alms=$(BUILD)/$(notdir $(<:.cpp=.lst)) $< -o $@
 
 $(BUILD)/%.o: %.s
 	@$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@

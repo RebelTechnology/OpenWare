@@ -5,6 +5,8 @@
 #define HARDWARE_ID                  WITCH_HARDWARE
 #define HARDWARE_VERSION             "Witch"
 
+#define USE_SPI_FLASH
+
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
@@ -33,7 +35,7 @@
 #define ADC_G 6
 #define ADC_H 7
 #define ADC_I 8
-#define AUDIO_OUTPUT_GAIN            127
+#define AUDIO_OUTPUT_GAIN            103
 
 #define TRIG1_Pin GP7_Pin 	/* A17 */
 #define TRIG1_GPIO_Port GP7_GPIO_Port

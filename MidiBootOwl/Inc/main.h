@@ -63,18 +63,10 @@ void Error_Handler(void);
 #define PUSHBUTTON_EXTI_IRQn EXTI2_IRQn
 #define LED2_Pin GPIO_PIN_3
 #define LED2_GPIO_Port GPIOE
-#define BYPASS_Pin GPIO_PIN_4
-#define BYPASS_GPIO_Port GPIOE
 #define LED1_Pin GPIO_PIN_5
 #define LED1_GPIO_Port GPIOE
 #define FLASH_nCS_Pin GPIO_PIN_5
 #define FLASH_nCS_GPIO_Port GPIOC
-#define BOOT1_Pin GPIO_PIN_2
-#define BOOT1_GPIO_Port GPIOB
-#define PUSH_GATE_IN_Pin GPIO_PIN_6
-#define PUSH_GATE_IN_GPIO_Port GPIOB
-#define PUSH_GATE_OUT_Pin GPIO_PIN_7
-#define PUSH_GATE_OUT_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

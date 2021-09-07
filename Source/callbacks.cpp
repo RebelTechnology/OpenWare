@@ -14,7 +14,6 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 #include "message.h"
-#include "FlashStorage.h"
 #include "PatchRegistry.h"
 #ifdef USE_SCREEN
 #include "Graphics.h"
@@ -343,3 +342,56 @@ __weak void onChangePin(uint16_t pin){
   }
 }
 
+__weak void setProgress(uint16_t value, const char* msg){
+  debugMessage(msg, (int)(100*value/4095));
+  setParameterValue(LOAD_INDICATOR_PARAMETER, value);
+}
+
+// Called on init, resource operation, storage erase
+__weak void onResourceUpdate(void){
+}
+
+__weak void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
+#ifdef USE_ADC
+  // IIR exponential filter with lambda 0.75
+#if defined OWL_MODULAR || defined OWL_TESSERACT || defined OWL_LICH /* inverting ADCs */
+  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
+  parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
+#elif defined OWL_WAVETABLE
+  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[ADC_B])>>2;
+  // parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
+  // parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
+  parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[ADC_C])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[ADC_D])>>2;
+  parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_E])>>2;
+  parameter_values[5] = (parameter_values[5]*3 + 4095-adc_values[ADC_F])>>2;
+  parameter_values[6] = (parameter_values[6]*3 + 4095-adc_values[ADC_G])>>2;
+  parameter_values[7] = (parameter_values[7]*3 + 4095-adc_values[ADC_H])>>2;  
+#elif defined USE_SCREEN
+  // Player todo: route input CVs to parameters
+#else
+#ifdef ADC_A
+  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
+#endif
+#ifdef ADC_B
+  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
+#endif
+#ifdef ADC_C
+  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
+#endif
+#ifdef ADC_D
+  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
+#endif
+#ifdef ADC_E
+  parameter_values[4] = adc_values[ADC_E];
+#endif
+  // parameter_values[0] = 4095-adc_values[0];
+  // parameter_values[1] = 4095-adc_values[1];
+  // parameter_values[2] = 4095-adc_values[2];
+  // parameter_values[3] = 4095-adc_values[3];
+#endif
+#endif
+}

@@ -1,4 +1,3 @@
-PROJECT = OwlPedal
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
@@ -14,10 +13,13 @@ PLATFORM = Pedal
 endif
 
 ifeq ($(PLATFORM),Pedal)
+  PROJECT = OwlPedal
   CPPFLAGS += -DOWL_PEDAL
 else ifeq ($(PLATFORM),Modular)
+  PROJECT = OwlModular
   CPPFLAGS += -DOWL_MODULAR
 else ifeq ($(PLATFORM),Rack)
+  PROJECT = OwlRack
   CPPFLAGS += -IOWL_PEDAL -DOWL_RACK
   CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
 endif

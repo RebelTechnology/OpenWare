@@ -8,13 +8,14 @@
 #include "Owl.h"
 #include "OpenWareMidiControl.h"
 #include "PatchRegistry.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "ApplicationSettings.h"
 #include "ProgramManager.h"
 #include "Codec.h"
 #include "message.h"
 #include "VersionToken.h"
 #include "ScreenBuffer.h"
+#include "HAL_TLC5946.h"
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
@@ -83,7 +84,7 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, DATA, VOLUME, CALIBRATE, EXIT, NOF_CONTROL_MODES
+    PLAY, STATUS, PRESET, DATA, VOLUME, LEDS, CALIBRATE, EXIT, NOF_CONTROL_MODES
   };
   ControlMode controlMode = PLAY;
   bool saveSettings;
@@ -106,6 +107,7 @@ public:
     "< Preset >",
     "< Data   >",
     "< Volume >",
+    "< LEDs   >",
     "< V/Oct   " };
 
   ParameterController(){
@@ -288,8 +290,8 @@ public:
     }
 
     // draw flash usage
-    int flash_used = storage.getWrittenSize() / 1024;
-    int flash_total = storage.getTotalAllocatedSize() / 1024;
+    int flash_used = storage.getUsedSize() / 1024;
+    int flash_total = storage.getTotalCapacity() / 1024;
     screen.print(64, offset + 8, "flash ");
     screen.print(flash_used * 100 / flash_total);
     screen.print("%");
@@ -361,6 +363,7 @@ public:
       screen.print(0, 26, getErrorMessage());
       screen.setTextWrap(false);
     }
+    drawMessage(51, screen);
   }
 
   void drawTitle(ScreenBuffer& screen){
@@ -415,23 +418,23 @@ public:
       screen.print(18, 24, "Delete:");
     if (selected > 0 && registry.getNumberOfResources() > 0) {
       screen.setCursor(1, 24);
-      screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
+      screen.print((int)selected);
       screen.print(".");
-      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + selected));
+      screen.print(registry.getResourceName(selected));
     };
     if (selected < (int)registry.getNumberOfResources()) {
       screen.setCursor(1, 24 + 10);
-      screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print((int)selected + 1);
       screen.print(".");
-      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+      screen.print(registry.getResourceName(1 + selected));
     }
     else if (resourceDelete)
       screen.print(18, 24 + 10, "Exit");
     if (selected + 1 < (int)registry.getNumberOfResources()) {
       screen.setCursor(1, 24 + 20);
-      screen.print((int)selected + 2 + MAX_NUMBER_OF_PATCHES);
+      screen.print((int)selected + 2);
       screen.print(".");
-      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
+      screen.print(registry.getResourceName(2 + selected));
     }
     if (resourceDelete)
       screen.drawRectangle(0, 25, 128, 10, WHITE);
@@ -447,6 +450,15 @@ public:
     screen.fillRectangle(64, 24 + 1 + 2, (int)settings.audio_output_gain >> 1, 4, WHITE);
     screen.invert(0, 24, 40, 10);
   }
+
+  void drawLeds(uint8_t selected, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    screen.print(1, 24 + 10, "Level  ");
+    screen.print((int)settings.leds_brightness);
+    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
+    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.leds_brightness, 4, WHITE);
+    screen.invert(0, 24, 40, 10);
+  }  
 
   void drawCalibration(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
@@ -564,7 +576,7 @@ public:
     case STATUS:
       drawTitle(controlModeNames[controlMode], screen);    
       drawStatus(screen);
-      drawMessage(46, screen);
+      drawMessage(51, screen);
       break;
     case PRESET:
       drawTitle(controlModeNames[controlMode], screen);    
@@ -578,12 +590,18 @@ public:
       drawTitle(controlModeNames[controlMode], screen);    
       drawVolume(selectedPid[1], screen);
       break;
+    case LEDS:
+      drawTitle(controlModeNames[controlMode], screen);    
+      drawLeds(selectedPid[1], screen);
+      break;
     case CALIBRATE:
       drawTitle(controlModeNames[controlMode], screen);
       drawCalibration(selectedPid[1], screen);
       break;
     case EXIT:
       drawTitle("done", screen);
+      break;
+    default:
       break;
     }
     // todo!
@@ -677,6 +695,9 @@ public:
     case VOLUME:
       selectedPid[1] = settings.audio_output_gain; // todo: get current
       break;
+    case LEDS:
+      selectedPid[1] = settings.leds_brightness;
+      break;
     case CALIBRATE:
       selectedPid[1] = 2;
       resetCalibration();
@@ -715,13 +736,13 @@ public:
           else if (!resourceDeletePressed) {
             // Delete resource unless it's protected by "__" prefix
             resourceDeletePressed = true;
-            ResourceHeader* res = registry.getResource(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+            Resource* res = registry.getResource(selectedPid[1]);
             if (res != NULL) {
-              if(res->name[0] == '_' && res->name[1] == '_'){
+              if(res->getName()[0] == '_' && res->getName()[1] == '_'){
                 debugMessage("Resource protected");
               }
               else {
-                registry.setDeleted(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+		storage.eraseResource(res);
               }
             }
           }
@@ -733,6 +754,9 @@ public:
         break;
       }
       case VOLUME:
+        controlMode = EXIT;
+        break;
+      case LEDS:
         controlMode = EXIT;
         break;
       case CALIBRATE:
@@ -854,6 +878,13 @@ public:
       selectedPid[1] = max(0, min(127, value));
       codec.setOutputGain(selectedPid[1]);
       settings.audio_output_gain = selectedPid[1];
+      saveSettings = true;
+      break;
+    case LEDS:
+      selectedPid[1] = max(0, min(63, value));
+      TLC5946_setAll_DC(selectedPid[1]);
+      TLC5946_Refresh_DC();      
+      settings.leds_brightness = selectedPid[1];
       saveSettings = true;
       break;
     case PRESET:

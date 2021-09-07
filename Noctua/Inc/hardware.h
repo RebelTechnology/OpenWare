@@ -36,7 +36,7 @@
 
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX           // microphone
-/* #define USE_USBD_AUDIO_RX           // speaker */
+#define USE_USBD_AUDIO_RX           // speaker
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
 #define USBH_HANDLE                 hUsbHostHS
@@ -45,7 +45,8 @@
 #define USB_HOST_RX_BUFF_SIZE       256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
 
-#define USE_UART_MIDI
+#define USE_UART_MIDI_RX
+#define USE_UART_MIDI_TX
 #define UART_MIDI_HANDLE            huart2
 #define UART_MIDI_RX_BUFFER_SIZE    256
 

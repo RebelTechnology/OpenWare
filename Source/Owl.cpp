@@ -16,11 +16,8 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 #include "message.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "PatchRegistry.h"
-#ifdef USE_SCREEN
-#include "Graphics.h"
-#endif
 
 #ifdef OWL_BIOSIGNALS
 #include "ads.h"
@@ -46,7 +43,9 @@ extern "C"{
 #endif /* USE_DIGITALBUS */
 
 Owl owl;
+#ifdef USE_RGB_LED
 uint32_t ledstatus;
+#endif
 MidiController midi_tx;
 MidiReceiver midi_rx;
 ApplicationSettings settings;
@@ -122,7 +121,7 @@ static TickType_t xFrequency;
 
 void Owl::setup(void){
 #ifdef USE_IWDG
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   IWDG1->KR = 0xCCCC; // Enable IWDG and turn on LSI
   IWDG1->KR = 0x5555; // ensure watchdog register write is allowed
   IWDG1->PR = 0x05;   // prescaler 128
@@ -137,7 +136,9 @@ void Owl::setup(void){
 #ifdef USE_BKPSRAM
   HAL_PWR_EnableBkUpAccess();
 #endif
+#ifdef USE_RGB_LED
   ledstatus = 0;
+#endif
   storage.init();
   registry.init();
   settings.init(); // settings need the registry to be initialised first
@@ -208,27 +209,23 @@ OperationMode Owl::getOperationMode(){
 }
 
 void Owl::setOperationMode(OperationMode mode){
-  onChangeMode(mode, operationMode);
+  OperationMode old_mode = operationMode;
   operationMode = mode;
+  onChangeMode(mode, old_mode);
 }
 
 void Owl::loop(){
 #ifdef USE_DIGITALBUS
   busstatus = bus_status();
 #endif
-#ifdef USE_SCREEN
-  graphics.draw();
-  graphics.display();
-#endif /* USE_SCREEN */
 #ifdef OLED_DMA
   // When using OLED_DMA this must delay for a minimum amount to allow screen to update
   vTaskDelay(xFrequency);
 #else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
 #endif
-  midi_tx.transmit();
 #ifdef USE_IWDG
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
 #else
   IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
@@ -262,7 +259,7 @@ void jump_to_bootloader(void){
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
   /* Disable all interrupts */
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   RCC->CIER = 0x00000000;
 #else
   RCC->CIR = 0x00000000;
@@ -279,7 +276,7 @@ void device_reset(){
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
   /* Disable all interrupts */
-#ifdef STM32H743xx
+#ifdef STM32H7xx
   RCC->CIER = 0x00000000;
 #else
   RCC->CIR = 0x00000000;
@@ -309,4 +306,18 @@ const char* getBootloaderVersion(){
   else {
     return "N/A";
   }
+}
+
+const char* getDeviceName(){
+  static char name[22];
+  static char* ptr = 0;
+  if(ptr == 0){
+    uint32_t* id = (uint32_t*)UID_BASE; // get a pointer to the 96-bit unique device id
+    unsigned int hash = id[0]^id[1]^id[2]; // hash into 32-bit value
+    hash = (hash>>16)^(hash&0xffff); // hash into 16-bit value
+    char* p = stpcpy(name, "OWL-" HARDWARE_VERSION "-");
+    stpcpy(p, msg_itoa(hash, 16));
+    ptr = name;
+  }
+  return ptr;
 }

@@ -3,8 +3,10 @@
 
 #include "errorhandlers.h"
 
+#ifdef USE_EXTERNAL_RAM
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
-  
+#endif
+
 void MPU_Config(void);
 
 #if 0

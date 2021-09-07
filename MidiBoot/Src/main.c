@@ -92,8 +92,8 @@ int testButton(){
 }
 
 static int testNoProgram(){
-  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x20000000;
-  /* Check Vector Table: Test if valid stack pointer is programmed at APPLICATION_ADDRESS */
+  return ((*(__IO uint32_t*)(APPLICATION_ADDRESS + 4)) & 0xFFF00000 ) != 0x08000000;
+  /* Check Vector Table: Test if valid Reset_Handler pointer is programmed after APPLICATION_ADDRESS */
 }
 
 static int testWatchdogReset(){
@@ -132,7 +132,6 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   MX_GPIO_Init();
-  MX_IWDG_Init();
   
   if(testMagic()){
     setMessage("Bootloader starting");
@@ -150,8 +149,11 @@ int main(void)
     /* Disable all interrupts */
     RCC->CIR = 0x00000000;
 
-    /* put marker in to prevent reset cycles */
+    /* Put marker in to prevent reset cycles */
     *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_LOOP_NUMBER;
+
+    /* Start watchdog */
+    MX_IWDG_Init();
 
     /* Jump to user application */
     uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
@@ -189,9 +191,6 @@ int main(void)
   while (1)
   {
     loop();
-#ifdef USE_IWDG
-    IWDG->KR = 0xaaaa; // reset the watchdog timer
-#endif
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
 
@@ -383,6 +382,7 @@ static void MX_GPIO_Init(void)
 #endif
   
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, FLASH_WP_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOC, FLASH_HOLD_Pin|FLASH_nCS_Pin, GPIO_PIN_RESET);
 
 #ifdef LED1_Pin
@@ -402,6 +402,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED2_GPIO_Port, &GPIO_InitStruct);
 #endif
+
+  GPIO_InitStruct.Pin = FLASH_WP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : FLASH_HOLD_Pin FLASH_nCS_Pin */
   GPIO_InitStruct.Pin = FLASH_HOLD_Pin|FLASH_nCS_Pin;

@@ -16,8 +16,6 @@ private:
 public:
   void init();
   void receive();
-  void handleMidiMessage(MidiMessage msg); // process MIDI from usbd
-  void forwardMidiMessage(MidiMessage msg); // send MIDI from all destinations to program callback
   void setCallback(void *callback);
   void setInputChannel(int8_t channel);
 };

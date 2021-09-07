@@ -17,8 +17,9 @@
 #define AUDIO_INPUT_GAIN             108
 #define AUDIO_OUTPUT_GAIN            115
 #endif
-#define OWLBOOT_MAGIC                (0xF00B4400)
 #define MAX_SYSEX_BOOTLOADER_SIZE    (32 * 1024)
+
+#define OWLBOOT_MAGIC_NUMBER         0xF00B4400
 
 #define USE_CODEC
 #define USE_WM8731
@@ -46,7 +47,7 @@
 #endif
 
 #define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  6
+#define NOF_BUTTONS                  (4 + 1)
 
 #if 0
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL

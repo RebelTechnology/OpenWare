@@ -216,6 +216,8 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
 
   USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG_HS));
   }
+
+  USBH_UsrLog("USBH Init %d %d", phost->EnumState, phost->gState);
   return USBH_OK;
 }
 
@@ -232,6 +234,8 @@ USBH_StatusTypeDef USBH_LL_DeInit(USBH_HandleTypeDef *phost)
   hal_status = HAL_HCD_DeInit(phost->pData);
 
   usb_status = USBH_Get_USB_Status(hal_status);
+
+  USBH_UsrLog("USBH DeInit %d %d %d", phost->EnumState, phost->gState, usb_status);
 
   return usb_status;
 }
@@ -250,6 +254,8 @@ USBH_StatusTypeDef USBH_LL_Start(USBH_HandleTypeDef *phost)
 
   usb_status = USBH_Get_USB_Status(hal_status);
 
+  USBH_UsrLog("USBH Start %d %d %d", phost->EnumState, phost->gState, usb_status);
+
   return usb_status;
 }
 
@@ -267,6 +273,7 @@ USBH_StatusTypeDef USBH_LL_Stop(USBH_HandleTypeDef *phost)
 
   usb_status = USBH_Get_USB_Status(hal_status);
 
+  USBH_UsrLog("USBH Stop %d %d %d", phost->EnumState, phost->gState, usb_status);
   return usb_status;
 }
 

@@ -1,7 +1,6 @@
 PROJECT = Genius
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
-OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_h7.cfg
 
 include $(OPENWARE)/Hardware/owl3.mk
 
@@ -10,8 +9,14 @@ CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/cs4272.c
 C_SRC += $(OPENWARE)/Source/ssd1309.c
-C_SRC += $(OPENWARE)/Source/usbh_midi.c
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
+CPP_SRC += $(OPENWARE)/Source/uart.cpp
+CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp
+CPP_SRC += $(OPENWARE)/Source/bus.cpp
+CPP_SRC += $(OPENWARE)/Source/DigitalBusHandler.cpp
+CPP_SRC += $(OPENWARE)/Source/DigitalBusReader.cpp
+CPP_SRC += $(OPENWARE)/Source/DigitalBusStreamReader.cpp
+CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
 CPP_SRC += $(OPENWARE)/Source/Graphics.cpp

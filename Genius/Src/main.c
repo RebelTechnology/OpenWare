@@ -20,13 +20,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "usb_device.h"
-#include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "device.h"
 #include "errorhandlers.h"
+#include "usb_device.h"
+#include "usb_host.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +65,10 @@ TIM_HandleTypeDef htim6;
 
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_uart5_rx;
+DMA_HandleTypeDef hdma_uart5_tx;
+DMA_HandleTypeDef hdma_usart2_rx;
+DMA_HandleTypeDef hdma_usart2_tx;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 HCD_HandleTypeDef hhcd_USB_OTG_HS;
@@ -78,7 +82,6 @@ osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_FMC_Init(void);
@@ -103,6 +106,7 @@ void loop(void);
 void MX_USB_HOST_Process(void);
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void initialise_monitor_handles(void);
+void MPU_Config(void);
 
 /* USER CODE END PFP */
 
@@ -128,13 +132,13 @@ int main(void)
 #ifdef USE_ICACHE
   /* Enable I-Cache-------------------------------------------------------------*/
   /* After reset, you must invalidate each cache before enabling (SCB_EnableICache) it. */
-  /* SCB_InvalidateICache(); */
+  SCB_InvalidateICache();
   SCB_EnableICache();
 #endif
 #ifdef USE_DCACHE
   /* Enable D-Cache-------------------------------------------------------------*/
   /* Before enabling the data cache, you must invalidate the entire data cache (SCB_InvalidateDCache), because external memory might have changed from when the cache was disabled. */
-  /* SCB_InvalidateDCache(); */
+  SCB_InvalidateDCache();
   SCB_EnableDCache();
 #endif
 
@@ -145,9 +149,6 @@ int main(void)
 
 
   /* USER CODE END 1 */
-
-  /* MPU Configuration--------------------------------------------------------*/
-  MPU_Config();
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -162,6 +163,9 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+
+  /* MPU Configuration--------------------------------------------------------*/
+  MPU_Config();
 
   /* USER CODE END SysInit */
 
@@ -180,8 +184,8 @@ int main(void)
   MX_ADC1_Init();
   MX_DAC1_Init();
   MX_UART5_Init();
-  //MX_USB_OTG_FS_PCD_Init();
-  //MX_USB_OTG_HS_HCD_Init();
+  /* MX_USB_OTG_FS_PCD_Init(); */
+  /* MX_USB_OTG_HS_HCD_Init(); */
   /* USER CODE BEGIN 2 */
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);
@@ -207,9 +211,6 @@ int main(void)
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
   if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
     Error_Handler();
-
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
   SDRAM_Initialization_Sequence(&hsdram1);   
 
@@ -263,7 +264,6 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
   /** Supply configuration update enable
   */
@@ -312,33 +312,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_UART5
-                              |RCC_PERIPHCLK_SPI5|RCC_PERIPHCLK_SPI4
-                              |RCC_PERIPHCLK_SPI2|RCC_PERIPHCLK_SAI1
-                              |RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_USB
-                              |RCC_PERIPHCLK_FMC;
-  PeriphClkInitStruct.PLL2.PLL2M = 2;
-  PeriphClkInitStruct.PLL2.PLL2N = 12;
-  PeriphClkInitStruct.PLL2.PLL2P = 5;
-  PeriphClkInitStruct.PLL2.PLL2Q = 2;
-  PeriphClkInitStruct.PLL2.PLL2R = 2;
-  PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
-  PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOMEDIUM;
-  PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
-  PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_D1HCLK;
-  PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL;
-  PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL;
-  PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_D2PCLK1;
-  PeriphClkInitStruct.Usart234578ClockSelection = RCC_USART234578CLKSOURCE_D2PCLK1;
-  PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
-  PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Enable USB Voltage detector
-  */
-  HAL_PWREx_EnableUSBVoltageDetector();
 }
 
 /**
@@ -443,7 +416,6 @@ static void MX_DAC1_Init(void)
   }
   /** DAC channel OUT2 config
   */
-  sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
   if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -797,7 +769,7 @@ static void MX_UART5_Init(void)
 
   /* USER CODE END UART5_Init 1 */
   huart5.Instance = UART5;
-  huart5.Init.BaudRate = 115200;
+  huart5.Init.BaudRate = 31250;
   huart5.Init.WordLength = UART_WORDLENGTH_8B;
   huart5.Init.StopBits = UART_STOPBITS_1;
   huart5.Init.Parity = UART_PARITY_NONE;
@@ -806,7 +778,9 @@ static void MX_UART5_Init(void)
   huart5.Init.OverSampling = UART_OVERSAMPLING_16;
   huart5.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart5.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT|UART_ADVFEATURE_DMADISABLEONERROR_INIT;
+  huart5.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
+  huart5.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart5) != HAL_OK)
   {
     Error_Handler();
@@ -854,7 +828,9 @@ static void MX_USART2_UART_Init(void)
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT|UART_ADVFEATURE_DMADISABLEONERROR_INIT;
+  huart2.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
+  huart2.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     Error_Handler();
@@ -958,11 +934,23 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+  /* DMA1_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
   /* DMA1_Stream4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA2_Stream1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
@@ -1175,34 +1163,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* MPU Configuration */
-
-void MPU_Config(void)
-{
-  MPU_Region_InitTypeDef MPU_InitStruct = {0};
-
-  /* Disables the MPU */
-  HAL_MPU_Disable();
-  /** Initializes and configures the Region and the memory to be protected 
-  */
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-  MPU_InitStruct.BaseAddress = 0x30000000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;
-  MPU_InitStruct.SubRegionDisable = 0x0;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
-
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
-  /* Enables the MPU */
-  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
-
-}
-
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
   * @brief  Function implementing the defaultTask thread.
@@ -1213,12 +1173,14 @@ void MPU_Config(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+  /* init code for USB_DEVICE */
+  /* NOTE: we get frequent boot failures if host is called first */
+  MX_USB_DEVICE_Init();
+  
 #ifdef USE_USB_HOST
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
 #endif
-  /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
 
   setup();
 

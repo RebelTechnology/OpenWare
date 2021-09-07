@@ -39,6 +39,7 @@
   #define LED1_GPIO_Port GPIOC
   #define LED2_Pin GPIO_PIN_8
   #define LED2_GPIO_Port GPIOA
+  #define USE_SPI_FLASH
 #elif defined OWL_ALCHEMIST
   #define HARDWARE_VERSION    "OWL Alchemist Boot"
   #define HARDWARE_ID         ALCHEMIST_HARDWARE

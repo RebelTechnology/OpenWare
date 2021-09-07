@@ -1,7 +1,6 @@
 PROJECT = MagusEncoder
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
-OPENOCD ?= openocd -f openocd.cfg
 
 include $(OPENWARE)/Hardware/STM32F051K4.mk
 

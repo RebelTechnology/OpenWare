@@ -11,13 +11,17 @@ MEMORY
 DTCMRAM (xrw)    : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K
 PLUSRAM  (xrw)   : ORIGIN = 0x24000000, LENGTH = 512K /* D1 RAM */
-RAM_D2  (xrw)    : ORIGIN = 0x30000000, LENGTH = 288K
+HEAP_D2  (xrw)   : ORIGIN = 0x30000000, LENGTH = 256K
+DMA_D2  (xrw)    : ORIGIN = 0x30040000, LENGTH = 32K
 RAM_D3  (xrw)    : ORIGIN = 0x38000000, LENGTH = 64K
-ITCMRAM (xrw)    : ORIGIN = 0x00000000, LENGTH = 64K
+ITCMRAM (xrw)    : ORIGIN = 0x00000008, LENGTH = 65528 /* 64K - 8 to avoid starting at 0x0 - FreeRTOS fails if stack address is NULL */
 EXTRAM  (rwx)    : ORIGIN = 0xD0000000, LENGTH = 8M
+/* BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 0K */
+/* FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 512K */
 BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K
 FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 384K
-STORAGE (rx)     : ORIGIN = 0x08100000, LENGTH = 512K
+STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 512K  /* Assuming 1Mb FLASH */
+/* STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 1536K /\* Assuming 2Mb FLASH *\/ */
 }
 
 /* Define output sections */
@@ -129,8 +133,8 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >ITCMRAM
-  _estack = ORIGIN(ITCMRAM)+LENGTH(ITCMRAM); /* end of firmware RAM */
+  } >DTCMRAM
+  _estack = ORIGIN(DTCMRAM)+LENGTH(DTCMRAM);
 
   /* CCM section, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".ccmdata"))); */
@@ -139,10 +143,6 @@ SECTIONS
     *(.ccmdata)
     . = ALIGN(8);
     PROVIDE (_CCMRAM = .);
-  /* } >RAM_CCM */
-  /* _CCMRAM_END = ORIGIN(RAM_CCM) + LENGTH(RAM_CCM); */
-  /* } >RAM_D3 */
-  /* _CCMRAM_END = ORIGIN(RAM_D3) + LENGTH(RAM_D3); */
   } >ITCMRAM
   _CCMRAM_END = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM);
   _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
@@ -182,10 +182,18 @@ SECTIONS
   _PLUSRAM_END = ORIGIN(PLUSRAM) + LENGTH(PLUSRAM);
   _PLUSRAM_SIZE = LENGTH(PLUSRAM);
 
+  .heapd2 (NOLOAD) :
+  {
+    PROVIDE (_HEAP_D2 = .);
+  } >HEAP_D2
+  _HEAP_D2_END = ORIGIN(HEAP_D2) + LENGTH(HEAP_D2);
+  _HEAP_D2_SIZE = LENGTH(HEAP_D2);
+
   .dmadata (NOLOAD) :
   {
+    PROVIDE (_DMA_DATA = .);
     *(.dmadata)
-  } >RAM_D2
+  } >DMA_D2
 
   .flash_storage (NOLOAD) :
   {

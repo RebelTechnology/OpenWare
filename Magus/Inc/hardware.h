@@ -5,6 +5,8 @@
 #define HARDWARE_ID                  MAGUS_HARDWARE
 #define HARDWARE_VERSION             "Magus"
 
+#define USE_SPI_FLASH
+
 #define USE_SCREEN
 #define SSD1309
 /* #define OLED_DMA */
@@ -35,6 +37,13 @@
 #define USE_USBH_MIDI
 #define USB_HOST_RX_BUFF_SIZE       256
 
+// Serial MIDI TX only
+#define USE_UART_MIDI_TX
+#define UART_MIDI_HANDLE huart2
+#define UART_MIDI_RX_BUFFER_SIZE    256
+
+#define USE_TLC5946
+#define LEDS_BRIGTHNESS             20
 #define TLC5946_SPI hspi6
 #define MAX11300_SPI hspi5
 #define ENCODERS_SPI hspi5
