@@ -2,13 +2,15 @@ PROJECT = Xibeca
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
+LDSCRIPT = $(OPENWARE)/Hardware/xibeca.ld
 include $(OPENWARE)/Hardware/owl3.mk
 
 C_SRC = $(wildcard Core/Src/*.c)
 CPP_SRC = $(wildcard Core/Src/*.cpp)
-C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/pcm3168a.c
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
+# C_SRC += $(OPENWARE)/Source/sdram.c
+C_SRC += $(OPENWARE)/Source/sdram-as4cXm32.c
 
 C_SRC += $(OPENWARE)/Source/ssd1309.c
 CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
