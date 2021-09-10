@@ -3,8 +3,11 @@
 #include "errorhandlers.h"
 #include "MidiController.h"
 #include "OpenWareMidiControl.h"
+#include "Pin.h"
 
 #define PATCH_RESET_COUNTER (1000/MAIN_LOOP_SLEEP_MS)
+
+// Pin bypass_pin(GPIOA, GPIO_PIN_4);
 
 void setLed(uint8_t led, uint32_t rgb){
   switch(rgb){
@@ -71,6 +74,14 @@ void setGateValue(uint8_t ch, int16_t value){
 }
 
 void setup(){
+  // bypass_pin.outputMode();
+  // bypass_pin.inputMode();
+  // bypass_pin.setPull(PIN_PULL_NONE);
+  // bypass_pin.set(false);
+  // bypass_pin.setPull(PIN_PULL_DOWN);
+  // bypass_pin.setPull(PIN_PULL_UP);
+  // bypass_pin.get();
+  
   setLed(0, RED_COLOUR);
   HAL_GPIO_WritePin(EXP_TIP_GPIO_Port, EXP_TIP_Pin, GPIO_PIN_SET);
   owl.setup();

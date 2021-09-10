@@ -730,11 +730,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SW4_Pin SW3_Pin BYPASS_Pin SW1_Pin */
-  GPIO_InitStruct.Pin = SW4_Pin|SW3_Pin|BYPASS_Pin|SW1_Pin;
+  /*Configure GPIO pins : SW4_Pin SW3_Pin SW1_Pin */
+  GPIO_InitStruct.Pin = SW4_Pin|SW3_Pin|SW1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BYPASS_Pin */
+  GPIO_InitStruct.Pin = BYPASS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(BYPASS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB0 PB12 PB13 PB14
                            PB15 PB4 PB7 PB9 */
