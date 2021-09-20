@@ -281,11 +281,8 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
-#elif defined OWL_BIOSIGNALS || defined OWL_NOCTUA
-  pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
 #else
-  pv->audio_format = AUDIO_FORMAT_24B32;
-  // pv->audio_format = AUDIO_FORMAT_24B32_2X;
+  pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
 #endif
 #endif /* PROGRAM_VECTOR_V13 */
   pv->message = NULL;
