@@ -39,7 +39,7 @@
 /* #define ADC_E 4 */
 #define USE_CODEC
 #define USE_CS4271
-#define CODEC_HP_FILTER
+/* #define CODEC_HP_FILTER */
 #define CODEC_SPI hspi4
 
 #define NOF_ADC_VALUES               4
