@@ -21,6 +21,11 @@ public:
   CircularBuffer(): data(NULL), size(0){}
   CircularBuffer(T* data, size_t size): data(data), size(size){}
 
+  void setData(T* data, size_t len) {
+    this->data = data;
+    size = len;
+  }
+
   size_t getSize() const {
     return size;
   }

@@ -35,7 +35,7 @@
 /* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
   that it is an even number and higher than 3 */
 #define AUDIO_RX_PACKET_NUM                           1
-#define AUDIO_TX_PACKET_NUM                           1
+#define AUDIO_TX_PACKET_NUM                           3
 /* Total size of the audio transfer buffer */
 #define AUDIO_RX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM))
 /* Total size of the IN (i.e. microphopne) transfer buffer */
@@ -84,9 +84,9 @@
 
 #if AUDIO_BITS_PER_SAMPLE == 8
 typedef int8_t audio_t;
-#else if AUDIO_BITS_PER_SAMPLE == 16
+#elif AUDIO_BITS_PER_SAMPLE == 16
 typedef int16_t audio_t;
-#else if AUDIO_BITS_PER_SAMPLE == 32
+#elif AUDIO_BITS_PER_SAMPLE == 32
 typedef int32_t audio_t;
 #else
 #error "Unsupported AUDIO_BITS_PER_SAMPLE"
@@ -139,7 +139,7 @@ extern USBD_ClassTypeDef  USBD_AUDIO;
 uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev, void *fops);
 uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd);
 
-void usbd_audio_tx_start_callback(size_t rate, uint8_t channels);
+void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb);
 void usbd_audio_tx_stop_callback();
 void usbd_audio_tx_callback(uint8_t* data, size_t len);
 void usbd_audio_rx_start_callback(size_t rate, uint8_t channels);

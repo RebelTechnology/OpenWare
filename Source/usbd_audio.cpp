@@ -17,6 +17,12 @@
 #include "usbd_conf.h"
 #include "usbd_ctlreq.h"
 
+#include "CircularBuffer.h"
+
+// todo: not static/global
+CircularBuffer<audio_t> rx_buffer;
+CircularBuffer<audio_t> tx_buffer;
+
 #define AUDIO_SAMPLE_FREQ(frq)           (uint8_t)(frq), (uint8_t)((frq >> 8)), (uint8_t)((frq >> 16))
 #define AUDIO_FREQ_FROM_DATA(bytes)      ((((uint32_t)((bytes)[2]))<<16)|(((uint32_t)((bytes)[1]))<<8)|(((uint32_t)((bytes)[0]))))
 #define AUDIO_FREQ_TO_DATA(frq , bytes)  do{	\
@@ -650,6 +656,8 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
   haudio->rx_alt_setting = 0;
   haudio->midi_alt_setting = 0;
   haudio->volume = 0;
+  rx_buffer.setData((audio_t*)haudio->audio_rx_buffer, AUDIO_TX_TOTAL_BUF_SIZE/sizeof(audio_t));
+  tx_buffer.setData((audio_t*)haudio->audio_tx_buffer, AUDIO_TX_TOTAL_BUF_SIZE/sizeof(audio_t));
 
 #ifdef USE_USBD_AUDIO_TX_FALSE
   USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_TX_EP, USBD_EP_TYPE_ISOC, AUDIO_TX_PACKET_SIZE);
@@ -760,9 +768,10 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
   	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_TX_EP, USBD_EP_TYPE_ISOC, AUDIO_TX_PACKET_SIZE);
 	haudio->audio_tx_active = 1;
 	haudio->tx_soffn = USB_SOF_NUMBER();
-	usbd_audio_tx_start_callback(USBD_AUDIO_TX_FREQ, USBD_AUDIO_TX_CHANNELS);
+	usbd_audio_tx_start_callback(USBD_AUDIO_TX_FREQ, USBD_AUDIO_TX_CHANNELS, &tx_buffer);
 	/* send first audio data */
-	usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
+	usbd_audio_write((uint8_t*)tx_buffer.getReadHead(), AUDIO_TX_PACKET_SIZE);	
+	// usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
       }
       haudio->tx_alt_setting = new_alt;
     }
@@ -919,7 +928,11 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 #ifdef USE_USBD_AUDIO_TX
   case AUDIO_TX_EP:
     haudio->tx_soffn = USB_SOF_NUMBER();
-    usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
+    // todo: can we find out how much data was actually read?
+    tx_buffer.moveReadHead(AUDIO_TX_PACKET_SIZE/sizeof(audio_t));
+    // todo: write no more than available data
+    usbd_audio_write((uint8_t*)tx_buffer.getReadHead(), AUDIO_TX_PACKET_SIZE);
+    // usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
     break;
 #endif
 #ifdef USE_USBD_MIDI
@@ -1228,7 +1241,11 @@ static uint8_t  USBD_AUDIO_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t ep
     USB_CLEAR_INCOMPLETE_IN_EP(AUDIO_TX_EP);
     USBD_LL_FlushEP(pdev, AUDIO_TX_EP);
     haudio->tx_soffn = USB_SOF_NUMBER();
-    usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
+    // host has not collected data
+    // let's not increment readhead
+    // todo: write no more than available data
+    usbd_audio_write((uint8_t*)tx_buffer.getReadHead(), AUDIO_TX_PACKET_SIZE);
+// usbd_audio_tx_callback(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
   }
 #endif
   return USBD_OK;
