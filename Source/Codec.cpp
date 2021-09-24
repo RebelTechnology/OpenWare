@@ -26,10 +26,14 @@ extern "C" {
   int32_t codec_txbuf[CODEC_BUFFER_SIZE] DMA_RAM;
   extern DMA_HandleTypeDef HDMA_TX;
   extern DMA_HandleTypeDef HDMA_RX;
+#if defined USE_CS4271 || defined USE_PCM3168A
+  extern SAI_HandleTypeDef HSAI_RX;
+  extern SAI_HandleTypeDef HSAI_TX;
+#endif
 }
 
 CircularBuffer<int32_t> audio_rx_buffer(codec_rxbuf, CODEC_BUFFER_SIZE);
-CircularBuffer<int32_t> audio_tx_buffer(codec_txbuf, CODEC_BUFFER_SIZE);;
+CircularBuffer<int32_t> audio_tx_buffer(codec_txbuf, CODEC_BUFFER_SIZE);
 
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
@@ -101,8 +105,9 @@ void usbd_audio_tx_stop_callback(){
 
 void usbd_audio_rx_start_callback(size_t rate, uint8_t channels){
 #if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
-  // todo: if(wet) { disable RX dma }
-  __HAL_DMA_DISABLE(&HDMA_RX); // stop codec transfers
+  // todo: if(wet) { disable RX dma } else { stop patch }
+  // __HAL_DMA_DISABLE(&HDMA_RX); // stop codec transfers
+  HAL_SAI_DMAPause(&HSAI_RX);
   audio_rx_buffer.clear();
   update_rx_read_index();
   size_t pos = audio_rx_buffer.getWriteIndex();
@@ -110,8 +115,8 @@ void usbd_audio_rx_start_callback(size_t rate, uint8_t channels){
   pos = (pos + len/2) % len;
   pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
   audio_rx_buffer.setWriteIndex(pos);
-  program.exitProgram(true);
-  owl.setOperationMode(STREAM_MODE);
+  // program.exitProgram(true);
+  // owl.setOperationMode(STREAM_MODE);
 #ifdef DEBUG
   printf("start rx %u %u %u\n", rate, channels, pos);
 #endif
@@ -120,11 +125,12 @@ void usbd_audio_rx_start_callback(size_t rate, uint8_t channels){
 
 void usbd_audio_rx_stop_callback(){
 #if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
-  __HAL_DMA_ENABLE(&HDMA_RX); // restart codec transfers
+  // __HAL_DMA_ENABLE(&HDMA_RX); // restart codec transfers
+  HAL_SAI_DMAResume(&HSAI_RX);
   audio_rx_buffer.clear();
-  program.loadProgram(program.getProgramIndex());
-  program.startProgram(true);
-  owl.setOperationMode(RUN_MODE);
+  // program.loadProgram(program.getProgramIndex());
+  // program.startProgram(true);
+  // owl.setOperationMode(RUN_MODE);
 #ifdef DEBUG
   printf("stop rx\n");
 #endif
@@ -163,6 +169,7 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
 }
 
 static int32_t usbd_audio_tx_flow = 0;
+static uint32_t usbd_audio_rx_count = 0;
 // expect a 1 in 10k sample underflow (-0.01% sample accuracy)
 void usbd_audio_tx_callback(uint8_t* data, size_t len){
 #if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
@@ -183,6 +190,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
     audio_tx_buffer.moveReadHead(AUDIO_CHANNELS);
   }
   usbd_audio_write(data, len);
+  usbd_audio_rx_count += len;
 #endif
 }
 #endif // USE_USBD_AUDIO
@@ -196,7 +204,11 @@ void usbd_audio_gain_callback(int16_t gain){
 }
 
 uint32_t usbd_audio_get_rx_count(){
-  return 0; // todo!
+  // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  pos += usbd_audio_rx_count;
+  usbd_audio_rx_count = 0;
+  return pos;
 }
 
 uint16_t Codec::getBlockSize(){
@@ -387,12 +399,10 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A
 
 extern "C" {
-  extern SAI_HandleTypeDef HSAI_RX;
-  extern SAI_HandleTypeDef HSAI_TX;
-  void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
+  void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
-  void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
+  void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){

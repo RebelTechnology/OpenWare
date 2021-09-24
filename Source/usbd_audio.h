@@ -82,6 +82,15 @@
 
 #endif
 
+#if AUDIO_BITS_PER_SAMPLE == 8
+typedef int8_t audio_t;
+#else if AUDIO_BITS_PER_SAMPLE == 16
+typedef int16_t audio_t;
+#else if AUDIO_BITS_PER_SAMPLE == 32
+typedef int32_t audio_t;
+#else
+#error "Unsupported AUDIO_BITS_PER_SAMPLE"
+#endif
 
 /** @defgroup USBD_CORE_Exported_TypesDefinitions
   * @{
