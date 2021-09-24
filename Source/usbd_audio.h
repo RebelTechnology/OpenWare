@@ -34,7 +34,7 @@
     
 /* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
   that it is an even number and higher than 3 */
-#define AUDIO_RX_PACKET_NUM                           1
+#define AUDIO_RX_PACKET_NUM                           3
 #define AUDIO_TX_PACKET_NUM                           3
 /* Total size of the audio transfer buffer */
 #define AUDIO_RX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM))
@@ -142,7 +142,7 @@ uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd);
 void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb);
 void usbd_audio_tx_stop_callback();
 void usbd_audio_tx_callback(uint8_t* data, size_t len);
-void usbd_audio_rx_start_callback(size_t rate, uint8_t channels);
+void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb);
 void usbd_audio_rx_stop_callback();
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len);
 void usbd_audio_mute_callback(int16_t gain);

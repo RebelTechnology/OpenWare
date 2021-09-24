@@ -126,7 +126,15 @@ void usbd_audio_tx_stop_callback(){
 #endif
 }
 
-void usbd_audio_rx_start_callback(size_t rate, uint8_t channels){
+void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
+  usbd_rx = (CircularBuffer<audio_t>*)cb;
+  usbd_rx->reset();
+  usbd_rx->clear();
+  usbd_rx->moveReadHead(usbd_rx->getSize()/2);
+  HAL_SAI_DMAPause(&HSAI_RX);
+#ifdef DEBUG
+  printf("start rx %u %u %u\n", rate, channels, usbd_rx->getSize());
+#endif
 #if 0 && defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
   // todo: if(wet) { disable RX dma } else { stop patch }
   // __HAL_DMA_DISABLE(&HDMA_RX); // stop codec transfers
@@ -147,6 +155,8 @@ void usbd_audio_rx_start_callback(size_t rate, uint8_t channels){
 }
 
 void usbd_audio_rx_stop_callback(){
+  usbd_rx = 0;
+  HAL_SAI_DMAResume(&HSAI_RX);
 #if 0 && defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
   // __HAL_DMA_ENABLE(&HDMA_RX); // restart codec transfers
   HAL_SAI_DMAResume(&HSAI_RX);
@@ -154,10 +164,10 @@ void usbd_audio_rx_stop_callback(){
   // program.loadProgram(program.getProgramIndex());
   // program.startProgram(true);
   // owl.setOperationMode(RUN_MODE);
+#endif  
 #ifdef DEBUG
   printf("stop rx\n");
 #endif
-#endif  
 }
 
 static int32_t usbd_audio_rx_flow = 0;
@@ -397,23 +407,30 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A
 
 extern "C" {
+  void usbd_rx_convert(int32_t* dst, size_t len){
+    while(len--)
+      *dst++ = AUDIO_SAMPLE_TO_INT32(usbd_rx->read());
+  }
   void usbd_tx_convert(int32_t* src, size_t len){
 #if USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS
 #error "todo: support for USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS"
 #endif
-    while(len--){
-      audio_t sample = AUDIO_INT32_TO_SAMPLE(*src++); // shift, round, dither, clip, truncate, bitswap
-      usbd_tx->write(sample);
-    }
+    while(len--)
+      // macro handles shift, round, dither, clip, truncate, bitswap
+      usbd_tx->write(AUDIO_INT32_TO_SAMPLE(*src++));
   }
   void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     if(usbd_tx)
-      usbd_tx_convert(codec_rxbuf, codec_blocksize*AUDIO_CHANNELS);
+      usbd_tx_convert(codec_txbuf, codec_blocksize*AUDIO_CHANNELS);
+    if(usbd_rx)
+      usbd_rx_convert(codec_rxbuf, codec_blocksize*AUDIO_CHANNELS);
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
   void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
     if(usbd_tx)
-      usbd_tx_convert(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize*AUDIO_CHANNELS);
+      usbd_tx_convert(codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize*AUDIO_CHANNELS);
+    if(usbd_rx)
+      usbd_rx_convert(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize*AUDIO_CHANNELS);
     audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){

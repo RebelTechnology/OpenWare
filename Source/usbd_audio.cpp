@@ -672,8 +672,9 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
   haudio->audio_rx_active = 0;
   haudio->fb_soffn = USB_SOF_NUMBER();
   /* Prepare OUT endpoint to receive first packet */
-  USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
-  usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS);
+  USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)rx_buffer->getWriteHead(), AUDIO_RX_PACKET_SIZE);
+  // USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
+  // usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS);
 #endif
 
 #ifdef USE_USBD_MIDI
@@ -1112,7 +1113,7 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
       }
     } else if (haudio->control.req_type == AUDIO_STREAMING_REQ) {
       USBD_DbgLog("STREAMING_REQ 0x%x 0x%x", haudio->control.cs, haudio->control.data[0]);
-#ifdef USE_USBD_AUDIO_RX
+#ifdef USE_USBD_AUDIO_RX_FALSE // todo!
       if (haudio->control.cs == AUDIO_STREAMING_REQ_FREQ_CTRL) {
 	/* Frequency Control */
 	uint32_t new_freq = AUDIO_FREQ_FROM_DATA(haudio->control.data);
@@ -1282,17 +1283,20 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
     uint32_t len;
     if(haudio->audio_rx_active == 0){
       haudio->audio_rx_active = 1;
-      usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS);
+      usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
       len = AUDIO_RX_PACKET_SIZE;
       /* send first synchro data */
       get_usb_full_speed_rate(USBD_AUDIO_RX_FREQ, fb_data);
       USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, 3U);
     }else{
       len = USBD_LL_GetRxDataSize(pdev, epnum);
+      rx_buffer.moveWriteHead(len/sizeof(audio_t));
     }
-    len = usbd_audio_rx_callback(haudio->audio_rx_buffer, len);
+    // len = usbd_audio_rx_callback(haudio->audio_rx_buffer, len);
+    // len = std::min(rx_buffer.getWriteCapacity(), AUDIO_RX_PACKET_SIZE);
+    len = AUDIO_RX_PACKET_SIZE; // todo: ^
     /* Prepare Out endpoint to receive next audio packet */
-    USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, len);
+    USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)rx_buffer.getWriteHead(), len);
   }
 #endif /* USE_USBD_AUDIO_RX */
 #ifdef USE_USBD_MIDI
@@ -1342,7 +1346,10 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
   USBD_LL_FlushEP(pdev, AUDIO_RX_EP);
 
   /* Prepare Out endpoint to receive first audio packet */
-  USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
+  // USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
+  // size_t len = std::min(rx_buffer.getWriteCapacity(), AUDIO_RX_PACKET_SIZE);
+  size_t len = AUDIO_RX_PACKET_SIZE; // todo: ^
+  USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)rx_buffer.getWriteHead(), len);
 
   /* get_usb_full_speed_rate(haudio->frequency, fb_data); // reset to new frequency */
 
