@@ -131,6 +131,7 @@ void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
   usbd_rx->reset();
   usbd_rx->clear();
   usbd_rx->moveReadHead(usbd_rx->getSize()/2);
+  usbd_audio_rx_count = 0;
   HAL_SAI_DMAPause(&HSAI_RX);
 #ifdef DEBUG
   printf("start rx %u %u %u\n", rate, channels, usbd_rx->getSize());
@@ -155,7 +156,7 @@ void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
 }
 
 void usbd_audio_rx_stop_callback(){
-  usbd_rx = 0;
+  usbd_rx = NULL;
   HAL_SAI_DMAResume(&HSAI_RX);
 #if 0 && defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
   // __HAL_DMA_ENABLE(&HDMA_RX); // restart codec transfers
@@ -210,12 +211,13 @@ void usbd_audio_gain_callback(int16_t gain){
   // codec_set_gain_in(gain); todo!
 }
 
+/* Get number of samples transmitted since previous request */
 uint32_t usbd_audio_get_rx_count(){
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
   pos += usbd_audio_rx_count;
   usbd_audio_rx_count = 0;
-  return pos;
+  return pos / AUDIO_CHANNELS;
 }
 #endif // USE_USBD_AUDIO
 
@@ -362,8 +364,8 @@ void Codec::stop(){
 void Codec::start(){
   setInputGain(settings.audio_input_gain);
   setOutputGain(settings.audio_output_gain);
-  // codec_blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
-  codec_blocksize = CODEC_BUFFER_SIZE/4;
+  // codec_blocksize = min(AUDIO_BLOCK_SIZE, settings.audio_blocksize);
+  codec_blocksize = AUDIO_BLOCK_SIZE;
   HAL_StatusTypeDef ret;
   /* See STM32F405 Errata, I2S device limitations */
   /* The I2S peripheral must be enabled when the external master sets the WS line at: */
@@ -375,7 +377,7 @@ void Codec::start(){
   // configuration phase, the Size parameter means the number of 16-bit data length
   // in the transaction and when a 24-bit data frame or a 32-bit data frame is selected
   // the Size parameter means the number of 16-bit data length.
-  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)codec_txbuf, (uint16_t*)codec_rxbuf, codec_blocksize*4);
+  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)codec_txbuf, (uint16_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   ASSERT(ret == HAL_OK, "Failed to start I2S DMA");
 }
 
@@ -408,6 +410,7 @@ extern "C"{
 
 extern "C" {
   void usbd_rx_convert(int32_t* dst, size_t len){
+    usbd_audio_rx_count += len;
     while(len--)
       *dst++ = AUDIO_SAMPLE_TO_INT32(usbd_rx->read());
   }

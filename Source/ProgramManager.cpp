@@ -222,7 +222,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
 #ifdef USE_CODEC
   pv->audio_blocksize = codec.getBlockSize();
 #else
-  pv->audio_blocksize = CODEC_BLOCKSIZE;
+  pv->audio_blocksize = AUDIO_BLOCK_SIZE;
 #endif
   pv->buttons = button_values;
   pv->registerPatch = onRegisterPatch;
