@@ -35,8 +35,8 @@ extern "C" {
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
 
-CircularBuffer<audio_t>* usbd_rx = NULL;
-CircularBuffer<audio_t>* usbd_tx = NULL;
+CircularBuffer<audio_t>* volatile usbd_rx = NULL;
+CircularBuffer<audio_t>* volatile usbd_tx = NULL;
 
 // static void update_rx_read_index(){
 // #if defined USE_CS4271 || defined USE_PCM3168A
@@ -118,11 +118,9 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
 }
 
 void usbd_audio_tx_stop_callback(){
-#if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
   usbd_tx = NULL;
 #ifdef DEBUG
   printf("stop tx\n");
-#endif
 #endif
 }
 
@@ -213,11 +211,12 @@ void usbd_audio_gain_callback(int16_t gain){
 
 /* Get number of samples transmitted since previous request */
 uint32_t usbd_audio_get_rx_count(){
-  // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
-  pos += usbd_audio_rx_count;
-  usbd_audio_rx_count = 0;
-  return pos / AUDIO_CHANNELS;
+  return 0;
+  // // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  // size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  // pos += usbd_audio_rx_count;
+  // usbd_audio_rx_count = 0;
+  // return pos / AUDIO_CHANNELS;
 }
 #endif // USE_USBD_AUDIO
 

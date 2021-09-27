@@ -31,14 +31,14 @@
 #define AUDIO_RX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_RX_FREQ * USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000)) 
 #define AUDIO_TX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_TX_FREQ * USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000))
 #define AUDIO_FB_PACKET_SIZE                          3U
-    
-/* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
-  that it is an even number and higher than 3 */
-#define AUDIO_RX_PACKET_NUM                           3
-#define AUDIO_TX_PACKET_NUM                           3
-/* Total size of the audio transfer buffer */
+
+/* Number of sub-packets in the audio transfer buffer. */
+#define AUDIO_RX_PACKET_NUM                           2
+#define AUDIO_TX_PACKET_NUM                           2
+
+/* Total size of the OUT audio transfer buffer */
 #define AUDIO_RX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM))
-/* Total size of the IN (i.e. microphopne) transfer buffer */
+/* Total size of the IN transfer buffer */
 #define AUDIO_TX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_TX_PACKET_SIZE * AUDIO_TX_PACKET_NUM))
 
 #define MIDI_TX_PACKET_SIZE                           0x40

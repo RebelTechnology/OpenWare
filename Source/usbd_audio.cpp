@@ -91,7 +91,7 @@ USBD_ClassTypeDef  USBD_AUDIO =
 };
 
 
-#if 1
+#ifdef USE_USBD_RX_FB
 
 #define FB_REFRESH 5 /* Feedback refresh rate 2^(10-FB_REFRESH) */
 #define FB_RATE (1<<(10-FB_REFRESH))
@@ -113,7 +113,7 @@ uint8_t fb_data[3];
 
 #endif
 
-#if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
+#if defined USE_USBD_AUDIO_RX && defined USE_USBD_RX_FB && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
 #define AUDIO_RX_IF                    0x01 // bInterfaceNumber
 #define AUDIO_TX_IF                    0x02
 #define AUDIO_MIDI_IF                  0x03
@@ -122,19 +122,38 @@ uint8_t fb_data[3];
 #define AUDIO_TX_EP                    0x82
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x83
-#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_RX_FB && defined USE_USBD_AUDIO_TX
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_TX_IF                    0x02
 #define AUDIO_RX_EP                    0x01
 #define AUDIO_FB_EP                    0x81
 #define AUDIO_TX_EP                    0x82
-#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_RX_FB && defined USE_USBD_MIDI
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x02
 #define AUDIO_RX_EP                    0x01
 #define AUDIO_FB_EP                    0x81
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x82
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
+#define AUDIO_RX_IF                    0x01 // bInterfaceNumber
+#define AUDIO_TX_IF                    0x02
+#define AUDIO_MIDI_IF                  0x03
+#define AUDIO_RX_EP                    0x01 // bEndpointAddress
+#define AUDIO_TX_EP                    0x81
+#define MIDI_RX_EP                     0x02
+#define MIDI_TX_EP                     0x82
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
+#define AUDIO_RX_IF                    0x01
+#define AUDIO_TX_IF                    0x02
+#define AUDIO_RX_EP                    0x01
+#define AUDIO_TX_EP                    0x81
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI
+#define AUDIO_RX_IF                    0x01
+#define AUDIO_MIDI_IF                  0x02
+#define AUDIO_RX_EP                    0x01
+#define MIDI_RX_EP                     0x02
+#define MIDI_TX_EP                     0x81
 #elif defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
 #define AUDIO_TX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x02
@@ -154,7 +173,11 @@ uint8_t fb_data[3];
 
 #ifdef USE_USBD_AUDIO_RX
 #define USBD_AUDIO_RX_AC_DESC_LEN      30
+#ifdef USE_USBD_RX_FB
 #define USBD_AUDIO_RX_AS_DESC_LEN      61
+#else
+#define USBD_AUDIO_RX_AS_DESC_LEN      52
+#endif
 #define USBD_AUDIO_RX_NUM_INTERFACES   1
 #else
 #define USBD_AUDIO_RX_AC_DESC_LEN      0
@@ -366,6 +389,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   /* 11 byte */
   
   /* USB Play data ep  */
+#ifdef USE_USBD_RX_FB
   /* Standard AS Isochronous asynchronous Audio Data Endpoint Descriptor*/
   0x09,                                    /* bLength */
   USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
@@ -377,6 +401,18 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x00,                                    /* bRefresh */
   AUDIO_FB_EP,                             /* bSynchAddress */
   /* 09 byte */
+#else
+  0x09,                                    /* bLength */
+  USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
+  AUDIO_RX_EP,                             /* bEndpointAddress 1 out endpoint*/
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC, /* bmAttributes */
+  LOBYTE(AUDIO_RX_PACKET_SIZE),		   /* wMaxPacketSize in bytes */
+  HIBYTE(AUDIO_RX_PACKET_SIZE),
+  0x01,                                    /* bInterval */
+  0x00,                                    /* bRefresh */
+  0,                                       /* bSynchAddress */
+  /* 09 byte */
+#endif
   
   /* Class-Specific AS Isochronous Audio Data Endpoint Descriptor*/
   0x07,                                    /* bLength */
@@ -388,6 +424,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x00,
   /* 07 byte */
 
+#ifdef USE_USBD_RX_FB
   /* Endpoint 2 - Standard Descriptor - See UAC Spec 1.0 p.63 4.6.2.1 Standard AS Isochronous Synch Endpoint Descriptor */
   0x09,                                    /* bLength */
   USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
@@ -399,6 +436,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   FB_REFRESH,                              /* bRefresh SOF_RATE */
   0x00,                                    /* bSynchAddress */
   /* 09 byte*/
+#endif
 
   // 9+9+7+11+9+7+9 = 61 bytes
 #endif /*USE_USBD_AUDIO_RX */
@@ -454,8 +492,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x09,                         // Size of the descriptor, in bytes (bLength)
   0x05,                         // ENDPOINT descriptor (bDescriptorType)
   AUDIO_TX_EP,                  // IN Endpoint 1. (bEndpointAddress)
-  /* USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC, // bmAttributes */
-  USBD_EP_TYPE_ISOC,            // bmAttributes
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC,   // bmAttributes
   LOBYTE(AUDIO_TX_PACKET_SIZE),	// wMaxPacketSize in bytes
   HIBYTE(AUDIO_TX_PACKET_SIZE),
   0x01,                         // Polling interval 1kHz. (bInterval)
@@ -656,8 +693,12 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
   haudio->rx_alt_setting = 0;
   haudio->midi_alt_setting = 0;
   haudio->volume = 0;
-  rx_buffer.setData((audio_t*)haudio->audio_rx_buffer, AUDIO_TX_TOTAL_BUF_SIZE/sizeof(audio_t));
+#ifdef USE_USBD_AUDIO_RX
+  rx_buffer.setData((audio_t*)haudio->audio_rx_buffer, AUDIO_RX_TOTAL_BUF_SIZE/sizeof(audio_t));
+#endif
+#ifdef USE_USBD_AUDIO_TX
   tx_buffer.setData((audio_t*)haudio->audio_tx_buffer, AUDIO_TX_TOTAL_BUF_SIZE/sizeof(audio_t));
+#endif
 
 #ifdef USE_USBD_AUDIO_TX_FALSE
   USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_TX_EP, USBD_EP_TYPE_ISOC, AUDIO_TX_PACKET_SIZE);
@@ -704,7 +745,9 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
 
 #ifdef USE_USBD_AUDIO_RX
   USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_RX_EP);
+#ifdef USE_USBD_RX_FB
   USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_FB_EP);
+#endif
   haudio->audio_rx_active = 0;
   usbd_audio_rx_stop_callback();
 #endif
@@ -741,17 +784,23 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
       if(new_alt == 0){
     	// close old
 	USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_RX_EP);
+#ifdef USE_USBD_RX_FB
 	USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_FB_EP);
+#endif
 	AUDIO_OUT_StopAndReset(pdev);
       }else{
     	// open new
     	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_RX_EP, USBD_EP_TYPE_ISOC, AUDIO_RX_PACKET_SIZE);
+#ifdef USE_USBD_RX_FB
 	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_FB_EP, USBD_EP_TYPE_ISOC, AUDIO_FB_PACKET_SIZE);
+#endif
 	haudio->fb_soffn = USB_SOF_NUMBER();
 	/* haudio->bit_depth = 16U; // alt 1 */
 	AUDIO_OUT_Restart(pdev);
       }
+#ifdef USE_USBD_RX_FB
       USBD_LL_FlushEP(pdev, AUDIO_FB_EP);
+#endif
       haudio->rx_alt_setting = new_alt;
     }    
     break;
@@ -920,7 +969,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
   (void)haudio;
   switch(epnum | 0x80){
-#ifdef USE_USBD_AUDIO_RX
+#ifdef USE_USBD_RX_FB
   case AUDIO_FB_EP:
     haudio->fb_soffn = USB_SOF_NUMBER();
     USBD_LL_Transmit(pdev, AUDIO_FB_EP, (uint8_t*)fb_data, 3U);
@@ -1190,7 +1239,7 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
   /* SOF (Start of Frame) Every millisecond the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
   USBD_AUDIO_HandleTypeDef* haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;  
-#ifdef USE_USBD_AUDIO_RX
+#ifdef USE_USBD_RX_FB
   static uint32_t sof_count = 0;
   if(haudio->audio_rx_active && ++sof_count == FB_RATE){
     sof_count = 0;
@@ -1225,8 +1274,7 @@ static uint8_t  USBD_AUDIO_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t ep
   uint16_t current_sof;
   current_sof = USB_SOF_NUMBER();
 
-#ifdef USE_USBD_AUDIO_RX
-  // todo: fix this to work for FB and TX endpoints
+#ifdef USE_USBD_RX_FB
   if(pdev->ep_in[AUDIO_FB_EP & 0xFU].is_used && 
      IS_ISO_IN_INCOMPLETE_EP(AUDIO_FB_EP & 0xFU, current_sof, haudio->fb_soffn)){
     USB_CLEAR_INCOMPLETE_IN_EP(AUDIO_FB_EP);
@@ -1285,9 +1333,11 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev,
       haudio->audio_rx_active = 1;
       usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
       len = AUDIO_RX_PACKET_SIZE;
+#ifdef USE_USBD_RX_FB
       /* send first synchro data */
       get_usb_full_speed_rate(USBD_AUDIO_RX_FREQ, fb_data);
       USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, 3U);
+#endif
     }else{
       len = USBD_LL_GetRxDataSize(pdev, epnum);
       rx_buffer.moveWriteHead(len/sizeof(audio_t));
@@ -1324,7 +1374,9 @@ static void AUDIO_OUT_StopAndReset(USBD_HandleTypeDef* pdev)
   USBD_DbgLog("AUDIO_OUT_StopAndReset %lu", haudio->frequency);
 
   haudio->audio_rx_active = 0;
+#ifdef USE_USBD_RX_FB
   USBD_LL_FlushEP(pdev, AUDIO_FB_EP);
+#endif
   USBD_LL_FlushEP(pdev, AUDIO_RX_EP);
   usbd_audio_rx_stop_callback();
   /* ((USBD_AUDIO_ItfTypeDef*)pdev->pUserData)->DeInit(0); */
@@ -1342,7 +1394,9 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
 
   /* AUDIO_OUT_StopAndReset(pdev); */
   haudio->audio_rx_active = 0;
+#ifdef USE_USBD_RX_FB
   USBD_LL_FlushEP(pdev, AUDIO_FB_EP);
+#endif
   USBD_LL_FlushEP(pdev, AUDIO_RX_EP);
 
   /* Prepare Out endpoint to receive first audio packet */
