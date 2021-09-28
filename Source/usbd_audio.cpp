@@ -186,7 +186,7 @@ uint8_t fb_data[3];
 #endif
 
 #ifdef USE_USBD_AUDIO_TX
-#define USBD_AUDIO_TX_AC_DESC_LEN      21
+#define USBD_AUDIO_TX_AC_DESC_LEN      30
 #define USBD_AUDIO_TX_AS_DESC_LEN      52
 #define USBD_AUDIO_TX_NUM_INTERFACES   1
 #else
@@ -291,8 +291,9 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x02,                                 // bUnitID
   0x01,                                 // bSourceID
   0x01,                                 // bControlSize
-  0x01|0x02,                            // bmaControls(0) AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME
-  0,                                    // bmaControls(1)
+  // 0x01|0x02,                            // bmaControls(0) AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME
+  0x00,                                 // bmaControls(0)
+  0x00,                                 // bmaControls(1)
   0x00,                                 // iTerminal
   /* 09 byte */
   
@@ -300,7 +301,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x09,                                 // bLength
   0x024,                                // bDescriptorType
   0x03,                                 // bDescriptorSubtype
-  0x03,                                 // bTerminalID 
+  0x03,                                 // bTerminalID
   0x01,                                 // wTerminalType  0x0301
   0x03,                                 // wTerminalType  0x0301
   0x00,                                 // bAssocTerminal
@@ -316,29 +317,42 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x0C,                         // Size of the descriptor, in bytes
   0x24,                         // bDescriptorType CS_INTERFACE Descriptor Type 0x24
   0x02,                         // bDescriptorSubtype INPUT_TERMINAL descriptor subtype 0x02
-  0x01,                         // bTerminalID ID of this Terminal.
+  0x04,                         // bTerminalID ID of this Terminal.
   0x01,                         // wTerminalType
   0x02,                         // wTerminalType Terminal is Microphone (0x0201)
   0x00,                         // bAssocTerminal No association
-  USBD_AUDIO_TX_CHANNELS,        // bNrChannels 
+  USBD_AUDIO_TX_CHANNELS,       // bNrChannels 
   0x03,                         // wChannelConfig
   0x00,                         // wChannelConfig Mono sets no position bits 
   0x00,                         // iChannelNames Unused
   0x00,                         // iTerminal Unused
   /* 12 bytes */
 
+  /* Feature Unit Descriptor*/
+  0x09,                                 // bLength
+  0x24,                                 // bDescriptorType
+  0x06,                                 // bDescriptorSubtype
+  0x05,                                 // bUnitID
+  0x04,                                 // bSourceID
+  0x01,                                 // bControlSize
+  // 0x01|0x02,                            // bmaControls(0) AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME
+  0x00,                                 // bmaControls(0)
+  0x00,                                 // bmaControls(1)
+  0x00,                                 // iTerminal
+  /* 09 byte */
+
   /* USB Microphone Output Terminal Descriptor */
   0x09,                            // Size of the descriptor, in bytes (bLength)
   0x24,                            // bDescriptorType
   0x03,                            // bDescriptorSubtype
-  0x02,                            // bTerminalID
-  0x01, 0x01,                      // wTerminalType
+  0x06,                            // bTerminalID
+  0x01, 0x01,                      // wTerminalType 0x0101 USB Streaming
   0x00,                            // bAssocTerminal
-  0x01,                            // From Input Terminal.(bSourceID)
+  0x05,                            // From Input Terminal.(bSourceID)
   0x00,                            // unused  (iTerminal)
   /* 9 bytes */
 
-  // 12+9 = 21 bytes
+  // 12+9+9 = 30 bytes
 #endif
   
 #ifdef USE_USBD_AUDIO_RX
@@ -434,8 +448,8 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
   AUDIO_FB_EP,                             /* bEndpointAddress */
   USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_NOSYNC|USBD_EP_ATTR_ISOC_FB,  /* bmAttributes */
-  LOBYTE(AUDIO_RX_MAX_PACKET_SIZE),		   /* wMaxPacketSize */
-  HIBYTE(AUDIO_RX_MAX_PACKET_SIZE),
+  LOBYTE(AUDIO_FB_PACKET_SIZE),		   /* wMaxPacketSize */
+  HIBYTE(AUDIO_FB_PACKET_SIZE),
   0x01,                                    /* bInterval 1ms */
   FB_REFRESH,                              /* bRefresh SOF_RATE */
   0x00,                                    /* bSynchAddress */
@@ -474,7 +488,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x07,                         // Size of the descriptor, in bytes (bLength)
   0x24,                         // bDescriptorType
   0x01,                         // bDescriptorSubtype
-  0x02,                         // Unit ID of the Output Terminal.(bTerminalLink)
+  0x04,                         // Unit ID of the Output Terminal.(bTerminalLink)
   0x00,                         // Interface delay. (bDelay)
   0x01,
   0x00,                         // PCM Format (wFormatTag) See 'USB Audio Data formats'
@@ -995,7 +1009,7 @@ static void AUDIO_REQ_GetCurrent(USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef*
   USBD_AUDIO_HandleTypeDef* haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;
 
-  if ((req->bmRequest & 0x1f) == AUDIO_CONTROL_REQ) {
+  if ((req->bmRequest & 0x1f) == AUDIO_CONTROL_REQ) { // should AUDIO_CONTROL_REQ the bUnitID of IN/OUT feature?
     switch (HIBYTE(req->wValue)) {
       case AUDIO_CONTROL_REQ_FU_MUTE: {
         /* Current mute state */
