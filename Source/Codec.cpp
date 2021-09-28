@@ -130,40 +130,17 @@ void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
   usbd_rx->clear();
   usbd_rx->moveReadHead(usbd_rx->getSize()/2);
   usbd_audio_rx_count = 0;
-  HAL_SAI_DMAPause(&HSAI_RX);
+  // HAL_SAI_DMAStop(&HSAI_RX);
+  // HAL_SAI_DMAPause(&HSAI_RX);
 #ifdef DEBUG
   printf("start rx %u %u %u\n", rate, channels, usbd_rx->getSize());
-#endif
-#if 0 && defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
-  // todo: if(wet) { disable RX dma } else { stop patch }
-  // __HAL_DMA_DISABLE(&HDMA_RX); // stop codec transfers
-  HAL_SAI_DMAPause(&HSAI_RX);
-  audio_rx_buffer.clear();
-  update_rx_read_index();
-  size_t pos = audio_rx_buffer.getWriteIndex();
-  size_t len = audio_rx_buffer.getSize();
-  pos = (pos + len/2) % len;
-  pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
-  audio_rx_buffer.setWriteIndex(pos);
-  // program.exitProgram(true);
-  // owl.setOperationMode(STREAM_MODE);
-#ifdef DEBUG
-  printf("start rx %u %u %u\n", rate, channels, pos);
-#endif
 #endif
 }
 
 void usbd_audio_rx_stop_callback(){
   usbd_rx = NULL;
-  HAL_SAI_DMAResume(&HSAI_RX);
-#if 0 && defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
-  // __HAL_DMA_ENABLE(&HDMA_RX); // restart codec transfers
-  HAL_SAI_DMAResume(&HSAI_RX);
-  audio_rx_buffer.clear();
-  // program.loadProgram(program.getProgramIndex());
-  // program.startProgram(true);
-  // owl.setOperationMode(RUN_MODE);
-#endif  
+  // HAL_SAI_Transmit_DMA(&HSAI_RX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  // HAL_SAI_DMAResume(&HSAI_RX);
 #ifdef DEBUG
   printf("stop rx\n");
 #endif
@@ -422,18 +399,18 @@ extern "C" {
       usbd_tx->write(AUDIO_INT32_TO_SAMPLE(*src++));
   }
   void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
-    if(usbd_tx)
-      usbd_tx_convert(codec_txbuf, codec_blocksize*AUDIO_CHANNELS);
     if(usbd_rx)
       usbd_rx_convert(codec_rxbuf, codec_blocksize*AUDIO_CHANNELS);
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+    if(usbd_tx)
+      usbd_tx_convert(codec_txbuf, codec_blocksize*AUDIO_CHANNELS);
   }
   void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
-    if(usbd_tx)
-      usbd_tx_convert(codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize*AUDIO_CHANNELS);
     if(usbd_rx)
       usbd_rx_convert(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize*AUDIO_CHANNELS);
     audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
+    if(usbd_tx)
+      usbd_tx_convert(codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize*AUDIO_CHANNELS);
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
     error(CONFIG_ERROR, "SAI DMA Error");

@@ -28,13 +28,18 @@
 #define AUDIO_IN_STREAMING_CTRL                       0x03
 #define AUDIO_OUT_STREAMING_CTRL                      0x04
 
-#define AUDIO_RX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_RX_FREQ * USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000)) 
-#define AUDIO_TX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_TX_FREQ * USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000))
+#define AUDIO_RX_SAMPLES_PER_MS                       (USBD_AUDIO_RX_FREQ / 1000)
+#define AUDIO_RX_PACKET_SIZE                          ((uint16_t)(AUDIO_RX_SAMPLES_PER_MS * USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE))
+#define AUDIO_RX_MAX_PACKET_SIZE                      ((uint16_t)(AUDIO_RX_PACKET_SIZE + USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE))
+
+#define AUDIO_TX_SAMPLES_PER_MS                       (USBD_AUDIO_TX_FREQ / 1000)
+#define AUDIO_TX_PACKET_SIZE                          ((uint16_t)(AUDIO_TX_SAMPLES_PER_MS * USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE))
+#define AUDIO_TX_MAX_PACKET_SIZE                      ((uint16_t)(AUDIO_TX_PACKET_SIZE + USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE))
 #define AUDIO_FB_PACKET_SIZE                          3U
 
 /* Number of sub-packets in the audio transfer buffer. */
-#define AUDIO_RX_PACKET_NUM                           2
-#define AUDIO_TX_PACKET_NUM                           2
+#define AUDIO_RX_PACKET_NUM                           4
+#define AUDIO_TX_PACKET_NUM                           4
 
 /* Total size of the OUT audio transfer buffer */
 #define AUDIO_RX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM))
@@ -44,11 +49,18 @@
 #define MIDI_TX_PACKET_SIZE                           0x40
 #define MIDI_RX_PACKET_SIZE                           0x40
    
+/* Isochronous Synchronisation Type */
 #define USBD_EP_ATTR_ISOC_NOSYNC                      0x00 /* no synchro */
 #define USBD_EP_ATTR_ISOC_ASYNC                       0x04 /* synchronisation by feedback  */
 #define USBD_EP_ATTR_ISOC_ADAPT                       0x08 /* adaptative synchronisation   */
 #define USBD_EP_ATTR_ISOC_SYNC                        0x0C /* synchronous mode  */
 
+/* Isochronous Usage Type */
+#define USBD_EP_ATTR_ISOC_DATA                        0x00 /* Data Endpoint  */
+#define USBD_EP_ATTR_ISOC_FB                          0x10 /* Feedback Endpoint  */
+#define USBD_EP_ATTR_ISOC_IMPL_FB                     0x20 /* Implicit Feedback Data Endpoint  */
+
+   
 /* Class-Specific AS Isochronous Audio Data Endpoint Descriptor bmAttributes */
 #define USBD_AUDIO_AS_CONTROL_SAMPLING_FREQUENCY             0x0001 /* D0 = 1*/
 #define USBD_AUDIO_AS_CONTROL_PITCH                          0x0002 /* D1 = 1*/
