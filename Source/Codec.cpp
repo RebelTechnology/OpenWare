@@ -6,8 +6,6 @@
 #include <cstring>
 #include "ProgramManager.h"
 
-#include "CircularBuffer.h"
-
 #ifdef USE_CS4271
 #define HSAI_RX hsai_BlockB1
 #define HSAI_TX hsai_BlockA1
@@ -35,8 +33,11 @@ extern "C" {
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
 
+#if 0
+
 CircularBuffer<audio_t>* volatile usbd_rx = NULL;
 CircularBuffer<audio_t>* volatile usbd_tx = NULL;
+static uint32_t usbd_audio_rx_count = 0;
 
 // static void update_rx_read_index(){
 // #if defined USE_CS4271 || defined USE_PCM3168A
@@ -93,7 +94,6 @@ void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb){
 }
 
 static int32_t usbd_audio_tx_flow = 0;
-static uint32_t usbd_audio_rx_count = 0;
 // expect a 1 in 10k sample underflow (-0.01% sample accuracy)
 void usbd_audio_tx_callback(uint8_t* data, size_t len){
 #if 0 && defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
@@ -178,14 +178,6 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
   return len;
 }
 
-void usbd_audio_mute_callback(int16_t gain){
-  // todo!
-}
-
-void usbd_audio_gain_callback(int16_t gain){
-  // codec_set_gain_in(gain); todo!
-}
-
 /* Get number of samples transmitted since previous request */
 uint32_t usbd_audio_get_rx_count(){
   return 0;
@@ -194,6 +186,16 @@ uint32_t usbd_audio_get_rx_count(){
   // pos += usbd_audio_rx_count;
   // usbd_audio_rx_count = 0;
   // return pos / AUDIO_CHANNELS;
+}
+
+#endif
+
+void usbd_audio_mute_callback(int16_t gain){
+  // todo!
+}
+
+void usbd_audio_gain_callback(int16_t gain){
+  // codec_set_gain_in(gain); todo!
 }
 #endif // USE_USBD_AUDIO
 
@@ -385,32 +387,11 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A
 
 extern "C" {
-  void usbd_rx_convert(int32_t* dst, size_t len){
-    usbd_audio_rx_count += len;
-    while(len--)
-      *dst++ = AUDIO_SAMPLE_TO_INT32(usbd_rx->read());
-  }
-  void usbd_tx_convert(int32_t* src, size_t len){
-#if USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS
-#error "todo: support for USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS"
-#endif
-    while(len--)
-      // macro handles shift, round, dither, clip, truncate, bitswap
-      usbd_tx->write(AUDIO_INT32_TO_SAMPLE(*src++));
-  }
   void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
-    if(usbd_rx)
-      usbd_rx_convert(codec_rxbuf, codec_blocksize*AUDIO_CHANNELS);
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
-    if(usbd_tx)
-      usbd_tx_convert(codec_txbuf, codec_blocksize*AUDIO_CHANNELS);
   }
   void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
-    if(usbd_rx)
-      usbd_rx_convert(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize*AUDIO_CHANNELS);
     audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
-    if(usbd_tx)
-      usbd_tx_convert(codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize*AUDIO_CHANNELS);
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
     error(CONFIG_ERROR, "SAI DMA Error");
@@ -453,6 +434,14 @@ void Codec::pause(){
 void Codec::resume(){
   HAL_SAI_DMAResume(&HSAI_RX);
   HAL_SAI_DMAResume(&HSAI_TX);
+}
+
+size_t Codec::getSampleCounter(){
+  // does not work: always returns values <= 5
+  // return DMA_GetCurrDataCounter(DMA2_Stream0);
+  // // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  return CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  // return (DWT->CYCCNT)/ARM_CYCLES_PER_SAMPLE;
 }
 
 extern "C" {

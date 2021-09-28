@@ -26,6 +26,72 @@
 #include "bus.h"
 #endif
 
+#ifdef USE_USBD_AUDIO
+#include "usbd_audio.h"
+#include "CircularBuffer.h"
+
+CircularBuffer<audio_t>* volatile usbd_rx = NULL;
+CircularBuffer<audio_t>* volatile usbd_tx = NULL;
+static uint32_t usbd_audio_rx_count = 0;
+
+/* Get number of samples transmitted since previous request */
+uint32_t usbd_audio_get_rx_count(){
+  return 0;
+  // // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  // size_t pos = codec.getSampleCounter() + usbd_audio_rx_count;
+  // usbd_audio_rx_count = 0;
+  // return pos / AUDIO_CHANNELS;
+}
+
+void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb){
+  usbd_tx = (CircularBuffer<audio_t>*)cb;
+  usbd_tx->reset();
+  usbd_tx->clear();
+  usbd_tx->moveWriteHead(usbd_tx->getSize()/2);
+}
+
+void usbd_audio_tx_stop_callback(){
+  usbd_tx = NULL;
+#ifdef DEBUG
+  printf("stop tx\n");
+#endif
+}
+
+void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
+  usbd_rx = (CircularBuffer<audio_t>*)cb;
+  usbd_rx->reset();
+  usbd_rx->clear();
+  usbd_rx->moveReadHead(usbd_rx->getSize()/2);
+  usbd_audio_rx_count = 0;
+#ifdef DEBUG
+  printf("start rx %u %u %u\n", rate, channels, usbd_rx->getSize());
+#endif
+}
+
+void usbd_audio_rx_stop_callback(){
+  usbd_rx = NULL;
+#ifdef DEBUG
+  printf("stop rx\n");
+#endif
+}
+
+void usbd_rx_convert(int32_t* dst, size_t len){
+  usbd_audio_rx_count += len;
+  while(len--)
+    *dst++ = AUDIO_SAMPLE_TO_INT32(usbd_rx->read());
+}
+
+void usbd_tx_convert(int32_t* src, size_t len){
+#if USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS
+#error "todo: support for USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS"
+#endif
+  while(len--)
+    // macro handles shift, round, dither, clip, truncate, bitswap
+    usbd_tx->write(AUDIO_INT32_TO_SAMPLE(*src++));
+}
+
+#endif
+
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
@@ -140,18 +206,23 @@ void setButtonValue(uint8_t ch, uint8_t value){
 
 /* called by the program when a block has been processed */
 void onProgramReady(){
-  midi_tx.transmit();
   ProgramVector* pv = getProgramVector();
+#ifdef USE_USBD_AUDIO_TX
+  if(usbd_tx) // after patch runs: convert wet output to USBD audio
+    usbd_tx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
+#endif
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
-  /* Block indefinitely */
-  // uint32_t ulNotifiedValue =
+  /* Block indefinitely (released by audioCallback) */
   ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+#ifdef USE_USBD_AUDIO_RX
+  if(usbd_rx) // before patch runs: convert USBD audio to input
+    usbd_rx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
+#endif
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
 #endif
-  midi_rx.receive(); // push queued up MIDI messages through to patch
 #ifdef USE_ADC
 #ifdef USE_SCREEN
   updateParameters(graphics.params.parameters, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
@@ -675,5 +746,8 @@ void ProgramManager::saveToFlash(uint8_t sector, void* address, uint32_t length)
 uint16_t getSampleCounter(){
   // does not work: always returns values <= 5
   // return DMA_GetCurrDataCounter(DMA2_Stream0);
-  return (DWT->CYCCNT)/ARM_CYCLES_PER_SAMPLE;
+  // // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  // size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  // return (DWT->CYCCNT)/ARM_CYCLES_PER_SAMPLE;
+  return codec.getSampleCounter() / AUDIO_CHANNELS;
 }
