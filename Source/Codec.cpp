@@ -63,9 +63,6 @@ static uint32_t usbd_audio_rx_count = 0;
 
 void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb){
   usbd_tx = (CircularBuffer<audio_t>*)cb;
-  usbd_tx->reset();
-  usbd_tx->clear();
-  usbd_tx->moveWriteHead(usbd_tx->getSize()/2);
 #ifdef DEBUG
   printf("start tx %u %u %u\n", rate, channels, usbd_tx->getSize());
 #endif

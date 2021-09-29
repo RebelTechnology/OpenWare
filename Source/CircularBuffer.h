@@ -4,19 +4,24 @@
 #include <stdint.h>
 #include <string.h> // for memcpy
 
-#ifdef DEBUG_CIRCULAR_BUFFER
-#define FLOW_ASSERT(x, y) ASSERT(x, y)
-#else
+#ifndef FLOW_ASSERT
 #define FLOW_ASSERT(x, y)
 #endif
+
+// #ifdef DEBUG_CIRCULAR_BUFFER
+// #define FLOW_ASSERT(x, y) ASSERT(x, y)
+// #else
+// #define FLOW_ASSERT(x, y)
+// // #define FLOW_ASSERT(x, y) if(!x){debugMessage(y, this->getReadCapacity(), this->getWriteCapacity());}
+// #endif
 
 template<typename T>
 class CircularBuffer {
 protected:
   T* data;
   size_t size;
-  size_t writepos = 0;
-  size_t readpos = 0;
+  volatile size_t writepos = 0;
+  volatile size_t readpos = 0;
 public:
   CircularBuffer(): data(NULL), size(0){}
   CircularBuffer(T* data, size_t size): data(data), size(size){}
@@ -118,7 +123,7 @@ public:
   }
 
   void moveWriteHead(size_t samples){
-    FLOW_ASSERT(getWriteCapacity() < samples, "overflow");
+    FLOW_ASSERT(getWriteCapacity() >= samples, "overflow");
     writepos += samples;
     if(writepos >= size)
       writepos -= size;

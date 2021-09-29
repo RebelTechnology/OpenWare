@@ -29,22 +29,23 @@
 #define AUDIO_OUT_STREAMING_CTRL                      0x04
 
 #define AUDIO_RX_SAMPLES_PER_MS                       (USBD_AUDIO_RX_FREQ / 1000)
-#define AUDIO_RX_PACKET_SIZE                          ((uint16_t)(AUDIO_RX_SAMPLES_PER_MS * USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE))
-#define AUDIO_RX_MAX_PACKET_SIZE                      ((uint16_t)(AUDIO_RX_PACKET_SIZE + USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE))
+#define AUDIO_RX_PACKET_SIZE                          (AUDIO_RX_SAMPLES_PER_MS * USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE)
+#define AUDIO_RX_MAX_PACKET_SIZE                      (AUDIO_RX_PACKET_SIZE + USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE)
 
-#define AUDIO_TX_SAMPLES_PER_MS                       (USBD_AUDIO_TX_FREQ / 1000)
-#define AUDIO_TX_PACKET_SIZE                          ((uint16_t)(AUDIO_TX_SAMPLES_PER_MS * USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE))
-#define AUDIO_TX_MAX_PACKET_SIZE                      ((uint16_t)(AUDIO_TX_PACKET_SIZE + USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE))
 #define AUDIO_FB_PACKET_SIZE                          3U
 
+#define AUDIO_TX_SAMPLES_PER_MS                       (USBD_AUDIO_TX_FREQ / 1000)
+#define AUDIO_TX_PACKET_SIZE                          (AUDIO_TX_SAMPLES_PER_MS * USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE)
+#define AUDIO_TX_MAX_PACKET_SIZE                      (AUDIO_TX_PACKET_SIZE + USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE)
+
 /* Number of sub-packets in the audio transfer buffer. */
-#define AUDIO_RX_PACKET_NUM                           4
-#define AUDIO_TX_PACKET_NUM                           4
+#define AUDIO_RX_PACKET_NUM                           3
+#define AUDIO_TX_PACKET_NUM                           5
 
 /* Total size of the OUT audio transfer buffer */
-#define AUDIO_RX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM))
+#define AUDIO_RX_TOTAL_BUF_SIZE                       (AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM)
 /* Total size of the IN transfer buffer */
-#define AUDIO_TX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_TX_PACKET_SIZE * AUDIO_TX_PACKET_NUM))
+#define AUDIO_TX_TOTAL_BUF_SIZE                       (AUDIO_TX_PACKET_SIZE * AUDIO_TX_PACKET_NUM)
 
 #define MIDI_TX_PACKET_SIZE                           0x40
 #define MIDI_RX_PACKET_SIZE                           0x40
@@ -126,11 +127,13 @@ typedef struct
   uint8_t                   ac_alt_setting, tx_alt_setting, rx_alt_setting, midi_alt_setting;
 #ifdef USE_USBD_AUDIO_TX
   uint8_t                   audio_tx_buffer[AUDIO_TX_TOTAL_BUF_SIZE];
+  uint8_t                   audio_tx_transmit[AUDIO_TX_MAX_PACKET_SIZE];
   volatile uint8_t          audio_tx_active;
   volatile uint16_t         tx_soffn;
 #endif
 #ifdef USE_USBD_AUDIO_RX
   uint8_t                   audio_rx_buffer[AUDIO_RX_TOTAL_BUF_SIZE];
+  uint8_t                   audio_rx_transmit[AUDIO_RX_MAX_PACKET_SIZE];
   volatile uint8_t          audio_rx_active;
   volatile uint16_t         fb_soffn;
 #endif
