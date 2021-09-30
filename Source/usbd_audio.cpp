@@ -20,6 +20,8 @@
 #include "message.h"
 int usbd_tx_flow = 0;
 int usbd_rx_flow = 0;
+int usbd_tx_capacity = 0;
+int usbd_rx_capacity = 0;
 #define FLOW_ASSERT(x, y) if(!x){debugMessage(y, usbd_rx_flow, usbd_tx_flow, this->getWriteCapacity());}
 #include "CircularBuffer.h"
 #include "Codec.h"
@@ -98,20 +100,19 @@ USBD_ClassTypeDef  USBD_AUDIO =
 
 #ifdef USE_USBD_RX_FB
 
-#define FB_REFRESH 4 /* Feedback refresh rate 2^(10-FB_REFRESH) */
-#define FB_RATE (1<<(10-FB_REFRESH))
+#define FB_REFRESH 4 /* Feedback refresh rate */
+#define FB_RATE (1<<FB_REFRESH)
 
 /**
   * @brief   get_usb_full_speed_rate
   *         Set feedback value from sample rate 
   */
 static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
-  // convert sample rate to 16.16 format (from Linux kernel)
-  uint32_t freq = ((rate << 13) + 62) / 125;
-  // store 10.14 format in little endian
-  buf[0] = freq >> 2;
-  buf[1] = freq >> 10;
-  buf[2] = freq >> 18;
+  usbd_rx_capacity = rate;
+  // convert sample rate to 10.14 format
+  rate = (rate / 1000.0f) * (1<<14);
+  AUDIO_FREQ_TO_DATA(rate, buf);
+  // usbd_rx_capacity = rate - 786432;
 }
 
 uint8_t fb_data[3];
@@ -446,7 +447,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x09,                                    /* bLength */
   USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
   AUDIO_RX_EP,                             /* bEndpointAddress 1 out endpoint*/
-  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ADAPT|USBD_EP_ATTR_ISOC_DATA, /* bmAttributes */
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ADAPT, /* bmAttributes */
   LOBYTE(AUDIO_RX_MAX_PACKET_SIZE),        /* wMaxPacketSize in bytes */
   HIBYTE(AUDIO_RX_MAX_PACKET_SIZE),
   0x01,                                    /* bInterval */
@@ -457,12 +458,12 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x09,                                    /* bLength */
   USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
   AUDIO_RX_EP,                             /* bEndpointAddress 1 out endpoint*/
-  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ASYNC|USBD_EP_ATTR_ISOC_DATA, /* bmAttributes */
-  LOBYTE(AUDIO_RX_MAX_PACKET_SIZE),		   /* wMaxPacketSize in bytes */
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ASYNC, /* bmAttributes */
+  LOBYTE(AUDIO_RX_MAX_PACKET_SIZE),	   /* wMaxPacketSize in bytes */
   HIBYTE(AUDIO_RX_MAX_PACKET_SIZE),
   0x01,                                    /* bInterval */
   0x00,                                    /* bRefresh */
-  0,                                       /* bSynchAddress */
+  0x00,                                    /* bSynchAddress */
   /* 09 byte */
 #endif
   
@@ -481,12 +482,12 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x09,                                    /* bLength */
   USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
   AUDIO_FB_EP,                             /* bEndpointAddress */
-  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_NOSYNC|USBD_EP_ATTR_ISOC_FB,  /* bmAttributes */
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_NOSYNC,  /* bmAttributes */
   LOBYTE(AUDIO_FB_PACKET_SIZE),		   /* wMaxPacketSize */
   HIBYTE(AUDIO_FB_PACKET_SIZE),
-  0x01,                                    /* bInterval 1ms */
+  0x01,                                    /* bInterval : Must be set to 1 */
   FB_REFRESH,                              /* bRefresh SOF_RATE */
-  0x00,                                    /* bSynchAddress */
+  0x00,                                    /* bSynchAddress : Must be reset to zero */
   /* 09 byte*/
 #endif
 
@@ -544,8 +545,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x09,                         // Size of the descriptor, in bytes (bLength)
   0x05,                         // ENDPOINT descriptor (bDescriptorType)
   AUDIO_TX_EP,                  // IN Endpoint 1. (bEndpointAddress)
-  // USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_SYNC,   // bmAttributes
-  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ASYNC|USBD_EP_ATTR_ISOC_DATA,   // bmAttributes
+  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ASYNC,   // bmAttributes
   // USBD_EP_TYPE_ISOC,   // bmAttributes (device not recognised in Windows if sync or async)
   LOBYTE(AUDIO_TX_MAX_PACKET_SIZE),	// wMaxPacketSize in bytes
   HIBYTE(AUDIO_TX_MAX_PACKET_SIZE),
@@ -1012,7 +1012,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 #ifdef USE_USBD_RX_FB
   case AUDIO_FB_EP:
     haudio->fb_soffn = USB_SOF_NUMBER();
-    USBD_LL_Transmit(pdev, AUDIO_FB_EP, (uint8_t*)fb_data, 3U);
+    USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, AUDIO_FB_PACKET_SIZE);
     break;
 #endif
 #ifdef USE_USBD_AUDIO_TX
@@ -1022,6 +1022,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
     size_t len = AUDIO_TX_PACKET_SIZE/sizeof(audio_t);
     size_t capacity = tx_buffer.getReadCapacity();
     capacity += codec.getSampleCounter();
+    usbd_tx_capacity = capacity;
     if(capacity < 2*AUDIO_TX_PACKET_SIZE/sizeof(audio_t)){
       len -= USBD_AUDIO_TX_CHANNELS;
       usbd_tx_flow--;
@@ -1300,14 +1301,27 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
   haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;  
 #ifdef USE_USBD_RX_FB
   static uint32_t sof_count = 0;
-  if(haudio->audio_rx_active && ++sof_count == FB_RATE){
-    sof_count = 0;
+  if(haudio->audio_rx_active){
+    if(++sof_count == FB_RATE){
+      sof_count = 0;
     // number of samples since last request (or 0 if unknown)
-    uint32_t samples = usbd_audio_get_rx_count();
-    if(samples != 0){
-      samples <<= (14 - FB_REFRESH); // convert to n.14 format
-      AUDIO_FREQ_TO_DATA(samples, fb_data); // pack into 3 bytes
+
+    // size_t capacity = rx_buffer.getWriteCapacity();
+    // capacity += codec.getSampleCounter();
+
+      uint32_t samples = usbd_audio_get_rx_count(); // across channels and fb rate
+      if(samples != 0){
+	// if(abs(samples - USBD_AUDIO_RX_FREQ*FB_RATE*USBD_AUDIO_RX_CHANNELS/1000) < 8){
+	samples * (1<<14); // convert to n.14 format
+	samples /= USBD_AUDIO_RX_CHANNELS * FB_RATE;
+	usbd_rx_capacity = samples - 786432;
+	AUDIO_FREQ_TO_DATA(samples, fb_data); // pack into 3 bytes (todo: make this atomic)
+	// }
+      }
+      // USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, AUDIO_FB_PACKET_SIZE);	
     }
+  // }else{
+  //   sof_count = 0;
   }
 #endif
   return USBD_OK;
@@ -1339,7 +1353,7 @@ static uint8_t  USBD_AUDIO_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t ep
     USB_CLEAR_INCOMPLETE_IN_EP(AUDIO_FB_EP);
     USBD_LL_FlushEP(pdev, AUDIO_FB_EP);
     haudio->fb_soffn = USB_SOF_NUMBER();
-    USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, 3U);
+    USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, AUDIO_FB_PACKET_SIZE);
   }
 #endif
 
@@ -1393,27 +1407,24 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
       rx_buffer.reset();
       rx_buffer.clear();
       rx_buffer.moveWriteHead(AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
-#ifdef USE_USBD_RX_FB
-      /* send first explicit feedback data */
-      get_usb_full_speed_rate(USBD_AUDIO_RX_FREQ, fb_data);
-      USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, AUDIO_FB_PACKET_SIZE);
-#endif
     }
     size_t len = USBD_LL_GetRxDataSize(pdev, epnum);
     rx_buffer.write((audio_t*)haudio->audio_rx_transmit, len/sizeof(audio_t));
-    // decide if we should request one set of samples more or less than usual
     len = AUDIO_RX_PACKET_SIZE/sizeof(audio_t);
+#if 1
+    // in asynch / adaptive mode, we have no control over the number of samples transferred
+    // decide if we should request one set of samples more or less than usual
     size_t capacity = rx_buffer.getWriteCapacity();
     capacity += codec.getSampleCounter();
+    // usbd_rx_capacity = capacity;
     if(capacity < AUDIO_RX_PACKET_SIZE/sizeof(audio_t)){
-      len -= USBD_AUDIO_RX_CHANNELS;
       usbd_rx_flow--;
     }else if(rx_buffer.getSize() - capacity < 2*AUDIO_RX_PACKET_SIZE/sizeof(audio_t)){
-      len += USBD_AUDIO_RX_CHANNELS;
       usbd_rx_flow++;
     }
+#endif
     /* Prepare Out endpoint to receive next audio packet */
-    USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)haudio->audio_rx_transmit, len);
+    USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)haudio->audio_rx_transmit, len*sizeof(audio_t));
     break;
   }
 #endif /* USE_USBD_AUDIO_RX */
@@ -1471,6 +1482,12 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
 
   /* Prepare Out endpoint to receive first audio packet */
   USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)haudio->audio_rx_transmit, AUDIO_RX_PACKET_SIZE);
+
+#ifdef USE_USBD_RX_FB
+  /* send first explicit feedback data */
+  get_usb_full_speed_rate(USBD_AUDIO_RX_FREQ, fb_data);
+  USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, AUDIO_FB_PACKET_SIZE);
+#endif
 
   /* get_usb_full_speed_rate(haudio->frequency, fb_data); // reset to new frequency */
 

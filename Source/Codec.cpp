@@ -33,160 +33,6 @@ extern "C" {
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
 
-#if 0
-
-CircularBuffer<audio_t>* volatile usbd_rx = NULL;
-CircularBuffer<audio_t>* volatile usbd_tx = NULL;
-static uint32_t usbd_audio_rx_count = 0;
-
-// static void update_rx_read_index(){
-// #if defined USE_CS4271 || defined USE_PCM3168A
-//   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-//   // use HDMA_TX position in case we have stopped HDMA_RX
-//   // todo: if(wet) then read position is incremented by audioCallback ?
-//   size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
-//   // // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
-//   // audio_rx_buffer.setReadIndex(pos & ~(AUDIO_CHANNELS-1));
-//   audio_rx_buffer.setReadIndex(pos);
-// #endif
-// }
-
-// static void update_tx_write_index(){
-// #if defined USE_CS4271 || defined USE_PCM3168A
-//   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-//   size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
-//   // // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
-//   // audio_tx_buffer.setWriteIndex(pos & ~(AUDIO_CHANNELS-1));
-//   audio_tx_buffer.setWriteIndex(pos);
-// #endif
-// }
-
-void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb){
-  usbd_tx = (CircularBuffer<audio_t>*)cb;
-#ifdef DEBUG
-  printf("start tx %u %u %u\n", rate, channels, usbd_tx->getSize());
-#endif
-#if 0 && defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
-  update_tx_write_index();
-  size_t pos = audio_tx_buffer.getWriteIndex(); // not always aligned to AUDIO_CHANNELS samples
-  // mask to full frame (assumes AUDIO_CHANNELS is a power of two)
-  pos &= ~(AUDIO_CHANNELS-1);
-  // position read head at one USB transfer block back from write head
-  pos -= AUDIO_CHANNELS*rate/1000;
-  // // position read head at half a ringbuffer distance from write head
-  // pos -= audio_tx_buffer.getSize()/2;
-  audio_tx_buffer.setReadIndex(pos);
-
-  // // set read head at half a ringbuffer distance from write head
-  // update_tx_write_index();
-  // size_t pos = audio_tx_buffer.getWriteIndex();
-  // size_t len = audio_tx_buffer.getSize();
-  // pos = (pos + len/2) % len;
-  // pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
-  // audio_tx_buffer.setReadIndex(pos);
-#ifdef DEBUG
-  printf("start tx %u %u %u\n", rate, channels, pos);
-#endif
-#endif
-}
-
-static int32_t usbd_audio_tx_flow = 0;
-// expect a 1 in 10k sample underflow (-0.01% sample accuracy)
-void usbd_audio_tx_callback(uint8_t* data, size_t len){
-#if 0 && defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
-  update_tx_write_index();
-  size_t available = audio_tx_buffer.getReadCapacity()/AUDIO_CHANNELS;
-  size_t blocksize = len / (USBD_AUDIO_TX_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
-  if(available < blocksize){
-    usbd_audio_tx_flow += blocksize-available;
-    blocksize = available;
-    len = blocksize*USBD_AUDIO_TX_CHANNELS*AUDIO_BYTES_PER_SAMPLE;
-  }
-  audio_t* dst = (audio_t*)data;
-  while(blocksize--){
-    int32_t* src = audio_tx_buffer.getReadHead();
-    size_t ch = USBD_AUDIO_TX_CHANNELS;
-    while(ch--)
-      *dst++ = AUDIO_INT32_TO_SAMPLE(*src++); // shift, round, dither, clip, truncate, bitswap
-    audio_tx_buffer.moveReadHead(AUDIO_CHANNELS);
-  }
-  usbd_audio_write(data, len);
-#endif
-}
-
-void usbd_audio_tx_stop_callback(){
-  usbd_tx = NULL;
-#ifdef DEBUG
-  printf("stop tx\n");
-#endif
-}
-
-void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
-  usbd_rx = (CircularBuffer<audio_t>*)cb;
-  usbd_rx->reset();
-  usbd_rx->clear();
-  usbd_rx->moveReadHead(usbd_rx->getSize()/2);
-  usbd_audio_rx_count = 0;
-  // HAL_SAI_DMAStop(&HSAI_RX);
-  // HAL_SAI_DMAPause(&HSAI_RX);
-#ifdef DEBUG
-  printf("start rx %u %u %u\n", rate, channels, usbd_rx->getSize());
-#endif
-}
-
-void usbd_audio_rx_stop_callback(){
-  usbd_rx = NULL;
-  // HAL_SAI_Transmit_DMA(&HSAI_RX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
-  // HAL_SAI_DMAResume(&HSAI_RX);
-#ifdef DEBUG
-  printf("stop rx\n");
-#endif
-}
-
-static int32_t usbd_audio_rx_flow = 0;
-size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
-#if 0 && defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
-  // copy audio to codec_txbuf aka audio_rx_buffer
-  update_rx_read_index();
-  audio_t* src = (audio_t*)data;
-  size_t blocksize = len / (USBD_AUDIO_RX_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
-  size_t available = audio_rx_buffer.getWriteCapacity()/AUDIO_CHANNELS;
-  if(available < blocksize){
-    usbd_audio_rx_flow += blocksize-available;
-    // skip some frames start and end of this block
-    // src += (blocksize - available)*USBD_AUDIO_RX_CHANNELS/2;
-    blocksize = available;
-    len = blocksize*USBD_AUDIO_RX_CHANNELS*AUDIO_BYTES_PER_SAMPLE;
-  }
-  while(blocksize--){
-      int32_t* dst = audio_rx_buffer.getWriteHead();
-      size_t ch = USBD_AUDIO_RX_CHANNELS;
-      while(ch--)
-  	*dst++ = AUDIO_SAMPLE_TO_INT32(*src++);
-      // should we leave in place or zero out any remaining channels?
-      memset(dst, 0, (AUDIO_CHANNELS-USBD_AUDIO_RX_CHANNELS)*sizeof(int32_t));
-      audio_rx_buffer.moveWriteHead(AUDIO_CHANNELS);
-  }
-  // available = audio_rx_buffer.getWriteCapacity()*AUDIO_BYTES_PER_SAMPLE*USBD_AUDIO_RX_CHANNELS/AUDIO_CHANNELS;
-  // if(available < AUDIO_RX_PACKET_SIZE)
-  //   return available;
-  usbd_audio_rx_count += len;
-#endif
-  return len;
-}
-
-/* Get number of samples transmitted since previous request */
-uint32_t usbd_audio_get_rx_count(){
-  return 0;
-  // // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  // size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
-  // pos += usbd_audio_rx_count;
-  // usbd_audio_rx_count = 0;
-  // return pos / AUDIO_CHANNELS;
-}
-
-#endif
-
 void usbd_audio_mute_callback(int16_t gain){
   // todo!
 }
@@ -433,19 +279,13 @@ void Codec::resume(){
   HAL_SAI_DMAResume(&HSAI_TX);
 }
 
+/** Get the number of individual samples (across channels) that have already been 
+ * transferred to/from the codec in this block 
+ */
 size_t Codec::getSampleCounter(){
-  // does not work: always returns values <= 5
-  // return DMA_GetCurrDataCounter(DMA2_Stream0);
-  // // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  return CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  // read NDTR: the number of remaining data units in the current DMA Stream transfer.
+  return (CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX)) % (codec_blocksize*AUDIO_CHANNELS);
   // return (DWT->CYCCNT)/ARM_CYCLES_PER_SAMPLE;
-}
-
-extern "C" {
-
-// void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
-// }
-
 }
 
 #endif /* USE_PCM3168A */

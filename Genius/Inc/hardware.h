@@ -44,8 +44,9 @@
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
 #define USE_USBD_AUDIO
-#define USE_USBD_AUDIO_TX  // microphone
+#define USE_USBD_RX_FB
 #define USE_USBD_AUDIO_RX // speaker
+#define USE_USBD_AUDIO_TX  // microphone
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
@@ -58,6 +59,7 @@
 #define USE_UART_MIDI_TX
 #define UART_MIDI_HANDLE huart5
 #define UART_MIDI_RX_BUFFER_SIZE 256
+
 // Digital bus
 /* #define USE_DIGITALBUS */
 /* #define DIGITAL_BUS_ENABLED 1 */

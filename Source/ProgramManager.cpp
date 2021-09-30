@@ -36,11 +36,10 @@ static uint32_t usbd_audio_rx_count = 0;
 
 /* Get number of samples transmitted since previous request */
 uint32_t usbd_audio_get_rx_count(){
-  return 0;
-  // // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  // size_t pos = codec.getSampleCounter() + usbd_audio_rx_count;
-  // usbd_audio_rx_count = 0;
-  // return pos / AUDIO_CHANNELS;
+  // return 0;
+  uint32_t pos = usbd_audio_rx_count + codec.getSampleCounter();
+  usbd_audio_rx_count = 0;
+  return pos;
 }
 
 void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb){
@@ -744,10 +743,6 @@ void ProgramManager::saveToFlash(uint8_t sector, void* address, uint32_t length)
 }
 
 uint16_t getSampleCounter(){
-  // does not work: always returns values <= 5
-  // return DMA_GetCurrDataCounter(DMA2_Stream0);
-  // // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  // size_t pos = CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX);
   // return (DWT->CYCCNT)/ARM_CYCLES_PER_SAMPLE;
   return codec.getSampleCounter() / AUDIO_CHANNELS;
 }
