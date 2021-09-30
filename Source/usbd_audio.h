@@ -120,8 +120,6 @@ typedef int32_t audio_t;
 }
 USBD_AUDIO_ControlTypeDef;
 
-
-
 typedef struct
 {
   uint8_t                   ac_alt_setting, tx_alt_setting, rx_alt_setting, midi_alt_setting;
@@ -135,7 +133,13 @@ typedef struct
   uint8_t                   audio_rx_buffer[AUDIO_RX_TOTAL_BUF_SIZE];
   uint8_t                   audio_rx_transmit[AUDIO_RX_MAX_PACKET_SIZE];
   volatile uint8_t          audio_rx_active;
+#ifdef USE_USBD_RX_FB
   volatile uint16_t         fb_soffn;
+  union {
+    uint8_t buf[3];
+    uint32_t val;
+  } fb_data;
+#endif
 #endif
 #ifdef USE_USBD_MIDI
   uint8_t                   midi_rx_buffer[MIDI_RX_PACKET_SIZE];
