@@ -39,7 +39,7 @@
 #define AUDIO_TX_MAX_PACKET_SIZE                      (AUDIO_TX_PACKET_SIZE + USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE)
 
 /* Number of sub-packets in the audio transfer buffer. */
-#define AUDIO_RX_PACKET_NUM                           3
+#define AUDIO_RX_PACKET_NUM                           5
 #define AUDIO_TX_PACKET_NUM                           5
 
 /* Total size of the OUT audio transfer buffer */

@@ -19,7 +19,8 @@
 
 #include "message.h"
 int usbd_tx_flow = 0;
-#define FLOW_ASSERT(x, y) if(!x){debugMessage(y, usbd_tx_flow, this->getReadCapacity(), this->getWriteCapacity());}
+int usbd_rx_flow = 0;
+#define FLOW_ASSERT(x, y) if(!x){debugMessage(y, usbd_rx_flow, usbd_tx_flow, this->getWriteCapacity());}
 #include "CircularBuffer.h"
 #include "Codec.h"
 
@@ -30,9 +31,9 @@ CircularBuffer<audio_t> tx_buffer;
 #define AUDIO_SAMPLE_FREQ(frq)           (uint8_t)(frq), (uint8_t)((frq >> 8)), (uint8_t)((frq >> 16))
 #define AUDIO_FREQ_FROM_DATA(bytes)      ((((uint32_t)((bytes)[2]))<<16)|(((uint32_t)((bytes)[1]))<<8)|(((uint32_t)((bytes)[0]))))
 #define AUDIO_FREQ_TO_DATA(frq , bytes)  do{	\
-    (bytes)[0]= (uint8_t)(frq);			\
-    (bytes)[1]= (uint8_t)(((frq) >> 8));	\
-    (bytes)[2]= (uint8_t)(((frq) >> 16));	\
+    (bytes)[0] = (uint8_t)(frq);		\
+    (bytes)[1] = (uint8_t)(((frq) >> 8));	\
+    (bytes)[2] = (uint8_t)(((frq) >> 16));	\
   }while(0);
 
 
@@ -1377,44 +1378,56 @@ static uint8_t  USBD_AUDIO_IsoOutIncomplete (USBD_HandleTypeDef *pdev, uint8_t e
   * @param  epnum: endpoint index
   * @retval status
   */
-static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, 
-				    uint8_t epnum)
-{
+static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
   USBD_AUDIO_HandleTypeDef *haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   (void)haudio;
+  switch(epnum){
 #ifdef USE_USBD_AUDIO_RX
-  if(epnum == AUDIO_RX_EP){
-    uint32_t len;
+  case AUDIO_RX_EP:{
     if(haudio->audio_rx_active == 0){
+      // todo: see if we can move this to AUDIO_OUT_Restart and remove the conditional around rx_active
       haudio->audio_rx_active = 1;
       usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
-      len = AUDIO_RX_PACKET_SIZE;
+      usbd_rx_flow = 0;
+      rx_buffer.reset();
+      rx_buffer.clear();
+      rx_buffer.moveWriteHead(AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
 #ifdef USE_USBD_RX_FB
-      /* send first synchro data */
+      /* send first explicit feedback data */
       get_usb_full_speed_rate(USBD_AUDIO_RX_FREQ, fb_data);
-      USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, 3U);
+      USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, AUDIO_FB_PACKET_SIZE);
 #endif
-    }else{
-      len = USBD_LL_GetRxDataSize(pdev, epnum);
-      rx_buffer.moveWriteHead(len/sizeof(audio_t));
     }
-    // len = usbd_audio_rx_callback(haudio->audio_rx_buffer, len);
-    // len = std::min(rx_buffer.getWriteCapacity(), AUDIO_RX_PACKET_SIZE);
-    len = AUDIO_RX_PACKET_SIZE; // todo: ^
+    size_t len = USBD_LL_GetRxDataSize(pdev, epnum);
+    rx_buffer.write((audio_t*)haudio->audio_rx_transmit, len/sizeof(audio_t));
+    // decide if we should request one set of samples more or less than usual
+    len = AUDIO_RX_PACKET_SIZE/sizeof(audio_t);
+    size_t capacity = rx_buffer.getWriteCapacity();
+    capacity += codec.getSampleCounter();
+    if(capacity < AUDIO_RX_PACKET_SIZE/sizeof(audio_t)){
+      len -= USBD_AUDIO_RX_CHANNELS;
+      usbd_rx_flow--;
+    }else if(rx_buffer.getSize() - capacity < 2*AUDIO_RX_PACKET_SIZE/sizeof(audio_t)){
+      len += USBD_AUDIO_RX_CHANNELS;
+      usbd_rx_flow++;
+    }
     /* Prepare Out endpoint to receive next audio packet */
-    USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)rx_buffer.getWriteHead(), len);
+    USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)haudio->audio_rx_transmit, len);
+    break;
   }
 #endif /* USE_USBD_AUDIO_RX */
 #ifdef USE_USBD_MIDI
-  if(epnum == MIDI_RX_EP){
+  case MIDI_RX_EP:{
     /* Forward data to midi callback */
     uint32_t len = USBD_LL_GetRxDataSize(pdev, epnum);
     usbd_midi_rx(haudio->midi_rx_buffer, len);
     /* Prepare Out endpoint to receive next packet */
     USBD_LL_PrepareReceive(pdev, MIDI_RX_EP, haudio->midi_rx_buffer, MIDI_RX_PACKET_SIZE);
+    break;
   }  
 #endif
+  }
   return USBD_OK;
 }
 
@@ -1457,14 +1470,11 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
   USBD_LL_FlushEP(pdev, AUDIO_RX_EP);
 
   /* Prepare Out endpoint to receive first audio packet */
-  // USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, haudio->audio_rx_buffer, AUDIO_RX_PACKET_SIZE);
-  // size_t len = std::min(rx_buffer.getWriteCapacity(), AUDIO_RX_PACKET_SIZE);
-  size_t len = AUDIO_RX_PACKET_SIZE; // todo: ^
-  USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)rx_buffer.getWriteHead(), len);
+  USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)haudio->audio_rx_transmit, AUDIO_RX_PACKET_SIZE);
 
   /* get_usb_full_speed_rate(haudio->frequency, fb_data); // reset to new frequency */
 
-  /* usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS); */
+  /* usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer); */
   /* ((USBD_AUDIO_ItfTypeDef*)pdev->pUserData)->Init(haudio->frequency, VOL_PERCENT(haudio->volume), 0); */
 }
 #endif /* USE_USBD_AUDIO_RX */
@@ -1495,22 +1505,35 @@ uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev,
 }
 
 uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd){
-#if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
+#if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI && defined USE_USBD_RX_FB
   HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
   HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
   HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x40);
   HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
   HAL_PCDEx_SetTxFiFo(hpcd, 3, 0x20);
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_RX_FB
+  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
+  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI && defined USE_USBD_RX_FB
+  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
+  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
+#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
+  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
+  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
 #elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
-  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+  HAL_PCDEx_SetRxFiFo(hpcd, 0xa0);
   HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
-  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x80);
 #elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI
-  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+  HAL_PCDEx_SetRxFiFo(hpcd, 0xa0);
   HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
-  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
+  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x80);
 #elif defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
   HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
   HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);

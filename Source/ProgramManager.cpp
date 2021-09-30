@@ -208,7 +208,7 @@ void setButtonValue(uint8_t ch, uint8_t value){
 void onProgramReady(){
   ProgramVector* pv = getProgramVector();
 #ifdef USE_USBD_AUDIO_TX
-  if(usbd_tx) // after patch runs: convert wet output to USBD audio
+  if(usbd_tx) // after patch runs: convert wet output to USBD audio tx
     usbd_tx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif
 #ifdef DEBUG_DWT
@@ -217,7 +217,7 @@ void onProgramReady(){
   /* Block indefinitely (released by audioCallback) */
   ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 #ifdef USE_USBD_AUDIO_RX
-  if(usbd_rx) // before patch runs: convert USBD audio to input
+  if(usbd_rx) // before patch runs: convert USBD audio rx to input (overwriting ADC)
     usbd_rx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif
 #ifdef DEBUG_DWT
