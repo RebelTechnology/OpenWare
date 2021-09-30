@@ -15,7 +15,8 @@
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
 #define USE_USBD_AUDIO
-/* #define USE_USBD_RX_FB */
+#define USE_USBD_RX_FB
+#define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX  // microphone
 #define USE_USBD_FS
