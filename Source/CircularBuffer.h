@@ -67,6 +67,16 @@ public:
     data[index % size] = value;
   }
 
+  void overdub(T c){
+    data[writepos++] += c;
+    if(writepos >= size)
+      writepos = 0;
+  }
+
+  void overdubAt(size_t index, T value){
+    data[index % size] += value;
+  }
+
   T read(){
     T c = data[readpos++];
     if(readpos >= size)
