@@ -22,11 +22,14 @@ int usbd_tx_flow = 0;
 int usbd_rx_flow = 0;
 int usbd_tx_capacity = 0;
 int usbd_rx_capacity = 0;
+
+#ifdef DEBUG
 #define FLOW_ASSERT(x, y) if(!(x)){debugMessage(y, usbd_rx_flow, usbd_tx_flow, this->getWriteCapacity());}
+#endif
 #include "CircularBuffer.h"
 #include "Codec.h"
 
-// todo: not static/global
+// todo: not static/global; move the buffers out of this compilation unit
 CircularBuffer<audio_t> rx_buffer;
 CircularBuffer<audio_t> tx_buffer;
 
@@ -303,12 +306,16 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x02,                                 // bUnitID
   0x01,                                 // bSourceID
   0x01,                                 // bControlSize
-  0x01|0x02,                            // bmaControls(0) AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME
   // 0x00,                                 // bmaControls(0)
-  0x00,                                 // bmaControls(1)
-  0x00,                                 // bmaControls(2)
+  AUDIO_CONTROL_REQ_FU_MUTE,            // bmaControls(0) Master
+  AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(1) Channel 1
+  AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(2) Channel 2
   0x00,                                 // iTerminal
   /* 10 byte */
+
+#if USBD_AUDIO_RX_CHANNELS != 2
+#error "incompatible channel count / todo"
+#endif
   
   /* Output Terminal Descriptor */
   0x09,                                 // bLength
@@ -361,11 +368,15 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x05,                                 // bUnitID
   0x04,                                 // bSourceID
   0x01,                                 // bControlSize
-  0x01|0x02,                            // bmaControls(0) AUDIO_CONTROL_MUTE|AUDIO_CONTROL_VOLUME
-  0x00,                                 // bmaControls(1)
-  0x00,                                 // bmaControls(2)
+  AUDIO_CONTROL_REQ_FU_MUTE,            // bmaControls(0) Master
+  AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(1) Channel 1
+  AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(2) Channel 2
   0x00,                                 // iTerminal
   /* 10 byte */
+
+#if USBD_AUDIO_TX_CHANNELS != 2
+#error "incompatible channel count / todo"
+#endif
   
   /* USB Microphone Output Terminal Descriptor */
   0x09,                            // Size of the descriptor, in bytes (bLength)
@@ -475,7 +486,8 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x07,                                    /* bLength */
   0x25,                                    /* bDescriptorType */
   0x01,                                    /* bDescriptor */
-  0x00,                                    /* bmAttributes 0x01: Sampling Frequency control. See UAC Spec 1.0 p.62 */
+  // USBD_AUDIO_AS_CONTROL_SAMPLING_FREQUENCY /* bmAttributes 0x01: Sampling Frequency control. See UAC Spec 1.0 p.62 */
+  0x00,                                    /* bmAttributes */
   0x00,                                    /* bLockDelayUnits */
   0x00,                                    /* wLockDelay */
   0x00,
@@ -1408,7 +1420,8 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
       rx_buffer.clear();
       rx_buffer.moveWriteHead(AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
     }
-    size_t len = USBD_LL_GetRxDataSize(pdev, epnum);
+    size_t len = USBD_LL_GetRxDataSize(pdev, AUDIO_RX_EP);
+    // we are required to support null packets: len may be zero
     rx_buffer.write((audio_t*)haudio->audio_rx_transmit, len/sizeof(audio_t));
 #ifdef USE_USBD_RX_FB
     // in asynch / adaptive mode, we have no control over the number of samples transferred
