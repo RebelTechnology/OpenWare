@@ -24,7 +24,7 @@
 #endif
 
 extern "C" {
-  uint16_t codec_blocksize = 0;
+  uint16_t codec_blocksize = AUDIO_BLOCK_SIZE;
   int32_t codec_rxbuf[CODEC_BUFFER_SIZE] DMA_RAM;
   int32_t codec_txbuf[CODEC_BUFFER_SIZE] DMA_RAM;
   extern DMA_HandleTypeDef HDMA_TX;
