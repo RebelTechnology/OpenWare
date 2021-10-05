@@ -11,11 +11,16 @@
 #define HSAI_TX hsai_BlockA1
 #define HDMA_RX hdma_sai1_b
 #define HDMA_TX hdma_sai1_a
-#else
+#elif defined USE_PCM3168A
 #define HSAI_RX hsai_BlockA1
 #define HSAI_TX hsai_BlockB1
 #define HDMA_RX hdma_sai1_a
 #define HDMA_TX hdma_sai1_b
+#elif defined USE_WM8731
+#define HDMA_RX hdma_i2s2_ext_rx
+#define HDMA_TX hdma_i2s2_ext_rx // linked
+#elif defined USE_ADS1294
+#define HDMA_TX hdma_spi1_rx
 #endif
 
 extern "C" {
@@ -35,10 +40,16 @@ extern "C" {
 
 void usbd_audio_mute_callback(int16_t gain){
   // todo!
+#ifdef DEBUG
+  printf("mute %d\n", gain);
+#endif
 }
 
 void usbd_audio_gain_callback(int16_t gain){
   // codec_set_gain_in(gain); todo!
+#ifdef DEBUG
+  printf("gain %d\n", gain);
+#endif
 }
 #endif // USE_USBD_AUDIO
 
@@ -133,6 +144,15 @@ void Codec::setHighPass(bool hpf){
   else
     codec_write(82, 0b00000111); // disable HPF for all ADC channels
 #endif
+}
+
+/** Get the number of individual samples (across channels) that have already been 
+ * transferred to/from the codec in this block 
+ */
+size_t Codec::getSampleCounter(){
+  // read NDTR: the number of remaining data units in the current DMA Stream transfer.
+  return (CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX)) % (codec_blocksize*AUDIO_CHANNELS);
+  // return (DWT->CYCCNT)/ARM_CYCLES_PER_SAMPLE;
 }
 
 #ifdef USE_IIS3DWB
@@ -277,15 +297,6 @@ void Codec::pause(){
 void Codec::resume(){
   HAL_SAI_DMAResume(&HSAI_RX);
   HAL_SAI_DMAResume(&HSAI_TX);
-}
-
-/** Get the number of individual samples (across channels) that have already been 
- * transferred to/from the codec in this block 
- */
-size_t Codec::getSampleCounter(){
-  // read NDTR: the number of remaining data units in the current DMA Stream transfer.
-  return (CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX)) % (codec_blocksize*AUDIO_CHANNELS);
-  // return (DWT->CYCCNT)/ARM_CYCLES_PER_SAMPLE;
 }
 
 #endif /* USE_PCM3168A */

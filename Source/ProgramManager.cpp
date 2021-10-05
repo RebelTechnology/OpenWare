@@ -19,17 +19,18 @@
 #include "BitState.hpp"
 #include "MidiReceiver.h"
 #include "MidiController.h"
-#ifdef USE_SCREEN
-#include "Graphics.h"
-#endif
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
-
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
 #include "CircularBuffer.h"
+#endif
+#ifdef USE_SCREEN
+#include "Graphics.h"
+#endif
 
+#ifdef USE_USBD_AUDIO
 CircularBuffer<audio_t>* volatile usbd_rx = NULL;
 CircularBuffer<audio_t>* volatile usbd_tx = NULL;
 static uint32_t usbd_audio_rx_count = 0;
