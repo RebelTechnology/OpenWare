@@ -2,6 +2,7 @@
 
 #include "Graphics.h"
 
+#ifdef DEBUG_USBD_AUDIO
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
   extern int usbd_tx_flow;
   extern int usbd_rx_flow;
@@ -21,6 +22,7 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
   screen.print(" / ");
   screen.print(usbd_tx_capacity);
 }
+#endif
 
 extern "C"{
 #if 0
