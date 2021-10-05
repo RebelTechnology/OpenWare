@@ -113,11 +113,9 @@ USBD_ClassTypeDef  USBD_AUDIO =
   *         Set feedback value from sample rate 
   */
 static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
-  // usbd_rx_capacity = rate;
   // convert sample rate to 10.14 format
   rate = (rate / 1000.0f) * (1<<14);
   AUDIO_FREQ_TO_DATA(rate, buf);
-  // usbd_rx_capacity = rate - 786432;
 }
 #endif
 
