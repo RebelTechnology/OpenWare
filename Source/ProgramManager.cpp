@@ -87,21 +87,28 @@ void usbd_rx_convert_add(int32_t* dst, size_t len){
   if(cap < len){
     // rx buffer underflow
     memset(dst+cap, 0, (len - cap)*sizeof(int32_t));
-    debugMessage("rx unf", (int)(len - cap));
     len = cap;
+#ifdef DEBUG_USBD_AUDIO
+    debugMessage("rx unf", (int)(len - cap));
+#endif
   }
   while(len--)
     *dst++ = __SSAT(*dst + AUDIO_SAMPLE_TO_INT32(usbd_rx->read()), 24);
 }
+
+#if USBD_AUDIO_RX_CHANNELS != AUDIO_CHANNELS
+#error "todo: support for USBD_AUDIO_RX_CHANNELS != AUDIO_CHANNELS"
+#endif
 
 void usbd_tx_convert(int32_t* src, size_t len){
   size_t cap = usbd_tx->getWriteCapacity() - USBD_AUDIO_TX_CHANNELS;
   // leave a bit of space to prevent wrapping read/write pointers
   if(cap < len){
     // tx buffer overflow
-    debugMessage("tx ovf", (int)(len - cap));
     len = cap;
-    // return; // if we write a full buffer, then the write pointer will appear to wrap
+#ifdef DEBUG_USBD_AUDIO
+    debugMessage("tx ovf", (int)(len - cap));
+#endif
   }
   while(len--)
     // macro handles shift, round, dither, clip, truncate, bitswap
