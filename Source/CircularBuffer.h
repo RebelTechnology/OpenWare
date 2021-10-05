@@ -4,22 +4,32 @@
 #include <stdint.h>
 #include <string.h> // for memcpy
 
-#ifdef DEBUG_CIRCULAR_BUFFER
-#define FLOW_ASSERT(x, y) ASSERT(x, y)
-#else
+#ifndef FLOW_ASSERT
 #define FLOW_ASSERT(x, y)
 #endif
+
+// #ifdef DEBUG_CIRCULAR_BUFFER
+// #define FLOW_ASSERT(x, y) ASSERT(x, y)
+// #else
+// #define FLOW_ASSERT(x, y)
+// // #define FLOW_ASSERT(x, y) if(!x){debugMessage(y, this->getReadCapacity(), this->getWriteCapacity());}
+// #endif
 
 template<typename T>
 class CircularBuffer {
 protected:
   T* data;
   size_t size;
-  size_t writepos = 0;
-  size_t readpos = 0;
+  volatile size_t writepos = 0;
+  volatile size_t readpos = 0;
 public:
   CircularBuffer(): data(NULL), size(0){}
   CircularBuffer(T* data, size_t size): data(data), size(size){}
+
+  void setData(T* data, size_t len) {
+    this->data = data;
+    size = len;
+  }
 
   size_t getSize() const {
     return size;
@@ -55,6 +65,16 @@ public:
     
   void writeAt(size_t index, T value){
     data[index % size] = value;
+  }
+
+  void overdub(T c){
+    data[writepos++] += c;
+    if(writepos >= size)
+      writepos = 0;
+  }
+
+  void overdubAt(size_t index, T value){
+    data[index % size] += value;
   }
 
   T read(){
@@ -112,11 +132,9 @@ public:
     return data+writepos;
   }
 
-  void moveWriteHead(size_t samples){
-    FLOW_ASSERT(getWriteCapacity() < samples, "overflow");
-    writepos += samples;
-    if(writepos >= size)
-      writepos -= size;
+  void moveWriteHead(int32_t samples){
+    FLOW_ASSERT(getWriteCapacity() >= samples, "overflow");
+    writepos = (writepos + samples) % size;
   }
 
   size_t getReadIndex(){
@@ -131,11 +149,9 @@ public:
     return data+readpos;
   }
 
-  void moveReadHead(size_t samples){
+  void moveReadHead(int32_t samples){
     FLOW_ASSERT(getReadCapacity() < samples, "underflow");
-    readpos += samples;
-    if(readpos >= size)
-      readpos -= size;
+    readpos = (readpos + samples) % size;
   }
 
   /**

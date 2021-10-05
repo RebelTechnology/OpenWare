@@ -40,7 +40,7 @@ Graphics::Graphics() :
 {  
 }
 
-void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
+__weak void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
   graphics.params.drawTitle(graphics.screen);
   graphics.params.drawMessage(26, graphics.screen);
 }

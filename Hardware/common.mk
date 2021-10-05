@@ -45,7 +45,7 @@ vpath %.s $(sort $(dir $(S_SRC)))
 build_dir: $(BUILD)
 
 $(BUILD):
-	$(MKDIR) $(BUILD)
+	@$(MKDIR) $(BUILD)
 
 # Build executable 
 $(ELF) : $(OBJS) $(LDSCRIPT)

@@ -2,6 +2,27 @@
 
 #include "Graphics.h"
 
+#ifdef DEBUG_USBD_AUDIO
+void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
+  extern int usbd_tx_flow;
+  extern int usbd_rx_flow;
+  extern int usbd_tx_capacity;
+  extern int usbd_rx_capacity;
+  ScreenBuffer& screen = graphics.screen;
+  graphics.params.drawTitle(screen);
+  graphics.params.drawMessage(26, screen);
+
+  screen.setTextSize(1);
+  screen.print(2, 36, "rx ");
+  screen.print(usbd_rx_flow);
+  screen.print(" / ");
+  screen.print(usbd_rx_capacity);
+  screen.print(2, 46, "tx ");
+  screen.print(usbd_tx_flow);
+  screen.print(" / ");
+  screen.print(usbd_tx_capacity);
+}
+#endif
 
 extern "C"{
 #if 0
