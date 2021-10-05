@@ -849,8 +849,8 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
     	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_RX_EP, USBD_EP_TYPE_ISOC, AUDIO_RX_MAX_PACKET_SIZE);
 #ifdef USE_USBD_RX_FB
 	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_FB_EP, USBD_EP_TYPE_ISOC, AUDIO_FB_PACKET_SIZE);
-#endif
 	haudio->fb_soffn = USB_SOF_NUMBER();
+#endif
 	/* haudio->bit_depth = 16U; // alt 1 */
 	AUDIO_OUT_Restart(pdev);
       }
