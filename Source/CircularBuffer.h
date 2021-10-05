@@ -132,11 +132,9 @@ public:
     return data+writepos;
   }
 
-  void moveWriteHead(size_t samples){
+  void moveWriteHead(int32_t samples){
     FLOW_ASSERT(getWriteCapacity() >= samples, "overflow");
-    writepos += samples;
-    if(writepos >= size)
-      writepos -= size;
+    writepos = (writepos + samples) % size;
   }
 
   size_t getReadIndex(){
@@ -151,11 +149,9 @@ public:
     return data+readpos;
   }
 
-  void moveReadHead(size_t samples){
+  void moveReadHead(int32_t samples){
     FLOW_ASSERT(getReadCapacity() < samples, "underflow");
-    readpos += samples;
-    if(readpos >= size)
-      readpos -= size;
+    readpos = (readpos + samples) % size;
   }
 
   /**
