@@ -47,6 +47,7 @@ class Codec {
   int32_t getMax();
   float getAvg();
   uint16_t getBlockSize();
+  size_t getSampleCounter();
 };
 
 extern Codec codec;

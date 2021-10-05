@@ -1,3 +1,15 @@
+22.1.rc1
+------
+
+* Fix USBD audio sync issues:
+* rx asynchronous mode with explicit feedback
+* tx asynchronous mode with variable output size
+* Fix USBD audio descriptor issues (Windows support)
+
+Known Issues:
+* USB Host does not support reconnecting devices
+
+
 22.0.0
 ------
 
