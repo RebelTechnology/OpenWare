@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v22.0.0"
+#define FIRMWARE_VERSION "v22.1.rc1"
 
 #ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
@@ -134,7 +134,6 @@
 #define AUDIO_SAMPLINGRATE           48000
 #endif
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
-#define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 
 #define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
 #define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE

@@ -14,10 +14,10 @@
 #define Q7_CLIP(a) ((a) > Q7_MAX ? Q7_MAX : (a) < Q7_MIN ? Q7_MIN : (a))
 #define Q15_CLIP(a) ((a) > Q15_MAX ? Q15_MAX : (a) < Q15_MIN ? Q15_MIN : (a))
 #define Q31_CLIP(a) ((a) > Q31_MAX ? Q31_MAX : (a) < Q31_MIN ? Q31_MIN : (a))
-#define Q15_MUL_Q15(a,b) Q15_CLIP(((q63_t)(a)*(b))>>15)
+#define Q15_MUL_Q15(a,b) Q15_CLIP(((q31_t)(a)*(b))>>15)
 #define Q31_MUL_Q31(a,b) Q31_CLIP(((q63_t)(a)*(b))>>31)
 #define FLOAT_TO_Q7(a) Q7_CLIP((q15_t)((a)*128.0f))
-#define FLOAT_TO_Q15(a) Q15_CLIP((q63_t)((a)*32768.0f))
+#define FLOAT_TO_Q15(a) Q15_CLIP((q31_t)((a)*32768.0f))
 #define FLOAT_TO_Q31(a) Q31_CLIP((q63_t)((a)*2147483648.0f))
 #endif
 
