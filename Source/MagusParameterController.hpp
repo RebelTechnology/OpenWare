@@ -1023,6 +1023,7 @@ public:
             // We must update encoder value before calculating user value, otherwise
             // previous value would be displayed
             user[selectedPid[i]] = getEncoderValue(i);
+            selectGlobalParameter(selectedPid[i]);
           }
           if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
             displayMode = STANDARD;
