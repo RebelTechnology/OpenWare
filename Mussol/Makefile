@@ -6,7 +6,7 @@ include $(OPENWARE)/Hardware/mussol.mk
 
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
-C_SRC += $(OPENWARE)/Source/usbd_audio.c
+CPP_SRC += $(OPENWARE)/Source/usbd_audio.cpp
 C_SRC += $(OPENWARE)/Source/usbh_midi.c
 
 include $(OPENWARE)/Hardware/sources.mk
