@@ -8,7 +8,7 @@ include $(OPENWARE)/Hardware/owl2.mk
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/ble_midi.c
-C_SRC += $(OPENWARE)/Source/usbd_audio.c
+CPP_SRC += $(OPENWARE)/Source/usbd_audio.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
 

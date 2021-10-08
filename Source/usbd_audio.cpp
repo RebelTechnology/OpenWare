@@ -177,12 +177,14 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define MIDI_TX_EP                     0x81
 #endif
 
-#ifdef USE_USBD_AUDIO_RX
 #ifdef USE_USBD_AUDIO_FEATURES
-#define USBD_AUDIO_RX_AC_DESC_LEN      31
+#define USBD_AUDIO_RX_AF_DESC_LEN      (8+USBD_AUDIO_RX_CHANNELS)
 #else
-#define USBD_AUDIO_RX_AC_DESC_LEN      21
+#define USBD_AUDIO_RX_AF_DESC_LEN      0
 #endif
+
+#ifdef USE_USBD_AUDIO_RX
+#define USBD_AUDIO_RX_AC_DESC_LEN      (21+USBD_AUDIO_RX_AF_DESC_LEN)
 #ifdef USE_USBD_RX_FB
 #define USBD_AUDIO_RX_AS_DESC_LEN      61
 #else
@@ -195,12 +197,14 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define USBD_AUDIO_RX_NUM_INTERFACES   0
 #endif
 
-#ifdef USE_USBD_AUDIO_TX
 #ifdef USE_USBD_AUDIO_FEATURES
-#define USBD_AUDIO_TX_AC_DESC_LEN      31
+#define USBD_AUDIO_TX_AF_DESC_LEN      (8+USBD_AUDIO_TX_CHANNELS)
 #else
-#define USBD_AUDIO_TX_AC_DESC_LEN      21
+#define USBD_AUDIO_TX_AF_DESC_LEN      0
 #endif
+
+#ifdef USE_USBD_AUDIO_TX
+#define USBD_AUDIO_TX_AC_DESC_LEN      (21+USBD_AUDIO_TX_AF_DESC_LEN)
 #define USBD_AUDIO_TX_AS_DESC_LEN      52
 #define USBD_AUDIO_TX_NUM_INTERFACES   1
 #else
@@ -306,16 +310,19 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x02,                                 // bUnitID
   0x01,                                 // bSourceID
   0x01,                                 // bControlSize
-  // 0x00,                                 // bmaControls(0)
   AUDIO_CONTROL_REQ_FU_MUTE,            // bmaControls(0) Master
   AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(1) Channel 1
+#if USBD_AUDIO_RX_CHANNELS > 1
   AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(2) Channel 2
-  0x00,                                 // iTerminal
-  /* 10 byte */
-
-#if USBD_AUDIO_RX_CHANNELS != 2
-#error "incompatible channel count / todo"
+#if USBD_AUDIO_RX_CHANNELS > 2
+  AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(3) Channel 3
+#if USBD_AUDIO_RX_CHANNELS > 3
+  AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(4) Channel 4
 #endif
+#endif
+#endif  
+  0x00,                                 // iTerminal
+  /* 8 + ch byte */
   
   /* Output Terminal Descriptor */
   0x09,                                 // bLength
@@ -370,13 +377,17 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x01,                                 // bControlSize
   AUDIO_CONTROL_REQ_FU_MUTE,            // bmaControls(0) Master
   AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(1) Channel 1
+#if USBD_AUDIO_TX_CHANNELS > 1
   AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(2) Channel 2
-  0x00,                                 // iTerminal
-  /* 10 byte */
-
-#if USBD_AUDIO_TX_CHANNELS != 2
-#error "incompatible channel count / todo"
+#if USBD_AUDIO_TX_CHANNELS > 2
+  AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(3) Channel 3
+#if USBD_AUDIO_TX_CHANNELS > 3
+  AUDIO_CONTROL_REQ_FU_VOL,             // bmaControls(4) Channel 4
 #endif
+#endif
+#endif  
+  0x00,                                 // iTerminal
+  /* 8 + ch byte */
   
   /* USB Microphone Output Terminal Descriptor */
   0x09,                            // Size of the descriptor, in bytes (bLength)
