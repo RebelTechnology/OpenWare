@@ -75,13 +75,7 @@ void usbd_audio_rx_stop_callback(){
 #endif
 }
 
-// void usbd_rx_convert(int32_t* dst, size_t len){
-//   usbd_audio_rx_count += len;
-//   while(len--)
-//     *dst++ = AUDIO_SAMPLE_TO_INT32(usbd_rx->read());
-// }
-
-void usbd_rx_convert_add(int32_t* dst, size_t len){
+void usbd_rx_convert(int32_t* dst, size_t len){
   usbd_audio_rx_count += len;
   size_t cap = usbd_rx->getReadCapacity();
   if(cap < len){
@@ -92,13 +86,29 @@ void usbd_rx_convert_add(int32_t* dst, size_t len){
     debugMessage("rx unf", (int)(len - cap));
 #endif
   }
+#if USBD_AUDIO_RX_CHANNELS == AUDIO_CHANNELS
+#if AUDIO_BITS_PER_SAMPLE == 32
+  usbd_rx->read(dst, len);
+#else
   while(len--)
-    *dst++ = __SSAT(*dst + AUDIO_SAMPLE_TO_INT32(usbd_rx->read()), 24);
-}
-
-#if USBD_AUDIO_RX_CHANNELS != AUDIO_CHANNELS
-#error "todo: support for USBD_AUDIO_RX_CHANNELS != AUDIO_CHANNELS"
+    *dst++ = AUDIO_SAMPLE_TO_INT32(usbd_rx->read());
 #endif
+#else /* USBD_AUDIO_RX_CHANNELS != AUDIO_CHANNELS */
+  len /= AUDIO_CHANNELS;
+  while(len--){
+#if AUDIO_BITS_PER_SAMPLE == 32
+    usbd_rx->read(dst, USBD_AUDIO_RX_CHANNELS);
+    dst += AUDIO_CHANNELS;
+#else
+    audio_t* src = usbd_rx->getReadHead();
+    for(int ch=0; ch<USBD_AUDIO_RX_CHANNELS; ch++)
+      *dst++ = AUDIO_SAMPLE_TO_INT32(*src++);
+    usbd_rx->moveReadHead(USBD_AUDIO_RX_CHANNELS);
+    dst += AUDIO_CHANNELS - USBD_AUDIO_RX_CHANNELS;
+#endif
+  }
+#endif
+}
 
 void usbd_tx_convert(int32_t* src, size_t len){
   size_t cap = usbd_tx->getWriteCapacity() - USBD_AUDIO_TX_CHANNELS;
@@ -110,21 +120,31 @@ void usbd_tx_convert(int32_t* src, size_t len){
     debugMessage("tx ovf", (int)(len - cap));
 #endif
   }
+#if USBD_AUDIO_TX_CHANNELS == AUDIO_CHANNELS
+#if AUDIO_BITS_PER_SAMPLE == 32
+  usbd_tx->write(src, len);
+#else
   while(len--)
-    // macro handles shift, round, dither, clip, truncate, bitswap
     usbd_tx->write(AUDIO_INT32_TO_SAMPLE(*src++));
+#endif
+#else /*  USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS */
+  len /= AUDIO_CHANNELS;
+  while(len--){
+#if AUDIO_BITS_PER_SAMPLE == 32
+    usbd_tx->write(src, USBD_AUDIO_TX_CHANNELS);
+    src += AUDIO_CHANNELS;
+#else
+    audio_t* dst = usbd_tx->getWriteHead();
+    for(int ch=0; ch<USBD_AUDIO_TX_CHANNELS; ch++)
+      *dst++ = AUDIO_INT32_TO_SAMPLE(*src++);
+    usbd_tx->moveWriteHead(USBD_AUDIO_TX_CHANNELS);
+    src += AUDIO_CHANNELS - USBD_AUDIO_TX_CHANNELS;
+#endif
+  }
+#endif
 }
 
-// void usbd_tx_convert_add(int32_t* src, size_t len){
-//   while(len--)
-//     usbd_tx->overdub(AUDIO_INT32_TO_SAMPLE(*src++));
-// }
-
-#if USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS
-#error "todo: support for USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS"
-#endif
-
-#endif
+#endif /* USE_USBD_AUDIO */
 
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
@@ -242,12 +262,12 @@ void setButtonValue(uint8_t ch, uint8_t value){
 void onProgramReady(){
   ProgramVector* pv = getProgramVector();
 #ifdef USE_USBD_AUDIO_TX
-  if(usbd_tx) // after patch runs: convert wet output to USBD audio tx
+  if(usbd_tx) // after patch runs: convert patch output to USBD audio tx
     usbd_tx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif
 #ifdef USE_USBD_AUDIO_RX
-  if(usbd_rx) // after patch runs: convert USBD audio rx to DAC (summing patch output)
-    usbd_rx_convert_add(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
+  if(usbd_rx) // after patch runs: convert USBD audio rx to DAC (overwriting patch output)
+    usbd_rx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif  
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
@@ -255,10 +275,8 @@ void onProgramReady(){
   /* Block indefinitely (released by audioCallback) */
   ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 #ifdef USE_USBD_AUDIO_RX
-  // if(usbd_rx) // before patch runs: convert USBD audio rx to input (overwriting ADC)
+  // if(usbd_rx) // before patch runs: convert USBD audio rx to patch input (overwriting ADC)
   //   usbd_rx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
-  // if(usbd_rx) // before patch runs: convert USBD audio rx to input (summing ADC)
-  //   usbd_rx_convert_add(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
