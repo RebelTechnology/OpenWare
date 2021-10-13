@@ -162,11 +162,13 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 
     __HAL_RCC_GPIOF_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     /**ADC3 GPIO Configuration
     PF10     ------> ADC3_IN8
     PC1     ------> ADC3_IN11
     PC2     ------> ADC3_IN12
     PC3     ------> ADC3_IN13
+    PA3     ------> ADC3_IN3
     */
     GPIO_InitStruct.Pin = ADC4_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
@@ -177,6 +179,11 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = EXP_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(EXP_GPIO_Port, &GPIO_InitStruct);
 
     /* ADC3 DMA Init */
     /* ADC3 Init */
@@ -259,10 +266,13 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     PC1     ------> ADC3_IN11
     PC2     ------> ADC3_IN12
     PC3     ------> ADC3_IN13
+    PA3     ------> ADC3_IN3
     */
     HAL_GPIO_DeInit(ADC4_GPIO_Port, ADC4_Pin);
 
     HAL_GPIO_DeInit(GPIOC, ADC3_Pin|ADC2_Pin|ADC1_Pin);
+
+    HAL_GPIO_DeInit(EXP_GPIO_Port, EXP_Pin);
 
     /* ADC3 DMA DeInit */
     HAL_DMA_DeInit(hadc->DMA_Handle);
