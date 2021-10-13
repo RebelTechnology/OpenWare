@@ -234,6 +234,11 @@ OWLPORT=`amidi -l|grep OWL|sed 's/.*\(hw:.*\),.*/\1/g'`
 
 Record 2 seconds 48k 16bit stereo
 arecord -D hw:1 -c 2 -r 48000 -f S16_LE out.wav
+AUDIODEV=hw:1 rec out.wav
+
+Playback 
+aplay -D hw:1 out.wav
+AUDIODEV=hw:1 play out.wav
 
 -----------------------------------------------------------------
 

@@ -6,7 +6,7 @@ include $(OPENWARE)/Hardware/owl1.mk
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/wm8731.c
-C_SRC += $(OPENWARE)/Source/usbd_audio.c
+CPP_SRC += $(OPENWARE)/Source/usbd_audio.cpp
 
 ifndef PLATFORM
 PLATFORM = Pedal

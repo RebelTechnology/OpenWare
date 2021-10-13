@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include "device.h"
-#include "Codec.h"
 
 // Section 8.1 Mode Control
 #define CODEC_MODE_CTRL1_REG						(uint8_t)0x01

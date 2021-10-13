@@ -40,12 +40,11 @@
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
-#define MAIN_LOOP_SLEEP_MS          20
-#define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
-
 #define USE_USBD_AUDIO
-#define USE_USBD_AUDIO_TX  // microphone
+#define USE_USBD_RX_FB
+#define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_RX // speaker
+#define USE_USBD_AUDIO_TX  // microphone
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
@@ -53,11 +52,15 @@
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
 
+#define MAIN_LOOP_SLEEP_MS          20
+#define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
+
 // Serial MIDI
 #define USE_UART_MIDI_RX
 #define USE_UART_MIDI_TX
 #define UART_MIDI_HANDLE huart5
 #define UART_MIDI_RX_BUFFER_SIZE 256
+
 // Digital bus
 /* #define USE_DIGITALBUS */
 /* #define DIGITAL_BUS_ENABLED 1 */
