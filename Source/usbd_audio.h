@@ -49,7 +49,10 @@
 
 #define MIDI_TX_PACKET_SIZE                           0x40
 #define MIDI_RX_PACKET_SIZE                           0x40
-   
+
+#define USBD_TOTAL_FIFO_SIZE                          0x500
+#define USBD_MIN_FIFO_SIZE                            0x40
+ 
 /* Isochronous Synchronisation Type */
 #define USBD_EP_ATTR_ISOC_NOSYNC                      0x00 /* no synchro */
 #define USBD_EP_ATTR_ISOC_ASYNC                       0x04 /* synchronisation by feedback  */

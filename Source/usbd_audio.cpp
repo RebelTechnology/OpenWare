@@ -128,12 +128,14 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define AUDIO_TX_EP                    0x82
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x83
+#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - 2*USBD_MIN_FIFO_SIZE - MIDI_TX_PACKET_SIZE - AUDIO_TX_MAX_PACKET_SIZE)
 #elif defined USE_USBD_AUDIO_RX && defined USE_USBD_RX_FB && defined USE_USBD_AUDIO_TX
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_TX_IF                    0x02
 #define AUDIO_RX_EP                    0x01
 #define AUDIO_FB_EP                    0x81
 #define AUDIO_TX_EP                    0x82
+#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - 2*USBD_MIN_FIFO_SIZE - AUDIO_TX_MAX_PACKET_SIZE)
 #elif defined USE_USBD_AUDIO_RX && defined USE_USBD_RX_FB && defined USE_USBD_MIDI
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x02
@@ -141,6 +143,7 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define AUDIO_FB_EP                    0x81
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x82
+#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - 2*USBD_MIN_FIFO_SIZE - MIDI_TX_PACKET_SIZE)
 #elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
 #define AUDIO_RX_IF                    0x01 // bInterfaceNumber
 #define AUDIO_TX_IF                    0x02
@@ -149,23 +152,27 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define AUDIO_TX_EP                    0x81
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x82
+#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - USBD_MIN_FIFO_SIZE - MIDI_TX_PACKET_SIZE - AUDIO_TX_MAX_PACKET_SIZE)
 #elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_TX_IF                    0x02
 #define AUDIO_RX_EP                    0x01
 #define AUDIO_TX_EP                    0x81
+#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - USBD_MIN_FIFO_SIZE - AUDIO_TX_MAX_PACKET_SIZE)
 #elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x02
 #define AUDIO_RX_EP                    0x01
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x81
+#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - USBD_MIN_FIFO_SIZE)
 #elif defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
 #define AUDIO_TX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x02
 #define AUDIO_TX_EP                    0x81
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x82
+#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - USBD_MIN_FIFO_SIZE - MIDI_TX_PACKET_SIZE - AUDIO_TX_MAX_PACKET_SIZE)
 #else
 #define AUDIO_RX_IF                    0x01
 #define AUDIO_TX_IF                    0x01
@@ -175,6 +182,13 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define AUDIO_TX_EP                    0x81
 #define MIDI_RX_EP                     0x01
 #define MIDI_TX_EP                     0x81
+#endif
+
+#if AUDIO_RX_FIFO_SIZE < (AUDIO_RX_MAX_PACKET_SIZE + 2*USBD_MIN_FIFO_SIZE)
+#pragma message "USBD RX FIFO small"
+#endif
+#if AUDIO_RX_FIFO_SIZE < USBD_MIN_FIFO_SIZE
+#error "USBD RX FIFO too small"
 #endif
 
 #ifdef USE_USBD_AUDIO_FEATURES
@@ -1621,46 +1635,30 @@ uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev,
 }
 
 uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd){
-#if defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI && defined USE_USBD_RX_FB
-  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
-  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x40);
-  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
-  HAL_PCDEx_SetTxFiFo(hpcd, 3, 0x20);
-#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_RX_FB
-  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
-  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
-  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
-#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI && defined USE_USBD_RX_FB
-  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
-  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
-  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
-#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
-  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
-  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
-  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
-#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_AUDIO_TX
-  HAL_PCDEx_SetRxFiFo(hpcd, 0xa0);
-  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x80);
-#elif defined USE_USBD_AUDIO_RX && defined USE_USBD_MIDI
-  HAL_PCDEx_SetRxFiFo(hpcd, 0xa0);
-  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x80);
-#elif defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
-  HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
-  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x20);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
-  HAL_PCDEx_SetTxFiFo(hpcd, 2, 0x40);
-#else
-  HAL_PCDEx_SetRxFiFo(hpcd, 0xa0);
-  HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x40);
-  HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x60);
+ // HAL_PCDEx_SetTxFiFo() must be called after HAL_PCDEx_SetRxFiFo().
+ // HAL_PCDEx_SetTxFiFo() must be called in the order of the endpoint number.
+ // Size is represented in terms of 4-byte words. Minimum: 16 words, maximum: 256 words
+ // The total of FIFO sizes should be no more than the 1.25 Kbytes USB RAM
+  // Total 0x140 words / 1280 bytes available for rx and tx fifos
+  // The FIFO is used optimally when used TxFIFOs are allocated in the top
+  // of the FIFO.Ex: use EP1 and EP2 as IN instead of EP1 and EP3 as IN ones.
+  // When DMA is used 3n * FIFO locations should be reserved for internal DMA registers
+  // STM32H7 A dedicated 4-Kbyte RAM can be divided into 1 shared RxFIFO and up to 9 TxFIFOs
+  HAL_PCDEx_SetRxFiFo(hpcd, AUDIO_RX_FIFO_SIZE/4);
+  HAL_PCDEx_SetTxFiFo(hpcd, 0x00, USBD_MIN_FIFO_SIZE/4); // control i/f
+
+#if defined USE_USBD_AUDIO_RX && defined USE_USBD_RX_FB  
+  HAL_PCDEx_SetTxFiFo(hpcd, AUDIO_FB_EP & 0x0f, USBD_MIN_FIFO_SIZE/4);
 #endif
-  /* total 0x140 words available for rx and tx fifos */  
+
+#if defined USE_USBD_AUDIO_TX
+  HAL_PCDEx_SetTxFiFo(hpcd, AUDIO_TX_EP & 0x0f, AUDIO_TX_MAX_PACKET_SIZE/4);
+#endif
+
+#if defined USE_USBD_MIDI
+  HAL_PCDEx_SetTxFiFo(hpcd, MIDI_TX_EP & 0x0f, MIDI_TX_PACKET_SIZE/4);
+#endif
+
   return USBD_OK;
 }
   
