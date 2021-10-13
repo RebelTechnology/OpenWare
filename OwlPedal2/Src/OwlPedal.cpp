@@ -7,29 +7,45 @@
 
 #define PATCH_RESET_COUNTER (1000/MAIN_LOOP_SLEEP_MS)
 
-// Pin bypass_pin(GPIOA, GPIO_PIN_4);
+// Pin footswitch_pin(GPIOA, GPIO_PIN_0);
+Pin bypass_pin(GPIOA, GPIO_PIN_0);
+Pin bufpass_pin(GPIOF, GPIO_PIN_9);
+Pin exp1_ring_pin(GPIOA, GPIO_PIN_2);
+Pin led_green_pin(GPIOB, GPIO_PIN_8);
+Pin led_red_pin(GPIOB, GPIO_PIN_9);
+
+#define SW3_Pin EXP2_T_Pin
+#define SW3_GPIO_Port EXP2_T_GPIO_Port
+#define SW4_Pin EXP2_R_Pin
+#define SW4_GPIO_Port EXP2_R_GPIO_Port
 
 void setLed(uint8_t led, uint32_t rgb){
   switch(rgb){
   case RED_COLOUR:
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+    led_green_pin.low();
+    led_red_pin.high();
+    // HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+    // HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
     break;
   case GREEN_COLOUR:
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+    led_green_pin.high();
+    led_red_pin.low();
+    // HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+    // HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
     break;
   case NO_COLOUR:
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+    led_green_pin.low();
+    led_red_pin.low();
+    // HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+    // HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
     break;
   }
 }
 
 void onChangePin(uint16_t pin){
   switch(pin){
-  case BYPASS_Pin: {
-    bool state = HAL_GPIO_ReadPin(BYPASS_GPIO_Port, BYPASS_Pin) == GPIO_PIN_RESET;
+  case FOOTSWITCH_Pin: {
+    bool state = HAL_GPIO_ReadPin(FOOTSWITCH_GPIO_Port, FOOTSWITCH_Pin) == GPIO_PIN_RESET;
     setLed(0, state ? NO_COLOUR : GREEN_COLOUR);
     break;
   }
@@ -60,20 +76,31 @@ void onChangePin(uint16_t pin){
 }
 
 void setGateValue(uint8_t ch, int16_t value){
-  if(ch == PUSHBUTTON){
-    HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, value ? GPIO_PIN_RESET : GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, value ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  switch(ch){
+  case PUSHBUTTON:
+    setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
 #ifdef OWL_MODULAR
     HAL_GPIO_WritePin(PUSH_GATE_OUT_GPIO_Port, PUSH_GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
 #endif
-  }else if(ch == GREEN_BUTTON){
-    setLed(0, GREEN_COLOUR);
-  }else if(ch == RED_BUTTON){
-    setLed(0, RED_COLOUR);
+    break;
+  case GREEN_BUTTON:
+    setLed(0, value ? GREEN_COLOUR : NO_COLOUR);
+    break;
+  case RED_BUTTON:
+    setLed(0, value ? RED_COLOUR : NO_COLOUR);
+    break;
   }
 }
 
 void setup(){
+  
+ bypass_pin.outputMode();
+ bypass_pin.low();
+ bufpass_pin.outputMode();
+ bufpass_pin.low();
+ exp1_ring_pin.outputMode();
+ exp1_ring_pin.high();
+
   // bypass_pin.outputMode();
   // bypass_pin.inputMode();
   // bypass_pin.setPull(PIN_PULL_NONE);
@@ -81,9 +108,11 @@ void setup(){
   // bypass_pin.setPull(PIN_PULL_DOWN);
   // bypass_pin.setPull(PIN_PULL_UP);
   // bypass_pin.get();
-  
+
+ led_green_pin.outputMode();
+ led_red_pin.outputMode();
+
   setLed(0, RED_COLOUR);
-  HAL_GPIO_WritePin(EXP_TIP_GPIO_Port, EXP_TIP_Pin, GPIO_PIN_SET);
   owl.setup();
   setLed(0, GREEN_COLOUR);
 }
