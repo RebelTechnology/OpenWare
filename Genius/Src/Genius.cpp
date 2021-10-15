@@ -147,6 +147,17 @@ void onChangePin(uint16_t pin){
   }
 }
 
+extern "C"{
+  // void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+  // }
+  void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc){
+    error(CONFIG_ERROR, "ADC error");
+  }
+}
+
+// void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
+// }
+
 void updateEncoders(){
   static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
   int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);

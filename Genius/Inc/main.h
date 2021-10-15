@@ -111,6 +111,7 @@ void Error_Handler(void);
 #define SW_B_EXTI_IRQn EXTI15_10_IRQn
 #define TR_IN_B_Pin GPIO_PIN_2
 #define TR_IN_B_GPIO_Port GPIOD
+#define TR_IN_B_EXTI_IRQn EXTI2_IRQn
 #define TR_OUT_B_Pin GPIO_PIN_3
 #define TR_OUT_B_GPIO_Port GPIOD
 #define TR_OUT_A_Pin GPIO_PIN_4

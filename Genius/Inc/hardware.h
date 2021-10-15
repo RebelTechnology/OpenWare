@@ -72,7 +72,7 @@
 #define ADC_A 0
 #define ADC_B 1
 #define NOF_ADC_VALUES               2
-#define NOF_PARAMETERS               20
+#define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (4+2)
 #define USE_DAC
 
