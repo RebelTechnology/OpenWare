@@ -1,6 +1,8 @@
 #include "Owl.h"
 
+#include "OpenWareMidiControl.h"
 #include "Graphics.h"
+#include "Pin.h"
 
 #ifdef DEBUG_USBD_AUDIO
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
@@ -22,6 +24,15 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
   screen.print(" / ");
   screen.print(usbd_tx_capacity);
 }
+// #else
+// void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
+//   ScreenBuffer& screen = graphics.screen;
+//   graphics.params.drawTitle(screen);
+//   graphics.params.drawMessage(26, screen);
+
+//   screen.setTextSize(1);
+//   encoder_values
+// }
 #endif
 
 extern "C"{
@@ -57,7 +68,15 @@ extern TIM_HandleTypeDef ENCODER_TIM2;
 
 Graphics graphics;
 
+Pin tr_out_a_pin(GPIOD, GPIO_PIN_3);
+Pin tr_out_b_pin(GPIOD, GPIO_PIN_4);
+
 void setup(){
+  tr_out_a_pin.outputMode();
+  tr_out_b_pin.outputMode();
+  tr_out_a_pin.high();
+  tr_out_b_pin.high();
+  
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
@@ -75,7 +94,59 @@ void setup(){
   owl.setup();
 }
 
-// int16_t* Encoders_get(){
+void setGateValue(uint8_t ch, int16_t value){
+  switch(ch){
+  case PUSHBUTTON:
+  case BUTTON_1:
+    tr_out_a_pin.set(!value);
+    break;
+  case BUTTON_2:
+    tr_out_b_pin.set(!value);
+    break;
+  }
+}
+
+// 12x12 bit multiplication with unsigned operands and result
+#define U12_MUL_U12(a,b) (__USAT(((uint32_t)(a)*(b))>>12, 12))
+static uint16_t scaleForDac(int16_t value){
+  return U12_MUL_U12(value + 70, 3521);
+}
+
+void setAnalogValue(uint8_t ch, int16_t value){
+  // if(owl.getOperationMode() == RUN_MODE){
+    extern DAC_HandleTypeDef hdac;
+    switch(ch){
+    case PARAMETER_F:
+      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, scaleForDac(value));
+      break;
+    case PARAMETER_G:
+      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, scaleForDac(value));
+      break;
+    }
+  // }
+}
+
+void onChangePin(uint16_t pin){
+  switch(pin){
+  case TR_IN_A_Pin:
+  case SW_A_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW_A_GPIO_Port, SW_A_Pin) == GPIO_PIN_RESET;
+    state |= HAL_GPIO_ReadPin(TR_IN_A_GPIO_Port, TR_IN_A_Pin) == GPIO_PIN_RESET;
+    setButtonValue(PUSHBUTTON, state);
+    setButtonValue(BUTTON_A, state);
+    // midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
+    break;
+  }
+  case TR_IN_B_Pin:
+  case SW_B_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW_B_GPIO_Port, SW_B_Pin) == GPIO_PIN_RESET;
+    state |= HAL_GPIO_ReadPin(TR_IN_B_GPIO_Port, TR_IN_B_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_B, state);
+    break;
+  }
+  }
+}
+
 void updateEncoders(){
   static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
   int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
@@ -89,20 +160,6 @@ void updateEncoders(){
     graphics.params.encoderChanged(1, delta);
   encoder_values[1] = value;
 }
-
-  // case ENC1_SW_Pin: // GPIO_PIN_14:
-  //   setButtonValue(BUTTON_A, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
-  //   setButtonValue(PUSHBUTTON, !(ENC1_SW_GPIO_Port->IDR & ENC1_SW_Pin));
-  //   break;
-  // case ENC2_SW_Pin: // GPIO_PIN_4:
-  //   setButtonValue(BUTTON_B, !(ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
-  //   break;
-  // case TR_IN_A_Pin: // GPIO_PIN_11:
-  //   setButtonValue(BUTTON_C, !(TR_IN_A_GPIO_Port->IDR & TR_IN_A_Pin));
-  //   break;
-  // case TR_IN_B_Pin: // GPIO_PIN_10:
-  //   setButtonValue(BUTTON_D, !(TR_IN_B_GPIO_Port->IDR & TR_IN_B_Pin));
-  //   break;
 
 void loop(void){
 
