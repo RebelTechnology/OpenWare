@@ -24,28 +24,23 @@ void setLed(uint8_t led, uint32_t rgb){
   case RED_COLOUR:
     led_green_pin.low();
     led_red_pin.high();
-    // HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
-    // HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
     break;
   case GREEN_COLOUR:
     led_green_pin.high();
     led_red_pin.low();
-    // HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
-    // HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
     break;
   case NO_COLOUR:
     led_green_pin.low();
     led_red_pin.low();
-    // HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
-    // HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
     break;
   }
 }
 
 void onChangePin(uint16_t pin){
   switch(pin){
-  case FOOTSWITCH_Pin: {
+  case FOOTSWITCH_Pin: { // stomp switch
     bool state = HAL_GPIO_ReadPin(FOOTSWITCH_GPIO_Port, FOOTSWITCH_Pin) == GPIO_PIN_RESET;
+    setButtonValue(0, state);
     setLed(0, state ? NO_COLOUR : GREEN_COLOUR);
     break;
   }
@@ -53,7 +48,7 @@ void onChangePin(uint16_t pin){
     bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
     setButtonValue(PUSHBUTTON, state);
     setButtonValue(BUTTON_A, state);
-    midi_tx.sendCc(PUSHBUTTON, state ? 127 : 0);
+    midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
     setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
     break;
   }
@@ -62,12 +57,12 @@ void onChangePin(uint16_t pin){
     setButtonValue(BUTTON_B, state);
     break;
   }
-  case SW3_Pin: {
+  case SW3_Pin: { // EXP2 Tip
     bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
     setButtonValue(BUTTON_C, state);
     break;
   }
-  case SW4_Pin: {
+  case SW4_Pin: { // EXP2 Ring
     bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
     setButtonValue(BUTTON_D, state);
     break;
@@ -89,28 +84,22 @@ void setGateValue(uint8_t ch, int16_t value){
   case RED_BUTTON:
     setLed(0, value ? RED_COLOUR : NO_COLOUR);
     break;
+  case BUTTON_1:
+    bufpass_pin.set(value);
+    break;
   }
 }
 
 void setup(){
-  
- bypass_pin.outputMode();
- bypass_pin.low();
- bufpass_pin.outputMode();
- bufpass_pin.low();
- exp1_ring_pin.outputMode();
- exp1_ring_pin.high();
+  bypass_pin.outputMode();
+  bypass_pin.low();
+  bufpass_pin.outputMode();
+  bufpass_pin.low();
+  exp1_ring_pin.outputMode();
+  exp1_ring_pin.high();
 
-  // bypass_pin.outputMode();
-  // bypass_pin.inputMode();
-  // bypass_pin.setPull(PIN_PULL_NONE);
-  // bypass_pin.set(false);
-  // bypass_pin.setPull(PIN_PULL_DOWN);
-  // bypass_pin.setPull(PIN_PULL_UP);
-  // bypass_pin.get();
-
- led_green_pin.outputMode();
- led_red_pin.outputMode();
+  led_green_pin.outputMode();
+  led_red_pin.outputMode();
 
   setLed(0, RED_COLOUR);
   owl.setup();
