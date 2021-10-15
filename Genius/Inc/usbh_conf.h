@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -36,7 +36,11 @@
 #include "stm32h7xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#ifdef DEBUG
+#define DEBUG_LEVEL     3
+#else
+#define DEBUG_LEVEL     0
+#endif
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_HOST_LIBRARY
@@ -69,13 +73,13 @@
 #define USBH_MAX_NUM_INTERFACES      10U
 
 /*----------   -----------*/
-#define USBH_MAX_NUM_CONFIGURATION      1U
+#define USBH_MAX_NUM_CONFIGURATION      5U
 
 /*----------   -----------*/
 #define USBH_KEEP_CFG_DESCRIPTOR      1U
 
 /*----------   -----------*/
-#define USBH_MAX_NUM_SUPPORTED_CLASS      1U
+#define USBH_MAX_NUM_SUPPORTED_CLASS      5U
 
 /*----------   -----------*/
 #define USBH_MAX_SIZE_CONFIGURATION      256U
@@ -84,7 +88,7 @@
 #define USBH_MAX_DATA_BUFFER      512U
 
 /*----------   -----------*/
-#define USBH_DEBUG_LEVEL      0U
+#define USBH_DEBUG_LEVEL      DEBUG_LEVEL
 
 /*----------   -----------*/
 #define USBH_USE_OS      0U
