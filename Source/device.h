@@ -8,7 +8,9 @@
 #ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
 #define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
+#ifndef SPI_FLASH_HSPI
 #define SPI_FLASH_HSPI               hspi1
+#endif
 #define EXTERNAL_STORAGE_SIZE        (8*1024*1024)
 #else
 #define MAX_SPI_FLASH_HEADERS        0
