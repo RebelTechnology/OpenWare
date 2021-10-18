@@ -153,10 +153,16 @@ extern "C"{
   void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc){
     error(CONFIG_ERROR, "ADC error");
   }
-}
 
-// void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-// }
+  void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
+    // graphics.params.parameters
+    graphics.params.setValue(0, adc_values[0]);
+    graphics.params.setValue(1, adc_values[1]);
+    // parameter_values[0] = adc_values[0]; // todo: sum with user / encoder setting
+    // parameter_values[1] = adc_values[1];
+  }
+
+}
 
 void updateEncoders(){
   static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
