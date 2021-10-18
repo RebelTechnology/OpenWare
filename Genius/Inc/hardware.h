@@ -5,7 +5,8 @@
 #define HARDWARE_ID                  GENIUS_HARDWARE
 #define HARDWARE_VERSION             "Genius"
 
-/* #define USE_SPI_FLASH */
+#define USE_SPI_FLASH
+#define SPI_FLASH_HSPI               hspi5
 
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
