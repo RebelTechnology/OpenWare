@@ -74,6 +74,7 @@ class Owl {
  private:
   volatile OperationMode operationMode = STARTUP_MODE;
   BackgroundTask* backgroundTask = NULL;
+  void (*messageCallback)(const char* msg, size_t len) = NULL;
   
  public:
   void setup();
@@ -81,6 +82,8 @@ class Owl {
   OperationMode getOperationMode();
   void setOperationMode(OperationMode mode);
   void setBackgroundTask(BackgroundTask* bt);
+  void setMessageCallback(void* callback);
+  void handleMessage(const char* msg, size_t len);
 };
 extern Owl owl;
 

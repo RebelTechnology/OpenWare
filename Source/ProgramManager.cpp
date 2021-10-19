@@ -588,6 +588,7 @@ void runManagerTask(void* p){
 	graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
 	midi_rx.setCallback(NULL);
+	owl.setMessageCallback(NULL);
 	vTaskDelete(audioTask);
 	audioTask = NULL;
 #ifdef USE_CODEC
@@ -759,8 +760,8 @@ uint8_t ProgramManager::getProgramIndex(){
 
 extern "C" {
   void vApplicationMallocFailedHook(void) {
-    program.exitProgram(false);
     error(PROGRAM_ERROR, "malloc failed");
+    program.exitProgram(false);
   }
   void vApplicationIdleHook(void) {
   }

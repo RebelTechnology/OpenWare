@@ -323,3 +323,12 @@ const char* getDeviceName(){
   }
   return ptr;
 }
+
+void Owl::setMessageCallback(void* callback){
+  messageCallback = (void (*)(const char* msg, size_t len))callback;
+}
+
+void Owl::handleMessage(const char* msg, size_t len){
+  if(messageCallback != NULL)
+    messageCallback(msg, len);
+}
