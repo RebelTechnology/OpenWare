@@ -68,9 +68,11 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
  */
 /* USER CODE BEGIN 1 */
 
+#ifdef USE_USBH_HID
 void USBH_HID_EventCallback(USBH_HandleTypeDef *phost){
   debugMessage("HID");
 }
+#endif
 
 /*
  * Background task
@@ -88,18 +90,20 @@ void MX_USB_HOST_Process()
   /*   Appli_state = APPLICATION_IDLE; */
   /* }   */
   USBH_HandleTypeDef *phost = &HUSB_HOST;
-    /* if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD){ */
-    /*   HID_KEYBD_Info_TypeDef* pinfo = USBH_HID_GetKeybdInfo(phost); */
-    /*   if(pinfo != NULL){ */
-    /* 	uint8_t c = USBH_HID_GetASCIICode(pinfo); */
-    /* 	// or c = pinfo->keys[0]; */
-    /* 	if(c >= 32 && c <= 126) { // readable ascii */
-    /* 	  char* msg = "char[ ]"; */
-    /* 	  msg[5] = c; */
-    /* 	  debugMessage(msg); */
-    /* 	} */
-    /*   } */
-    /* } */
+#ifdef USE_USBH_HID
+    if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD){
+      HID_KEYBD_Info_TypeDef* pinfo = USBH_HID_GetKeybdInfo(phost);
+      if(pinfo != NULL){
+	uint8_t c = USBH_HID_GetASCIICode(pinfo);
+	// or c = pinfo->keys[0];
+	if(c >= 32 && c <= 126) { // readable ascii
+	  char* msg = "char[ ]";
+	  msg[5] = c;
+	  debugMessage(msg);
+	}
+      }
+    }
+#endif
 }
 
 /* USER CODE END 1 */

@@ -8,13 +8,18 @@
 #define USE_SPI_FLASH
 #define SPI_FLASH_HSPI               hspi5
 
+#define USE_USBH_HID
+
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 
 #define USE_PLUS_RAM
-/* #define USE_ICACHE */
-/* #define USE_DCACHE */
+
+#ifndef DEBUG
+#define USE_ICACHE
+#define USE_DCACHE
+#endif
 
 #define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
 
