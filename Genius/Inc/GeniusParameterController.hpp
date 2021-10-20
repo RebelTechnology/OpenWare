@@ -9,6 +9,7 @@
 #include "VersionToken.h"
 #include "ScreenBuffer.h"
 #include "Owl.h"
+#include "OpenWareMidiControl.h"
 #ifdef USE_DIGITALBUS
 #include "DigitalBusReader.h"
 extern DigitalBusReader bus;
@@ -74,6 +75,26 @@ public:
       screen.print(2, 56, names[selected]);
       screen.print(": ");
       screen.print((int)parameters[selected]/41);
+      if (getButtonValue(BUTTON_A))
+        screen.fillRectangle(96, 50, 6, 6, WHITE);
+      else
+        screen.drawRectangle(96, 50, 6, 6, WHITE);
+      if (getButtonValue(BUTTON_B))
+        screen.fillRectangle(104, 50, 6, 6, WHITE);
+      else
+        screen.drawRectangle(104, 50, 6, 6, WHITE);
+      extern bool last_buttons[2];
+      // getButtonValue won't read output values, we must store them from callback
+      if (last_buttons[0])
+      //if (getButtonValue(BUTTON_C))
+        screen.fillRectangle(112, 50, 6, 6, WHITE);
+      else
+        screen.drawRectangle(112, 50, 6, 6, WHITE);
+      if (last_buttons[1])
+      //if (getButtonValue(BUTTON_D))
+        screen.fillRectangle(120, 50, 6, 6, WHITE);
+      else
+        screen.drawRectangle(120, 50, 6, 6, WHITE);
     }
   }
 

@@ -184,8 +184,8 @@ int main(void)
   MX_ADC1_Init();
   MX_DAC1_Init();
   MX_UART5_Init();
-  MX_USB_OTG_FS_PCD_Init();
-  MX_USB_OTG_HS_HCD_Init();
+//  MX_USB_OTG_FS_PCD_Init();
+//  MX_USB_OTG_HS_HCD_Init();
   /* USER CODE BEGIN 2 */
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);
@@ -1151,6 +1151,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(ENC2_SW_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 10, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
   HAL_NVIC_SetPriority(EXTI4_IRQn, 10, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 

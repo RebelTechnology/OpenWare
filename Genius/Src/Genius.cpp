@@ -1,6 +1,7 @@
 #include "Owl.h"
 
 #include "Graphics.h"
+#include "OpenWareMidiControl.h"
 
 #ifdef DEBUG_USBD_AUDIO
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
@@ -51,6 +52,52 @@ extern "C"{
     return 0;
   }
 }  
+void onChangePin(uint16_t pin){
+  switch(pin){
+  case SW_A_Pin:
+  case TR_IN_A_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW_A_GPIO_Port, SW_A_Pin) == GPIO_PIN_RESET ||
+      HAL_GPIO_ReadPin(TR_IN_A_GPIO_Port, TR_IN_A_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_A, state);
+    setButtonValue(PUSHBUTTON, state);
+    setLed(1, state ? RED_COLOUR : NO_COLOUR);
+    break;
+  }
+  case SW_B_Pin:
+  case TR_IN_B_Pin: {
+    bool state = HAL_GPIO_ReadPin(SW_B_GPIO_Port, SW_B_Pin) == GPIO_PIN_RESET ||
+      HAL_GPIO_ReadPin(TR_IN_B_GPIO_Port, TR_IN_B_Pin) == GPIO_PIN_RESET;
+    setButtonValue(BUTTON_B, state);
+    setLed(2, state ? RED_COLOUR : NO_COLOUR);
+    break;
+  }
+  }
+}
+
+bool last_buttons[2] = {false, false};
+
+void setGateValue(uint8_t ch, int16_t value){
+  switch(ch){
+#if 0
+  case BUTTON_A:
+    setLed(1, value);
+    break;
+  case BUTTON_B:
+    setLed(2, value);
+    break;
+#endif
+  case PUSHBUTTON:
+  case BUTTON_C:
+    last_buttons[0] = value;
+    HAL_GPIO_WritePin(TR_OUT_A_GPIO_Port, TR_OUT_A_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
+    break;
+  case BUTTON_D:
+    last_buttons[1] = value;
+    HAL_GPIO_WritePin(TR_OUT_B_GPIO_Port, TR_OUT_B_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
+    break;
+  }
+}
+
 
 extern TIM_HandleTypeDef ENCODER_TIM1;
 extern TIM_HandleTypeDef ENCODER_TIM2;
