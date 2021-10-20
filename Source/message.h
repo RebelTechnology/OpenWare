@@ -62,4 +62,4 @@ void assert_failed(const char* msg, const char* location, int line);
 
 #endif
 
-#endif /* __MESSAG£_H */
+#endif /* __MESSAGE_H */
