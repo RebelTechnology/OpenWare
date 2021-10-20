@@ -511,6 +511,8 @@ void runAudioTask(void* p){
     for(size_t i=0; i<5 && pv->heapSegments[i].location != NULL; ++i)
       memset(pv->heapSegments[i].location, 0, pv->heapSegments[i].size);
     // run program
+    __DSB();
+    __ISB();
     def->run();
   }
   error(PROGRAM_ERROR, "Program error");
