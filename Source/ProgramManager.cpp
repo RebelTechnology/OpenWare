@@ -510,9 +510,13 @@ void runAudioTask(void* p){
     // zero-fill heap memory
     for(size_t i=0; i<5 && pv->heapSegments[i].location != NULL; ++i)
       memset(pv->heapSegments[i].location, 0, pv->heapSegments[i].size);
-    // run program
+#ifdef STM32H7xx
+    // Memory barriers must be used to flush pipelines on H7, not doing it leads to a bus fault.
+    // It may be a good idea to use it on other achitectures too.
     __DSB();
     __ISB();
+#endif
+    // run program
     def->run();
   }
   error(PROGRAM_ERROR, "Program error");
