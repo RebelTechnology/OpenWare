@@ -3,6 +3,9 @@
 #include "Graphics.h"
 #include "OpenWareMidiControl.h"
 
+// 12x12 bit multiplication with unsigned operands and result
+#define U12_MUL_U12(a,b) (__USAT(((uint32_t)(a)*(b))>>12, 12))
+
 #ifdef DEBUG_USBD_AUDIO
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
   extern int usbd_tx_flow;
@@ -75,17 +78,10 @@ void onChangePin(uint16_t pin){
 }
 
 bool last_buttons[2] = {false, false};
+int16_t dac_values[2] = {0, 0};
 
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
-#if 0
-  case BUTTON_A:
-    setLed(1, value);
-    break;
-  case BUTTON_B:
-    setLed(2, value);
-    break;
-#endif
   case PUSHBUTTON:
   case BUTTON_C:
     last_buttons[0] = value;
@@ -98,6 +94,27 @@ void setGateValue(uint8_t ch, int16_t value){
   }
 }
 
+
+static uint16_t scaleForDac(int16_t value){
+  // Copied from Witch and probably needs some adjustments
+  return U12_MUL_U12(value + 70, 3521);
+}
+
+void setAnalogValue(uint8_t ch, int16_t value){
+  if(owl.getOperationMode() == RUN_MODE){
+    extern DAC_HandleTypeDef hdac;
+    switch(ch){
+    case PARAMETER_F:
+      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, scaleForDac(value));
+      dac_values[0] = value;
+      break;
+    case PARAMETER_G:
+      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, scaleForDac(value));
+      dac_values[1] = value;
+      break;
+    }
+  }
+}
 
 extern TIM_HandleTypeDef ENCODER_TIM1;
 extern TIM_HandleTypeDef ENCODER_TIM2;

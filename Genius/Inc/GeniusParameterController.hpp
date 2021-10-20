@@ -84,14 +84,11 @@ public:
       else
         screen.drawRectangle(104, 50, 6, 6, WHITE);
       extern bool last_buttons[2];
-      // getButtonValue won't read output values, we must store them from callback
       if (last_buttons[0])
-      //if (getButtonValue(BUTTON_C))
         screen.fillRectangle(112, 50, 6, 6, WHITE);
       else
         screen.drawRectangle(112, 50, 6, 6, WHITE);
       if (last_buttons[1])
-      //if (getButtonValue(BUTTON_D))
         screen.fillRectangle(120, 50, 6, 6, WHITE);
       else
         screen.drawRectangle(120, 50, 6, 6, WHITE);
@@ -158,13 +155,14 @@ public:
   void encoderChanged(uint8_t encoder, int32_t delta){
     if(encoder == 0){
       if(sw2()){
-	if(delta > 1)
-	  selected = min(SIZE-1, selected+1);
-	else if(delta < 1)
-	  selected = max(0, selected-1);
-      }else{
-	parameters[selected] += delta*10;
-	parameters[selected] = min(4095, max(0, parameters[selected]));
+        if(delta > 1)
+          selected = min(SIZE-1, selected+1);
+        else if(delta < 1)
+          selected = max(0, selected-1);
+      }
+      else{
+        parameters[selected] += delta*10;
+        parameters[selected] = min(4095, max(0, parameters[selected]));
       }
     } // todo: change patch with enc1/sw1
   }
