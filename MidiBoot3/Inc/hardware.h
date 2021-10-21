@@ -14,6 +14,10 @@
   #define HARDWARE_VERSION    "OWL Genius Boot"
   #define HARDWARE_ID         GENIUS_HARDWARE
   #define APPLICATION_ADDRESS 0x08020000
+#elif defined OWL_MAGUS
+  #define HARDWARE_VERSION    "OWL Magus Boot"
+  #define HARDWARE_ID         MAGUS_HARDWARE
+  #define APPLICATION_ADDRESS 0x08020000
 #else
   #error Invalid configuration
 #endif
