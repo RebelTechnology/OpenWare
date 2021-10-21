@@ -41,6 +41,9 @@
 #else
 #define DEBUG_LEVEL     0
 #endif
+   void *pvPortMalloc( size_t xSize );
+   void vPortFree( void *pv );
+
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_HOST_LIBRARY

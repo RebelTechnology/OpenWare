@@ -328,6 +328,9 @@ void Owl::setMessageCallback(void* callback){
   messageCallback = (void (*)(const char* msg, size_t len))callback;
 }
 
+/**
+ * This method should not be called from an irq handler
+ */
 void Owl::handleMessage(const char* msg, size_t len){
   if(messageCallback != NULL)
     messageCallback(msg, len);

@@ -3,6 +3,7 @@
 #include "OpenWareMidiControl.h"
 #include "Graphics.h"
 #include "Pin.h"
+#include "GeniusParameterController.hpp"
 
 #ifdef DEBUG_USBD_AUDIO
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
@@ -66,10 +67,11 @@ extern "C"{
 extern TIM_HandleTypeDef ENCODER_TIM1;
 extern TIM_HandleTypeDef ENCODER_TIM2;
 
-Graphics graphics;
-
 Pin tr_out_a_pin(GPIOD, GPIO_PIN_3);
 Pin tr_out_b_pin(GPIOD, GPIO_PIN_4);
+
+static GeniusParameterController params;
+Graphics graphics(params);
 
 void setup(){
   tr_out_a_pin.outputMode();
@@ -156,26 +158,28 @@ extern "C"{
 
   void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
     // graphics.params.parameters
-    graphics.params.setValue(0, adc_values[0]);
-    graphics.params.setValue(1, adc_values[1]);
+    graphics.params.updateValue(0, adc_values[0]);
+    graphics.params.updateValue(1, adc_values[1]);
     // parameter_values[0] = adc_values[0]; // todo: sum with user / encoder setting
     // parameter_values[1] = adc_values[1];
   }
-
 }
 
 void updateEncoders(){
-  static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
-  int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
-  int16_t delta = value - encoder_values[0];
-  if(delta)
-    graphics.params.encoderChanged(0, delta);
-  encoder_values[0] = value;
-  value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
-  delta = value - encoder_values[1];
-  if(delta)
-    graphics.params.encoderChanged(1, delta);
-  encoder_values[1] = value;
+  int16_t encoder_values[2] = {(int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1),
+                               (int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2)};
+  params.updateEncoders(encoder_values, 2);
+  // static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
+  // int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
+  // int16_t delta = value - encoder_values[0];
+  // if(delta)
+  //   graphics.params.encoderChanged(0, delta);
+  // encoder_values[0] = value;
+  // value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
+  // delta = value - encoder_values[1];
+  // if(delta)
+  //   graphics.params.encoderChanged(1, delta);
+  // encoder_values[1] = value;
 }
 
 void loop(void){

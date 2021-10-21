@@ -5,14 +5,14 @@
 #define HARDWARE_ID                  MAGUS_HARDWARE
 #define HARDWARE_VERSION             "Magus3"
 
-#define USE_SPI_FLASH
+/* #define USE_SPI_FLASH */
 
-/* #define NO_EXTERNAL_RAM */
-/* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 #define USE_PLUS_RAM
-/* #define USE_ICACHE */
-/* #define USE_DCACHE */
+#define USE_ICACHE
+#define USE_DCACHE
+
+/* #define USE_BKPSRAM */
 
 #define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
 

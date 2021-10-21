@@ -21,6 +21,8 @@
 #define USE_DCACHE
 #endif
 
+/* #define USE_BKPSRAM */
+
 #define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
 
 #define hdac hdac1
@@ -28,8 +30,8 @@
 #define USE_SCREEN
 #define SSD1309
 
-#define ENCODER_TIM1 htim2
-#define ENCODER_TIM2 htim3
+#define ENCODER_TIM1 htim3
+#define ENCODER_TIM2 htim2
 
 /* #define OLED_DMA */
 #define OLED_SOFT_CS

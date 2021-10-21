@@ -1,5 +1,5 @@
-#ifndef __ParameterController_hpp__
-#define __ParameterController_hpp__
+#ifndef __GeniusParameterController_hpp__
+#define __GeniusParameterController_hpp__
 
 #include <stdint.h>
 #include <string.h>
@@ -26,35 +26,30 @@ extern DigitalBusReader bus;
 
 extern VersionToken* bootloader_token;
 
-void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
+#define NOF_ENCODERS 2
 
-/* shows a single parameter selected and controlled with a single encoder
+/** 
+ *shows a single parameter selected and controlled with a single encoder
  */
-template<uint8_t SIZE>
-class ParameterController {
+class GeniusParameterController : public ParameterController {
 public:
-  char title[11] = "Genius";
-  int16_t parameters[SIZE];
-  char names[SIZE][12];
+  char names[NOF_PARAMETERS][12];
   int8_t selected = 0;
-  ParameterController(){
+  int16_t encoders[NOF_ENCODERS]; // last seen encoder values
+  int16_t user[NOF_PARAMETERS]; // user set values (ie by encoder or MIDI)
+  GeniusParameterController(){
+    encoders[0] = INT16_MAX/2;
+    encoders[1] = INT16_MAX/2;
     reset();
   }
-  void setTitle(const char* str){
-    strncpy(title, str, 10);    
-  }
   void reset(){
-    drawCallback = defaultDrawCallback;
-    for(int i=0; i<SIZE; ++i){
+    setTitle("Genius");
+    for(int i=0; i<NOF_PARAMETERS; ++i){
       strcpy(names[i], "Parameter  ");
       names[i][10] = 'A'+i;
       parameters[i] = 0;
+      user[i] = 0;
     }
-  }
-  void draw(uint8_t* pixels, uint16_t width, uint16_t height){
-    ScreenBuffer screen(width, height);
-    screen.setBuffer(pixels);
-    draw(screen);
   }
 
   void draw(ScreenBuffer& screen){
@@ -69,7 +64,7 @@ public:
       screen.setTextSize(1);
       screen.print(2, 20, getErrorMessage());
     }else{
-      drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
+      graphics.drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       screen.setTextSize(1);
       screen.print(2, 56, names[selected]);
       screen.print(": ");
@@ -97,7 +92,7 @@ public:
   }
 
   void drawGlobalParameterNames(int y, ScreenBuffer& screen){    
-    drawParameterNames(y, 0, names, SIZE, screen);
+    drawParameterNames(y, 0, names, NOF_PARAMETERS, screen);
   }
 
   void drawStats(ScreenBuffer& screen){
@@ -134,25 +129,38 @@ public:
 #endif
   }
 
+  void updateEncoders(int16_t* data, uint8_t size){
+    if(data[0] != encoders[0]){
+      encoderChanged(0, data[0] - encoders[0]);
+      encoders[0] = data[0];
+    }
+    if(data[1] != encoders[1]){
+      encoderChanged(1, data[1] - encoders[1]);
+      encoders[1] = data[1];
+    }
+  }
+
   void encoderChanged(uint8_t encoder, int32_t delta){
-    if(encoder == 0){
+    if(encoder == 1){
       if(sw2()){
 	if(delta > 1)
-	  selected = min(SIZE-1, selected+1);
+	  selected = min(NOF_PARAMETERS-1, selected+1);
 	else if(delta < 1)
 	  selected = max(0, selected-1);
       }else{
-	parameters[selected] += delta*10;
+	// single clicks have delta +/- 2
+	// parameters[selected] += delta*4095/200;	
+	if(delta > 0)
+	  parameters[selected] += 20 << (delta/2);
+	else
+	  parameters[selected] -= 20 << (-delta/2);
 	parameters[selected] = min(4095, max(0, parameters[selected]));
       }
     } // todo: change patch with enc1/sw1
   }
   void setName(uint8_t pid, const char* name){
-    if(pid < SIZE)
+    if(pid < NOF_PARAMETERS)
       strncpy(names[pid], name, 11);
-  }
-  uint8_t getSize(){
-    return SIZE;
   }
   void setValue(uint8_t ch, int16_t value){
     parameters[ch] = value;
@@ -178,15 +186,17 @@ public:
     screen.print(1, 17, title);
   }
 
-  void setCallback(void *callback){
-    if(callback == NULL)
-      drawCallback = defaultDrawCallback;
-    else
-      drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
+  // @param value is the modulation ADC value
+  void updateValue(uint8_t pid, int16_t value){
+    // smoothing at apprx 50Hz
+    parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
   }
-  
+
+  int16_t getValue(uint8_t pid){
+    return parameters[pid];
+  }
+
 private:
-  void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
   bool sw1(){
     return HAL_GPIO_ReadPin(ENC1_SW_GPIO_Port, ENC1_SW_Pin) != GPIO_PIN_SET;
   }
@@ -195,4 +205,4 @@ private:
   }
 };
 
-#endif // __ParameterController_hpp__
+#endif // __GeniusParameterController_hpp__

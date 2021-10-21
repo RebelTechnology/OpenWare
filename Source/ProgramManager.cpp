@@ -223,7 +223,7 @@ void onProgramStatus(ProgramVectorAudioStatus status){
 __weak int16_t getParameterValue(uint8_t pid){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    return graphics.params.parameters[pid];
+    return graphics.params.getValue(pid);
 #else
     return parameter_values[pid];
 #endif
@@ -235,7 +235,6 @@ __weak void setParameterValue(uint8_t pid, int16_t value){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
     graphics.params.setValue(pid, value);
-  // graphics.params.parameters[pid] = value;
 #else
     parameter_values[pid] = value;
 #endif
@@ -283,7 +282,7 @@ void onProgramReady(){
 #endif
 #ifdef USE_ADC
 #ifdef USE_SCREEN
-  updateParameters(graphics.params.parameters, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
+  updateParameters(graphics.params.getParameters(), graphics.params.getSize(), adc_values, NOF_ADC_VALUES);
 #else
   updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
 #endif
@@ -342,7 +341,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
 #ifdef USE_SCREEN
   pv->parameters_size = graphics.params.getSize();
-  pv->parameters = graphics.params.parameters;
+  pv->parameters = graphics.params.getParameters();
 #else
   pv->parameters_size = NOF_PARAMETERS;
   pv->parameters = parameter_values;
@@ -502,7 +501,7 @@ void sendResourceTask(void* p){
 
 __weak void onStartProgram(){
 #ifdef USE_SCREEN
-  graphics.params.reset();
+  graphics.reset();
 #endif
 #ifndef USE_SCREEN
   memset(parameter_values, 0, sizeof(parameter_values));

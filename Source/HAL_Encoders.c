@@ -52,3 +52,10 @@ void Encoders_init (SPI_HandleTypeDef *spiconfig)
 	pbarRST(1);
 }
 
+void Encoders_reset(void){
+	pbarRST(0);
+	volatile uint16_t x  = NOP_CNT;
+	while(--x){__NOP();}
+	pbarRST(1);	
+}
+

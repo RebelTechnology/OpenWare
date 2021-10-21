@@ -9,14 +9,26 @@
 #include "HAL_Encoders.h"
 #include "Pin.h"
 #include "ApplicationSettings.h"
+#include "Storage.h"
+#include "MagusParameterController.hpp"
 
 // 63, 19, 60 // TODO: balance levels
 
 const uint32_t* dyn_rainbowinputs = rainbowinputs;
 const uint32_t* dyn_rainbowoutputs = rainbowoutputs;
-Graphics graphics;
+
+static MagusParameterController params;
+Graphics graphics(params);
 
 extern "C" void onResourceUpdate(void);
+
+char* progress_message = NULL;
+uint16_t progress_counter = 0;
+
+void setProgress(uint16_t value, const char* reason){
+  progress_message = (char*)reason;
+  progress_counter = value;
+}
 
 static bool updateMAX11300 = false;
 static uint8_t portMode[20];
@@ -174,7 +186,7 @@ void loop(void){
   for(int i=0; i<16; ++i){
     if(getPortMode(i) == PORT_UNI_INPUT){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
-      uint16_t val = graphics.params.parameters[i]>>2;
+      uint16_t val = graphics.params.getValue(i)>>2;
       setLed(i, dyn_rainbowinputs[val&0x3ff]);
     }else{
       // DACs
@@ -182,9 +194,9 @@ void loop(void){
     // graphics.params.updateOutput(i, getOutputValue(i));
       // MAX11300_setDACValue(i+1, graphics.params.parameters[i]);
       graphics.params.updateValue(i, 0);
-      uint16_t val = graphics.params.parameters[i]>>2;
+      uint16_t val = graphics.params.getValue(i)>>2;
       setLed(i, dyn_rainbowoutputs[val&0x3ff]);
-      MAX11300_setDAC(i+1, graphics.params.parameters[i]);
+      MAX11300_setDAC(i+1, graphics.params.getValue(i));
     }
   }
   for(int i=16; i<20; ++i){
@@ -192,7 +204,7 @@ void loop(void){
       graphics.params.updateValue(i, MAX11300_getADCValue(i+1));
     }else{
       graphics.params.updateValue(i, 0);
-      MAX11300_setDAC(i+1, graphics.params.parameters[i]);
+      MAX11300_setDAC(i+1, graphics.params.getValue(i));
     }
   }
   // MAX11300_bulkwriteDAC();
