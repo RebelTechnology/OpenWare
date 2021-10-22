@@ -5,37 +5,6 @@
 #include "Pin.h"
 #include "GeniusParameterController.hpp"
 
-#ifdef DEBUG_USBD_AUDIO
-void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
-  extern int usbd_tx_flow;
-  extern int usbd_rx_flow;
-  extern int usbd_tx_capacity;
-  extern int usbd_rx_capacity;
-  ScreenBuffer& screen = graphics.screen;
-  graphics.params.drawTitle(screen);
-  graphics.params.drawMessage(26, screen);
-
-  screen.setTextSize(1);
-  screen.print(2, 36, "rx ");
-  screen.print(usbd_rx_flow);
-  screen.print(" / ");
-  screen.print(usbd_rx_capacity);
-  screen.print(2, 46, "tx ");
-  screen.print(usbd_tx_flow);
-  screen.print(" / ");
-  screen.print(usbd_tx_capacity);
-}
-// #else
-// void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
-//   ScreenBuffer& screen = graphics.screen;
-//   graphics.params.drawTitle(screen);
-//   graphics.params.drawMessage(26, screen);
-
-//   screen.setTextSize(1);
-//   encoder_values
-// }
-#endif
-
 extern "C"{
 #if 0
   void eeprom_unlock(){}
@@ -70,10 +39,36 @@ extern TIM_HandleTypeDef ENCODER_TIM2;
 Pin tr_out_a_pin(GPIOD, GPIO_PIN_3);
 Pin tr_out_b_pin(GPIOD, GPIO_PIN_4);
 
-static GeniusParameterController params;
-Graphics graphics(params);
+GeniusParameterController params;
+Graphics graphics;
+
+char* progress_message = NULL;
+uint16_t progress_counter = 0;
+
+void setProgress(uint16_t value, const char* reason){
+  progress_message = (char*)reason;
+  progress_counter = value;
+}
+
+void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+  switch(new_mode){
+  case STARTUP_MODE:
+  case STREAM_MODE:
+  case LOAD_MODE:
+  case CONFIGURE_MODE:
+    setDisplayMode(PROGRESS_DISPLAY_MODE);
+    break;
+  case RUN_MODE:
+    setDisplayMode(STANDARD_DISPLAY_MODE);
+    break;
+  case ERROR_MODE:
+    setDisplayMode(ERROR_DISPLAY_MODE);
+    break;
+  }
+}
 
 void setup(){
+  progress_counter = 100;
   tr_out_a_pin.outputMode();
   tr_out_b_pin.outputMode();
   tr_out_a_pin.high();
@@ -81,7 +76,9 @@ void setup(){
   
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
-  graphics.begin(&OLED_SPI);
+  graphics.begin(&params, &OLED_SPI);
+
+  progress_counter = 1000;
 
 #ifdef USE_USB_HOST
   // enable USB Host power
@@ -93,7 +90,9 @@ void setup(){
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
 
+  progress_counter = 2000;
   owl.setup();
+  progress_counter = 4000;
 }
 
 void setGateValue(uint8_t ch, int16_t value){
@@ -158,8 +157,9 @@ extern "C"{
 
   void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
     // graphics.params.parameters
-    graphics.params.updateValue(0, adc_values[0]);
-    graphics.params.updateValue(1, adc_values[1]);
+    params.updateValues((int16_t*)adc_values, adc_len);
+    // graphics.params.updateValue(0, adc_values[0]);
+    // graphics.params.updateValue(1, adc_values[1]);
     // parameter_values[0] = adc_values[0]; // todo: sum with user / encoder setting
     // parameter_values[1] = adc_values[1];
   }
@@ -206,3 +206,34 @@ void loop(void){
 
   owl.loop();
 }
+
+#ifdef DEBUG_USBD_AUDIO
+void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
+  extern int usbd_tx_flow;
+  extern int usbd_rx_flow;
+  extern int usbd_tx_capacity;
+  extern int usbd_rx_capacity;
+  ScreenBuffer& screen = graphics.screen;
+  params.drawTitle(screen);
+  params.drawMessage(26, screen);
+
+  screen.setTextSize(1);
+  screen.print(2, 36, "rx ");
+  screen.print(usbd_rx_flow);
+  screen.print(" / ");
+  screen.print(usbd_rx_capacity);
+  screen.print(2, 46, "tx ");
+  screen.print(usbd_tx_flow);
+  screen.print(" / ");
+  screen.print(usbd_tx_capacity);
+}
+// #else
+// void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
+//   ScreenBuffer& screen = graphics.screen;
+//   params.drawTitle(screen);
+//   params.drawMessage(26, screen);
+
+//   screen.setTextSize(1);
+//   encoder_values
+// }
+#endif

@@ -7,6 +7,8 @@
 #include "Storage.h"
 #include "Owl.h"
 
+#include "cmsis_os.h"
+
 #ifdef USE_FFT_TABLES
 #include "arm_const_structs.h"
 #endif /* USE_FFT_TABLES */

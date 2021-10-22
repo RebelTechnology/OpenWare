@@ -9,14 +9,33 @@ class ParameterController {
 protected:
   char title[11];
   int16_t parameters[NOF_PARAMETERS];
+  char names[NOF_PARAMETERS][12];
 public:
   // ParameterController();
-  virtual void reset(){}
+  virtual void reset(){
+    for(int i=0; i<NOF_PARAMETERS; ++i){
+      strcpy(names[i], "Parameter  ");
+      names[i][10] = 'A'+i;
+      parameters[i] = 0;
+    }
+  }
   virtual void draw(ScreenBuffer& screen) = 0;
+  /* Update parameters with encoders */
   virtual void updateEncoders(int16_t* data, uint8_t size) = 0;
-  virtual void updateValue(uint8_t pid, int16_t value) = 0;
-  virtual void setValue(uint8_t pid, int16_t value) = 0;
-  virtual void setName(uint8_t pid, const char* name) = 0;
+  /* Update parameters with ADC values */
+  virtual void updateValues(int16_t* values, size_t len){};
+  const char* getName(uint8_t pid){
+    if(pid < NOF_PARAMETERS)
+      return names[pid];
+    return "";
+  }
+  void setName(uint8_t pid, const char* name){
+    if(pid < NOF_PARAMETERS)
+      strncpy(names[pid], name, 11);
+  }
+  void setValue(uint8_t pid, int16_t value){    
+    parameters[pid] = value;
+  }
   int16_t getValue(uint8_t pid){
     return parameters[pid];
   }
@@ -57,9 +76,7 @@ public:
   virtual void draw(ScreenBuffer& screen){}  
   void updateEncoders(int16_t* data, uint8_t size);  
 };
-#endif
 
-#if 0
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 /* shows a single parameter selected and controlled with a single encoder

@@ -223,7 +223,7 @@ void onProgramStatus(ProgramVectorAudioStatus status){
 __weak int16_t getParameterValue(uint8_t pid){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    return graphics.params.getValue(pid);
+    return graphics.params->getValue(pid);
 #else
     return parameter_values[pid];
 #endif
@@ -234,7 +234,7 @@ __weak int16_t getParameterValue(uint8_t pid){
 __weak void setParameterValue(uint8_t pid, int16_t value){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    graphics.params.setValue(pid, value);
+    graphics.params->setValue(pid, value);
 #else
     parameter_values[pid] = value;
 #endif
@@ -282,7 +282,7 @@ void onProgramReady(){
 #endif
 #ifdef USE_ADC
 #ifdef USE_SCREEN
-  updateParameters(graphics.params.getParameters(), graphics.params.getSize(), adc_values, NOF_ADC_VALUES);
+  updateParameters(graphics.params->getParameters(), graphics.params->getSize(), adc_values, NOF_ADC_VALUES);
 #else
   updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
 #endif
@@ -302,7 +302,7 @@ void onProgramReady(){
 // called from program
 void onSetPatchParameter(uint8_t pid, int16_t value){
 // #ifdef USE_SCREEN
-//   graphics.params.setDynamicValue(ch, value);
+//   graphics.params->setDynamicValue(ch, value);
 // #else
 //   parameter_values[ch] = value;
 // #endif
@@ -324,7 +324,7 @@ void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
 // called from program
 void onRegisterPatchParameter(uint8_t id, const char* name){
 #ifdef USE_SCREEN 
-  graphics.params.setName(id, name);
+  graphics.params->setName(id, name);
 #endif /* USE_SCREEN */
   midi_tx.sendPatchParameterName((PatchParameterId)id, name);
 }
@@ -332,7 +332,7 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 // called from program
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
 #if defined USE_SCREEN
-  graphics.params.setTitle(name);
+  graphics.params->setTitle(name);
 #endif /* OWL_MAGUS */
 }
 
@@ -340,8 +340,8 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
 #ifdef USE_SCREEN
-  pv->parameters_size = graphics.params.getSize();
-  pv->parameters = graphics.params.getParameters();
+  pv->parameters_size = graphics.params->getSize();
+  pv->parameters = graphics.params->getParameters();
 #else
   pv->parameters_size = NOF_PARAMETERS;
   pv->parameters = parameter_values;
@@ -711,11 +711,17 @@ void ProgramManager::updateProgramIndex(uint8_t index){
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  
   if(registry.loadProgram(address, length))
     updateProgramIndex(0);
+  else
+    error(PROGRAM_ERROR, "Failed load");
 }
 
 void ProgramManager::loadProgram(uint8_t pid){
-  if(patchindex != pid && registry.loadProgram(pid))
-    updateProgramIndex(pid);
+  if(patchindex != pid && registry.hasPatch(pid)){
+    if(registry.loadProgram(pid))
+      updateProgramIndex(pid);
+    else
+      error(PROGRAM_ERROR, "Failed load");
+  }
 }
 
 #ifdef DEBUG_STACK

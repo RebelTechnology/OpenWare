@@ -5,7 +5,14 @@
 #include "callbacks.h"
 #include "ProgramVector.h"
 
-void Graphics::begin(SPI_HandleTypeDef *spi) {
+Graphics::Graphics() :
+  screen(OLED_WIDTH, OLED_HEIGHT),
+  drawCallback(defaultDrawCallback) {
+  screen.clear();
+}
+
+void Graphics::begin(ParameterController* pc, SPI_HandleTypeDef *spi) {
+  params = pc;
   oled_init(spi);
   screen.setBuffer(pixelbuffer);
   screen.clear();
@@ -18,19 +25,19 @@ void Graphics::display(){
 
 void Graphics::draw(){
   // drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-  // // params.draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-  params.draw(screen);
+  // // params->draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
+  params->draw(screen);
 }
 
 // static void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
 //   graphics.screen.setBuffer(pixels);
 //   graphics.screen.clear();
-//   graphics.params.draw(graphics.screen);
+//   graphics.params->draw(graphics.screen);
 // }
 
 void Graphics::reset(){
   drawCallback = defaultDrawCallback;
-  params.reset();
+  params->reset();
 }
 
 void Graphics::setCallback(void *callback){
@@ -40,18 +47,12 @@ void Graphics::setCallback(void *callback){
     drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
 }
 
-Graphics::Graphics(ParameterController& params) :
-  screen(OLED_WIDTH, OLED_HEIGHT), params(params),
-  drawCallback(defaultDrawCallback) {
-  screen.clear();
-}
-
 __weak void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
   ScreenBuffer screen = graphics.screen;
 
   // draw title
   screen.setTextSize(2);
-  screen.print(0, 16, graphics.params.getTitle());
+  screen.print(0, 16, graphics.params->getTitle());
 
   // draw program message, if set
   ProgramVector* pv = getProgramVector();
