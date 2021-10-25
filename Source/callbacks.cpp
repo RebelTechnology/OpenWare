@@ -21,13 +21,6 @@
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
-#ifdef OWL_BIOSIGNALS
-#include "ads.h"
-#ifdef USE_KX122
-#include "kx122.h"
-#endif
-#include "ble_midi.h"
-#endif
 
 #if defined USE_RGB_LED
 #include "rainbow.h"
@@ -76,6 +69,22 @@ int getGainSelectionValue(){
 }
 int getPatchSelectionValue(){
   return adc_values[MODE_BUTTON_PATCH]*(registry.getNumberOfPatches()-1)*4/4095;
+}
+
+__weak void initLed(){
+  // Initialise RGB LED PWM timers
+#if defined OWL_TESSERACT
+  extern TIM_HandleTypeDef htim2;
+  extern TIM_HandleTypeDef htim3;
+  // Red
+  HAL_TIM_Base_Start(&htim2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  // Green
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  // Blue
+  HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+#endif
 }
 
 void owl_mode_button(void){
@@ -135,11 +144,6 @@ void owl_mode_button(void){
 #endif /* USE_MODE_BUTTON */
 
 __weak void setup(){
-#ifdef OWL_BIOSIGNALS
-  ble_init();
-  setLed(1, NO_COLOUR);
-#endif
-
 #ifdef USE_ENCODERS
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
@@ -242,57 +246,12 @@ __weak void setLed(uint8_t led, uint32_t rgb){
   TIM2->CCR1 = 1023 - ((rgb>>20)&0x3ff);
   TIM3->CCR4 = 1023 - ((rgb>>10)&0x3ff);
   TIM2->CCR2 = 1023 - ((rgb>>00)&0x3ff);
-#elif defined OWL_BIOSIGNALS
-  if(led == 0){
-#ifdef USE_LED_PWM
-    rgb &= COLOUR_LEVEL5; // turn down intensity
-    TIM1->CCR1 = 1023 - ((rgb>>20)&0x3ff); // red
-    TIM1->CCR3 = 1023 - ((rgb>>10)&0x3ff); // green
-    TIM1->CCR2 = 1023 - ((rgb>>00)&0x3ff); // blue
-#else
-    switch(rgb){ // sinking current
-    case RED_COLOUR:
-      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-      break;
-    case GREEN_COLOUR:
-      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-      break;
-    case YELLOW_COLOUR:
-      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-      break;
-    case NO_COLOUR:
-      HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-      break;
-    }
-#endif      
-  }else if(led == 1){
-    if(rgb == NO_COLOUR)
-      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
-    else
-      HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
-  }
-#endif // OWL_BIOSIGNALS
+#endif // OWL_TESSERACT
 }
 
 
 __weak void onChangePin(uint16_t pin){
   switch(pin){
-#ifdef OWL_BIOSIGNALS
-  case ADC_DRDY_Pin: {
-    ads_drdy();
-    break;
-  }
-#ifdef USE_KX122
-  case ACC_INT1_Pin: {
-    kx122_drdy();
-    break;
-  }
-#endif
-#endif
 #ifdef PUSHBUTTON_Pin
   case PUSHBUTTON_Pin: {
     bool isSet = !(PUSHBUTTON_GPIO_Port->IDR & PUSHBUTTON_Pin);
