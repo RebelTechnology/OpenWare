@@ -29,7 +29,7 @@ extern VersionToken* bootloader_token;
 #define NOF_ENCODERS 2
 
 enum DisplayMode {
-  STANDARD_DISPLAY_MODE, CONFIGURATION_DISPLAY_MODE, PROGRESS_DISPLAY_MODE, SELECT_ONE_DISPLAY_MODE, SELECT_TWO_DISPLAY_MODE, ERROR_DISPLAY_MODE
+  STANDARD_DISPLAY_MODE, CONFIGURATION_DISPLAY_MODE, PROGRESS_DISPLAY_MODE, SELECT_ONE_DISPLAY_MODE, SELECT_TWO_DISPLAY_MODE, EXIT_DISPLAY_MODE, ERROR_DISPLAY_MODE
 };
 // DisplayMode displayMode;
 void setDisplayMode(DisplayMode mode);
@@ -90,11 +90,16 @@ public:
       parameters[ch] = value;
     }
   }
-  // @param value is the modulation ADC value
+  int16_t getUserValue(uint8_t ch){
+    if(ch < NOF_ADC_VALUES)
+      return user[ch];
+    return parameters[ch];
+  }
+  // @param values the modulation ADC values
   void updateValues(int16_t* values, size_t len){
     for(size_t pid=0; pid<NOF_ADC_VALUES; ++pid)
-      parameters[pid] = max(0, min(4095, (user[pid] + values[pid])>>1));
-      // parameters[pid] = max(0, min(4095, (2*parameters[pid] + user[pid] + values[pid])>>2));
+      parameters[pid] = max(0, min(4095, user[pid] + values[pid]));
+      // parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + values[pid])>>1));
   }
   // void updateValue(uint8_t pid, int16_t value){
   //   // smoothing at apprx 50Hz
@@ -125,7 +130,7 @@ extern GeniusParameterController params;
 class SelectControlPage : public Page {
   const uint8_t ctrl;
   size_t counter; // ticks since switch was pressed down
-  static constexpr size_t TOGGLE_LIMIT = (600/MAIN_LOOP_SLEEP_MS);
+  static constexpr size_t TOGGLE_LIMIT = (400/MAIN_LOOP_SLEEP_MS);
 public:
   int8_t select;
   SelectControlPage(uint8_t ctrl, int8_t select): ctrl(ctrl), select(select){}
@@ -144,7 +149,7 @@ public:
   void draw(ScreenBuffer& screen){
     if(!sw(ctrl)){
       // encoder switch released
-      if(counter < TOGGLE_LIMIT){
+      if(ctrl == 0 && counter < TOGGLE_LIMIT){
 	setDisplayMode(CONFIGURATION_DISPLAY_MODE);
       }else{
 	setDisplayMode(STANDARD_DISPLAY_MODE);
@@ -189,7 +194,7 @@ class ProgressPage : public Page {
     // uint16_t progress_counter = user[LOAD_INDICATOR_PARAMETER];
     screen.drawRectangle(0, 30, 128, 20, WHITE);
     // if(progress_counter != 4095)
-    screen.fillRectangle(0, 44, progress_counter * 127 / 4095, 5, WHITE);
+    screen.fillRectangle(0, 44, progress_counter * 128 / 4095, 5, WHITE);
     screen.setCursor(33, 40);
     screen.setTextSize(1);
     if(progress_message == NULL)
@@ -207,11 +212,23 @@ class ErrorPage : public Page {
       setDisplayMode(STANDARD_DISPLAY_MODE);
     }else{
       screen.setTextSize(2);
-      screen.print(1, 17, "ERROR");
+      screen.print(1, 16, "ERROR");
       if(getErrorMessage() != NULL){
 	screen.setTextSize(1);
 	screen.print(2, 25, getErrorMessage());
       }
+    }
+  }
+};
+
+class ExitPage : public Page {
+public:
+  void draw(ScreenBuffer& screen){
+    if(!(sw1() || sw2())){ // leave configuration mode on release
+      setDisplayMode(STANDARD_DISPLAY_MODE);
+    }else{
+      screen.setTextSize(2);
+      screen.print(40, 26, "exit");
     }
   }
 };
@@ -221,7 +238,7 @@ public:
   void encoderChanged(uint8_t encoder, int32_t delta){}
   void draw(ScreenBuffer& screen){
     if(sw1() || sw2()){
-      setDisplayMode(STANDARD_DISPLAY_MODE);
+      setDisplayMode(EXIT_DISPLAY_MODE);
     }else{
       drawStats(screen);
     }
@@ -272,7 +289,7 @@ public:
     else
       delta = -20 << (-delta/2);
     delta = min(802, max(-802, delta)); // max rate of change +/- 20%
-    params.setUserValue(select, min(4095, max(0, params.getValue(select) + delta)));
+    params.setUserValue(select, min(4095, max(0, params.getUserValue(select) + delta)));
   }
   void draw(ScreenBuffer& screen){
     if(sw1()){
@@ -297,6 +314,7 @@ public:
 StandardPage standardPage;
 ProgressPage progressPage;
 ErrorPage errorPage;
+ExitPage exitPage;
 StatsPage configurationPage;
 
 void changePage(Page* page){
@@ -325,6 +343,9 @@ void setDisplayMode(DisplayMode mode){
     break;
   case SELECT_TWO_DISPLAY_MODE:
     changePage(&selectTwoPage);
+    break;
+  case EXIT_DISPLAY_MODE:
+    changePage(&exitPage);
     break;
   case ERROR_DISPLAY_MODE:
     changePage(&errorPage);
