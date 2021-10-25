@@ -183,7 +183,7 @@ int main(void)
   MX_ADC1_Init();
   MX_DAC1_Init();
   MX_UART5_Init();
-  MX_USB_OTG_FS_PCD_Init();
+  /* MX_USB_OTG_FS_PCD_Init(); hangs if bootloader has run */
   /* USER CODE BEGIN 2 */
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);
