@@ -25,9 +25,15 @@
 #include "usbh_core.h"
 
 /* USER CODE BEGIN Includes */
-#include "usbh_midi.h"
 #include "device.h"
+#include "message.h"
 #include "errorhandlers.h"
+#ifdef USE_USBH_MIDI
+#include "usbh_midi.h"
+#endif
+#ifdef USE_USBH_HID
+#include "usbh_hid.h"
+#endif
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
@@ -62,6 +68,10 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
  */
 /* USER CODE BEGIN 1 */
 
+void USBH_HID_EventCallback(USBH_HandleTypeDef *phost){
+  debugMessage("HID");
+}
+
 /*
  * Background task
 */ 
@@ -77,6 +87,19 @@ void MX_USB_HOST_Process()
   /*   MX_USB_HOST_Init(); */
   /*   Appli_state = APPLICATION_IDLE; */
   /* }   */
+  USBH_HandleTypeDef *phost = &HUSB_HOST;
+    /* if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD){ */
+    /*   HID_KEYBD_Info_TypeDef* pinfo = USBH_HID_GetKeybdInfo(phost); */
+    /*   if(pinfo != NULL){ */
+    /* 	uint8_t c = USBH_HID_GetASCIICode(pinfo); */
+    /* 	// or c = pinfo->keys[0]; */
+    /* 	if(c >= 32 && c <= 126) { // readable ascii */
+    /* 	  char* msg = "char[ ]"; */
+    /* 	  msg[5] = c; */
+    /* 	  debugMessage(msg); */
+    /* 	} */
+    /*   } */
+    /* } */
 }
 
 /* USER CODE END 1 */
@@ -96,16 +119,27 @@ void MX_USB_HOST_Init(void)
   {
     Error_Handler();
   }
+#ifdef USE_USBH_MIDI
   if (USBH_RegisterClass(&HUSB_HOST, USBH_MIDI_CLASS) != USBH_OK)
   {
     Error_Handler();
   }
+#endif
+#ifdef USE_USBH_HID
+  if (USBH_RegisterClass(&HUSB_HOST, USBH_HID_CLASS) != USBH_OK)
+  {
+    Error_Handler();
+  }
+#endif
   if (USBH_Start(&HUSB_HOST) != USBH_OK)
   {
     Error_Handler();
   }
   /* USER CODE BEGIN USB_HOST_Init_PostTreatment */
-  
+
+#ifdef STM32H7xx
+  HAL_PWREx_EnableUSBVoltageDetector();
+#endif  
   /* USER CODE END USB_HOST_Init_PostTreatment */
 }
 
@@ -127,22 +161,26 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_CLASS_ACTIVE:
     if(Appli_state == APPLICATION_START){
+#ifdef USE_USBH_MIDI
       usbh_midi_begin();
+#endif
       Appli_state = APPLICATION_READY;
     }
     break;
 
   case HOST_USER_DISCONNECTION:
     Appli_state = APPLICATION_DISCONNECT;
+#ifdef USE_USBH_MIDI
     usbh_midi_reset();
+#endif
     break;
 
   case HOST_USER_UNRECOVERED_ERROR:
-    phost->Control.state = CTRL_SETUP; 
-    phost->RequestState = CMD_SEND;
+    /* phost->Control.state = CTRL_SETUP;  */
+    /* phost->RequestState = CMD_SEND; */
     Appli_state = APPLICATION_DISCONNECT;
     /* usbh_midi_reset(); // reset and hope for the best */
-    USBH_LL_ResetPort(&USBH_HANDLE);
+    /* USBH_LL_ResetPort(&USBH_HANDLE); */
     error(USB_ERROR, "USB Host error");
     break;
 
