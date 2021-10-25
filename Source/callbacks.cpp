@@ -38,6 +38,11 @@ extern TIM_HandleTypeDef ENCODER_TIM1;
 extern TIM_HandleTypeDef ENCODER_TIM2;
 #endif
 
+extern "C"{
+  void setup();
+  void loop();
+}
+
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -69,22 +74,6 @@ int getGainSelectionValue(){
 }
 int getPatchSelectionValue(){
   return adc_values[MODE_BUTTON_PATCH]*(registry.getNumberOfPatches()-1)*4/4095;
-}
-
-__weak void initLed(){
-  // Initialise RGB LED PWM timers
-#if defined OWL_TESSERACT
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
-  // Red
-  HAL_TIM_Base_Start(&htim2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  // Green
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-  // Blue
-  HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-#endif
 }
 
 void owl_mode_button(void){
@@ -143,14 +132,7 @@ void owl_mode_button(void){
 }
 #endif /* USE_MODE_BUTTON */
 
-__weak void setup(){
-#ifdef USE_ENCODERS
-  __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
-  __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
-  HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
-#endif /* OWL_PLAYERF7 */
-
+__weak void onSetup(){
 #ifdef OWL_WAVETABLE
   extern ADC_HandleTypeDef hadc1;
   extern ADC_HandleTypeDef hadc3;
@@ -161,16 +143,34 @@ __weak void setup(){
   if(ret != HAL_OK)
     error(CONFIG_ERROR, "ADC3 Start failed");
 #endif
-  initLed();
+#if defined OWL_TESSERACT
+  // Initialise RGB LED PWM timers
+  extern TIM_HandleTypeDef htim2;
+  extern TIM_HandleTypeDef htim3;
+  // Red
+  HAL_TIM_Base_Start(&htim2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  // Green
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  // Blue
+  HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+#endif
   setLed(0, NO_COLOUR);
+}
+
+__weak void setup(){
+#ifdef USE_ENCODERS
+  __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
+  __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
+  HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
+#endif /* USE_ENCODERS */
+  onSetup();
   owl.setup();
 }
 
-__weak void loop(void){
-#ifdef USE_MODE_BUTTON
-  owl_mode_button();
-#endif /* USE_MODE_BUTTON */
-
+__weak void onLoop(){
 #ifdef FASCINATION_MACHINE
   static int output_gain = 0;
   int gain = adc_values[ADC_D]*255/4095;
@@ -190,6 +190,24 @@ __weak void loop(void){
   }
 #endif
 
+#ifdef OWL_PRISM
+  int16_t encoders[NOF_ENCODERS] = {(int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1),
+				    (int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2) };
+  graphics.params.updateEncoders(encoders, 2);
+#ifndef OWL_RACK
+  for(int i=0; i<NOF_ENCODERS; ++i)
+    graphics.params.updateValue(i, getAnalogValue(i)-2048); // update two bipolar cv inputs
+  for(int i=2; i<NOF_PARAMETERS; ++i)
+    graphics.params.updateValue(i, 0);
+#endif
+#endif /* OWL_PRISM */
+}
+
+__weak void loop(){
+#ifdef USE_MODE_BUTTON
+  owl_mode_button();
+#endif /* USE_MODE_BUTTON */
+
 #ifdef USE_USB_HOST
 #if defined USB_HOST_PWR_FAULT_Pin && defined USB_HOST_PWR_EN_Pin
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
@@ -205,20 +223,16 @@ __weak void loop(void){
 #endif
 #endif
 
-  owl.loop();
+#ifdef USE_SCREEN
+  graphics.draw();
+  graphics.display();
+#endif /* USE_SCREEN */
 
-#ifdef OWL_PRISM
-  int16_t encoders[NOF_ENCODERS] = {(int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1),
-				    (int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2) };
-  graphics.params.updateEncoders(encoders, 2);
-#ifndef OWL_RACK
-  for(int i=0; i<NOF_ENCODERS; ++i)
-    graphics.params.updateValue(i, getAnalogValue(i)-2048); // update two bipolar cv inputs
-  for(int i=2; i<NOF_PARAMETERS; ++i)
-    graphics.params.updateValue(i, 0);
-#endif
-#endif /* OWL_PRISM */
+  onLoop();
+  owl.loop();
 }
+
+__weak void onScreenDraw(){}
 
 __weak void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   setLed(0, new_mode == RUN_MODE ? GREEN_COLOUR : YELLOW_COLOUR);
@@ -249,6 +263,11 @@ __weak void setLed(uint8_t led, uint32_t rgb){
 #endif // OWL_TESSERACT
 }
 
+void onError(int8_t code, const char* msg){
+#if defined OWL_PEDAL || defined OWL_MODULAR || defined OWL_BIOSIGNALS
+  setLed(0, RED_COLOUR);
+#endif
+}
 
 __weak void onChangePin(uint16_t pin){
   switch(pin){
