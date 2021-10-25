@@ -223,11 +223,6 @@ __weak void loop(){
 #endif
 #endif
 
-#ifdef USE_SCREEN
-  graphics.draw();
-  graphics.display();
-#endif /* USE_SCREEN */
-
   onLoop();
   owl.loop();
 }

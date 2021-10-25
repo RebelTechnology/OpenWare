@@ -117,14 +117,12 @@ public:
   }
   void reset(){
     setTitle("Magus");
+    ParameterController::reset();
     Encoders_reset();
     saveSettings = false;
     resourceDelete = false;
     for(int i=0; i<NOF_PARAMETERS; ++i){
-      strcpy(names[i], "Parameter ");
-      names[i][9] = 'A'+i;
       user[i] = 0;
-      parameters[i] = 0;
     }
     for(int i=0; i<NOF_ENCODERS; ++i){
       // encoders[i] = 0;
@@ -163,7 +161,7 @@ public:
       screen.setCursor(32, 40);
       screen.setTextSize(1);
       screen.print(progress_message);
-      screen.fillRectangle(0, 44, progress_counter * 127 / 4095, 5, WHITE);
+      screen.fillRectangle(0, 44, progress_counter * 128 / 4095, 5, WHITE);
     }
   }
 

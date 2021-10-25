@@ -12,10 +12,8 @@ const char* errormsg = 0;
 void error(int8_t code, const char* reason){
   setErrorMessage(code, reason);
   /* assert_param(0); */
-#if defined OWL_PEDAL || defined OWL_MODULAR || defined OWL_BIOSIGNALS
   if(code != NO_ERROR)
-    setLed(0, RED_COLOUR);
-#endif
+    onError(code, reason);
 #ifdef DEBUG
   // assuming semihosting enabled
   if(reason != NULL)

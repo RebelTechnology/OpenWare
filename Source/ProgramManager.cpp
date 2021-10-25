@@ -155,6 +155,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 #define MANAGER_TASK_PRIORITY  (AUDIO_TASK_PRIORITY | portPRIVILEGE_BIT)
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
 #define FLASH_TASK_PRIORITY 1 // allow default task to run when FLASH task yields
+#define SCREEN_TASK_PRIORITY 3 // less than AUDIO_TASK_PRIORITY, more than osPriorityNormal
 
 #define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
 
@@ -174,6 +175,9 @@ static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
 static StaticTask_t audioTaskBuffer;
 static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] CCM_RAM; // use CCM if available
+#ifdef USE_SCREEN
+static TaskHandle_t screenTask = NULL;
+#endif
 
 #ifdef USE_ADC
 extern uint16_t adc_values[NOF_ADC_VALUES];
@@ -201,6 +205,13 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   static float audio_envelope_lambda = 0.999995f;
   static float audio_envelope = 0.0;
   audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(pv->audio_output[0])*(1.0f/INT16_MAX);
+#endif
+#ifdef USE_ADC
+#ifdef USE_SCREEN
+  updateParameters(graphics.params->getParameters(), graphics.params->getSize(), adc_values, NOF_ADC_VALUES);
+#else
+  updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
+#endif
 #endif
   if(audioTask != NULL){
     BaseType_t yield;
@@ -273,19 +284,8 @@ void onProgramReady(){
 #endif
   /* Block indefinitely (released by audioCallback) */
   ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-#ifdef USE_USBD_AUDIO_RX
-  // if(usbd_rx) // before patch runs: convert USBD audio rx to patch input (overwriting ADC)
-  //   usbd_rx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
-#endif
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
-#endif
-#ifdef USE_ADC
-#ifdef USE_SCREEN
-  updateParameters(graphics.params->getParameters(), graphics.params->getSize(), adc_values, NOF_ADC_VALUES);
-#else
-  updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
-#endif
 #endif
   pv->buttons = button_values;
   if(pv->buttonChangedCallback != NULL && stateChanged.getState()){
@@ -502,11 +502,25 @@ void sendResourceTask(void* p){
 __weak void onStartProgram(){
 #ifdef USE_SCREEN
   graphics.reset();
-#endif
-#ifndef USE_SCREEN
+#else
   memset(parameter_values, 0, sizeof(parameter_values));
 #endif
 }
+
+#ifdef USE_SCREEN
+void runScreenTask(void* p){
+  TickType_t xLastWakeTime;
+  TickType_t xFrequency;
+  xFrequency = SCREEN_LOOP_SLEEP_MS / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+  xLastWakeTime = xTaskGetTickCount();
+  for(;;){
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);    
+    onScreenDraw();
+    graphics.draw();
+    graphics.display();
+  }
+}
+#endif	// USE_SCREEN
 
 void runAudioTask(void* p){
   PatchDefinition* def = getPatchDefinition();
@@ -651,11 +665,10 @@ ProgramManager::ProgramManager(){
 }
 
 void ProgramManager::startManager(){
-  // updateProgramVector(getProgramVector(), NULL);
-// #ifdef USE_SCREEN
-//   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
-// #endif
   xTaskCreate(runManagerTask, "Manager", MANAGER_TASK_STACK_SIZE, NULL, MANAGER_TASK_PRIORITY, &managerTask);
+#ifdef USE_SCREEN
+  xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
+#endif
 }
 
 void ProgramManager::notifyManagerFromISR(uint32_t ulValue){
@@ -712,7 +725,7 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
   if(registry.loadProgram(address, length))
     updateProgramIndex(0);
   else
-    error(PROGRAM_ERROR, "Failed load");
+    error(PROGRAM_ERROR, "Load error");
 }
 
 void ProgramManager::loadProgram(uint8_t pid){
@@ -720,7 +733,9 @@ void ProgramManager::loadProgram(uint8_t pid){
     if(registry.loadProgram(pid))
       updateProgramIndex(pid);
     else
-      error(PROGRAM_ERROR, "Failed load");
+      error(PROGRAM_ERROR, "Load error");
+  }else{
+    owl.setOperationMode(CONFIGURE_MODE);
   }
 }
 

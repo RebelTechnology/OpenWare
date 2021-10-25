@@ -55,8 +55,10 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   case STARTUP_MODE:
   case STREAM_MODE:
   case LOAD_MODE:
-  case CONFIGURE_MODE:
     setDisplayMode(PROGRESS_DISPLAY_MODE);
+    break;
+  case CONFIGURE_MODE:
+    setDisplayMode(CONFIGURATION_DISPLAY_MODE);
     break;
   case RUN_MODE:
     setDisplayMode(STANDARD_DISPLAY_MODE);
@@ -67,8 +69,8 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   }
 }
 
-void setup(){
-  progress_counter = 100;
+void onSetup(){
+  progress_counter = 1000;
   tr_out_a_pin.outputMode();
   tr_out_b_pin.outputMode();
   tr_out_a_pin.high();
@@ -78,7 +80,7 @@ void setup(){
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&params, &OLED_SPI);
 
-  progress_counter = 1000;
+  progress_counter = 2000;
 
 #ifdef USE_USB_HOST
   // enable USB Host power
@@ -90,9 +92,7 @@ void setup(){
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
 
-  progress_counter = 2000;
-  owl.setup();
-  progress_counter = 4000;
+  progress_counter = 3000;
 }
 
 void setGateValue(uint8_t ch, int16_t value){
@@ -182,8 +182,7 @@ void updateEncoders(){
   // encoder_values[1] = value;
 }
 
-void loop(void){
-
+void onLoop(void){
 #ifdef USE_USB_HOST
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
     if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
@@ -198,13 +197,6 @@ void loop(void){
   // SCB_CleanInvalidateDCache_by_Addr((uint32_t*)graphics.params.user, sizeof(graphics.params.user));
 #endif
   updateEncoders();
-
-#ifdef USE_SCREEN
-  graphics.draw();
-  graphics.display();
-#endif /* USE_SCREEN */
-
-  owl.loop();
 }
 
 #ifdef DEBUG_USBD_AUDIO

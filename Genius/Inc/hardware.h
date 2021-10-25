@@ -8,7 +8,7 @@
 #define USE_SPI_FLASH
 #define SPI_FLASH_HSPI               hspi5
 
-#define USE_USBH_HID
+/* #define USE_USBH_HID */
 
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
@@ -51,9 +51,9 @@
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
 #define USE_USBD_AUDIO
-/* #define USE_USBD_RX_FB */
-/* #define USE_USBD_AUDIO_FEATURES */
-/* #define USE_USBD_AUDIO_RX // speaker */
+#define USE_USBD_RX_FB
+#define USE_USBD_AUDIO_FEATURES
+#define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX  // microphone
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
@@ -62,7 +62,6 @@
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
 
-#define MAIN_LOOP_SLEEP_MS          20
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
 // Serial MIDI

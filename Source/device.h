@@ -153,6 +153,10 @@
 #define MAIN_LOOP_SLEEP_MS           2
 #endif
 
+#ifndef SCREEN_LOOP_SLEEP_MS
+#define SCREEN_LOOP_SLEEP_MS         40 /* 40mS = 25 fps */
+#endif
+
 #ifndef LOAD_INDICATOR_PARAMETER
 #define LOAD_INDICATOR_PARAMETER     PARAMETER_A
 #endif
@@ -163,6 +167,7 @@
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
+#define SCREEN_TASK_STACK_SIZE       (2*1024/sizeof(portSTACK_TYPE))
 
 #ifndef ARM_CYCLES_PER_SAMPLE
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */

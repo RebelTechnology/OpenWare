@@ -16,6 +16,7 @@ void Graphics::begin(ParameterController* pc, SPI_HandleTypeDef *spi) {
   oled_init(spi);
   screen.setBuffer(pixelbuffer);
   screen.clear();
+  params->reset();
   display();
 }
 
@@ -24,8 +25,6 @@ void Graphics::display(){
 }
 
 void Graphics::draw(){
-  // drawCallback(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
-  // // params->draw(pixelbuffer, OLED_WIDTH, OLED_HEIGHT);
   params->draw(screen);
 }
 
@@ -48,6 +47,7 @@ void Graphics::setCallback(void *callback){
 }
 
 __weak void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
+  // doDefaultDrawCallback(graphics.screen);
   ScreenBuffer screen = graphics.screen;
 
   // draw title

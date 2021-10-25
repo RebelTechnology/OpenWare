@@ -130,7 +130,7 @@ extern GeniusParameterController params;
 class SelectControlPage : public Page {
   const uint8_t ctrl;
   size_t counter; // ticks since switch was pressed down
-  static constexpr size_t TOGGLE_LIMIT = (400/MAIN_LOOP_SLEEP_MS);
+  static constexpr size_t TOGGLE_LIMIT = (400/SCREEN_LOOP_SLEEP_MS);
 public:
   int8_t select;
   SelectControlPage(uint8_t ctrl, int8_t select): ctrl(ctrl), select(select){}
@@ -191,7 +191,6 @@ class ProgressPage : public Page {
   void drawLoadProgress(ScreenBuffer &screen){
     extern char* progress_message;
     extern uint16_t progress_counter;
-    // uint16_t progress_counter = user[LOAD_INDICATOR_PARAMETER];
     screen.drawRectangle(0, 30, 128, 20, WHITE);
     // if(progress_counter != 4095)
     screen.fillRectangle(0, 44, progress_counter * 128 / 4095, 5, WHITE);
@@ -288,7 +287,8 @@ public:
       delta = 20 << (delta/2);
     else
       delta = -20 << (-delta/2);
-    delta = min(802, max(-802, delta)); // max rate of change +/- 20%
+    // delta = min(819, max(-819, delta)); // max rate of change +/- 20%
+    // delta = min(1229, max(-1229, delta)); // max rate of change +/- 30%
     params.setUserValue(select, min(4095, max(0, params.getUserValue(select) + delta)));
   }
   void draw(ScreenBuffer& screen){
