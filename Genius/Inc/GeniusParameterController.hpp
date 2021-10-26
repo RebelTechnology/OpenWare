@@ -273,7 +273,7 @@ class AssignPage : public Page {
 private:
   uint8_t select;
   uint8_t assign;
-  static constexpr char* assignations[] = {"CV A In", "CV B In", "CV A Out", "CV B Out"};
+  static constexpr const char* assignations[] = {"CV A In", "CV B In", "CV A Out", "CV B Out"};
 public:
   void encoderChanged(uint8_t encoder, int32_t delta){
     if(encoder == 0){
