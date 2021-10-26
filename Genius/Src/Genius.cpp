@@ -36,11 +36,15 @@ extern "C"{
 extern TIM_HandleTypeDef ENCODER_TIM1;
 extern TIM_HandleTypeDef ENCODER_TIM2;
 
-Pin tr_out_a_pin(GPIOD, GPIO_PIN_3);
-Pin tr_out_b_pin(GPIOD, GPIO_PIN_4);
+Pin tr_out_a_pin(GPIOD, GPIO_PIN_4);
+Pin tr_out_b_pin(GPIOD, GPIO_PIN_3);
 
 GeniusParameterController params;
-Graphics graphics;
+// #ifdef OLED_DMA
+Graphics graphics DMA_RAM;
+// #else
+// Graphics graphics;
+// #endif
 
 char* progress_message = NULL;
 uint16_t progress_counter = 0;
@@ -147,19 +151,21 @@ void onChangePin(uint16_t pin){
 }
 
 extern "C"{
-  // void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
-  // }
+  void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+    // this runs at apprx 3.3kHz
+    // with 64.5 cycles sample time, 30 MHz ADC clock, and ClockPrescaler = 32
+    extern uint16_t adc_values[NOF_ADC_VALUES];
+    for(size_t i=0; i<NOF_ADC_VALUES; ++i){
+      // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+      adc_values[i] = (adc_values[i]*3 + adc_values[i]) >> 2;
+    }
+    // tr_out_a_pin.toggle();
+  }
   void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc){
     error(CONFIG_ERROR, "ADC error");
   }
-
   void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-    // graphics.params.parameters
     params.updateValues((int16_t*)adc_values, adc_len);
-    // graphics.params.updateValue(0, adc_values[0]);
-    // graphics.params.updateValue(1, adc_values[1]);
-    // parameter_values[0] = adc_values[0]; // todo: sum with user / encoder setting
-    // parameter_values[1] = adc_values[1];
   }
 }
 

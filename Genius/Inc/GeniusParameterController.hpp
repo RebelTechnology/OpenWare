@@ -27,9 +27,10 @@ extern DigitalBusReader bus;
 extern VersionToken* bootloader_token;
 
 #define NOF_ENCODERS 2
+#define GENIUS_ADC_OFFSET (-120)
 
 enum DisplayMode {
-  STANDARD_DISPLAY_MODE, CONFIGURATION_DISPLAY_MODE, PROGRESS_DISPLAY_MODE, SELECT_ONE_DISPLAY_MODE, SELECT_TWO_DISPLAY_MODE, EXIT_DISPLAY_MODE, ERROR_DISPLAY_MODE
+  STANDARD_DISPLAY_MODE, CONFIGURATION_DISPLAY_MODE, PROGRESS_DISPLAY_MODE, SELECT_ONE_DISPLAY_MODE, SELECT_TWO_DISPLAY_MODE, EXIT_DISPLAY_MODE, ASSIGN_DISPLAY_MODE, ERROR_DISPLAY_MODE
 };
 // DisplayMode displayMode;
 void setDisplayMode(DisplayMode mode);
@@ -98,20 +99,9 @@ public:
   // @param values the modulation ADC values
   void updateValues(int16_t* values, size_t len){
     for(size_t pid=0; pid<NOF_ADC_VALUES; ++pid)
-      parameters[pid] = max(0, min(4095, user[pid] + values[pid]));
+      parameters[pid] = max(0, min(4095, user[pid] + values[pid] + GENIUS_ADC_OFFSET));
       // parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + values[pid])>>1));
   }
-  // void updateValue(uint8_t pid, int16_t value){
-  //   // smoothing at apprx 50Hz
-  //   parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
-  // }
-  // update value from patch or MIDI
-  // void setValue(uint8_t ch, int16_t value){
-  //   parameters[ch] = value;
-  // }
-  // int16_t getValue(uint8_t pid){
-  //   return parameters[pid];
-  // }
 private:
 };
 
@@ -149,8 +139,8 @@ public:
   void draw(ScreenBuffer& screen){
     if(!sw(ctrl)){
       // encoder switch released
-      if(ctrl == 0 && counter < TOGGLE_LIMIT){
-	setDisplayMode(CONFIGURATION_DISPLAY_MODE);
+      if(counter < TOGGLE_LIMIT){
+	setDisplayMode(ctrl == 0 ? CONFIGURATION_DISPLAY_MODE : ASSIGN_DISPLAY_MODE);
       }else{
 	setDisplayMode(STANDARD_DISPLAY_MODE);
       }
@@ -279,6 +269,43 @@ public:
 SelectControlPage selectOnePage(0, 0);
 SelectControlPage selectTwoPage(1, 1);
 
+class AssignPage : public Page {
+private:
+  uint8_t select;
+  uint8_t assign;
+  static constexpr char* assignations[] = {"CV A In", "CV B In", "CV A Out", "CV B Out"};
+public:
+  void encoderChanged(uint8_t encoder, int32_t delta){
+    if(encoder == 0){
+      if(delta > 0)
+	select = min(3, select+1);
+      else if(delta < 0)
+	select = max(0, select-1);
+    }else{
+      if(delta > 0)
+	assign = min(NOF_PARAMETERS-1, assign+1);
+      else if(delta < 0)
+	assign = max(0, assign-1);
+    }
+  }
+  void enter(){
+    select = 0;
+    assign = 0;
+  }
+  void draw(ScreenBuffer& screen){
+    if(sw1() || sw2()){
+      setDisplayMode(EXIT_DISPLAY_MODE);
+    }else{
+      screen.setTextSize(2);
+      screen.print(1, 16, "ASSIGN");
+      screen.setTextSize(1);
+      screen.print(1, 26, assignations[select]);
+      screen.print(": ");
+      screen.print(params.getName(assign));
+    }
+  }
+};
+
 class StandardPage : public Page {
 public:
   void encoderChanged(uint8_t encoder, int32_t delta){
@@ -316,6 +343,7 @@ ProgressPage progressPage;
 ErrorPage errorPage;
 ExitPage exitPage;
 StatsPage configurationPage;
+AssignPage assignPage;
 
 void changePage(Page* page){
   if(params.page != page){
@@ -346,6 +374,9 @@ void setDisplayMode(DisplayMode mode){
     break;
   case EXIT_DISPLAY_MODE:
     changePage(&exitPage);
+    break;
+  case ASSIGN_DISPLAY_MODE:
+    changePage(&assignPage);
     break;
   case ERROR_DISPLAY_MODE:
     changePage(&errorPage);

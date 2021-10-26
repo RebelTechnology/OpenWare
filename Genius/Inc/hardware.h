@@ -29,6 +29,7 @@
 
 #define USE_SCREEN
 #define SSD1309
+#define OLED_DMA
 
 #define ENCODER_TIM1 htim3
 #define ENCODER_TIM2 htim2

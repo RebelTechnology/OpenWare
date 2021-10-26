@@ -98,11 +98,29 @@ void HAL_MspInit(void)
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
   if(hadc->Instance==ADC1)
   {
   /* USER CODE BEGIN ADC1_MspInit 0 */
 
   /* USER CODE END ADC1_MspInit 0 */
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+    PeriphClkInitStruct.PLL2.PLL2M = 2;
+    PeriphClkInitStruct.PLL2.PLL2N = 12;
+    PeriphClkInitStruct.PLL2.PLL2P = 5;
+    PeriphClkInitStruct.PLL2.PLL2Q = 2;
+    PeriphClkInitStruct.PLL2.PLL2R = 2;
+    PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
+    PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOMEDIUM;
+    PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
+    PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
     /* Peripheral clock enable */
     __HAL_RCC_ADC12_CLK_ENABLE();
 
@@ -1204,7 +1222,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     GPIO_InitStruct.Alternate = GPIO_AF6_SAI1;
     HAL_GPIO_Init(CS_SDIN_GPIO_Port, &GPIO_InitStruct);
 
-    /* Peripheral DMA init*/
+      /* Peripheral DMA init*/
 
     hdma_sai1_a.Instance = DMA2_Stream1;
     hdma_sai1_a.Init.Request = DMA_REQUEST_SAI1_A;
@@ -1256,7 +1274,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     GPIO_InitStruct.Alternate = GPIO_AF6_SAI1;
     HAL_GPIO_Init(CS_SDOUT_GPIO_Port, &GPIO_InitStruct);
 
-    /* Peripheral DMA init*/
+      /* Peripheral DMA init*/
 
     hdma_sai1_b.Instance = DMA2_Stream4;
     hdma_sai1_b.Init.Request = DMA_REQUEST_SAI1_B;
@@ -1301,6 +1319,7 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
 
     HAL_GPIO_DeInit(CS_SDIN_GPIO_Port, CS_SDIN_Pin);
 
+    /* SAI1 DMA Deinit */
     HAL_DMA_DeInit(hsai->hdmarx);
     HAL_DMA_DeInit(hsai->hdmatx);
     }
@@ -1318,6 +1337,7 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
     */
     HAL_GPIO_DeInit(CS_SDOUT_GPIO_Port, CS_SDOUT_Pin);
 
+    /* SAI1 DMA Deinit */
     HAL_DMA_DeInit(hsai->hdmarx);
     HAL_DMA_DeInit(hsai->hdmatx);
     }
