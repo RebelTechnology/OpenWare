@@ -151,13 +151,14 @@ void onChangePin(uint16_t pin){
 }
 
 extern "C"{
+  static uint16_t smooth_adc_values[NOF_ADC_VALUES];
   void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
     // this runs at apprx 3.3kHz
     // with 64.5 cycles sample time, 30 MHz ADC clock, and ClockPrescaler = 32
     extern uint16_t adc_values[NOF_ADC_VALUES];
     for(size_t i=0; i<NOF_ADC_VALUES; ++i){
       // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
-      adc_values[i] = (adc_values[i]*3 + adc_values[i]) >> 2;
+      smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
     }
     // tr_out_a_pin.toggle();
   }
@@ -165,7 +166,7 @@ extern "C"{
     error(CONFIG_ERROR, "ADC error");
   }
   void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-    params.updateValues((int16_t*)adc_values, adc_len);
+    params.updateValues((int16_t*)smooth_adc_values, adc_len);
   }
 }
 
