@@ -1,8 +1,9 @@
 // _____ Includes ______________________________________________________________________
+#include <string.h>
 #include "oled.h"
 #include "device.h"
+#include "message.h"
 #include "errorhandlers.h"
-#include <string.h>
 
 /* static void NopDelay(uint32_t nops){ */
 /*   while (nops--) */
@@ -108,9 +109,9 @@ static void OLED_writeCMD(const uint8_t* data, uint16_t length)
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
   if(hspi->ErrorCode == HAL_SPI_ERROR_OVR){
     __HAL_SPI_CLEAR_OVRFLAG(hspi);
-    error(RUNTIME_ERROR, "SPI OVR");
+    debugMessage("SPI OVR");
   }else{
-    assert_param(0);
+    error(RUNTIME_ERROR, "SPI Error");
   }
 }
 
