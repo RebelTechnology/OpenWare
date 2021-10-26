@@ -45,6 +45,7 @@
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              2
+#define AUDIO_OUTPUT_GAIN           121 /* -6dB */
 #define USBD_AUDIO_RX_CHANNELS      AUDIO_CHANNELS
 #define USBD_AUDIO_TX_CHANNELS      AUDIO_CHANNELS
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
@@ -61,6 +62,7 @@
 #define USE_USB_HOST
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
+
 
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
