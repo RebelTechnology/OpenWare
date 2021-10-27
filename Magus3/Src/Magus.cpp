@@ -18,7 +18,7 @@ const uint32_t* dyn_rainbowinputs = rainbowinputs;
 const uint32_t* dyn_rainbowoutputs = rainbowoutputs;
 
 static MagusParameterController params;
-Graphics graphics;
+Graphics graphics DMA_RAM;
 
 extern "C" void onResourceUpdate(void);
 
