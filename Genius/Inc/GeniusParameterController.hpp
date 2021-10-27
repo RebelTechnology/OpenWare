@@ -9,6 +9,7 @@
 #include "VersionToken.h"
 #include "ScreenBuffer.h"
 #include "Owl.h"
+#include "message.h"
 #ifdef USE_DIGITALBUS
 #include "DigitalBusReader.h"
 extern DigitalBusReader bus;
@@ -202,10 +203,11 @@ class ErrorPage : public Page {
     }else{
       screen.setTextSize(2);
       screen.print(1, 16, "ERROR");
-      if(getErrorMessage() != NULL){
-	screen.setTextSize(1);
+      screen.setTextSize(1);
+      if(getErrorMessage() != NULL)
 	screen.print(2, 25, getErrorMessage());
-      }
+      if(getDebugMessage() != NULL)
+	screen.print(2, 32, getDebugMessage());
     }
   }
 };

@@ -40,11 +40,7 @@ Pin tr_out_a_pin(GPIOD, GPIO_PIN_4);
 Pin tr_out_b_pin(GPIOD, GPIO_PIN_3);
 
 GeniusParameterController params;
-// #ifdef OLED_DMA
 Graphics graphics DMA_RAM;
-// #else
-// Graphics graphics;
-// #endif
 
 char* progress_message = NULL;
 uint16_t progress_counter = 0;

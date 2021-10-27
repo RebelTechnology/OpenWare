@@ -103,7 +103,6 @@ void StartDefaultTask(void const * argument);
 /* USER CODE BEGIN PFP */
 void setup(void);
 void loop(void);
-void MX_USB_HOST_Process(void);
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void initialise_monitor_handles(void);
 void MPU_Config(void);
