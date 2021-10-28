@@ -92,8 +92,6 @@ void owl_mode_button(void){
       gainselect = getGainSelectionValue();
       owl.setOperationMode(CONFIGURE_MODE);
       setLed(0, NO_COLOUR);
-    }else if(getErrorStatus() != NO_ERROR){
-      owl.setOperationMode(ERROR_MODE);
     }else{
 #ifdef USE_RGB_LED
       updateLed();
@@ -262,6 +260,7 @@ void onError(int8_t code, const char* msg){
 #if defined OWL_PEDAL || defined OWL_MODULAR || defined OWL_BIOSIGNALS
   setLed(0, RED_COLOUR);
 #endif
+  owl.setOperationMode(ERROR_MODE);
 }
 
 __weak void onChangePin(uint16_t pin){

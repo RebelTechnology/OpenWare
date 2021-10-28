@@ -725,7 +725,7 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
   if(registry.loadProgram(address, length))
     updateProgramIndex(0);
   else
-    error(PROGRAM_ERROR, "Load error");
+    error(PROGRAM_ERROR, "Load failed");
 }
 
 void ProgramManager::loadProgram(uint8_t pid){
@@ -733,7 +733,7 @@ void ProgramManager::loadProgram(uint8_t pid){
     if(registry.loadProgram(pid))
       updateProgramIndex(pid);
     else
-      error(PROGRAM_ERROR, "Load error");
+      error(PROGRAM_ERROR, "Load failed");
   }else{
     owl.setOperationMode(CONFIGURE_MODE);
   }

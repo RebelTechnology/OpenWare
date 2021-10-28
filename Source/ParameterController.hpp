@@ -13,11 +13,11 @@ protected:
 public:
   virtual void reset(){
     for(size_t i=0; i<NOF_PARAMETERS; ++i){
-      size_t ch = 0;
+      size_t c = 0;
       if(i > 8)
-	names[i][ch++] = '@'+(i/8);
-      names[i][ch++] = 'A'+(i%8);
-      names[i][ch++] = '\0';
+	names[i][c++] = '@'+(i/8);
+      names[i][c++] = 'A'+(i%8);
+      names[i][c] = '\0';
       parameters[i] = 0;
     }
   }

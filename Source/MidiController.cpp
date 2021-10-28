@@ -124,7 +124,7 @@ void MidiController::sendPatchName(uint8_t slot){
   if(slot == 0){
     PatchDefinition* def = registry.getPatchDefinition();
     if(def)
-      sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getProgramSize(), 0);
+      sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getBinarySize(), 0);
   }else{
     Resource* resource = registry.getPatch(slot-1);
     if(resource)
