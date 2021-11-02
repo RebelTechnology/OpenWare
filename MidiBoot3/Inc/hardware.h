@@ -21,6 +21,3 @@
 #else
   #error Invalid configuration
 #endif
-
-/* #define USE_IWDG */
-/* #define INIT_FMC */
