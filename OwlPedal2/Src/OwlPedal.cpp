@@ -9,7 +9,7 @@
 
 // Pin footswitch_pin(GPIOA, GPIO_PIN_0);
 Pin bypass_pin(GPIOA, GPIO_PIN_0);
-Pin bufpass_pin(GPIOF, GPIO_PIN_9);
+Pin bufpass_pin(GPIOF, GPIO_PIN_9); // high is bypass
 Pin exp1_ring_pin(GPIOA, GPIO_PIN_2);
 Pin led_green_pin(GPIOB, GPIO_PIN_8);
 Pin led_red_pin(GPIOB, GPIO_PIN_9);
