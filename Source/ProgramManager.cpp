@@ -257,6 +257,9 @@ void onProgramReady(){
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
 #endif
+  // push queued up MIDI messages through to patch
+  midi_tx.transmit();
+  midi_rx.receive();
 #ifdef USE_ADC
 #ifdef USE_SCREEN
   updateParameters(graphics.params.parameters, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
@@ -734,6 +737,10 @@ uint32_t ProgramManager::getHeapMemoryUsed(){
 
 uint8_t ProgramManager::getProgramIndex(){
   return patchindex;
+}
+
+bool ProgramManager::isProgramRunning(){
+  return audioTask != NULL;
 }
 
 extern "C" {
