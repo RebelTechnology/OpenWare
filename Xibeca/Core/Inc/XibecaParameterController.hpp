@@ -1,5 +1,5 @@
-#ifndef __ParameterController_hpp__
-#define __ParameterController_hpp__
+#ifndef __XibecaParameterController_hpp__
+#define __XibecaParameterController_hpp__
 
 #include <stdint.h>
 #include <string.h>
@@ -9,6 +9,7 @@
 #include "VersionToken.h"
 #include "ScreenBuffer.h"
 #include "Owl.h"
+#include "ParameterController.hpp"
 #ifdef USE_DIGITALBUS
 #include "DigitalBusReader.h"
 extern DigitalBusReader bus;
@@ -26,18 +27,20 @@ extern DigitalBusReader bus;
 
 extern VersionToken* bootloader_token;
 
+#define NOF_ENCODERS 4
+
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 /* shows a single parameter selected and controlled with a single encoder
  */
-template<uint8_t SIZE>
-class ParameterController {
+class XibecaParameterController : public ParameterController {
 public:
   char title[11] = "Xibeca";
-  int16_t parameters[SIZE];
-  char names[SIZE][12];
+  int16_t encoders[NOF_ENCODERS]; // last seen encoder values
+  int16_t parameters[NOF_PARAMETERS];
+  char names[NOF_PARAMETERS][12];
   int8_t selected = 0;
-  ParameterController(){
+  XibecaParameterController(){
     reset();
   }
   void setTitle(const char* str){
@@ -45,7 +48,7 @@ public:
   }
   void reset(){
     drawCallback = defaultDrawCallback;
-    for(int i=0; i<SIZE; ++i){
+    for(int i=0; i<NOF_PARAMETERS; ++i){
       strcpy(names[i], "Parameter  ");
       names[i][10] = 'A'+i;
       parameters[i] = 0;
@@ -97,7 +100,7 @@ public:
   }
 
   void drawGlobalParameterNames(int y, ScreenBuffer& screen){    
-    drawParameterNames(y, 0, names, SIZE, screen);
+    drawParameterNames(y, 0, names, NOF_PARAMETERS, screen);
   }
 
   void drawStats(ScreenBuffer& screen){
@@ -134,11 +137,21 @@ public:
 #endif
   }
 
+  void updateEncoders(int16_t* data, uint8_t size){
+    if(data[0] != encoders[0]){
+      encoderChanged(0, data[0] - encoders[0]);
+      encoders[0] = data[0];
+    }
+    if(data[1] != encoders[1]){
+      encoderChanged(1, data[1] - encoders[1]);
+      encoders[1] = data[1];
+    }
+  }
   void encoderChanged(uint8_t encoder, int32_t delta){
     if(encoder == 0){
       if(sw2()){
 	if(delta > 1)
-	  selected = min(SIZE-1, selected+1);
+	  selected = min(NOF_PARAMETERS-1, selected+1);
 	else if(delta < 1)
 	  selected = max(0, selected-1);
       }else{
@@ -148,11 +161,11 @@ public:
     } // todo: change patch with enc1/sw1
   }
   void setName(uint8_t pid, const char* name){
-    if(pid < SIZE)
+    if(pid < NOF_PARAMETERS)
       strncpy(names[pid], name, 11);
   }
   uint8_t getSize(){
-    return SIZE;
+    return NOF_PARAMETERS;
   }
   void setValue(uint8_t ch, int16_t value){
     parameters[ch] = value;
@@ -195,4 +208,4 @@ private:
   }
 };
 
-#endif // __ParameterController_hpp__
+#endif // __XibecaParameterController_hpp__

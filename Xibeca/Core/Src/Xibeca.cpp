@@ -4,6 +4,7 @@
 #include "Pin.h"
 #include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
+#include "XibecaParameterController.hpp"
 #include "message.h"
 
 #if 0
@@ -52,6 +53,7 @@
 #include "Graphics.h"
 Graphics graphics;
 #endif
+static XibecaParameterController params;
 
 #define ENCODER_TIM1 htim4
 extern TIM_HandleTypeDef ENCODER_TIM1;
@@ -297,7 +299,7 @@ void setup(){
 #ifdef USE_SCREEN
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
-  graphics.begin(&OLED_SPI);
+  graphics.begin(&params, &OLED_SPI);
 #endif
 
   owl.setup();
