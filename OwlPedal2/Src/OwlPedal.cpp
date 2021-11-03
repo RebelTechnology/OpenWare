@@ -4,7 +4,6 @@
 #include "MidiController.h"
 #include "OpenWareMidiControl.h"
 #include "Pin.h"
-#include "usb_device.h"
 
 #define PATCH_RESET_COUNTER (1000/MAIN_LOOP_SLEEP_MS)
 
@@ -105,8 +104,6 @@ void setup(){
   setLed(0, RED_COLOUR);
   owl.setup();
   setLed(0, GREEN_COLOUR);
-
-  MX_USB_DEVICE_Init();
 
 }
 
