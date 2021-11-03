@@ -48,8 +48,15 @@ void onChangePin(uint16_t pin){
     bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
     setButtonValue(PUSHBUTTON, state);
     setButtonValue(BUTTON_A, state);
-    midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
-    setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
+    // midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
+    // setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
+    if(state){
+      // toggle buffered bypass 
+      static bool buffered_bypass = false;
+      buffered_bypass = !buffered_bypass;
+      bufpass_pin.set(buffered_bypass);
+      setLed(0, buffered_bypass ? RED_COLOUR : GREEN_COLOUR);
+    }
     break;
   }
   case SW2_Pin: { // mode button
@@ -86,6 +93,7 @@ void setGateValue(uint8_t ch, int16_t value){
     break;
   case BUTTON_1:
     bufpass_pin.set(value);
+    setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
     break;
   }
 }
