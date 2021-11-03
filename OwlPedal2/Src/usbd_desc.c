@@ -135,7 +135,7 @@ uint8_t * USBD_FS_USR_BOSDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
   * @{
   */
 
-USBD_DescriptorsTypeDef FS_Desc =
+USBD_DescriptorsTypeDef USBD_DESC =
 {
   USBD_FS_DeviceDescriptor
 , USBD_FS_LangIDStrDescriptor

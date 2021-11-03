@@ -30,7 +30,7 @@
 #include "usbd_def.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "device.h"
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -105,7 +105,7 @@
   */
 
 /** Descriptor for the Usb device. */
-extern USBD_DescriptorsTypeDef FS_Desc;
+extern USBD_DescriptorsTypeDef USBD_DESC;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 
