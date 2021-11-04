@@ -12,7 +12,7 @@ C_SRC += $(OPENWARE)/Source/usb_device.c
 C_SRC += $(OPENWARE)/Source/usbd_desc.c
 C_SRC += $(OPENWARE)/Source/usbd_conf.c
 C_SRC += $(OPENWARE)/Source/usbh_conf.c
-C_SRC += $(OPENWARE)/Source/usbd_audio.c
+CPP_SRC += $(OPENWARE)/Source/usbd_audio.cpp
 CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
