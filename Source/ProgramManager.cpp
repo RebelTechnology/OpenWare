@@ -200,19 +200,6 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   pv->audio_input = rx;
   pv->audio_output = tx;
   pv->audio_blocksize = size;
-#ifdef FASCINATION_MACHINE
-  extern uint32_t ledstatus;
-  static float audio_envelope_lambda = 0.999995f;
-  static float audio_envelope = 0.0;
-  audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(pv->audio_output[0])*(1.0f/INT16_MAX);
-#endif
-#ifdef USE_ADC
-#ifdef USE_SCREEN
-  updateParameters(graphics.params->getParameters(), graphics.params->getSize(), adc_values, NOF_ADC_VALUES);
-#else
-  updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
-#endif
-#endif
   if(audioTask != NULL){
     BaseType_t yield;
     // wake up audio task
@@ -286,6 +273,16 @@ void onProgramReady(){
   ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
+#endif
+  // push queued up MIDI messages through to patch
+  midi_tx.transmit();
+  midi_rx.receive();
+#ifdef USE_ADC
+#ifdef USE_SCREEN
+  updateParameters(graphics.params.parameters, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
+#else
+  updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
+#endif
 #endif
   pv->buttons = button_values;
   if(pv->buttonChangedCallback != NULL && stateChanged.getState()){
@@ -779,6 +776,10 @@ uint32_t ProgramManager::getHeapMemoryUsed(){
 
 uint8_t ProgramManager::getProgramIndex(){
   return patchindex;
+}
+
+bool ProgramManager::isProgramRunning(){
+  return audioTask != NULL;
 }
 
 extern "C" {

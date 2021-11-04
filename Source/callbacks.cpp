@@ -366,4 +366,10 @@ __weak void updateParameters(int16_t* parameter_values, size_t parameter_len, ui
   // parameter_values[3] = 4095-adc_values[3];
 #endif
 #endif
+#ifdef FASCINATION_MACHINE
+  extern uint32_t ledstatus;
+  static float audio_envelope_lambda = 0.999995f;
+  static float audio_envelope = 0.0;
+  audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(pv->audio_output[0])*(1.0f/INT16_MAX);
+#endif
 }

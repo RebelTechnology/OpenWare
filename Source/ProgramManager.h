@@ -46,6 +46,7 @@ public:
   uint32_t getCyclesPerBlock();
   uint32_t getHeapMemoryUsed();
   uint8_t getProgramIndex();
+  bool isProgramRunning();
 private:
   void updateProgramIndex(uint8_t index);
 };
