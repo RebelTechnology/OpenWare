@@ -19,6 +19,11 @@
 #define XIBECA_PIN13 GPIOA, GPIO_PIN_7
 #define XIBECA_PIN14 GPIOA, GPIO_PIN_3
 
+#define XIBECA_PIN17 GPIOG, GPIO_PIN_12
+#define XIBECA_PIN18 GPIOG, GPIO_PIN_11
+#define XIBECA_PIN19 GPIOA, GPIO_PIN_15
+#define XIBECA_PIN20 GPIOA, GPIO_PIN_1
+
 #define XIBECA_PIN21 GPIOC, GPIO_PIN_6
 #define XIBECA_PIN22 GPIOC, GPIO_PIN_7
 #define XIBECA_PIN23 GPIOD, GPIO_PIN_12
@@ -103,7 +108,7 @@ void setup(){
   led_out2.outputMode();
   led_out3.outputMode();
   led_out4.outputMode();
-  // 
+
   for(size_t i=1; i<=12; ++i)
     setLed(i, NO_COLOUR);
 

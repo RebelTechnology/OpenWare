@@ -8,11 +8,13 @@
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 #define USE_PLUS_RAM
-/* #define USE_ICACHE */
-/* #define USE_DCACHE */
+
+#ifdef NDEBUG
+#define USE_ICACHE
+#define USE_DCACHE
+#endif
 
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
-#define MAIN_LOOP_SLEEP_MS          20
 
 // todo: quad SPI
 /* #define USE_SPI_FLASH */
@@ -35,7 +37,7 @@
 
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX           // microphone
-/* #define USE_USBD_AUDIO_RX           // speaker */
+#define USE_USBD_AUDIO_RX           // speaker
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
 /* #define USBD_MAX_POWER              100 // 200mA for iPad compatibility */
