@@ -81,6 +81,8 @@ extern DMA_HandleTypeDef hdma_sai1_a;
 extern DMA_HandleTypeDef hdma_sai1_b;
 extern SAI_HandleTypeDef hsai_BlockA1;
 extern SAI_HandleTypeDef hsai_BlockB1;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -218,37 +220,33 @@ void DMA2_Stream4_IRQHandler(void)
   /* USER CODE END DMA2_Stream4_IRQn 1 */
 }
 
-#ifdef USE_USBD_FS
 /**
   * @brief This function handles USB On The Go FS global interrupt.
   */
 void OTG_FS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
-  extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+
   /* USER CODE END OTG_FS_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
 
   /* USER CODE END OTG_FS_IRQn 1 */
 }
-#endif
 
-#ifdef USE_USBD_HS
 /**
   * @brief This function handles USB On The Go HS global interrupt.
   */
 void OTG_HS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_HS_IRQn 0 */
-  extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
+
   /* USER CODE END OTG_HS_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
   /* USER CODE BEGIN OTG_HS_IRQn 1 */
 
   /* USER CODE END OTG_HS_IRQn 1 */
 }
-#endif
 
 /**
   * @brief This function handles SAI1 global interrupt.

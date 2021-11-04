@@ -11,7 +11,7 @@
 #define USBD_DESC FS_Desc
 #define USBD_HSFS DEVICE_FS
 #define USBD_HANDLE hUsbDeviceFS
-/* #define USBD_PCD_HANDLE hpcd_USB_OTG_FS */
+#define USBD_PCD_HANDLE hpcd_USB_OTG_FS
 
 /* #define USE_USBD_HS */
 /* #define USBD_DESC HS_Desc */
@@ -35,6 +35,7 @@
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
 #define USE_BKPSRAM
+#define AUDIO_OUTPUT_GAIN           123
 
 /* #define USE_MODE_BUTTON */
 /* #define MODE_BUTTON_PIN SW3_Pin */

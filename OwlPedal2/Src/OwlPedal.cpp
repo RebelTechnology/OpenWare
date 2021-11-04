@@ -4,6 +4,7 @@
 #include "MidiController.h"
 #include "OpenWareMidiControl.h"
 #include "Pin.h"
+#include "usb_device.h"
 
 #define PATCH_RESET_COUNTER (1000/MAIN_LOOP_SLEEP_MS)
 
@@ -54,7 +55,7 @@ void onChangePin(uint16_t pin){
       // toggle buffered bypass 
       static bool buffered_bypass = false;
       buffered_bypass = !buffered_bypass;
-      bufpass_pin.set(buffered_bypass);
+      bufpass_pin.set(!buffered_bypass);
       setLed(0, buffered_bypass ? RED_COLOUR : GREEN_COLOUR);
     }
     break;
@@ -113,6 +114,7 @@ void setup(){
   owl.setup();
   setLed(0, GREEN_COLOUR);
 
+  MX_USB_DEVICE_Init();  
 }
 
 void loop(){
