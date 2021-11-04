@@ -103,7 +103,7 @@ void setup(){
   led_out2.outputMode();
   led_out3.outputMode();
   led_out4.outputMode();
-
+  // 
   for(size_t i=1; i<=12; ++i)
     setLed(i, NO_COLOUR);
 

@@ -60,10 +60,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define FLASH_DQ2_Pin GPIO_PIN_2
 #define FLASH_DQ2_GPIO_Port GPIOE
-#define OLED_CS_Pin GPIO_PIN_14
-#define OLED_CS_GPIO_Port GPIOG
-#define OLED_DC_Pin GPIO_PIN_11
-#define OLED_DC_GPIO_Port GPIOC
 #define EXTI13_Pin GPIO_PIN_13
 #define EXTI13_GPIO_Port GPIOC
 #define EXTI13_EXTI_IRQn EXTI15_10_IRQn
@@ -90,10 +86,10 @@ void Error_Handler(void);
 #define ADC_SPI_MISO_GPIO_Port GPIOC
 #define ADC_SPI_MOSI_Pin GPIO_PIN_3
 #define ADC_SPI_MOSI_GPIO_Port GPIOC
-#define OLED_RST_Pin GPIO_PIN_4
-#define OLED_RST_GPIO_Port GPIOA
 #define ADC2_Pin GPIO_PIN_2
 #define ADC2_GPIO_Port GPIOA
+#define ADC6_Pin GPIO_PIN_6
+#define ADC6_GPIO_Port GPIOA
 #define ADC4_Pin GPIO_PIN_5
 #define ADC4_GPIO_Port GPIOC
 #define ADC3_Pin GPIO_PIN_1
