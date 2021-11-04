@@ -19,6 +19,8 @@
 // todo: quad SPI
 /* #define USE_SPI_FLASH */
 
+/* #define AUDIO_OUTPUT_GAIN           112 in/out gain not working?*/
+
 #define USE_CODEC
 #define USE_PCM3168A
 /* #define CODEC_HP_FILTER */
@@ -36,11 +38,12 @@
 #define USBD_AUDIO_TX_CHANNELS       4
 
 #define USE_USBD_AUDIO
+#define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_TX           // microphone
-#define USE_USBD_AUDIO_RX           // speaker
+/* #define USE_USBD_RX_FB */
+/* #define USE_USBD_AUDIO_RX           // speaker */
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
-/* #define USBD_MAX_POWER              100 // 200mA for iPad compatibility */
 
 /* #define USE_UART_MIDI_RX */
 /* #define USE_UART_MIDI_TX */
