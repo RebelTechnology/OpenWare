@@ -37,6 +37,15 @@ void setLed(uint8_t led, uint32_t rgb){
   }
 }
 
+bool getBufferedBypass(){
+  return !bufpass_pin.get();
+}
+
+void setBufferedBypass(bool value){
+  setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
+  bufpass_pin.set(!value);
+}
+
 void onChangePin(uint16_t pin){
   switch(pin){
   case FOOTSWITCH_Pin: { // stomp switch
@@ -53,10 +62,7 @@ void onChangePin(uint16_t pin){
     // setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
     if(state){
       // toggle buffered bypass 
-      static bool buffered_bypass = false;
-      buffered_bypass = !buffered_bypass;
-      bufpass_pin.set(!buffered_bypass);
-      setLed(0, buffered_bypass ? RED_COLOUR : GREEN_COLOUR);
+      setBufferedBypass(!getBufferedBypass());
     }
     break;
   }
@@ -93,8 +99,7 @@ void setGateValue(uint8_t ch, int16_t value){
     setLed(0, value ? RED_COLOUR : NO_COLOUR);
     break;
   case BUTTON_1:
-    bufpass_pin.set(value);
-    setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
+    setBufferedBypass(value);
     break;
   }
 }
@@ -112,9 +117,10 @@ void setup(){
 
   setLed(0, RED_COLOUR);
   owl.setup();
-  setLed(0, GREEN_COLOUR);
 
   MX_USB_DEVICE_Init();  
+
+  setBufferedBypass(false);
 }
 
 void loop(){
