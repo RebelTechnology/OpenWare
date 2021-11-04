@@ -174,7 +174,7 @@ void Owl::setOperationMode(OperationMode mode){
 }
 
 void Owl::loop(){
-  if(program.isProgramRunning()){
+  if(!program.isProgramRunning()){
     midi_tx.transmit();
     midi_rx.receive(); // push queued up MIDI messages through to patch
   }
