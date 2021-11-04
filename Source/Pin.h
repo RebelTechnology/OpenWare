@@ -38,11 +38,7 @@ public:
     port->BSRR = (1<<(pin+16U));
   }
   void set(bool on){
-    port->BSRR = (1<<(pin+16U*!on));
-    // if(on)
-    //   high(pin);
-    // else
-    //   low(pin);
+    port->BSRR = (1<<(pin+(16U*!on)));
   }
   void toggle(){
     port->ODR ^= 1<<pin;
