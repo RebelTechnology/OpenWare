@@ -70,12 +70,23 @@ void codec_init(){
   delay(10);
 
   codec_write(64, 0b11000001); // Normal operation, Single rate
-  codec_write(65, 0b00000110); // Power Save Enable, Slave mode, 24-bit I2S mode TDM format
-  /* codec_write(65, 0b10000110); // Power Save Disable, Slave mode, 24-bit I2S mode TDM format */
 
   /* Register: DAC Control 1 */
-  codec_write(65, 0b10000110); // Power Save Disable, Slave mode, 24-bit I2S mode TDM format
+  codec_write(65, 0b00000110); // Power Save Enable, Slave mode, 24-bit I2S mode TDM format
+  /* codec_write(65, 0b10000110); // Power Save Disable, Slave mode, 24-bit I2S mode TDM format */
+  /* codec_write(65, 0b10000110); // Power Save Disable, Slave mode, 24-bit I2S mode TDM format */
   /* codec_write(65, 0b10000111); // 24-bit left-justified mode TDM format */
+  
+  /* Register: DAC Control 2 */
+#if AUDIO_CHANNELS == 4
+  codec_write(66, 0b11000000); // disable DAC channels 7/8 and 5/6
+#elif AUDIO_CHANNELS == 6
+  codec_write(66, 0b10000000); // disable DAC channels 7/8
+/* These bits control the DAC operation mode. In operation disable mode, the DAC output is cut off from DIN with a fade-out */
+/* sequence, and the internal DAC data is reset. DAC output is forced into VCOMDA if PSMDA = 1, or DAC output is forced */
+/* into AGNDDA and goes into a power-down state if PSMDA = 0. For normal operating mode, a fade-in sequence is */
+/* applied on the DAC output in resume process. The serial mode control is effective during operation disable mode */							 
+#endif
 
   /* Register: DAC Output Phase */
   /* codec_write(67, 0xff); // phase invert all DAC channels */
@@ -95,16 +106,23 @@ void codec_init(){
   codec_write(81, 0b00000110); // Slave mode 24-bit I2S mode TDM format 
   /* codec_write(81, 0b00000111); // Slave mode 24-bit left-justified mode TDM format */
 
-#ifndef CODEC_HP_FILTER
-  /* Register: ADC Control 2 */
-  codec_write(82, 0b00000111); // disable HPF for all ADC channels
+  uint8_t value;
+#if AUDIO_CHANNELS == 4
+  value = 0b01000000; // disable ADC channels 5/6
+#else
+  value = 0b00000000;
 #endif
+#ifndef CODEC_HP_FILTER
+  value |= 0b00000111;  // disable HPF for all ADC channels
+#endif
+  /* Register: ADC Control 2 */
+  codec_write(82, value);
 
   /* Register: ADC Input Configuration */
-  /* codec_write(83, 0b00111111); // singled ended inputs on all ADC channels */
+  codec_write(83, 0b00111111); // singled ended inputs on all ADC channels
 
-    /* Register: ADC Input Phase */
-  /* codec_write(83, 0b00111111); // phase invert all ADC channels */
+  /* Register: ADC Input Phase */
+  codec_write(84, 0b00111111); // phase invert all ADC channels
 
   /* Register: ADC Overflow Flag */
 /*   ADC Overflow flag (read-only) */
