@@ -481,13 +481,13 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.SlotInit.SlotSize = SAI_SLOTSIZE_32B;
   hsai_BlockA1.SlotInit.SlotNumber = 8;
 #if AUDIO_CHANNELS == 8
-  hsai_BlockA1.SlotInit.SlotActive = SAI_SLOTACTIVE_ALL;
+  hsai_BlockA1.SlotInit.SlotActive = 0xff;
 #elif AUDIO_CHANNELS == 6
-  hsai_BlockA1.SlotInit.SlotActive = SAI_SLOTACTIVE_6;
+  hsai_BlockA1.SlotInit.SlotActive = 0x3f;
 #elif AUDIO_CHANNELS == 4
-  hsai_BlockA1.SlotInit.SlotActive = SAI_SLOTACTIVE_4;
+  hsai_BlockA1.SlotInit.SlotActive = 0x0f;
 #elif AUDIO_CHANNELS == 2
-  hsai_BlockA1.SlotInit.SlotActive = SAI_SLOTACTIVE_2;
+  hsai_BlockA1.SlotInit.SlotActive = 0x03;
 #else
 #error "Unsupported AUDIO_CHANNELS"
 #endif
@@ -520,13 +520,13 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.SlotInit.SlotSize = SAI_SLOTSIZE_32B;
   hsai_BlockB1.SlotInit.SlotNumber = 8;
 #if AUDIO_CHANNELS == 8
-  hsai_BlockB1.SlotInit.SlotActive = SAI_SLOTACTIVE_ALL;
+  hsai_BlockB1.SlotInit.SlotActive = 0xff;
 #elif AUDIO_CHANNELS == 6
-  hsai_BlockB1.SlotInit.SlotActive = SAI_SLOTACTIVE_6;
+  hsai_BlockB1.SlotInit.SlotActive = 0x3f;
 #elif AUDIO_CHANNELS == 4
-  hsai_BlockB1.SlotInit.SlotActive = SAI_SLOTACTIVE_4;
+  hsai_BlockB1.SlotInit.SlotActive = 0x0f;
 #elif AUDIO_CHANNELS == 2
-  hsai_BlockB1.SlotInit.SlotActive = SAI_SLOTACTIVE_2;
+  hsai_BlockB1.SlotInit.SlotActive = 0x03;
 #else
 #error "Unsupported AUDIO_CHANNELS"
 #endif
