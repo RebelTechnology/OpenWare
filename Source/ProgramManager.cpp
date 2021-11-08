@@ -279,7 +279,7 @@ void onProgramReady(){
   midi_rx.receive();
 #ifdef USE_ADC
 #ifdef USE_SCREEN
-  updateParameters(graphics.params.parameters, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
+  updateParameters(graphics.params->getParameters(), NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
 #else
   updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
 #endif
