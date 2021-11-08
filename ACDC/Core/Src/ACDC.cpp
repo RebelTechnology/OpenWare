@@ -51,6 +51,9 @@ void setLed(uint8_t led, uint32_t rgb){
     if(rgb == RED_COLOUR){
       led_in1.high();
       led_clip1.low();
+    }else if(rgb == NO_COLOUR){
+      led_in1.high();
+      led_clip1.high();
     }else{
       led_in1.low();
       led_clip1.high();
@@ -60,6 +63,9 @@ void setLed(uint8_t led, uint32_t rgb){
     if(rgb == RED_COLOUR){
       led_in2.high();
       led_clip2.low();
+    }else if(rgb == NO_COLOUR){
+      led_in2.high();
+      led_clip2.high();
     }else{
       led_in2.low();
       led_clip2.high();

@@ -30,18 +30,14 @@
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              4
-/* #define AUDIO_INT32_TO_SAMPLE(x)    (__REV16((x)>>8)) */
-/* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(__REV16(x))<<8) */
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
-/* #define USBD_AUDIO_RX_CHANNELS       4 */
-/* #define USBD_AUDIO_TX_CHANNELS       4 */
 
 #define USE_USBD_AUDIO
-#define USE_USBD_AUDIO_FEATURES
+/* #define USE_USBD_AUDIO_FEATURES */
 #define USE_USBD_AUDIO_TX           // microphone
-/* #define USE_USBD_RX_FB */
-/* #define USE_USBD_AUDIO_RX           // speaker */
+#define USE_USBD_AUDIO_RX           // speaker
+#define USE_USBD_RX_FB
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
 
