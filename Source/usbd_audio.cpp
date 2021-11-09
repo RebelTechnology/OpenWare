@@ -318,7 +318,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
 
 #ifdef USE_USBD_AUDIO_FEATURES
   /* Feature Unit Descriptor*/
-  0x0a,                                 // bLength
+  USBD_AUDIO_RX_AF_DESC_LEN,            // bLength
   0x24,                                 // bDescriptorType
   0x06,                                 // bDescriptorSubtype
   0x02,                                 // bUnitID
@@ -383,7 +383,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
 
 #ifdef USE_USBD_AUDIO_FEATURES
   /* Feature Unit Descriptor*/
-  0x0a,                                 // bLength
+  USBD_AUDIO_TX_AF_DESC_LEN,            // bLength
   0x24,                                 // bDescriptorType
   0x06,                                 // bDescriptorSubtype
   0x05,                                 // bUnitID
