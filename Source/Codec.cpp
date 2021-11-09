@@ -262,12 +262,21 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A
 
 extern "C" {
+#ifdef USE_CS4271
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
   void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
   }
+#else // PCM3168A: TX is slave
+  void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
+    audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+  }
+  void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
+    audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
+  }
+#endif
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
     error(CONFIG_ERROR, "SAI DMA Error");
   }
