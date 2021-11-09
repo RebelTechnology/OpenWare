@@ -42,7 +42,7 @@ public:
   // virtual void updateEncoders(int16_t* data, uint8_t size){}
   virtual void enter(){}
   virtual void exit(){}
-  virtual void encoderChanged(uint8_t encoder, int32_t delta){}
+  virtual void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){}
 };
 
 class GeniusParameterController : public ParameterController {
@@ -73,16 +73,16 @@ public:
   }
   void updateEncoders(int16_t* data, uint8_t size){
     if(data[0] != encoders[0]){
-      encoderChanged(0, data[0] - encoders[0]);
+      encoderChanged(0, data[0] - encoders[0], encoders[0]);
       encoders[0] = data[0];
     }
     if(data[1] != encoders[1]){
-      encoderChanged(1, data[1] - encoders[1]);
+      encoderChanged(1, data[1] - encoders[1], encoders[1]);
       encoders[1] = data[1];
     }
   }
-  void encoderChanged(uint8_t encoder, int32_t delta){
-    page->encoderChanged(encoder, delta);
+  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){
+    page->encoderChanged(encoder, delta, previous);
   }
   // update value with encoder
   void setUserValue(uint8_t ch, int16_t value){
@@ -128,9 +128,9 @@ public:
   void enter(){
     counter = 0;
   }
-  void encoderChanged(uint8_t encoder, int32_t delta){
+  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){
     if(encoder == ctrl){
-      // select = max(0, min(NOF_PARAMETERS-1, select+delta));
+      delta = (delta + (previous & 0x03)) / 4;
       if(delta > 0)
 	select = min(NOF_PARAMETERS-1, select+1);
       else if(delta < 0)
@@ -226,7 +226,7 @@ public:
 
 class StatsPage : public Page {
 public:
-  void encoderChanged(uint8_t encoder, int32_t delta){}
+  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){}
   void draw(ScreenBuffer& screen){
     if(sw1() || sw2()){
       setDisplayMode(EXIT_DISPLAY_MODE);
@@ -277,7 +277,8 @@ private:
   uint8_t assign;
   static constexpr const char* assignations[] = {"CV A In", "CV B In", "CV A Out", "CV B Out"};
 public:
-  void encoderChanged(uint8_t encoder, int32_t delta){
+  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){
+    delta = (delta + (previous & 0x03)) / 4;
     if(encoder == 0){
       if(delta > 0)
 	select = min(3, select+1);
@@ -310,7 +311,7 @@ public:
 
 class StandardPage : public Page {
 public:
-  void encoderChanged(uint8_t encoder, int32_t delta){
+  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){
     int select = encoder == 0 ? selectOnePage.select : selectTwoPage.select;
     if(delta > 0)
       delta = 20 << (delta/2);
