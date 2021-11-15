@@ -29,8 +29,6 @@ extern "C" {
     };
 
   void usbh_midi_push();
-
-  void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URBStateTypeDef urb_state);
 }
 
 static SerialBuffer<USB_HOST_RX_BUFF_SIZE> rxbuffer;
@@ -164,12 +162,14 @@ USBH_StatusTypeDef  USBH_MIDI_Stop(USBH_HandleTypeDef *phost){
   return USBH_OK;
 }
 
-void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URBStateTypeDef urb_state){
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
-  if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
-     MIDI_Handle->state == MIDI_TRANSFER_DATA){
-    size_t len = USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
-    USBH_MIDI_ReceiveCallback(phost, MIDI_Handle->pRxData, len);
+extern "C"{
+  void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state){
+    MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+    if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
+       MIDI_Handle->state == MIDI_TRANSFER_DATA){
+      size_t len = USBH_LL_GetLastXferSize((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->InPipe);
+      USBH_MIDI_ReceiveCallback((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->pRxData, len);
+    }
   }
 }
 

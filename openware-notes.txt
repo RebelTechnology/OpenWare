@@ -389,3 +389,20 @@ play -c 1 -r 48k -t f32 sample.raw
 FirmwareSender -in sample.raw -out "OWL*" -name "sample.wav"
 
 -----------------------------------------------------------------
+
+H7 ADC:
+set Scan enable, Continuous enable, Conversion End of sequence, and ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR
+
+-----------------------------------------------------------------
+
+ABFSR 0x04: AHBP busfault
+
+-----------------------------------------------------------------
+
+Dynamic module / code loading with Position Independent Code / Executables PIC / PIE
+https://github.com/rgujju/STM32-projects/tree/master/got_plt
+https://community.arm.com/support-forums/f/architectures-and-processors-forum/45919/gcc-does-not-generate-correct-code-while-building-pic
+https://systemoverlord.com/2017/03/19/got-and-plt-for-pwning.html
+https://reverseengineering.stackexchange.com/questions/1992/what-is-plt-got
+
+-----------------------------------------------------------------

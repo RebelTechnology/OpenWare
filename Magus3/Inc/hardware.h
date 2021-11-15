@@ -3,19 +3,22 @@
 
 #define OWL_MAGUS
 #define HARDWARE_ID                  MAGUS_HARDWARE
-#define HARDWARE_VERSION             "Magus"
+#define HARDWARE_VERSION             "Magus3"
 
-/* #define NO_EXTERNAL_RAM */
-/* #define NO_CCM_RAM */
+/* #define USE_SPI_FLASH */
+
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 #define USE_PLUS_RAM
-/* #define USE_ICACHE */
-/* #define USE_DCACHE */
+#define USE_ICACHE
+#define USE_DCACHE
+
+/* #define USE_BKPSRAM */
+
+#define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
 
 #define USE_SCREEN
 #define SSD1309
 /* #define OLED_DMA */
-#define OLED_SOFT_CS
 #define OLED_SPI hspi6
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
@@ -36,8 +39,8 @@
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
 #define USE_USBD_AUDIO
-/* #define USE_USBD_AUDIO_TX  // microphone */
-/* #define USE_USBD_AUDIO_RX // speaker */
+#define USE_USBD_AUDIO_TX  // microphone
+#define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS

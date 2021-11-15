@@ -465,12 +465,11 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   counter = 0;
 }
 
-void setup(){
+void onSetup(){
   initLed();
   HAL_GPIO_WritePin(LEDPWM_GPIO_Port, LEDPWM_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
-  owl.setup();
   for(size_t i=5; i<9; ++i){
     takeover.set(i, CV_ATTENUATION_DEFAULT);
     takeover.reset(i, false);
@@ -480,11 +479,10 @@ void setup(){
   patchselect = program.getProgramIndex();
 }
 
-void loop(void){
+void onLoop(){
   MX_USB_HOST_Process(); // todo: enable PWR management
   static bool sw4_state = false;
   if(sw4_state != !sw4.get())
     sw4_state = updatePin(4, sw4);
   update_preset();
-  owl.loop();
 }

@@ -3,12 +3,14 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v22.1.rc1"
+#define FIRMWARE_VERSION "v22.1.rc2"
 
 #ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
 #define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
+#ifndef SPI_FLASH_HSPI
 #define SPI_FLASH_HSPI               hspi1
+#endif
 #define EXTERNAL_STORAGE_SIZE        (8*1024*1024)
 #else
 #define MAX_SPI_FLASH_HEADERS        0
@@ -41,6 +43,7 @@
 #define MIDI_OUTPUT_BUFFER_SIZE      1024
 #define MIDI_INPUT_BUFFER_SIZE       64
 #define MIDI_SYSEX_BUFFER_SIZE       256
+#define USE_MESSAGE_CALLBACK
 
 #ifndef USBD_MAX_POWER
 #define USBD_MAX_POWER               100 // 200mA
@@ -56,7 +59,9 @@
 #define STORAGE_MAX_BLOCKS           64
 #endif
 
+#ifndef OWL_XIBECA
 #define DEBUG_DWT
+#endif
 /* #define DEBUG_STACK */
 #define DEBUG_STORAGE
 /* #define DEBUG_BOOTLOADER */
@@ -148,6 +153,10 @@
 #define MAIN_LOOP_SLEEP_MS           2
 #endif
 
+#ifndef SCREEN_LOOP_SLEEP_MS
+#define SCREEN_LOOP_SLEEP_MS         40 /* 40mS = 25 fps */
+#endif
+
 #ifndef LOAD_INDICATOR_PARAMETER
 #define LOAD_INDICATOR_PARAMETER     PARAMETER_A
 #endif
@@ -158,6 +167,7 @@
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
+#define SCREEN_TASK_STACK_SIZE       (2*1024/sizeof(portSTACK_TYPE))
 
 #ifndef ARM_CYCLES_PER_SAMPLE
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
@@ -169,11 +179,11 @@
 #define USE_EXTERNAL_RAM
 #endif
 
-#ifndef NO_CCM_RAM
-#define USE_CCM_RAM
-#define CCM_RAM                          __attribute__ ((section (".ccmdata")))
-#else
+#ifdef NO_CCM_RAM
 #define CCM_RAM
+#else
+#define USE_CCM_RAM
+#define CCM_RAM                      __attribute__ ((section (".ccmdata")))
 #endif
 
 #ifndef DMA_RAM

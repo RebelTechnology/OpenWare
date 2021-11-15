@@ -1,3 +1,9 @@
+22.1.rc2
+------
+
+* Process USB messages each audio block, before patch runs (or in loop if no patch is loaded)
+
+
 22.1.rc1
 ------
 

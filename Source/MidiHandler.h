@@ -38,6 +38,7 @@ private:
   void handleSettingsResetCommand(uint8_t* data, uint16_t size);
   void handleSettingsStoreCommand(uint8_t* data, uint16_t size);
   void handleDeviceResetCommand(uint8_t* data, uint16_t size);
+  void handleProgramMessage(uint8_t* data, uint16_t size);
   void runProgram();
 };
 

@@ -19,14 +19,6 @@
 #include "Storage.h"
 #include "PatchRegistry.h"
 
-#ifdef OWL_BIOSIGNALS
-#include "ads.h"
-#ifdef USE_KX122
-#include "kx122.h"
-#endif
-#include "ble_midi.h"
-#endif
-
 #if defined USE_RGB_LED
 #include "rainbow.h"
 #endif /* USE_RGB_LED */
@@ -53,7 +45,7 @@ ApplicationSettings settings;
 Codec codec;
 #endif
 #ifdef USE_ADC
-uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM;
+uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM = {};
 #endif
 #ifdef USE_DAC
 extern DAC_HandleTypeDef hdac;
@@ -75,39 +67,6 @@ void midiSetOutputChannel(int8_t channel){
   settings.midi_output_channel = channel;
   midi_tx.setOutputChannel(channel);
 }
-
-__weak void initLed(){
-  // Initialise RGB LED PWM timers
-#if defined OWL_TESSERACT
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
-  // Red
-  HAL_TIM_Base_Start(&htim2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  // Green
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-  // Blue
-  HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-#elif defined OWL_BIOSIGNALS
-#ifdef USE_LED_PWM
-  extern TIM_HandleTypeDef htim1;
-  HAL_TIM_Base_Start(&htim1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-#else
-  /*Configure GPIO pin : LED_GREEN_Pin, LED_RED_Pin */
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  GPIO_InitStruct.Pin = LED_GREEN_Pin | LED_RED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED_GREEN_GPIO_Port, &GPIO_InitStruct);
-#endif
-#endif
-}
-
 
 extern "C" {
 
@@ -151,8 +110,6 @@ void Owl::setup(void){
   codec.setOutputGain(settings.audio_output_gain);
 #endif /* USE_CODEC */
 
-  program.startManager();
-
 #ifdef USE_DAC
   HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
   HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
@@ -178,6 +135,8 @@ void Owl::setup(void){
   bus_setup();
   bus_set_input_channel(settings.midi_input_channel);
 #endif /* USE_DIGITALBUS */
+
+  program.startManager(); // calls bootstrap, loads patch
 }
 
 #ifdef USE_DIGITALBUS
@@ -215,8 +174,10 @@ void Owl::setOperationMode(OperationMode mode){
 }
 
 void Owl::loop(){
-  midi_tx.transmit();
-  midi_rx.receive(); // push queued up MIDI messages through to patch
+  if(!program.isProgramRunning()){
+    midi_tx.transmit();
+    midi_rx.receive(); // push queued up MIDI messages through to patch
+  }
 #ifdef USE_DIGITALBUS
   busstatus = bus_status();
 #endif
@@ -322,4 +283,16 @@ const char* getDeviceName(){
     ptr = name;
   }
   return ptr;
+}
+
+void Owl::setMessageCallback(void* callback){
+  messageCallback = (void (*)(const char* msg, size_t len))callback;
+}
+
+/**
+ * This method should not be called from an irq handler
+ */
+void Owl::handleMessage(const char* msg, size_t len){
+  if(messageCallback != NULL)
+    messageCallback(msg, len);
 }

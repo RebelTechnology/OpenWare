@@ -149,13 +149,13 @@ void HAL_HCD_Disconnect_Callback(HCD_HandleTypeDef *hhcd)
   * @param  urb_state: state
   * @retval None
   */
-void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state)
-{
-  /* To be used with OS to sync URB state with the global state machine */
-#if (USBH_USE_OS == 1)
-  USBH_LL_NotifyURBChange(hhcd->pData);
-#endif
-}
+/* void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state) */
+/* { */
+/*   /\* To be used with OS to sync URB state with the global state machine *\/ */
+/* #if (USBH_USE_OS == 1) */
+/*   USBH_LL_NotifyURBChange(hhcd->pData); */
+/* #endif */
+/* } */
 /**
 * @brief  Port Port Enabled callback.
   * @param  hhcd: HCD handle

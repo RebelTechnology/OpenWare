@@ -1,10 +1,10 @@
-#ifndef __ParameterController_hpp__
-#define __ParameterController_hpp__
+#ifndef __MagusParameterController_hpp__
+#define __MagusParameterController_hpp__
 
 #include "device.h"
 #include "errorhandlers.h"
 #include "ProgramVector.h"
-// #include "HAL_Encoders.h"
+#include "HAL_Encoders.h"
 #include "Owl.h"
 #include "OpenWareMidiControl.h"
 #include "PatchRegistry.h"
@@ -16,8 +16,6 @@
 #include "VersionToken.h"
 #include "ScreenBuffer.h"
 #include "HAL_TLC5946.h"
-
-void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #define NOF_ENCODERS 6
 #define ENC_MULTIPLIER 6 // shift left by this many steps
@@ -38,6 +36,14 @@ void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 extern VersionToken* bootloader_token;
 
+
+#define PORT_UNI_INPUT 1
+#define PORT_UNI_OUTPUT 2
+#define PORT_BI_INPUT 3
+#define PORT_BI_OUTPUT 4
+void setPortMode(uint8_t index, uint8_t mode);
+uint8_t getPortMode(uint8_t index);
+
 /*    
 screen 128 x 64, font 5x7
 4 blocks, 32px per each, 3-4 letters each
@@ -54,11 +60,8 @@ todo:
 - select global parameter
 - select preset mode
 */
-template<uint8_t SIZE>
-class ParameterController {
+class MagusParameterController : public ParameterController {
 public:
-  char title[11] = "Magus";
-  
   enum EncoderSensitivity {
       SENS_SUPER_FINE = 0,
       SENS_FINE = (ENC_MULTIPLIER / 2),
@@ -70,11 +73,10 @@ public:
   // Sensitivity is currently not stored in settings, but it's not reset either.
   bool sensitivitySelected;
   
-  int16_t parameters[SIZE];
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t offsets[NOF_ENCODERS]; // last seen encoder values
-  int16_t user[SIZE]; // user set values (ie by encoder or MIDI)
-  char names[SIZE][12];
+  int16_t user[NOF_PARAMETERS]; // user set values (ie by encoder or MIDI)
+  char names[NOF_PARAMETERS][12];
   // char blocknames[4][NOF_ENCODERS] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   uint8_t selectedBlock;
   uint8_t selectedPid[NOF_ENCODERS];
@@ -110,18 +112,17 @@ public:
     "< LEDs   >",
     "< V/Oct   " };
 
-  ParameterController(){
+  MagusParameterController(){
     reset();
   }
   void reset(){
+    setTitle("Magus");
+    ParameterController::reset();
+    Encoders_reset();
     saveSettings = false;
     resourceDelete = false;
-    drawCallback = defaultDrawCallback;
-    for(int i=0; i<SIZE; ++i){
-      strcpy(names[i], "Parameter ");
-      names[i][9] = 'A'+i;
+    for(int i=0; i<NOF_PARAMETERS; ++i){
       user[i] = 0;
-      parameters[i] = 0;
     }
     for(int i=0; i<NOF_ENCODERS; ++i){
       // encoders[i] = 0;
@@ -150,19 +151,18 @@ public:
     offsets[eid] = encoders[eid] - (value >> encoderSensitivity);
   }
 
-  void draw(uint8_t* pixels, uint16_t width, uint16_t height){
-    ScreenBuffer screen(width, height);
-    screen.setBuffer(pixels);
-    draw(screen);
-  }
-
-  void drawLoadProgress(uint8_t progress, ScreenBuffer &screen){
-    // progress should be 0 - 127
-    screen.drawRectangle(0, 30, 128, 20, WHITE);
-    screen.setCursor(32, 40);
-    screen.setTextSize(1);
-    screen.print("Uploading...");
-    screen.fillRectangle(0, 44, progress, 5, WHITE);
+  void drawLoadProgress(ScreenBuffer &screen){
+    extern char* progress_message;
+    extern uint16_t progress_counter;
+    // uint16_t progress_counter = user[LOAD_INDICATOR_PARAMETER];
+    if(progress_message != NULL && progress_counter != 4095){
+    // if(progress_counter && progress_counter != 4095){
+      screen.drawRectangle(0, 30, 128, 20, WHITE);
+      screen.setCursor(32, 40);
+      screen.setTextSize(1);
+      screen.print(progress_message);
+      screen.fillRectangle(0, 44, progress_counter * 128 / 4095, 5, WHITE);
+    }
   }
 
   void drawParameter(int pid, int y, ScreenBuffer& screen){
@@ -202,7 +202,7 @@ public:
     if(selectedPid[0] > 0)
       screen.print(1, 24, names[selectedPid[0]-1]);
     screen.print(1, 24+10, names[selectedPid[0]]);
-    if(selectedPid[0] < SIZE-1)
+    if(selectedPid[0] < NOF_PARAMETERS-1)
       screen.print(1, 24+20, names[selectedPid[0]+1]);
     screen.invert(0, 25, 64, 10);
   }
@@ -388,7 +388,7 @@ public:
 
   void drawPresetNames(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
-    selected = min(selected, registry.getNumberOfPatches()-1);
+    selected = min(selected, (int)registry.getNumberOfPatches()-1);
     if(selected > 1) {
       screen.setCursor(1, 24);
       screen.print((int)selected - 1);
@@ -411,9 +411,9 @@ public:
   void drawResourceNames(int selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
     if (resourceDelete)
-      selected = min(selected, registry.getNumberOfResources());
+      selected = min(selected, (int)registry.getNumberOfResources());
     else
-      selected = min(selected, registry.getNumberOfResources() - 1);
+      selected = min(selected, (int)registry.getNumberOfResources() - 1);
     if (resourceDelete && selected == 0)
       screen.print(18, 24, "Delete:");
     if (selected > 0 && registry.getNumberOfResources() > 0) {
@@ -616,13 +616,13 @@ public:
       // draw most recently changed parameter
       // drawParameter(selectedPid[selectedBlock], 44, screen);
       if (owl.getOperationMode() == LOAD_MODE){
-        drawLoadProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen);
+        drawLoadProgress(screen);
       }
       else {
         drawParameter(selectedPid[selectedBlock], 54, screen);
       }
       // use callback to draw title and message
-      drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
+      graphics.drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       break;
     case SELECTBLOCKPARAMETER:
       drawTitle(screen);
@@ -645,7 +645,7 @@ public:
   }
 
   void setName(uint8_t pid, const char* name){
-    if(pid < SIZE){
+    if(pid < NOF_PARAMETERS){
       strncpy(names[pid], name, 11);
 #ifdef OWL_MAGUS
       if(names[pid][strnlen(names[pid], 11)-1] == '>')
@@ -661,7 +661,7 @@ public:
   }
 
   uint8_t getSize(){
-    return SIZE;
+    return NOF_PARAMETERS;
   }
 
   void selectBlockParameter(uint8_t enc, int8_t pid){
@@ -675,7 +675,7 @@ public:
   }
 
   void selectGlobalParameter(int8_t pid){
-    selectedPid[0] = max(0, min(SIZE-1, pid));
+    selectedPid[0] = max(0, min(NOF_PARAMETERS-1, pid));
     setEncoderValue(0, user[selectedPid[0]]);
   }
 
@@ -768,29 +768,33 @@ public:
       default:
         break;
       }
-    }else{
+    }
+    else{
       if(controlMode == EXIT){
-	displayMode = STANDARD;
-	sensitivitySelected = false;
-	if(saveSettings)
-	  settings.saveToFlash();
-      }else{
-	int16_t delta = value - encoders[1];
-	if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
-	  setControlMode(controlMode+1);
-	}else if(delta < 0 && controlMode > 0){
-	  setControlMode(controlMode-1);
-	}
-	if (controlMode == CALIBRATE) {
-	  if (continueCalibration)
-	    updateCalibration();
-	  else
-	    calibrationConfirm = false;
-	}
-  else if (controlMode == DATA && resourceDeletePressed) {
-    resourceDeletePressed = false;
-  }
-	encoders[1] = value;
+        displayMode = STANDARD;
+        //selectedBlock = 0;
+        sensitivitySelected = false;
+        if(saveSettings)
+          settings.saveToFlash();
+      }
+      else{
+        int16_t delta = value - encoders[1];
+        if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
+          setControlMode(controlMode+1);
+        }
+        else if(delta < 0 && controlMode > 0){
+          setControlMode(controlMode-1);
+        }
+        if (controlMode == CALIBRATE) {
+          if (continueCalibration)
+            updateCalibration();
+          else
+            calibrationConfirm = false;
+        }
+        else if (controlMode == DATA && resourceDeletePressed) {
+          resourceDeletePressed = false;
+        }
+        encoders[1] = value;
       }
     }
   }
@@ -925,6 +929,7 @@ public:
 
     // update encoder 1 top right
     int16_t value = data[2];
+    int16_t right_enc = encoders[1]; // Save old value for encoder scrolling in main menu
     if(displayMode == CONTROL){
       selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
       if(pressed&0x3c) // exit status mode if any other encoder is pressed
@@ -958,24 +963,39 @@ public:
         // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
         displayMode = SELECTGLOBALPARAMETER;
         int16_t delta = value - encoders[0];
+        selectedPid[0] = selectedPid[selectedBlock];
+        selectedBlock = 0;
         if(delta < 0) {
-          selectGlobalParameter(selectedPid[0]-1);
-        }
+          selectGlobalParameter(selectedPid[selectedBlock] - 1);
+      }
         else {
           if(delta > 0) {              
-            selectGlobalParameter(selectedPid[0]+1);
+            selectGlobalParameter(selectedPid[selectedBlock] + 1);
           }
-          selectedBlock = 0;
         }
       }
       else{
+        if (displayMode == STANDARD) {
+          // Quick selection of global parameter by right encoder - without popover menu
+          int16_t delta = data[2] - right_enc;
+          encoders[1] = data[2];
+          if(delta < 0) {
+            selectGlobalParameter(selectedPid[selectedBlock] - 1);
+            selectedBlock = 0;
+          }
+          else
+            if(delta > 0) {
+              selectGlobalParameter(selectedPid[selectedBlock] + 1);
+              selectedBlock = 0;
+            }
+        }
         if(encoders[0] != value){
-          selectedBlock = 0;
           encoders[0] = value;
           // We must update encoder value before calculating user value, otherwise
           // previous value would be displayed
           user[selectedPid[0]] = getEncoderValue(0);
         }
+
         if(displayMode == SELECTGLOBALPARAMETER)
           displayMode = STANDARD;
       }
@@ -996,18 +1016,19 @@ public:
             if(delta > 0)
               selectBlockParameter(i, selectedPid[i]+1);
           }
-	else{
-	  if(encoders[i] != value){
-	    selectedBlock = i;
-	    encoders[i] = value;
-	    // We must update encoder value before calculating user value, otherwise
-	    // previous value would be displayed
-	    user[selectedPid[i]] = getEncoderValue(i);
-	  }
-	  if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
-	    displayMode = STANDARD;
-	}
-	encoders[i] = value;
+        else{
+          if(encoders[i] != value){
+            selectedBlock = i;
+            encoders[i] = value;
+            // We must update encoder value before calculating user value, otherwise
+            // previous value would be displayed
+            user[selectedPid[i]] = getEncoderValue(i);
+            selectGlobalParameter(selectedPid[i]);
+          }
+          if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
+            displayMode = STANDARD;
+        }
+        encoders[i] = value;
       }
       if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
         displayMode = ERROR;    
@@ -1031,6 +1052,10 @@ public:
     parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
   }
 
+  int16_t getValue(uint8_t pid){
+    return parameters[pid];
+  }
+
   void updateOutput(uint8_t pid, int16_t value){
     parameters[pid] = max(0, min(4095, (((parameters[pid] + (user[pid]*value))>>12)>>1)));
   }
@@ -1040,17 +1065,14 @@ public:
     //   parameters[selectedPid[i]] = encoders[i] + data[i];
   // }
 
-  void encoderChanged(uint8_t encoder, int32_t delta){
-  }
+  // void encoderChanged(uint8_t encoder, int32_t delta){
+  // }
 
-
-  void setCallback(void *callback){
-    if(callback == NULL)
-      drawCallback = defaultDrawCallback;
-    else
-      drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
-  }
-  void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
+  // void draw(uint8_t* pixels, uint16_t width, uint16_t height){
+  //   ScreenBuffer screen(width, height);
+  //   screen.setBuffer(pixels);
+  //   draw(screen);
+  // }
 };
 
-#endif // __ParameterController_hpp__
+#endif // __MagusParameterController_hpp__

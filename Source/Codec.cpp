@@ -150,6 +150,12 @@ void Codec::setHighPass(bool hpf){
   else
     codec_write(82, 0b00000111); // disable HPF for all ADC channels
 #endif
+#ifdef USE_CS4271
+  if(hpf)
+    codec_write(0x06, 0x10); // hp filters enabled
+  else
+    codec_write(0x06, 0x10 | 0x03 ); // hp filters disabled
+#endif
 }
 
 /** Get the number of individual samples (across channels) that have already been 
@@ -256,12 +262,21 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A
 
 extern "C" {
+#ifdef USE_CS4271
+  void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
+    audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+  }
+  void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
+    audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
+  }
+#else // PCM3168A: TX is slave
   void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
   void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
   }
+#endif
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
     error(CONFIG_ERROR, "SAI DMA Error");
   }
