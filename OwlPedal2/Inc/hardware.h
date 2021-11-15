@@ -1,23 +1,23 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
-#define DEBUG_STACK
-
 #define OWL_PEDAL_MKII
 #define HARDWARE_ID                  OWL_PEDAL_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal mkII"
 
-#define USE_USBD_FS
-#define USBD_DESC FS_Desc
-#define USBD_HSFS DEVICE_FS
-#define USBD_HANDLE hUsbDeviceFS
-#define USBD_PCD_HANDLE hpcd_USB_OTG_FS
+#define USE_SPI_FLASH
 
-/* #define USE_USBD_HS */
-/* #define USBD_DESC HS_Desc */
-/* #define USBD_HSFS DEVICE_HS */
-/* #define USBD_HANDLE hUsbDeviceHS */
-/* #define USBD_PCD_HANDLE hpcd_USB_OTG_HS */
+/* #define USE_USBD_FS */
+/* #define USBD_DESC FS_Desc */
+/* #define USBD_HSFS DEVICE_FS */
+/* #define USBD_HANDLE hUsbDeviceFS */
+/* #define USBD_PCD_HANDLE hpcd_USB_OTG_FS */
+
+#define USE_USBD_HS
+#define USBD_DESC HS_Desc
+#define USBD_HSFS DEVICE_HS
+#define USBD_HANDLE hUsbDeviceHS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_HS
 
 #define USE_USBD_AUDIO
 #define USE_USBD_RX_FB

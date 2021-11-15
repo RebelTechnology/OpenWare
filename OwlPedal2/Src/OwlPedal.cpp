@@ -1,12 +1,22 @@
 #include "Owl.h"
-#include "device.h"
 #include "errorhandlers.h"
+#include "Codec.h"
 #include "MidiController.h"
+#include "ProgramManager.h"
+#include "ApplicationSettings.h"
 #include "OpenWareMidiControl.h"
+#include "PatchRegistry.h"
 #include "Pin.h"
 #include "usb_device.h"
 
 #define PATCH_RESET_COUNTER (1000/MAIN_LOOP_SLEEP_MS)
+#define PATCH_CONFIG_COUNTER (3000/MAIN_LOOP_SLEEP_MS)
+
+static int16_t knobvalues[2];
+static uint8_t patchselect;
+#define PATCH_CONFIG_KNOB_THRESHOLD (4096/4)
+#define PATCH_CONFIG_PROGRAM_CONTROL 0
+#define PATCH_CONFIG_VOLUME_CONTROL 3
 
 // Pin footswitch_pin(GPIOA, GPIO_PIN_0);
 Pin bypass_pin(GPIOA, GPIO_PIN_0);
@@ -58,12 +68,12 @@ void onChangePin(uint16_t pin){
     bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
     setButtonValue(PUSHBUTTON, state);
     setButtonValue(BUTTON_A, state);
-    // midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
-    // setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
-    if(state){
-      // toggle buffered bypass 
-      setBufferedBypass(!getBufferedBypass());
-    }
+    setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
+    midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
+    // if(state){
+    //   // toggle buffered bypass 
+    //   setBufferedBypass(!getBufferedBypass());
+    // }
     break;
   }
   case SW2_Pin: { // mode button
@@ -104,7 +114,7 @@ void setGateValue(uint8_t ch, int16_t value){
   }
 }
 
-void setup(){
+void onSetup(){
   bypass_pin.outputMode();
   bypass_pin.low();
   bufpass_pin.outputMode();
@@ -116,34 +126,87 @@ void setup(){
   led_red_pin.outputMode();
 
   setLed(0, RED_COLOUR);
-  owl.setup();
 
   MX_USB_DEVICE_Init();  
 
   setBufferedBypass(false);
 }
 
-void loop(){
-  static uint32_t counter = PATCH_RESET_COUNTER;
+bool isPushbuttonPressed(){
+  return HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
+}
+
+static uint32_t counter = 0;
+void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+  counter = 0;
+  if(new_mode == CONFIGURE_MODE){
+    knobvalues[0] = getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL);
+    knobvalues[1] = getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL);
+    patchselect = program.getProgramIndex();
+  // }else if(old_mode == CONFIGURE_MODE && new_mode == RUN_MODE){
+  }else if(new_mode == RUN_MODE){
+    setLed(0, getButtonValue(0) ? NO_COLOUR : GREEN_COLOUR); // set green led if not in bypass mode
+  }
+}
+
+
+void onLoop(){
   switch(owl.getOperationMode()){
   case STARTUP_MODE:
   case LOAD_MODE:
+  case STREAM_MODE:
     setLed(0, counter > PATCH_RESET_COUNTER/2 ? GREEN_COLOUR : NO_COLOUR);
+    if(counter-- == 0)
+      counter = PATCH_RESET_COUNTER;
     break;
   case RUN_MODE:
     if(getErrorStatus() != NO_ERROR)
       owl.setOperationMode(ERROR_MODE);
+    if(isPushbuttonPressed()){
+      if(counter-- == 0){
+	owl.setOperationMode(CONFIGURE_MODE);	
+      }else if(counter < PATCH_RESET_COUNTER){
+	setLed(0, counter > PATCH_RESET_COUNTER/2 ? GREEN_COLOUR : NO_COLOUR);
+      }
+    }else{
+      counter = PATCH_CONFIG_COUNTER;
+    }
     break;
   case CONFIGURE_MODE:
-    owl.setOperationMode(RUN_MODE);
+    if(isPushbuttonPressed()){
+      if(abs(knobvalues[0] - getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL)) >= PATCH_CONFIG_KNOB_THRESHOLD){
+	knobvalues[0] = -PATCH_CONFIG_KNOB_THRESHOLD;
+	uint8_t idx = 1 + (getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL) * registry.getNumberOfPatches()) / 4096;
+	if(registry.hasPatch(idx)){
+	  patchselect = idx;
+	  midi_tx.sendPc(idx);
+	  setLed(0, idx & 0x01 ? RED_COLOUR : GREEN_COLOUR);
+	}
+      }
+      if(abs(knobvalues[1] - getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL)) >= PATCH_CONFIG_KNOB_THRESHOLD){
+	knobvalues[1] = -PATCH_CONFIG_KNOB_THRESHOLD;
+	uint8_t value = (getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL) >> 6) + 63;
+	if(settings.audio_output_gain != value){
+	  settings.audio_output_gain = value;
+	  codec.setOutputGain(value);
+	  midi_tx.sendCc(MIDI_CC_VOLUME, value);
+	}
+      }
+    }else{      
+      if(program.getProgramIndex() != patchselect &&
+	 registry.hasPatch(patchselect)){
+	// change patch on mode button release
+	program.loadProgram(patchselect); // enters load mode (calls onChangeMode)
+	program.resetProgram(false);
+      }else{
+	owl.setOperationMode(RUN_MODE);
+      }
+    }
     break;
-  case STREAM_MODE:
   case ERROR_MODE:
     setLed(0, counter > PATCH_RESET_COUNTER/2 ? RED_COLOUR : NO_COLOUR);
+    if(counter-- == 0)
+      counter = PATCH_RESET_COUNTER;
     break;
   }
-  if(--counter == 0)
-    counter = PATCH_RESET_COUNTER;
-
-  owl.loop();
 }

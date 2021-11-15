@@ -54,6 +54,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "errorhandlers.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -786,7 +788,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, EXP_TIP_Pin|CS_nCS_Pin|CS_nRST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, FLASH_WP_Pin|EXP_TIP_Pin|CS_nCS_Pin|CS_nRST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PC13 PC14 PC6 PC7
                            PC8 PC9 PC10 PC11
@@ -831,19 +833,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(FOOTSWITCH_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB0 PB12 PB4 PB7
-                           PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_12|GPIO_PIN_4|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : EXP_TIP_Pin CS_nCS_Pin CS_nRST_Pin */
-  GPIO_InitStruct.Pin = EXP_TIP_Pin|CS_nCS_Pin|CS_nRST_Pin;
+  /*Configure GPIO pins : FLASH_WP_Pin EXP_TIP_Pin CS_nCS_Pin CS_nRST_Pin */
+  GPIO_InitStruct.Pin = FLASH_WP_Pin|EXP_TIP_Pin|CS_nCS_Pin|CS_nRST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB12 PB4 PB7 PB8
+                           PB9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_4|GPIO_PIN_7|GPIO_PIN_8
+                          |GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD11 PD12 PD13 PD3
@@ -908,7 +910,6 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
     loop();
-    /* osDelay(1); */
   }
   /* USER CODE END 5 */
 }
@@ -920,7 +921,6 @@ void StartDefaultTask(void const * argument)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
 #ifdef DEBUG
   __asm__("BKPT");
 #else
@@ -940,8 +940,6 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-    ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 #ifdef DEBUG
   __asm__("BKPT");
 #else
