@@ -151,6 +151,9 @@ void Error_Handler(void);
 #define SW2_Pin GPIO_PIN_9
 #define SW2_GPIO_Port GPIOG
 #define SW2_EXTI_IRQn EXTI9_5_IRQn
+#define SW1_ALT_Pin GPIO_PIN_10
+#define SW1_ALT_GPIO_Port GPIOG
+#define SW1_ALT_EXTI_IRQn EXTI15_10_IRQn
 #define FLASH_SCK_Pin GPIO_PIN_3
 #define FLASH_SCK_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */

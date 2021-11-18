@@ -56,16 +56,25 @@ void setBufferedBypass(bool value){
   bufpass_pin.set(!value);
 }
 
+bool isPushbuttonPressed(){
+  return HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET ||
+    HAL_GPIO_ReadPin(SW1_ALT_GPIO_Port, SW1_ALT_Pin) == GPIO_PIN_RESET;
+}
+
 void onChangePin(uint16_t pin){
   switch(pin){
-  case FOOTSWITCH_Pin: { // stomp switch
+  case FOOTSWITCH_Pin: { // bypass / stomp switch
     bool state = HAL_GPIO_ReadPin(FOOTSWITCH_GPIO_Port, FOOTSWITCH_Pin) == GPIO_PIN_RESET;
     setButtonValue(0, state);
     setLed(0, state ? NO_COLOUR : GREEN_COLOUR);
+
+    // todo: save LED state
+    // todo: only allow config mode in bypass?
     break;
   }
-  case SW1_Pin: { // pushbutton
-    bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
+  case SW1_Pin:
+  case SW1_ALT_Pin: { // pushbutton
+    bool state = isPushbuttonPressed();
     setButtonValue(PUSHBUTTON, state);
     setButtonValue(BUTTON_A, state);
     setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
@@ -132,10 +141,6 @@ void onSetup(){
   setBufferedBypass(false);
 }
 
-bool isPushbuttonPressed(){
-  return HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
-}
-
 static uint32_t counter = 0;
 void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   counter = 0;
@@ -153,9 +158,13 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
 void onLoop(){
   switch(owl.getOperationMode()){
   case STARTUP_MODE:
-  case LOAD_MODE:
   case STREAM_MODE:
     setLed(0, counter > PATCH_RESET_COUNTER/2 ? GREEN_COLOUR : NO_COLOUR);
+    if(counter-- == 0)
+      counter = PATCH_RESET_COUNTER;
+    break;
+  case LOAD_MODE:
+    setLed(0, counter > PATCH_RESET_COUNTER/10 ? GREEN_COLOUR : NO_COLOUR);
     if(counter-- == 0)
       counter = PATCH_RESET_COUNTER;
     break;
@@ -166,7 +175,7 @@ void onLoop(){
       if(counter-- == 0){
 	owl.setOperationMode(CONFIGURE_MODE);	
       }else if(counter < PATCH_RESET_COUNTER){
-	setLed(0, counter > PATCH_RESET_COUNTER/2 ? GREEN_COLOUR : NO_COLOUR);
+	setLed(0, counter > PATCH_RESET_COUNTER/10 ? GREEN_COLOUR : NO_COLOUR);
       }
     }else{
       counter = PATCH_CONFIG_COUNTER;

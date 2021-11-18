@@ -5,7 +5,7 @@
 #define HARDWARE_ID                  OWL_PEDAL_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal mkII"
 
-#define USE_SPI_FLASH
+/* #define USE_SPI_FLASH */
 
 /* #define USE_USBD_FS */
 /* #define USBD_DESC FS_Desc */
@@ -52,7 +52,7 @@
 #define ADC_E 4
 #define USE_CODEC
 #define USE_CS4271
-/* #define CODEC_HP_FILTER */
+#define CODEC_HP_FILTER
 #define CODEC_SPI hspi4
 
 #define NOF_ADC_VALUES               5
