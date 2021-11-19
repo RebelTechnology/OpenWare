@@ -89,7 +89,9 @@ void codec_init(){
 #endif
 
   /* Register: DAC Output Phase */
-  /* codec_write(67, 0xff); // phase invert all DAC channels */
+#ifdef CODEC_DAC_INVERT
+  codec_write(67, 0xff); // phase invert all DAC channels
+#endif
 
   /* Register: DAC Soft Mute Control */
   /* codec_write(68, 0xff); // enable soft mute for all DAC channels */
@@ -123,7 +125,9 @@ void codec_init(){
   codec_write(83, 0b00111111); // singled ended inputs on all ADC channels
 
   /* Register: ADC Input Phase */
+#ifdef CODEC_ADC_INVERT
   codec_write(84, 0b00111111); // phase invert all ADC channels
+#endif
 
   /* Register: ADC Overflow Flag */
 /*   ADC Overflow flag (read-only) */
