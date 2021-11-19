@@ -23,6 +23,8 @@
 
 #define USE_CODEC
 #define USE_PCM3168A
+#define CODEC_ADC_INVERT
+#define CODEC_DAC_INVERT
 /* #define CODEC_HP_FILTER */
 #define CODEC_SPI hspi2
 
