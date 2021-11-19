@@ -155,13 +155,17 @@ void onSetup(){
 static uint32_t counter = 0;
 void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   counter = 0;
+  setLed(0, NO_COLOUR);
   if(new_mode == CONFIGURE_MODE){
     knobvalues[0] = getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL);
     knobvalues[1] = getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL);
     patchselect = program.getProgramIndex();
-  // }else if(old_mode == CONFIGURE_MODE && new_mode == RUN_MODE){
   }else if(new_mode == RUN_MODE){
-    setLed(0, getButtonValue(0) ? NO_COLOUR : GREEN_COLOUR); // set green led if not in bypass mode
+    if(HAL_GPIO_ReadPin(FOOTSWITCH_GPIO_Port, FOOTSWITCH_Pin) == GPIO_PIN_RESET){
+      setButtonValue(0, true);
+    }else{
+      setLed(0, GREEN_COLOUR); // todo: restore to saved state
+    }
   }
 }
 
