@@ -50,11 +50,12 @@
 #define ADC_C 2
 #define ADC_D 3
 #define ADC_E 4
+#define ADC_F 5
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_HP_FILTER
 #define CODEC_SPI hspi4
 
-#define NOF_ADC_VALUES               5
+#define NOF_ADC_VALUES               6
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (2+4)

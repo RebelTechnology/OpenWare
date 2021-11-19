@@ -21,7 +21,8 @@ static uint8_t patchselect;
 // Pin footswitch_pin(GPIOA, GPIO_PIN_0);
 Pin bypass_pin(GPIOA, GPIO_PIN_0);
 Pin bufpass_pin(GPIOF, GPIO_PIN_9); // high is bypass
-Pin exp1_ring_pin(GPIOA, GPIO_PIN_2);
+Pin exp1_tip_pin(GPIOA, GPIO_PIN_2);
+Pin exp1_ring_pin(GPIOA, GPIO_PIN_3);
 Pin led_green_pin(GPIOB, GPIO_PIN_8);
 Pin led_red_pin(GPIOB, GPIO_PIN_9);
 
@@ -123,13 +124,23 @@ void setGateValue(uint8_t ch, int16_t value){
   }
 }
 
+void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
+  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
+  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
+  parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_E])>>2;
+}
+
 void onSetup(){
   bypass_pin.outputMode();
   bypass_pin.low();
   bufpass_pin.outputMode();
   bufpass_pin.low();
+  // Ring is available on ADC_F
   exp1_ring_pin.outputMode();
   exp1_ring_pin.high();
+  // exp1_tip_pin.analogMode();
 
   led_green_pin.outputMode();
   led_red_pin.outputMode();
