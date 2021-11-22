@@ -42,7 +42,7 @@ public:
   // virtual void updateEncoders(int16_t* data, uint8_t size){}
   virtual void enter(){}
   virtual void exit(){}
-  virtual void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){}
+  virtual void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){}
 };
 
 class GeniusParameterController : public ParameterController {
@@ -73,16 +73,16 @@ public:
   }
   void updateEncoders(int16_t* data, uint8_t size){
     if(data[0] != encoders[0]){
-      encoderChanged(0, data[0] - encoders[0], encoders[0]);
+      encoderChanged(0, data[0], encoders[0]);
       encoders[0] = data[0];
     }
     if(data[1] != encoders[1]){
-      encoderChanged(1, data[1] - encoders[1], encoders[1]);
+      encoderChanged(1, data[1], encoders[1]);
       encoders[1] = data[1];
     }
   }
-  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){
-    page->encoderChanged(encoder, delta, previous);
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    page->encoderChanged(encoder, current, previous);
   }
   // update value with encoder
   void setUserValue(uint8_t ch, int16_t value){
@@ -122,18 +122,21 @@ class SelectControlPage : public Page {
   const uint8_t ctrl;
   size_t counter; // ticks since switch was pressed down
   static constexpr size_t TOGGLE_LIMIT = (400/SCREEN_LOOP_SLEEP_MS);
+  int8_t remainder = 0;
 public:
   int8_t select;
   SelectControlPage(uint8_t ctrl, int8_t select): ctrl(ctrl), select(select){}
   void enter(){
     counter = 0;
   }
-  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == ctrl){
-      delta = (delta + (previous & 0x03)) / 4;
-      if(delta > 0)
+      int32_t delta = current - previous + remainder;
+      int32_t value = delta / 4; // or use `struct div_t std::div(int, int)`
+      remainder = delta - value * 4; // ARM Cortex SDIV instruction discards remainder
+      if(value > 0)
 	select = min(NOF_PARAMETERS-1, select+1);
-      else if(delta < 0)
+      else if(value < 0)
 	select = max(0, select-1);
     }
   }
@@ -226,7 +229,7 @@ public:
 
 class StatsPage : public Page {
 public:
-  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){}
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){}
   void draw(ScreenBuffer& screen){
     if(sw1() || sw2()){
       setDisplayMode(EXIT_DISPLAY_MODE);
@@ -275,19 +278,22 @@ class AssignPage : public Page {
 private:
   uint8_t select;
   uint8_t assign;
+  int8_t remainder = 0;
   static constexpr const char* assignations[] = {"CV A In", "CV B In", "CV A Out", "CV B Out"};
 public:
-  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){
-    delta = (delta + (previous & 0x03)) / 4;
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    int32_t delta = current - previous + remainder;
+    int32_t value = delta / 4;
+    remainder = delta - value * 4; // ARM Cortex SDIV instruction discards remainder
     if(encoder == 0){
-      if(delta > 0)
+      if(value > 0)
 	select = min(3, select+1);
-      else if(delta < 0)
+      else if(value < 0)
 	select = max(0, select-1);
     }else{
-      if(delta > 0)
+      if(value > 0)
 	assign = min(NOF_PARAMETERS-1, assign+1);
-      else if(delta < 0)
+      else if(value < 0)
 	assign = max(0, assign-1);
     }
   }
@@ -311,7 +317,8 @@ public:
 
 class StandardPage : public Page {
 public:
-  void encoderChanged(uint8_t encoder, int32_t delta, int32_t previous){
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    int32_t delta = current - previous;
     int select = encoder == 0 ? selectOnePage.select : selectTwoPage.select;
     if(delta > 0)
       delta = 20 << (delta/2);
