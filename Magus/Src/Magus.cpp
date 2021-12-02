@@ -12,8 +12,6 @@
 #include "Storage.h"
 #include "MagusParameterController.hpp"
 
-// 63, 19, 60 // TODO: balance levels
-
 const uint32_t* dyn_rainbowinputs = rainbowinputs;
 const uint32_t* dyn_rainbowoutputs = rainbowoutputs;
 
@@ -28,6 +26,25 @@ uint16_t progress_counter = 0;
 void setProgress(uint16_t value, const char* reason){
   progress_message = (char*)reason;
   progress_counter = value;
+}
+
+void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+  switch(new_mode){
+  case STARTUP_MODE:
+  case STREAM_MODE:
+  case LOAD_MODE:
+    setDisplayMode(PROGRESS_DISPLAY_MODE);
+    break;
+  case CONFIGURE_MODE:
+    setDisplayMode(STATUS_DISPLAY_MODE);
+    break;
+  case RUN_MODE:
+    setDisplayMode(STANDARD_DISPLAY_MODE);
+    break;
+  case ERROR_MODE:
+    setDisplayMode(ERROR_DISPLAY_MODE);
+    break;
+  }
 }
 
 static bool updateMAX11300 = false;
