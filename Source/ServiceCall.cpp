@@ -143,7 +143,7 @@ static int handleLoadResource(void** params, int len){
     // We require offset to be aligned to 4 bytes
     if (res != NULL && !(offset & 0b11)) {
       if (*buffer == NULL) {
-        // Buffer pointer not given, so we will update value refenced by max_size with
+        // Buffer pointer not given, so we will update value referenced by max_size with
         // actual resource size here
         *max_size = res->getDataSize() - offset;
 	if(res->isMemoryMapped())
