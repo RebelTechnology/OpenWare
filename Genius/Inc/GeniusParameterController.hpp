@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <algorithm>
 #include "device.h"
 #include "errorhandlers.h"
 #include "ProgramVector.h"
@@ -37,12 +38,32 @@ enum DisplayMode {
 void setDisplayMode(DisplayMode mode);
 
 class Page {
+protected:
+  static constexpr int16_t encoder_sensitivity = 1;
+  static constexpr int16_t encoder_mask = 0x01;
 public:
   virtual void draw(ScreenBuffer& screen){}
   // virtual void updateEncoders(int16_t* data, uint8_t size){}
   virtual void enter(){}
   virtual void exit(){}
   virtual void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){}
+  int16_t getDiscreteEncoderValue(int16_t current, int16_t previous){
+    int32_t delta = (current - previous) * encoder_sensitivity;    
+    if(delta > 0 && (current & encoder_mask) == encoder_mask)
+      return 1;
+    if(delta < 0 && (current & encoder_mask) == encoder_mask)
+      return -1;
+    return 0;
+  }
+
+  int16_t getContinuousEncoderValue(int16_t current, int16_t previous){
+    int32_t delta = (current - previous) * encoder_sensitivity;    
+    if(delta > 0)
+      delta = 20 << (delta/2);
+    else
+      delta = -20 << (-delta/2);
+    return delta;
+  }
 };
 
 class GeniusParameterController : public ParameterController {
@@ -54,8 +75,10 @@ public:
   // for assignable CV / modulations
   // int16_t user[NOF_PARAMETERS]; // user set values (ie by encoder or MIDI)
   GeniusParameterController() {
-    encoders[0] = INT16_MAX/2;
-    encoders[1] = INT16_MAX/2;
+    // encoders[0] = INT16_MAX/2;
+    // encoders[1] = INT16_MAX/2;
+    encoders[0] = 0;
+    encoders[1] = 0;
     reset();
     setDisplayMode(PROGRESS_DISPLAY_MODE);
   }
@@ -73,11 +96,11 @@ public:
   }
   void updateEncoders(int16_t* data, uint8_t size){
     if(data[0] != encoders[0]){
-      encoderChanged(0, data[0], encoders[0]);
+      page->encoderChanged(0, data[0], encoders[0]);
       encoders[0] = data[0];
     }
     if(data[1] != encoders[1]){
-      encoderChanged(1, data[1], encoders[1]);
+      page->encoderChanged(1, data[1], encoders[1]);
       encoders[1] = data[1];
     }
   }
@@ -122,7 +145,6 @@ class SelectControlPage : public Page {
   const uint8_t ctrl;
   size_t counter; // ticks since switch was pressed down
   static constexpr size_t TOGGLE_LIMIT = (400/SCREEN_LOOP_SLEEP_MS);
-  int8_t remainder = 0;
 public:
   int8_t select;
   SelectControlPage(uint8_t ctrl, int8_t select): ctrl(ctrl), select(select){}
@@ -130,16 +152,9 @@ public:
     counter = 0;
   }
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
-    if(encoder == ctrl){
-      int32_t delta = current - previous + remainder;
-      int32_t value = delta / 4; // or use `struct div_t std::div(int, int)`
-      remainder = delta - value * 4; // ARM Cortex SDIV instruction discards remainder
-      if(value > 0)
-	select = min(NOF_PARAMETERS-1, select+1);
-      else if(value < 0)
-	select = max(0, select-1);
+    if(encoder == ctrl)
+      select = std::clamp(select + getDiscreteEncoderValue(current, previous), 0, NOF_PARAMETERS-1);
     }
-  }
   void draw(ScreenBuffer& screen){
     if(!sw(ctrl)){
       // encoder switch released
@@ -278,24 +293,17 @@ class AssignPage : public Page {
 private:
   uint8_t select;
   uint8_t assign;
-  int8_t remainder = 0;
   static constexpr const char* assignations[] = {"CV A In", "CV B In", "CV A Out", "CV B Out"};
+  int16_t enc, del;
 public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
-    int32_t delta = current - previous + remainder;
-    int32_t value = delta / 4;
-    remainder = delta - value * 4; // ARM Cortex SDIV instruction discards remainder
     if(encoder == 0){
-      if(value > 0)
-	select = min(3, select+1);
-      else if(value < 0)
-	select = max(0, select-1);
+      select = std::clamp(select + getDiscreteEncoderValue(current, previous), 0, 3);
     }else{
-      if(value > 0)
-	assign = min(NOF_PARAMETERS-1, assign+1);
-      else if(value < 0)
-	assign = max(0, assign-1);
+      assign = std::clamp(assign + getDiscreteEncoderValue(current, previous), 0, NOF_PARAMETERS-1);
     }
+    enc = current;
+    del = current - previous;
   }
   void enter(){
     select = 0;
@@ -311,6 +319,10 @@ public:
       screen.print(1, 26, assignations[select]);
       screen.print(": ");
       screen.print(params.getName(assign));
+      screen.setCursor(1, 36);
+      screen.print(enc);
+      screen.setCursor(1, 46);
+      screen.print(del);
     }
   }
 };
@@ -318,15 +330,10 @@ public:
 class StandardPage : public Page {
 public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
-    int32_t delta = current - previous;
-    int select = encoder == 0 ? selectOnePage.select : selectTwoPage.select;
-    if(delta > 0)
-      delta = 20 << (delta/2);
-    else
-      delta = -20 << (-delta/2);
-    // delta = min(819, max(-819, delta)); // max rate of change +/- 20%
-    // delta = min(1229, max(-1229, delta)); // max rate of change +/- 30%
-    params.setUserValue(select, min(4095, max(0, params.getUserValue(select) + delta)));
+    uint8_t select = encoder == 0 ? selectOnePage.select : selectTwoPage.select;
+    int16_t value = getContinuousEncoderValue(current, previous);
+    value = std::clamp(params.getUserValue(select) + value, 0, 4095);
+    params.setUserValue(select, value);
   }
   void draw(ScreenBuffer& screen){
     if(sw1()){
