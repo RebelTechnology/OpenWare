@@ -164,8 +164,8 @@ __weak void setup(){
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
 #endif /* USE_ENCODERS */
-  onSetup();
   owl.setup();
+  onSetup();
 }
 
 __weak void onLoop(){
