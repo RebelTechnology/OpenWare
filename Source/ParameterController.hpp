@@ -14,7 +14,7 @@ public:
   virtual void reset(){
     for(size_t i=0; i<NOF_PARAMETERS; ++i){
       size_t c = 0;
-      if(i > 8)
+      if(i >= 8)
 	names[i][c++] = '@'+(i/8);
       names[i][c++] = 'A'+(i%8);
       names[i][c] = '\0';
@@ -26,17 +26,18 @@ public:
   virtual void updateEncoders(int16_t* data, uint8_t size) = 0;
   /* Update parameters with ADC values */
   virtual void updateValues(int16_t* values, size_t len){};
+  virtual void setValue(uint8_t pid, int16_t value){    
+    parameters[pid] = value;
+  }
   const char* getName(uint8_t pid){
     if(pid < NOF_PARAMETERS)
       return names[pid];
     return "";
   }
-  void setName(uint8_t pid, const char* name){
+  virtual void setName(uint8_t pid, const char* name){
+    // todo : set direction (input/output), type (parameter/button)
     if(pid < NOF_PARAMETERS)
       strncpy(names[pid], name, 11);
-  }
-  void setValue(uint8_t pid, int16_t value){    
-    parameters[pid] = value;
   }
   int16_t getValue(uint8_t pid){
     return parameters[pid];
