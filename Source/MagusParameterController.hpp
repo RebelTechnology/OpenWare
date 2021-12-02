@@ -18,7 +18,6 @@
 #include "HAL_TLC5946.h"
 
 #define NOF_ENCODERS 6
-#define ENC_MULTIPLIER 6 // shift left by this many steps
 #define SHOW_CALIBRATION_INFO  // This flag renders current values in calibration menu
 #define CALIBRATION_INFO_FLOAT // Display float values instead of raw integers
 
@@ -53,7 +52,6 @@ press once to toggle mode: update > select
 turn to scroll through 4 functions
 press again to select parameter: select > update
 
-
 todo:
 - update parameter / encoderChanged
 - select parameter
@@ -63,20 +61,18 @@ todo:
 class MagusParameterController : public ParameterController {
 public:
   enum EncoderSensitivity {
-      SENS_SUPER_FINE = 0,
-      SENS_FINE = (ENC_MULTIPLIER / 2),
-      SENS_STANDARD = ENC_MULTIPLIER,
-      SENS_COARSE = (3 * ENC_MULTIPLIER / 2),
-      SENS_SUPER_COARSE = (ENC_MULTIPLIER * 2)
+      SENS_SUPER_FINE = 1,
+      SENS_FINE = 2,
+      SENS_STANDARD = 3,
+      SENS_COARSE = 4, 
+      SENS_SUPER_COARSE = 5
   };
   EncoderSensitivity encoderSensitivity = SENS_STANDARD;
   // Sensitivity is currently not stored in settings, but it's not reset either.
   bool sensitivitySelected;
-  
+  static constexpr int16_t encoder_mask = 0x03;
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
-  int16_t offsets[NOF_ENCODERS]; // last seen encoder values
   int16_t user[NOF_PARAMETERS]; // user set values (ie by encoder or MIDI)
-  char names[NOF_PARAMETERS][12];
   // char blocknames[4][NOF_ENCODERS] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   uint8_t selectedBlock;
   uint8_t selectedPid[NOF_ENCODERS];
@@ -84,7 +80,7 @@ public:
     STANDARD, SELECTBLOCKPARAMETER, SELECTGLOBALPARAMETER, CONTROL, ERROR
   };
   DisplayMode displayMode;
-  
+
   enum ControlMode {
     PLAY, STATUS, PRESET, DATA, VOLUME, LEDS, CALIBRATE, EXIT, NOF_CONTROL_MODES
   };
@@ -124,10 +120,6 @@ public:
     for(int i=0; i<NOF_PARAMETERS; ++i){
       user[i] = 0;
     }
-    for(int i=0; i<NOF_ENCODERS; ++i){
-      // encoders[i] = 0;
-      offsets[i] = 0;
-    }
     selectedBlock = 0;
     selectedPid[0] = PARAMETER_BA;
     selectedPid[1] = 0;
@@ -141,14 +133,6 @@ public:
     for(int i=0; i<20; ++i)
       setPortMode(i, PORT_UNI_INPUT);
 #endif
-  }
- 
-  int16_t getEncoderValue(uint8_t eid){
-    return (encoders[eid] - offsets[eid]) << encoderSensitivity;
-  }
-
-  void setEncoderValue(uint8_t eid, int16_t value){
-    offsets[eid] = encoders[eid] - (value >> encoderSensitivity);
   }
 
   void drawLoadProgress(ScreenBuffer &screen){
@@ -645,23 +629,15 @@ public:
   }
 
   void setName(uint8_t pid, const char* name){
-    if(pid < NOF_PARAMETERS){
-      strncpy(names[pid], name, 11);
+    ParameterController::setName(pid, name);
 #ifdef OWL_MAGUS
-      if(names[pid][strnlen(names[pid], 11)-1] == '>')
+    if(pid < NOF_PARAMETERS){
+      if(name[strnlen(name, 11)-1] == '>')
         setPortMode(pid, PORT_UNI_OUTPUT);
       else
         setPortMode(pid, PORT_UNI_INPUT);
-#endif
     }
-  }
-
-  void setTitle(const char* str){
-    strncpy(title, str, 10);    
-  }
-
-  uint8_t getSize(){
-    return NOF_PARAMETERS;
+#endif
   }
 
   void selectBlockParameter(uint8_t enc, int8_t pid){
@@ -671,12 +647,10 @@ public:
     if(pid == i*2+7)
       pid = i*2+1; // skip down
     selectedPid[enc] = max(i*2, min(i*2+9, pid));
-    setEncoderValue(enc, user[selectedPid[enc]]);
   }
 
   void selectGlobalParameter(int8_t pid){
     selectedPid[0] = max(0, min(NOF_PARAMETERS-1, pid));
-    setEncoderValue(0, user[selectedPid[0]]);
   }
 
   void setControlMode(uint8_t value){
@@ -779,10 +753,10 @@ public:
       }
       else{
         int16_t delta = value - encoders[1];
-        if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
+        if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES && (value & encoder_mask) == 0){
           setControlMode(controlMode+1);
         }
-        else if(delta < 0 && controlMode > 0){
+        else if(delta < 0 && controlMode > 0 && (value & encoder_mask) == 0){
           setControlMode(controlMode-1);
         }
         if (controlMode == CALIBRATE) {
@@ -852,32 +826,22 @@ public:
   }
 
   void setControlModeValue(uint8_t value){
-    bool sensitivityChanged = false;
     switch(controlMode){
     case PLAY:
-        sensitivitySelected = true;
-        value = max((uint8_t)SENS_SUPER_FINE, min((uint8_t)SENS_SUPER_COARSE, value));
-        if (value > (uint8_t)encoderSensitivity){
-          encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity + ENC_MULTIPLIER / 2);
-          value = (uint8_t)encoderSensitivity;
-          sensitivityChanged = true;
-        }
-        else {
-            if (selectedPid[1] < encoderSensitivity) {
-                encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity - ENC_MULTIPLIER / 2);
-                value = (uint8_t)encoderSensitivity;
-                sensitivityChanged = true;
-            }
-        }
-        selectedPid[1] = value;
-        if (sensitivityChanged) {
-          for (int eid = 0; eid < NOF_ENCODERS; eid++) {
-              // We update encoders with previous values recalculated with different sensitivity
-              if (eid != 1)
-                setEncoderValue(eid, user[selectedPid[eid]]);
-          }
-        }
-        break;
+      sensitivitySelected = true;
+      value = max((uint8_t)SENS_SUPER_FINE, min((uint8_t)SENS_SUPER_COARSE, value));
+      if (value > (uint8_t)encoderSensitivity){
+	encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity + 1);
+	value = (uint8_t)encoderSensitivity;
+      }
+      else {
+	if (value < encoderSensitivity) {
+	  encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity - 1);
+	  value = (uint8_t)encoderSensitivity;
+	}
+      }
+      selectedPid[1] = value;
+      break;
     case VOLUME:
       selectedPid[1] = max(0, min(127, value));
       codec.setOutputGain(selectedPid[1]);
@@ -923,7 +887,7 @@ public:
       break;
     }
   }
-
+  
   void updateEncoders(int16_t* data, uint8_t size){
     uint16_t pressed = data[0];
 
@@ -934,114 +898,96 @@ public:
       selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
       if(pressed&0x3c) // exit status mode if any other encoder is pressed
         controlMode = EXIT;
-      // use delta value from encoder 0 top left, store in selectedPid[1]
-      int16_t delta = data[1] - encoders[0];
-      if(delta > 0 && selectedPid[1] < 127) {
-        setControlModeValue(selectedPid[1]+1);
-      }
-      else {
-          if(delta < 0 && selectedPid[1] > 0) {
-            setControlModeValue(selectedPid[1]-1);
-          }
-      }
+      // use delta value from encoder 0 top left
+      int16_t delta = getDiscreteEncoderValue(data[1], encoders[0]);
+      // we use selectedPid[1] to store control values because we don't need it to select a pid
+      setControlModeValue(selectedPid[1] + delta);
       encoders[0] = data[1];
       return; // skip normal encoder processing
-      // todo: should update offsets so values aren't changed on exit
     }
-    else {
-      if(pressed & (1 << 1)){
-        displayMode = CONTROL;
-        controlMode = PLAY;
-        selectedPid[1] = encoderSensitivity;
-      }
-      encoders[1] = value;
+    if(pressed & (1 << 1)){
+      displayMode = CONTROL;
+      controlMode = PLAY;
+      selectedPid[1] = encoderSensitivity; // initialise control value
+    }
+    encoders[1] = value;
 
-      // update encoder 0 top left
-      value = data[1];
-      if(pressed & (1<<0)){
-        // update selected global parameter
-        // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
-        displayMode = SELECTGLOBALPARAMETER;
-        int16_t delta = value - encoders[0];
-        selectedPid[0] = selectedPid[selectedBlock];
-        selectedBlock = 0;
-        if(delta < 0) {
-          selectGlobalParameter(selectedPid[selectedBlock] - 1);
+    // update encoder 0 top left
+    value = data[1];
+    if(pressed & (1<<0)){
+      // update selected global parameter
+      // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
+      displayMode = SELECTGLOBALPARAMETER;
+      int16_t delta = getDiscreteEncoderValue(value, encoders[0]);
+      selectedPid[0] = selectedPid[selectedBlock];
+      selectedBlock = 0;
+      selectGlobalParameter(selectedPid[selectedBlock] + delta);
+    }
+    else{
+      if (displayMode == STANDARD) {
+	// Quick selection of global parameter by right encoder - without popover menu
+	int16_t delta = getDiscreteEncoderValue(data[2], right_enc);
+	encoders[1] = data[2];
+	selectGlobalParameter(selectedPid[selectedBlock] + delta);
+	selectedBlock = 0;
       }
-        else {
-          if(delta > 0) {              
-            selectGlobalParameter(selectedPid[selectedBlock] + 1);
-          }
-        }
+      if(encoders[0] != value){
+	user[selectedPid[0]] += getContinuousEncoderValue(value, encoders[0]);
+	encoders[0] = value;
+      }
+
+      if(displayMode == SELECTGLOBALPARAMETER)
+	displayMode = STANDARD;
+    }
+    encoders[0] = value;
+
+    // update encoders 2-6 bottom row
+    for(uint8_t i=2; i<NOF_ENCODERS; ++i){
+      value = data[i+1]; // +1 for buttons
+      if(pressed&(1<<i)){
+	// update selected block parameter
+	selectedBlock = i;
+	displayMode = SELECTBLOCKPARAMETER;
+	int16_t delta = getDiscreteEncoderValue(value, encoders[i]);
+	selectBlockParameter(i, selectedPid[i] + delta);
       }
       else{
-        if (displayMode == STANDARD) {
-          // Quick selection of global parameter by right encoder - without popover menu
-          int16_t delta = data[2] - right_enc;
-          encoders[1] = data[2];
-          if(delta < 0) {
-            selectGlobalParameter(selectedPid[selectedBlock] - 1);
-            selectedBlock = 0;
-          }
-          else
-            if(delta > 0) {
-              selectGlobalParameter(selectedPid[selectedBlock] + 1);
-              selectedBlock = 0;
-            }
-        }
-        if(encoders[0] != value){
-          encoders[0] = value;
-          // We must update encoder value before calculating user value, otherwise
-          // previous value would be displayed
-          user[selectedPid[0]] = getEncoderValue(0);
-        }
-
-        if(displayMode == SELECTGLOBALPARAMETER)
-          displayMode = STANDARD;
+	if(encoders[i] != value){
+	  selectedBlock = i;	    
+	  user[selectedPid[i]] += getContinuousEncoderValue(value, encoders[i]);
+	  encoders[i] = value;
+	  selectGlobalParameter(selectedPid[i]);
+	}
+	if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
+	  displayMode = STANDARD;
       }
-      encoders[0] = value;
-
-      // update encoders 2-6 bottom row
-      for(uint8_t i=2; i<NOF_ENCODERS; ++i){
-        value = data[i+1]; // +1 for buttons
-        if(pressed&(1<<i)){
-          // update selected block parameter
-          selectedBlock = i;
-          displayMode = SELECTBLOCKPARAMETER;
-          int16_t delta = value - encoders[i];
-          if(delta < 0) {
-            selectBlockParameter(i, selectedPid[i]-1);
-          }
-          else
-            if(delta > 0)
-              selectBlockParameter(i, selectedPid[i]+1);
-          }
-        else{
-          if(encoders[i] != value){
-            selectedBlock = i;
-            encoders[i] = value;
-            // We must update encoder value before calculating user value, otherwise
-            // previous value would be displayed
-            user[selectedPid[i]] = getEncoderValue(i);
-            selectGlobalParameter(selectedPid[i]);
-          }
-          if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
-            displayMode = STANDARD;
-        }
-        encoders[i] = value;
-      }
-      if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
-        displayMode = ERROR;    
+      encoders[i] = value;
     }
+    if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
+      displayMode = ERROR;    
   }
 
-  // called by MIDI cc and/or from patch
+  int16_t getDiscreteEncoderValue(int16_t current, int16_t previous){
+    int32_t delta = (current - previous) * encoderSensitivity;
+    if(delta > 0 && (delta & encoder_mask) == 0)
+      return 1;
+    if(delta < 0 && (delta & encoder_mask) == 0)
+      return -1;
+    return 0;
+  }
+
+  int16_t getContinuousEncoderValue(int16_t current, int16_t previous){
+    int32_t delta = (current - previous) * encoderSensitivity;
+    if(delta > 0)
+      delta = 20 << (delta/2);
+    else
+      delta = -20 << (-delta/2);
+    return delta;
+  }
+
+// called by MIDI cc and/or from patch
   void setValue(uint8_t pid, int16_t value){
     user[pid] = value;
-    // reset encoder value if associated through selectedPid to avoid skipping
-    for(int i=0; i<NOF_ENCODERS; ++i)
-      if(selectedPid[i] == pid)
-        setEncoderValue(i, value);
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
   }
@@ -1060,10 +1006,10 @@ public:
     parameters[pid] = max(0, min(4095, (((parameters[pid] + (user[pid]*value))>>12)>>1)));
   }
 
-  // void updateValues(uint16_t* data, uint8_t size){
-    // for(int i=0; i<16; ++i)
-    //   parameters[selectedPid[i]] = encoders[i] + data[i];
-  // }
+  void updateValues(uint16_t* data, uint8_t size){
+    for(int i=0; i<size; ++i)
+      updateValue(i, data[i]);
+  }
 
   // void encoderChanged(uint8_t encoder, int32_t delta){
   // }
