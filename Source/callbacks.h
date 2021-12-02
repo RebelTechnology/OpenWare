@@ -14,6 +14,7 @@ extern "C" {
     RUN_MODE,
     CONFIGURE_MODE,
     STREAM_MODE,
+    BYPASS_MODE,
     ERROR_MODE
   } OperationMode;
 
