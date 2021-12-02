@@ -1,6 +1,9 @@
 #ifndef __MagusParameterController_hpp__
 #define __MagusParameterController_hpp__
 
+#include <stdint.h>
+#include <string.h>
+#include <algorithm>
 #include "device.h"
 #include "errorhandlers.h"
 #include "ProgramVector.h"
@@ -18,8 +21,6 @@
 #include "HAL_TLC5946.h"
 
 #define NOF_ENCODERS 6
-#define SHOW_CALIBRATION_INFO  // This flag renders current values in calibration menu
-#define CALIBRATION_INFO_FLOAT // Display float values instead of raw integers
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -31,10 +32,7 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
-#include "calibration.hpp"
-
 extern VersionToken* bootloader_token;
-
 
 #define PORT_UNI_INPUT 1
 #define PORT_UNI_OUTPUT 2
@@ -42,6 +40,70 @@ extern VersionToken* bootloader_token;
 #define PORT_BI_OUTPUT 4
 void setPortMode(uint8_t index, uint8_t mode);
 uint8_t getPortMode(uint8_t index);
+
+enum EncoderIdentifier {
+  ENCODER_L,
+  ENCODER_R,
+  ENCODER_1,
+  ENCODER_2,
+  ENCODER_3,
+  ENCODER_4,
+  ENCODER_1234 = 0x3c,
+  ENCODER_ANY = 0x3f,
+};
+
+enum EncoderSensitivity {
+  SENS_SUPER_FINE = 1,
+  SENS_FINE = 2,
+  SENS_STANDARD = 3,
+  SENS_COARSE = 4, 
+  SENS_SUPER_COARSE = 5
+};
+static EncoderSensitivity encoder_sensitivity = SENS_FINE;
+// Sensitivity is currently not stored in settings, but it's not reset either.
+
+enum DisplayMode {
+  STANDARD_DISPLAY_MODE,
+  PROGRESS_DISPLAY_MODE,
+  SELECT_BLOCK_DISPLAY_MODE,
+  SELECT_GLOBAL_DISPLAY_MODE,
+  STATUS_DISPLAY_MODE,
+  CONFIG_EXIT_DISPLAY_MODE,
+  CONFIG_SENSITIVITY_DISPLAY_MODE,
+  CONFIG_PATCH_DISPLAY_MODE,
+  CONFIG_VOLUME_DISPLAY_MODE,
+  CONFIG_LEDS_DISPLAY_MODE,
+  ERROR_DISPLAY_MODE
+};
+// DisplayMode displayMode;
+void setDisplayMode(uint8_t mode);
+
+class Page {
+protected:
+  // static constexpr int16_t encoder_sensitivity = 1;
+  static constexpr int16_t encoder_mask = 0x01;
+public:
+  virtual void draw(ScreenBuffer& screen){}
+  virtual void enter(){}
+  virtual void exit(){}
+  virtual void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){}
+  int16_t getDiscreteEncoderValue(int16_t current, int16_t previous){
+    int32_t delta = (current - previous) * encoder_sensitivity;    
+    if(delta > 0 && (current & encoder_mask) == encoder_mask)
+      return 1;
+    if(delta < 0 && (current & encoder_mask) == encoder_mask)
+      return -1;
+    return 0;
+  }
+  int16_t getContinuousEncoderValue(int16_t current, int16_t previous){
+    int32_t delta = (current - previous) * encoder_sensitivity;    
+    if(delta > 0)
+      delta = 20 << (delta/2);
+    else
+      delta = -20 << (-delta/2);
+    return delta;
+  }
+};
 
 /*    
 screen 128 x 64, font 5x7
@@ -60,63 +122,21 @@ todo:
 */
 class MagusParameterController : public ParameterController {
 public:
-  enum EncoderSensitivity {
-      SENS_SUPER_FINE = 1,
-      SENS_FINE = 2,
-      SENS_STANDARD = 3,
-      SENS_COARSE = 4, 
-      SENS_SUPER_COARSE = 5
-  };
-  EncoderSensitivity encoderSensitivity = SENS_STANDARD;
-  // Sensitivity is currently not stored in settings, but it's not reset either.
-  bool sensitivitySelected;
-  static constexpr int16_t encoder_mask = 0x03;
+  Page* page;
+  uint16_t buttons;  
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t user[NOF_PARAMETERS]; // user set values (ie by encoder or MIDI)
-  // char blocknames[4][NOF_ENCODERS] = {"OSC", "FLT", "ENV", "LFO"} ; // 4 times up to 5 letters/32px
   uint8_t selectedBlock;
   uint8_t selectedPid[NOF_ENCODERS];
-  enum DisplayMode {
-    STANDARD, SELECTBLOCKPARAMETER, SELECTGLOBALPARAMETER, CONTROL, ERROR
-  };
-  DisplayMode displayMode;
-
-  enum ControlMode {
-    PLAY, STATUS, PRESET, DATA, VOLUME, LEDS, CALIBRATE, EXIT, NOF_CONTROL_MODES
-  };
-  ControlMode controlMode = PLAY;
-  bool saveSettings;
-
-  bool resourceDelete;
-  bool resourceDeletePressed; // This is used to ensure that we don't delete current resourse on menu enter
-
-  InputCalibration input_cal;
-  OutputCalibration output_cal;
-  BaseCalibration *current_cal;
-  BaseCalibration::CalibrationMode calibrationMode;
-  bool isCalibrationRunning;
-  bool isCalibrationModeSelected;
-  bool calibrationConfirm = false; //A flag used to track encoder presses.
-  bool continueCalibration = false; // Runs output calibration for several buffer
-
-  const char controlModeNames[NOF_CONTROL_MODES][12] = {
-    "  Play   >",
-    "< Status >",
-    "< Preset >",
-    "< Data   >",
-    "< Volume >",
-    "< LEDs   >",
-    "< V/Oct   " };
 
   MagusParameterController(){
     reset();
+    setDisplayMode(PROGRESS_DISPLAY_MODE);
   }
   void reset(){
     setTitle("Magus");
     ParameterController::reset();
     Encoders_reset();
-    saveSettings = false;
-    resourceDelete = false;
     for(int i=0; i<NOF_PARAMETERS; ++i){
       user[i] = 0;
     }
@@ -127,7 +147,6 @@ public:
     selectedPid[3] = PARAMETER_C;
     selectedPid[4] = PARAMETER_E;
     selectedPid[5] = PARAMETER_G;
-    displayMode = STANDARD;
 
 #ifdef OWL_MAGUS
     for(int i=0; i<20; ++i)
@@ -135,18 +154,26 @@ public:
 #endif
   }
 
-  void drawLoadProgress(ScreenBuffer &screen){
-    extern char* progress_message;
-    extern uint16_t progress_counter;
-    // uint16_t progress_counter = user[LOAD_INDICATOR_PARAMETER];
-    if(progress_message != NULL && progress_counter != 4095){
-    // if(progress_counter && progress_counter != 4095){
-      screen.drawRectangle(0, 30, 128, 20, WHITE);
-      screen.setCursor(32, 40);
-      screen.setTextSize(1);
-      screen.print(progress_message);
-      screen.fillRectangle(0, 44, progress_counter * 128 / 4095, 5, WHITE);
+  void changePage(Page* page){
+    if(this->page != page){
+      this->page->exit();
+      this->page = page;
+      page->enter();
     }
+  }
+      
+  void drawMessage(int16_t y, ScreenBuffer& screen){
+    ProgramVector* pv = getProgramVector();
+    if(pv->message != NULL){
+      screen.setTextSize(1);
+      screen.setTextWrap(true);
+      screen.print(0, y, pv->message);
+      screen.setTextWrap(false);
+    }    
+  }
+
+  void drawParameter(ScreenBuffer& screen){
+    drawParameter(selectedPid[selectedBlock], 54, screen);
   }
 
   void drawParameter(int pid, int y, ScreenBuffer& screen){
@@ -235,29 +262,426 @@ public:
       }
     }
   }
+
+  void drawTitle(ScreenBuffer& screen){
+    drawTitle(title, screen);
+  }
+
+  void drawTitle(const char* title, ScreenBuffer& screen){
+    // draw title
+    screen.setTextSize(2);
+    screen.print(0, 16, title);
+  }
+
+  void draw(ScreenBuffer& screen){
+    screen.clear();
+    screen.setTextWrap(false);
+    page->draw(screen);
+    drawBlocks(screen);
+  }
+
+  void setName(uint8_t pid, const char* name){
+    ParameterController::setName(pid, name);
+#ifdef OWL_MAGUS
+    if(pid < NOF_PARAMETERS){
+      if(name[strnlen(name, 11)-1] == '>')
+        setPortMode(pid, PORT_UNI_OUTPUT);
+      else
+        setPortMode(pid, PORT_UNI_INPUT);
+    }
+#endif
+  }
+
+  void selectBlockParameter(uint8_t enc, int8_t pid){
+    uint8_t i = enc-2;
+    if(pid == i*2+2)
+      pid = i*2+8; // skip up
+    if(pid == i*2+7)
+      pid = i*2+1; // skip down
+    selectedPid[enc] = max(i*2, min(i*2+9, pid));
+  }
+
+  void selectGlobalParameter(int8_t pid){
+    selectedPid[0] = max(0, min(NOF_PARAMETERS-1, pid));
+  }
+
+  bool isEncoderPushed(uint16_t enc){
+    return buttons & enc;
+  }
+
+  void updateEncoders(int16_t* data, uint8_t size){
+    buttons = data[0];
+    for(size_t i=1; i<NOF_ENCODERS; ++i){
+      if(data[i] != encoders[i]){
+	page->encoderChanged(i, data[i], encoders[i]);
+	encoders[i] = data[i];
+      }
+    }
+  }
+
+// called by MIDI cc and/or from patch
+  void setValue(uint8_t pid, int16_t value){
+    user[pid] = value;
+    // TODO: store values set from patch somewhere and multiply with user[] value for outputs
+    // graphics.params.updateOutput(i, getOutputValue(i));
+  }
+
+  // @param value is the modulation ADC value
+  void updateValue(uint8_t pid, int16_t value){
+    // smoothing at apprx 50Hz
+    parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
+  }
+
+  int16_t getValue(uint8_t pid){
+    return parameters[pid];
+  }
+
+  void updateOutput(uint8_t pid, int16_t value){
+    parameters[pid] = max(0, min(4095, (((parameters[pid] + (user[pid]*value))>>12)>>1)));
+  }
+
+  void updateValues(uint16_t* data, uint8_t size){
+    for(int i=0; i<size; ++i)
+      updateValue(i, data[i]);
+  }
+
+  void changeBlockValue(uint8_t enc, int16_t delta){
+    selectedBlock = enc;
+    user[selectedPid[enc]] = std::clamp(user[selectedPid[enc]] + delta, 0, 4095);
+    selectGlobalParameter(selectedPid[enc]);
+  }
+
+  void changeBlockAssign(uint8_t enc, int16_t delta){
+    // selectedPid[enc] = selectedPid[selectedBlock];
+    selectedBlock = enc;
+    selectGlobalParameter(selectedPid[enc] + delta);
+  }
+
+  void changeGlobalAssign(int16_t delta){
+      selectGlobalParameter(selectedPid[selectedBlock] + delta);
+      selectedBlock = 0;
+  }
+};
+
+extern MagusParameterController params;
+
+
+class StandardPage : public Page {
+public:
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    if(encoder == ENCODER_R){
+	// Quick selection of global parameter by right encoder - without popover menu
+      params.changeGlobalAssign(getDiscreteEncoderValue(current, previous));
+    }else{
+      // updates for encoders 1-4 bottom row and left
+      params.changeBlockValue(encoder, getContinuousEncoderValue(current, previous));
+    }
+  }
   
-  void drawPlay(ScreenBuffer& screen) {
+  void draw(ScreenBuffer& screen){
+    if(params.isEncoderPushed(ENCODER_R))
+      setDisplayMode(STATUS_DISPLAY_MODE);
+    if(params.isEncoderPushed(ENCODER_L))
+      setDisplayMode(SELECT_GLOBAL_DISPLAY_MODE);
+    if(params.isEncoderPushed(ENCODER_1234))
+      setDisplayMode(SELECT_BLOCK_DISPLAY_MODE);
+    if(getErrorStatus() && getErrorMessage() != NULL)
+      setDisplayMode(ERROR_DISPLAY_MODE);    
+
+    params.drawParameter(screen);
+
+    // use callback to draw title and message
+    graphics.drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
+  }
+};
+
+class ErrorPage : public Page {
+  void draw(ScreenBuffer& screen){
+    if(params.isEncoderPushed(ENCODER_ANY))
+      setErrorStatus(0);
+    if(getErrorStatus() == NO_ERROR){
+      setDisplayMode(STANDARD_DISPLAY_MODE);
+    }else{
+      params.drawTitle("ERROR", screen);
+      drawError(screen);
+      drawStats(screen);
+    }
+  }
+
+  // void drawError(ScreenBuffer& screen){
+  //   if(getErrorMessage() != NULL){
+  //     params.drawTitle("ERROR", screen);
+  //     screen.setTextSize(1);
+  //     screen.setTextWrap(true);
+  //     screen.print(0, 26, getErrorMessage());
+  //     screen.setTextWrap(false);
+  //   }
+  //   drawMessage(51, screen);
+  // }
+
+  void drawError(ScreenBuffer& screen){
+    screen.setTextSize(2);
+    screen.print(1, 16, "ERROR");
+    screen.setTextSize(1);
+    if(getErrorMessage() != NULL)
+      screen.print(2, 25, getErrorMessage());
+    if(getDebugMessage() != NULL)
+      screen.print(2, 32, getDebugMessage());
+  }
+
+  void drawStats(ScreenBuffer& screen){
+    int offset = 0;
+    screen.setTextSize(1);
+    // draw memory use
+
+    // two columns
+    screen.print(80, offset+8, "mem");
+    ProgramVector* pv = getProgramVector();
+    screen.setCursor(80, offset+17);
+    int mem = (int)(pv->heap_bytes_used)/1024;
+    if(mem > 999){
+      screen.print(mem/1024);
+      screen.print("M");
+    }else{
+      screen.print(mem);
+      screen.print("k");
+    }
+    // draw CPU load
+    screen.print(110, offset+8, "cpu");
+    screen.setCursor(110, offset+17);
+    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
+    screen.print("%");
+  }
+};
+
+class SelectGlobalPage : public Page {
+public:
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    if(encoder == ENCODER_L){
+      // update selected global parameter
+      // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
+      params.changeBlockAssign(ENCODER_L, getDiscreteEncoderValue(current, previous));
+    }
+  }
+  void draw(ScreenBuffer& screen){
+    if(!params.isEncoderPushed(ENCODER_L))
+      setDisplayMode(STANDARD_DISPLAY_MODE);
+    params.drawTitle(screen);
+    params.drawGlobalParameterNames(screen);
+  }
+};
+
+class SelectBlockPage : public Page {
+public:
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    // if(params.isEncoderPushed(ENCODER_1234)){
+    // if(params.isEncoderPushed(ENCODER_1234)){
+    if(encoder == params.selectedBlock){
+      // update selected block parameter
+      params.changeBlockAssign(encoder, getDiscreteEncoderValue(current, previous));
+    }
+  }
+  void draw(ScreenBuffer& screen){
+    if(!params.isEncoderPushed(ENCODER_1234))
+      setDisplayMode(STANDARD_DISPLAY_MODE);
+    params.drawTitle(screen);
+    params.drawBlockParameterNames(screen);
+  }
+};
+
+class EncoderSensitivityPage : public Page {
+public:
+ void enter(){
+   // selectedPid[1] = encoder_sensitivity; // initialise control value
+ }
+ void exit(){}
+
+  void draw(ScreenBuffer& screen){
+    if(params.isEncoderPushed(ENCODER_ANY))
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+    params.drawTitle("< Encode >", screen);
     int offset = 16;
     screen.setTextSize(1);
     screen.print(1, offset + 33, "Encoder sensitivity");
-
     screen.drawCircle(24, offset + 15, 8, WHITE);
     screen.drawCircle(44, offset + 15, 8, WHITE);
     screen.drawCircle(64, offset + 15, 8, WHITE);
     screen.drawCircle(84, offset + 15, 8, WHITE);
     screen.drawCircle(104, offset + 15, 8, WHITE);
-    
     screen.fillCircle(24, offset + 15, 6, WHITE);
-    if (encoderSensitivity >= SENS_FINE)
+    if (encoder_sensitivity >= SENS_FINE)
       screen.fillCircle(44, offset + 15, 6, WHITE);
-    if (encoderSensitivity >= SENS_STANDARD)
+    if (encoder_sensitivity >= SENS_STANDARD)
       screen.fillCircle(64, offset + 15, 6, WHITE);
-    if (encoderSensitivity >= SENS_COARSE)
+    if (encoder_sensitivity >= SENS_COARSE)
       screen.fillCircle(84, offset + 15, 6, WHITE);
-    if (encoderSensitivity >= SENS_SUPER_COARSE)
+    if (encoder_sensitivity >= SENS_SUPER_COARSE)
       screen.fillCircle(104, offset + 15, 6, WHITE);
-}
+  }
 
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    if(encoder == ENCODER_R){
+      int16_t delta = getDiscreteEncoderValue(current, previous);
+      setDisplayMode(std::clamp(CONFIG_SENSITIVITY_DISPLAY_MODE + delta, (int)STATUS_DISPLAY_MODE, (int)CONFIG_LEDS_DISPLAY_MODE));
+    }else if(encoder == ENCODER_L){
+      int16_t delta = getDiscreteEncoderValue(current, previous);
+      encoder_sensitivity = (EncoderSensitivity)std::clamp(encoder_sensitivity + delta, (int)SENS_SUPER_FINE, (int)SENS_SUPER_COARSE);
+    }
+    // // update encoder 1 top right
+    // int16_t value = data[2];
+    // int16_t right_enc = encoders[1]; // Save old value for encoder scrolling in main menu
+    // if(displayMode == CONTROL){
+    //   selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
+    //   if(params.isEncoderPushed(ENCODER_1234)){
+    //   // if(pressed&0x3c) // exit status mode if any other encoder is pressed
+    //     controlMode = EXIT;
+    //   // use delta value from encoder 0 top left
+    //   int16_t delta = getDiscreteEncoderValue(data[1], encoders[0]);
+    //   // we use selectedPid[1] to store control values because we don't need it to select a pid
+    //   setControlModeValue(selectedPid[1] + delta);
+    //   encoders[0] = data[1];
+    //   return; // skip normal encoder processing
+    // }
+  }
+};
+
+class ConfigVolumePage : public Page {
+public:
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    if(encoder == ENCODER_R){
+      int16_t delta = getDiscreteEncoderValue(current, previous);
+      setDisplayMode(std::clamp(CONFIG_VOLUME_DISPLAY_MODE + delta, (int)STATUS_DISPLAY_MODE, (int)CONFIG_LEDS_DISPLAY_MODE));
+    }else if(encoder == ENCODER_L){
+      int16_t value = std::clamp(settings.audio_output_gain + getContinuousEncoderValue(current, previous), 0, 127);
+      if(settings.audio_output_gain != value){
+	settings.audio_output_gain = value;
+	codec.setOutputGain(value);
+      }
+    }
+  }
+  void draw(ScreenBuffer& screen){
+    if(params.isEncoderPushed(ENCODER_ANY))
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+    params.drawTitle("< Volume >", screen);    
+    drawVolume(screen);
+  }
+
+  void drawVolume(ScreenBuffer& screen){
+    screen.setTextSize(1);
+    screen.print(1, 24 + 10, "Volume ");
+    screen.print((int)settings.audio_output_gain);
+    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
+    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.audio_output_gain >> 1, 4, WHITE);
+    screen.invert(0, 24, 40, 10);
+  }
+};
+
+class ConfigLedsPage : public Page {
+public:
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    if(encoder == ENCODER_R){
+      int16_t delta = getDiscreteEncoderValue(current, previous);
+      setDisplayMode(std::clamp(CONFIG_LEDS_DISPLAY_MODE + delta, (int)STATUS_DISPLAY_MODE, (int)CONFIG_LEDS_DISPLAY_MODE));
+    }else if(encoder == ENCODER_L){
+      int16_t value = std::clamp(settings.leds_brightness + getContinuousEncoderValue(current, previous), 0, 63);
+      if(settings.leds_brightness != value){
+	settings.leds_brightness = value;
+	TLC5946_setAll_DC(value);
+	TLC5946_Refresh_DC();
+      }
+    }
+  }
+  void draw(ScreenBuffer& screen){
+    if(params.isEncoderPushed(ENCODER_ANY))
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+    // "  Play   >",
+    // "< Status >",
+    // "< Preset >",
+    // "< Data   >",
+    // "< Volume >",
+            // "< LEDs   >",
+    params.drawTitle("< LEDs    >", screen);    
+    drawLeds(screen);
+  }
+
+  void drawLeds(ScreenBuffer& screen){
+    screen.setTextSize(1);
+    screen.print(1, 24 + 10, "Level  ");
+    screen.print((int)settings.leds_brightness);
+    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
+    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.leds_brightness, 4, WHITE);
+    screen.invert(0, 24, 40, 10);
+  }  
+};
+
+class SelectPatchPage : public Page {
+private:
+  uint8_t patchselect;
+public:
+  void enter(){
+    patchselect = program.getProgramIndex();
+  }
+  void exit(){
+    if(registry.hasPatch(patchselect)){
+      program.loadProgram(patchselect);
+      program.resetProgram(false);
+    }
+  }
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    if(encoder == ENCODER_R){
+      int16_t delta = getDiscreteEncoderValue(current, previous);
+      setDisplayMode(std::clamp(CONFIG_LEDS_DISPLAY_MODE + delta, (int)STATUS_DISPLAY_MODE, (int)CONFIG_LEDS_DISPLAY_MODE));
+    }else if(encoder == ENCODER_L){
+      patchselect = std::clamp(patchselect + getContinuousEncoderValue(current, previous), 0, (int)registry.getNumberOfPatches()-1);
+    }
+  }
+  void draw(ScreenBuffer& screen){
+    if(params.isEncoderPushed(ENCODER_ANY)){
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+    }
+    params.drawTitle("< Patch  >", screen);    
+    drawPresetNames(patchselect, screen);
+  }  
+  void drawPresetNames(uint8_t selected, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    selected = min(selected, (int)registry.getNumberOfPatches()-1);
+    if(selected > 1) {
+      screen.setCursor(1, 24);
+      screen.print((int)selected - 1);
+      screen.print(".");
+      screen.print(registry.getPatchName(selected - 1));
+    };
+    screen.setCursor(1, 24+10);
+    screen.print((int)selected);
+    screen.print(".");
+    screen.print(registry.getPatchName(selected));
+    if(selected+1 < (int)registry.getNumberOfPatches()) {
+      screen.setCursor(1, 24+20);
+      screen.print((int)selected + 1);
+      screen.print(".");
+      screen.print(registry.getPatchName(selected+1));
+    }
+    screen.invert(0, 25, 128, 10);
+  }
+};
+
+class StatusPage : public Page {
+public:
+  void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
+    if(encoder == ENCODER_R){
+      int16_t delta = getDiscreteEncoderValue(current, previous);
+      setDisplayMode(std::clamp(STATUS_DISPLAY_MODE + delta, (int)STATUS_DISPLAY_MODE, (int)CONFIG_LEDS_DISPLAY_MODE));
+    }
+  }
+  void draw(ScreenBuffer& screen){
+    if(params.isEncoderPushed(ENCODER_ANY)){
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+    }else{
+      params.drawTitle("  Status >", screen);
+      drawStatus(screen);
+    }
+  }
+  
   void drawStatus(ScreenBuffer& screen){
     int offset = 16;
     screen.setTextSize(1);
@@ -315,710 +739,144 @@ public:
     }
   }
   
-  void drawStats(ScreenBuffer& screen){
-    int offset = 0;
-    screen.setTextSize(1);
-    // screen.clear(86, 0, 128-86, 16);
-    // draw memory use
-
-    // two columns
-    screen.print(80, offset+8, "mem");
-    ProgramVector* pv = getProgramVector();
-    screen.setCursor(80, offset+17);
-    int mem = (int)(pv->heap_bytes_used)/1024;
-    if(mem > 999){
-      screen.print(mem/1024);
-      screen.print("M");
-    }else{
-      screen.print(mem);
-      screen.print("k");
-    }
-    // draw CPU load
-    screen.print(110, offset+8, "cpu");
-    screen.setCursor(110, offset+17);
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
-    screen.print("%");
-  }
-
-  void drawError(ScreenBuffer& screen){
-    if(getErrorMessage() != NULL){
-      screen.setTextSize(1);
-      screen.setTextWrap(true);
-      screen.print(0, 26, getErrorMessage());
-      screen.setTextWrap(false);
-    }
-    drawMessage(51, screen);
-  }
-
-  void drawTitle(ScreenBuffer& screen){
-    drawTitle(title, screen);
-  }
-
-  void drawTitle(const char* title, ScreenBuffer& screen){
-    // draw title
-    screen.setTextSize(2);
-    screen.print(0, 16, title);
-  }
-
-  void drawMessage(int16_t y, ScreenBuffer& screen){
-    ProgramVector* pv = getProgramVector();
-    if(pv->message != NULL){
-      screen.setTextSize(1);
-      screen.setTextWrap(true);
-      screen.print(0, y, pv->message);
-      screen.setTextWrap(false);
-    }    
-  }
-
-  void drawPresetNames(uint8_t selected, ScreenBuffer& screen){
-    screen.setTextSize(1);
-    selected = min(selected, (int)registry.getNumberOfPatches()-1);
-    if(selected > 1) {
-      screen.setCursor(1, 24);
-      screen.print((int)selected - 1);
-      screen.print(".");
-      screen.print(registry.getPatchName(selected - 1));
-    };
-    screen.setCursor(1, 24+10);
-    screen.print((int)selected);
-    screen.print(".");
-    screen.print(registry.getPatchName(selected));
-    if(selected+1 < (int)registry.getNumberOfPatches()) {
-      screen.setCursor(1, 24+20);
-      screen.print((int)selected + 1);
-      screen.print(".");
-      screen.print(registry.getPatchName(selected+1));
-    }
-    screen.invert(0, 25, 128, 10);
-  }
-
-  void drawResourceNames(int selected, ScreenBuffer &screen) {
-    screen.setTextSize(1);
-    if (resourceDelete)
-      selected = min(selected, (int)registry.getNumberOfResources());
-    else
-      selected = min(selected, (int)registry.getNumberOfResources() - 1);
-    if (resourceDelete && selected == 0)
-      screen.print(18, 24, "Delete:");
-    if (selected > 0 && registry.getNumberOfResources() > 0) {
-      screen.setCursor(1, 24);
-      screen.print((int)selected);
-      screen.print(".");
-      screen.print(registry.getResourceName(selected));
-    };
-    if (selected < (int)registry.getNumberOfResources()) {
-      screen.setCursor(1, 24 + 10);
-      screen.print((int)selected + 1);
-      screen.print(".");
-      screen.print(registry.getResourceName(1 + selected));
-    }
-    else if (resourceDelete)
-      screen.print(18, 24 + 10, "Exit");
-    if (selected + 1 < (int)registry.getNumberOfResources()) {
-      screen.setCursor(1, 24 + 20);
-      screen.print((int)selected + 2);
-      screen.print(".");
-      screen.print(registry.getResourceName(2 + selected));
-    }
-    if (resourceDelete)
-      screen.drawRectangle(0, 25, 128, 10, WHITE);
-    else
-      screen.invert(0, 25, 128, 10);
-  }
-
-  void drawVolume(uint8_t selected, ScreenBuffer& screen){
-    screen.setTextSize(1);
-    screen.print(1, 24 + 10, "Volume ");
-    screen.print((int)settings.audio_output_gain);
-    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
-    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.audio_output_gain >> 1, 4, WHITE);
-    screen.invert(0, 24, 40, 10);
-  }
-
-  void drawLeds(uint8_t selected, ScreenBuffer& screen){
-    screen.setTextSize(1);
-    screen.print(1, 24 + 10, "Level  ");
-    screen.print((int)settings.leds_brightness);
-    screen.drawRectangle(64, 24 + 1, 64, 8, WHITE);
-    screen.fillRectangle(64, 24 + 1 + 2, (int)settings.leds_brightness, 4, WHITE);
-    screen.invert(0, 24, 40, 10);
-  }  
-
-  void drawCalibration(uint8_t selected, ScreenBuffer& screen){
-    screen.setTextSize(1);
-    if (isCalibrationRunning) {
-      if (isCalibrationModeSelected) {
-        float input_multiplier = (float)(int32_t)settings.input_scalar / UINT16_MAX;
-        float input_offset = (float)(int32_t)settings.input_offset / UINT16_MAX;
-        float input_sample = current_cal->getInput();
-        float input_voltage = (input_sample - input_offset) * input_multiplier;
-
-        switch (current_cal->state){
-        case BaseCalibration::CAL_LO:
-          if (calibrationMode == BaseCalibration::CAL_INPUT) {
-            screen.print(1, 24 + 10, "1V to IN1");
-          }
-          else {
-            screen.print(1, 24 + 10, "OUT1 to IN1");
-            screen.print(1, 24 + 20, "Voltage ");
-            screen.print(input_voltage);
-          }
-          screen.print(1, 24 + 30, "Sample  ");
-          screen.print(input_sample);
-          break;
-        case BaseCalibration::CAL_HI:
-          if (calibrationMode == BaseCalibration::CAL_INPUT) {
-            screen.print(1, 24 + 10, "3V to IN1");
-          }
-          else {
-            screen.print(1, 24 + 10, "OUT1 to IN1");
-            screen.print(1, 24 + 20, "Voltage ");
-            screen.print(input_voltage);
-          }
-          screen.print(1, 24 + 30, "Sample  ");
-          screen.print(input_sample);
-          break;	  
-        case BaseCalibration::CAL_DONE:
-          // Save or discard results
-          screen.print(1, 24, "Calibration results");
-          screen.print(1, 24 + 10, "Scalar:");
-          screen.print((float)current_cal->getScalar() / UINT16_MAX);
-          screen.print(1, 24 + 20, "Offset:");
-          screen.print((float)current_cal->getOffset() / UINT16_MAX);
-
-          screen.print(1, 24 + 30, "Save");
-          screen.print(65, 24 + 30, "Discard");
-          if (selected == BaseCalibration::CAL_SAVE) {
-            screen.invert(0, 24 + 20, 64, 10);
-          }
-          else {
-            screen.invert(64, 24 + 20, 64, 10);
-          }
-          break;
-        }
-      }
-      else {
-        // Select calibration mode
-        screen.print(1, 24, "Input");
-        screen.print(49, 24, "Output");
-        screen.print(97, 24, "Exit");
-        switch (selected) {
-        case BaseCalibration::CAL_INPUT:
-          screen.invert(0, 14, 48, 10);
-          break;
-        case BaseCalibration::CAL_OUTPUT:
-          screen.invert(48, 14, 48, 10);
-          break;
-        default:
-          screen.invert(96, 14, 48, 10);
-          break;
-        }
-      }
-    }
-    else {
-      screen.print(1, 24, "Start calibration");
-      #ifdef SHOW_CALIBRATION_INFO
-      // Not sure if this should be visible by default, but it helps while debugging
-      screen.invert(0, 14, 128, 10);
-      screen.print(29, 24 + 10, "Input");
-      screen.print(78, 24 + 10, "Output");
-      screen.print(1, 24 + 20, "Scl");
-      
-      #ifdef CALIBRATION_INFO_FLOAT
-      screen.print(29, 24 + 20, msg_ftoa((float)((int32_t)settings.input_scalar) / UINT16_MAX, 10));
-      screen.print(78, 24 + 20, msg_ftoa((float)((int32_t)settings.output_scalar) / UINT16_MAX, 10));
-      #else
-      screen.print(29, 24 + 20, msg_itoa(settings.input_scalar, 10));
-      screen.print(78, 24 + 20, msg_itoa(settings.output_scalar, 10));
-      #endif // CALIBRATION_INFO_FLOAT
-      
-      screen.print(1, 24 + 30, "Off");
-      
-      #ifdef CALIBRATION_INFO_FLOAT
-      screen.print(29, 24 + 30, msg_ftoa((float)((int32_t)settings.input_offset) / UINT16_MAX, 10));
-      screen.print(78, 24 + 30, msg_ftoa((float)((int32_t)settings.output_offset) / UINT16_MAX, 10));
-      #else
-      screen.print(29, 24 + 30, msg_itoa(settings.input_offset, 10));
-      screen.print(78, 24 + 30, msg_itoa(settings.output_offset, 10));
-      #endif // CALIBRATION_INFO_FLOAT
-      
-      screen.drawHorizontalLine(0, 24 + 10, 128, WHITE);
-      screen.drawHorizontalLine(0, 24 + 20, 128, WHITE);
-      screen.drawVerticalLine(27, 24, 30, WHITE);
-      screen.drawVerticalLine(76, 24, 30, WHITE);
-      #endif // SHOW_CALIBRATION_INFO
-    }
-  }
-
-  void drawControlMode(ScreenBuffer& screen){
-    switch(controlMode){
-    case PLAY:
-      // drawMessage("push to exit ->", screen);
-      drawTitle(controlModeNames[controlMode], screen);    
-      drawPlay(screen);
-      break;
-    case STATUS:
-      drawTitle(controlModeNames[controlMode], screen);    
-      drawStatus(screen);
-      drawMessage(51, screen);
-      break;
-    case PRESET:
-      drawTitle(controlModeNames[controlMode], screen);    
-      drawPresetNames(selectedPid[1], screen);
-      break;
-    case DATA:
-      drawTitle(controlModeNames[controlMode], screen);
-      drawResourceNames(selectedPid[1], screen);
-      break;
-    case VOLUME:
-      drawTitle(controlModeNames[controlMode], screen);    
-      drawVolume(selectedPid[1], screen);
-      break;
-    case LEDS:
-      drawTitle(controlModeNames[controlMode], screen);    
-      drawLeds(selectedPid[1], screen);
-      break;
-    case CALIBRATE:
-      drawTitle(controlModeNames[controlMode], screen);
-      drawCalibration(selectedPid[1], screen);
-      break;
-    case EXIT:
-      drawTitle("done", screen);
-      break;
-    default:
-      break;
-    }
-    // todo!
-    // select: Scope, VU Meter, Patch Stats, Set Gain, Show MIDI, Reset Patch, Select Patch...
-  }
-
+//   void drawStats(ScreenBuffer& screen){
+//     screen.setTextSize(1);
+//     ProgramVector* pv = getProgramVector();
+//     if(pv->message != NULL)
+//       screen.print(2, 16, pv->message);
+//     screen.print(2, 26, "cpu/mem: ");
+//     float percent = (pv->cycles_per_block/pv->audio_blocksize) / (float)ARM_CYCLES_PER_SAMPLE;
+//     screen.print((int)(percent*100));
+//     screen.print("% ");
+//     screen.print((int)(pv->heap_bytes_used)/1024);
+//     screen.print("kB");
+//     // draw firmware version
+//     screen.print(1, 36, getFirmwareVersion());
+//     if (bootloader_token->magic == BOOTLOADER_MAGIC){
+//       screen.print(" bt.");
+//       screen.print(getBootloaderVersion());
+//     }
+// #ifdef USE_DIGITALBUS
+//     screen.print(1, 56, "Bus: ");
+//     screen.print(bus.getStatusString());
+//     screen.print(" ");
+//     extern uint32_t bus_tx_packets, bus_rx_packets;
+//     screen.print((int)bus_tx_packets);
+//     screen.print("/");
+//     screen.print((int)bus_rx_packets);
+//     if (bus.getStatus() == BUS_STATUS_CONNECTED) {
+//       screen.print(", ");
+//       screen.print(bus.getPeers());
+//       screen.print(" peers");
+//     }
+// #endif
+//   }
+};
+    
+class ExitPage : public Page {
+public:
+  void exit(){} // todo: save settings?
   void draw(ScreenBuffer& screen){
-    screen.clear();
-    screen.setTextWrap(false);
-    switch(displayMode){
-    case STANDARD:
-      // draw most recently changed parameter
-      // drawParameter(selectedPid[selectedBlock], 44, screen);
-      if (owl.getOperationMode() == LOAD_MODE){
-        drawLoadProgress(screen);
-      }
-      else {
-        drawParameter(selectedPid[selectedBlock], 54, screen);
-      }
-      // use callback to draw title and message
-      graphics.drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
-      break;
-    case SELECTBLOCKPARAMETER:
-      drawTitle(screen);
-      drawBlockParameterNames(screen);
-      break;
-    case SELECTGLOBALPARAMETER:
-      drawTitle(screen);
-      drawGlobalParameterNames(screen);
-      break;
-    case CONTROL:
-      drawControlMode(screen);
-      break;
-    case ERROR:
-      drawTitle("ERROR", screen);
-      drawError(screen);
-      drawStats(screen);
-      break;
-    }
-    drawBlocks(screen);
-  }
-
-  void setName(uint8_t pid, const char* name){
-    ParameterController::setName(pid, name);
-#ifdef OWL_MAGUS
-    if(pid < NOF_PARAMETERS){
-      if(name[strnlen(name, 11)-1] == '>')
-        setPortMode(pid, PORT_UNI_OUTPUT);
-      else
-        setPortMode(pid, PORT_UNI_INPUT);
-    }
-#endif
-  }
-
-  void selectBlockParameter(uint8_t enc, int8_t pid){
-    uint8_t i = enc-2;
-    if(pid == i*2+2)
-      pid = i*2+8; // skip up
-    if(pid == i*2+7)
-      pid = i*2+1; // skip down
-    selectedPid[enc] = max(i*2, min(i*2+9, pid));
-  }
-
-  void selectGlobalParameter(int8_t pid){
-    selectedPid[0] = max(0, min(NOF_PARAMETERS-1, pid));
-  }
-
-  void setControlMode(uint8_t value){
-    controlMode = (ControlMode)value;
-    switch(controlMode){
-    case PLAY:
-    case STATUS:
-      break;
-    case PRESET:
-      selectedPid[1] = settings.program_index;
-      break;
-    case DATA:
-      selectedPid[1] = 0; // Go to beginning of resource list
-      resourceDelete = false;
-      break;
-    case VOLUME:
-      selectedPid[1] = settings.audio_output_gain; // todo: get current
-      break;
-    case LEDS:
-      selectedPid[1] = settings.leds_brightness;
-      break;
-    case CALIBRATE:
-      selectedPid[1] = 2;
-      resetCalibration();
-      break;
-    default:
-      break;
+    if(!params.isEncoderPushed(ENCODER_ANY)){
+      // leave configuration mode on release
+      setDisplayMode(STANDARD_DISPLAY_MODE);
+    }else{
+      screen.setTextSize(2);
+      screen.print(40, 26, "exit");
     }
   }
+};
 
-  void selectControlMode(int16_t value, bool pressed){
-    if(pressed){
-      switch(controlMode){
-      case PLAY:
-        if (sensitivitySelected) {
-          controlMode = EXIT;
-        }
-        break;
-      case STATUS:
-        setErrorStatus(NO_ERROR);
-        break;
-      case PRESET:
-        // load preset
-        settings.program_index = selectedPid[1];
-        program.loadProgram(settings.program_index);
-        program.resetProgram(false);
-        controlMode = EXIT;
-        break;
-      case DATA: {
-        if (resourceDelete) {
-          if (selectedPid[1] == registry.getNumberOfResources()){
-            // Exit on last menu item (exit link after resources list)
-            resourceDelete = false;
-            resourceDeletePressed = false;
-            controlMode = EXIT;
-          }
-          else if (!resourceDeletePressed) {
-            // Delete resource unless it's protected by "__" prefix
-            resourceDeletePressed = true;
-            Resource* res = registry.getResource(selectedPid[1]);
-            if (res != NULL) {
-              if(res->getName()[0] == '_' && res->getName()[1] == '_'){
-                debugMessage("Resource protected");
-              }
-              else {
-		storage.eraseResource(res);
-              }
-            }
-          }
-        }
-        else {
-          resourceDelete = true;
-          resourceDeletePressed = true;
-        }
-        break;
-      }
-      case VOLUME:
-        controlMode = EXIT;
-        break;
-      case LEDS:
-        controlMode = EXIT;
-        break;
-      case CALIBRATE:
-        if (!calibrationConfirm) {
-          calibrationConfirm = true;
-          updateCalibration();
-        }
-        break;
-      default:
-        break;
-      }
-    }
-    else{
-      if(controlMode == EXIT){
-        displayMode = STANDARD;
-        //selectedBlock = 0;
-        sensitivitySelected = false;
-        if(saveSettings)
-          settings.saveToFlash();
-      }
-      else{
-        int16_t delta = value - encoders[1];
-        if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES && (value & encoder_mask) == 0){
-          setControlMode(controlMode+1);
-        }
-        else if(delta < 0 && controlMode > 0 && (value & encoder_mask) == 0){
-          setControlMode(controlMode-1);
-        }
-        if (controlMode == CALIBRATE) {
-          if (continueCalibration)
-            updateCalibration();
-          else
-            calibrationConfirm = false;
-        }
-        else if (controlMode == DATA && resourceDeletePressed) {
-          resourceDeletePressed = false;
-        }
-        encoders[1] = value;
-      }
-    }
+class ProgressPage : public Page {
+  void draw(ScreenBuffer& screen){
+    drawLoadProgress(screen);
   }
-
-  void resetCalibration(){
-    //selectedPid[1] = 0;
-    isCalibrationRunning = false;
-    isCalibrationModeSelected = false;
-    input_cal.reset();
-    output_cal.reset();
-  }
-
-  void updateCalibration(){
-    continueCalibration = false;
-    // This function runs once every time when encoder is pressed.
-    if (isCalibrationRunning){
-      if (isCalibrationModeSelected) {
-        if (current_cal->state == BaseCalibration::CAL_DONE) {
-          current_cal->results = (BaseCalibration::CalibrationResults)selectedPid[1];
-          if (current_cal->results == BaseCalibration::CAL_SAVE)
-            current_cal->storeResults();
-          resetCalibration();
-          program.loadProgram(settings.program_index);
-          program.resetProgram(false);
-        } else{        
-          if (current_cal->readSample()) {
-            current_cal->nextState();
-          }
-          else {
-            continueCalibration = true;
-          }
-          if (current_cal->isDone())
-            current_cal->calibrate();
-        }
-      } else {
-        isCalibrationModeSelected = true;
-        switch (selectedPid[1]){
-        case 0:
-          program.exitProgram(false);
-          input_cal.reset();
-          break;
-        case 1:
-          program.exitProgram(false);
-          output_cal.reset();
-          break;
-	  //case 2:
-	  //  controlMode = EXIT;
-	  //  break;
-        }
-      }
-    }
-    else{
-      isCalibrationRunning = true;
-    }
-  }
-
-  void setControlModeValue(uint8_t value){
-    switch(controlMode){
-    case PLAY:
-      sensitivitySelected = true;
-      value = max((uint8_t)SENS_SUPER_FINE, min((uint8_t)SENS_SUPER_COARSE, value));
-      if (value > (uint8_t)encoderSensitivity){
-	encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity + 1);
-	value = (uint8_t)encoderSensitivity;
-      }
-      else {
-	if (value < encoderSensitivity) {
-	  encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity - 1);
-	  value = (uint8_t)encoderSensitivity;
-	}
-      }
-      selectedPid[1] = value;
-      break;
-    case VOLUME:
-      selectedPid[1] = max(0, min(127, value));
-      codec.setOutputGain(selectedPid[1]);
-      settings.audio_output_gain = selectedPid[1];
-      saveSettings = true;
-      break;
-    case LEDS:
-      selectedPid[1] = max(0, min(63, value));
-      TLC5946_setAll_DC(selectedPid[1]);
-      TLC5946_Refresh_DC();      
-      settings.leds_brightness = selectedPid[1];
-      saveSettings = true;
-      break;
-    case PRESET:
-      selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
-      break;
-    case DATA:
-      if (resourceDelete)
-        selectedPid[1] = max(0, min(registry.getNumberOfResources(), value));
-      else
-        selectedPid[1] = max(0, min(registry.getNumberOfResources() - 1, value));
-      break;
-    case CALIBRATE:
-      if (isCalibrationRunning && !isCalibrationModeSelected) {
-        selectedPid[1] = max(0, min(value, 2));
-        // calibration process is not running yet.
-        switch ((BaseCalibration::CalibrationMode)selectedPid[1]){
-        case BaseCalibration::CAL_INPUT:
-          calibrationMode = BaseCalibration::CAL_INPUT;
-          current_cal = &input_cal;
-          break;
-        case BaseCalibration::CAL_OUTPUT:
-          calibrationMode = BaseCalibration::CAL_OUTPUT;
-          current_cal = &output_cal;
-          break;
-        }
-      }
-      else if (isCalibrationRunning && isCalibrationModeSelected && current_cal->state == BaseCalibration::CAL_DONE) {
-        selectedPid[1] = max(0, min(value, 1));
-      }
-      break;
-    default:
-      break;
-    }
-  }
-  
-  void updateEncoders(int16_t* data, uint8_t size){
-    uint16_t pressed = data[0];
-
-    // update encoder 1 top right
-    int16_t value = data[2];
-    int16_t right_enc = encoders[1]; // Save old value for encoder scrolling in main menu
-    if(displayMode == CONTROL){
-      selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
-      if(pressed&0x3c) // exit status mode if any other encoder is pressed
-        controlMode = EXIT;
-      // use delta value from encoder 0 top left
-      int16_t delta = getDiscreteEncoderValue(data[1], encoders[0]);
-      // we use selectedPid[1] to store control values because we don't need it to select a pid
-      setControlModeValue(selectedPid[1] + delta);
-      encoders[0] = data[1];
-      return; // skip normal encoder processing
-    }
-    if(pressed & (1 << 1)){
-      displayMode = CONTROL;
-      controlMode = PLAY;
-      selectedPid[1] = encoderSensitivity; // initialise control value
-    }
-    encoders[1] = value;
-
-    // update encoder 0 top left
-    value = data[1];
-    if(pressed & (1<<0)){
-      // update selected global parameter
-      // TODO: add 'special' parameters: Volume, Freq, Gain, Gate
-      displayMode = SELECTGLOBALPARAMETER;
-      int16_t delta = getDiscreteEncoderValue(value, encoders[0]);
-      selectedPid[0] = selectedPid[selectedBlock];
-      selectedBlock = 0;
-      selectGlobalParameter(selectedPid[selectedBlock] + delta);
-    }
-    else{
-      if (displayMode == STANDARD) {
-	// Quick selection of global parameter by right encoder - without popover menu
-	int16_t delta = getDiscreteEncoderValue(data[2], right_enc);
-	encoders[1] = data[2];
-	selectGlobalParameter(selectedPid[selectedBlock] + delta);
-	selectedBlock = 0;
-      }
-      if(encoders[0] != value){
-	user[selectedPid[0]] += getContinuousEncoderValue(value, encoders[0]);
-	encoders[0] = value;
-      }
-
-      if(displayMode == SELECTGLOBALPARAMETER)
-	displayMode = STANDARD;
-    }
-    encoders[0] = value;
-
-    // update encoders 2-6 bottom row
-    for(uint8_t i=2; i<NOF_ENCODERS; ++i){
-      value = data[i+1]; // +1 for buttons
-      if(pressed&(1<<i)){
-	// update selected block parameter
-	selectedBlock = i;
-	displayMode = SELECTBLOCKPARAMETER;
-	int16_t delta = getDiscreteEncoderValue(value, encoders[i]);
-	selectBlockParameter(i, selectedPid[i] + delta);
-      }
-      else{
-	if(encoders[i] != value){
-	  selectedBlock = i;	    
-	  user[selectedPid[i]] += getContinuousEncoderValue(value, encoders[i]);
-	  encoders[i] = value;
-	  selectGlobalParameter(selectedPid[i]);
-	}
-	if(displayMode == SELECTBLOCKPARAMETER && selectedBlock == i)
-	  displayMode = STANDARD;
-      }
-      encoders[i] = value;
-    }
-    if(displayMode == STANDARD && getErrorStatus() && getErrorMessage() != NULL)
-      displayMode = ERROR;    
-  }
-
-  int16_t getDiscreteEncoderValue(int16_t current, int16_t previous){
-    int32_t delta = (current - previous) * encoderSensitivity;
-    if(delta > 0 && (delta & encoder_mask) == 0)
-      return 1;
-    if(delta < 0 && (delta & encoder_mask) == 0)
-      return -1;
-    return 0;
-  }
-
-  int16_t getContinuousEncoderValue(int16_t current, int16_t previous){
-    int32_t delta = (current - previous) * encoderSensitivity;
-    if(delta > 0)
-      delta = 20 << (delta/2);
+  void drawLoadProgress(ScreenBuffer &screen){
+    extern char* progress_message;
+    extern uint16_t progress_counter;
+    screen.drawRectangle(0, 30, 128, 20, WHITE);
+    // if(progress_counter != 4095)
+    screen.fillRectangle(0, 44, progress_counter * 128 / 4095, 5, WHITE);
+    screen.setCursor(33, 40);
+    screen.setTextSize(1);
+    if(progress_message == NULL)
+      screen.print("Loading");
     else
-      delta = -20 << (-delta/2);
-    return delta;
+      screen.print(progress_message);
   }
 
-// called by MIDI cc and/or from patch
-  void setValue(uint8_t pid, int16_t value){
-    user[pid] = value;
-    // TODO: store values set from patch somewhere and multiply with user[] value for outputs
-    // graphics.params.updateOutput(i, getOutputValue(i));
-  }
-
-  // @param value is the modulation ADC value
-  void updateValue(uint8_t pid, int16_t value){
-    // smoothing at apprx 50Hz
-    parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
-  }
-
-  int16_t getValue(uint8_t pid){
-    return parameters[pid];
-  }
-
-  void updateOutput(uint8_t pid, int16_t value){
-    parameters[pid] = max(0, min(4095, (((parameters[pid] + (user[pid]*value))>>12)>>1)));
-  }
-
-  void updateValues(uint16_t* data, uint8_t size){
-    for(int i=0; i<size; ++i)
-      updateValue(i, data[i]);
-  }
-
-  // void encoderChanged(uint8_t encoder, int32_t delta){
-  // }
-
-  // void draw(uint8_t* pixels, uint16_t width, uint16_t height){
-  //   ScreenBuffer screen(width, height);
-  //   screen.setBuffer(pixels);
-  //   draw(screen);
+  // void drawLoadProgress(ScreenBuffer &screen){
+  //   extern char* progress_message;
+  //   extern uint16_t progress_counter;
+  //   // uint16_t progress_counter = user[LOAD_INDICATOR_PARAMETER];
+  //   if(progress_message != NULL && progress_counter != 4095){
+  //   // if(progress_counter && progress_counter != 4095){
+  //     screen.drawRectangle(0, 30, 128, 20, WHITE);
+  //     screen.setCursor(32, 40);
+  //     screen.setTextSize(1);
+  //     screen.print(progress_message);
+  //     screen.fillRectangle(0, 44, progress_counter * 128 / 4095, 5, WHITE);
+  //   }
   // }
 };
+
+  // const char controlModeNames[NOF_CONTROL_MODES][12] = {
+  //   "  Play   >",
+  //   "< Status >",
+  //   "< Preset >",
+  //   "< Data   >",
+  //   "< Volume >",
+  //   "< LEDs   >",
+  //   "< V/Oct   " };
+
+StandardPage standardPage;
+ProgressPage progressPage;
+SelectBlockPage selectBlockPage;
+SelectGlobalPage selectGlobalPage;
+StatusPage statusPage;
+EncoderSensitivityPage sensitivityPage;
+SelectPatchPage selectPatchPage;
+ConfigVolumePage configVolumePage;
+ConfigLedsPage configLedsPage;
+ExitPage exitPage;
+ErrorPage errorPage;
+
+void setDisplayMode(uint8_t mode){
+  switch(mode){
+  case STANDARD_DISPLAY_MODE:
+    params.changePage(&standardPage);
+    break;
+  case PROGRESS_DISPLAY_MODE:
+    params.changePage(&progressPage);
+    break;
+  case SELECT_BLOCK_DISPLAY_MODE:
+    params.changePage(&selectBlockPage);
+    break;
+  case SELECT_GLOBAL_DISPLAY_MODE:
+    params.changePage(&selectGlobalPage);
+    break;
+  case STATUS_DISPLAY_MODE:
+    params.changePage(&statusPage);
+    break;
+  case CONFIG_SENSITIVITY_DISPLAY_MODE:
+    params.changePage(&sensitivityPage);
+    break;
+  case CONFIG_PATCH_DISPLAY_MODE:
+    params.changePage(&selectPatchPage);
+    break;
+  case CONFIG_VOLUME_DISPLAY_MODE:
+    params.changePage(&configVolumePage);
+    break;
+  case CONFIG_LEDS_DISPLAY_MODE:
+    params.changePage(&configLedsPage);
+  break;
+  case CONFIG_EXIT_DISPLAY_MODE:
+    params.changePage(&exitPage);
+    break;
+  case ERROR_DISPLAY_MODE:
+    params.changePage(&errorPage);
+    break;
+  }
+}
 
 #endif // __MagusParameterController_hpp__
