@@ -497,7 +497,7 @@ public:
     }
   }
   void draw(ScreenBuffer& screen){
-    if(!params.isEncoderPushed(ENCODER_BUTTON_1234))
+    if(!params.isEncoderPushed(EncoderButton(1<<params.selectedBlock)))
       setDisplayMode(STANDARD_DISPLAY_MODE);
     params.drawTitle(screen);
     params.drawBlockParameterNames(screen);
@@ -630,30 +630,34 @@ public:
 };
 
 class SelectPatchPage : public Page {
-private:
-  uint8_t patchselect;
 public:
-  void enter(){
+  uint8_t patchselect;
+  void reset(){
     patchselect = program.getProgramIndex();
   }
-  void exit(){
-    if(registry.hasPatch(patchselect)){
-      program.loadProgram(patchselect);
-      program.resetProgram(false);
-    }
+  void enter(){
+    reset();
   }
+  // void exit(){
+  //   if(isEncoderPressed(ENCODER_BUTTON_L) && patchselect != program.getProgramIndex() &&
+  //      registry.hasPatch(patchselect)){
+  //     program.loadProgram(patchselect);
+  //     program.resetProgram(false);
+  //   }
+  // } // only change patch when exiting through ExitPatch
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == ENCODER_R){
+      reset();
       int16_t delta = getDiscreteEncoderValue(current, previous);
       setDisplayMode(std::clamp(CONFIG_PATCH_DISPLAY_MODE + delta, (int)STATUS_DISPLAY_MODE, (int)CONFIG_LEDS_DISPLAY_MODE));
     }else if(encoder == ENCODER_L){
-      patchselect = std::clamp(patchselect + getDiscreteEncoderValue(current, previous), 0, (int)registry.getNumberOfPatches()-1);
+      patchselect = std::clamp(patchselect + getDiscreteEncoderValue(current, previous), 1, (int)registry.getNumberOfPatches()-1);
     }
   }
   void draw(ScreenBuffer& screen){
     if(params.isEncoderPushed(ENCODER_BUTTON_ANY))
       setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
-    params.drawTitle("< Patch  >", screen);    
+    params.drawTitle("< Patch  >", screen);
     drawPresetNames(patchselect, screen);
   }  
   void drawPresetNames(uint8_t selected, ScreenBuffer& screen){
@@ -787,20 +791,6 @@ public:
 //   }
 };
     
-class ExitPage : public Page {
-public:
-  void exit(){} // todo: save settings if exited with ENCODER_BUTTON_R
-  void draw(ScreenBuffer& screen){
-    if(!params.isEncoderPushed(ENCODER_BUTTON_ANY)){
-      // leave configuration mode on release
-      setDisplayMode(STANDARD_DISPLAY_MODE);
-    }else{
-      screen.setTextSize(2);
-      screen.print(40, 26, "exit");
-    }
-  }
-};
-
 class ProgressPage : public Page {
   void draw(ScreenBuffer& screen){
     drawLoadProgress(screen);
@@ -852,8 +842,31 @@ EncoderSensitivityPage sensitivityPage;
 SelectPatchPage selectPatchPage;
 ConfigVolumePage configVolumePage;
 ConfigLedsPage configLedsPage;
-ExitPage exitPage;
 ErrorPage errorPage;
+
+class ExitPage : public Page {
+public:
+  void enter(){
+    uint8_t patchselect = selectPatchPage.patchselect;
+    if(patchselect != program.getProgramIndex() &&
+       registry.hasPatch(patchselect)){
+      program.loadProgram(patchselect);
+      program.resetProgram(false);
+    }
+  } // todo: save settings if exited with ENCODER_BUTTON_R
+  void draw(ScreenBuffer& screen){
+    if(!params.isEncoderPushed(ENCODER_BUTTON_ANY)){
+      // leave configuration mode on release
+      setDisplayMode(STANDARD_DISPLAY_MODE);
+    }else{
+      screen.setTextSize(2);
+      screen.print(40, 26, "exit");
+    }
+  }
+};
+
+ExitPage exitPage;
+
 
 void setDisplayMode(uint8_t mode){
   switch(mode){

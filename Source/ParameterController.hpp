@@ -34,6 +34,8 @@ public:
       return names[pid];
     return "";
   }
+  // bool isInput(uint8_t pid)
+  // bool isBipolar(uint8_t pid)
   virtual void setName(uint8_t pid, const char* name){
     // todo : set direction (input/output), type (parameter/button)
     if(pid < NOF_PARAMETERS)

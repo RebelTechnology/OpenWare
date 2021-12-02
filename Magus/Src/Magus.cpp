@@ -30,9 +30,13 @@ void setProgress(uint16_t value, const char* reason){
 
 void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   switch(new_mode){
-  case STARTUP_MODE:
   case STREAM_MODE:
+    setProgress(0, "Streaming");
+    setDisplayMode(PROGRESS_DISPLAY_MODE);
+    break;
+  case STARTUP_MODE:
   case LOAD_MODE:
+    setProgress(0, "Loading");
     setDisplayMode(PROGRESS_DISPLAY_MODE);
     break;
   case CONFIGURE_MODE:
@@ -103,8 +107,8 @@ void onSetup(){
 
     // LEDs
     TLC5946_init(&TLC5946_SPI);
-    TLC5946_setAll_DC(0); // Start with 0 brightness here, update from settings later
-    TLC5946_setAll(0x10, 0x10, 0x10);
+    TLC5946_setAll_DC(0); // Start with low brightness here, update from settings later
+    TLC5946_setAll(0, 0, 0);
 
     HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
 
@@ -159,7 +163,10 @@ void onScreenDraw(){
 #ifdef USE_TLC5946
   for(int i=0; i<16; ++i){
     uint16_t val = params.getValue(i)>>2;
-    setLed(i, dyn_rainbowinputs[val&0x3ff]);
+    if(getPortMode(i) == PORT_UNI_INPUT)
+      setLed(i, dyn_rainbowinputs[val&0x3ff]);
+    else
+      setLed(i, dyn_rainbowoutputs[val&0x3ff]);
   }
   TLC5946_Refresh_GS();
 #endif  
