@@ -23,6 +23,8 @@
 
 #define USE_CODEC
 #define USE_PCM3168A
+#define CODEC_ADC_INVERT
+#define CODEC_DAC_INVERT
 /* #define CODEC_HP_FILTER */
 #define CODEC_SPI hspi2
 
@@ -34,10 +36,10 @@
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
 #define USE_USBD_AUDIO
-/* #define USE_USBD_AUDIO_FEATURES */
+#define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_TX           // microphone
-#define USE_USBD_AUDIO_RX           // speaker
-#define USE_USBD_RX_FB
+/* #define USE_USBD_AUDIO_RX           // speaker */
+/* #define USE_USBD_RX_FB */
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
 

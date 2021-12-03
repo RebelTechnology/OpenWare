@@ -235,6 +235,15 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define USBD_MIDI_NUM_INTERFACES       0
 #endif
 
+#if AUDIO_CHANNELS >= 4
+#define USBD_AUDIO_CHANNEL_CONFIG      0x0603 /* Side L/R and Front L/R */
+#elif  AUDIO_CHANNELS >= 2
+#define USBD_AUDIO_CHANNEL_CONFIG      0x0003 /* L/R */
+#else
+#define USBD_AUDIO_CHANNEL_CONFIG      0x0000 /* Unassigned */
+#endif
+
+
 // not including Audio Control AC interface
 #define AUDIO_NUM_INTERFACES           (USBD_AUDIO_RX_NUM_INTERFACES+USBD_AUDIO_TX_NUM_INTERFACES+USBD_MIDI_NUM_INTERFACES)
 
@@ -306,12 +315,8 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x01,                                 // wTerminalType 
   0x03,                                 // bAssocTerminal
   USBD_AUDIO_RX_CHANNELS,               // bNrChannels
-#if USBD_AUDIO_RX_CHANNELS == 1
-  0x00,                                 // wChannelConfig 0x00 sets Mono, no position bits
-#else
-  0x03,                                 // wChannelConfig 0x03 sets stereo channels left and right
-#endif
-  0x00,                                 // wChannelConfig
+  LOBYTE(USBD_AUDIO_CHANNEL_CONFIG),          // wChannelConfig
+  HIBYTE(USBD_AUDIO_CHANNEL_CONFIG),          // wChannelConfig
   0x00,                                 // iChannelNames
   0x00,                                 // iTerminal Unused
   /* 12 byte */
@@ -375,8 +380,8 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x02,                         // wTerminalType Terminal is Microphone (0x0201)
   0x06,                         // bAssocTerminal
   USBD_AUDIO_TX_CHANNELS,       // bNrChannels 
-  0x03,                         // wChannelConfig
-  0x00,                         // wChannelConfig Mono sets no position bits 
+  LOBYTE(USBD_AUDIO_CHANNEL_CONFIG),          // wChannelConfig
+  HIBYTE(USBD_AUDIO_CHANNEL_CONFIG),          // wChannelConfig
   0x00,                         // iChannelNames Unused
   0x00,                         // iTerminal Unused
   /* 12 bytes */
@@ -486,7 +491,6 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x09,                                    /* bLength */
   USB_DESC_TYPE_ENDPOINT,                  /* bDescriptorType */
   AUDIO_RX_EP,                             /* bEndpointAddress 1 out endpoint*/
-  // USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ADAPT, /* bmAttributes */
   USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ASYNC, /* bmAttributes */
   LOBYTE(AUDIO_RX_MAX_PACKET_SIZE),        /* wMaxPacketSize in bytes */
   HIBYTE(AUDIO_RX_MAX_PACKET_SIZE),
@@ -586,8 +590,9 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   0x09,                         // Size of the descriptor, in bytes (bLength)
   0x05,                         // ENDPOINT descriptor (bDescriptorType)
   AUDIO_TX_EP,                  // IN Endpoint 1. (bEndpointAddress)
-  USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ASYNC,   // bmAttributes
-  // USBD_EP_TYPE_ISOC,   // bmAttributes (device not recognised in Windows if sync or async)
+  // BADD 4.2.3: Basic Audio Functions shall support the same Synchronization Type on all of their streaming endpoints. Only Synchronous or Asynchronous Synchronization Types are allowed.
+  // USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_ASYNC,   // bmAttributes
+  USBD_EP_TYPE_ISOC,   // bmAttributes (device not recognised in Windows if sync or async)
   LOBYTE(AUDIO_TX_MAX_PACKET_SIZE),	// wMaxPacketSize in bytes
   HIBYTE(AUDIO_TX_MAX_PACKET_SIZE),
   0x01,                         // Polling interval 1kHz. (bInterval)

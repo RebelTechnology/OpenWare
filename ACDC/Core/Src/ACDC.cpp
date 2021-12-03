@@ -29,46 +29,40 @@
 #define XIBECA_PIN23 GPIOD, GPIO_PIN_12
 #define XIBECA_PIN24 GPIOD, GPIO_PIN_13
 
-Pin led_in1(XIBECA_PIN17);
-Pin led_in2(XIBECA_PIN18);
-Pin led_in3(XIBECA_PIN19);
-Pin led_in4(XIBECA_PIN20);
+// Pin led_in1(XIBECA_PIN13);
+// Pin led_in2(XIBECA_PIN14);
+// Pin led_in3(XIBECA_PIN19);
+// Pin led_in4(XIBECA_PIN20);
 
 Pin led_clip1(XIBECA_PIN10);
 Pin led_clip2(XIBECA_PIN7);
 Pin led_clip3(XIBECA_PIN8);
 Pin led_clip4(XIBECA_PIN5);
 
-Pin led_out1(XIBECA_PIN21);
-Pin led_out2(XIBECA_PIN22);
-Pin led_out3(XIBECA_PIN23);
-Pin led_out4(XIBECA_PIN24);
+// Pin led_out1(XIBECA_PIN21);
+// Pin led_out2(XIBECA_PIN22);
+// Pin led_out3(XIBECA_PIN23);
+// Pin led_out4(XIBECA_PIN24);
 
 void setLed(uint8_t led, uint32_t rgb){
-  uint32_t pwm = 0xFFFFFFFFU - __USAT(rgb>>10, 10);
+  uint32_t pwm = 1023 - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
   switch(led){
   case 1:
     if(rgb == RED_COLOUR){
-      led_in1.high();
       led_clip1.low();
-    }else if(rgb == NO_COLOUR){
-      led_in1.high();
-      led_clip1.high();
+      TIM3->CCR2 = 0xFFFFFFFFU;
     }else{
-      led_in1.low();
       led_clip1.high();
-    }      
+      TIM3->CCR2 = pwm;
+    }
     break;
   case 2:
     if(rgb == RED_COLOUR){
-      led_in2.high();
       led_clip2.low();
-    }else if(rgb == NO_COLOUR){
-      led_in2.high();
-      led_clip2.high();
+      TIM2->CCR4 = 0xFFFFFFFFU;
     }else{
-      led_in2.low();
       led_clip2.high();
+      TIM2->CCR4 = pwm;
     }      
     break;
   case 3:
@@ -113,23 +107,21 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 
 void initLed(){
   extern TIM_HandleTypeDef htim2;
+  extern TIM_HandleTypeDef htim3;
   extern TIM_HandleTypeDef htim4;
-  // extern TIM_HandleTypeDef htim5;
   extern TIM_HandleTypeDef htim8;
   HAL_TIM_Base_Start(&htim2);
+  HAL_TIM_Base_Start(&htim3);
   HAL_TIM_Base_Start(&htim4);
-  // HAL_TIM_Base_Start(&htim5);
   HAL_TIM_Base_Start(&htim8);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // in3
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); // in4
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4); // in2
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); // in1
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1); // out3
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2); // out4
-  // HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_1); // clip1
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1); // out1
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1); // out2
-
-  led_in1.outputMode();
-  led_in2.outputMode();
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2); // out2
 
   led_clip1.outputMode();
   led_clip2.outputMode();
@@ -139,28 +131,14 @@ void initLed(){
 
 void onSetup(){
   initLed();
-  // led_in1.outputMode();
-  // led_in2.outputMode();
-  // led_in3.outputMode();
-  // led_in4.outputMode();
-
-  // led_clip1.outputMode();
-  // led_clip2.outputMode();
-  // led_clip3.outputMode();
-  // led_clip4.outputMode();
-
-  // led_out1.outputMode();
-  // led_out2.outputMode();
-  // led_out3.outputMode();
-  // led_out4.outputMode();
-
   for(size_t i=1; i<=8; ++i)
     setLed(i, NO_COLOUR);
 }
 
 void onLoop(void){  
   for(size_t i=0; i<4; ++i){
-    setLed(i+1, getParameterValue(PARAMETER_AA+i));
-    setLed(i+4, getParameterValue(PARAMETER_BA+i));
+    int16_t value = getParameterValue(PARAMETER_AA+i);
+    setLed(i+1, value >= 4095 ? RED_COLOUR : value);
+    setLed(i+5, getParameterValue(PARAMETER_BA+i));
   }
 }
