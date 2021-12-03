@@ -142,7 +142,10 @@ void onScreenDraw(){
 #ifdef USE_TLC5946
   for(int i=0; i<16; ++i){
     uint16_t val = params.getValue(i)>>2;
-    setLed(i, dyn_rainbowinputs[val&0x3ff]);
+    if(getPortMode(i) == PORT_UNI_INPUT)
+      setLed(i, dyn_rainbowinputs[val&0x3ff]);
+    else
+      setLed(i, dyn_rainbowoutputs[val&0x3ff]);
   }
   TLC5946_Refresh_GS();
 #endif  
