@@ -90,6 +90,16 @@ public:
       user[i] = 0;
     setDisplayMode(PROGRESS_DISPLAY_MODE);
   }
+
+  void changePage(Page* page){
+    if(this->page != page){
+      if(this->page != NULL)
+	this->page->exit();
+      this->page = page;
+      page->enter();
+    }
+  }
+
   void draw(ScreenBuffer& screen){
     screen.clear();
     page->draw(screen);
@@ -362,41 +372,31 @@ ExitPage exitPage;
 StatsPage configurationPage;
 AssignPage assignPage;
 
-void changePage(Page* page){
-  if(params.page != page){
-    if(params.page != NULL)
-      params.page->exit();
-    params.page = page;
-    if(page != NULL)
-      page->enter();
-  }
-}
-
 void setDisplayMode(DisplayMode mode){
   switch(mode){
   case STANDARD_DISPLAY_MODE:
-    changePage(&standardPage);
+    params.changePage(&standardPage);
     break;
   case CONFIGURATION_DISPLAY_MODE:
-    changePage(&configurationPage);
+    params.changePage(&configurationPage);
     break;
   case PROGRESS_DISPLAY_MODE:
-    changePage(&progressPage);
+    params.changePage(&progressPage);
     break;
   case SELECT_ONE_DISPLAY_MODE:
-    changePage(&selectOnePage);
+    params.changePage(&selectOnePage);
     break;
   case SELECT_TWO_DISPLAY_MODE:
-    changePage(&selectTwoPage);
+    params.changePage(&selectTwoPage);
     break;
   case EXIT_DISPLAY_MODE:
-    changePage(&exitPage);
+    params.changePage(&exitPage);
     break;
   case ASSIGN_DISPLAY_MODE:
-    changePage(&assignPage);
+    params.changePage(&assignPage);
     break;
   case ERROR_DISPLAY_MODE:
-    changePage(&errorPage);
+    params.changePage(&errorPage);
     break;
   }
 }
