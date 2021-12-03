@@ -542,21 +542,6 @@ public:
       int16_t delta = getDiscreteEncoderValue(current, previous);
       encoder_sensitivity = (EncoderSensitivity)std::clamp(encoder_sensitivity + delta, (int)SENS_SUPER_FINE, (int)SENS_SUPER_COARSE);
     }
-    // // update encoder 1 top right
-    // int16_t value = data[2];
-    // int16_t right_enc = encoders[1]; // Save old value for encoder scrolling in main menu
-    // if(displayMode == CONTROL){
-    //   selectControlMode(value, pressed&0x3); // action if either left or right encoder pushed
-    //   if(params.isEncoderPushed(ENCODER_BUTTON_1234)){
-    //   // if(pressed&0x3c) // exit status mode if any other encoder is pressed
-    //     controlMode = EXIT;
-    //   // use delta value from encoder 0 top left
-    //   int16_t delta = getDiscreteEncoderValue(data[1], encoders[0]);
-    //   // we use selectedPid[1] to store control values because we don't need it to select a pid
-    //   setControlModeValue(selectedPid[1] + delta);
-    //   encoders[0] = data[1];
-    //   return; // skip normal encoder processing
-    // }
   }
 };
 
@@ -614,8 +599,8 @@ public:
     // "< Preset >",
     // "< Data   >",
     // "< Volume >",
-    // "< LEDs   >",
-    params.drawTitle("< LEDs    >", screen);    
+    // "< LEDs",
+    params.drawTitle("< LEDs", screen);    
     drawLeds(screen);
   }
 
@@ -692,7 +677,7 @@ public:
     }
   }
   void draw(ScreenBuffer& screen){
-    if(params.isEncoderPushed(ENCODER_BUTTON_1234)){
+    if(params.isEncoderPushed(ENCODER_BUTTON_ANY)){
       setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
     }else{
       params.drawTitle("  Status >", screen);
