@@ -63,15 +63,15 @@ class BackgroundTask {
 
 class Owl {
  private:
-  volatile OperationMode operationMode = STARTUP_MODE;
+  volatile uint8_t operationMode = STARTUP_MODE;
   BackgroundTask* backgroundTask = NULL;
   void (*messageCallback)(const char* msg, size_t len) = NULL;
   
  public:
   void setup();
   void loop();
-  OperationMode getOperationMode();
-  void setOperationMode(OperationMode mode);
+  uint8_t getOperationMode();
+  void setOperationMode(uint8_t mode);
   void setBackgroundTask(BackgroundTask* bt);
   void setMessageCallback(void* callback);
   void handleMessage(const char* msg, size_t len);

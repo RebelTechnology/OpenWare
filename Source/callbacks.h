@@ -14,7 +14,6 @@ extern "C" {
     RUN_MODE,
     CONFIGURE_MODE,
     STREAM_MODE,
-    BYPASS_MODE,
     ERROR_MODE
   } OperationMode;
 
@@ -27,7 +26,7 @@ extern "C" {
   void setAnalogValue(uint8_t ch, int16_t value);
   void setGateValue(uint8_t bid, int16_t value);
   void onChangePin(uint16_t pin);
-  void onChangeMode(OperationMode new_mode, OperationMode old_mode);
+  void onChangeMode(uint8_t new_mode, uint8_t old_mode);
   void onStartProgram();
   void onError(int8_t code, const char* msg);
   // sets a progress bar (if available) to a value from 0 to 4095

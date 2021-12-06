@@ -163,12 +163,12 @@ void updateLed(){
 }
 #endif /*USE_RGB_LED */
 
-OperationMode Owl::getOperationMode(){
+uint8_t Owl::getOperationMode(){
   return operationMode;
 }
 
-void Owl::setOperationMode(OperationMode mode){
-  OperationMode old_mode = operationMode;
+void Owl::setOperationMode(uint8_t mode){
+  uint8_t old_mode = operationMode;
   operationMode = mode;
   onChangeMode(mode, old_mode);
 }

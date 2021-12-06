@@ -227,7 +227,7 @@ __weak void loop(){
 
 __weak void onScreenDraw(){}
 
-__weak void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+__weak void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   setLed(0, new_mode == RUN_MODE ? GREEN_COLOUR : YELLOW_COLOUR);
 }
 
