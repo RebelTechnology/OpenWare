@@ -18,7 +18,7 @@ extern "C"{
   {return 0;}
   int eeprom_wait()
   {return 0;}
-  int eeprom_erase_sector(uint32_t sector)
+  int eeprom_erase_sector(uint32_t sector, uint32_t bank)
   {return 0;}
   int eeprom_write_unlock(uint32_t wrp_sectors)
   {return 0;}
@@ -50,7 +50,7 @@ void setProgress(uint16_t value, const char* reason){
   progress_counter = value;
 }
 
-void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   switch(new_mode){
   case STARTUP_MODE:
   case STREAM_MODE:

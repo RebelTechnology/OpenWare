@@ -18,7 +18,7 @@ ProgramManager::ProgramManager(){}
 void ProgramManager::exitProgram(bool isr){}
 void setParameterValue(uint8_t ch, int16_t value){}
 void SystemMidiReader::reset(){}
-void Owl::setOperationMode(OperationMode mode) {}
+void Owl::setOperationMode(uint8_t mode) {}
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
@@ -66,15 +66,15 @@ void sendMessage(){
 void eraseFromFlash(uint8_t sector){
   eeprom_unlock();
   if(sector == 0xff){
-    eeprom_erase_sector(FLASH_SECTOR_7);
-    eeprom_erase_sector(FLASH_SECTOR_8);
-    eeprom_erase_sector(FLASH_SECTOR_9);
-    eeprom_erase_sector(FLASH_SECTOR_10);
-    eeprom_erase_sector(FLASH_SECTOR_11);
+    eeprom_erase_sector(FLASH_SECTOR_7, FLASH_BANK_1);
+    eeprom_erase_sector(FLASH_SECTOR_8, FLASH_BANK_1);
+    eeprom_erase_sector(FLASH_SECTOR_9, FLASH_BANK_1);
+    eeprom_erase_sector(FLASH_SECTOR_10, FLASH_BANK_1);
+    eeprom_erase_sector(FLASH_SECTOR_11, FLASH_BANK_1);
     setMessage("Erased patch storage");
     led_green();
   }else{
-    eeprom_erase_sector(sector);
+    eeprom_erase_sector(sector, FLASH_BANK_1);
     setMessage("Erased flash sector");
     led_green();
   }
@@ -84,15 +84,15 @@ void eraseFromFlash(uint8_t sector){
 void saveToFlash(uint8_t sector, void* data, uint32_t length){
   if(sector == FIRMWARE_SECTOR && length <= (16 * 2 + 64 + 2 * 128) * 1024){
     eeprom_unlock();
-    eeprom_erase_sector(FLASH_SECTOR_2);
+    eeprom_erase_sector(FLASH_SECTOR_2, FLASH_BANK_1);
     if(length > 16 * 1024){
-      eeprom_erase_sector(FLASH_SECTOR_3);
+      eeprom_erase_sector(FLASH_SECTOR_3, FLASH_BANK_1);
       if(length > (16 * 2) * 1024){
-        eeprom_erase_sector(FLASH_SECTOR_4);
+        eeprom_erase_sector(FLASH_SECTOR_4, FLASH_BANK_1);
         if (length > (16 * 2 + 64) * 1024){
-          eeprom_erase_sector(FLASH_SECTOR_5);
+          eeprom_erase_sector(FLASH_SECTOR_5, FLASH_BANK_1);
           if (length > (16 * 2 + 64 + 128) * 1024){
-            eeprom_erase_sector(FLASH_SECTOR_6);
+            eeprom_erase_sector(FLASH_SECTOR_6, FLASH_BANK_1);
           }
         }
       }
