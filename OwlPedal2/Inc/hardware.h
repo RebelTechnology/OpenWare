@@ -20,10 +20,10 @@
 #define USBD_PCD_HANDLE hpcd_USB_OTG_HS
 
 #define USE_USBD_AUDIO
-#define USE_USBD_RX_FB
 #define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_TX  // microphone
-#define USE_USBD_AUDIO_RX // speaker
+/* #define USE_USBD_AUDIO_RX // speaker */
+/* #define USE_USBD_RX_FB */
 #define USE_USBD_MIDI
 
 /* USB audio settings */

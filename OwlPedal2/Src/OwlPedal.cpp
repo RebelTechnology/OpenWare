@@ -1,3 +1,4 @@
+#include <math.h>
 #include "Owl.h"
 #include "errorhandlers.h"
 #include "Codec.h"
@@ -9,15 +10,23 @@
 #include "Pin.h"
 #include "usb_device.h"
 
-#define PATCH_RESET_COUNTER (1024/MAIN_LOOP_SLEEP_MS)
+#define PATCH_RESET_COUNTER (768/MAIN_LOOP_SLEEP_MS)
 #define PATCH_CONFIG_COUNTER (3072/MAIN_LOOP_SLEEP_MS)
-#define PATCH_INDICATOR_COUNTER (128/MAIN_LOOP_SLEEP_MS)
+#define PATCH_INDICATOR_COUNTER (256/MAIN_LOOP_SLEEP_MS)
+
+#define BYPASS_MODE       (ERROR_MODE+1)
+#define ENTER_CONFIG_MODE (ERROR_MODE+2)
 
 static int16_t knobvalues[2];
 static uint8_t patchselect;
-#define PATCH_CONFIG_KNOB_THRESHOLD (4096/4)
+#define PATCH_CONFIG_KNOB_THRESHOLD (4096/8)
 #define PATCH_CONFIG_PROGRAM_CONTROL 0
 #define PATCH_CONFIG_VOLUME_CONTROL 3
+
+#define SW3_Pin EXP2_T_Pin
+#define SW3_GPIO_Port EXP2_T_GPIO_Port
+#define SW4_Pin EXP2_R_Pin
+#define SW4_GPIO_Port EXP2_R_GPIO_Port
 
 // Pin footswitch_pin(GPIOA, GPIO_PIN_0);
 Pin bypass_pin(GPIOA, GPIO_PIN_0);
@@ -27,10 +36,7 @@ Pin exp1_ring_pin(GPIOA, GPIO_PIN_3);
 Pin led_green_pin(GPIOB, GPIO_PIN_8);
 Pin led_red_pin(GPIOB, GPIO_PIN_9);
 
-#define SW3_Pin EXP2_T_Pin
-#define SW3_GPIO_Port EXP2_T_GPIO_Port
-#define SW4_Pin EXP2_R_Pin
-#define SW4_GPIO_Port EXP2_R_GPIO_Port
+static uint32_t counter = 0;
 
 void initLed(){
 #ifdef OWL_PEDAL_PWM_LEDS
@@ -77,10 +83,12 @@ bool getBufferedBypass(){
 void setBufferedBypass(bool value){
   setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
   bufpass_pin.set(!value);
+  // todo; set BYPASS_MODE
 }
 
 bool isBypassed(){
   return HAL_GPIO_ReadPin(FOOTSWITCH_GPIO_Port, FOOTSWITCH_Pin) == GPIO_PIN_RESET;
+  // todo: || getBufferedBypass()
 }
 
 bool isPushbuttonPressed(){
@@ -89,69 +97,70 @@ bool isPushbuttonPressed(){
 }
 
 void onChangePin(uint16_t pin){
-  switch(pin){
-  case FOOTSWITCH_Pin: { // bypass / stomp switch
-    bool state = isBypassed();
-    setButtonValue(0, state);
-    setLed(0, state ? NO_COLOUR : GREEN_COLOUR);
-    // todo: save LED state
-    // todo: only allow config mode in bypass?
-    break;
-  }
-  case SW1_Pin:
-  case SW1_ALT_Pin: { // pushbutton
-    bool state = isPushbuttonPressed();
-    setButtonValue(PUSHBUTTON, state);
-    setButtonValue(BUTTON_A, state);
-    setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
-    midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
-    if(state && owl.getOperationMode() == CONFIGURE_MODE){
-      // exit configure mode
-      owl.setOperationMode(RUN_MODE);
+  if(owl.getOperationMode() == RUN_MODE){
+    switch(pin){
+    case FOOTSWITCH_Pin: { // bypass / stomp switch
+      bool state = isBypassed();
+      setButtonValue(0, state);
+      setLed(0, state ? NO_COLOUR : GREEN_COLOUR);
+      // todo: save LED state
+      // todo: only allow config mode in bypass?
+      break;
     }
-    break;
-  }
-  case SW2_Pin: { // mode button
-    bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
-    setButtonValue(BUTTON_B, state);
-    break;
-  }
-  case SW3_Pin: { // EXP2 Tip
-    bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
-    setButtonValue(BUTTON_C, state);
-    break;
-  }
-  case SW4_Pin: { // EXP2 Ring
-    bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
-    setButtonValue(BUTTON_D, state);
-    break;
-  }
+    case SW1_Pin:
+    case SW1_ALT_Pin: { // pushbutton
+      bool state = isPushbuttonPressed();
+      setButtonValue(PUSHBUTTON, state);
+      setButtonValue(BUTTON_A, state);
+      setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
+      midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
+      break;
+    }
+    case SW2_Pin: { // mode button
+      bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_B, state);
+      break;
+    }
+    case SW3_Pin: { // EXP2 Tip
+      bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_C, state);
+      break;
+    }
+    case SW4_Pin: { // EXP2 Ring
+      bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_D, state);
+      break;
+    }
+    }
   }
 }
 
 void setGateValue(uint8_t ch, int16_t value){
-  switch(ch){
-  case PUSHBUTTON:
-    setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
-    break;
-  case GREEN_BUTTON:
-    setLed(0, value ? GREEN_COLOUR : NO_COLOUR);
-    break;
-  case RED_BUTTON:
-    setLed(0, value ? RED_COLOUR : NO_COLOUR);
-    break;
-  case BUTTON_1:
-    setBufferedBypass(value);
-    break;
+  if(owl.getOperationMode() == RUN_MODE){
+    switch(ch){
+    case PUSHBUTTON:
+      setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
+      break;
+    case GREEN_BUTTON:
+      setLed(0, value ? GREEN_COLOUR : NO_COLOUR);
+      break;
+    case RED_BUTTON:
+      setLed(0, value ? RED_COLOUR : NO_COLOUR);
+      break;
+    }
   }
+  if(ch == BUTTON_1)
+    setBufferedBypass(value);
 }
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
-  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
-  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
-  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
-  parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_E])>>2;
+  if(owl.getOperationMode() == RUN_MODE){
+    parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
+    parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
+    parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
+    parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
+    parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_E])>>2;
+  }
 }
 
 void onSetup(){
@@ -172,30 +181,27 @@ void onSetup(){
   setBufferedBypass(false);
 }
 
-static uint32_t counter = 0;
-void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   counter = 0;
   setLed(0, NO_COLOUR);
   if(new_mode == CONFIGURE_MODE){
     knobvalues[0] = getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL);
     knobvalues[1] = getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL);
     patchselect = program.getProgramIndex();
-    counter = PATCH_RESET_COUNTER;
   }else if(new_mode == BYPASS_MODE){
     setLed(0, NO_COLOUR); // todo: save LED state
   }else if(new_mode == RUN_MODE){
-    if(old_mode == CONFIGURE_MODE){
-      if(program.getProgramIndex() != patchselect &&
-	 registry.hasPatch(patchselect)){
-	// change patch on mode button release
-	program.loadProgram(patchselect); // enters load mode (calls onChangeMode)
-	program.resetProgram(true); // true if setOperationMode() is called from button IRQ
-      // }else{
-      // 	owl.setOperationMode(RUN_MODE);
-      }
-    }
     setLed(0, GREEN_COLOUR); // todo: restore to saved state
   }
+}
+
+// static uint16_t progress = 0;
+void setProgress(uint16_t value, const char* msg){
+  // debugMessage(msg, (int)(100*value/4095));
+  // progress = value;
+  // toggle red/green
+  led_red_pin.set(led_green_pin.get());
+  led_green_pin.toggle();      
 }
 
 void onLoop(){
@@ -207,55 +213,69 @@ void onLoop(){
       counter = PATCH_RESET_COUNTER;
     break;
   case LOAD_MODE:
-    setLed(0, counter > PATCH_INDICATOR_COUNTER/2 ? GREEN_COLOUR : NO_COLOUR);
+    // setLed(0, counter > PATCH_INDICATOR_COUNTER/2 ? GREEN_COLOUR : NO_COLOUR);
     // todo: use setProgress()?
-    if(counter-- == 0)
-      counter = PATCH_RESET_COUNTER;
+    // if(counter-- == 0)
+    //   counter = PATCH_RESET_COUNTER;
     break;
   case BYPASS_MODE:
     if(!isBypassed()){
-      owl.setOperationMode(RUN_MODE);      
+      owl.setOperationMode(RUN_MODE);
     }else if(isPushbuttonPressed()){
-      if(counter-- == 0){
-	owl.setOperationMode(CONFIGURE_MODE);	
-      }else if(counter % 100 == 0){
-	led_green_pin.toggle();
-	led_red_pin.toggle();
-      }
-    }else{
-      counter = PATCH_RESET_COUNTER;
+      owl.setOperationMode(ENTER_CONFIG_MODE);	
     }
     break;
   case RUN_MODE:
     if(getErrorStatus() != NO_ERROR){
       owl.setOperationMode(ERROR_MODE);
-    }else if(isBypassed()){
-      owl.setOperationMode(BYPASS_MODE);      
     }else if(isPushbuttonPressed()){
-      if(counter-- == 0){
-	owl.setOperationMode(CONFIGURE_MODE);	
-      }else if(counter < PATCH_RESET_COUNTER && counter % 100 == 0){
+      if(--counter == 0){ // counter == 0 when we enter RUN_MODE
+	owl.setOperationMode(ENTER_CONFIG_MODE);
+      }else if(counter < PATCH_RESET_COUNTER && counter % 128 == 0){
 	led_green_pin.toggle();
 	led_red_pin.toggle();
       }
+    }else if(isBypassed()){
+      // don't change to BYPASS_MODE while pushbutton is pressed
+      // (we might have just come from CONFIGURATION_MODE)
+      owl.setOperationMode(BYPASS_MODE);
     }else{
       counter = PATCH_CONFIG_COUNTER;
     }
     break;
+  case ENTER_CONFIG_MODE:
+    if(isPushbuttonPressed()){
+      // toggle rapidly for yellow-ish LED
+      led_red_pin.set(led_green_pin.get());
+      led_green_pin.toggle();      
+    }else{
+      owl.setOperationMode(CONFIGURE_MODE);
+    }
+    break;
   case CONFIGURE_MODE:
-    // if(isPushbuttonPressed()){
+    if(isPushbuttonPressed()){ // exit configure mode
+      if(program.getProgramIndex() != patchselect &&
+	 registry.hasPatch(patchselect)){
+	// change patch on mode button release
+	program.loadProgram(patchselect); // enters load mode (calls onChangeMode)
+	program.resetProgram(false);
+      }else{
+	owl.setOperationMode(RUN_MODE);
+      }
+    }else{
+      // update patch control
       if(abs(knobvalues[0] - getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL)) >= PATCH_CONFIG_KNOB_THRESHOLD){
 	knobvalues[0] = -PATCH_CONFIG_KNOB_THRESHOLD;
-	float idx = 1 + (getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL) * registry.getNumberOfPatches()) / 4096.0f;
-	if(abs(patchselect - idx) > 0.6 && registry.hasPatch(idx)){ // ensure a small dead zone
+	float pos = 0.5f + (getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL) * (registry.getNumberOfPatches() - 1)) / 4096.0f;
+	uint8_t idx = roundf(pos);
+	if(abs(patchselect - pos) > 0.6 && registry.hasPatch(idx)){ // ensure a small dead zone
 	  patchselect = idx;
-	  midi_tx.sendPc(idx);
-	  // setLed(0, idx & 0x01 ? RED_COLOUR : GREEN_COLOUR);
+	  midi_tx.sendPc(patchselect);
+	  // update patch indicator
+	  counter = PATCH_RESET_COUNTER + PATCH_INDICATOR_COUNTER*(2*patchselect + 1);
 	}
-      // }else{
-      // 	led_green_pin.toggle();
-      // 	led_red_pin.toggle();
       }
+      // update volume control
       if(abs(knobvalues[1] - getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL)) >= PATCH_CONFIG_KNOB_THRESHOLD){
 	knobvalues[1] = -PATCH_CONFIG_KNOB_THRESHOLD;
 	uint8_t value = (getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL) >> 6) + 63;
@@ -265,33 +285,33 @@ void onLoop(){
 	  midi_tx.sendCc(MIDI_CC_VOLUME, value);
 	}
       }
+      // indicator LED
       if(counter-- == 0){
-	counter = PATCH_RESET_COUNTER + PATCH_INDICATOR_COUNTER + PATCH_INDICATOR_COUNTER*2*patchselect;
+	counter = PATCH_RESET_COUNTER + PATCH_INDICATOR_COUNTER*(2*patchselect + 1); // patch indicator
 	setLed(0, NO_COLOUR);
       }else if(counter <= PATCH_RESET_COUNTER){
-	// toggle rapidly during 1 second for yellow-ish LED
-	led_red_pin.set(led_green_pin.get());
-	led_green_pin.toggle();
-      }else if(counter % PATCH_INDICATOR_COUNTER == 0){
-	if(counter >= PATCH_RESET_COUNTER + 5*2*PATCH_INDICATOR_COUNTER){
-	  counter -= 4*PATCH_INDICATOR_COUNTER;
-	  led_red_pin.toggle();
-	}else{
+	if(patchselect == 0){
+	  // toggle rapidly for yellow-ish LED
+	  led_red_pin.set(led_green_pin.get());
 	  led_green_pin.toggle();
+	}else{
+	  setLed(0, NO_COLOUR);
 	}
+      }else if((counter - PATCH_RESET_COUNTER) % (2*PATCH_INDICATOR_COUNTER) == 0){
+	if((counter - PATCH_RESET_COUNTER) >= 10*PATCH_INDICATOR_COUNTER){
+	  counter -= 8*PATCH_INDICATOR_COUNTER;
+	  setLed(0, RED_COLOUR);
+	}else{
+	  setLed(0, GREEN_COLOUR);
+	}
+      }else if((counter - PATCH_RESET_COUNTER) % PATCH_INDICATOR_COUNTER == 0){
+	setLed(0, NO_COLOUR);
       }
-    // if(isPushbuttonPressed()){ // exit configure mode
-    //   if(program.getProgramIndex() != patchselect &&
-    // 	 registry.hasPatch(patchselect)){
-    // 	// change patch on mode button release
-    // 	program.loadProgram(patchselect); // enters load mode (calls onChangeMode)
-    // 	program.resetProgram(false);
-    //   }else{
-    // 	owl.setOperationMode(RUN_MODE);
-    //   }
-    // }
+    }
     break;
   case ERROR_MODE:
+    if(isPushbuttonPressed())
+      owl.setOperationMode(ENTER_CONFIG_MODE); 
     setLed(0, counter > PATCH_RESET_COUNTER/2 ? RED_COLOUR : NO_COLOUR);
     if(counter-- == 0)
       counter = PATCH_RESET_COUNTER;
