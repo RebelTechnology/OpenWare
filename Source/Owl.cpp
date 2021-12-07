@@ -168,9 +168,12 @@ uint8_t Owl::getOperationMode(){
 }
 
 void Owl::setOperationMode(uint8_t mode){
-  uint8_t old_mode = operationMode;
-  operationMode = mode;
-  onChangeMode(mode, old_mode);
+  if(mode != operationMode){
+    uint8_t old_mode = operationMode;
+    // make sure this is set before calling onChangeMode
+    operationMode = mode;
+    onChangeMode(mode, old_mode);
+  }
 }
 
 void Owl::loop(){
