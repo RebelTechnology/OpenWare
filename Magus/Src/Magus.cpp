@@ -28,7 +28,7 @@ void setProgress(uint16_t value, const char* reason){
   progress_counter = value;
 }
 
-void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   switch(new_mode){
   case STREAM_MODE:
     setProgress(0, "Streaming");

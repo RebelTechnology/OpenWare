@@ -12,12 +12,10 @@
 #include "Storage.h"
 #include "MagusParameterController.hpp"
 
-// 63, 19, 60 // TODO: balance levels
-
 const uint32_t* dyn_rainbowinputs = rainbowinputs;
 const uint32_t* dyn_rainbowoutputs = rainbowoutputs;
 
-static MagusParameterController params;
+MagusParameterController params;
 Graphics graphics DMA_RAM;
 
 extern "C" void onResourceUpdate(void);
@@ -28,6 +26,29 @@ uint16_t progress_counter = 0;
 void setProgress(uint16_t value, const char* reason){
   progress_message = (char*)reason;
   progress_counter = value;
+}
+
+void onChangeMode(uint8_t new_mode, uint8_t old_mode){
+  switch(new_mode){
+  case STREAM_MODE:
+    setProgress(0, "Streaming");
+    setDisplayMode(PROGRESS_DISPLAY_MODE);
+    break;
+  case STARTUP_MODE:
+  case LOAD_MODE:
+    setProgress(0, "Loading");
+    setDisplayMode(PROGRESS_DISPLAY_MODE);
+    break;
+  case CONFIGURE_MODE:
+    setDisplayMode(STATUS_DISPLAY_MODE);
+    break;
+  case RUN_MODE:
+    setDisplayMode(STANDARD_DISPLAY_MODE);
+    break;
+  case ERROR_MODE:
+    setDisplayMode(ERROR_DISPLAY_MODE);
+    break;
+  }
 }
 
 static bool updateMAX11300 = false;
@@ -86,8 +107,8 @@ void onSetup(){
 
     // LEDs
     TLC5946_init(&TLC5946_SPI);
-    TLC5946_setAll_DC(0); // Start with 0 brightness here, update from settings later
-    TLC5946_setAll(0x10, 0x10, 0x10);
+    TLC5946_setAll_DC(0); // Start with low brightness here, update from settings later
+    TLC5946_setAll(0, 0, 0);
 
     HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_RESET);
 
