@@ -365,22 +365,24 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
-  extern char _PATCHRAM_END;
+  extern uint8_t _PATCHRAM, _PATCHRAM_END, _PATCHRAM_SIZE;
   uint8_t* end = (uint8_t*)def->getStackBase(); // program end
-  uint32_t remain = (uint32_t)&_PATCHRAM_END - (uint32_t)def->getStackBase(); // space left
+  uint32_t remain = &_PATCHRAM_END - end; // space left
+  if(end < &_PATCHRAM || remain > (uint32_t)&_PATCHRAM_SIZE) // sanity check
+    remain = 0; // prevent errors if program stack is not linked to PATCHRAM
 #ifdef USE_CCM_RAM
   extern char _CCMRAM, _CCMRAM_SIZE;
 #endif
 #ifdef USE_PLUS_RAM
-  extern char _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
-  extern char _PATCHRAM, _PATCHRAM_SIZE;
+  extern uint8_t _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
   uint8_t* plusend = (uint8_t*)&_PLUSRAM;
   uint32_t plusremain = (uint32_t)&_PLUSRAM_SIZE;
   if(def->getLinkAddress() == (uint32_t*)&_PLUSRAM){
     end = (uint8_t*)&_PATCHRAM;
-    remain = (uint32_t)&_PATCHRAM_SIZE;
+    remain = (uint32_t)&_PATCHRAM_SIZE; // use all of PATCHRAM for heap
     plusend = (uint8_t*)def->getStackBase();
-    plusremain = (uint32_t)&_PLUSRAM_END - (uint32_t)def->getStackBase();
+    plusremain = def->getStackSize();
+    plusremain = &_PLUSRAM_END - plusend;
   }
 #endif
 #ifdef USE_EXTERNAL_RAM
@@ -406,6 +408,8 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
+#elif AUDIO_CHANNELS == 2
+  pv->audio_format = AUDIO_FORMAT_24B32;
 #else
   pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
 #endif
