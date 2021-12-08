@@ -81,12 +81,12 @@ bool updatePin(size_t bid, Pin pin){
     setButtonValue(bid+3, state);
     setLed(bid+6, state ? RED_COLOUR : NO_COLOUR);
   }else if(owl.getOperationMode() == CONFIGURE_MODE && state){
-    if(patchselect == bid){
-      if(registry.hasPatch(bid+4))
-	patchselect = bid+4;
-    }else{
-      if(registry.hasPatch(bid))
-	patchselect = bid;
+    if(patchselect == bid && registry.hasPatch(bid+4)){
+      patchselect = bid+4;
+    }else if(registry.hasPatch(bid)){
+      patchselect = bid;
+    }else if(registry.hasPatch(bid+4)){
+      patchselect = bid+4;
     }
   }
   return state;
@@ -400,7 +400,7 @@ void onStartProgram(){
   memset(button_led_values, 0, sizeof(button_led_values)); // reset leds
 }
 
-void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   if(new_mode == CONFIGURE_MODE){
     // entering config mode
     HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
