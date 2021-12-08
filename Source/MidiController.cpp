@@ -366,14 +366,13 @@ void MidiController::sendConfigurationSetting(const char* name, uint32_t value){
 }
 
 void MidiController::sendDeviceId(){
-  uint32_t* deviceId = (uint32_t*)UID_BASE;
   char buf[32];
   buf[0] = SYSEX_DEVICE_ID;
   char* p = &buf[1];
-  p = stpcpy(p, msg_itoa(deviceId[0], 16, 8));
+  p = stpcpy(p, msg_itoa(HAL_GetUIDw0(), 16, 8));
   p = stpcpy(p, ":");
-  p = stpcpy(p, msg_itoa(deviceId[1], 16, 8));
+  p = stpcpy(p, msg_itoa(HAL_GetUIDw1(), 16, 8));
   p = stpcpy(p, ":");
-  p = stpcpy(p, msg_itoa(deviceId[2], 16, 8));
+  p = stpcpy(p, msg_itoa(HAL_GetUIDw2(), 16, 8));
   sendSysEx((uint8_t*)buf, p-buf);
 }
