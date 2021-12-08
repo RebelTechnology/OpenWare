@@ -156,7 +156,7 @@ void setProgress(uint16_t value, const char* msg){
   progress = value;
 }
 
-void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   progress = 0;
   patchselect = program.getProgramIndex();
   setEncoderValue(patchselect);
