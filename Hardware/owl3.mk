@@ -25,11 +25,7 @@ endif
 LDFLAGS += -Wl,--gc-sections
 LDSCRIPT ?= $(OPENWARE)/Hardware/owl3.ld
 LDLIBS += -lc -lm
-# CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
-# CPPFLAGS += -fpic -fpie
-CPPFLAGS += -Wdouble-promotion
-CPPFLAGS += -fdata-sections
-CPPFLAGS += -ffunction-sections
+CPPFLAGS += -Wdouble-promotion -Werror=double-promotion
 CPPFLAGS += -fno-builtin -ffreestanding
 LDFLAGS += -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17
