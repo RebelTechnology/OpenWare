@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v22.1.rc2"
+#define FIRMWARE_VERSION "v22.1.rc3"
 
 #ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
@@ -59,9 +59,8 @@
 #define STORAGE_MAX_BLOCKS           64
 #endif
 
-#ifndef OWL_XIBECA
 #define DEBUG_DWT
-#endif
+
 /* #define DEBUG_STACK */
 #define DEBUG_STORAGE
 /* #define DEBUG_BOOTLOADER */
