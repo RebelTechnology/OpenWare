@@ -16,7 +16,7 @@ void Graphics::begin(ParameterController* pc, SPI_HandleTypeDef *spi) {
   oled_init(spi);
   screen.setBuffer(pixelbuffer);
   screen.clear();
-  params->reset();
+  reset();
   display();
 }
 
