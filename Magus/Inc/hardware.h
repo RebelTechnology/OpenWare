@@ -42,7 +42,7 @@
 #define UART_MIDI_RX_BUFFER_SIZE    256
 
 #define USE_TLC5946
-#define LEDS_BRIGTHNESS             6
+#define LEDS_BRIGTHNESS             2
 #define TLC5946_SPI hspi6
 #define MAX11300_SPI hspi5
 #define ENCODERS_SPI hspi5
