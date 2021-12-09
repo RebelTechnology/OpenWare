@@ -100,7 +100,7 @@ void codec_init(){
 /*   Each DAC channel (VOUTx) has a digital attenuator function. The attenuation level can be set from 0 dB to –100 dB in */
 /* 0.5-dB steps, and also can be set to infinite attenuation (mute). The attenuation level change from current value to target */
 /* value is performed by incrementing or decrementing with s-curve responses and a time set by ATSPDA. */
-  codec_write(70, 0b1000000); // ATMDDA=1 All channels with preset (independent) data + master (common) data in decibel number
+  codec_write(70, 0b10000000); // ATMDDA=1 All channels with preset (independent) data + master (common) data in decibel number
 
   /* Data formats, see Table 11 p.33 */
 
