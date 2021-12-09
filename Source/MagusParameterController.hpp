@@ -96,7 +96,9 @@ public:
   virtual void enter(){}
   virtual void exit(){}
   virtual void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){}
-  int16_t getDiscreteEncoderValue(int16_t current, int16_t previous){
+  virtual void buttonsChanged(uint32_t current, uint32_t previous){}
+  // helper functions
+  static int16_t getDiscreteEncoderValue(int16_t current, int16_t previous){
     int32_t delta = (current - previous) * encoder_sensitivity;    
     if(delta > 0 && (current & encoder_mask) == encoder_mask)
       return 1;
@@ -104,13 +106,19 @@ public:
       return -1;
     return 0;
   }
-  int16_t getContinuousEncoderValue(int16_t current, int16_t previous, int16_t scale){
+  static int16_t getContinuousEncoderValue(int16_t current, int16_t previous, int16_t scale){
     int32_t delta = (current - previous) * encoder_sensitivity;    
     if(delta > 0)
       delta = scale << (delta/3);
     else
       delta = -scale << (-delta/3);
     return delta;
+  }
+  static bool pressed(uint32_t bid, uint32_t current, uint32_t previous){
+    return (current & bid) && !(previous & bid);
+  }
+  static bool released(uint32_t bid, uint32_t current, uint32_t previous){
+    return !(current & bid) && (previous & bid);
   }
 };
 
@@ -123,29 +131,19 @@ press once to toggle mode: update > select
 turn to scroll through 4 functions
 press again to select parameter: select > update
 
-todo:
-- update parameter / encoderChanged
-- select parameter
-- select global parameter
-- select preset mode
 */
 class MagusParameterController : public ParameterController {
 public:
   Page* page = NULL;
-  uint16_t buttons;  
+  uint16_t buttons;
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t user[NOF_PARAMETERS]; // user set values (ie by encoder or MIDI)
   uint8_t selectedBlock;
   uint8_t selectedPid[NOF_ENCODERS];
 
-  MagusParameterController(){
-    reset();
-    setDisplayMode(PROGRESS_DISPLAY_MODE);
-  }
   void reset(){
     setTitle("Magus");
     ParameterController::reset();
-    Encoders_reset();
     for(int i=0; i<NOF_PARAMETERS; ++i){
       user[i] = 0;
     }
@@ -156,6 +154,8 @@ public:
     selectedPid[3] = PARAMETER_C;
     selectedPid[4] = PARAMETER_E;
     selectedPid[5] = PARAMETER_G;
+
+    setDisplayMode(PROGRESS_DISPLAY_MODE);
 
 #ifdef OWL_MAGUS
     for(int i=0; i<20; ++i)
@@ -310,7 +310,10 @@ public:
   }
 
   void updateEncoders(int16_t* data, uint8_t size){
-    buttons = data[0];
+    if(buttons != data[0]){
+      page->buttonsChanged(data[0], buttons);
+      buttons = data[0];
+    }
     for(size_t i=0; i<NOF_ENCODERS; ++i){
       int16_t value = data[i+1];
       if(value != encoders[i]){
@@ -374,9 +377,8 @@ public:
       params.changeValue(encoder, getContinuousEncoderValue(current, previous, 40));
     }
   }
-  
-  void draw(ScreenBuffer& screen){
-    switch(params.buttons){
+  void buttonsChanged(uint32_t current, uint32_t previous){
+    switch(current){
     case ENCODER_BUTTON_L:
       setDisplayMode(SELECT_GLOBAL_DISPLAY_MODE);
       break;
@@ -400,20 +402,22 @@ public:
       setDisplayMode(SELECT_BLOCK_DISPLAY_MODE);
       break;
     }
-    if(getErrorStatus() && getErrorMessage() != NULL)
-      setDisplayMode(ERROR_DISPLAY_MODE);    
-
-    params.drawParameter(screen);
-
+  }
+  void draw(ScreenBuffer& screen){
+    if(getErrorStatus())
+      setDisplayMode(ERROR_DISPLAY_MODE);
+    params.drawParameter(screen); // display last changed parameter
     // use callback to draw title and message
     graphics.drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
   }
 };
 
 class ErrorPage : public Page {
+  void buttonsChanged(uint32_t current, uint32_t previous){
+    if(pressed(ENCODER_BUTTON_ANY, current, previous))
+      setErrorStatus(0);      
+  }
   void draw(ScreenBuffer& screen){
-    if(params.isEncoderPushed(ENCODER_BUTTON_ANY))
-      setErrorStatus(0);
     if(getErrorStatus() == NO_ERROR){
       setDisplayMode(STANDARD_DISPLAY_MODE);
     }else{
@@ -512,8 +516,6 @@ public:
  void exit(){}
 
   void draw(ScreenBuffer& screen){
-    if(params.isEncoderPushed(ENCODER_BUTTON_ANY))
-      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
     params.drawTitle("< Encode >", screen);
     int offset = 16;
     screen.setTextSize(1);
@@ -533,7 +535,10 @@ public:
     if (encoder_sensitivity >= SENS_SUPER_COARSE)
       screen.fillCircle(104, offset + 15, 6, WHITE);
   }
-
+  void buttonsChanged(uint32_t current, uint32_t previous){
+    if(pressed(ENCODER_BUTTON_ANY, current, previous))
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+  }
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == ENCODER_R){
       int16_t delta = getDiscreteEncoderValue(current, previous);
@@ -547,6 +552,10 @@ public:
 
 class ConfigVolumePage : public Page {
 public:
+  void buttonsChanged(uint32_t current, uint32_t previous){
+    if(pressed(ENCODER_BUTTON_ANY, current, previous))
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+  }
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == ENCODER_R){
       int16_t delta = getDiscreteEncoderValue(current, previous);
@@ -560,12 +569,9 @@ public:
     }
   }
   void draw(ScreenBuffer& screen){
-    if(params.isEncoderPushed(ENCODER_BUTTON_ANY))
-      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
     params.drawTitle("< Volume >", screen);    
     drawVolume(screen);
   }
-
   void drawVolume(ScreenBuffer& screen){
     screen.setTextSize(1);
     screen.print(1, 24 + 10, "Volume ");
@@ -578,12 +584,21 @@ public:
 
 class ConfigLedsPage : public Page {
 public:
+  // void exit(){
+  //   extern uint8_t ENCODER_CS_DELAY_US;
+  //   ENCODER_CS_DELAY_US = settings.leds_brightness;
+  // }  
+  void buttonsChanged(uint32_t current, uint32_t previous){
+    if(pressed(ENCODER_BUTTON_ANY, current, previous))
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+  }
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == ENCODER_R){
       int16_t delta = getDiscreteEncoderValue(current, previous);
       setDisplayMode(std::clamp(CONFIG_LEDS_DISPLAY_MODE + delta, (int)STATUS_DISPLAY_MODE, (int)CONFIG_LEDS_DISPLAY_MODE));
     }else if(encoder == ENCODER_L){
-      int16_t value = std::clamp(settings.leds_brightness + getContinuousEncoderValue(current, previous, 1), 0, 63);
+      // todo: set red/green/blue individually with different encoders
+      int8_t value = std::clamp(settings.leds_brightness + getContinuousEncoderValue(current, previous, 1), 0, 63);
       if(settings.leds_brightness != value){
 	settings.leds_brightness = value;
 	TLC5946_setAll_DC(value);
@@ -592,8 +607,6 @@ public:
     }
   }
   void draw(ScreenBuffer& screen){
-    if(params.isEncoderPushed(ENCODER_BUTTON_ANY))
-      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
     // "  Play   >",
     // "< Status >",
     // "< Preset >",
@@ -630,6 +643,10 @@ public:
   //     program.resetProgram(false);
   //   }
   // } // only change patch when exiting through ExitPatch
+  void buttonsChanged(uint32_t current, uint32_t previous){
+    if(pressed(ENCODER_BUTTON_ANY, current, previous))
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+  }
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == ENCODER_R){
       reset();
@@ -640,8 +657,6 @@ public:
     }
   }
   void draw(ScreenBuffer& screen){
-    if(params.isEncoderPushed(ENCODER_BUTTON_ANY))
-      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
     params.drawTitle("< Patch  >", screen);
     drawPresetNames(patchselect, screen);
   }  
@@ -670,6 +685,10 @@ public:
 
 class StatusPage : public Page {
 public:
+  void buttonsChanged(uint32_t current, uint32_t previous){
+    if(pressed(ENCODER_BUTTON_ANY, current, previous))
+      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
+  }
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == ENCODER_R){
       int16_t delta = getDiscreteEncoderValue(current, previous);
@@ -677,12 +696,8 @@ public:
     }
   }
   void draw(ScreenBuffer& screen){
-    if(params.isEncoderPushed(ENCODER_BUTTON_ANY)){
-      setDisplayMode(CONFIG_EXIT_DISPLAY_MODE);
-    }else{
-      params.drawTitle("  Status >", screen);
-      drawStatus(screen);
-    }
+    params.drawTitle("  Status >", screen);
+    drawStatus(screen);
   }
   
   void drawStatus(ScreenBuffer& screen){
