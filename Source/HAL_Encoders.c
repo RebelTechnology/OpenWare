@@ -10,10 +10,18 @@ SPI_HandleTypeDef* Encoders_SPIConfig;
 
 static int16_t rgENC_Values[7] = {0};
 
+#ifdef STM32H7xx
+#define ENCODER_CS_DELAY_US 14
+#else
 #define ENCODER_CS_DELAY_US 8
+#endif
+/* uint8_t ENCODER_CS_DELAY_US = 14; */
 
 __STATIC_INLINE void DWT_Delay_us(volatile uint32_t microseconds)
 {
+#ifndef DEBUG_DWT
+#error "Need DWT enabled for microsecond delay"
+#endif
  uint32_t clk_cycle_start = DWT->CYCCNT;
  /* Go to number of cycles for system */
  microseconds *= (HAL_RCC_GetHCLKFreq() / 1000000);
