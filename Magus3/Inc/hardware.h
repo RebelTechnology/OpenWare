@@ -35,12 +35,14 @@
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
-#define MAIN_LOOP_SLEEP_MS          20
+/* #define MAIN_LOOP_SLEEP_MS          2 */
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
 #define USE_USBD_AUDIO
-#define USE_USBD_AUDIO_TX  // microphone
+#define USE_USBD_RX_FB
+#define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_RX // speaker
+#define USE_USBD_AUDIO_TX  // microphone
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
@@ -54,7 +56,7 @@
 /* #define UART_MIDI_RX_BUFFER_SIZE 256 */
 
 #define USE_TLC5946
-#define LEDS_BRIGTHNESS             20
+#define LEDS_BRIGTHNESS             2
 #define TLC5946_SPI hspi6
 #define MAX11300_SPI hspi5
 #define ENCODERS_SPI hspi5

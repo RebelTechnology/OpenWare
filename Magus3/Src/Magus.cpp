@@ -98,6 +98,8 @@ void onResourceUpdate(void){
 void onSetup(){
   HAL_GPIO_WritePin(TLC_BLANK_GPIO_Port, TLC_BLANK_Pin, GPIO_PIN_SET); // LEDs off
   Pin enc_nrst(ENC_NRST_GPIO_Port, ENC_NRST_Pin);
+
+  // Encoders_reset();
   enc_nrst.outputMode();
   enc_nrst.low();
 
@@ -148,7 +150,8 @@ void onSetup(){
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
 #endif
 
-  // Update LEDs brighness from settings
+  // Update LEDs brightness from settings
+  // TLC5946_setRGB_DC(63, 19, 60);
   TLC5946_setAll_DC(settings.leds_brightness);
   TLC5946_Refresh_DC();
 
@@ -156,6 +159,7 @@ void onSetup(){
   // allows us to program chip with SWD
   enc_nrst.inputMode();
   enc_nrst.setPull(PIN_PULL_UP);
+  HAL_Delay(20);
   Encoders_readAll();
 }
 
