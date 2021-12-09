@@ -155,7 +155,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 #define MANAGER_TASK_PRIORITY  (AUDIO_TASK_PRIORITY | portPRIVILEGE_BIT)
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
 #define FLASH_TASK_PRIORITY 1 // allow default task to run when FLASH task yields
-#define SCREEN_TASK_PRIORITY 3 // less than AUDIO_TASK_PRIORITY, more than osPriorityNormal
+#define SCREEN_TASK_PRIORITY 3 // less than AUDIO_TASK_PRIORITY, more than osPriorityNormal (which is probably 1)
 
 #define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
 
@@ -657,8 +657,8 @@ ProgramManager::ProgramManager(){
 #ifdef DEBUG_DWT
   // DWT cycle count enable
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-#ifdef OWL_ARCH_F7
-  DWT->LAR = 0xC5ACCE55; // enable debug access: required on F7
+#ifdef STM32H7xx
+  DWT->LAR = 0xC5ACCE55; // enable debug access: required on M7
 #endif
   DWT->CYCCNT = 0;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
