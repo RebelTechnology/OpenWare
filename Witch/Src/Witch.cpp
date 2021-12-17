@@ -12,6 +12,8 @@
 #include "TakeoverControls.h"
 #include "qint.h"
 #include "Pin.h"
+#include "usb_device.h"
+#include "usb_host.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -439,6 +441,12 @@ void onSetup(){
   takeover.set(9, settings.audio_output_gain<<5);
   takeover.reset(9, false);
   patchselect = program.getProgramIndex();
+
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
+
+  /* init code for USB_HOST */
+  MX_USB_HOST_Init();
 }
 
 void onLoop(){

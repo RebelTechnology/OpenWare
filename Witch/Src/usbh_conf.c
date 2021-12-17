@@ -35,7 +35,7 @@
 
 /* USER CODE END PV */
 
-HCD_HandleTypeDef hhcd_USB_OTG_HS;
+extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
 void Error_Handler(void);
 
 /* USER CODE BEGIN 0 */
@@ -59,7 +59,7 @@ USBH_StatusTypeDef USBH_Get_USB_Status(HAL_StatusTypeDef hal_status);
 *******************************************************************************/
 /* MSP Init */
 
-void HAL_HCD_MspInit(HCD_HandleTypeDef* hcdHandle)
+__weak void HAL_HCD_MspInit(HCD_HandleTypeDef* hcdHandle)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(hcdHandle->Instance==USB_OTG_HS)
@@ -92,7 +92,7 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef* hcdHandle)
   }
 }
 
-void HAL_HCD_MspDeInit(HCD_HandleTypeDef* hcdHandle)
+__weak void HAL_HCD_MspDeInit(HCD_HandleTypeDef* hcdHandle)
 {
   if(hcdHandle->Instance==USB_OTG_HS)
   {
