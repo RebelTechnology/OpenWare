@@ -36,7 +36,7 @@ class Codec {
   void mute(bool doMute);
   void clear();
   void txrx();
-  void set(uint32_t value);
+  void set(int32_t value);
   void ramp(uint32_t max);
   void setInputGain(int8_t value);
   /* int8_t getOutputGain(); */
