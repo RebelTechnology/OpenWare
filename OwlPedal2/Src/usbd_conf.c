@@ -325,6 +325,7 @@ USBD_StatusTypeDef USBD_LL_CloseEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   HAL_StatusTypeDef hal_status = HAL_OK;
   USBD_StatusTypeDef usb_status = USBD_OK;
 
+  USB_DISABLE_EP_BEFORE_CLOSE(ep_addr);
   hal_status = HAL_PCD_EP_Close(pdev->pData, ep_addr);
 
   usb_status =  USBD_Get_USB_Status(hal_status);
