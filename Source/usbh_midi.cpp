@@ -3,6 +3,11 @@
 #include "midi.h"
 #include "SerialBuffer.hpp"
 
+/**
+ * USB Host MIDI Driver
+ * Based on code by Xavier Halgand @MrBlueXav
+ */
+
 extern "C" {
   static USBH_StatusTypeDef USBH_MIDI_InterfaceInit  (USBH_HandleTypeDef *phost);
 
@@ -127,7 +132,7 @@ USBH_StatusTypeDef USBH_MIDI_InterfaceDeInit (USBH_HandleTypeDef *phost){
   if(phost->pActiveClass->pData){
     /* statically allocated in init
        USBH_free (phost->pActiveClass->pData); */
-    phost->pActiveClass->pData = 0;
+    phost->pActiveClass->pData = NULL;
   }
 
   return USBH_OK;
@@ -211,6 +216,14 @@ static USBH_StatusTypeDef USBH_MIDI_Process (USBH_HandleTypeDef *phost){
   * @retval USBH Status
   */
 static USBH_StatusTypeDef USBH_MIDI_SOFProcess (USBH_HandleTypeDef *phost){
+  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+
+  USBH_URBStateTypeDef URB_Status = USBH_LL_GetURBState(phost, MIDI_Handle->InPipe);
+  if(URB_Status == USBH_URB_STALL) {
+    USBH_DbgLog("USBH URB Stall");
+    if (USBH_ClrFeature(phost, MIDI_Handle->InEp) == USBH_OK)
+      MIDI_Handle->state = MIDI_TRANSFER_DATA;
+  }
   return USBH_OK;  
 }
   

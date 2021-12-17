@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v22.1.rc3"
+#define FIRMWARE_VERSION "v22.1.rc4"
 
 #ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
