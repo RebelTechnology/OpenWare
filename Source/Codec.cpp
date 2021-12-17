@@ -114,7 +114,7 @@ float Codec::getAvg(){
   return avg / CODEC_BUFFER_SIZE;
 }
 
-void Codec::set(uint32_t value){
+void Codec::set(int32_t value){
   for(int i=0; i<CODEC_BUFFER_SIZE; ++i){
     codec_txbuf[i] = value;
     codec_rxbuf[i] = value;
