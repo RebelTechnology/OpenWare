@@ -238,11 +238,11 @@ void DMA2_Stream4_IRQHandler(void)
 void OTG_FS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
-
+#ifdef USE_USBD_FS
   /* USER CODE END OTG_FS_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
-
+#endif
   /* USER CODE END OTG_FS_IRQn 1 */
 }
 
@@ -252,11 +252,11 @@ void OTG_FS_IRQHandler(void)
 void OTG_HS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_HS_IRQn 0 */
-
+#ifdef USE_USBD_HS
   /* USER CODE END OTG_HS_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
   /* USER CODE BEGIN OTG_HS_IRQn 1 */
-
+#endif
   /* USER CODE END OTG_HS_IRQn 1 */
 }
 
