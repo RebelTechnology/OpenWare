@@ -18,8 +18,9 @@
 
 // todo: quad SPI
 /* #define USE_SPI_FLASH */
+/* #define SPI_FLASH_HSPI              hqspi */
 
-/* #define AUDIO_OUTPUT_GAIN           112 in/out gain not working?*/
+#define AUDIO_OUTPUT_GAIN           114
 
 #define USE_CODEC
 #define USE_PCM3168A

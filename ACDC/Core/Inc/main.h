@@ -103,9 +103,15 @@ void Error_Handler(void);
 
 #define ADC_NCS_Pin ADC_SPI_NCS_Pin
 #define ADC_NCS_GPIO_Port ADC_SPI_NCS_GPIO_Port
-
 #define ADC_RESET_Pin ADC_RST_Pin
 #define ADC_RESET_GPIO_Port ADC_RST_GPIO_Port
+
+#define FLASH_nCS_Pin FLASH_NCS_Pin
+#define FLASH_nCS_GPIO_Port FLASH_NCS_GPIO_Port
+#define FLASH_WP_Pin FLASH_DQ2_Pin
+#define FLASH_WP_GPIO_Port FLASH_DQ2_GPIO_Port
+#define FLASH_HOLD_Pin FLASH_DQ3_Pin
+#define FLASH_HOLD_GPIO_Port FLASH_DQ3_GPIO_Port
 
 /* USER CODE END Private defines */
 
