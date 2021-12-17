@@ -33,10 +33,67 @@ Pin bypass_pin(GPIOA, GPIO_PIN_0);
 Pin bufpass_pin(GPIOF, GPIO_PIN_9); // high is bypass
 Pin exp1_tip_pin(GPIOA, GPIO_PIN_2);
 Pin exp1_ring_pin(GPIOA, GPIO_PIN_3);
+
+#ifndef OWL_PEDAL_PWM_LEDS
 Pin led_green_pin(GPIOB, GPIO_PIN_8);
 Pin led_red_pin(GPIOB, GPIO_PIN_9);
+#endif
 
 static uint32_t counter = 0;
+static uint8_t expression_mode = 0;
+
+bool getBufferedBypass(){
+  return !bufpass_pin.get();
+}
+
+void setBufferedBypass(bool value){
+  // setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
+  bufpass_pin.set(!value);
+  // todo; set BYPASS_MODE
+}
+
+bool isBypassed(){
+  return HAL_GPIO_ReadPin(FOOTSWITCH_GPIO_Port, FOOTSWITCH_Pin) == GPIO_PIN_RESET;
+  // todo: || getBufferedBypass()
+}
+
+bool isPushbuttonPressed(){
+  return HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET ||
+    HAL_GPIO_ReadPin(SW1_ALT_GPIO_Port, SW1_ALT_Pin) == GPIO_PIN_RESET;
+}
+
+void configureExpression(uint8_t mode){
+  if(mode != expression_mode){
+    switch(mode){
+    case EXPRESSION_MODE_EXP_TRS:
+      // Ring is available on ADC_F
+      exp1_ring_pin.outputMode();
+      exp1_ring_pin.high();
+      exp1_ring_pin.setPull(PIN_PULL_NONE);
+      exp1_tip_pin.analogMode();
+      exp1_tip_pin.setPull(PIN_PULL_NONE);
+      break;
+    case EXPRESSION_MODE_EXP_RTS:
+      exp1_tip_pin.outputMode();
+      exp1_tip_pin.high();
+      exp1_tip_pin.setPull(PIN_PULL_NONE);
+      exp1_ring_pin.analogMode();
+      exp1_ring_pin.setPull(PIN_PULL_NONE);
+      break;
+    case EXPRESSION_MODE_FS_TS:
+    case EXPRESSION_MODE_FS_TRS:
+      exp1_tip_pin.inputMode();
+      exp1_tip_pin.setPull(PIN_PULL_UP);
+      exp1_ring_pin.inputMode();
+      exp1_ring_pin.setPull(PIN_PULL_UP);
+      break;
+    }
+    expression_mode = mode;
+    setButtonValue(PUSHBUTTON, isPushbuttonPressed());
+    setButtonValue(BUTTON_1, isPushbuttonPressed());
+    setButtonValue(BUTTON_2, false);
+  }
+}
 
 void initLed(){
 #ifdef OWL_PEDAL_PWM_LEDS
@@ -50,10 +107,38 @@ void initLed(){
 #endif
 }
 
+uint32_t getLed(uint8_t led){
+#ifdef OWL_PEDAL_PWM_LEDS
+  uint32_t r = 1023 - TIM4->CCR3;
+  uint32_t g = TIM4->CCR4;
+  return (r<<20) | (g<<10);
+#else
+  if(!led_green_pin.get() && led_red_pin.get())
+    return RED_COLOUR;
+  else if(led_green_pin.get() && !led_red_pin.get())
+    return GREEN_COLOUR;
+  else
+    return NO_COLOUR;
+#endif
+}
+
+void toggleLed(uint8_t led){
+#ifdef OWL_PEDAL_PWM_LEDS
+  setLed(led, getLed(led) == GREEN_COLOUR ? RED_COLOUR : GREEN_COLOUR);
+  // uint32_t r = TIM4->CCR3;
+  // uint32_t g = TIM4->CCR4;
+  // TIM4->CCR3 = 1023 - r;
+  // TIM4->CCR4 = 1023 - g;
+#else
+  led_red_pin.set(led_green_pin.get());
+  led_green_pin.toggle();      
+#endif
+}
+    
 void setLed(uint8_t led, uint32_t rgb){
 #ifdef OWL_PEDAL_PWM_LEDS
   uint32_t r = 1023 - ((rgb>>20) & 0x3ff);
-  uint32_t g = 1023 - ((rgb>>10) & 0x3ff);  
+  uint32_t g = ((rgb>>10) & 0x3ff); // green TIM4 has reverse polarity
   TIM4->CCR3 = r;
   TIM4->CCR4 = g;
 #else
@@ -76,61 +161,42 @@ void setLed(uint8_t led, uint32_t rgb){
 #endif
 }
 
-bool getBufferedBypass(){
-  return !bufpass_pin.get();
-}
-
-void setBufferedBypass(bool value){
-  setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
-  bufpass_pin.set(!value);
-  // todo; set BYPASS_MODE
-}
-
-bool isBypassed(){
-  return HAL_GPIO_ReadPin(FOOTSWITCH_GPIO_Port, FOOTSWITCH_Pin) == GPIO_PIN_RESET;
-  // todo: || getBufferedBypass()
-}
-
-bool isPushbuttonPressed(){
-  return HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET ||
-    HAL_GPIO_ReadPin(SW1_ALT_GPIO_Port, SW1_ALT_Pin) == GPIO_PIN_RESET;
-}
-
 void onChangePin(uint16_t pin){
+  if(pin == FOOTSWITCH_Pin){
+    setButtonValue(0, isBypassed());
+  }
   if(owl.getOperationMode() == RUN_MODE){
     switch(pin){
-    case FOOTSWITCH_Pin: { // bypass / stomp switch
-      bool state = isBypassed();
-      setButtonValue(0, state);
-      setLed(0, state ? NO_COLOUR : GREEN_COLOUR);
-      // todo: save LED state
-      // todo: only allow config mode in bypass?
-      break;
-    }
+    // case FOOTSWITCH_Pin: { // bypass / stomp switch
+    //   bool state = isBypassed();
+    //   setButtonValue(0, state);
+    //   setLed(0, state ? NO_COLOUR : GREEN_COLOUR);
+    //   break;
+    // }
     case SW1_Pin:
     case SW1_ALT_Pin: { // pushbutton
       bool state = isPushbuttonPressed();
       setButtonValue(PUSHBUTTON, state);
-      setButtonValue(BUTTON_A, state);
+      setButtonValue(BUTTON_1, state);
       setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
       midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
       break;
     }
-    case SW2_Pin: { // mode button
-      bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_B, state);
-      break;
-    }
-    case SW3_Pin: { // EXP2 Tip
-      bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_C, state);
-      break;
-    }
-    case SW4_Pin: { // EXP2 Ring
-      bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_D, state);
-      break;
-    }
+    // case SW2_Pin: { // mode button
+    //   bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
+    //   setButtonValue(BUTTON_2, state);
+    //   break;
+    // }
+    // case SW3_Pin: { // EXP2 Tip
+    //   bool state = HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin) == GPIO_PIN_RESET;
+    //   setButtonValue(BUTTON_3, state);
+    //   break;
+    // }
+    // case SW4_Pin: { // EXP2 Ring
+    //   bool state = HAL_GPIO_ReadPin(SW4_GPIO_Port, SW4_Pin) == GPIO_PIN_RESET;
+    //   setButtonValue(BUTTON_4, state);
+    //   break;
+    // }
     }
   }
 }
@@ -138,19 +204,28 @@ void onChangePin(uint16_t pin){
 void setGateValue(uint8_t ch, int16_t value){
   if(owl.getOperationMode() == RUN_MODE){
     switch(ch){
+    case BUTTON_1:
     case PUSHBUTTON:
       setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
       break;
     case GREEN_BUTTON:
+#ifdef OWL_PEDAL_PWM_LEDS
+      setLed(0, (value<<8) & (0x3ff<<10)); // use top 10 bits (out of 12) as green value
+#else
       setLed(0, value ? GREEN_COLOUR : NO_COLOUR);
+#endif
       break;
     case RED_BUTTON:
+#ifdef OWL_PEDAL_PWM_LEDS
+      setLed(0, (value<<18) & (0x3ff<<20)); // use top 10 bits (out of 12) as red value
+#else
       setLed(0, value ? RED_COLOUR : NO_COLOUR);
+#endif
       break;
     }
   }
-  if(ch == BUTTON_1)
-    setBufferedBypass(value);
+  // if(ch == 0)
+  //   setBufferedBypass(value);
 }
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
@@ -159,7 +234,39 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
     parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
     parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
     parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
-    parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_E])>>2;
+
+    static uint8_t fs_state = 0;
+    uint8_t buttons = 0;
+    switch(expression_mode){
+    case EXPRESSION_MODE_EXP_TRS:
+      parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_E])>>2;
+      break;
+    case EXPRESSION_MODE_EXP_RTS:
+      parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_F])>>2;
+      break;
+    case EXPRESSION_MODE_FS_TRS:
+      buttons = (!exp1_ring_pin.get()) << BUTTON_2;
+      buttons |= (!exp1_tip_pin.get()) << BUTTON_1;
+      if(buttons != fs_state){
+	if((buttons & (1 << BUTTON_2)) != (fs_state & (1 << BUTTON_2))){
+	  setButtonValue(BUTTON_2, buttons & (1 << BUTTON_2));
+	}
+	if((buttons & (1 << BUTTON_1)) != (fs_state & (1 << BUTTON_1))){
+	  setButtonValue(BUTTON_1, buttons & (1 << BUTTON_1));
+	  setButtonValue(PUSHBUTTON, buttons & (1 << BUTTON_1));
+	}
+	fs_state = buttons;
+      }
+      break;
+    case EXPRESSION_MODE_FS_TS:
+      buttons = (!exp1_tip_pin.get()) << BUTTON_1;
+      if(buttons != fs_state){
+	setButtonValue(BUTTON_1, buttons & (1 << BUTTON_1));
+	setButtonValue(PUSHBUTTON, buttons & (1 << BUTTON_1));
+	fs_state = buttons;
+      }
+      break;
+    }
   }
 }
 
@@ -169,10 +276,7 @@ void onSetup(){
   bypass_pin.low();
   bufpass_pin.outputMode();
   bufpass_pin.low();
-  // Ring is available on ADC_F
-  exp1_ring_pin.outputMode();
-  exp1_ring_pin.high();
-  // exp1_tip_pin.analogMode();
+  configureExpression(settings.expression_mode);
 
   setLed(0, RED_COLOUR);
 
@@ -181,27 +285,33 @@ void onSetup(){
   setBufferedBypass(false);
 }
 
+void onStartProgram(){
+  setLed(0, GREEN_COLOUR);
+}
+
 void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   counter = 0;
+  static uint32_t saved_led = NO_COLOUR;
+  if(old_mode == RUN_MODE){
+    saved_led = getLed(0); // leaving RUN_MODE, save LED state
+  }
   setLed(0, NO_COLOUR);
   if(new_mode == CONFIGURE_MODE){
     knobvalues[0] = getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL);
     knobvalues[1] = getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL);
     patchselect = program.getProgramIndex();
-  }else if(new_mode == BYPASS_MODE){
-    setLed(0, NO_COLOUR); // todo: save LED state
   }else if(new_mode == RUN_MODE){
-    setLed(0, GREEN_COLOUR); // todo: restore to saved state
+    setLed(0, saved_led); // restore to saved LED state
   }
 }
 
 // static uint16_t progress = 0;
 void setProgress(uint16_t value, const char* msg){
-  // debugMessage(msg, (int)(100*value/4095));
-  // progress = value;
-  // toggle red/green
-  led_red_pin.set(led_green_pin.get());
-  led_green_pin.toggle();      
+#ifdef OWL_PEDAL_PWM_LEDS
+  setLed(0, (value<<18) & (0x3ff<<20));
+#else
+  toggleLed(0);
+#endif
 }
 
 void onLoop(){
@@ -232,8 +342,7 @@ void onLoop(){
       if(--counter == 0){ // counter == 0 when we enter RUN_MODE
 	owl.setOperationMode(ENTER_CONFIG_MODE);
       }else if(counter < PATCH_RESET_COUNTER && counter % 128 == 0){
-	led_green_pin.toggle();
-	led_red_pin.toggle();
+	toggleLed(0);
       }
     }else if(isBypassed()){
       // don't change to BYPASS_MODE while pushbutton is pressed
@@ -246,8 +355,7 @@ void onLoop(){
   case ENTER_CONFIG_MODE:
     if(isPushbuttonPressed()){
       // toggle rapidly for yellow-ish LED
-      led_red_pin.set(led_green_pin.get());
-      led_green_pin.toggle();      
+      toggleLed(0);
     }else{
       owl.setOperationMode(CONFIGURE_MODE);
     }
@@ -292,8 +400,7 @@ void onLoop(){
       }else if(counter <= PATCH_RESET_COUNTER){
 	if(patchselect == 0){
 	  // toggle rapidly for yellow-ish LED
-	  led_red_pin.set(led_green_pin.get());
-	  led_green_pin.toggle();
+	  toggleLed(0);
 	}else{
 	  setLed(0, NO_COLOUR);
 	}
@@ -317,4 +424,5 @@ void onLoop(){
       counter = PATCH_RESET_COUNTER;
     break;
   }
+  configureExpression(settings.expression_mode);
 }

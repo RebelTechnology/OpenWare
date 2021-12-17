@@ -1,23 +1,34 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
-#define OWL_PEDAL_MKII
+#define OWL_PEDAL
 #define HARDWARE_ID                  OWL_PEDAL_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal mkII"
 
+#define EXPRESSION_MODE_EXP_TRS      1
+#define EXPRESSION_MODE_EXP_RTS      2
+#define EXPRESSION_MODE_FS_TS        3 // single footswitch
+#define EXPRESSION_MODE_FS_TRS       4 // dual footswitch
+#define EXPRESSION_MODE              EXPRESSION_MODE_EXP_TRS
+
+#define OWL_PEDAL_PWM_LEDS
+
 /* #define USE_SPI_FLASH */
 
-/* #define USE_USBD_FS */
-/* #define USBD_DESC FS_Desc */
-/* #define USBD_HSFS DEVICE_FS */
-/* #define USBD_HANDLE hUsbDeviceFS */
-/* #define USBD_PCD_HANDLE hpcd_USB_OTG_FS */
-
 #define USE_USBD_HS
+/* #define USE_USBD_FS */
+
+#ifdef USE_USBD_FS
+#define USBD_DESC FS_Desc
+#define USBD_HSFS DEVICE_FS
+#define USBD_HANDLE hUsbDeviceFS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_FS
+#else
 #define USBD_DESC HS_Desc
 #define USBD_HSFS DEVICE_HS
 #define USBD_HANDLE hUsbDeviceHS
 #define USBD_PCD_HANDLE hpcd_USB_OTG_HS
+#endif
 
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_FEATURES
@@ -36,6 +47,7 @@
 
 #define USE_BKPSRAM
 #define AUDIO_OUTPUT_GAIN           123
+
 
 /* #define USE_MODE_BUTTON */
 /* #define MODE_BUTTON_PIN SW3_Pin */
