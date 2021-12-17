@@ -230,15 +230,19 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
   */
 USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 {
-  if (pdev->id == DEVICE_FS) {
+#ifdef USE_USBD_FS
+  /* if (pdev->id == DEVICE_FS) { */
     /* Link the driver to the stack. */
     hpcd_USB_OTG_FS.pData = pdev;
     pdev->pData = &hpcd_USB_OTG_FS;
-  } else if (pdev->id == DEVICE_HS) {
+#endif
+  /* } else if (pdev->id == DEVICE_HS) { */
+#ifdef USE_USBD_HS
     /* Link the driver to the stack. */
     hpcd_USB_OTG_HS.pData = pdev;
     pdev->pData = &hpcd_USB_OTG_HS;
-  }
+#endif
+  /* } */
   USBD_AUDIO_SetFiFos(pdev->pData);
   return USBD_OK;
 }

@@ -66,14 +66,10 @@
 #define USBD_VID     0x1209
 #define USBD_LANGID_STRING     1033
 #define USBD_MANUFACTURER_STRING     "Rebel Technology"
-#define USBD_PID_FS     0xDADA
-#define USBD_PRODUCT_STRING_FS     "OWL-PEDAL"
-#define USBD_CONFIGURATION_STRING_FS     "AUDIO Config"
-#define USBD_INTERFACE_STRING_FS     "AUDIO Interface"
-#define USBD_PID_HS     0xDADA
-#define USBD_PRODUCT_STRING_HS     "OWL-PEDAL"
-#define USBD_CONFIGURATION_STRING_HS     "AUDIO Config"
-#define USBD_INTERFACE_STRING_HS     "AUDIO Interface"
+#define USBD_PID_FSHS     0xDADA
+#define USBD_PRODUCT_STRING_FSHS     "OWL-PEDAL"
+#define USBD_CONFIGURATION_STRING_FSHS     "AUDIO Config"
+#define USBD_INTERFACE_STRING_FSHS     "AUDIO Interface"
 
 #define USB_SIZ_BOS_DESC            0x0C
 
@@ -177,8 +173,8 @@ __ALIGN_BEGIN uint8_t USBD_FSHS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
   USB_MAX_EP0_SIZE,           /*bMaxPacketSize*/
   LOBYTE(USBD_VID),           /*idVendor*/
   HIBYTE(USBD_VID),           /*idVendor*/
-  LOBYTE(USBD_PID_HS),        /*idProduct*/
-  HIBYTE(USBD_PID_HS),        /*idProduct*/
+  LOBYTE(USBD_PID_FSHS),        /*idProduct*/
+  HIBYTE(USBD_PID_FSHS),        /*idProduct*/
   0x00,                       /*bcdDevice rel. 2.00*/
   0x02,
   USBD_IDX_MFC_STR,           /*Index of manufacturer  string*/
@@ -291,11 +287,11 @@ uint8_t * USBD_FSHS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *leng
 {
   if(speed == 0)
   {
-    USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_FSHS, USBD_StrDesc, length);
   }
   else
   {
-    USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_FSHS, USBD_StrDesc, length);
   }
   return USBD_StrDesc;
 }
@@ -344,11 +340,11 @@ uint8_t * USBD_FSHS_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *lengt
 {
   if(speed == USBD_SPEED_HIGH)
   {
-    USBD_GetString((uint8_t *)USBD_CONFIGURATION_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_CONFIGURATION_STRING_FSHS, USBD_StrDesc, length);
   }
   else
   {
-    USBD_GetString((uint8_t *)USBD_CONFIGURATION_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_CONFIGURATION_STRING_FSHS, USBD_StrDesc, length);
   }
   return USBD_StrDesc;
 }
@@ -363,11 +359,11 @@ uint8_t * USBD_FSHS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *le
 {
   if(speed == 0)
   {
-    USBD_GetString((uint8_t *)USBD_INTERFACE_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_INTERFACE_STRING_FSHS, USBD_StrDesc, length);
   }
   else
   {
-    USBD_GetString((uint8_t *)USBD_INTERFACE_STRING_HS, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)USBD_INTERFACE_STRING_FSHS, USBD_StrDesc, length);
   }
   return USBD_StrDesc;
 }
