@@ -529,10 +529,10 @@ void runAudioTask(void* p){
     def->copy();
     ProgramVector* pv = def->getProgramVector();
     updateProgramVector(pv, def);
-    onStartProgram();
     programVector = pv;
     setErrorStatus(NO_ERROR);
     owl.setOperationMode(RUN_MODE);
+    onStartProgram();
 #ifdef USE_CODEC
     codec.clear();
 #endif
