@@ -261,6 +261,11 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     settings.bus_forward_midi = value;
     break;
 #endif
+#ifdef OWL_PEDAL
+  case HEXCODE(SYSEX_CONFIGURATION_EXPRESSION_PEDAL):
+    settings.expression_mode = value;
+    break;    
+#endif
   }
 }
 

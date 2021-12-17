@@ -39,6 +39,9 @@ void ApplicationSettings::reset(){
 #ifdef USE_TLC5946
   leds_brightness = LEDS_BRIGHTNESS;
 #endif
+#ifdef OWL_PEDAL
+  expression_mode = EXPRESSION_MODE;
+#endif
 }
 
 bool ApplicationSettings::settingsInFlash(){

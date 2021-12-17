@@ -30,6 +30,9 @@ public:
 #ifdef USE_TLC5946
   uint8_t leds_brightness;
 #endif
+#ifdef OWL_PEDAL
+  uint8_t expression_mode;
+#endif
 public:
   void init();
   void reset();
