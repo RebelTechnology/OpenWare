@@ -50,7 +50,7 @@ unlock:
 	$(OPENOCD) -c "init" -c "reset halt" -c "flash protect 0 0 1 off" -c "flash info 0" -c "exit"
 
 erase:
-	$(OPENOCD) -c "init" -c "halt" -c "stm32h7 mass_erase 0" -c "flash info 0" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "stm32h7x mass_erase 0" -c "flash info 0" -c "exit"
 
 erase-boot: # flash erase_sector num first last
 	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 0 1" -c "exit"
