@@ -203,23 +203,28 @@ void onChangePin(uint16_t pin){
 
 void setGateValue(uint8_t ch, int16_t value){
   if(owl.getOperationMode() == RUN_MODE){
+    value = (value >> 2) & 0x3ff; // use top 10 bits of 12
     switch(ch){
     case BUTTON_1:
     case PUSHBUTTON:
-      setLed(0, value ? RED_COLOUR : GREEN_COLOUR);
+#ifdef OWL_PEDAL_PWM_LEDS
+      setLed(0, (value << 20) | ((1023 - value) << 10));
+#else
+      setLed(0, value < 2048 ? RED_COLOUR : GREEN_COLOUR);
+#endif
       break;
     case GREEN_BUTTON:
 #ifdef OWL_PEDAL_PWM_LEDS
-      setLed(0, (value<<8) & (0x3ff<<10)); // use top 10 bits (out of 12) as green value
+      setLed(0, value << 10);
 #else
-      setLed(0, value ? GREEN_COLOUR : NO_COLOUR);
+      setLed(0, value < 2048 ? GREEN_COLOUR : NO_COLOUR);
 #endif
       break;
     case RED_BUTTON:
 #ifdef OWL_PEDAL_PWM_LEDS
-      setLed(0, (value<<18) & (0x3ff<<20)); // use top 10 bits (out of 12) as red value
+      setLed(0, value << 20);
 #else
-      setLed(0, value ? RED_COLOUR : NO_COLOUR);
+      setLed(0, value < 2048 ? RED_COLOUR : NO_COLOUR);
 #endif
       break;
     }
