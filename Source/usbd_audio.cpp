@@ -184,6 +184,10 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define MIDI_TX_EP                     0x81
 #endif
 
+#if defined USE_USBD_RX and defined USE_USBD_TX and defined USE_USBD_MIDI and USBD_MAX_NUM_INTERFACES < 4
+#error "Insufficient USBD interfaces configured"
+#endif
+
 #if AUDIO_RX_FIFO_SIZE < (AUDIO_RX_MAX_PACKET_SIZE + 2*USBD_MIN_FIFO_SIZE)
 #pragma message "USBD RX FIFO small"
 #endif
