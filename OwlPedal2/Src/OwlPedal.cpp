@@ -369,7 +369,6 @@ void onLoop(){
     if(isPushbuttonPressed()){ // exit configure mode
       if(program.getProgramIndex() != patchselect &&
 	 registry.hasPatch(patchselect)){
-	// change patch on mode button release
 	program.loadProgram(patchselect); // enters load mode (calls onChangeMode)
 	program.resetProgram(false);
       }else{
