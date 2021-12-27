@@ -1,3 +1,12 @@
+22.2.0
+------
+
+* Support for OWL Pedal mk2
+* Prevent invalid characters in reported patch names
+* Send resource size and checksum with name
+* Improved backwards patch compatibility (CCM linked stack)
+
+
 22.1.rc2
 ------
 
