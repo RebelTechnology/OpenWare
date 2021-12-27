@@ -50,6 +50,9 @@
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (4 + 1)
 
+#define EXPRESSION_MODE_EXP_TRS      1
+#define EXPRESSION_MODE              EXPRESSION_MODE_EXP_TRS
+
 #if 0
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
 #define MIDI_OUTPUT_CHANNEL          0
