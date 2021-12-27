@@ -18,7 +18,7 @@ private:
   uint32_t* linkAddress;
   uint32_t binarySize;
   uint32_t programSize;
-  char programName[24];
+  char programName[20]; // ResourceHeader::name is char[20]
   Resource* sourceResource = NULL;
   void* sourceAddress = NULL;
   
