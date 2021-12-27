@@ -20,6 +20,7 @@
 /* #define USE_SPI_FLASH */
 /* #define SPI_FLASH_HSPI              hqspi */
 
+/* #define AUDIO_INPUT_GAIN            114 */
 #define AUDIO_OUTPUT_GAIN           114
 
 #define USE_CODEC
@@ -39,8 +40,8 @@
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_TX           // microphone
-/* #define USE_USBD_AUDIO_RX           // speaker */
-/* #define USE_USBD_RX_FB */
+#define USE_USBD_AUDIO_RX           // speaker
+#define USE_USBD_RX_FB
 #define USE_USBD_FS
 #define USBD_HANDLE                 hUsbDeviceFS
 
