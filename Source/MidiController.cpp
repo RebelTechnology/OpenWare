@@ -205,7 +205,7 @@ void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name, size
      // make the numbers big-endian
     datasize = __REV(datasize);
     crc = __REV(crc);
-    size_t len = strnlen(name, 24);
+    size_t len = strnlen(name, sizeof(ResourceHeader::name));
     uint8_t buf[len+3+5+5];
     buf[0] = cmd;
     buf[1] = index;
