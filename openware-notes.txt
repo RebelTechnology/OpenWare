@@ -406,3 +406,14 @@ https://systemoverlord.com/2017/03/19/got-and-plt-for-pwning.html
 https://reverseengineering.stackexchange.com/questions/1992/what-is-plt-got
 
 -----------------------------------------------------------------
+
+CPPFLAGS += -fdata-sections -ffunction-sections
+Required to compile without missing (unused) symbols
+
+-----------------------------------------------------------------
+
+use HAL_GetUIDw[012]()
+Returns first word of the unique device identifier (UID based on 96 
+bits)
+
+-----------------------------------------------------------------
