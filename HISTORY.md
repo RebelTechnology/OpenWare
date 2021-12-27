@@ -1,6 +1,11 @@
 22.2.0
 ------
 
+* Improved USB Audio FIFO allocation
+* Refactored Graphics code
+* Move screen handling to separate task
+* Added patch text/message handlers
+* Changed loop/setup callbacks to onLoop and onSetup
 * Support for OWL Pedal mk2
 * Prevent invalid characters in reported patch names
 * Send resource size and checksum with name
