@@ -128,6 +128,8 @@ void Error_Handler(void);
 #define FLASH_HOLD_GPIO_Port GPIOC
 #define FLASH_nCS_Pin GPIO_PIN_5
 #define FLASH_nCS_GPIO_Port GPIOC
+#define FLASH_WP_Pin GPIO_PIN_0
+#define FLASH_WP_GPIO_Port GPIOB
 #define PWM3_Pin GPIO_PIN_1
 #define PWM3_GPIO_Port GPIOB
 #define SW2_Pin GPIO_PIN_2

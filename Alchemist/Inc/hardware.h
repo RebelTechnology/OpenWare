@@ -22,6 +22,7 @@
 #define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX  // microphone
+#define USBD_HANDLE hUsbDeviceHS
 
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW3_Pin
