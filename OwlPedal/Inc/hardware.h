@@ -16,8 +16,10 @@
 #define HARDWARE_VERSION             "OWL Pedal"
 #define AUDIO_INPUT_GAIN             108
 #define AUDIO_OUTPUT_GAIN            115
+#define OWL_PEDAL_LEGACY
 #endif
 #define MAX_SYSEX_BOOTLOADER_SIZE    (32 * 1024)
+
 
 #define EXPRESSION_MODE_EXP_TRS      1
 #define EXPRESSION_MODE_EXP_RTS      2
@@ -42,8 +44,8 @@
 #define AUDIO_CHANNELS              2
 #define USBD_AUDIO_RX_CHANNELS      AUDIO_CHANNELS
 #define USBD_AUDIO_TX_CHANNELS      AUDIO_CHANNELS
-#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
-#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
+#define AUDIO_INT32_TO_SAMPLE(x)    (x & 0xffff)
+#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x))
 
 #define USE_USBD_AUDIO
 #define USE_USBD_RX_FB
@@ -63,8 +65,8 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
-#define ADC_E 4
-#define ADC_F 5
+#define ADC_E 5
+#define ADC_F 4
 #endif
 
 #define NOF_PARAMETERS               40

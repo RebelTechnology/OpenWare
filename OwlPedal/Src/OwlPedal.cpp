@@ -59,7 +59,11 @@ void setBufferedBypass(bool value){
 #endif
 
 bool isBypassed(){
+#ifdef OWL_PEDAL_LEGACY
+  return HAL_GPIO_ReadPin(FOOTSWITCH_GPIO_Port, FOOTSWITCH_Pin) == GPIO_PIN_SET;
+#else
   return HAL_GPIO_ReadPin(FOOTSWITCH_GPIO_Port, FOOTSWITCH_Pin) == GPIO_PIN_RESET;
+#endif
   // todo: || getBufferedBypass()
 }
 
@@ -258,6 +262,13 @@ void setGateValue(uint8_t ch, int16_t value){
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
   if(owl.getOperationMode() == RUN_MODE){
+#ifdef OWL_MODULAR
+    parameter_values[0] = (parameter_values[0]*3 + 4095 - adc_values[ADC_A])>>2;
+    parameter_values[1] = (parameter_values[1]*3 + 4095 - adc_values[ADC_B])>>2;
+    parameter_values[2] = (parameter_values[2]*3 + 4095 - adc_values[ADC_C])>>2;
+    parameter_values[3] = (parameter_values[3]*3 + 4095 - adc_values[ADC_D])>>2;
+    parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_E])>>2;
+#else
     parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
     parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
     parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
@@ -296,6 +307,7 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
       break;
     }
   }
+#endif
 }
 
 void onSetup(){
