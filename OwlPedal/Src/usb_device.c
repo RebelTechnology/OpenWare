@@ -27,6 +27,7 @@
 #include "usbd_audio.h"
 
 /* USER CODE BEGIN Includes */
+#include "device.h"
 
 /* USER CODE END Includes */
 
@@ -41,7 +42,7 @@
 /* USER CODE END PFP */
 
 /* USB Device Core handle declaration. */
-USBD_HandleTypeDef hUsbDeviceFS;
+USBD_HandleTypeDef USBD_HANDLE;
 
 /*
  * -- Insert your variables declaration here --
@@ -68,19 +69,19 @@ void MX_USB_DEVICE_Init(void)
   /* USER CODE END USB_DEVICE_Init_PreTreatment */
   
   /* Init Device Library, add supported class and start the library. */
-  if (USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS) != USBD_OK)
+  if (USBD_Init(&USBD_HANDLE, &USBD_DESC, USBD_HSFS) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_RegisterClass(&hUsbDeviceFS, &USBD_AUDIO) != USBD_OK)
+  if (USBD_RegisterClass(&USBD_HANDLE, &USBD_AUDIO) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_AUDIO_RegisterInterface(&hUsbDeviceFS, NULL) != USBD_OK)
+  if (USBD_AUDIO_RegisterInterface(&USBD_HANDLE, NULL) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_Start(&hUsbDeviceFS) != USBD_OK)
+  if (USBD_Start(&USBD_HANDLE) != USBD_OK)
   {
     Error_Handler();
   }

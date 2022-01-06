@@ -91,14 +91,14 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define PUSHBUTTON_Pin GPIO_PIN_2
-#define PUSHBUTTON_GPIO_Port GPIOE
-#define PUSHBUTTON_EXTI_IRQn EXTI2_IRQn
+#define SW1_Pin GPIO_PIN_2
+#define SW1_GPIO_Port GPIOE
+#define SW1_EXTI_IRQn EXTI2_IRQn
 #define LED_RED_Pin GPIO_PIN_3
 #define LED_RED_GPIO_Port GPIOE
-#define BYPASS_Pin GPIO_PIN_4
-#define BYPASS_GPIO_Port GPIOE
-#define BYPASS_EXTI_IRQn EXTI4_IRQn
+#define FOOTSWITCH_Pin GPIO_PIN_4
+#define FOOTSWITCH_GPIO_Port GPIOE
+#define FOOTSWITCH_EXTI_IRQn EXTI4_IRQn
 #define LED_GREEN_Pin GPIO_PIN_5
 #define LED_GREEN_GPIO_Port GPIOE
 #define ADC1_Pin GPIO_PIN_0
@@ -109,10 +109,10 @@ void Error_Handler(void);
 #define ADC3_GPIO_Port GPIOC
 #define ADC4_Pin GPIO_PIN_3
 #define ADC4_GPIO_Port GPIOC
-#define ADC5_Pin GPIO_PIN_2
-#define ADC5_GPIO_Port GPIOA
-#define EXPRESSION_PEDAL_TIP_Pin GPIO_PIN_3
-#define EXPRESSION_PEDAL_TIP_GPIO_Port GPIOA
+#define EXP1_RING_Pin GPIO_PIN_2
+#define EXP1_RING_GPIO_Port GPIOA
+#define EXP1_TIP_Pin GPIO_PIN_3
+#define EXP1_TIP_GPIO_Port GPIOA
 #define FLASH_nCS_Pin GPIO_PIN_5
 #define FLASH_nCS_GPIO_Port GPIOC
 #define I2C_SCK_Pin GPIO_PIN_10
