@@ -278,10 +278,16 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
     uint8_t buttons = 0;
     switch(expression_mode){
     case EXPRESSION_MODE_EXP_TRS:
-      parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_E])>>2;
+      parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_E])>>2;
+      break;
+    case EXPRESSION_MODE_EXP_ITRS:
+      parameter_values[4] = (parameter_values[4]*3 + 4095 - adc_values[ADC_E])>>2;
       break;
     case EXPRESSION_MODE_EXP_RTS:
-      parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_F])>>2;
+      parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_F])>>2;
+      break;
+    case EXPRESSION_MODE_EXP_IRTS:
+      parameter_values[4] = (parameter_values[4]*3 + 4095 - adc_values[ADC_F])>>2;
       break;
     case EXPRESSION_MODE_FS_TRS:
       buttons = (!exp1_ring_pin.get()) << BUTTON_2;

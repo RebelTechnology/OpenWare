@@ -21,10 +21,12 @@
 #define MAX_SYSEX_BOOTLOADER_SIZE    (32 * 1024)
 
 
-#define EXPRESSION_MODE_EXP_TRS      1
-#define EXPRESSION_MODE_EXP_RTS      2
+#define EXPRESSION_MODE_EXP_TRS      1 // TRS expression pedal
+#define EXPRESSION_MODE_EXP_RTS      2 // TRS expression pedal
 #define EXPRESSION_MODE_FS_TS        3 // single footswitch
 #define EXPRESSION_MODE_FS_TRS       4 // dual footswitch
+#define EXPRESSION_MODE_EXP_ITRS     5 // inverted TRS expression pedal
+#define EXPRESSION_MODE_EXP_IRTS     6 // inverted RTS expression pedal
 #define EXPRESSION_MODE              EXPRESSION_MODE_EXP_TRS
 
 #define OWLBOOT_MAGIC_NUMBER         0xF00B4400
