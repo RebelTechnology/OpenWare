@@ -8,10 +8,6 @@
 	extern "C" {
 #endif
 
-// Modes
-#define Mode_GS 	0
-#define Mode_DC		1
-
 // Pin Control
 #define pXLAT(state)		HAL_GPIO_WritePin(TLC_XLAT_GPIO_Port,  TLC_XLAT_Pin,  (GPIO_PinState)state)
 #define pMODE(state)		HAL_GPIO_WritePin(TLC_MODE_GPIO_Port,  TLC_MODE_Pin,  (GPIO_PinState)state)

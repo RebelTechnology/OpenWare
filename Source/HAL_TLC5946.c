@@ -8,12 +8,15 @@
 #define TLC_DEVICES 	3
 #endif
 
-#define TLC_CHANNELS 16
+#define TLC_CHANNELS    16
 #define TLC_DC_BYTES    (TLC_CHANNELS * 3 / 4)
 #define TLC_GS_BYTES    (TLC_CHANNELS * 3 / 2)
+// Modes
+#define TLC_MODE_GS 	0
+#define TLC_MODE_DC	1
 
-static uint8_t rgGSbuf[TLC_DEVICES*TLC_GS_BYTES+1];
-static uint8_t rgDCbuf[TLC_DEVICES*TLC_DC_BYTES+1] =
+static uint8_t rgGSbuf[TLC_DEVICES*TLC_GS_BYTES] = {0};
+static uint8_t rgDCbuf[TLC_DEVICES*TLC_DC_BYTES] =
   {
    12, 48, 195, 12, 48, 195, 12, 48, 195, 12, 48, 195, // DC=3 Red
    12, 48, 195, 12, 48, 195, 12, 48, 195, 12, 48, 195, // DC=3 Blue
@@ -62,9 +65,9 @@ void TLC5946_SetOutput_DC(uint8_t ic, uint8_t led, uint8_t value)
 }
 
 // Set the same value on one or more TLC clips. This is not called outside of this file.
-static void TLC5946_SetOutput_DC_Many(uint8_t* data, uint8_t num_values, uint8_t value)
+static void TLC5946_SetOutput_DC_Many(uint8_t* data, size_t len, uint8_t value)
 {
-    uint8_t* last_data = data + num_values * 3 / 4;
+    uint8_t* last_data = data + len;
     uint8_t byte1 = value << 2 | value >> 4;
     uint8_t byte2 = value << 4 | value >> 2;
     uint8_t byte3 = value << 6 | value;
@@ -80,6 +83,7 @@ void TLC5946_TxINTCallback(void)
 	// Latch pulse
 	pXLAT(1);
 	/* pBLANK(1); */
+	// XLAT pulse duration min 20nS
 	pXLAT(0);
 
 #ifdef TLC_CONTINUOUS
@@ -91,7 +95,6 @@ void TLC5946_TxINTCallback(void)
 void TLC5946_Refresh_GS(void)
 {
 	// Update Grayscale
-	pMODE(Mode_GS);
 	pXLAT(0);
 	/* pBLANK(1); */
 	
@@ -109,44 +112,42 @@ void TLC5946_Refresh_GS(void)
 
 void TLC5946_Refresh_DC(void)
 {
-	pMODE(Mode_DC);
+	pMODE(TLC_MODE_DC);
 	pXLAT(0);
-	
 	// Update Dot Correction
 	HAL_SPI_Transmit(TLC5946_SPIConfig, (uint8_t*)rgDCbuf, TLC_DC_BYTES*TLC_DEVICES, 100);
-	
 	// Latch pulse
 	pXLAT(1);
+	HAL_Delay(1); // TH2 MODE-XLAT^ min 100nS
+	pMODE(TLC_MODE_GS);
+	pXLAT(0);
 }
 
 // _____ Magus Functions _____
 void TLC5946_setRGB(uint8_t LED_ID, uint16_t val_R, uint16_t val_G, uint16_t val_B)
 {
 	TLC5946_SetOutput_GS(0, rgLED_R[LED_ID-1], val_R);
-	TLC5946_SetOutput_GS(2, rgLED_G[LED_ID-1], val_G);
 	TLC5946_SetOutput_GS(1, rgLED_B[LED_ID-1], val_B);
+	TLC5946_SetOutput_GS(2, rgLED_G[LED_ID-1], val_G);
 }
 
 void TLC5946_setRGB_DC(uint8_t val_R, uint8_t val_G, uint8_t val_B)
 {
-	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_CHANNELS, val_R);
-	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES, TLC_CHANNELS, val_G);
-	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES * 2, TLC_CHANNELS, val_B);
-	
-	TLC5946_Refresh_DC();
+	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_DC_BYTES, val_R);
+	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES, TLC_DC_BYTES, val_B);
+	TLC5946_SetOutput_DC_Many(rgDCbuf + TLC_DC_BYTES*2, TLC_DC_BYTES, val_G);
 }
 
 void TLC5946_setAll_DC(uint8_t value)
 {
-	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_CHANNELS * TLC_DEVICES, value);
-	TLC5946_Refresh_DC();
+	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_DC_BYTES * TLC_DEVICES, value);
 }
 
 void TLC5946_setAll(uint16_t val_R, uint16_t val_G, uint16_t val_B){
   for(int i=0; i<16; i++){
     TLC5946_SetOutput_GS(0, i, val_R);
-    TLC5946_SetOutput_GS(2, i, val_G);
     TLC5946_SetOutput_GS(1, i, val_B);
+    TLC5946_SetOutput_GS(2, i, val_G);
   }
 }
 
@@ -155,6 +156,5 @@ void TLC5946_init (SPI_HandleTypeDef *spiconfig)
 {
 	// Copy SPI handle to local variable
 	TLC5946_SPIConfig = spiconfig;
-	
-	// 
+	pMODE(TLC_MODE_GS);	
 }

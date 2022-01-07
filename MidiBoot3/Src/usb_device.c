@@ -1,96 +1,85 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file           : usb_device.c
+  * @file           : USB_DEVICE  
   * @version        : v1.0_Cube
-  * @brief          : This file implements the USB Device
+  * @brief          : This file implements the USB Device 
   ******************************************************************************
-  * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2017 STMicroelectronics International N.V. 
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * Redistribution and use in source and binary forms, with or without 
+  * modification, are permitted, provided that the following conditions are met:
+  *
+  * 1. Redistribution of source code must retain the above copyright notice, 
+  *    this list of conditions and the following disclaimer.
+  * 2. Redistributions in binary form must reproduce the above copyright notice,
+  *    this list of conditions and the following disclaimer in the documentation
+  *    and/or other materials provided with the distribution.
+  * 3. Neither the name of STMicroelectronics nor the names of other 
+  *    contributors to this software may be used to endorse or promote products 
+  *    derived from this software without specific written permission.
+  * 4. This software, including modifications and/or derivative works of this 
+  *    software, must execute solely and exclusively on microcontroller or
+  *    microprocessor devices manufactured by or for STMicroelectronics.
+  * 5. Redistribution and use of this software other than as permitted under 
+  *    this license is void and will automatically terminate your rights under 
+  *    this license. 
+  *
+  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
+  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
+  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
+  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
+  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
+  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
-  */
-/* USER CODE END Header */
+*/
 
 /* Includes ------------------------------------------------------------------*/
 
+#include "device.h"
 #include "usb_device.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_midi.h"
 
-/* USER CODE BEGIN Includes */
+/* USB Device Core handle declaration */
+USBD_HandleTypeDef USBD_HANDLE;
 
-/* USER CODE END Includes */
-
-/* USER CODE BEGIN PV */
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE END PV */
-
-/* USER CODE BEGIN PFP */
-/* Private function prototypes -----------------------------------------------*/
-
-/* USER CODE END PFP */
-
-/* USB Device Core handle declaration. */
-USBD_HandleTypeDef hUsbDeviceFS;
-
-/*
- * -- Insert your variables declaration here --
- */
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/*
- * -- Insert your external function declaration here --
- */
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
-
-/**
-  * Init USB device Library, add supported class and start the library
-  * @retval None
-  */
+/* init function */				        
 void MX_USB_DEVICE_Init(void)
 {
-  /* USER CODE BEGIN USB_DEVICE_Init_PreTreatment */
-
-  /* USER CODE END USB_DEVICE_Init_PreTreatment */
-
-  /* Init Device Library, add supported class and start the library. */
-  if (USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS) != USBD_OK)
+  /* Init Device Library,Add Supported Class and Start the library*/
+#if defined USE_USBD_FS
+  if (USBD_Init(&USBD_HANDLE, &FS_Desc, DEVICE_FS) != USBD_OK)
+#elif defined USE_USBD_HS
+  if (USBD_Init(&USBD_HANDLE, &HS_Desc, DEVICE_HS) != USBD_OK)
+#else
+#error Invalid USB configuration
+#endif
   {
     Error_Handler();
   }
-  if (USBD_RegisterClass(&hUsbDeviceFS, &USBD_AUDIO) != USBD_OK)
+  if (USBD_RegisterClass(&USBD_HANDLE, &USBD_AUDIO) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_AUDIO_RegisterInterface(&hUsbDeviceFS, NULL) != USBD_OK)
+  if (USBD_AUDIO_RegisterInterface(&USBD_HANDLE, NULL) != USBD_OK)
   {
     Error_Handler();
   }
-  if (USBD_Start(&hUsbDeviceFS) != USBD_OK)
+  if (USBD_Start(&USBD_HANDLE) != USBD_OK)
   {
     Error_Handler();
   }
-
-  /* USER CODE BEGIN USB_DEVICE_Init_PostTreatment */
-  HAL_PWREx_EnableUSBVoltageDetector();
-
-  /* USER CODE END USB_DEVICE_Init_PostTreatment */
 }
-
 /**
   * @}
   */

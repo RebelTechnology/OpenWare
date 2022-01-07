@@ -49,7 +49,14 @@
 
 #define MIDI_TX_PACKET_SIZE                           0x40
 #define MIDI_RX_PACKET_SIZE                           0x40
-   
+
+#ifdef STM32H7xx
+#define USBD_TOTAL_FIFO_SIZE                          0x1000 /* 4k FIFO buffers on H7 */
+#else
+#define USBD_TOTAL_FIFO_SIZE                          0x500  /* 1.25k FIFO buffers on F4 */
+#endif
+#define USBD_MIN_FIFO_SIZE                            0x40
+ 
 /* Isochronous Synchronisation Type */
 #define USBD_EP_ATTR_ISOC_NOSYNC                      0x00 /* no synchro */
 #define USBD_EP_ATTR_ISOC_ASYNC                       0x04 /* synchronisation by feedback  */

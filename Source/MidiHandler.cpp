@@ -179,6 +179,12 @@ void MidiHandler::updateCodecSettings(){
 
 #define HEXCODE(x) ((uint16_t)(((x)[1]<<8)|(x)[0]))
 
+void MidiHandler::handleProgramMessage(uint8_t* data, uint16_t size){
+  // we've received a message destined for the patch
+  data[size] = '\0'; // terminate string, overwriting 0xf7
+  owl.handleMessage((const char*)data, size);
+}
+
 void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   if(size < 3) // size may be 3 or more depending on number of digits in value
     return;
@@ -254,6 +260,11 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   case HEXCODE(SYSEX_CONFIGURATION_BUS_FORWARD_MIDI):
     settings.bus_forward_midi = value;
     break;
+#endif
+#ifdef OWL_PEDAL
+  case HEXCODE(SYSEX_CONFIGURATION_EXPRESSION_PEDAL):
+    settings.expression_mode = value;
+    break;    
 #endif
   }
 }
@@ -400,6 +411,9 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     break;
   case SYSEX_BOOTLOADER_COMMAND:
     jump_to_bootloader();
+    break;
+  case SYSEX_PROGRAM_MESSAGE:
+    handleProgramMessage(data+4, size-5);
     break;
   case SYSEX_FIRMWARE_UPLOAD:
     handleFirmwareUploadCommand(data+1, size-2);

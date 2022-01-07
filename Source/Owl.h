@@ -38,15 +38,6 @@ extern "C" {
 
   void midiSetInputChannel(int8_t channel);
   void midiSetOutputChannel(int8_t channel);
-			   
-#ifdef OWL_MAGUS
-#define PORT_UNI_INPUT 1
-#define PORT_UNI_OUTPUT 2
-#define PORT_BI_INPUT 3
-#define PORT_BI_OUTPUT 4
-  void setPortMode(uint8_t index, uint8_t mode);
-  uint8_t getPortMode(uint8_t index);
-#endif /* OWL_MAGUS */
 
   int16_t getParameterValue(uint8_t index);
   void setParameterValue(uint8_t ch, int16_t value);
@@ -72,15 +63,18 @@ class BackgroundTask {
 
 class Owl {
  private:
-  volatile OperationMode operationMode = STARTUP_MODE;
+  volatile uint8_t operationMode = STARTUP_MODE;
   BackgroundTask* backgroundTask = NULL;
+  void (*messageCallback)(const char* msg, size_t len) = NULL;
   
  public:
   void setup();
   void loop();
-  OperationMode getOperationMode();
-  void setOperationMode(OperationMode mode);
+  uint8_t getOperationMode();
+  void setOperationMode(uint8_t mode);
   void setBackgroundTask(BackgroundTask* bt);
+  void setMessageCallback(void* callback);
+  void handleMessage(const char* msg, size_t len);
 };
 extern Owl owl;
 

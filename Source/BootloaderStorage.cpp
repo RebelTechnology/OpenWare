@@ -18,13 +18,13 @@ BootloaderStorage::BootloaderStorage(){
 bool BootloaderStorage::erase(){
     eeprom_unlock();
     // We expect bootloader to occupy 1 - 4 sectors. Currently OWL1 uses 2 sectors, OWL2 uses 4.
-    int ret = eeprom_erase_sector(FLASH_SECTOR_0);
+    int ret = eeprom_erase_sector(FLASH_SECTOR_0, FLASH_BANK_1);
     if (bootloader_sectors & OB_WRP_SECTOR_1)
-        ret |= eeprom_erase_sector(FLASH_SECTOR_1);
+        ret |= eeprom_erase_sector(FLASH_SECTOR_1, FLASH_BANK_1);
     if (bootloader_sectors & OB_WRP_SECTOR_2)
-        ret |= eeprom_erase_sector(FLASH_SECTOR_2);
+        ret |= eeprom_erase_sector(FLASH_SECTOR_2, FLASH_BANK_1);
     if (bootloader_sectors & OB_WRP_SECTOR_3)
-        ret |= eeprom_erase_sector(FLASH_SECTOR_3);
+        ret |= eeprom_erase_sector(FLASH_SECTOR_3, FLASH_BANK_1);
     eeprom_lock();
     return ret == 0;
 }

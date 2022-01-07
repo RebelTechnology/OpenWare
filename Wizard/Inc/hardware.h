@@ -6,6 +6,8 @@
 #define HARDWARE_VERSION             "Wizard"
 /* #define FASCINATION_MACHINE */
 
+#define USE_SPI_FLASH
+
 #ifndef OWL_EUROWIZARD
 #define USE_USBD_HS
 #define USBD_HANDLE hUsbDeviceHS
@@ -23,11 +25,16 @@
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              2
+#define USBD_AUDIO_RX_CHANNELS      AUDIO_CHANNELS
+#define USBD_AUDIO_TX_CHANNELS      AUDIO_CHANNELS
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
+
 #define USE_USBD_AUDIO
+#define USE_USBD_RX_FB
+#define USE_USBD_AUDIO_FEATURES
+#define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX  // microphone
-/* #define USE_USBD_AUDIO_RX // speaker */
 
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW5_Pin

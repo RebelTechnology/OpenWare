@@ -23,12 +23,10 @@ int eeprom_get_error() {
   return HAL_FLASH_GetError();
 }
 
-int eeprom_erase_sector(uint32_t sector) {
+int eeprom_erase_sector(uint32_t sector, uint32_t bank) {
   FLASH_EraseInitTypeDef cfg;
   cfg.TypeErase = FLASH_TYPEERASE_SECTORS;
-#ifndef OWL_ARCH_F7
-  cfg.Banks = FLASH_BANK_1;
-#endif
+  cfg.Banks = bank;
   cfg.Sector = sector;
   cfg.NbSectors = 1;
   cfg.VoltageRange = FLASH_VOLTAGE_RANGE_3;
@@ -90,65 +88,71 @@ void eeprom_unlock(){
 int eeprom_erase_address(uint32_t address){
   int ret = 0;
   if(address < ADDR_FLASH_SECTOR_1){
-    eeprom_erase_sector(FLASH_SECTOR_0);
+    eeprom_erase_sector(FLASH_SECTOR_0, FLASH_BANK_1);
     ret = ADDR_FLASH_SECTOR_1 - ADDR_FLASH_SECTOR_0;
   }else if(address < ADDR_FLASH_SECTOR_2){
-    eeprom_erase_sector(FLASH_SECTOR_1);
+    eeprom_erase_sector(FLASH_SECTOR_1, FLASH_BANK_1);
     ret = ADDR_FLASH_SECTOR_2 - ADDR_FLASH_SECTOR_1;
   }else if(address < ADDR_FLASH_SECTOR_3){
-    eeprom_erase_sector(FLASH_SECTOR_2);
+    eeprom_erase_sector(FLASH_SECTOR_2, FLASH_BANK_1);
     ret = ADDR_FLASH_SECTOR_3 - ADDR_FLASH_SECTOR_2;
   }else if(address < ADDR_FLASH_SECTOR_4){
-    eeprom_erase_sector(FLASH_SECTOR_3);
+    eeprom_erase_sector(FLASH_SECTOR_3, FLASH_BANK_1);
     ret = ADDR_FLASH_SECTOR_4 - ADDR_FLASH_SECTOR_3;
   }else if(address < ADDR_FLASH_SECTOR_5){
-    eeprom_erase_sector(FLASH_SECTOR_4);
+    eeprom_erase_sector(FLASH_SECTOR_4, FLASH_BANK_1);
     ret = ADDR_FLASH_SECTOR_5 - ADDR_FLASH_SECTOR_4;
   }else if(address < ADDR_FLASH_SECTOR_6){
-    eeprom_erase_sector(FLASH_SECTOR_5);
+    eeprom_erase_sector(FLASH_SECTOR_5, FLASH_BANK_1);
     ret = ADDR_FLASH_SECTOR_6 - ADDR_FLASH_SECTOR_5;
   }else if(address < ADDR_FLASH_SECTOR_7){
-    eeprom_erase_sector(FLASH_SECTOR_6);
+    eeprom_erase_sector(FLASH_SECTOR_6, FLASH_BANK_1);
     ret = ADDR_FLASH_SECTOR_7 - ADDR_FLASH_SECTOR_6;
-#ifdef FLASH_SECTOR_8
+#ifdef STM32H7xx
   }else if(address < ADDR_FLASH_SECTOR_8){
-    eeprom_erase_sector(FLASH_SECTOR_7);
+    eeprom_erase_sector(FLASH_SECTOR_7, FLASH_BANK_1);
     ret = ADDR_FLASH_SECTOR_8 - ADDR_FLASH_SECTOR_7;
   }else if(address < ADDR_FLASH_SECTOR_9){
-    eeprom_erase_sector(FLASH_SECTOR_8);
+    eeprom_erase_sector(FLASH_SECTOR_0, FLASH_BANK_2);
     ret = ADDR_FLASH_SECTOR_9 - ADDR_FLASH_SECTOR_8;
   }else if(address < ADDR_FLASH_SECTOR_10){
-    eeprom_erase_sector(FLASH_SECTOR_9);
+    eeprom_erase_sector(FLASH_SECTOR_1, FLASH_BANK_2);
     ret = ADDR_FLASH_SECTOR_10 - ADDR_FLASH_SECTOR_9;
   }else if(address < ADDR_FLASH_SECTOR_11){
-    eeprom_erase_sector(FLASH_SECTOR_10);
+    eeprom_erase_sector(FLASH_SECTOR_2, FLASH_BANK_2);
     ret = ADDR_FLASH_SECTOR_11 - ADDR_FLASH_SECTOR_10;
-#ifdef ADDR_FLASH_SECTOR_12
   }else if(address < ADDR_FLASH_SECTOR_12){
-    eeprom_erase_sector(FLASH_SECTOR_11);
+    eeprom_erase_sector(FLASH_SECTOR_3, FLASH_BANK_2);
     ret = ADDR_FLASH_SECTOR_12 - ADDR_FLASH_SECTOR_11;
   }else if(address < ADDR_FLASH_SECTOR_13){
-    eeprom_erase_sector(FLASH_SECTOR_12);
+    eeprom_erase_sector(FLASH_SECTOR_4, FLASH_BANK_2);
     ret = ADDR_FLASH_SECTOR_13 - ADDR_FLASH_SECTOR_12;
   }else if(address < ADDR_FLASH_SECTOR_14){
-    eeprom_erase_sector(FLASH_SECTOR_13);
+    eeprom_erase_sector(FLASH_SECTOR_5, FLASH_BANK_2);
     ret = ADDR_FLASH_SECTOR_14 - ADDR_FLASH_SECTOR_13;
   }else if(address < ADDR_FLASH_SECTOR_15){
-    eeprom_erase_sector(FLASH_SECTOR_14);
+    eeprom_erase_sector(FLASH_SECTOR_6, FLASH_BANK_2);
     ret = ADDR_FLASH_SECTOR_15 - ADDR_FLASH_SECTOR_14;
-  }else if(address < FLASH_END){
-    eeprom_erase_sector(FLASH_SECTOR_15);
-    ret = FLASH_END - ADDR_FLASH_SECTOR_15;
-#else /* define FLASH_SECTOR_12 */
-  }else if(address < FLASH_END){
-    eeprom_erase_sector(FLASH_SECTOR_11);
-    ret = FLASH_END - ADDR_FLASH_SECTOR_11;
-#endif /* define FLASH_SECTOR_12 */
+  }else if(address < ADDR_FLASH_SECTOR_END){
+    eeprom_erase_sector(FLASH_SECTOR_7, FLASH_BANK_2);
+    ret = ADDR_FLASH_SECTOR_END - ADDR_FLASH_SECTOR_15;
 #else
-  }else if(address < FLASH_END){
-    eeprom_erase_sector(FLASH_SECTOR_7);
-    ret = FLASH_END - ADDR_FLASH_SECTOR_7;
-#endif /* define FLASH_SECTOR_8 */
+  }else if(address < ADDR_FLASH_SECTOR_8){
+    eeprom_erase_sector(FLASH_SECTOR_7, FLASH_BANK_1);
+    ret = ADDR_FLASH_SECTOR_8 - ADDR_FLASH_SECTOR_7;
+  }else if(address < ADDR_FLASH_SECTOR_9){
+    eeprom_erase_sector(FLASH_SECTOR_8, FLASH_BANK_1);
+    ret = ADDR_FLASH_SECTOR_9 - ADDR_FLASH_SECTOR_8;
+  }else if(address < ADDR_FLASH_SECTOR_10){
+    eeprom_erase_sector(FLASH_SECTOR_9, FLASH_BANK_1);
+    ret = ADDR_FLASH_SECTOR_10 - ADDR_FLASH_SECTOR_9;
+  }else if(address < ADDR_FLASH_SECTOR_11){
+    eeprom_erase_sector(FLASH_SECTOR_10, FLASH_BANK_1);
+    ret = ADDR_FLASH_SECTOR_11 - ADDR_FLASH_SECTOR_10;
+  }else if(address < ADDR_FLASH_SECTOR_END){
+    eeprom_erase_sector(FLASH_SECTOR_11, FLASH_BANK_1);
+    ret = ADDR_FLASH_SECTOR_END - ADDR_FLASH_SECTOR_11;
+#endif
   }
   return ret;
 }

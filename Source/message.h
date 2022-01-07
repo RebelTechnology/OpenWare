@@ -24,6 +24,7 @@
 #endif
 
    void debugMessage(const char* msg);
+   const char* getDebugMessage();
    void error(int8_t code, const char* reason);
    void assert_failed(uint8_t* location, uint32_t line);
 
@@ -62,4 +63,4 @@ void assert_failed(const char* msg, const char* location, int line);
 
 #endif
 
-#endif /* __MESSAG£_H */
+#endif /* __MESSAGE_H */

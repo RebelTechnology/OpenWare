@@ -26,7 +26,7 @@
 #define USE_USBD_FS
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX  // microphone
-/* #define USE_USBD_AUDIO_RX  // speaker */
+#define USE_USBD_AUDIO_RX  // speaker
 #define USBD_HANDLE hUsbDeviceFS
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
@@ -44,10 +44,14 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
+#define ADC_E 4
 #endif
 
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (4 + 1)
+
+#define EXPRESSION_MODE_EXP_TRS      1
+#define EXPRESSION_MODE              EXPRESSION_MODE_EXP_TRS
 
 #if 0
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL

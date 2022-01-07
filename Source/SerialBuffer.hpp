@@ -42,14 +42,12 @@ public:
   }
 
   void push(T c){
-    buffer[writepos++] = c;
-    if(writepos >= size)
-      writepos = 0;
+    buffer[writepos] = c;
+    writepos = (writepos + 1) % size;
   }
   T pull(){
-    T c = buffer[readpos++];
-    if(readpos >= size)
-      readpos = 0;
+    T c = buffer[readpos];
+    readpos = (readpos + 1) % size;
     return c;
   }
 
@@ -99,9 +97,7 @@ public:
   void incrementReadHead(size_t len){
     // ASSERT((readpos >= writepos && readpos+len <= size) ||
     // 	   (readpos < writepos && readpos+len <= writepos), "uart rx underflow");
-    readpos += len;
-    if(readpos >= size)
-      readpos -= size;
+    readpos = (readpos + len) % size;
   }
   bool notEmpty(){
     return writepos != readpos;

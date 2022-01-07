@@ -43,6 +43,9 @@ else ifeq ($(PLATFORM),Alchemist)
 else ifeq ($(PLATFORM),Wizard)
   CPPFLAGS += -Iusbd-hs -DOWL_WIZARD -DUSE_USBD_HS
   vpath %.c usbd-hs
+else ifeq ($(PLATFORM),Pedal)
+  CPPFLAGS += -Iusbd-hs -DOWL_PEDAL -DUSE_USBD_HS
+  vpath %.c usbd-hs
 else ifeq ($(PLATFORM),EuroWizard)
   CPPFLAGS += -Iusbd-fs -DOWL_WIZARD -DUSE_USBD_FS
   vpath %.c usbd-fs

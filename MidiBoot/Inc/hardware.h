@@ -4,7 +4,6 @@
 
 #define USE_BOOTLOADER_MODE
 #define USE_USBD_MIDI
-#define USBD_MAX_POWER              100 // 100mA for iPad compatibility
 #ifdef USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #else
@@ -63,6 +62,18 @@
   #define LED1_GPIO_Port GPIOA
   #define LED2_Pin GPIO_PIN_1
   #define LED2_GPIO_Port GPIOA
+  #define APPLICATION_ADDRESS 0x08010000
+#elif defined OWL_PEDAL
+  #define HARDWARE_VERSION    "OWL Pedal Boot"
+  #define HARDWARE_ID         OWL_PEDAL_HARDWARE
+  #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_10 // only valid for green/Rev04
+  #define BOOT1_GPIO_Port GPIOG
+  #define USE_LED
+  #define LED1_Pin GPIO_PIN_8
+  #define LED1_GPIO_Port GPIOB
+  #define LED2_Pin GPIO_PIN_9
+  #define LED2_GPIO_Port GPIOB
   #define APPLICATION_ADDRESS 0x08010000
 #elif defined OWL_NOCTUA
   #define HARDWARE_VERSION    "OWL Noctua Boot"

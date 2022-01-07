@@ -78,11 +78,11 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   // }
 }
 
-void setup(){
+
+void onSetup(){
   HAL_GPIO_WritePin(TRIG_OUT_GPIO_Port, TRIG_OUT_Pin, GPIO_PIN_RESET); // Trigger out off
   initLed();
   setLed(0, NO_COLOUR);
-  owl.setup();
 
 #ifdef USE_USB_HOST
   // enable USB Host power
@@ -90,7 +90,7 @@ void setup(){
 #endif
 }
 
-void loop(void){
+void onLoop(){
 #ifdef USE_USB_HOST
   if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
     if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
@@ -102,5 +102,4 @@ void loop(void){
   }
 #endif
   owl_mode_button();
-  owl.loop();
 }

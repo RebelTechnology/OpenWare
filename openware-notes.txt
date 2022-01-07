@@ -365,6 +365,9 @@ DC Offset removed with 48dB 10Hz hpf
 
 todo:
 - bootloader verify
+- send and receive error messages
+- send error messages without polling
+- bootloader message with reason for bootloader mode (watchdog, magic, no/invalid firmware)
 - disable all: sysex rule
 - IWDG->KR = 0xaaaa only if watchog is enabled, otherwise it hangs
 - fix Noctua bootloader
@@ -384,5 +387,33 @@ Create and upload resource from wav:
 sox sample.wav -r 48k -c 1 -t f32 sample.raw
 play -c 1 -r 48k -t f32 sample.raw 
 FirmwareSender -in sample.raw -out "OWL*" -name "sample.wav"
+
+-----------------------------------------------------------------
+
+H7 ADC:
+set Scan enable, Continuous enable, Conversion End of sequence, and ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR
+
+-----------------------------------------------------------------
+
+ABFSR 0x04: AHBP busfault
+
+-----------------------------------------------------------------
+
+Dynamic module / code loading with Position Independent Code / Executables PIC / PIE
+https://github.com/rgujju/STM32-projects/tree/master/got_plt
+https://community.arm.com/support-forums/f/architectures-and-processors-forum/45919/gcc-does-not-generate-correct-code-while-building-pic
+https://systemoverlord.com/2017/03/19/got-and-plt-for-pwning.html
+https://reverseengineering.stackexchange.com/questions/1992/what-is-plt-got
+
+-----------------------------------------------------------------
+
+CPPFLAGS += -fdata-sections -ffunction-sections
+Required to compile without missing (unused) symbols
+
+-----------------------------------------------------------------
+
+use HAL_GetUIDw[012]()
+Returns first word of the unique device identifier (UID based on 96 
+bits)
 
 -----------------------------------------------------------------

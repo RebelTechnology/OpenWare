@@ -75,13 +75,7 @@ void usbd_audio_rx_stop_callback(){
 #endif
 }
 
-// void usbd_rx_convert(int32_t* dst, size_t len){
-//   usbd_audio_rx_count += len;
-//   while(len--)
-//     *dst++ = AUDIO_SAMPLE_TO_INT32(usbd_rx->read());
-// }
-
-void usbd_rx_convert_add(int32_t* dst, size_t len){
+void usbd_rx_convert(int32_t* dst, size_t len){
   usbd_audio_rx_count += len;
   size_t cap = usbd_rx->getReadCapacity();
   if(cap < len){
@@ -92,13 +86,29 @@ void usbd_rx_convert_add(int32_t* dst, size_t len){
     debugMessage("rx unf", (int)(len - cap));
 #endif
   }
+#if USBD_AUDIO_RX_CHANNELS == AUDIO_CHANNELS
+#if AUDIO_BITS_PER_SAMPLE == 32
+  usbd_rx->read(dst, len);
+#else
   while(len--)
-    *dst++ = __SSAT(*dst + AUDIO_SAMPLE_TO_INT32(usbd_rx->read()), 24);
-}
-
-#if USBD_AUDIO_RX_CHANNELS != AUDIO_CHANNELS
-#error "todo: support for USBD_AUDIO_RX_CHANNELS != AUDIO_CHANNELS"
+    *dst++ = AUDIO_SAMPLE_TO_INT32(usbd_rx->read());
 #endif
+#else /* USBD_AUDIO_RX_CHANNELS != AUDIO_CHANNELS */
+  len /= AUDIO_CHANNELS;
+  while(len--){
+#if AUDIO_BITS_PER_SAMPLE == 32
+    usbd_rx->read(dst, USBD_AUDIO_RX_CHANNELS);
+    dst += AUDIO_CHANNELS;
+#else
+    audio_t* src = usbd_rx->getReadHead();
+    for(int ch=0; ch<USBD_AUDIO_RX_CHANNELS; ch++)
+      *dst++ = AUDIO_SAMPLE_TO_INT32(*src++);
+    usbd_rx->moveReadHead(USBD_AUDIO_RX_CHANNELS);
+    dst += AUDIO_CHANNELS - USBD_AUDIO_RX_CHANNELS;
+#endif
+  }
+#endif
+}
 
 void usbd_tx_convert(int32_t* src, size_t len){
   size_t cap = usbd_tx->getWriteCapacity() - USBD_AUDIO_TX_CHANNELS;
@@ -110,21 +120,31 @@ void usbd_tx_convert(int32_t* src, size_t len){
     debugMessage("tx ovf", (int)(len - cap));
 #endif
   }
+#if USBD_AUDIO_TX_CHANNELS == AUDIO_CHANNELS
+#if AUDIO_BITS_PER_SAMPLE == 32
+  usbd_tx->write(src, len);
+#else
   while(len--)
-    // macro handles shift, round, dither, clip, truncate, bitswap
     usbd_tx->write(AUDIO_INT32_TO_SAMPLE(*src++));
+#endif
+#else /*  USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS */
+  len /= AUDIO_CHANNELS;
+  while(len--){
+#if AUDIO_BITS_PER_SAMPLE == 32
+    usbd_tx->write(src, USBD_AUDIO_TX_CHANNELS);
+    src += AUDIO_CHANNELS;
+#else
+    audio_t* dst = usbd_tx->getWriteHead();
+    for(int ch=0; ch<USBD_AUDIO_TX_CHANNELS; ch++)
+      *dst++ = AUDIO_INT32_TO_SAMPLE(*src++);
+    usbd_tx->moveWriteHead(USBD_AUDIO_TX_CHANNELS);
+    src += AUDIO_CHANNELS - USBD_AUDIO_TX_CHANNELS;
+#endif
+  }
+#endif
 }
 
-// void usbd_tx_convert_add(int32_t* src, size_t len){
-//   while(len--)
-//     usbd_tx->overdub(AUDIO_INT32_TO_SAMPLE(*src++));
-// }
-
-#if USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS
-#error "todo: support for USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS"
-#endif
-
-#endif
+#endif /* USE_USBD_AUDIO */
 
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
@@ -135,6 +155,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 #define MANAGER_TASK_PRIORITY  (AUDIO_TASK_PRIORITY | portPRIVILEGE_BIT)
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
 #define FLASH_TASK_PRIORITY 1 // allow default task to run when FLASH task yields
+#define SCREEN_TASK_PRIORITY 3 // less than AUDIO_TASK_PRIORITY, more than osPriorityNormal (which is probably 1)
 
 #define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
 
@@ -154,6 +175,9 @@ static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
 static StaticTask_t audioTaskBuffer;
 static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] CCM_RAM; // use CCM if available
+#ifdef USE_SCREEN
+static TaskHandle_t screenTask = NULL;
+#endif
 
 #ifdef USE_ADC
 extern uint16_t adc_values[NOF_ADC_VALUES];
@@ -197,7 +221,7 @@ void onProgramStatus(ProgramVectorAudioStatus status){
 __weak int16_t getParameterValue(uint8_t pid){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    return graphics.params.parameters[pid];
+    return graphics.params->getValue(pid);
 #else
     return parameter_values[pid];
 #endif
@@ -208,8 +232,7 @@ __weak int16_t getParameterValue(uint8_t pid){
 __weak void setParameterValue(uint8_t pid, int16_t value){
   if(pid < NOF_PARAMETERS)
 #ifdef USE_SCREEN
-    graphics.params.setValue(pid, value);
-  // graphics.params.parameters[pid] = value;
+    graphics.params->setValue(pid, value);
 #else
     parameter_values[pid] = value;
 #endif
@@ -236,24 +259,18 @@ void setButtonValue(uint8_t ch, uint8_t value){
 void onProgramReady(){
   ProgramVector* pv = getProgramVector();
 #ifdef USE_USBD_AUDIO_TX
-  if(usbd_tx) // after patch runs: convert wet output to USBD audio tx
+  if(usbd_tx) // after patch runs: convert patch output to USBD audio tx
     usbd_tx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif
 #ifdef USE_USBD_AUDIO_RX
-  if(usbd_rx) // after patch runs: convert USBD audio rx to DAC (summing patch output)
-    usbd_rx_convert_add(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
+  if(usbd_rx) // after patch runs: convert USBD audio rx to DAC (overwriting patch output)
+    usbd_rx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif  
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
   /* Block indefinitely (released by audioCallback) */
   ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-#ifdef USE_USBD_AUDIO_RX
-  // if(usbd_rx) // before patch runs: convert USBD audio rx to input (overwriting ADC)
-  //   usbd_rx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
-  // if(usbd_rx) // before patch runs: convert USBD audio rx to input (summing ADC)
-  //   usbd_rx_convert_add(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
-#endif
 #ifdef DEBUG_DWT
   DWT->CYCCNT = 0;
 #endif
@@ -262,7 +279,7 @@ void onProgramReady(){
   midi_rx.receive();
 #ifdef USE_ADC
 #ifdef USE_SCREEN
-  updateParameters(graphics.params.parameters, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
+  updateParameters(graphics.params->getParameters(), NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
 #else
   updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
 #endif
@@ -282,7 +299,7 @@ void onProgramReady(){
 // called from program
 void onSetPatchParameter(uint8_t pid, int16_t value){
 // #ifdef USE_SCREEN
-//   graphics.params.setDynamicValue(ch, value);
+//   graphics.params->setDynamicValue(ch, value);
 // #else
 //   parameter_values[ch] = value;
 // #endif
@@ -304,7 +321,7 @@ void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
 // called from program
 void onRegisterPatchParameter(uint8_t id, const char* name){
 #ifdef USE_SCREEN 
-  graphics.params.setName(id, name);
+  graphics.params->setName(id, name);
 #endif /* USE_SCREEN */
   midi_tx.sendPatchParameterName((PatchParameterId)id, name);
 }
@@ -312,7 +329,7 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 // called from program
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
 #if defined USE_SCREEN
-  graphics.params.setTitle(name);
+  graphics.params->setTitle(name);
 #endif /* OWL_MAGUS */
 }
 
@@ -320,8 +337,8 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
 #ifdef USE_SCREEN
-  pv->parameters_size = graphics.params.getSize();
-  pv->parameters = graphics.params.parameters;
+  pv->parameters_size = graphics.params->getSize();
+  pv->parameters = graphics.params->getParameters();
 #else
   pv->parameters_size = NOF_PARAMETERS;
   pv->parameters = parameter_values;
@@ -348,22 +365,24 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
-  extern char _PATCHRAM_END;
+  extern uint8_t _PATCHRAM, _PATCHRAM_END, _PATCHRAM_SIZE;
   uint8_t* end = (uint8_t*)def->getStackBase(); // program end
-  uint32_t remain = (uint32_t)&_PATCHRAM_END - (uint32_t)def->getStackBase(); // space left
+  uint32_t remain = &_PATCHRAM_END - end; // space left
+  if(end < &_PATCHRAM || remain > (uint32_t)&_PATCHRAM_SIZE) // sanity check
+    remain = 0; // prevent errors if program stack is not linked to PATCHRAM
 #ifdef USE_CCM_RAM
   extern char _CCMRAM, _CCMRAM_SIZE;
 #endif
 #ifdef USE_PLUS_RAM
-  extern char _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
-  extern char _PATCHRAM, _PATCHRAM_SIZE;
+  extern uint8_t _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
   uint8_t* plusend = (uint8_t*)&_PLUSRAM;
   uint32_t plusremain = (uint32_t)&_PLUSRAM_SIZE;
   if(def->getLinkAddress() == (uint32_t*)&_PLUSRAM){
     end = (uint8_t*)&_PATCHRAM;
-    remain = (uint32_t)&_PATCHRAM_SIZE;
+    remain = (uint32_t)&_PATCHRAM_SIZE; // use all of PATCHRAM for heap
     plusend = (uint8_t*)def->getStackBase();
-    plusremain = (uint32_t)&_PLUSRAM_END - (uint32_t)def->getStackBase();
+    plusremain = def->getStackSize();
+    plusremain = &_PLUSRAM_END - plusend;
   }
 #endif
 #ifdef USE_EXTERNAL_RAM
@@ -389,11 +408,10 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
-#elif defined OWL_BIOSIGNALS || defined OWL_NOCTUA
-  pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
-#else
+#elif AUDIO_CHANNELS == 2
   pv->audio_format = AUDIO_FORMAT_24B32;
-  // pv->audio_format = AUDIO_FORMAT_24B32_2X;
+#else
+  pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
 #endif
 #endif /* PROGRAM_VECTOR_V13 */
   pv->message = NULL;
@@ -484,12 +502,26 @@ void sendResourceTask(void* p){
 
 __weak void onStartProgram(){
 #ifdef USE_SCREEN
-  graphics.params.reset();
-#endif
-#ifndef USE_SCREEN
+  graphics.reset();
+#else
   memset(parameter_values, 0, sizeof(parameter_values));
 #endif
 }
+
+#ifdef USE_SCREEN
+void runScreenTask(void* p){
+  TickType_t xLastWakeTime;
+  TickType_t xFrequency;
+  xFrequency = SCREEN_LOOP_SLEEP_MS / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+  xLastWakeTime = xTaskGetTickCount();
+  for(;;){
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);    
+    onScreenDraw();
+    graphics.draw();
+    graphics.display();
+  }
+}
+#endif	// USE_SCREEN
 
 void runAudioTask(void* p){
   PatchDefinition* def = getPatchDefinition();
@@ -497,16 +529,19 @@ void runAudioTask(void* p){
     def->copy();
     ProgramVector* pv = def->getProgramVector();
     updateProgramVector(pv, def);
-    onStartProgram();
     programVector = pv;
     setErrorStatus(NO_ERROR);
     owl.setOperationMode(RUN_MODE);
+    onStartProgram();
 #ifdef USE_CODEC
     codec.clear();
 #endif
     // zero-fill heap memory
     for(size_t i=0; i<5 && pv->heapSegments[i].location != NULL; ++i)
       memset(pv->heapSegments[i].location, 0, pv->heapSegments[i].size);
+    // memory barriers for dynamically loaded code
+    __DSB();
+    __ISB();
     // run program
     def->run();
   }
@@ -570,6 +605,7 @@ void runManagerTask(void* p){
 	graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
 	midi_rx.setCallback(NULL);
+	owl.setMessageCallback(NULL);
 	vTaskDelete(audioTask);
 	audioTask = NULL;
 #ifdef USE_CODEC
@@ -621,8 +657,8 @@ ProgramManager::ProgramManager(){
 #ifdef DEBUG_DWT
   // DWT cycle count enable
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-#ifdef OWL_ARCH_F7
-  DWT->LAR = 0xC5ACCE55; // enable debug access: required on F7
+#ifdef STM32H7xx
+  DWT->LAR = 0xC5ACCE55; // enable debug access: required on M7
 #endif
   DWT->CYCCNT = 0;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
@@ -630,11 +666,10 @@ ProgramManager::ProgramManager(){
 }
 
 void ProgramManager::startManager(){
-  // updateProgramVector(getProgramVector(), NULL);
-// #ifdef USE_SCREEN
-//   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
-// #endif
   xTaskCreate(runManagerTask, "Manager", MANAGER_TASK_STACK_SIZE, NULL, MANAGER_TASK_PRIORITY, &managerTask);
+#ifdef USE_SCREEN
+  xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
+#endif
 }
 
 void ProgramManager::notifyManagerFromISR(uint32_t ulValue){
@@ -690,11 +725,19 @@ void ProgramManager::updateProgramIndex(uint8_t index){
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  
   if(registry.loadProgram(address, length))
     updateProgramIndex(0);
+  else
+    error(PROGRAM_ERROR, "Load failed");
 }
 
 void ProgramManager::loadProgram(uint8_t pid){
-  if(patchindex != pid && registry.loadProgram(pid))
-    updateProgramIndex(pid);
+  if(patchindex != pid && registry.hasPatch(pid)){
+    if(registry.loadProgram(pid))
+      updateProgramIndex(pid);
+    else
+      error(PROGRAM_ERROR, "Load failed");
+  }else{
+    owl.setOperationMode(CONFIGURE_MODE);
+  }
 }
 
 #ifdef DEBUG_STACK
@@ -745,8 +788,8 @@ bool ProgramManager::isProgramRunning(){
 
 extern "C" {
   void vApplicationMallocFailedHook(void) {
-    program.exitProgram(false);
     error(PROGRAM_ERROR, "malloc failed");
+    program.exitProgram(false);
   }
   void vApplicationIdleHook(void) {
   }
@@ -756,7 +799,7 @@ extern "C" {
     /* Run time stack overflow checking is performed if
        configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
        function is called from PendSV ISR if a stack overflow is detected. */
-    vTaskDelete(pxTask);
+    // vTaskDelete(pxTask); // seems to just get stuck
     if(pxTask == utilityTask)
       utilityTask = NULL;
     if(pxTask == audioTask)

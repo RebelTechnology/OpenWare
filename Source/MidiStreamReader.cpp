@@ -2,6 +2,7 @@
 #include "errorhandlers.h"
 
 MidiMessage MidiStreamReader::read(unsigned char data){
+  // todo: realtime bytes can appear anywhere in the stream
   if(pos == size || status == READY_STATUS)
     clear();
   buffer[pos++] = data;

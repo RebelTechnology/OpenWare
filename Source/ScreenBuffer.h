@@ -29,8 +29,8 @@ typedef uint16_t Colour;
 #define CYAN            0x07FF
 #define MAGENTA         0xFFE0
 #define WHITE           0xFFFF
-#else
-#error "Invalid configuration"
+#elif defined USE_SCREEN
+#error "Invalid screen configuration"
 #endif
 
 class ScreenBuffer {

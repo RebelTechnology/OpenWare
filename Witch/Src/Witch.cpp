@@ -9,8 +9,11 @@
 #include "OpenWareMidiControl.h"
 #include "Codec.h"
 #include "ApplicationSettings.h"
+#include "TakeoverControls.h"
 #include "qint.h"
 #include "Pin.h"
+#include "usb_device.h"
+#include "usb_host.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -48,45 +51,6 @@ Pin sw3(SW3_GPIO_Port, SW3_Pin);
 Pin sw4(SW4_GPIO_Port, SW4_Pin);
 Pin sw5(SW5_GPIO_Port, SW5_Pin);
 
-template<size_t SIZE, typename value_t>
-class TakeoverControls {
-private:
-  value_t values[SIZE];
-  bool takeover[SIZE];
-public:
-  TakeoverControls(){
-    reset(true);
-  }
-  value_t get(uint8_t index){
-    return values[index];
-  }
-  void set(uint8_t index, value_t value){
-    values[index] = value;
-  }
-  void update(uint8_t index, value_t value, value_t threshold){
-    if(takeover[index]){
-      values[index] = value;
-    }else if(abs(values[index] - value) < threshold){
-      takeover[index] = true;
-      values[index] = value;
-    }
-  }
-  bool taken(uint8_t index){
-    return takeover[index];
-  }
-  /**
-   * If @param state is true, then the control is taken.
-   * If the control is taken it reflects the current knob setting.
-   */
-  void reset(uint8_t index, bool state){
-    takeover[index] = state;
-  }
-  void reset(bool state){
-    for(size_t i=0; i<SIZE; ++i)
-      takeover[i] = state;
-  }
-};
-
 TakeoverControls<10, int16_t> takeover;
 int16_t dac_values[2] = {0, 0};
 bool button_led_values[4] = {false};
@@ -119,12 +83,12 @@ bool updatePin(size_t bid, Pin pin){
     setButtonValue(bid+3, state);
     setLed(bid+6, state ? RED_COLOUR : NO_COLOUR);
   }else if(owl.getOperationMode() == CONFIGURE_MODE && state){
-    if(patchselect == bid){
-      if(registry.hasPatch(bid+4))
-	patchselect = bid+4;
-    }else{
-      if(registry.hasPatch(bid))
-	patchselect = bid;
+    if(patchselect == bid && registry.hasPatch(bid+4)){
+      patchselect = bid+4;
+    }else if(registry.hasPatch(bid)){
+      patchselect = bid;
+    }else if(registry.hasPatch(bid+4)){
+      patchselect = bid+4;
     }
   }
   return state;
@@ -438,7 +402,7 @@ void onStartProgram(){
   memset(button_led_values, 0, sizeof(button_led_values)); // reset leds
 }
 
-void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   if(new_mode == CONFIGURE_MODE){
     // entering config mode
     HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
@@ -465,12 +429,11 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   counter = 0;
 }
 
-void setup(){
+void onSetup(){
   initLed();
   HAL_GPIO_WritePin(LEDPWM_GPIO_Port, LEDPWM_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
-  owl.setup();
   for(size_t i=5; i<9; ++i){
     takeover.set(i, CV_ATTENUATION_DEFAULT);
     takeover.reset(i, false);
@@ -478,13 +441,18 @@ void setup(){
   takeover.set(9, settings.audio_output_gain<<5);
   takeover.reset(9, false);
   patchselect = program.getProgramIndex();
+
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
+
+  /* init code for USB_HOST */
+  MX_USB_HOST_Init();
 }
 
-void loop(void){
+void onLoop(){
   MX_USB_HOST_Process(); // todo: enable PWR management
   static bool sw4_state = false;
   if(sw4_state != !sw4.get())
     sw4_state = updatePin(4, sw4);
   update_preset();
-  owl.loop();
 }

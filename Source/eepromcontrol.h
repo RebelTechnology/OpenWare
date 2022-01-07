@@ -35,6 +35,7 @@
 #define ADDR_FLASH_SECTOR_10    ((uint32_t)0x080C0000) /* Base @ of Sector 10, 128 Kbyte */
 #define ADDR_FLASH_SECTOR_11    ((uint32_t)0x080E0000) /* Base @ of Sector 11, 128 Kbyte */
 #endif
+#define ADDR_FLASH_SECTOR_END   ((uint32_t)(FLASH_END + 1))
 
 #ifdef __cplusplus
  extern "C" {
@@ -47,7 +48,7 @@
    int eeprom_write_byte(uint32_t address, uint8_t data);
    int eeprom_erase(uint32_t address, uint32_t size);
    int eeprom_wait();
-   int eeprom_erase_sector(uint32_t sector);
+   int eeprom_erase_sector(uint32_t sector, uint32_t bank);
    /*
     * Functions to lock/unlock pages will perform system reset unless flash is already in desired state
     */

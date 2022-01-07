@@ -11,31 +11,38 @@ SPI_HandleTypeDef* Encoders_SPIConfig;
 static int16_t rgENC_Values[7] = {0};
 
 #ifdef STM32H7xx
-static volatile uint16_t NOP_CNT = 600;
+#define ENCODER_CS_DELAY_US 14
 #else
-static uint16_t NOP_CNT = 250; // 150 doesn't work in Release build
+#define ENCODER_CS_DELAY_US 8
 #endif
+/* uint8_t ENCODER_CS_DELAY_US = 14; */
+
+__STATIC_INLINE void DWT_Delay_us(volatile uint32_t microseconds)
+{
+#ifndef DEBUG_DWT
+#error "Need DWT enabled for microsecond delay"
+#endif
+ uint32_t clk_cycle_start = DWT->CYCCNT;
+ /* Go to number of cycles for system */
+ microseconds *= (HAL_RCC_GetHCLKFreq() / 1000000);
+ /* Delay till end */
+ while ((DWT->CYCCNT - clk_cycle_start) < microseconds);
+}
 
 //_____ Functions _____________________________________________________________________________________________________
 // Port and Chip Setup
 void Encoders_readAll(void)
 { 
-	volatile uint16_t x  = NOP_CNT;
-	
 	pbarCS(0);
-	while(--x){__NOP();} // TODO: microsecond delay using CYCCNT
-	// *** The minimum NOP delay for proper operation seems to be 150 ***
+	DWT_Delay_us(ENCODER_CS_DELAY_US);
 	HAL_SPI_Receive(Encoders_SPIConfig, (uint8_t*)rgENC_Values, 14, 100);
 	pbarCS(1);
 }
 
 void Encoders_readSwitches(void)
 { 
-	volatile uint16_t x  = NOP_CNT;
-	
 	pbarCS(0);
-	while(--x){__NOP();}
-	// *** The minimum NOP delay for proper operation seems to be 150 ***
+	DWT_Delay_us(ENCODER_CS_DELAY_US);
 	HAL_SPI_Receive(Encoders_SPIConfig, (uint8_t*)rgENC_Values, 2, 100);
 	pbarCS(1);
 }
@@ -50,5 +57,11 @@ void Encoders_init (SPI_HandleTypeDef *spiconfig)
 {
 	Encoders_SPIConfig = spiconfig;
 	pbarRST(1);
+}
+
+void Encoders_reset(void){
+	pbarRST(0);
+	HAL_Delay(20);
+	pbarRST(1);	
 }
 

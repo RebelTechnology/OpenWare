@@ -3,6 +3,11 @@
 #include "midi.h"
 #include "SerialBuffer.hpp"
 
+/**
+ * USB Host MIDI Driver
+ * Based on code by Xavier Halgand @MrBlueXav
+ */
+
 extern "C" {
   static USBH_StatusTypeDef USBH_MIDI_InterfaceInit  (USBH_HandleTypeDef *phost);
 
@@ -29,8 +34,6 @@ extern "C" {
     };
 
   void usbh_midi_push();
-
-  void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URBStateTypeDef urb_state);
 }
 
 static SerialBuffer<USB_HOST_RX_BUFF_SIZE> rxbuffer;
@@ -129,7 +132,7 @@ USBH_StatusTypeDef USBH_MIDI_InterfaceDeInit (USBH_HandleTypeDef *phost){
   if(phost->pActiveClass->pData){
     /* statically allocated in init
        USBH_free (phost->pActiveClass->pData); */
-    phost->pActiveClass->pData = 0;
+    phost->pActiveClass->pData = NULL;
   }
 
   return USBH_OK;
@@ -164,12 +167,14 @@ USBH_StatusTypeDef  USBH_MIDI_Stop(USBH_HandleTypeDef *phost){
   return USBH_OK;
 }
 
-void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URBStateTypeDef urb_state){
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
-  if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
-     MIDI_Handle->state == MIDI_TRANSFER_DATA){
-    size_t len = USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
-    USBH_MIDI_ReceiveCallback(phost, MIDI_Handle->pRxData, len);
+extern "C"{
+  void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state){
+    MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+    if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
+       MIDI_Handle->state == MIDI_TRANSFER_DATA){
+      size_t len = USBH_LL_GetLastXferSize((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->InPipe);
+      USBH_MIDI_ReceiveCallback((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->pRxData, len);
+    }
   }
 }
 
@@ -211,6 +216,14 @@ static USBH_StatusTypeDef USBH_MIDI_Process (USBH_HandleTypeDef *phost){
   * @retval USBH Status
   */
 static USBH_StatusTypeDef USBH_MIDI_SOFProcess (USBH_HandleTypeDef *phost){
+  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+
+  USBH_URBStateTypeDef URB_Status = USBH_LL_GetURBState(phost, MIDI_Handle->InPipe);
+  if(URB_Status == USBH_URB_STALL) {
+    USBH_DbgLog("USBH URB Stall");
+    if (USBH_ClrFeature(phost, MIDI_Handle->InEp) == USBH_OK)
+      MIDI_Handle->state = MIDI_TRANSFER_DATA;
+  }
   return USBH_OK;  
 }
   
