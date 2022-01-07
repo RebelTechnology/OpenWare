@@ -413,7 +413,20 @@ Required to compile without missing (unused) symbols
 -----------------------------------------------------------------
 
 use HAL_GetUIDw[012]()
-Returns first word of the unique device identifier (UID based on 96 
-bits)
+Returns first word of the unique device identifier (UID based on 96 bits)
 
 -----------------------------------------------------------------
+
+USB audio:
+- pre fx
+- post fx
+- interlace
+
+[usb] -|      |- [usb]
+       +- fx -+
+[adc] -|      |- [dac]
+
+e.g. 4ch adc/dac, 4ch usb tx/rx, 8 ch fx
+
+-----------------------------------------------------------------
+       
