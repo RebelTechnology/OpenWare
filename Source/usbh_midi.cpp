@@ -41,12 +41,9 @@ static MIDI_HandleTypeDef staticMidiHandle;
 
 static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
   USBH_StatusTypeDef status = USBH_FAIL ;
-  uint8_t interface = 0;
-  MIDI_HandleTypeDef *MIDI_Handle;
-
   //USB_MIDI_ChangeConnectionState(0);
 
-  interface = USBH_FindInterface(phost, USB_AUDIO_CLASS, USB_MIDISTREAMING_SUBCLASS, 0xFF);
+  uint8_t interface = USBH_FindInterface(phost, USB_AUDIO_CLASS, USB_MIDISTREAMING_SUBCLASS, 0xFF);
   USBH_DbgLog ("USBH InterfaceInit 0x%x", interface);
 
   if(interface == 0xFF){
@@ -55,8 +52,9 @@ static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
     status = USBH_FAIL;
   }else{
     USBH_SelectInterface (phost, interface);
-    phost->pActiveClass->pData = &staticMidiHandle;
-    MIDI_Handle =  &staticMidiHandle;
+    MIDI_HandleTypeDef* MIDI_Handle = &staticMidiHandle;
+    memset(MIDI_Handle, 0, sizeof(staticMidiHandle));
+    phost->pActiveClass->pData = MIDI_Handle;
 
     if(phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress & 0x80){
       MIDI_Handle->InEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress);
@@ -115,22 +113,22 @@ static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
  */
 USBH_StatusTypeDef USBH_MIDI_InterfaceDeInit (USBH_HandleTypeDef *phost){
   USBH_DbgLog ("USBH InterfaceDeInit");
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
-
-  if ( MIDI_Handle->OutPipe){
-    USBH_ClosePipe(phost, MIDI_Handle->OutPipe);
-    USBH_FreePipe  (phost, MIDI_Handle->OutPipe);
-    MIDI_Handle->OutPipe = 0;     /* Reset the Channel as Free */
-  }
-
-  if ( MIDI_Handle->InPipe){
-    USBH_ClosePipe(phost, MIDI_Handle->InPipe);
-    USBH_FreePipe  (phost, MIDI_Handle->InPipe);
-    MIDI_Handle->InPipe = 0;     /* Reset the Channel as Free */
-  }
-
   if(phost->pActiveClass->pData){
-    /* statically allocated in init
+    MIDI_HandleTypeDef* MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
+
+    if ( MIDI_Handle->OutPipe){
+      USBH_ClosePipe(phost, MIDI_Handle->OutPipe);
+      USBH_FreePipe  (phost, MIDI_Handle->OutPipe);
+      MIDI_Handle->OutPipe = 0;     /* Reset the Channel as Free */
+    }
+    
+    if ( MIDI_Handle->InPipe){
+      USBH_ClosePipe(phost, MIDI_Handle->InPipe);
+      USBH_FreePipe  (phost, MIDI_Handle->InPipe);
+      MIDI_Handle->InPipe = 0;     /* Reset the Channel as Free */
+    }
+
+    /* statically allocated
        USBH_free (phost->pActiveClass->pData); */
     phost->pActiveClass->pData = NULL;
   }
@@ -409,6 +407,7 @@ void usbh_midi_tx(uint8_t* buffer, uint32_t length){
 }
 
 void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost){
+  // tx complete callback
 // get ready to send some data
 }
 
