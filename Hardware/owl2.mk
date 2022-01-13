@@ -4,11 +4,12 @@ ifeq ($(CONFIG),Debug)
   CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g3
   CFLAGS   = -g3
-endif
-ifeq ($(CONFIG),Release)
+else ifeq ($(CONFIG),Release)
   CPPFLAGS = -O2
   ASFLAGS  = -O2
   CFLAGS   = -O2
+else
+  $(error Invalid CONFIG=$(CONFIG))
 endif
 
 # compile with semihosting if Debug is selected
