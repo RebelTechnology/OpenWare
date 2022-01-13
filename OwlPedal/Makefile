@@ -20,8 +20,10 @@ else ifeq ($(PLATFORM),Modular)
   CPPFLAGS += -DOWL_MODULAR
 else ifeq ($(PLATFORM),Rack)
   PROJECT = OwlRack
-  CPPFLAGS += -IOWL_PEDAL -DOWL_RACK
+  CPPFLAGS += -DOWL_RACK
   CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
+else
+  $(error Invalid PLATFORM=$(PLATFORM))
 endif
 
 include $(OPENWARE)/Hardware/sources.mk

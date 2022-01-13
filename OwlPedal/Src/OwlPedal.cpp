@@ -20,8 +20,15 @@
 static int16_t knobvalues[2];
 static uint8_t patchselect;
 #define PATCH_CONFIG_KNOB_THRESHOLD (4096/8)
-#define PATCH_CONFIG_PROGRAM_CONTROL 0
-#define PATCH_CONFIG_VOLUME_CONTROL 3
+#define PATCH_CONFIG_PROGRAM_CONTROL ADC_A
+#define PATCH_CONFIG_VOLUME_CONTROL  ADC_D
+
+#ifdef OWL_MODULAR
+/* analogue values A, B, C, D are inverted on OWL Modular */
+#define GET_ABCD(x) (4095 - getAnalogValue(x))
+#else
+#define GET_ABCD(x) (getAnalogValue(x))
+#endif
 
 #if 0
 #define SW3_Pin EXP2_T_Pin
@@ -75,6 +82,7 @@ bool isPushbuttonPressed(){
     ;
 }
 
+#ifdef OWL_PEDAL
 void configureExpression(uint8_t mode){
   if(mode != expression_mode){
     switch(mode){
@@ -107,6 +115,7 @@ void configureExpression(uint8_t mode){
     setButtonValue(BUTTON_2, false);
   }
 }
+#endif
 
 void initLed(){
 #ifdef OWL_PEDAL_PWM_LEDS
@@ -189,8 +198,7 @@ void onChangePin(uint16_t pin){
 #ifdef SW1_ALT_Pin
     case SW1_ALT_Pin:
 #endif
-    case SW1_Pin:
-      { // pushbutton
+    case SW1_Pin: { // pushbutton
 	bool state = isPushbuttonPressed();
 	setButtonValue(PUSHBUTTON, state);
 	setButtonValue(BUTTON_1, state);
@@ -198,6 +206,15 @@ void onChangePin(uint16_t pin){
 	midi_tx.sendCc(PATCH_BUTTON, state ? 127 : 0);
 	break;
       }
+#ifdef OWL_MODULAR
+    case PUSH_GATE_IN_Pin: {
+      bool state = !(PUSH_GATE_IN_GPIO_Port->IDR & PUSH_GATE_IN_Pin);
+      setButtonValue(PUSHBUTTON, state);
+      setButtonValue(BUTTON_1, state);
+      setLed(0, state ? RED_COLOUR : GREEN_COLOUR);
+      break;
+    }
+#endif
     // case SW2_Pin: { // mode button
     //   bool state = HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET;
     //   setButtonValue(BUTTON_2, state);
@@ -246,14 +263,6 @@ void setGateValue(uint8_t ch, int16_t value){
       setLed(0, value < 512 ? NO_COLOUR : RED_COLOUR);
 #endif
       break;
-#ifdef OWL_MODULAR
-  case PUSH_GATE_IN_Pin: {
-    bool isSet = !(PUSH_GATE_IN_GPIO_Port->IDR & PUSH_GATE_IN_Pin);
-    setButtonValue(PUSHBUTTON, isSet);
-    setLed(0, isSet ? RED_COLOUR : GREEN_COLOUR);
-    break;
-  }
-#endif
     }
   }
   // if(ch == 0)
@@ -312,8 +321,8 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
       }
       break;
     }
-  }
 #endif
+  }
 }
 
 void onSetup(){
@@ -325,8 +334,9 @@ void onSetup(){
   bufpass_pin.low();
   setBufferedBypass(false);
 #endif
+#ifdef OWL_PEDAL
   configureExpression(settings.expression_mode);
-
+#endif
   setLed(0, RED_COLOUR);
 
   MX_USB_DEVICE_Init();  
@@ -345,8 +355,8 @@ void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   }
   setLed(0, NO_COLOUR);
   if(new_mode == CONFIGURE_MODE){
-    knobvalues[0] = getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL);
-    knobvalues[1] = getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL);
+    knobvalues[0] = GET_ABCD(PATCH_CONFIG_PROGRAM_CONTROL);
+    knobvalues[1] = GET_ABCD(PATCH_CONFIG_VOLUME_CONTROL);
     patchselect = program.getProgramIndex();
   }else if(new_mode == RUN_MODE){
     setLed(0, saved_led); // restore to saved LED state
@@ -419,9 +429,9 @@ void onLoop(){
       }
     }else{
       // update patch control
-      if(abs(knobvalues[0] - getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL)) >= PATCH_CONFIG_KNOB_THRESHOLD){
+      if(abs(knobvalues[0] - GET_ABCD(PATCH_CONFIG_PROGRAM_CONTROL)) >= PATCH_CONFIG_KNOB_THRESHOLD){
 	knobvalues[0] = -PATCH_CONFIG_KNOB_THRESHOLD;
-	float pos = 0.5f + (getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL) * (registry.getNumberOfPatches() - 1)) / 4096.0f;
+	float pos = 0.5f + (GET_ABCD(PATCH_CONFIG_PROGRAM_CONTROL) * (registry.getNumberOfPatches() - 1)) / 4096.0f;
 	uint8_t idx = roundf(pos);
 	if(abs(patchselect - pos) > 0.6 && registry.hasPatch(idx)){ // ensure a small dead zone
 	  patchselect = idx;
@@ -431,9 +441,9 @@ void onLoop(){
 	}
       }
       // update volume control
-      if(abs(knobvalues[1] - getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL)) >= PATCH_CONFIG_KNOB_THRESHOLD){
+      if(abs(knobvalues[1] - GET_ABCD(PATCH_CONFIG_VOLUME_CONTROL)) >= PATCH_CONFIG_KNOB_THRESHOLD){
 	knobvalues[1] = -PATCH_CONFIG_KNOB_THRESHOLD;
-	uint8_t value = (getAnalogValue(PATCH_CONFIG_VOLUME_CONTROL) >> 6) + 63;
+	uint8_t value = (GET_ABCD(PATCH_CONFIG_VOLUME_CONTROL) >> 6) + 63;
 	if(settings.audio_output_gain != value){
 	  settings.audio_output_gain = value;
 	  codec.setOutputGain(value);
@@ -471,5 +481,7 @@ void onLoop(){
       counter = PATCH_RESET_COUNTER;
     break;
   }
+#ifdef OWL_PEDAL
   configureExpression(settings.expression_mode);
+#endif
 }
