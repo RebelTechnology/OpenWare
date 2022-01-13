@@ -33,6 +33,8 @@ else ifeq ($(PLATFORM),Modular)
 else ifeq ($(PLATFORM),Rack)
   CPPFLAGS += -Iusbd-fs -IOWL_PEDAL -DOWL_RACK
 #  vpath %.c usbd-fs
+else
+  $(error Invalid PLATFORM=$(PLATFORM))
 endif
 
 C_SRC += $(C_SRC_SRAM)
@@ -41,8 +43,6 @@ C_SRC += $(C_SRC_UART)
 C_SRC += $(C_SRC_IWDG)
 
 include $(OPENWARE)/Hardware/f4.mk
-
-DFUCMD = $(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0
 
 .PHONY: clean deploy unlock erase upload lock
 
