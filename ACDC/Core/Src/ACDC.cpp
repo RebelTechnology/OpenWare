@@ -51,10 +51,10 @@ void setLed(uint8_t led, uint32_t rgb){
   case 1:
     if(rgb == RED_COLOUR){
       led_clip1.low();
-      TIM3->CCR2 = 0xFFFFFFFFU;
+      TIM2->CCR1 = 0xFFFFFFFFU;
     }else{
       led_clip1.high();
-      TIM3->CCR2 = pwm;
+      TIM2->CCR1 = pwm;
     }
     break;
   case 2:
@@ -69,10 +69,10 @@ void setLed(uint8_t led, uint32_t rgb){
   case 3:
     if(rgb == RED_COLOUR){
       led_clip3.low();
-      TIM2->CCR1 = 0xFFFFFFFFU;
+      TIM3->CCR2 = 0xFFFFFFFFU;
     }else{
       led_clip3.high();
-      TIM2->CCR1 = pwm;
+      TIM3->CCR2 = pwm;
     }
     break;
   case 4:
@@ -115,10 +115,10 @@ void initLed(){
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_Base_Start(&htim4);
   HAL_TIM_Base_Start(&htim8);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // in3
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // in1
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); // in4
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4); // in2
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); // in1
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); // in3
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1); // out3
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2); // out4
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1); // out1
@@ -140,7 +140,7 @@ void onSetup(){
 void onLoop(void){  
   for(size_t i=0; i<4; ++i){
     int16_t value = getParameterValue(PARAMETER_AA+i);
-    setLed(i+1, value >= 4095 ? RED_COLOUR : value);
+    setLed(i+1, value >= 4000 ? RED_COLOUR : value);
     setLed(i+5, getParameterValue(PARAMETER_BA+i));
   }
 }

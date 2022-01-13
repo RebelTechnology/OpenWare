@@ -14,6 +14,7 @@
   #define HARDWARE_VERSION    "OWL Magus Boot"
   #define HARDWARE_ID         MAGUS_HARDWARE
   #define APPLICATION_ADDRESS 0x08010000
+  #define USE_SPI_FLASH
 #elif defined OWL_LICH
   #define HARDWARE_VERSION    "OWL Lich Boot"
   #define HARDWARE_ID         LICH_HARDWARE
@@ -26,6 +27,7 @@
   #define LED1_GPIO_Port GPIOF
   #define LED2_Pin GPIO_PIN_8
   #define LED2_GPIO_Port GPIOF
+  #define USE_SPI_FLASH
 #elif defined OWL_WITCH
   #define HARDWARE_VERSION    "OWL Witch Boot"
   #define HARDWARE_ID         WITCH_HARDWARE
@@ -51,6 +53,7 @@
   #define LED2_Pin GPIO_PIN_1
   #define LED2_GPIO_Port GPIOA
   #define APPLICATION_ADDRESS 0x08010000
+  #define USE_SPI_FLASH
 #elif defined OWL_WIZARD
   #define HARDWARE_VERSION    "OWL Wizard Boot"
   #define HARDWARE_ID         WIZARD_HARDWARE
@@ -63,6 +66,7 @@
   #define LED2_Pin GPIO_PIN_1
   #define LED2_GPIO_Port GPIOA
   #define APPLICATION_ADDRESS 0x08010000
+  #define USE_SPI_FLASH
 #elif defined OWL_PEDAL
   #define HARDWARE_VERSION    "OWL Pedal Boot"
   #define HARDWARE_ID         OWL_PEDAL_HARDWARE
@@ -75,6 +79,7 @@
   #define LED2_Pin GPIO_PIN_9
   #define LED2_GPIO_Port GPIOB
   #define APPLICATION_ADDRESS 0x08010000
+  #define USE_SPI_FLASH
 #elif defined OWL_NOCTUA
   #define HARDWARE_VERSION    "OWL Noctua Boot"
   #define HARDWARE_ID         NOCTUA_HARDWARE

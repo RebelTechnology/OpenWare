@@ -42,3 +42,7 @@ C_SRC += $(C_SRC_QSPI)
 C_SRC += $(C_SRC_MDMA)
 
 include $(OPENWARE)/Hardware/h7.mk
+
+dfu: Build/${PROJECT}.bin
+	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s 0x8000000 -D $<
+	@echo Uploaded $< to Xibeca bootsector

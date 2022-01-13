@@ -30,6 +30,8 @@ ifeq ($(PLATFORM),Genius)
 else ifeq ($(PLATFORM),Magus)
   CPPFLAGS += -Iusbd-fs -DOWL_MAGUS -DUSE_USBD_FS
   vpath %.c usbd-fs
+else
+  $(error Invalid PLATFORM=$(PLATFORM))
 endif
 
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp

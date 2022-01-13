@@ -73,13 +73,11 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern DMA_HandleTypeDef hdma_adc3;
 extern DMA_HandleTypeDef hdma_spi2_tx;
 extern DMA_HandleTypeDef hdma_i2s2_ext_rx;
 extern I2S_HandleTypeDef hi2s2;
-extern DMA_HandleTypeDef hdma_uart4_rx;
-extern UART_HandleTypeDef huart4;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -142,20 +140,6 @@ void EXTI4_IRQHandler(void)
   /* USER CODE BEGIN EXTI4_IRQn 1 */
 
   /* USER CODE END EXTI4_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA1 stream2 global interrupt.
-  */
-void DMA1_Stream2_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
-
-  /* USER CODE END DMA1_Stream2_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_uart4_rx);
-  /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream2_IRQn 1 */
 }
 
 /**
@@ -264,33 +248,6 @@ void SPI2_IRQHandler(void)
   /* USER CODE BEGIN SPI2_IRQn 1 */
 
   /* USER CODE END SPI2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles UART4 global interrupt.
-  */
-void UART4_IRQHandler(void)
-{
-  /* USER CODE BEGIN UART4_IRQn 0 */
-
-  /* USER CODE END UART4_IRQn 0 */
-  HAL_UART_IRQHandler(&huart4);
-  /* USER CODE BEGIN UART4_IRQn 1 */
-  /* Check for IDLE flag */
-  UART_HandleTypeDef *huart = &huart4;
-  if(huart->Instance->SR & UART_FLAG_IDLE){
-    /* This part is important */
-    /* Clear IDLE flag by reading status and data registers */
-    volatile uint32_t tmp;                  /* Must be volatile to prevent optimizations */
-    tmp = huart->Instance->SR;              /* Read status register */
-    tmp = huart->Instance->DR;              /* Read data register */
-    (void)tmp;                              /* Prevent compiler warnings */
-    if(huart->hdmarx != NULL)
-      huart->hdmarx->Instance->CR &= ~DMA_SxCR_EN;       /* Disabling DMA will force transfer complete interrupt if enabled */
-    /* DMA1_Stream2->CR &= ~DMA_SxCR_EN;       /\* Disabling DMA will force transfer complete interrupt if enabled *\/ */
-  }
-
-  /* USER CODE END UART4_IRQn 1 */
 }
 
 /**

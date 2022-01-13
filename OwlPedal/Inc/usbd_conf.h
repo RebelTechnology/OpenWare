@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -36,7 +36,12 @@
 #include "stm32f4xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "device.h"
+#ifdef DEBUG
+#define DEBUG_LEVEL     3
+#else
+#define DEBUG_LEVEL     0
+#endif
 /* USER CODE END INCLUDE */
 
 /** @addtogroup USBD_OTG_DRIVER
@@ -64,19 +69,18 @@
   */
 
 /*---------- -----------*/
-#define USBD_MAX_NUM_INTERFACES     1U
+#define USBD_MAX_NUM_INTERFACES     5U
 /*---------- -----------*/
 #define USBD_MAX_NUM_CONFIGURATION     1U
 /*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512U
 /*---------- -----------*/
-#define USBD_DEBUG_LEVEL     0U
+#define USBD_DEBUG_LEVEL     DEBUG_LEVEL
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     0U
 /*---------- -----------*/
-#define USBD_SELF_POWERED     1U
+#define USBD_SELF_POWERED     0U
 /*---------- -----------*/
-#define USBD_AUDIO_FREQ     22100U
 
 /****************************************/
 /* #define for FS and HS identification */
@@ -91,14 +95,13 @@
   * @brief Aliases.
   * @{
   */
-
-/* Memory management macros */
-
+/* Memory management macros make sure to use static memory allocation */
 /** Alias for memory allocation. */
-#define USBD_malloc         malloc
+
+#define USBD_malloc         (void *)USBD_static_malloc
 
 /** Alias for memory release. */
-#define USBD_free           free
+#define USBD_free           USBD_static_free
 
 /** Alias for memory set. */
 #define USBD_memset         memset
@@ -112,25 +115,25 @@
 /* DEBUG macros */
 
 #if (USBD_DEBUG_LEVEL > 0)
-#define USBD_UsrLog(...)    printf(__VA_ARGS__);\
-                            printf("\n");
+#define USBD_UsrLog(...)    do { printf(__VA_ARGS__);	\
+                            printf("\n"); } while(0)
 #else
 #define USBD_UsrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 1)
 
-#define USBD_ErrLog(...)    printf("ERROR: ") ;\
+#define USBD_ErrLog(...)    do { printf("ERROR: ") ;\
                             printf(__VA_ARGS__);\
-                            printf("\n");
+                            printf("\n"); } while(0)
 #else
 #define USBD_ErrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 2)
-#define USBD_DbgLog(...)    printf("DEBUG : ") ;\
+#define USBD_DbgLog(...)    do { printf("DEBUG : ") ;	\
                             printf(__VA_ARGS__);\
-                            printf("\n");
+                            printf("\n"); } while(0)
 #else
 #define USBD_DbgLog(...)
 #endif
@@ -154,6 +157,8 @@
   */
 
 /* Exported functions -------------------------------------------------------*/
+void *USBD_static_malloc(uint32_t size);
+void USBD_static_free(void *p);
 
 /**
   * @}

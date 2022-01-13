@@ -58,6 +58,8 @@ else ifeq ($(PLATFORM),Noctua)
 else ifeq ($(PLATFORM),BioSignals)
   CPPFLAGS += -Iusbd-hs -DOWL_BIOSIGNALS -DUSE_USBD_HS
   vpath %.c usbd-hs
+else
+  $(error Invalid PLATFORM=$(PLATFORM))
 endif
 
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
