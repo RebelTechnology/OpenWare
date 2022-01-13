@@ -8,7 +8,7 @@
 #endif
 
    struct ResourceHeader {
-     uint32_t magic; // 0xDADADEED for resources, 0xDADAC0DE for patches
+     uint32_t magic; // 0xDADADEED for resources
      uint32_t size;
      char name[20];
      uint32_t flags;
