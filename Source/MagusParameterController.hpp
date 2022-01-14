@@ -154,9 +154,6 @@ public:
     selectedPid[3] = PARAMETER_C;
     selectedPid[4] = PARAMETER_E;
     selectedPid[5] = PARAMETER_G;
-
-    setDisplayMode(PROGRESS_DISPLAY_MODE);
-
 #ifdef OWL_MAGUS
     for(int i=0; i<20; ++i)
       setPortMode(i, PORT_UNI_INPUT);

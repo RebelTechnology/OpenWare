@@ -88,7 +88,6 @@ public:
     for(int i=0; i<NOF_ADC_VALUES; ++i)
     // for(int i=0; i<NOF_PARAMETERS; ++i)
       user[i] = 0;
-    setDisplayMode(PROGRESS_DISPLAY_MODE);
   }
 
   void changePage(Page* page){
@@ -117,14 +116,14 @@ public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     page->encoderChanged(encoder, current, previous);
   }
-  // update value with encoder
-  void setUserValue(uint8_t ch, int16_t value){
-    if(ch < NOF_ADC_VALUES){
-      user[ch] = value;
+  void setValue(uint8_t pid, int16_t value){    
+    if(pid < NOF_ADC_VALUES){
+      user[pid] = value;
     }else{
-      parameters[ch] = value;
+      parameters[pid] = value;
     }
   }
+
   int16_t getUserValue(uint8_t ch){
     if(ch < NOF_ADC_VALUES)
       return user[ch];
@@ -343,7 +342,7 @@ public:
     uint8_t select = encoder == 0 ? selectOnePage.select : selectTwoPage.select;
     int16_t value = getContinuousEncoderValue(current, previous);
     value = std::clamp(params.getUserValue(select) + value, 0, 4095);
-    params.setUserValue(select, value);
+    params.setValue(select, value);
   }
   void draw(ScreenBuffer& screen){
     if(sw1()){
