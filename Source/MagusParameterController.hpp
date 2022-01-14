@@ -141,6 +141,10 @@ public:
   uint8_t selectedBlock;
   uint8_t selectedPid[NOF_ENCODERS];
 
+  MagusParameterController(){
+    setDisplayMode(PROGRESS_DISPLAY_MODE);
+  }
+
   void reset(){
     setTitle("Magus");
     ParameterController::reset();
@@ -465,11 +469,7 @@ class ErrorPage : public Page {
     // draw CPU load
     screen.print(110, offset+8, "cpu");
     screen.setCursor(110, offset+17);
-#ifdef STM32H7xx
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/100);
-#else
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
-#endif
+    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/(ARM_CYCLES_PER_SAMPLE/100));
     screen.print("%");
   }
 };
