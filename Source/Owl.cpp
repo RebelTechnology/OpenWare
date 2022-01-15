@@ -85,11 +85,15 @@ void Owl::setup(void){
   IWDG1->KR = 0x5555; // ensure watchdog register write is allowed
   IWDG1->PR = 0x05;   // prescaler 128
   IWDG1->RLR = 0x753; // reload 8 seconds
+  while(IWDG1->SR != 0x00u); // wait to count down
+  IWDG1->KR = 0xaaaa; // reset the watchdog timer
 #else
   IWDG->KR = 0xCCCC; // Enable IWDG and turn on LSI
   IWDG->KR = 0x5555; // ensure watchdog register write is allowed
   IWDG->PR = 0x05;   // prescaler 128
   IWDG->RLR = 0x753; // reload 8 seconds
+  while(IWDG->SR != 0x00u); // wait to count down
+  IWDG->KR = 0xaaaa; // reset the watchdog timer
 #endif
 #endif
 #ifdef USE_BKPSRAM
@@ -184,12 +188,7 @@ void Owl::loop(){
 #ifdef USE_DIGITALBUS
   busstatus = bus_status();
 #endif
-#ifdef OLED_DMA
-  // When using OLED_DMA this must delay for a minimum amount to allow screen to update
-  vTaskDelay(xFrequency);
-#else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
-#endif
 #ifdef USE_IWDG
 #ifdef STM32H7xx
   IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
@@ -219,7 +218,6 @@ void jump_to_bootloader(void){
 //   extern USBD_HandleTypeDef USBD_HANDLE;
 //   USBD_DeInit(&USBD_HANDLE);
 // #endif
-  *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
@@ -230,13 +228,13 @@ void jump_to_bootloader(void){
 #else
   RCC->CIR = 0x00000000;
 #endif
+  *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
 }
 
 void device_reset(){
-  *OWLBOOT_MAGIC_ADDRESS = 0;
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
@@ -247,6 +245,7 @@ void device_reset(){
 #else
   RCC->CIR = 0x00000000;
 #endif
+  *OWLBOOT_MAGIC_ADDRESS = 0;
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
