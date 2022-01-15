@@ -100,6 +100,16 @@ static int testWatchdogReset(){
   return __HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET;
 }
 
+static int testPowerLowReset(){
+  return __HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST) != RESET;
+}
+
+static int testBrownOutReset(){
+  return __HAL_RCC_GET_FLAG(RCC_FLAG_BORRST) != RESET && // Power down or Brown out
+    __HAL_RCC_GET_FLAG(RCC_FLAG_PORRST) == RESET; // Not power down
+    
+}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -138,9 +148,13 @@ int main(void)
   }else if(testButton()){
     setMessage("Bootloader requested");
   }else if(testLoop()){
-    error(RUNTIME_ERROR, "Unexpected firmware reset");
+    error(RUNTIME_ERROR, "Unexpected reset");
   }else if(testWatchdogReset()){
     error(RUNTIME_ERROR, "Watchdog reset");
+  }else if(testPowerLowReset()){
+    error(RUNTIME_ERROR, "Low power reset");
+  }else if(testBrownOutReset()){
+    error(RUNTIME_ERROR, "Brown out reset");
   }else if(testNoProgram()){
     error(RUNTIME_ERROR, "No valid firmware");
   }else{
