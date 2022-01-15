@@ -518,7 +518,7 @@ __weak void onStartProgram(){
 void runScreenTask(void* p){
   TickType_t xLastWakeTime;
   TickType_t xFrequency;
-  xFrequency = SCREEN_LOOP_SLEEP_MS / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+  xFrequency = SCREEN_LOOP_SLEEP_MS / portTICK_PERIOD_MS;
   xLastWakeTime = xTaskGetTickCount();
   for(;;){
     vTaskDelayUntil(&xLastWakeTime, xFrequency);    
