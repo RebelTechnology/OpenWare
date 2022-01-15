@@ -39,7 +39,6 @@ HCD_HandleTypeDef hhcd_USB_OTG_HS;
 void Error_Handler(void);
 
 /* USER CODE BEGIN 0 */
-void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URBStateTypeDef urb_state);
 
 /* USER CODE END 0 */
 
@@ -155,14 +154,13 @@ void HAL_HCD_Disconnect_Callback(HCD_HandleTypeDef *hhcd)
   * @param  urb_state: state
   * @retval None
   */
-void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state)
-{
-  USBH_MIDI_NotifyURBChange(hhcd->pData, chnum, urb_state);
-/* To be used with OS to sync URB state with the global state machine */
-#if (USBH_USE_OS == 1)
-  USBH_LL_NotifyURBChange(hhcd->pData);
-#endif
-}
+/* void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state) */
+/* { */
+/* /\* To be used with OS to sync URB state with the global state machine *\/ */
+/* #if (USBH_USE_OS == 1) */
+/*   USBH_LL_NotifyURBChange(hhcd->pData); */
+/* #endif */
+/* } */
 /**
 * @brief  Port Port Enabled callback.
   * @param  hhcd: HCD handle

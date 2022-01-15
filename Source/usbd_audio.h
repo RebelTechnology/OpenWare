@@ -28,27 +28,47 @@
 #define AUDIO_IN_STREAMING_CTRL                       0x03
 #define AUDIO_OUT_STREAMING_CTRL                      0x04
 
-#define AUDIO_RX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_RX_FREQ * USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000)) 
-#define AUDIO_TX_PACKET_SIZE                          (uint16_t)(((USBD_AUDIO_TX_FREQ * USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE) /1000))
+#define AUDIO_RX_SAMPLES_PER_MS                       (USBD_AUDIO_RX_FREQ / 1000)
+#define AUDIO_RX_PACKET_SIZE                          (AUDIO_RX_SAMPLES_PER_MS * USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE)
+#define AUDIO_RX_MAX_PACKET_SIZE                      (AUDIO_RX_PACKET_SIZE + USBD_AUDIO_RX_CHANNELS * AUDIO_BYTES_PER_SAMPLE)
+
 #define AUDIO_FB_PACKET_SIZE                          3U
-    
-/* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
-  that it is an even number and higher than 3 */
-#define AUDIO_RX_PACKET_NUM                           1
-#define AUDIO_TX_PACKET_NUM                           1
-/* Total size of the audio transfer buffer */
-#define AUDIO_RX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM))
-/* Total size of the IN (i.e. microphopne) transfer buffer */
-#define AUDIO_TX_TOTAL_BUF_SIZE                       ((size_t)(AUDIO_TX_PACKET_SIZE * AUDIO_TX_PACKET_NUM))
+
+#define AUDIO_TX_SAMPLES_PER_MS                       (USBD_AUDIO_TX_FREQ / 1000)
+#define AUDIO_TX_PACKET_SIZE                          (AUDIO_TX_SAMPLES_PER_MS * USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE)
+#define AUDIO_TX_MAX_PACKET_SIZE                      (AUDIO_TX_PACKET_SIZE + USBD_AUDIO_TX_CHANNELS * AUDIO_BYTES_PER_SAMPLE)
+
+/* Number of sub-packets in the audio transfer buffer. */
+#define AUDIO_RX_PACKET_NUM                           5
+#define AUDIO_TX_PACKET_NUM                           5
+
+/* Total size of the OUT audio transfer buffer */
+#define AUDIO_RX_TOTAL_BUF_SIZE                       (AUDIO_RX_PACKET_SIZE * AUDIO_RX_PACKET_NUM)
+/* Total size of the IN transfer buffer */
+#define AUDIO_TX_TOTAL_BUF_SIZE                       (AUDIO_TX_PACKET_SIZE * AUDIO_TX_PACKET_NUM)
 
 #define MIDI_TX_PACKET_SIZE                           0x40
 #define MIDI_RX_PACKET_SIZE                           0x40
-   
+
+#ifdef STM32H7xx
+#define USBD_TOTAL_FIFO_SIZE                          0x1000 /* 4k FIFO buffers on H7 */
+#else
+#define USBD_TOTAL_FIFO_SIZE                          0x500  /* 1.25k FIFO buffers on F4 */
+#endif
+#define USBD_MIN_FIFO_SIZE                            0x40
+ 
+/* Isochronous Synchronisation Type */
 #define USBD_EP_ATTR_ISOC_NOSYNC                      0x00 /* no synchro */
 #define USBD_EP_ATTR_ISOC_ASYNC                       0x04 /* synchronisation by feedback  */
 #define USBD_EP_ATTR_ISOC_ADAPT                       0x08 /* adaptative synchronisation   */
 #define USBD_EP_ATTR_ISOC_SYNC                        0x0C /* synchronous mode  */
 
+/* Isochronous Usage Type */
+#define USBD_EP_ATTR_ISOC_DATA                        0x00 /* Data Endpoint  */
+#define USBD_EP_ATTR_ISOC_FB                          0x10 /* Feedback Endpoint  */
+#define USBD_EP_ATTR_ISOC_IMPL_FB                     0x20 /* Implicit Feedback Data Endpoint  */
+
+   
 /* Class-Specific AS Isochronous Audio Data Endpoint Descriptor bmAttributes */
 #define USBD_AUDIO_AS_CONTROL_SAMPLING_FREQUENCY             0x0001 /* D0 = 1*/
 #define USBD_AUDIO_AS_CONTROL_PITCH                          0x0002 /* D1 = 1*/
@@ -82,6 +102,15 @@
 
 #endif
 
+#if AUDIO_BITS_PER_SAMPLE == 8
+typedef int8_t audio_t;
+#elif AUDIO_BITS_PER_SAMPLE == 16
+typedef int16_t audio_t;
+#elif AUDIO_BITS_PER_SAMPLE == 32
+typedef int32_t audio_t;
+#else
+#error "Unsupported AUDIO_BITS_PER_SAMPLE"
+#endif
 
 /** @defgroup USBD_CORE_Exported_TypesDefinitions
   * @{
@@ -98,20 +127,26 @@
 }
 USBD_AUDIO_ControlTypeDef;
 
-
-
 typedef struct
 {
   uint8_t                   ac_alt_setting, tx_alt_setting, rx_alt_setting, midi_alt_setting;
 #ifdef USE_USBD_AUDIO_TX
   uint8_t                   audio_tx_buffer[AUDIO_TX_TOTAL_BUF_SIZE];
+  uint8_t                   audio_tx_transmit[AUDIO_TX_MAX_PACKET_SIZE];
   volatile uint8_t          audio_tx_active;
   volatile uint16_t         tx_soffn;
 #endif
 #ifdef USE_USBD_AUDIO_RX
   uint8_t                   audio_rx_buffer[AUDIO_RX_TOTAL_BUF_SIZE];
+  uint8_t                   audio_rx_transmit[AUDIO_RX_MAX_PACKET_SIZE];
   volatile uint8_t          audio_rx_active;
+#ifdef USE_USBD_RX_FB
   volatile uint16_t         fb_soffn;
+  union {
+    uint8_t buf[3];
+    uint32_t val;
+  } fb_data;
+#endif
 #endif
 #ifdef USE_USBD_MIDI
   uint8_t                   midi_rx_buffer[MIDI_RX_PACKET_SIZE];
@@ -130,10 +165,10 @@ extern USBD_ClassTypeDef  USBD_AUDIO;
 uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev, void *fops);
 uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd);
 
-void usbd_audio_tx_start_callback(size_t rate, uint8_t channels);
+void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb);
 void usbd_audio_tx_stop_callback();
 void usbd_audio_tx_callback(uint8_t* data, size_t len);
-void usbd_audio_rx_start_callback(size_t rate, uint8_t channels);
+void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb);
 void usbd_audio_rx_stop_callback();
 size_t usbd_audio_rx_callback(uint8_t* data, size_t len);
 void usbd_audio_mute_callback(int16_t gain);

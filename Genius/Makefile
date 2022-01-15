@@ -9,7 +9,7 @@ CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/cs4272.c
 C_SRC += $(OPENWARE)/Source/ssd1309.c
-C_SRC += $(OPENWARE)/Source/usbd_audio.c
+CPP_SRC += $(OPENWARE)/Source/usbd_audio.cpp
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
 CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp
 CPP_SRC += $(OPENWARE)/Source/bus.cpp
@@ -32,5 +32,7 @@ C_SRC += $(C_SRC_USBH)
 C_SRC += $(C_SRC_DSP)
 C_SRC += $(C_SRC_OS)
 C_SRC += $(C_SRC_UART)
+
+C_SRC += $(C_SRC_USBH_HID)
 
 include $(OPENWARE)/Hardware/h7.mk

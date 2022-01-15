@@ -88,5 +88,5 @@ bool PatchRegistry::loadProgram(uint8_t index){
 }
 
 bool PatchRegistry::loadProgram(void* address, uint32_t length){
-  return patchDefinition.load(address, length) && patchDefinition.isValid();  
+  return patchDefinition.load(address, length) && patchDefinition.isValid();
 }

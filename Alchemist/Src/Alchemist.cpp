@@ -49,7 +49,10 @@ void onChangePin(uint16_t pin){
   }
 }
 
-void loop(void){
+void onSetup(){
+  initLed();
+}
+
+void onLoop(){
   owl_mode_button();
-  owl.loop();
 }

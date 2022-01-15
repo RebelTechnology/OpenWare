@@ -4,11 +4,12 @@ ifeq ($(CONFIG),Debug)
   CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g3
   CFLAGS   = -g3
-endif
-ifeq ($(CONFIG),Release)
+else ifeq ($(CONFIG),Release)
   CPPFLAGS = -O2
   ASFLAGS  = -O2
   CFLAGS   = -O2
+else
+  $(error Invalid CONFIG=$(CONFIG))
 endif
 
 # compile with semihosting if Debug is selected
@@ -25,11 +26,8 @@ endif
 LDFLAGS += -Wl,--gc-sections
 LDSCRIPT ?= $(OPENWARE)/Hardware/owl3.ld
 LDLIBS += -lc -lm
-# CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
-# CPPFLAGS += -fpic -fpie
-CPPFLAGS += -Wdouble-promotion
-CPPFLAGS += -fdata-sections
-CPPFLAGS += -ffunction-sections
+CPPFLAGS += -Wdouble-promotion -Werror=double-promotion
+CPPFLAGS += -fdata-sections -ffunction-sections
 CPPFLAGS += -fno-builtin -ffreestanding
 LDFLAGS += -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17

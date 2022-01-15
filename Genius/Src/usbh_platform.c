@@ -31,8 +31,8 @@
   * @brief  Drive VBUS.
   * @param  state : VBUS state
   *          This parameter can be one of the these values:
-  *           - 1 : VBUS Active
-  *           - 0 : VBUS Inactive
+  *          - 1 : VBUS Active
+  *          - 0 : VBUS Inactive
   */
 void MX_DriverVbusHS(uint8_t state)
 {
@@ -49,7 +49,7 @@ void MX_DriverVbusHS(uint8_t state)
     data = GPIO_PIN_RESET;
   }
   /* USER CODE END PREPARE_GPIO_DATA_VBUS_HS */
-  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, (GPIO_PinState)data);
+  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_9,(GPIO_PinState)data);
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

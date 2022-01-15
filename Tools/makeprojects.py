@@ -13,9 +13,10 @@ PROJECTS = {
         }
     ],
     'MidiBoot': [
-        'Alchemist', 'Wizard', 'Magus', 'Lich', 'Noctua',
-        'BioSignals', 'Witch'
-        #'Effectsbox' - won't build bootloader
+        'Alchemist', 'Wizard', 'Magus', 'Lich', 'Witch',
+        { 'OwlPedal2': ['Pedal=OwlPedal2'] }
+        # 'Noctua', 'BioSignals', not needed
+        # 'Effectsbox' won't build bootloader
     ],
     'MidiBoot3': [
         'Genius'

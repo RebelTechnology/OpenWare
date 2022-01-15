@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include "device.h"
-#include "Codec.h"
 
 // Section 8.1 Mode Control
 #define CODEC_MODE_CTRL1_REG						(uint8_t)0x01
@@ -13,13 +12,16 @@
 #define CODEC_MC_SERIAL_FORMAT(x)					(uint8_t)(((x) & 0x07) << 0)
 
 // Section 8.2 DAC Control
-#define CODEC_DAC_CONTROL_REG						(uint8_t)0x02
+#define CODEC_DAC_CTRL						(uint8_t)0x02
 #define CODEC_DAC_CTRL_AUTO_MUTE					(uint8_t)0x80
 #define CODEC_DAC_CTRL_FILTER_SEL					(uint8_t)0x40
 #define CODEC_DAC_CTRL_DE_EMPHASIS(x)					(uint8_t)(((x) & 0x03) << 4)
 #define CODEC_DAC_CTRL_VOL_RAMP_UP					(uint8_t)0x08
 #define CODEC_DAC_CTRL_VOL_RAMP_DN					(uint8_t)0x04
 #define CODEC_DAC_CTRL_INV_POL(x)					(uint8_t)(((x) & 0x03) << 0)
+#define CODEC_DAC_CTRL_INV_POL_AB					(uint8_t)(0x03)
+#define CODEC_DAC_CTRL_INV_POL_A					(uint8_t)(0x02)
+#define CODEC_DAC_CTRL_INV_POL_B					(uint8_t)(0x01)
 
 // Section 8.3 DAC Volume and Mixing
 #define CODEC_DAC_VOL_REG						(uint8_t)0x03

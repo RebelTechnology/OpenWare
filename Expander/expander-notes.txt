@@ -1,6 +1,7 @@
 
 
 LQFP-48
+STM32F100CBT6/7 24 MHz 128k FLASH 8k RAM
 
 full compatible:
 STM32F100C8Tx 24 MHz 64k FLASH 8k RAM
@@ -21,3 +22,19 @@ STM32L4P5CE 120MHz 1M FLASH 320k RAM, 1x USB OTG
 STM32L4P5CET6 LQFP-48, USD 3.9641 / 10k	
 
 Ultra-low-power with FPU Arm Cortex-M4 MCU 120 MHz with 512 kbytes of Flash memory, USB OTG, DFSDM, CHROM-ART
+
+
+LCSC STM32F103C8T6 4943 in stock 29/10 2021
+https://lcsc.com/product-detail/ST-Microelectronics_STMicroelectronics-STM32F103C8T6_C8734.html
+USD 10.1218 @100
+
+STM32L051C8T6TR 13602 in stock 29/10 2021
+https://lcsc.com/product-detail/ST-Microelectronics_STMicroelectronics-STM32L051C8T6TR_C2802165.html
+USD 1.9934 @100
+
+STM32L051C8 M0 32 Mhz 64k FLASH 8k RAM compatible?
+
+STM32F030CCT6 US$ 5.7171 @100 48Mhz 32k RAM 256k FLASH compatible?
+
+STM32F302C8T6 2879 in stock, US$4.3153 @100
+

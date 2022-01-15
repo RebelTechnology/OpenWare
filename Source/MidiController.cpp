@@ -112,7 +112,8 @@ public:
       Resource* resource = registry.getResource(state);
       if(resource)
 	midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, state+MAX_NUMBER_OF_PATCHES,
-			 resource->getName(), resource->getDataSize(), storage.getChecksum(resource));
+			 resource->getName(), resource->getDataSize(),
+			 storage.getChecksum(resource));
       state++;
     }else{
       owl.setBackgroundTask(NULL); // end this task
@@ -124,11 +125,12 @@ void MidiController::sendPatchName(uint8_t slot){
   if(slot == 0){
     PatchDefinition* def = registry.getPatchDefinition();
     if(def)
-      sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getProgramSize(), 0);
+      sendName(SYSEX_PRESET_NAME_COMMAND, slot, def->getName(), def->getBinarySize(), 0);
   }else{
     Resource* resource = registry.getPatch(slot-1);
     if(resource)
-      sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize(), storage.getChecksum(resource));
+      sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize(),
+	       storage.getChecksum(resource));
   }
 }
 
@@ -205,7 +207,7 @@ void MidiController::sendName(uint8_t cmd, uint8_t index, const char* name, size
      // make the numbers big-endian
     datasize = __REV(datasize);
     crc = __REV(crc);
-    size_t len = strnlen(name, 24);
+    size_t len = strnlen(name, sizeof(ResourceHeader::name));
     uint8_t buf[len+3+5+5];
     buf[0] = cmd;
     buf[1] = index;
@@ -366,14 +368,13 @@ void MidiController::sendConfigurationSetting(const char* name, uint32_t value){
 }
 
 void MidiController::sendDeviceId(){
-  uint32_t* deviceId = (uint32_t*)UID_BASE;
   char buf[32];
   buf[0] = SYSEX_DEVICE_ID;
   char* p = &buf[1];
-  p = stpcpy(p, msg_itoa(deviceId[0], 16, 8));
+  p = stpcpy(p, msg_itoa(HAL_GetUIDw0(), 16, 8));
   p = stpcpy(p, ":");
-  p = stpcpy(p, msg_itoa(deviceId[1], 16, 8));
+  p = stpcpy(p, msg_itoa(HAL_GetUIDw1(), 16, 8));
   p = stpcpy(p, ":");
-  p = stpcpy(p, msg_itoa(deviceId[2], 16, 8));
+  p = stpcpy(p, msg_itoa(HAL_GetUIDw2(), 16, 8));
   sendSysEx((uint8_t*)buf, p-buf);
 }

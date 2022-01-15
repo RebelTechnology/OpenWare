@@ -1,3 +1,4 @@
+#include <cstddef>
 #include "Codec.h"
 #include "device.h"
 #include "errorhandlers.h"

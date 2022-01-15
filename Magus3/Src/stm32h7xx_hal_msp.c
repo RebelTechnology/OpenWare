@@ -124,14 +124,14 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     GPIO_InitStruct.Pin = FLASH_MISO_Pin|FLASH_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = FLASH_SCK_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(FLASH_SCK_GPIO_Port, &GPIO_InitStruct);
 
@@ -200,7 +200,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     GPIO_InitStruct.Pin = SPI_A_SCK_Pin|SPI_A_MISO_Pin|SPI_A_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI5;
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
@@ -871,7 +871,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     GPIO_InitStruct.Alternate = GPIO_AF6_SAI1;
     HAL_GPIO_Init(CS_SDIN_GPIO_Port, &GPIO_InitStruct);
 
-    /* Peripheral DMA init*/
+      /* Peripheral DMA init*/
 
     hdma_sai1_a.Instance = DMA2_Stream1;
     hdma_sai1_a.Init.Request = DMA_REQUEST_SAI1_A;
@@ -914,7 +914,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     GPIO_InitStruct.Alternate = GPIO_AF6_SAI1;
     HAL_GPIO_Init(CS_SDOUT_GPIO_Port, &GPIO_InitStruct);
 
-    /* Peripheral DMA init*/
+      /* Peripheral DMA init*/
 
     hdma_sai1_b.Instance = DMA2_Stream4;
     hdma_sai1_b.Init.Request = DMA_REQUEST_SAI1_B;
@@ -959,6 +959,7 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
 
     HAL_GPIO_DeInit(CS_SDIN_GPIO_Port, CS_SDIN_Pin);
 
+    /* SAI1 DMA Deinit */
     HAL_DMA_DeInit(hsai->hdmarx);
     HAL_DMA_DeInit(hsai->hdmatx);
     }
@@ -976,6 +977,7 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
     */
     HAL_GPIO_DeInit(CS_SDOUT_GPIO_Port, CS_SDOUT_Pin);
 
+    /* SAI1 DMA Deinit */
     HAL_DMA_DeInit(hsai->hdmarx);
     HAL_DMA_DeInit(hsai->hdmatx);
     }

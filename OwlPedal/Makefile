@@ -6,7 +6,7 @@ include $(OPENWARE)/Hardware/owl1.mk
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/wm8731.c
-C_SRC += $(OPENWARE)/Source/usbd_audio.c
+CPP_SRC += $(OPENWARE)/Source/usbd_audio.cpp
 
 ifndef PLATFORM
 PLATFORM = Pedal
@@ -20,8 +20,10 @@ else ifeq ($(PLATFORM),Modular)
   CPPFLAGS += -DOWL_MODULAR
 else ifeq ($(PLATFORM),Rack)
   PROJECT = OwlRack
-  CPPFLAGS += -IOWL_PEDAL -DOWL_RACK
+  CPPFLAGS += -DOWL_RACK
   CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
+else
+  $(error Invalid PLATFORM=$(PLATFORM))
 endif
 
 include $(OPENWARE)/Hardware/sources.mk

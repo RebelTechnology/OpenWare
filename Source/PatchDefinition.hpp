@@ -16,34 +16,35 @@ private:
   typedef void (*ProgramFunction)(void);
   ProgramFunction programFunction = NULL;
   uint32_t* linkAddress;
-  uint32_t* jumpAddress;
+  uint32_t binarySize;
   uint32_t programSize;
-  char programName[24];
+  char programName[20]; // ResourceHeader::name is char[20]
   Resource* sourceResource = NULL;
   void* sourceAddress = NULL;
   
   bool load(ProgramHeader* header, uint32_t sz){
+    binarySize = sz;
+    // check we've got an entry function
+    if(header->magic != 0xDADAC0DE)
+      return false;
     linkAddress = header->linkAddress;
     programSize = (uint32_t)header->endAddress - (uint32_t)header->linkAddress;
-    if(header->magic != 0xDADAC0DE || sz != programSize)
-      return false;
     stackBase = header->stackBegin;
     stackSize = (uint32_t)header->stackEnd - (uint32_t)header->stackBegin;
-    jumpAddress = header->jumpAddress;
     programVector = header->programVector;
     strlcpy(programName, header->programName, sizeof(programName));
-    programFunction = (ProgramFunction)jumpAddress;
+    programFunction = (ProgramFunction)header->jumpAddress;
     return true;
   }
 public:
   PatchDefinition() {}
   void copy(){
     if(sourceResource){
-      storage.readResource(sourceResource, linkAddress, 0, programSize);
+      storage.readResource(sourceResource, linkAddress, 0, binarySize);
       sourceResource = NULL;
     }else if(sourceAddress){
       if(linkAddress != sourceAddress)
-	memmove(linkAddress, sourceAddress, programSize);
+	memmove(linkAddress, sourceAddress, binarySize);
       sourceAddress = NULL;
     }
   }
@@ -82,7 +83,8 @@ public:
     return false;
   }
   bool isValid(){
-    // check we've got an entry function
+    // if(binarySize != programSize)
+    //   return false;
     if(programFunction == NULL || programVector == NULL)
       return false;
     extern char _PATCHRAM, _PATCHRAM_SIZE;
@@ -97,11 +99,17 @@ public:
   }
   void run(){
     // check magic
-    if((*(uint32_t*)linkAddress) == 0xDADAC0DE)
+    if((*(uint32_t*)linkAddress) == 0xDADAC0DE){
+      if(binarySize < programSize) // blank out bss area
+	memset(linkAddress+binarySize, 0, programSize - binarySize);
       programFunction();
+    }
   }
   uint32_t getProgramSize(){
     return programSize;
+  }
+  uint32_t getBinarySize(){
+    return binarySize;
   }
   uint32_t* getLinkAddress(){
     return linkAddress;

@@ -52,6 +52,8 @@
 #include "cmsis_os.h"
 #include "usb_device.h"
 #include "usb_host.h"
+#include "usb_device.h"
+#include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -199,30 +201,33 @@ int main(void)
   MX_SPI6_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_SAI_DeInit(&hsai_BlockA1);
-  HAL_SAI_DeInit(&hsai_BlockB1);
-  hsai_BlockA1.Instance = SAI1_Block_A;
-  hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_TX;
-  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
-  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
-  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
-  hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
-  hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
-  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
-  hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
-    Error_Handler();
-  hsai_BlockB1.Instance = SAI1_Block_B;
-  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
-  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
-  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
-  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
-  hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
-  hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
-  hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
-  hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
-    Error_Handler();
+  /* HAL_SAI_DeInit(&hsai_BlockA1); */
+  /* HAL_SAI_DeInit(&hsai_BlockB1); */
+  /* hsai_BlockA1.Instance = SAI1_Block_A; */
+  /* hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_TX; */
+  /* hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS; */
+  /* hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE; */
+  /* hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY; */
+  /* hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE; */
+  /* hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE; */
+  /* hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING; */
+  /* hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED; */
+  /* if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK) */
+  /*   Error_Handler(); */
+  /* hsai_BlockB1.Instance = SAI1_Block_B; */
+  /* hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX; */
+  /* hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS; */
+  /* hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE; */
+  /* hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY; */
+  /* hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE; */
+  /* hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE; */
+  /* hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING; */
+  /* hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED; */
+  /* if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK) */
+  /*   Error_Handler(); */
+
+  /* HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0); */
+  /* HAL_NVIC_EnableIRQ(EXTI2_IRQn); */
 
   SDRAM_Initialization_Sequence(&hsdram1);   
 
@@ -521,7 +526,7 @@ static void MX_SPI5_Init(void)
   hspi5.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi5.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi5.Init.NSS = SPI_NSS_SOFT;
-  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi5.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi5.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi5.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -858,7 +863,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, FLASH_HOLD_Pin|FLASH_nCS_Pin|ENC_NRST_Pin|TLC_XLAT_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, FLASH_nWP_Pin|CS_CS_Pin|CS_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, FLASH_WP_Pin|CS_CS_Pin|CS_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
@@ -896,8 +901,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : FLASH_nWP_Pin CS_CS_Pin CS_RST_Pin */
-  GPIO_InitStruct.Pin = FLASH_nWP_Pin|CS_CS_Pin|CS_RST_Pin;
+  /*Configure GPIO pins : FLASH_WP_Pin CS_CS_Pin CS_RST_Pin */
+  GPIO_InitStruct.Pin = FLASH_WP_Pin|CS_CS_Pin|CS_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

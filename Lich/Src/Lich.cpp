@@ -56,7 +56,6 @@ Pin seg_pins[8] =
    Pin(DISPLAY_DP_GPIO_Port, DISPLAY_DP_Pin), 
   };
 
-// set value to 10 for no display
 static void setSegmentDisplay(int value, bool dot=false){
   seg_pins[7].set(!dot);
   // HAL_GPIO_WritePin(seg_ports[7], seg_pins[7], dot ? GPIO_PIN_RESET : GPIO_PIN_SET);
@@ -138,11 +137,10 @@ void setEncoderValue(int value){
   __HAL_TIM_SET_COUNTER(&htim2, value<<2);
 }
 
-void setup(){
+void onSetup(){
   // __HAL_TIM_SET_COUNTER(&htim2, INT16_MAX/2);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   setSegmentDisplay(SEG_DISPLAY_L, true);
-  owl.setup();
   setEncoderValue(program.getProgramIndex());
   setLed(1, 0);
   setLed(2, 0);
@@ -156,13 +154,23 @@ void setProgress(uint16_t value, const char* msg){
   progress = value;
 }
 
-void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   progress = 0;
   patchselect = program.getProgramIndex();
   setEncoderValue(patchselect);
 }
 
-static void update_preset(){
+extern "C" {
+  void usbh_midi_reset(void){
+    HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
+    HAL_Delay(100); // wait 100mS
+    HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+    // extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
+    // USBH_LL_ResetPort(&USBH_HANDLE);
+  }
+}
+
+void onLoop(void){
   static uint32_t counter = PATCH_RESET_COUNTER;
   switch(owl.getOperationMode()){
   case STARTUP_MODE:
@@ -225,27 +233,4 @@ static void update_preset(){
     }
     break;
   }
-}
-
-extern "C" {
-  void usbh_midi_reset(void){
-    HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
-    HAL_Delay(100); // wait 100mS
-    HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
-    // extern USBH_HandleTypeDef USBH_HANDLE; // defined in usb_host.c
-    // USBH_LL_ResetPort(&USBH_HANDLE);
-  }
-}
-
-void loop(void){
-  if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
-    if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
-      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
-      error(USB_ERROR, "USBH PWR Fault");
-    }
-  }else{
-    MX_USB_HOST_Process();
-  }
-  update_preset();
-  owl.loop();
 }

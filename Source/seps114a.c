@@ -46,13 +46,8 @@
 #define SEPS114A_RGB_POL 0xE1
 #define SEPS114A_DISPLAY_MODE_CONTROL 0xE5
 
-#ifdef OLED_SOFT_CS
 #define setCS()    setPin(OLED_CS_GPIO_Port, OLED_CS_Pin)
 #define clearCS()  clearPin(OLED_CS_GPIO_Port, OLED_CS_Pin)
-#else
-#define setCS()    
-#define clearCS()
-#endif
 #define setDC()   setPin(OLED_DC_GPIO_Port, OLED_DC_Pin)
 #define clearDC() clearPin(OLED_DC_GPIO_Port, OLED_DC_Pin)
 #define clearRST() clearPin(OLED_RST_GPIO_Port, OLED_RST_Pin);

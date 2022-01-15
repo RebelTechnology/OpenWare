@@ -2,19 +2,26 @@
 ENTRY(Reset_Handler)
 
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size  = 0x000; /* required amount of heap  */
+_Min_Heap_Size  = 0x200; /* required amount of heap  */
 _Min_Stack_Size = 0x200; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
-DTCMRAM (xrw)    : ORIGIN = 0x20000000, LENGTH = 48K
+  /* DTCMRAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K */
+  /* RAM_D1 (xrw)      : ORIGIN = 0x24000000, LENGTH = 512K */
+  /* RAM_D2 (xrw)      : ORIGIN = 0x30000000, LENGTH = 288K */
+  /* RAM_D3 (xrw)      : ORIGIN = 0x38000000, LENGTH = 64K */
+  /* ITCMRAM (xrw)      : ORIGIN = 0x00000000, LENGTH = 64K */
+  /* FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 2048K */
+DTCMRAM  (xrw)   : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K
 PLUSRAM  (xrw)   : ORIGIN = 0x24000000, LENGTH = 512K /* D1 RAM */
 HEAP_D2  (xrw)   : ORIGIN = 0x30000000, LENGTH = 256K
-DMA_D2  (xrw)    : ORIGIN = 0x30040000, LENGTH = 32K
-RAM_D3  (xrw)    : ORIGIN = 0x38000000, LENGTH = 64K
-ITCMRAM (xrw)    : ORIGIN = 0x00000008, LENGTH = 65528 /* 64K - 8 to avoid starting at 0x0 - FreeRTOS fails if stack address is NULL */
+DMA_D2   (xrw)   : ORIGIN = 0x30040000, LENGTH = 32K
+RAM_D3   (xrw)   : ORIGIN = 0x38000000, LENGTH = 64K
+ITCMRAM (xrw)    : ORIGIN = 0x00000000, LENGTH = 4K
+CCMRAM (xrw)     : ORIGIN = 0x00001000, LENGTH = 60K
 EXTRAM  (rwx)    : ORIGIN = 0xD0000000, LENGTH = 8M
 /* BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 0K */
 /* FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 512K */
@@ -122,19 +129,18 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
+
+    end = .;           /* system heap, used e.g. by printf in DEBUG builds */
+    . = . + _Min_Heap_Size;
   } >DTCMRAM
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
   {
-    . = ALIGN(8);
-    PROVIDE ( end = . );
-    PROVIDE ( _end = . );
-    . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >DTCMRAM
-  _estack = ORIGIN(DTCMRAM)+LENGTH(DTCMRAM);
+  } >ITCMRAM
+  _estack = ORIGIN(ITCMRAM)+LENGTH(ITCMRAM);
 
   /* CCM section, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".ccmdata"))); */
@@ -143,8 +149,8 @@ SECTIONS
     *(.ccmdata)
     . = ALIGN(8);
     PROVIDE (_CCMRAM = .);
-  } >ITCMRAM
-  _CCMRAM_END = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM);
+  } >CCMRAM
+  _CCMRAM_END = ORIGIN(CCMRAM) + LENGTH(CCMRAM);
   _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
 
   /* Bootloader end will be used for finding bootloader token */

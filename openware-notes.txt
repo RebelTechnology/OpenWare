@@ -234,6 +234,11 @@ OWLPORT=`amidi -l|grep OWL|sed 's/.*\(hw:.*\),.*/\1/g'`
 
 Record 2 seconds 48k 16bit stereo
 arecord -D hw:1 -c 2 -r 48000 -f S16_LE out.wav
+AUDIODEV=hw:1 rec out.wav
+
+Playback 
+aplay -D hw:1 out.wav
+AUDIODEV=hw:1 play out.wav
 
 -----------------------------------------------------------------
 
@@ -360,6 +365,9 @@ DC Offset removed with 48dB 10Hz hpf
 
 todo:
 - bootloader verify
+- send and receive error messages
+- send error messages without polling
+- bootloader message with reason for bootloader mode (watchdog, magic, no/invalid firmware)
 - disable all: sysex rule
 - IWDG->KR = 0xaaaa only if watchog is enabled, otherwise it hangs
 - fix Noctua bootloader
@@ -381,3 +389,39 @@ play -c 1 -r 48k -t f32 sample.raw
 FirmwareSender -in sample.raw -out "OWL*" -name "sample.wav"
 
 -----------------------------------------------------------------
+
+H7 ADC:
+set Scan enable, Continuous enable, Conversion End of sequence, and ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR
+
+-----------------------------------------------------------------
+
+ABFSR 0x04: AHBP busfault
+
+-----------------------------------------------------------------
+
+Dynamic module / code loading with Position Independent Code / Executables PIC / PIE
+https://github.com/rgujju/STM32-projects/tree/master/got_plt
+https://community.arm.com/support-forums/f/architectures-and-processors-forum/45919/gcc-does-not-generate-correct-code-while-building-pic
+https://systemoverlord.com/2017/03/19/got-and-plt-for-pwning.html
+https://reverseengineering.stackexchange.com/questions/1992/what-is-plt-got
+
+-----------------------------------------------------------------
+
+CPPFLAGS += -fdata-sections -ffunction-sections
+Required to compile without missing (unused) symbols
+
+-----------------------------------------------------------------
+
+USB audio:
+- pre fx
+- post fx
+- interlace
+
+[usb] -|      |- [usb]
+       +- fx -+
+[adc] -|      |- [dac]
+
+e.g. 4ch adc/dac, 4ch usb tx/rx, 8 ch fx
+
+-----------------------------------------------------------------
+       

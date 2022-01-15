@@ -3,12 +3,14 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v22.0.0"
+#define FIRMWARE_VERSION "v22.2.0"
 
 #ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
 #define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
+#ifndef SPI_FLASH_HSPI
 #define SPI_FLASH_HSPI               hspi1
+#endif
 #define EXTERNAL_STORAGE_SIZE        (8*1024*1024)
 #else
 #define MAX_SPI_FLASH_HEADERS        0
@@ -41,6 +43,7 @@
 #define MIDI_OUTPUT_BUFFER_SIZE      1024
 #define MIDI_INPUT_BUFFER_SIZE       64
 #define MIDI_SYSEX_BUFFER_SIZE       256
+#define USE_MESSAGE_CALLBACK
 
 #ifndef USBD_MAX_POWER
 #define USBD_MAX_POWER               100 // 200mA
@@ -57,6 +60,7 @@
 #endif
 
 #define DEBUG_DWT
+
 /* #define DEBUG_STACK */
 #define DEBUG_STORAGE
 /* #define DEBUG_BOOTLOADER */
@@ -134,7 +138,6 @@
 #define AUDIO_SAMPLINGRATE           48000
 #endif
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
-#define AUDIO_MAX_BLOCK_SIZE         (CODEC_BUFFER_SIZE/4)
 
 #define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
 #define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE
@@ -149,6 +152,10 @@
 #define MAIN_LOOP_SLEEP_MS           2
 #endif
 
+#ifndef SCREEN_LOOP_SLEEP_MS
+#define SCREEN_LOOP_SLEEP_MS         40 /* 40mS = 25 fps */
+#endif
+
 #ifndef LOAD_INDICATOR_PARAMETER
 #define LOAD_INDICATOR_PARAMETER     PARAMETER_A
 #endif
@@ -159,6 +166,7 @@
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
 #define MANAGER_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
+#define SCREEN_TASK_STACK_SIZE       (2*1024/sizeof(portSTACK_TYPE))
 
 #ifndef ARM_CYCLES_PER_SAMPLE
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
@@ -170,11 +178,11 @@
 #define USE_EXTERNAL_RAM
 #endif
 
-#ifndef NO_CCM_RAM
-#define USE_CCM_RAM
-#define CCM_RAM                          __attribute__ ((section (".ccmdata")))
-#else
+#ifdef NO_CCM_RAM
 #define CCM_RAM
+#else
+#define USE_CCM_RAM
+#define CCM_RAM                      __attribute__ ((section (".ccmdata")))
 #endif
 
 #ifndef DMA_RAM
