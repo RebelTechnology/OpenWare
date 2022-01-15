@@ -756,7 +756,8 @@ public:
       screen.print(1, offset+35, getBootloaderVersion());
 #endif
   }
-    
+};
+
 class ProgressPage : public Page {
   void draw(ScreenBuffer& screen){
     drawLoadProgress(screen);
