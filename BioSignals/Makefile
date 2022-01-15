@@ -21,6 +21,3 @@ C_SRC += $(C_SRC_I2S)
 C_SRC += $(C_SRC_RTC)
 
 include $(OPENWARE)/Hardware/f4.mk
-
-flash:
-	openocd -f openocd.cfg -c "program Build/$(PROJECT).elf verify reset exit"
