@@ -139,7 +139,7 @@ void codec_init(){
 /*   Each ADC channel has a digital attenuator function with 20-dB gain. The attenuation level can be set from 20 dB to –100 */
 /* dB in 0.5-dB steps, and also can be set to infinite attenuation (mute). The attenuation level change from current value to */
 /* target value is performed by increment or decrement with s-curve response and time set by ATSPAD. */
-  codec_write(87, 0b1000000); // ATMDAD=1 All channels with preset (independent) data + master (common) data in decibel number
+  codec_write(87, 0b10000000); // ATMDAD=1 All channels with preset (independent) data + master (common) data in decibel number
 
   /* codec_reset(); */
 
