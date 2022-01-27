@@ -37,10 +37,13 @@ enum DisplayMode {
 // DisplayMode displayMode;
 void setDisplayMode(DisplayMode mode);
 
+static int16_t encoder_sensitivity = 2;
+static int16_t encoder_mask = 0x03;
+
 class Page {
 protected:
-  static constexpr int16_t encoder_sensitivity = 1;
-  static constexpr int16_t encoder_mask = 0x01;
+  // static constexpr int16_t encoder_sensitivity = 1;
+  // static constexpr int16_t encoder_mask = 0x01;
 public:
   virtual void draw(ScreenBuffer& screen){}
   // virtual void updateEncoders(int16_t* data, uint8_t size){}
@@ -48,7 +51,7 @@ public:
   virtual void exit(){}
   virtual void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){}
   int16_t getDiscreteEncoderValue(int16_t current, int16_t previous){
-    int32_t delta = (current - previous) * encoder_sensitivity;    
+    int32_t delta = (current - previous); // * encoder_sensitivity;
     if(delta > 0 && (current & encoder_mask) == encoder_mask)
       return 1;
     if(delta < 0 && (current & encoder_mask) == encoder_mask)
@@ -72,8 +75,7 @@ public:
   Page* page;
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t user[NOF_ADC_VALUES]; // user set values (ie by encoder or MIDI)
-  // for assignable CV / modulations
-  // int16_t user[NOF_PARAMETERS]; // user set values (ie by encoder or MIDI)
+  uint8_t cv_assign[4];
   GeniusParameterController() {
     // encoders[0] = INT16_MAX/2;
     // encoders[1] = INT16_MAX/2;
@@ -81,6 +83,8 @@ public:
     encoders[1] = 0;
     reset();
     setDisplayMode(PROGRESS_DISPLAY_MODE);
+    assignCV(0, 0);
+    assignCV(1, 1);
   }
   void reset(){
     setTitle("Genius");
@@ -89,7 +93,13 @@ public:
     // for(int i=0; i<NOF_PARAMETERS; ++i)
       user[i] = 0;
   }
-
+  void assignCV(uint8_t cv, uint8_t pid){
+    if(cv_assign[cv] != pid){
+      parameters[cv_assign[cv]] = user[cv];
+      user[cv] = parameters[pid];
+      cv_assign[cv] = pid;
+    }
+  }
   void changePage(Page* page){
     if(this->page != page){
       if(this->page != NULL)
@@ -98,7 +108,6 @@ public:
       page->enter();
     }
   }
-
   void draw(ScreenBuffer& screen){
     screen.clear();
     page->draw(screen);
@@ -116,26 +125,40 @@ public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     page->encoderChanged(encoder, current, previous);
   }
+  void updateEncoderValue(uint8_t select, int16_t delta){
+    if(select == cv_assign[0]){
+      user[0] = std::clamp(user[0] + delta, 0, 4095);
+    }else if(select == cv_assign[1]){
+      user[1] = std::clamp(user[1] + delta, 0, 4095);
+    }else{      
+      parameters[select] = std::clamp(parameters[select] + delta, 0, 4095);
+    }
+  }
   void setValue(uint8_t pid, int16_t value){    
-    if(pid < NOF_ADC_VALUES){
-      user[pid] = value;
+    if(pid == cv_assign[0]){
+      user[0] = value;
+    }else if(pid == cv_assign[1]){
+      user[1] = value;
     }else{
       parameters[pid] = value;
     }
   }
-
-  int16_t getUserValue(uint8_t ch){
-    if(ch < NOF_ADC_VALUES)
-      return user[ch];
-    return parameters[ch];
-  }
-  // @param values the modulation ADC values
   void updateValues(int16_t* values, size_t len){
-    for(size_t pid=0; pid<NOF_ADC_VALUES; ++pid)
-      parameters[pid] = max(0, min(4095, user[pid] + values[pid] + GENIUS_ADC_OFFSET));
-      // parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + values[pid])>>1));
+    parameters[cv_assign[0]] = std::clamp(user[0] + values[0] + GENIUS_ADC_OFFSET, 0, 4095);
+    parameters[cv_assign[1]] = std::clamp(user[1] + values[1] + GENIUS_ADC_OFFSET, 0, 4095);
   }
-private:
+    
+  // int16_t getUserValue(uint8_t ch){
+  //   if(ch < NOF_ADC_VALUES)
+  //     return user[ch];
+  //   return parameters[ch];
+  // }
+  // @param values the modulation ADC values
+  // void updateValues(int16_t* values, size_t len){
+  //   for(size_t pid=0; pid<NOF_ADC_VALUES; ++pid)
+  //     parameters[pid] = max(0, min(4095, user[pid] + values[pid] + GENIUS_ADC_OFFSET));
+  //     // parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + values[pid])>>1));
+  // }
 };
 
 static bool sw1(){
@@ -318,6 +341,9 @@ public:
     select = 0;
     assign = 0;
   }
+  void exit(){
+    params.assignCV(select, assign);
+  }
   void draw(ScreenBuffer& screen){
     if(sw1() || sw2()){
       setDisplayMode(EXIT_DISPLAY_MODE);
@@ -339,10 +365,9 @@ public:
 class StandardPage : public Page {
 public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
-    uint8_t select = encoder == 0 ? selectOnePage.select : selectTwoPage.select;
     int16_t value = getContinuousEncoderValue(current, previous);
-    value = std::clamp(params.getUserValue(select) + value, 0, 4095);
-    params.setValue(select, value);
+    uint8_t select = encoder == 0 ? selectOnePage.select : selectTwoPage.select;
+    params.updateEncoderValue(select, value);
   }
   void draw(ScreenBuffer& screen){
     if(sw1()){

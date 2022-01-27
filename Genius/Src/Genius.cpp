@@ -161,9 +161,9 @@ extern "C"{
   void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc){
     error(CONFIG_ERROR, "ADC error");
   }
-  void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-    params.updateValues((int16_t*)smooth_adc_values, adc_len);
-  }
+}
+void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
+  params.updateValues((int16_t*)smooth_adc_values, adc_len);
 }
 
 void updateEncoders(){
