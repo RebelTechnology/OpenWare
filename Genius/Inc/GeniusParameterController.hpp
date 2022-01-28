@@ -72,10 +72,11 @@ public:
 class GeniusParameterController : public ParameterController {
 private:
 public:
+  static constexpr size_t NOF_CV_VALUES = 4;
   Page* page;
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
-  int16_t user[NOF_ADC_VALUES]; // user set values (ie by encoder or MIDI)
-  uint8_t cv_assign[4];
+  int16_t user[NOF_CV_VALUES]; // user set values (ie by encoder or MIDI)
+  uint8_t cv_assign[NOF_CV_VALUES];
   GeniusParameterController() {
     // encoders[0] = INT16_MAX/2;
     // encoders[1] = INT16_MAX/2;
@@ -83,17 +84,21 @@ public:
     encoders[1] = 0;
     reset();
     setDisplayMode(PROGRESS_DISPLAY_MODE);
-    assignCV(0, 0);
-    assignCV(1, 1);
+    setAssignedCV(0, 0);
+    setAssignedCV(1, 1);
   }
   void reset(){
     setTitle("Genius");
     ParameterController::reset();
-    for(int i=0; i<NOF_ADC_VALUES; ++i)
-    // for(int i=0; i<NOF_PARAMETERS; ++i)
+    for(int i=0; i<NOF_CV_VALUES; ++i){
       user[i] = 0;
+      cv_assign[i] = 0;
+    }
   }
-  void assignCV(uint8_t cv, uint8_t pid){
+  uint8_t getAssignedCV(uint8_t cv){
+    return cv_assign[cv];
+  }
+  void setAssignedCV(uint8_t cv, uint8_t pid){
     if(cv_assign[cv] != pid){
       parameters[cv_assign[cv]] = user[cv];
       user[cv] = parameters[pid];
@@ -125,6 +130,9 @@ public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     page->encoderChanged(encoder, current, previous);
   }
+  int16_t getEncoderValue(uint8_t encoder){
+    return user[encoder];
+  }
   void updateEncoderValue(uint8_t select, int16_t delta){
     if(select == cv_assign[0]){
       user[0] = std::clamp(user[0] + delta, 0, 4095);
@@ -134,6 +142,20 @@ public:
       parameters[select] = std::clamp(parameters[select] + delta, 0, 4095);
     }
   }
+  void setName(uint8_t pid, const char* name){
+    ParameterController::setName(pid, name);
+    if(isOutput(pid)){
+      if(cv_assign[2] == 0)
+  	cv_assign[2] = pid;
+      else if(cv_assign[3] == 0)
+  	cv_assign[3] = pid;
+    }else{
+      if(cv_assign[0] == 0)
+  	cv_assign[0] = pid;
+      else if(cv_assign[1] == 0)
+  	cv_assign[1] = pid;
+    }      
+  }    
   void setValue(uint8_t pid, int16_t value){    
     if(pid == cv_assign[0]){
       user[0] = value;
@@ -323,28 +345,20 @@ SelectControlPage selectTwoPage(1, 1);
 
 class AssignPage : public Page {
 private:
-  uint8_t select;
-  uint8_t assign;
+  uint8_t select = 0;
   static constexpr const char* assignations[] = {"CV A In", "CV B In", "CV A Out", "CV B Out"};
-  int16_t enc, del;
 public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == 0){
       select = std::clamp(select + getDiscreteEncoderValue(current, previous), 0, 3);
     }else{
+      uint8_t assign = params.getAssignedCV(select);
       assign = std::clamp(assign + getDiscreteEncoderValue(current, previous), 0, NOF_PARAMETERS-1);
+      params.setAssignedCV(select, assign);      
     }
-    enc = current;
-    del = current - previous;
-  }
-  void enter(){
-    select = 0;
-    assign = 0;
-  }
-  void exit(){
-    params.assignCV(select, assign);
   }
   void draw(ScreenBuffer& screen){
+    uint8_t assign = params.getAssignedCV(select);
     if(sw1() || sw2()){
       setDisplayMode(EXIT_DISPLAY_MODE);
     }else{
@@ -354,10 +368,6 @@ public:
       screen.print(1, 26, assignations[select]);
       screen.print(": ");
       screen.print(params.getName(assign));
-      screen.setCursor(1, 36);
-      screen.print(enc);
-      screen.setCursor(1, 46);
-      screen.print(del);
     }
   }
 };
@@ -367,8 +377,10 @@ public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     int16_t value = getContinuousEncoderValue(current, previous);
     uint8_t select = encoder == 0 ? selectOnePage.select : selectTwoPage.select;
+    // uint8_t select = getAssignedEncoder(encoder);
     params.updateEncoderValue(select, value);
   }
+
   void draw(ScreenBuffer& screen){
     if(sw1()){
       setDisplayMode(SELECT_ONE_DISPLAY_MODE);
@@ -377,15 +389,43 @@ public:
     }else{
       int s1 = selectOnePage.select;
       int s2 = selectTwoPage.select;
-      screen.setTextSize(1);
-      screen.print(2, 56, params.getName(s1));
-      screen.print(": ");
-      screen.print((int)params.getValue(s1)/41);
-      screen.print(2, 64, params.getName(s2));
-      screen.print(": ");
-      screen.print((int)params.getValue(s2)/41);
+      // int s1 = getAssignedEncoder(0);
+      // int s2 = getAssignedEncoder(1);
+      drawParameter(s1, 56, screen);
+      drawParameter(s2, 64, screen);
+      // screen.setTextSize(1);
+      // screen.print(2, 56, params.getName(s1));
+      // screen.print(": ");
+      // screen.print((int)params.getValue(s1)/41);
+      // screen.print(2, 64, params.getName(s2));
+      // screen.print(": ");
+      // screen.print((int)params.getValue(s2)/41);
       graphics.drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
     }
+  }
+  
+  void drawParameter(int pid, int y, ScreenBuffer& screen){
+    int x = 0;
+#if 0
+    // stacked
+    // 6px high by up to 128px long rectangle
+    screen.drawRectangle(x, y, max(1, min(128, parameters[pid]/32)), 6, WHITE);
+    // y -= 7;
+    screen.setTextSize(1);
+    screen.print(x, y, names[pid]);
+#endif
+    screen.setTextSize(1);
+    screen.print(x, y, params.getName(pid));
+    // 6px high by up to 64px long rectangle
+    y -= 7;
+    x += 64;
+    screen.drawRectangle(x, y, max(1, min(64, params.getValue(pid)/64)), 6, WHITE);
+    // screen.drawRectangle(x, y, max(1, min(64, parameters[pid]/64)), 6, WHITE);
+    // if(params.getAssignedCV(0))
+    if(params.getAssignedCV(0) == pid)
+      screen.fillRectangle(x, y+1, max(1, min(64, params.getEncoderValue(0)/64)), 4, WHITE);
+    else if(params.getAssignedCV(1) == pid)
+      screen.fillRectangle(x, y+1, max(1, min(64, params.getEncoderValue(1)/64)), 4, WHITE);
   }
 };
 
