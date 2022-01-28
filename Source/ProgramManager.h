@@ -47,6 +47,9 @@ public:
   uint32_t getHeapMemoryUsed();
   uint8_t getProgramIndex();
   bool isProgramRunning();
+  void resetProgramIndex(){
+    patchindex = 0;
+  }
 private:
   void updateProgramIndex(uint8_t index);
 };

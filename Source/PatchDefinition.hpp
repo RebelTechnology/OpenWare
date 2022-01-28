@@ -32,7 +32,7 @@ private:
     stackBase = header->stackBegin;
     stackSize = (uint32_t)header->stackEnd - (uint32_t)header->stackBegin;
     programVector = header->programVector;
-    strlcpy(programName, header->programName, sizeof(programName));
+    strlcpy(programName, header->programName, sizeof(header->programName));
     programFunction = (ProgramFunction)header->jumpAddress;
     return true;
   }

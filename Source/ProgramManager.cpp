@@ -458,6 +458,7 @@ void programFlashTask(void* p){
     if(index == 0){
       onResourceUpdate();
     }else{
+      program.resetProgramIndex();
       program.loadProgram(index);
     }
   }
@@ -614,6 +615,7 @@ void runManagerTask(void* p){
 	owl.setMessageCallback(NULL);
 	vTaskDelete(audioTask);
 	audioTask = NULL;
+	program.resetProgramIndex();
 #ifdef USE_CODEC
 	codec.clear();
 #endif
