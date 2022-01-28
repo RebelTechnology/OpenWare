@@ -58,7 +58,7 @@ void onChangeMode(uint8_t new_mode, uint8_t old_mode){
     setDisplayMode(PROGRESS_DISPLAY_MODE);
     break;
   case CONFIGURE_MODE:
-    setDisplayMode(CONFIGURATION_DISPLAY_MODE);
+    setDisplayMode(CONFIG_STATS_DISPLAY_MODE);
     break;
   case RUN_MODE:
     setDisplayMode(STANDARD_DISPLAY_MODE);
@@ -70,6 +70,7 @@ void onChangeMode(uint8_t new_mode, uint8_t old_mode){
 }
 
 void onSetup(){
+  params.reset();
   progress_counter = 1000;
   tr_out_a_pin.outputMode();
   tr_out_b_pin.outputMode();
