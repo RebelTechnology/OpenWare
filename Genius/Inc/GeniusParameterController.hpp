@@ -299,12 +299,12 @@ public:
       uint8_t assign = params.getAssignedCV(select);
       int16_t delta = getDiscreteEncoderValue(current, previous);
       assign = std::clamp(assign + delta, 0, NOF_PARAMETERS-1);
-      if(select < 2){ // assigning input CV
+      if(select < 2 && delta){ // assigning input CV
 	while(params.isOutput(assign))
 	  assign += delta;
 	if(params.isInput(assign))
 	  params.setAssignedCV(select, assign);
-      }else{ // assigning output CV
+      }else if(delta){ // assigning output CV
 	while(params.isInput(assign))
 	  assign += delta;
 	if(params.isOutput(assign))
@@ -469,8 +469,9 @@ public:
     screen.setTextSize(1);
     int y = 26;
     // start two patches back from selected
-    for(size_t pid=max(0, selected-2); pid<=registry.getNumberOfPatches(); ++pid){
-      if(registry.hasPatch(pid)){
+    size_t current = program.getProgramIndex();
+    for(size_t pid=max(0, selected-2); pid <= registry.getNumberOfPatches(); ++pid){
+      if((pid == 0 && current == 0) || registry.hasPatch(pid)){
 	screen.setCursor(1, y);
 	screen.print((int)pid);
 	screen.print(".");
