@@ -18,7 +18,7 @@ private:
   uint32_t* linkAddress;
   uint32_t binarySize;
   uint32_t programSize;
-  char programName[20]; // ResourceHeader::name is char[20]
+  char programName[20]; // ResourceHeader::name is char[20], ProgramHeader::name is char[24]
   Resource* sourceResource = NULL;
   void* sourceAddress = NULL;
   
@@ -32,7 +32,7 @@ private:
     stackBase = header->stackBegin;
     stackSize = (uint32_t)header->stackEnd - (uint32_t)header->stackBegin;
     programVector = header->programVector;
-    strlcpy(programName, header->programName, sizeof(header->programName));
+    strlcpy(programName, header->programName, sizeof(programName));
     programFunction = (ProgramFunction)header->jumpAddress;
     return true;
   }
