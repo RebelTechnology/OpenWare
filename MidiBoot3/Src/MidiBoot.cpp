@@ -7,6 +7,7 @@
 #include "errorhandlers.h"
 #include "eepromcontrol.h"
 #include "MidiController.h"
+#include "Storage.h"
 
 static SystemMidiReader midi_rx;
 MidiController midi_tx;
@@ -61,6 +62,14 @@ extern "C" void setMessage(const char* msg){
   message = msg;
 }
 
+void sendMessage(uint8_t cmd, const char* msg){  
+  char buffer[64];
+  buffer[0] = cmd;
+  char* p = &buffer[1];
+  p = stpncpy(p, msg, 62);
+  midi_tx.sendSysEx((uint8_t*)buffer, p-buffer);
+}
+
 void sendMessage(){
   if(getErrorStatus() != NO_ERROR)
     message = getErrorMessage() == NULL ? "Error" : getErrorMessage();
@@ -74,21 +83,23 @@ void sendMessage(){
   }
 }
 
+void setProgress(uint16_t value, const char* msg){
+  // debugMessage(msg, (int)(100*value/4095));
+  led_toggle();
+}
+
 void eraseFromFlash(uint8_t sector){
   eeprom_unlock();
   if(sector == 0xff){
-    extern char _FLASH_STORAGE_BEGIN, _FLASH_STORAGE_END;
-    uint32_t address = (uint32_t)&_FLASH_STORAGE_BEGIN;
-    uint32_t sector = FLASH_SECTOR_4;
-    while (address < (uint32_t)&_FLASH_STORAGE_END) {
-      eeprom_erase_sector(sector++, FLASH_BANK_1);
-      address += FLASH_SECTOR_SIZE;
-    }
-    setMessage("Erased patch storage");
+#ifdef USE_SPI_FLASH
+    storage.erase(RESOURCE_PORT_MAPPED);
+#endif
+    storage.erase(RESOURCE_MEMORY_MAPPED);
+    sendMessage(SYSEX_PROGRAM_MESSAGE, "Erased storage");
     led_green();
   }else{
     eeprom_erase_sector(sector, FLASH_BANK_1);
-    setMessage("Erased flash sector");
+    sendMessage(SYSEX_PROGRAM_MESSAGE, "Erased flash sector");
     led_green();
   }
   eeprom_lock();
@@ -98,15 +109,17 @@ void saveToFlash(uint8_t sector, void* data, uint32_t length){
   // TODO!
   if(sector == FIRMWARE_SECTOR && length <= (3*128)*1024){
     eeprom_unlock();
-    eeprom_erase_sector(FLASH_SECTOR_1, FLASH_BANK_1);
-    if(length > 128*1024){
-      eeprom_erase_sector(FLASH_SECTOR_2, FLASH_BANK_1);
-      if(length > (128+128)*1024){
-        eeprom_erase_sector(FLASH_SECTOR_3, FLASH_BANK_1);
-      }
-    }
+    // eeprom_erase_sector(FLASH_SECTOR_1, FLASH_BANK_1);
+    // if(length > 128*1024){
+    //   eeprom_erase_sector(FLASH_SECTOR_2, FLASH_BANK_1);
+    //   if(length > (128+128)*1024){
+    //     eeprom_erase_sector(FLASH_SECTOR_3, FLASH_BANK_1);
+    //   }
+    // }
     extern char _BOOTLOADER_END;
-    eeprom_write_block((uint32_t)&_BOOTLOADER_END, data, length);
+    uint32_t addr = (uint32_t)&_BOOTLOADER_END;
+    eeprom_erase(addr, length);
+    eeprom_write_block(addr, data, length);
     eeprom_lock();
   }else{
     error(RUNTIME_ERROR, "Firmware too big");
@@ -147,7 +160,8 @@ extern "C" {
     led_green();
     midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
     midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
-    setMessage("OWL Bootloader Ready");
+    storage.init();
+    sendMessage(SYSEX_PROGRAM_MESSAGE, "OWL Bootloader Ready");
   }
 
   void loop(void){
@@ -157,14 +171,14 @@ extern "C" {
     if(counter){
       switch(counter-- % 1200){
       case 600:
-        led_red();
-        break;
+	led_red();
+	break;
       case 0:
-        led_green();
-        break;
+	led_green();
+	break;
       default:
-        HAL_Delay(1);
-        break;
+	HAL_Delay(1);
+	break;
       }
     }
 #endif
@@ -340,13 +354,25 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
   case REQUEST_SETTINGS:
     switch(value){
     case 0:
+    case 127:
       sendMessage();
+      // midi_tx.sendDeviceInfo();
+      break;
+    // case SYSEX_RESOURCE_NAME_COMMAND:
+    //   midi_tx.sendResourceNames();
+    //   break;
     case SYSEX_FIRMWARE_VERSION:
       midi_tx.sendFirmwareVersion();
       break;
     case SYSEX_DEVICE_ID:
       midi_tx.sendDeviceId();
       break;
+    // case SYSEX_DEVICE_STATS:
+    //   midi_tx.sendDeviceStats();
+    //   break;
+    // case SYSEX_BOOTLOADER_VERSION:
+    //   midi_tx.sendBootloaderVersion();
+    //   break;
     case SYSEX_PROGRAM_MESSAGE:
       sendMessage();
       break;

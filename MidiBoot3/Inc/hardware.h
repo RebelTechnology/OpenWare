@@ -18,6 +18,10 @@
   #define HARDWARE_VERSION    "OWL Magus Boot"
   #define HARDWARE_ID         MAGUS_HARDWARE
   #define APPLICATION_ADDRESS 0x08020000
+#elif defined OWL_XIBECA
+  #define HARDWARE_VERSION    "OWL Xibeca Boot"
+  #define HARDWARE_ID         XIBECA_HARDWARE
+  #define APPLICATION_ADDRESS 0x08020000
 #else
   #error Invalid configuration
 #endif

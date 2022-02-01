@@ -1,5 +1,6 @@
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
+DFUUTIL ?= dfu-util
 
 LDSCRIPT = STM32H743ZGTx-boot.ld
 include $(OPENWARE)/Hardware/owl3.mk
@@ -14,9 +15,10 @@ C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/crc32.c
 C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/message.c
+C_SRC += $(OPENWARE)/Source/Flash_S25FL.c
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
-# S_SRC = startup_openboot.s
+CPP_SRC += $(OPENWARE)/Source/Storage.cpp
 
 ifndef PLATFORM
 PLATFORM = Genius
@@ -29,6 +31,9 @@ ifeq ($(PLATFORM),Genius)
   vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Magus)
   CPPFLAGS += -Iusbd-fs -DOWL_MAGUS -DUSE_USBD_FS
+  vpath %.c usbd-fs
+else ifeq ($(PLATFORM),Xibeca)
+  CPPFLAGS += -Iusbd-fs -DOWL_XIBECA -DUSE_USBD_FS
   vpath %.c usbd-fs
 else
   $(error Invalid PLATFORM=$(PLATFORM))
@@ -73,3 +78,7 @@ deploy: upload lock
 
 sysex:
 	FirmwareSender -in "Build/${PROJECT}.bin" -flash `crc32 "Build/${PROJECT}.bin"` -save "Build/${PROJECT}.syx"
+
+dfu:
+	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s 0x8000000 -D Build/${PROJECT}.elf
+	@echo Uploaded $< to device bootsector

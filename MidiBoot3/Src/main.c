@@ -95,6 +95,16 @@ static int testWatchdogReset(){
   return __HAL_RCC_GET_FLAG(RCC_FLAG_IWDG1RST) != RESET;
 }
 
+static int testPowerLowReset(){
+  return __HAL_RCC_GET_FLAG(RCC_FLAG_LPWR1RST) != RESET ||
+    __HAL_RCC_GET_FLAG(RCC_FLAG_LPWR2RST) != RESET;
+}
+
+static int testBrownOutReset(){
+  return __HAL_RCC_GET_FLAG(RCC_FLAG_BORRST) != RESET && // Power down or Brown out
+    __HAL_RCC_GET_FLAG(RCC_FLAG_PORRST) == RESET; // Not power down
+}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -127,39 +137,43 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   MX_GPIO_Init();
-  MX_IWDG1_Init();
   
   if(testMagic()){
     setMessage("Bootloader starting");
   }else if(testButton()){
     setMessage("Bootloader requested");
   }else if(testLoop()){
-    error(RUNTIME_ERROR, "Unexpected firmware reset");
+    error(RUNTIME_ERROR, "Unexpected reset");
   }else if(testWatchdogReset()){
     error(RUNTIME_ERROR, "Watchdog reset");
+  }else if(testPowerLowReset()){
+    error(RUNTIME_ERROR, "Low power reset");
+  }else if(testBrownOutReset()){
+    error(RUNTIME_ERROR, "Brown out reset");
   }else if(testNoProgram()){
     error(RUNTIME_ERROR, "No valid firmware");
   }else{
     // jump to application code
       
-      /* Disable all interrupts */
-      __disable_irq();
+    /* Disable all interrupts */
+    RCC->CIER = 0x00000000;
 
-      RCC->CIER = 0x00000000;
+    /* Disable and reset SysTick */
+    SysTick->CTRL = 0;
+    SysTick->LOAD = 0;
+    SysTick->VAL = 0;
 
-      /* Disable and reset SysTick */
-      SysTick->CTRL = 0;
-      SysTick->LOAD = 0;
-      SysTick->VAL = 0;
+    /* Clear Interrupt Enable Register & Interrupt Pending Register */
+    for (int i = 0;i < 5; i++) {
+      NVIC->ICER[i]=0xFFFFFFFF;
+      NVIC->ICPR[i]=0xFFFFFFFF;
+    }
 
-      /* Clear Interrupt Enable Register & Interrupt Pending Register */
-      for (int i = 0;i < 5; i++) {
-        NVIC->ICER[i]=0xFFFFFFFF;
-        NVIC->ICPR[i]=0xFFFFFFFF;
-      }
-
-    /* put marker in to prevent reset cycles */
+    /* Put marker in to prevent reset cycles */
     *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_LOOP_NUMBER;
+
+    /* Start watchdog */
+    MX_IWDG1_Init();
 
     /* Jump to user application */
     uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
