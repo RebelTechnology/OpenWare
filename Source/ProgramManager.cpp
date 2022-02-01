@@ -571,9 +571,11 @@ void bootstrap(){
     extern RTC_HandleTypeDef hrtc;
     HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
-  }else{
+  }else if(registry.hasPatch(settings.program_index)){
     program.loadProgram(settings.program_index);
     program.startProgram(false);
+  }else{
+    owl.setOperationMode(CONFIGURE_MODE);
   }
 
 #ifdef USE_CODEC
@@ -615,7 +617,6 @@ void runManagerTask(void* p){
 	owl.setMessageCallback(NULL);
 	vTaskDelete(audioTask);
 	audioTask = NULL;
-	program.resetProgramIndex();
 #ifdef USE_CODEC
 	codec.clear();
 #endif
@@ -743,8 +744,6 @@ void ProgramManager::loadProgram(uint8_t pid){
       updateProgramIndex(pid);
     else
       error(PROGRAM_ERROR, "Load failed");
-  }else{
-    owl.setOperationMode(CONFIGURE_MODE);
   }
 }
 
