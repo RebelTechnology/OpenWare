@@ -54,7 +54,7 @@ const char* PatchRegistry::getResourceName(unsigned int index){
 
 const char* PatchRegistry::getPatchName(unsigned int index){
   if(index == 0){
-    patchDefinition.getName();
+    return patchDefinition.getName();
   }else{
     Resource* resource = getPatch(index-1);
     if(resource)
