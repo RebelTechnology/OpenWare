@@ -277,9 +277,9 @@ class ErrorPage : public Page {
       params.drawTitle("ERROR", screen);
       screen.setTextSize(1);
       if(getErrorMessage() != NULL)
-	screen.print(2, 25, getErrorMessage());
+	screen.print(2, 26, getErrorMessage());
       if(getDebugMessage() != NULL)
-	screen.print(2, 32, getDebugMessage());
+	screen.print(2, 36, getDebugMessage());
     }
   }
 };
@@ -457,7 +457,7 @@ public:
       uint8_t pid = patchselect + delta;
       while(!registry.hasPatch(pid) && pid < registry.getNumberOfPatches() && delta)
 	pid += delta;
-      if(registry.hasPatch(pid))
+      if(registry.hasPatch(pid) || (pid == 0 && program.getProgramIndex() == 0))
 	patchselect = pid;
     }
   }
@@ -503,7 +503,7 @@ public:
       setDisplayMode(EXIT_DISPLAY_MODE);
   }
   void draw(ScreenBuffer& screen){
-    params.drawTitle("< Volume >", screen);    
+    params.drawTitle("< Volume", screen);    
     drawVolume(screen);
   }
   void drawVolume(ScreenBuffer& screen){
