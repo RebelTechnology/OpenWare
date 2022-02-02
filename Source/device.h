@@ -139,7 +139,9 @@
 #ifndef AUDIO_SAMPLINGRATE
 #define AUDIO_SAMPLINGRATE           48000
 #endif
+#ifndef AUDIO_BLOCK_SIZE
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
+#endif
 
 #define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
 #define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE
