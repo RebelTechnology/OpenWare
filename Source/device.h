@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v22.2.0"
+#define FIRMWARE_VERSION "v22.2.1"
 
 #ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
@@ -110,7 +110,9 @@
 #define MAX_NUMBER_OF_RESOURCES      12
 #endif
 
+#ifndef CODEC_BLOCKSIZE
 #define CODEC_BLOCKSIZE              64
+#endif
 #define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */

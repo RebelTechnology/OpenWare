@@ -67,6 +67,9 @@
 
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
+#define CODEC_BLOCKSIZE              1024
+#define AUDIO_BLOCK_SIZE             128
+
 // Serial MIDI
 #define USE_UART_MIDI_RX
 #define USE_UART_MIDI_TX
