@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <cstring>
 #include "Codec.h"
 #include "device.h"
 #include "errorhandlers.h"
@@ -11,7 +12,6 @@ extern uint16_t codec_blocksize;
 extern int32_t* codec_rxbuf;
 extern int32_t* codec_txbuf;
 
-
 typedef int32_t audio_t;
 static audio_t ads_samples[ADS_MAX_CHANNELS];
 #ifdef USE_KX122
@@ -19,61 +19,19 @@ static audio_t ads_samples[ADS_MAX_CHANNELS];
 static audio_t kx122_samples[KX122_TOTAL_CHANNELS];
 #endif
 
-
-#ifdef USE_USBD_AUDIO
-#include "usbd_audio.h"
-#include "SerialBuffer.hpp"
-SerialBuffer<AUDIO_RINGBUFFER_SIZE, audio_t> audio_ringbuffer;
-volatile static size_t adc_underflow = 0;
-
-void usbd_fill_buffer(uint8_t* buffer, size_t len){
-  len /= (AUDIO_BYTES_PER_SAMPLE*USBD_AUDIO_TX_CHANNELS);
-  audio_t* dst = (audio_t*)buffer;
-  size_t available;
-  for(size_t i=0; i<len; ++i){
-    memcpy(dst, audio_ringbuffer.getReadHead(), USBD_AUDIO_TX_CHANNELS*sizeof(audio_t));
-    available = audio_ringbuffer.getReadCapacity();
-    if(available > USBD_AUDIO_TX_CHANNELS)
-      audio_ringbuffer.incrementReadHead(USBD_AUDIO_TX_CHANNELS);
-    else
-      adc_underflow++;
-    dst += USBD_AUDIO_TX_CHANNELS;
-  }
-}
-
-void usbd_audio_gain_callback(uint8_t gain){
-  ads_set_gain(gain-24);
-}
-
-void usbd_initiate_tx(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  usbd_fill_buffer(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
-  usbd_audio_write(haudio->audio_tx_buffer, AUDIO_TX_PACKET_SIZE);
-}
-
-void usbd_audio_start_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  // set read head at half a ringbuffer distance from write head
-  size_t pos = audio_ringbuffer.getWriteIndex() / USBD_AUDIO_TX_CHANNELS;
-  size_t len = audio_ringbuffer.getCapacity() / USBD_AUDIO_TX_CHANNELS;
-  pos = (pos + len/2) % len;
-  pos *= USBD_AUDIO_TX_CHANNELS;
-  audio_ringbuffer.setReadIndex(pos);
-  usbd_initiate_tx(pdev, haudio);
-}
-
-void usbd_audio_data_in_callback(USBD_HandleTypeDef* pdev, USBD_AUDIO_HandleTypeDef* haudio){
-  usbd_initiate_tx(pdev, haudio);
-}
-
-#endif // USE_USBD_AUDIO
-
 void codec_init(){
   rxindex = 0;
-  rxhalf = AUDIO_BLOCK_SIZE*AUDIO_CHANNELS;
+  rxhalf = codec_blocksize*AUDIO_CHANNELS;
   rxfull = 2*rxhalf;  
   ads_setup(ads_samples);
 #ifdef USE_KX122
   kx122_setup(kx122_samples);
 #endif
+}
+
+void codec_reset(){
+  rxhalf = codec_blocksize*AUDIO_CHANNELS;
+  rxfull = 2*rxhalf;    
 }
 
 void codec_bypass(int bypass){}
@@ -90,36 +48,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   extern TIM_HandleTypeDef htim8;
   if (htim == &htim8){
     // sample all channels
-
-#if defined USE_USBD_AUDIO && defined AUDIO_BYPASS
-    // write directly to usb buffer
-    audio_t* dst = audio_ringbuffer.getWriteHead(); // assume there's enough contiguous space for one full frame
-#else
     audio_t* dst = codec_rxbuf + rxindex;
-#endif
     memcpy(dst, ads_samples, ADS_ACTIVE_CHANNELS*sizeof(audio_t));
     dst += ADS_ACTIVE_CHANNELS;
 #ifdef USE_KX122
     memcpy(dst, kx122_samples, KX122_ACTIVE_CHANNELS*sizeof(audio_t));
     dst += KX122_ACTIVE_CHANNELS;
 #endif
-#if defined USE_USBD_AUDIO && defined AUDIO_BYPASS
-    audio_ringbuffer.incrementWriteHead(USBD_AUDIO_TX_CHANNELS);
-#else
-    rxindex += USBD_AUDIO_TX_CHANNELS;
+    rxindex += AUDIO_CHANNELS;
     if(rxindex == rxhalf){
       audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize); // trigger audio processing block
-#ifdef USE_USBD_AUDIO
-      audio_ringbuffer.push(codec_txbuf+rxhalf, codec_blocksize*USBD_AUDIO_TX_CHANNELS); // copy back previous block
-#endif
     }else if(rxindex >= rxfull){
       rxindex = 0;
       audioCallback(codec_rxbuf+rxhalf, codec_txbuf+rxhalf, codec_blocksize);
-#ifdef USE_USBD_AUDIO
-      audio_ringbuffer.push(codec_txbuf, codec_blocksize*USBD_AUDIO_TX_CHANNELS);
-#endif
     }
-#endif
   }
 }
 
