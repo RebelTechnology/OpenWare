@@ -58,6 +58,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define FLASH_WP_Pin GPIO_PIN_13
+#define FLASH_WP_GPIO_Port GPIOC
+#define FLASH_nCS_Pin GPIO_PIN_6
+#define FLASH_nCS_GPIO_Port GPIOF
+#define FLASH_HOLD_Pin GPIO_PIN_10
+#define FLASH_HOLD_GPIO_Port GPIOF
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
