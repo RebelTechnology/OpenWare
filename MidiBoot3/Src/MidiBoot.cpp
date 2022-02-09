@@ -29,6 +29,44 @@ const char* getFirmwareVersion(){
 
 #define FIRMWARE_SECTOR 0xff
 
+void JumpToBootloader(void){
+  /* Set the address of the entry point to bootloader */
+#ifdef STM32H7xx
+  volatile uint32_t BootAddr = 0x1FF09800;
+#else
+  volatile uint32_t BootAddr = 0x1FF00000;
+#endif
+ 
+  /* Disable all interrupts */
+  __disable_irq();
+
+  /* Disable Systick timer */
+  SysTick->CTRL = 0;
+	 
+  /* Set the clock to the default state */
+  HAL_RCC_DeInit();
+
+  /* Clear Interrupt Enable Register & Interrupt Pending Register */
+  for(uint32_t i=0; i<5; i++){
+    NVIC->ICER[i]=0xFFFFFFFF;
+    NVIC->ICPR[i]=0xFFFFFFFF;
+  }
+	 
+  /* Re-enable all interrupts */
+  __enable_irq();
+	
+  /* Set up the jump to booloader address + 4 */
+  void (*SysMemBootJump)(void);
+  SysMemBootJump = (void (*)(void)) (*((uint32_t *) ((BootAddr + 4))));
+ 
+  /* Set the main stack pointer to the bootloader stack */
+  __set_MSP(*(uint32_t *)BootAddr);
+ 
+  /* Call the function to jump to bootloader location */
+  SysMemBootJump();
+  for(;;);
+}
+
 void led_off(){
 #ifdef USE_LED
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
@@ -252,7 +290,12 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     device_reset();
     break;
   case SYSEX_BOOTLOADER_COMMAND:
+#ifdef USE_DFU_BOOTLOADER
+    sendMessage(SYSEX_PROGRAM_MESSAGE, "Jumping to  bootloader");
+    JumpToBootloader();
+#else
     error(RUNTIME_ERROR, "Bootloader OK");
+#endif
     break;
   case SYSEX_FIRMWARE_UPLOAD:
     handleFirmwareUploadCommand(data+1, size-2);

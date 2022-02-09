@@ -73,9 +73,10 @@ static int testMagic(){
 
 static int testLoop(){
   // Prevent reset cycles.
-  // Check if we've been reset without zeroing the magic address,
-  // which might indicate a corrupt firmware.
-  return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_LOOP_NUMBER;
+  /* // Check if we've been reset without zeroing the magic address, */
+  /* // which might indicate a corrupt firmware. */
+  /* return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_LOOP_NUMBER; */
+  return *OWLBOOT_MAGIC_ADDRESS != 3; // stop at third reset
 }
 
 int testButton(){
@@ -137,13 +138,14 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   MX_GPIO_Init();
-  
+
+  SCB_InvalidateDCache();
+  __DSB(); __ISB(); // memory and instruction barriers
+
   if(testMagic()){
     setMessage("Bootloader starting");
   }else if(testButton()){
     setMessage("Bootloader requested");
-  }else if(testLoop()){
-    error(RUNTIME_ERROR, "Unexpected reset");
   }else if(testWatchdogReset()){
     error(RUNTIME_ERROR, "Watchdog reset");
   }else if(testPowerLowReset()){
@@ -152,40 +154,49 @@ int main(void)
     error(RUNTIME_ERROR, "Brown out reset");
   }else if(testNoProgram()){
     error(RUNTIME_ERROR, "No valid firmware");
+  }else if(testLoop()){
+    error(RUNTIME_ERROR, "Unexpected reset");
   }else{
-    // jump to application code
-      
-    /* Disable all interrupts */
-    RCC->CIER = 0x00000000;
-
-    /* Disable and reset SysTick */
-    SysTick->CTRL = 0;
-    SysTick->LOAD = 0;
-    SysTick->VAL = 0;
-
-    /* Clear Interrupt Enable Register & Interrupt Pending Register */
-    for (int i = 0;i < 5; i++) {
-      NVIC->ICER[i]=0xFFFFFFFF;
-      NVIC->ICPR[i]=0xFFFFFFFF;
-    }
 
     /* Put marker in to prevent reset cycles */
-    *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_LOOP_NUMBER;
+    *OWLBOOT_MAGIC_ADDRESS += 1;
 
     /* Start watchdog */
     MX_IWDG1_Init();
+    
+    /* Set the address of the entry point to bootloader */
+    volatile uint32_t BootAddr = APPLICATION_ADDRESS;
+ 
+    /* Disable all interrupts */
+    __disable_irq();
 
-    /* Jump to user application */
-  __disable_irq();
-    uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
-    pFunction jumpToApplication = (pFunction) JumpAddress;
-    /* Initialize user application's Stack Pointer */
-    __set_MSP(*(__IO uint32_t*)APPLICATION_ADDRESS);
-    SCB->VTOR = *(__IO uint32_t*)APPLICATION_ADDRESS;
+    /* Disable Systick timer */
+    SysTick->CTRL = 0;
+	 
+    /* Set the clock to the default state */
+    HAL_RCC_DeInit();
+
+    /* Clear Interrupt Enable Register & Interrupt Pending Register */
+    for(uint32_t i=0; i<5; i++){
+      NVIC->ICER[i]=0xFFFFFFFF;
+      NVIC->ICPR[i]=0xFFFFFFFF;
+    }
+	 
+    /* Re-enable all interrupts */
     __enable_irq();
-    jumpToApplication();
+	
+    /* Set up the jump to booloader address + 4 */
+    void (*SysMemBootJump)(void);
+    SysMemBootJump = (void (*)(void)) (*((uint32_t *) ((BootAddr + 4))));
+ 
+    /* Set the main stack pointer to the bootloader stack */
+    __set_MSP(*(uint32_t *)BootAddr);
+ 
+    /* Call the function to jump to bootloader location */
+    SysMemBootJump();
     for(;;);
   }
+
   /* Clear reset flags */
   __HAL_RCC_CLEAR_RESET_FLAGS();
 

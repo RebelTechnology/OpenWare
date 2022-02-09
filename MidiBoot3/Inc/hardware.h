@@ -14,6 +14,11 @@
   #define HARDWARE_VERSION    "OWL Genius Boot"
   #define HARDWARE_ID         GENIUS_HARDWARE
   #define APPLICATION_ADDRESS 0x08020000
+  #define USE_BOOT1_PIN // SW_A (Button 1): PC10
+  #define BOOT1_Pin GPIO_PIN_10
+  #define BOOT1_GPIO_Port GPIOC
+  #define USE_SPI_FLASH
+  #define SPI_FLASH_HSPI               hspi5
 #elif defined OWL_MAGUS
   #define HARDWARE_VERSION    "OWL Magus Boot"
   #define HARDWARE_ID         MAGUS_HARDWARE
@@ -22,6 +27,7 @@
   #define HARDWARE_VERSION    "OWL Xibeca Boot"
   #define HARDWARE_ID         XIBECA_HARDWARE
   #define APPLICATION_ADDRESS 0x08020000
+  #define USE_DFU_BOOTLOADER
 #else
   #error Invalid configuration
 #endif
