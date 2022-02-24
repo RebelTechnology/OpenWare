@@ -68,8 +68,10 @@ void Error_Handler(void);
 #define BUT_B_LED_GPIO_Port GPIOG
 #define BUT_B_Pin GPIO_PIN_10
 #define BUT_B_GPIO_Port GPIOG
+#define BUT_B_EXTI_IRQn EXTI15_10_IRQn
 #define BUT_A_Pin GPIO_PIN_2
 #define BUT_A_GPIO_Port GPIOD
+#define BUT_A_EXTI_IRQn EXTI2_IRQn
 #define FLASH_NCS_Pin GPIO_PIN_6
 #define FLASH_NCS_GPIO_Port GPIOG
 #define FLASH_DQ3_Pin GPIO_PIN_6
