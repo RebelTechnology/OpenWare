@@ -62,6 +62,14 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define FLASH_DQ2_Pin GPIO_PIN_2
 #define FLASH_DQ2_GPIO_Port GPIOE
+#define BUT_A_LED_Pin GPIO_PIN_12
+#define BUT_A_LED_GPIO_Port GPIOG
+#define BUT_B_LED_Pin GPIO_PIN_11
+#define BUT_B_LED_GPIO_Port GPIOG
+#define BUT_B_Pin GPIO_PIN_10
+#define BUT_B_GPIO_Port GPIOG
+#define BUT_A_Pin GPIO_PIN_2
+#define BUT_A_GPIO_Port GPIOD
 #define FLASH_NCS_Pin GPIO_PIN_6
 #define FLASH_NCS_GPIO_Port GPIOG
 #define FLASH_DQ3_Pin GPIO_PIN_6
@@ -82,6 +90,8 @@ void Error_Handler(void);
 #define ADC_SPI_MISO_GPIO_Port GPIOC
 #define ADC_SPI_MOSI_Pin GPIO_PIN_3
 #define ADC_SPI_MOSI_GPIO_Port GPIOC
+#define ADC8_Pin GPIO_PIN_4
+#define ADC8_GPIO_Port GPIOC
 #define ADC2_Pin GPIO_PIN_2
 #define ADC2_GPIO_Port GPIOA
 #define ADC6_Pin GPIO_PIN_6

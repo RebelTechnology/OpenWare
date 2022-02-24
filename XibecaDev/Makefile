@@ -21,9 +21,9 @@ C_SRC += $(BUILDROOT)/USB_DEVICE/App/usb_device.c
 C_SRC += $(BUILDROOT)/USB_DEVICE/App/usbd_desc.c
 C_SRC += $(BUILDROOT)/USB_DEVICE/Target/usbd_conf.c
 
-# CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
-# C_SRC += $(BUILDROOT)/USB_HOST/Target/usbh_conf.c
-# C_SRC += $(BUILDROOT)/USB_HOST/App/usb_host.c
+CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
+C_SRC += $(BUILDROOT)/USB_HOST/Target/usbh_conf.c
+C_SRC += $(BUILDROOT)/USB_HOST/App/usb_host.c
 
 C_SRC += $(OPENWARE)/Source/flash.c
 
@@ -37,7 +37,7 @@ C_SRC += $(C_SRC_SAI)
 # C_SRC += $(C_SRC_DAC)
 C_SRC += $(C_SRC_SDRAM)
 C_SRC += $(C_SRC_USBD)
-# C_SRC += $(C_SRC_USBH)
+C_SRC += $(C_SRC_USBH)
 C_SRC += $(C_SRC_DSP)
 C_SRC += $(C_SRC_OS)
 C_SRC += $(C_SRC_UART)
