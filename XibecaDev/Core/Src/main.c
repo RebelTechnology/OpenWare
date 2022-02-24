@@ -22,8 +22,6 @@
 #include "cmsis_os.h"
 #include "usb_device.h"
 #include "usb_host.h"
-#include "usb_device.h"
-#include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -339,7 +337,7 @@ static void MX_ADC1_Init(void)
   /** Common config
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV32;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
@@ -1206,6 +1204,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
+#if 0
 /**
   * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
@@ -1214,12 +1213,19 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
-  /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
-
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
   /* USER CODE BEGIN 5 */
+#endif
+  void StartDefaultTask(void const * argument) {
+  /* init code for USB_DEVICE */
+  /* NOTE: we get frequent boot failures if host is called first */
+  MX_USB_DEVICE_Init();
+  
+#ifdef USE_USB_HOST
+  /* init code for USB_HOST */
+  MX_USB_HOST_Init();
+#endif
 
   setup();
 
