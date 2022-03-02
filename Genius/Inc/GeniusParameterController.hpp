@@ -200,7 +200,10 @@ public:
     parameters[cv_assign[1]] = std::clamp(user[1] + values[1] + GENIUS_ADC_OFFSET, 0, 4095);
   }
   void drawTitle(const char* title, ScreenBuffer& screen){
-    screen.setTextSize(2);
+    if(strnlen(title, 11) < 11)
+      screen.setTextSize(2);
+    else
+      screen.setTextSize(1);
     screen.print(0, 16, title);
   }
 };
@@ -390,7 +393,8 @@ public:
       setDisplayMode(EXIT_DISPLAY_MODE);
   }
   void draw(ScreenBuffer& screen){
-    params.drawTitle("  Status >", screen);
+    screen.setTextSize(2);
+    screen.print(5, 16, "  Status >");
     drawStatus(screen);
   }
   void drawStatus(ScreenBuffer& screen){
@@ -455,23 +459,48 @@ public:
     }else if(encoder == ENCODER_BOT){
       int16_t delta = getDiscreteEncoderValue(current, previous);
       uint8_t pid = patchselect + delta;
-      while(!registry.hasPatch(pid) && pid < registry.getNumberOfPatches() && delta)
+      while(!(registry.hasPatch(pid) || pid == program.getProgramIndex())
+	    && pid < registry.getNumberOfPatches() && delta)
 	pid += delta;
-      if(registry.hasPatch(pid) || (pid == 0 && program.getProgramIndex() == 0))
+      if(registry.hasPatch(pid) || pid == program.getProgramIndex())
 	patchselect = pid;
     }
   }
   void draw(ScreenBuffer& screen){
-    params.drawTitle("< Patch  >", screen);
+    screen.setTextSize(2);
+    screen.print(5, 16, "< Patch  >");
     drawPresetNames(patchselect, screen);
+  }
+  static int8_t prev(int8_t selected){
+    for(int8_t i=selected-1; i>=0; --i){
+      if(registry.hasPatch(i) || program.getProgramIndex() == i)
+	return i;
+    }
+    return -1;
+  }
+  static int8_t next(int8_t selected){
+    if(selected != -1){
+      for(uint8_t i=selected+1; i<=registry.getNumberOfPatches(); ++i){
+	if(registry.hasPatch(i))
+	  return i;
+      }
+    }
+    return -1;
   }
   void drawPresetNames(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
-    int y = 26;
-    // start two patches back from selected
-    size_t current = program.getProgramIndex();
-    for(size_t pid=max(0, selected-2); pid <= registry.getNumberOfPatches(); ++pid){
-      if((pid == 0 && current == 0) || registry.hasPatch(pid)){
+    int8_t pids[7];
+    pids[0] = prev(prev(selected));
+    pids[1] = prev(selected);
+    pids[2] = selected;
+    pids[3] = next(selected);
+    pids[4] = next(pids[3]);
+    pids[5] = next(pids[4]);
+    pids[6] = next(pids[5]);
+    int y = 24;
+    for(int i=0; i < 7 && y < 65; ++i){
+      int8_t pid = pids[i];
+      if(pid != -1){
 	screen.setCursor(1, y);
 	screen.print((int)pid);
 	screen.print(".");
@@ -503,7 +532,8 @@ public:
       setDisplayMode(EXIT_DISPLAY_MODE);
   }
   void draw(ScreenBuffer& screen){
-    params.drawTitle("< Volume", screen);    
+    screen.setTextSize(2);
+    screen.print(5, 16, "< Volume");
     drawVolume(screen);
   }
   void drawVolume(ScreenBuffer& screen){
