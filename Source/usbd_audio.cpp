@@ -165,7 +165,7 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define AUDIO_RX_EP                    0x01
 #define MIDI_RX_EP                     0x02
 #define MIDI_TX_EP                     0x81
-#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - USBD_MIN_FIFO_SIZE)
+#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - USBD_MIN_FIFO_SIZE - MIDI_TX_PACKET_SIZE)
 #elif defined USE_USBD_AUDIO_TX && defined USE_USBD_MIDI
 #define AUDIO_TX_IF                    0x01
 #define AUDIO_MIDI_IF                  0x02
@@ -182,6 +182,7 @@ static void get_usb_full_speed_rate(unsigned int rate, uint8_t* buf){
 #define AUDIO_TX_EP                    0x81
 #define MIDI_RX_EP                     0x01
 #define MIDI_TX_EP                     0x81
+#define AUDIO_RX_FIFO_SIZE             (USBD_TOTAL_FIFO_SIZE - USBD_MIN_FIFO_SIZE - MIDI_TX_PACKET_SIZE)
 #endif
 
 #if defined USE_USBD_RX and defined USE_USBD_TX and defined USE_USBD_MIDI and USBD_MAX_NUM_INTERFACES < 4
@@ -1278,20 +1279,22 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
     // if (bUnit == 0x02 || bUnit == 0x05) {
       USBD_DbgLog("CONTROL_REQ 0x%x 0x%x", haudio->control.cs, haudio->control.data[0]);
       switch (haudio->control.cs) {
+#ifdef USE_USBD_AUDIO
 	/* Mute Control */
       case AUDIO_CONTROL_REQ_FU_MUTE: {
 	usbd_audio_mute_callback(haudio->control.data[0]);
 	/* ((USBD_AUDIO_ItfTypeDef*)pdev->pUserData)->MuteCtl(haudio->control.data[0]); */
-      };
 	break;
+      }
 	/* Volume Control */
       case AUDIO_CONTROL_REQ_FU_VOL: {
 	int16_t vol = *(int16_t*)&haudio->control.data[0];
 	haudio->volume = vol;
 	usbd_audio_gain_callback(vol);
 	/* ((USBD_AUDIO_ItfTypeDef*)pdev->pUserData)->VolumeCtl(VOL_PERCENT(vol)); */
-      };
 	break;
+      }
+#endif
       }
     } else if (haudio->control.req_type == AUDIO_STREAMING_REQ) {
       USBD_DbgLog("STREAMING_REQ 0x%x 0x%x", haudio->control.cs, haudio->control.data[0]);
@@ -1650,7 +1653,7 @@ uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd){
  // The total of FIFO sizes should be no more than the 1.25 Kbytes USB RAM
   // Total 0x140 words / 1280 bytes available for rx and tx fifos
   // The FIFO is used optimally when used TxFIFOs are allocated in the top
-  // of the FIFO.Ex: use EP1 and EP2 as IN instead of EP1 and EP3 as IN ones.
+  // of the FIFO. Ex: use EP1 and EP2 as IN instead of EP1 and EP3 as IN ones.
   // When DMA is used 3n * FIFO locations should be reserved for internal DMA registers
   // STM32H7 A dedicated 4-Kbyte RAM can be divided into 1 shared RxFIFO and up to 9 TxFIFOs
   HAL_PCDEx_SetRxFiFo(hpcd, AUDIO_RX_FIFO_SIZE/4);
