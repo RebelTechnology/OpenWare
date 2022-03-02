@@ -38,8 +38,12 @@
 /* #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>16) */
 /* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<16) */
 #else
-#define AUDIO_INT32_TO_SAMPLE(x)    (__REV(x))
-#define AUDIO_SAMPLE_TO_INT32(x)    (__REV(x))
+/* #define AUDIO_INT32_TO_SAMPLE(x)    (x) */
+/* #define AUDIO_SAMPLE_TO_INT32(x)    (x) */
+#define AUDIO_INT32_TO_SAMPLE(x)    ((x)<<8)
+#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)>>8)
+/* #define AUDIO_INT32_TO_SAMPLE(x)    (__REV(x)) */
+/* #define AUDIO_SAMPLE_TO_INT32(x)    (__REV(x)) */
 #endif
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_SAMPLINGRATE          8000

@@ -4,13 +4,11 @@
 #include "device.h"
 #include "errorhandlers.h"
 #include "ads.h"
+#include "ads1298.h"
 
 static size_t rxindex = 0;
 static size_t rxhalf = 0;
 static size_t rxfull = 0;
-extern uint16_t codec_blocksize;
-extern int32_t* codec_rxbuf;
-extern int32_t* codec_txbuf;
 
 typedef int32_t audio_t;
 static audio_t ads_samples[ADS_MAX_CHANNELS];
@@ -18,6 +16,12 @@ static audio_t ads_samples[ADS_MAX_CHANNELS];
 #include "kx122.h"
 static audio_t kx122_samples[KX122_TOTAL_CHANNELS];
 #endif
+
+extern "C" {
+  extern uint16_t codec_blocksize;
+  extern int32_t codec_rxbuf[CODEC_BUFFER_SIZE] DMA_RAM;
+  extern int32_t codec_txbuf[CODEC_BUFFER_SIZE] DMA_RAM;
+}
 
 void codec_init(){
   rxindex = 0;
@@ -37,11 +41,20 @@ void codec_reset(){
 void codec_bypass(int bypass){}
 
 void codec_set_gain_in(int8_t volume){
-  ads_set_gain(volume);
 }
 
 void codec_set_gain_out(int8_t volume){
-  ads_set_gain(volume);
+  volume /= 10;
+  if(volume > 8)
+    ads_set_gain(ADS1298::GAIN_12X);
+  else if(volume > 4)
+    ads_set_gain(ADS1298::GAIN_8X);
+  else if(volume > 2)
+    ads_set_gain(ADS1298::GAIN_4X);
+  else if(volume > 1)
+    ads_set_gain(ADS1298::GAIN_2X);
+  else
+    ads_set_gain(ADS1298::GAIN_1X);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
