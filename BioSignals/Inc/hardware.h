@@ -20,21 +20,26 @@
 #define USE_CODEC
 #define USE_ADS1294
 
+#define USE_USBD_HS
+#define USBD_DESC HS_Desc
+#define USBD_HSFS DEVICE_HS
+#define USBD_HANDLE hUsbDeviceHS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_HS
+
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX  // microphone
 /* #define USE_USBD_AUDIO_RX  // speaker */
 /* #define USE_USBD_RX_FB */
 /* #define USE_USBD_AUDIO_FEATURES */
-#define USE_USBD_HS
-#define USBD_HSFS DEVICE_HS
-#define USBD_HANDLE hUsbDeviceHS
 #define AUDIO_BITS_PER_SAMPLE       32
 #if AUDIO_BITS_PER_SAMPLE == 16
-#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>16)
-#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<16)
+#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
+#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
+/* #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>16) */
+/* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<16) */
 #else
-#define AUDIO_INT32_TO_SAMPLE(x)    (x)
-#define AUDIO_SAMPLE_TO_INT32(x)    (x)
+#define AUDIO_INT32_TO_SAMPLE(x)    (__REV(x))
+#define AUDIO_SAMPLE_TO_INT32(x)    (__REV(x))
 #endif
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_SAMPLINGRATE          8000
