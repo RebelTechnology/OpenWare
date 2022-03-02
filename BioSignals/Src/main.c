@@ -88,6 +88,8 @@ UART_HandleTypeDef huart1;
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+PCD_HandleTypeDef hpcd_USB_OTG_HS;
+/* PCD_HandleTypeDef hpcd_USB_OTG_FS; */
 
 /* USER CODE END PV */
 
@@ -128,9 +130,10 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 #ifdef DEBUG
-#warning "Compiling with semihosting"
+#warning "DEBUG uses printf and semihosting!"
   if(CoreDebug->DHCSR & 0x01)
     initialise_monitor_handles(); // remove when not semi-hosting
+  printf("showtime\n");
 #endif
   /* USER CODE END 1 */
   

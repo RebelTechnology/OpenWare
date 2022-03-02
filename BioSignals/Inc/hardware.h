@@ -39,7 +39,7 @@
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_SAMPLINGRATE          8000
 
-#define USE_KX122
+/* #define USE_KX122 */
 #define KX122_ACTIVE_CHANNELS         3
 /* #define KX122_AUDIO_FREQ              25600 */
 /* #define KX122_AUDIO_FREQ              12800 */
