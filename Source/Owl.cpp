@@ -78,7 +78,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
-void Owl::setup(void){
+static void iwdg_setup(){
 #ifdef USE_IWDG
 #ifdef STM32H7xx
   IWDG1->KR = 0xCCCC; // Enable IWDG and turn on LSI
@@ -95,7 +95,11 @@ void Owl::setup(void){
   while(IWDG->SR != 0x00u); // wait to count down
   IWDG->KR = 0xaaaa; // reset the watchdog timer
 #endif
-#endif
+#endif  
+}
+
+void Owl::setup(void){
+  iwdg_setup();
 #ifdef USE_BKPSRAM
   HAL_PWR_EnableBkUpAccess();
 #endif
@@ -229,6 +233,7 @@ void jump_to_bootloader(void){
   RCC->CIR = 0x00000000;
 #endif
   *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
+  __DSB(); __ISB(); // memory and instruction barriers
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
@@ -246,6 +251,7 @@ void device_reset(){
   RCC->CIR = 0x00000000;
 #endif
   *OWLBOOT_MAGIC_ADDRESS = 0;
+  __DSB(); __ISB(); // memory and instruction barriers
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
