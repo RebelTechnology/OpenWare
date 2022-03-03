@@ -6,6 +6,7 @@
 #include "OpenWareMidiControl.h"
 #include "message.h"
 #include "Codec.h"
+#include "flash.h"
 
 #define XIBECA_PIN3  GPIOD, GPIO_PIN_2
 #define XIBECA_PIN4  GPIOG, GPIO_PIN_10
@@ -131,6 +132,39 @@ void initLed(){
   led_clip3.outputMode();
   led_clip4.outputMode();
 }
+
+#if 0
+void initFlash(){
+#define QSPIHandle hqspi
+  extern QSPI_HandleTypeDef QSPIHandle;
+  QSPIHandle.Instance = QUADSPI;
+  /* QSPI clock = 480MHz / (1+9) = 48MHz */
+  /* QSPI clock = 480MHz / (1+4) = 96MHz */
+  QSPIHandle.Init.ClockPrescaler     = 9;
+  /* QSPIHandle.Init.ClockPrescaler     = 4; // 4 and 5 don't work? 8 works  */
+/* #define IS_QSPI_FIFO_THRESHOLD(THR)        (((THR) > 0U) && ((THR) <= 32U)) */
+  QSPIHandle.Init.FifoThreshold      = 4;
+  QSPIHandle.Init.SampleShifting     = QSPI_SAMPLE_SHIFTING_NONE;
+  QSPIHandle.Init.FlashSize          = 22; // 2^(22+1) = 8M / 64Mbit
+  QSPIHandle.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
+  QSPIHandle.Init.ClockMode          = QSPI_CLOCK_MODE_0;
+
+  // QSPIHandle.Init.FlashID = QSPI_FLASH_ID_1;
+  // QSPIHandle.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
+
+  /* Initialize QuadSPI ------------------------------------------------ */
+  HAL_QSPI_DeInit(&QSPIHandle);
+  if (HAL_QSPI_Init(&QSPIHandle) != HAL_OK)
+    {
+      Error_Handler();
+    }
+  if( HAL_QSPI_SetFifoThreshold(&QSPIHandle, 16) != HAL_OK)
+    {
+      Error_Handler();
+    }
+  // flash_init(&QSPIHandle);
+}
+#endif
 
 void onSetup(){
   initLed();

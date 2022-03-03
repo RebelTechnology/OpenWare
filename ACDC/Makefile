@@ -26,7 +26,7 @@ C_SRC += $(BUILDROOT)/USB_DEVICE/Target/usbd_conf.c
 # C_SRC += $(BUILDROOT)/USB_HOST/Target/usbh_conf.c
 # C_SRC += $(BUILDROOT)/USB_HOST/App/usb_host.c
 
-C_SRC += $(OPENWARE)/Source/flash.c
+C_SRC += $(OPENWARE)/Source/flash-qspi.c
 
 include $(OPENWARE)/Hardware/sources.mk
 

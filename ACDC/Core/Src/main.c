@@ -435,7 +435,10 @@ static void MX_QUADSPI_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN QUADSPI_Init 2 */
-
+  if( HAL_QSPI_SetFifoThreshold(&hqspi, 16) != HAL_OK)
+    {
+      Error_Handler();
+    }
   /* USER CODE END QUADSPI_Init 2 */
 
 }

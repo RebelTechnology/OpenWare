@@ -18,9 +18,7 @@
 
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
-// todo: quad SPI
-/* #define USE_SPI_FLASH */
-/* #define SPI_FLASH_HSPI              hqspi */
+#define USE_QSPI_FLASH
 
 /* #define AUDIO_INPUT_GAIN            114 */
 #define AUDIO_OUTPUT_GAIN           114
