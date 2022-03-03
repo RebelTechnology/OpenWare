@@ -7,6 +7,8 @@
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
+
+/* note that with H750, PLUS_RAM is used by firmware */
 #define USE_PLUS_RAM
 
 #ifdef NDEBUG

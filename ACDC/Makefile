@@ -2,6 +2,7 @@ PROJECT = ACDC
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
+# LDSCRIPT = $(BUILDROOT)/acdc.ld
 LDSCRIPT = $(OPENWARE)/Hardware/xibeca.ld
 include $(OPENWARE)/Hardware/owl3.mk
 
