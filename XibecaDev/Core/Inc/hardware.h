@@ -61,7 +61,7 @@
 
 #define AUDIO_SAMPLINGRATE          48000
 
-/* #define USE_ADC */
+#define USE_ADC
 #define ADC_PERIPH hadc1
 #define ADC_A 0
 #define ADC_B 1
