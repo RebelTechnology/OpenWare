@@ -1,6 +1,5 @@
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
-DFUUTIL ?= dfu-util
 
 LDSCRIPT = owl3-boot.ld
 include $(OPENWARE)/Hardware/owl3.mk
