@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
   void codec_init();
+  void codec_reset();
   void codec_bypass(int bypass);
   void codec_set_gain_in(int8_t volume);
   void codec_set_gain_out(int8_t volume);

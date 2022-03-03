@@ -62,14 +62,15 @@ uint16_t Codec::getBlockSize(){
 #endif
 
 void Codec::init(){
-  codec_init();
   codec_blocksize = std::clamp(settings.audio_blocksize, (uint16_t)4, (uint16_t)CODEC_BLOCKSIZE);
+  codec_init();
 }
 
 void Codec::reset(){
   stop();
   // this is called when blocksize is changed
   codec_blocksize = std::clamp(settings.audio_blocksize, (uint16_t)4, (uint16_t)CODEC_BLOCKSIZE);
+  codec_reset();
   start();
 }
 
@@ -190,6 +191,7 @@ void Codec::start(){
 void Codec::stop(){
   ads_stop_continuous();
   extern TIM_HandleTypeDef htim8;
+  HAL_TIM_PWM_Stop_IT(&htim8, TIM_CHANNEL_4);
   HAL_TIM_Base_Stop(&htim8);
 }
 
