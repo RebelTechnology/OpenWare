@@ -92,6 +92,9 @@ erase-storage: # flash erase_sector num first last
 dump: # flash read_bank num filename [offset [length]]
 	$(OPENOCD) -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"
 
+dump-fw: # flash read_bank num filename [offset [length]]
+	$(OPENOCD) -c "init" -c "halt" -c "flash read_bank 0 dump.bin 0x0010000" -c "exit"
+
 upload:
 	$(OPENOCD) -c "program Build/${PROJECT}.elf verify reset exit"
 

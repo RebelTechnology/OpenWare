@@ -107,7 +107,6 @@ static int testPowerLowReset(){
 static int testBrownOutReset(){
   return __HAL_RCC_GET_FLAG(RCC_FLAG_BORRST) != RESET && // Power down or Brown out
     __HAL_RCC_GET_FLAG(RCC_FLAG_PORRST) == RESET; // Not power down
-    
 }
 
 /* USER CODE END PFP */
@@ -163,6 +162,17 @@ int main(void)
     /* Disable all interrupts */
     RCC->CIR = 0x00000000;
 
+    /* Disable and reset SysTick */
+    SysTick->CTRL = 0;
+    SysTick->LOAD = 0;
+    SysTick->VAL = 0;
+
+    /* Clear Interrupt Enable Register & Interrupt Pending Register */
+    for (int i = 0;i < 5; i++) {
+      NVIC->ICER[i]=0xFFFFFFFF;
+      NVIC->ICPR[i]=0xFFFFFFFF;
+    }
+
     /* Put marker in to prevent reset cycles */
     *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_LOOP_NUMBER;
 
@@ -170,10 +180,13 @@ int main(void)
     MX_IWDG_Init();
 
     /* Jump to user application */
+    __disable_irq();
     uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
     pFunction jumpToApplication = (pFunction) JumpAddress;
-    /* Initialize user application's Stack Pointer */
-    __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
+    /* Initialize user application's Stack Pointer and vector table */
+    __set_MSP(*(__IO uint32_t*)APPLICATION_ADDRESS);
+    SCB->VTOR = *(__IO uint32_t*)APPLICATION_ADDRESS;
+    __enable_irq();
     jumpToApplication();
     for(;;);
   }
