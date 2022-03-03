@@ -48,6 +48,9 @@ void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb){
   // usbd_tx->reset();
   // usbd_tx->clear();
   // usbd_tx->moveWriteHead(usbd_tx->getSize()/2);
+#ifdef DEBUG
+  printf("start tx %u %u %u\n", rate, channels, usbd_tx->getSize());
+#endif
 }
 
 void usbd_audio_tx_stop_callback(){
@@ -126,7 +129,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 #endif
     }
 #if USBD_AUDIO_TX_CHANNELS == AUDIO_CHANNELS
-#if AUDIO_BITS_PER_SAMPLE == 32
+#if false // AUDIO_BITS_PER_SAMPLE == 32
     tx->write(src, len);
 #else
     while(len--)
@@ -135,7 +138,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 #else /*  USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS */
     len /= AUDIO_CHANNELS;
     while(len--){
-#if AUDIO_BITS_PER_SAMPLE == 32
+#if false // AUDIO_BITS_PER_SAMPLE == 32
       tx->write(src, USBD_AUDIO_TX_CHANNELS);
       src += AUDIO_CHANNELS;
 #else
@@ -261,14 +264,30 @@ void setButtonValue(uint8_t ch, uint8_t value){
   button_values |= (bool(value)<<ch);
 }
 
+#if 0 // pre / post fx
+#ifdef USE_USBD_AUDIO_TX
+#define USE_USBD_AUDIO_TX_PRE_FX
+#endif
+#ifdef USE_USBD_AUDIO_RX
+#define USE_USBD_AUDIO_RX_PRE_FX
+#endif
+#else
+#ifdef USE_USBD_AUDIO_TX
+#define USE_USBD_AUDIO_TX_POST_FX
+#endif
+#ifdef USE_USBD_AUDIO_RX
+#define USE_USBD_AUDIO_RX_POST_FX
+#endif
+#endif
+
 /* called by the program when a block has been processed */
 void onProgramReady(){
   ProgramVector* pv = getProgramVector();
-#ifdef USE_USBD_AUDIO_TX
+#ifdef USE_USBD_AUDIO_TX_POST_FX
   // after patch runs: convert patch output to USBD audio tx
   usbd_tx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif
-#ifdef USE_USBD_AUDIO_RX
+#ifdef USE_USBD_AUDIO_RX_POST_FX
   // after patch runs: convert USBD audio rx to DAC (overwriting patch output)
   usbd_rx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif  
@@ -300,6 +319,14 @@ void onProgramReady(){
       bid = stateChanged.getFirstSetIndex();
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
+#ifdef USE_USBD_AUDIO_TX_PRE_FX
+  // before patch runs: convert audio input to USBD audio tx
+  usbd_tx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
+#endif
+#ifdef USE_USBD_AUDIO_RX_PRE_FX
+  // before patch runs: convert USBD audio rx to patch audio input
+  usbd_rx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
+#endif  
 }
 
 // called from program
@@ -410,7 +437,10 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   heapSegments[segments++] = 
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) };
 #endif
-  heapSegments[segments++] = { NULL, 0 };
+  heapSegments[segments] = { NULL, 0 };
+  // zero-fill heap memory
+  for(size_t i=0; i<segments; ++i)
+    memset(heapSegments[i].location, 0, heapSegments[i].size);
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
@@ -543,9 +573,6 @@ void runAudioTask(void* p){
 #ifdef USE_CODEC
     codec.clear();
 #endif
-    // zero-fill heap memory
-    for(size_t i=0; i<5 && pv->heapSegments[i].location != NULL; ++i)
-      memset(pv->heapSegments[i].location, 0, pv->heapSegments[i].size);
     // memory barriers for dynamically loaded code
     __DSB();
     __ISB();
