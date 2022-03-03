@@ -53,7 +53,7 @@
 #define OWLBOOT_MAGIC_NUMBER        0xDADAB007
 #endif
 #define OWLBOOT_LOOP_NUMBER         0xDADADEAD
-#define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
+#define OWLBOOT_MAGIC_ADDRESS       ((volatile uint32_t*)0x2000FFF0)
 
 #ifndef STORAGE_MAX_BLOCKS
 #define STORAGE_MAX_BLOCKS           64
