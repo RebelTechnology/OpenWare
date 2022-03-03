@@ -9,9 +9,9 @@ extern "C" {
 #endif
   
   void flash_init(void* spiconfig);
-  void flash_read(uint32_t address, uint8_t* data, size_t length);
-  void flash_write(uint32_t address, uint8_t* data, size_t length);
-  void flash_erase (uint32_t address, uint8_t cmd);
+  int flash_read(uint32_t address, uint8_t* data, size_t length);
+  int flash_write(uint32_t address, uint8_t* data, size_t length);
+  int flash_erase(uint32_t address, size_t size);
 
 #ifdef __cplusplus
 }

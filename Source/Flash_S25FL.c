@@ -1,5 +1,6 @@
 #include "device.h"
-#include "Flash_S25FL.h"
+#include "errorhandlers.h"
+#include "flash.h"
 #include <string.h>
 
 #define INST_ERASE_SECTOR			0x20
@@ -52,7 +53,7 @@ SPI_HandleTypeDef* FLASH_SPIConfig;
 uint32_t flash_rdid = 0;
 #endif
 
-void flash_read(uint32_t address, uint8_t* data, size_t length){
+int flash_read(uint32_t address, uint8_t* data, size_t length){
   uint8_t rgAddress[3];
   uint8_t ucInstruction;
 
@@ -91,16 +92,18 @@ void flash_read(uint32_t address, uint8_t* data, size_t length){
 #endif
   
   flash_Deselect();
+
+  return length;
 }
 
 // address must be on a 256-byte boundary
 /* "The Page Program command accepts from 1-byte up to 256 consecutive bytes of data (page) to be programmed in one operation. Programming means that bits can either be left at 1, or programmed from 1 to 0. Changing bits from 0 to 1 requires an erase operation." */  
-void flash_write(uint32_t address, uint8_t* data, size_t length){
+int flash_write(uint32_t address, uint8_t* data, size_t length){
   uint8_t rgAddress[3];
 
   // PP Page Program 1-1-1, 0x02, up to 108Mhz
   uint8_t ucInstruction = INST_PAGE_PROGRAM;
-
+  size_t ret = length;
   while(length){
 
     _flash_writeEN();
@@ -145,6 +148,7 @@ void flash_write(uint32_t address, uint8_t* data, size_t length){
     // Check that the write enable latch has been cleared
     while (flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_flash_writeDIS();}
   }
+  return ret;
 }
 
 uint32_t flash_readIdentification(){
@@ -255,7 +259,22 @@ void flash_BulkErase (void)
 }
 
 /* individual 4 KB sector erase, 32 KB half block sector, 64 KB block sector erase */		
-void flash_erase(uint32_t address, uint8_t cmd){
+int flash_erase(uint32_t address, size_t size){
+  uint8_t cmd;
+  switch(size){
+  case 4*1024:
+    cmd = ERASE_4KB;
+    break;
+  case 32*1024:
+    cmd = ERASE_32KB;
+    break;
+  case 64*1024:
+    cmd = ERASE_64KB;
+    break;
+  default:
+    return -1;
+  }
+
   uint8_t data[4];
   data[0] = cmd;
   data[1] =  (address & 0xFF0000) >> 16;
@@ -278,6 +297,8 @@ void flash_erase(uint32_t address, uint8_t cmd){
 	
   // Check that the write enable latch has been cleared
   while (flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_flash_writeDIS();__nop();}
+
+  return size;
 }
 
 //_____ Sub Functions

@@ -10,8 +10,8 @@
 #include "cmsis_os.h"
 #endif
 
-#ifdef USE_SPI_FLASH
-#include "Flash_S25FL.h"
+#ifdef USE_NOR_FLASH
+#include "flash.h"
 
 extern char _FLASH_STORAGE_BEGIN;
 extern char _FLASH_STORAGE_END;
@@ -40,7 +40,7 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
   return NULL;
 }
 
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
 uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
   uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
   uint32_t address = end-align; // start at the end
@@ -64,9 +64,13 @@ uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
 #endif
   
 void Storage::init(){
-#ifdef USE_SPI_FLASH
-  extern SPI_HandleTypeDef SPI_FLASH_HSPI;
-  flash_init(&SPI_FLASH_HSPI);
+#if defined USE_SPI_FLASH
+  extern SPI_HandleTypeDef SPI_FLASH_HANDLE;
+  flash_init(&SPI_FLASH_HANDLE);
+  memset(nor_index, 0, sizeof(nor_index));
+#elif defined USE_QSPI_FLASH
+  extern QSPI_HandleTypeDef QSPI_FLASH_HANDLE;
+  flash_init(&QSPI_FLASH_HANDLE);
   memset(nor_index, 0, sizeof(nor_index));
 #endif
   index();
@@ -92,7 +96,7 @@ void Storage::index(){
     resources[i].setHeader((ResourceHeader*)p);
   }
 #endif
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   uint32_t address = 0;
   NorHeader* header = &nor_index[0];
   header->address = address;
@@ -126,7 +130,7 @@ uint32_t Storage::getChecksum(Resource* resource){
   uint32_t crc = 0;
   if(resource->isMemoryMapped()){
     crc = crc32(resource->getData(), resource->getDataSize(), 0);
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   }else{
     uint8_t data[32]; // read chunk of bytes at a time
     uint32_t address = resource->getAddress() + sizeof(ResourceHeader);
@@ -151,7 +155,7 @@ size_t Storage::readResource(Resource* resource, void* data, size_t offset, size
       memcpy(data, resource->getData()+offset, len);
       ret = len;
     }else{
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
       uint32_t address = resource->getAddress();
       size_t len = std::min(resource->getDataSize()-offset, length);
       flash_read(address+sizeof(ResourceHeader)+offset, (uint8_t*)data, len);
@@ -194,7 +198,7 @@ bool Storage::eraseResource(Resource* resource){
     eeprom_lock();
 #endif
   }else{
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
     uint32_t address = resource->getAddress();
     resource->getHeader()->magic = RESOURCE_ERASED_MAGIC;
     flash_write(address, (uint8_t*)resource->getHeader(), 4); // write new magic
@@ -250,13 +254,13 @@ void Storage::erase(uint32_t flags){
     eeprom_lock();
   }
 #endif
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   if(flags & RESOURCE_PORT_MAPPED){
-    const size_t blocksize = (64*1024);
+    constexpr size_t blocksize = 64*1024;
     uint32_t endaddress = findFirstFreePage(0, EXTERNAL_STORAGE_SIZE, blocksize);
     for(uint32_t address=0; address < endaddress; address += blocksize){
       setProgress(address*4095LL/endaddress, "Erasing");
-      flash_erase(address, FLASH_ERASE_64K_BLOCK); // 450 to 1150 mS each
+      flash_erase(address, blocksize); // 450 to 1150 mS each
 #ifndef USE_BOOTLOADER_MODE
       vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
 #endif
@@ -288,7 +292,7 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
     eeprom_lock();
 #endif
   }else{
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
     flash_write(0, (uint8_t*)buffer, offset);
 #endif
   }
@@ -320,7 +324,7 @@ size_t Storage::writeResource(const char* name, uint8_t* data, size_t datasize, 
  * 5. rebuild index
  */
 size_t Storage::writeResource(ResourceHeader* header){
-#ifndef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   header->flags |= RESOURCE_MEMORY_MAPPED; // save everything mem mapped
 #endif
   size_t length = header->size+sizeof(ResourceHeader);
@@ -372,7 +376,7 @@ size_t Storage::writeResource(ResourceHeader* header){
     eeprom_lock();
 #endif
   }else{
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
     uint32_t address = dest->getAddress();
     flash_write(address, data, length);
     flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)); // read back resource header
@@ -393,7 +397,7 @@ size_t Storage::writeResource(ResourceHeader* header){
 bool Storage::verifyData(Resource* resource, void* data, size_t length){
   if(resource->isMemoryMapped()){
     return memcmp(data, resource->getHeader(), length) == 0;
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   }else{
     uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
     uint32_t address = resource->getAddress();
@@ -421,7 +425,7 @@ size_t Storage::getFreeSize(uint32_t flags){
       total += INTERNAL_STORAGE_END - (uint32_t)resource->getHeader();
   }
 #endif
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   if(flags & RESOURCE_PORT_MAPPED){
     Resource* resource = getFreeResource(RESOURCE_PORT_MAPPED);
     if(resource)
@@ -437,7 +441,7 @@ size_t Storage::getTotalCapacity(uint32_t flags){
   if(flags & RESOURCE_MEMORY_MAPPED)
     total += INTERNAL_STORAGE_SIZE;
 #endif
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   if(flags & RESOURCE_PORT_MAPPED)
     total += EXTERNAL_STORAGE_SIZE;
 #endif

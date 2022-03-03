@@ -53,7 +53,7 @@ public:
   bool isValidSize(){
     if(isMemoryMapped()){
       return uint32_t(header) + getTotalSize() < INTERNAL_STORAGE_END;
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
     }else{
       return getAddress() < EXTERNAL_STORAGE_SIZE;
 #endif
@@ -99,7 +99,7 @@ public:
   uint8_t* getData(){
     return ((uint8_t*)header)+sizeof(ResourceHeader);
   }
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   /**
    * Get address of port-mapped resource. 
    * Assumes header is immediately followed by a 32-bit address value.
