@@ -8,6 +8,7 @@
 #ifdef USE_SPI_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
 #define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
+#define FLASH_ERASE_64K_BLOCK        0xD8
 #ifndef SPI_FLASH_HSPI
 #define SPI_FLASH_HSPI               hspi1
 #endif
@@ -16,6 +17,12 @@
 #define MAX_SPI_FLASH_HEADERS        0
 #define FLASH_DEFAULT_FLAGS          RESOURCE_MEMORY_MAPPED
 #endif
+
+#ifdef USE_QSPI_FLASH
+#define QSPI_FLASH_BASE                      0x90000000
+#define QSPI_FLASH_SIZE                      (8*1024*1024) // 8M / 64Mbit
+#endif
+
 #define USE_FLASH
 #define MAX_RESOURCE_HEADERS         (16+MAX_SPI_FLASH_HEADERS)
 

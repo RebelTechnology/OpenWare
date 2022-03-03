@@ -47,7 +47,7 @@ uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
   uint16_t progress = 0;
   while(address > start){
     setProgress(progress, "Index");
-    Flash_read(address, (uint8_t*)quad, sizeof(quad));
+    flash_read(address, (uint8_t*)quad, sizeof(quad));
     if(RESOURCE_FREE_MAGIC != (quad[0] & quad[1] & quad[2] & quad[3]))
       break;
     address -= sizeof(quad);
@@ -66,7 +66,7 @@ uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
 void Storage::init(){
 #ifdef USE_SPI_FLASH
   extern SPI_HandleTypeDef SPI_FLASH_HSPI;
-  Flash_S25FL_init(&SPI_FLASH_HSPI);
+  flash_init(&SPI_FLASH_HSPI);
   memset(nor_index, 0, sizeof(nor_index));
 #endif
   index();
@@ -97,7 +97,7 @@ void Storage::index(){
   NorHeader* header = &nor_index[0];
   header->address = address;
   resources[++i].setHeader(header);
-  Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+  flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
   while(i<MAX_RESOURCE_HEADERS && resources[i].isUsed() &&
 	address < EXTERNAL_STORAGE_SIZE &&
 	header < &nor_index[MAX_SPI_FLASH_HEADERS]){
@@ -105,7 +105,7 @@ void Storage::index(){
     if(resources[i].isValid())
       resources[++i].setHeader(++header);
     header->address = address;
-    Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+    flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
     setProgress(progress += 4095/MAX_RESOURCE_HEADERS, "Indexing");
   }
   if(!resources[i].isFree()){
@@ -134,7 +134,7 @@ uint32_t Storage::getChecksum(Resource* resource){
     // uint32_t start = address;
     while(address < end){
       size_t len = std::min(sizeof(data), (size_t)(end-address));
-      Flash_read(address, data, len);
+      flash_read(address, data, len);
       crc = crc32(data, len, crc);
       address += len;
     }
@@ -154,7 +154,7 @@ size_t Storage::readResource(Resource* resource, void* data, size_t offset, size
 #ifdef USE_SPI_FLASH
       uint32_t address = resource->getAddress();
       size_t len = std::min(resource->getDataSize()-offset, length);
-      Flash_read(address+sizeof(ResourceHeader)+offset, (uint8_t*)data, len);
+      flash_read(address+sizeof(ResourceHeader)+offset, (uint8_t*)data, len);
       ret = len;
 #endif
     }
@@ -197,7 +197,7 @@ bool Storage::eraseResource(Resource* resource){
 #ifdef USE_SPI_FLASH
     uint32_t address = resource->getAddress();
     resource->getHeader()->magic = RESOURCE_ERASED_MAGIC;
-    Flash_write(address, (uint8_t*)resource->getHeader(), 4); // write new magic
+    flash_write(address, (uint8_t*)resource->getHeader(), 4); // write new magic
 #endif
   }
   return status;
@@ -256,7 +256,7 @@ void Storage::erase(uint32_t flags){
     uint32_t endaddress = findFirstFreePage(0, EXTERNAL_STORAGE_SIZE, blocksize);
     for(uint32_t address=0; address < endaddress; address += blocksize){
       setProgress(address*4095LL/endaddress, "Erasing");
-      Flash_erase(address, ERASE_64KB); // 450 to 1150 mS each
+      flash_erase(address, FLASH_ERASE_64K_BLOCK); // 450 to 1150 mS each
 #ifndef USE_BOOTLOADER_MODE
       vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
 #endif
@@ -289,7 +289,7 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
 #endif
   }else{
 #ifdef USE_SPI_FLASH
-    Flash_write(0, (uint8_t*)buffer, offset);
+    flash_write(0, (uint8_t*)buffer, offset);
 #endif
   }
   index();
@@ -374,8 +374,8 @@ size_t Storage::writeResource(ResourceHeader* header){
   }else{
 #ifdef USE_SPI_FLASH
     uint32_t address = dest->getAddress();
-    Flash_write(address, data, length);
-    Flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)); // read back resource header
+    flash_write(address, data, length);
+    flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)); // read back resource header
     status = 0;
 #endif
   }
@@ -400,7 +400,7 @@ bool Storage::verifyData(Resource* resource, void* data, size_t length){
     size_t blocks = length/sizeof(quad);
     uint32_t* src = (uint32_t*)data;
     while(blocks--){
-      Flash_read(address, (uint8_t*)quad, sizeof(quad));
+      flash_read(address, (uint8_t*)quad, sizeof(quad));
       if(quad[0] != *src++ || quad[1] != *src++ ||
 	 quad[2] != *src++ || quad[3] != *src++)
 	return false;
