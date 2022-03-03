@@ -3,6 +3,8 @@
 #include "flash.h"
 #include <string.h>
 
+#ifdef USE_SPI_FLASH
+
 #define INST_ERASE_SECTOR			0x20
 #define INST_ERASE_BLOCK			0xD8
 #define INST_ERASE_HALF_BLOCK			0x52
@@ -16,8 +18,6 @@ static uint8_t flash_readStatusReg (uint8_t reg);
 static uint32_t flash_readIdentification();
 static void flash_writeStatusReg (uint8_t reg, uint8_t data);
 static void flash_BulkErase (void);
-
-#ifdef USE_SPI_FLASH
 
 //_____ External Definitions _______________________________________________________________________
 // Pin Mappings

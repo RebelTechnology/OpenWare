@@ -186,7 +186,7 @@
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
 #endif
 
-#define USE_IWDG                     // compile with support for IWDG watchdog
+/* #define USE_IWDG                     // compile with support for IWDG watchdog */
 
 #ifndef NO_EXTERNAL_RAM
 #define USE_EXTERNAL_RAM
