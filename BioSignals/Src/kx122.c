@@ -144,9 +144,9 @@ void kx122_set_range(uint8_t range){
 
 void kx122_cplt(){
   ACCEL_CS_HI();
-  kx122_samples[0] = (kx122_buffer[1]<<16) | (kx122_buffer[2]<<24);
-  kx122_samples[1] = (kx122_buffer[3]<<16) | (kx122_buffer[4]<<24);
-  kx122_samples[2] = (kx122_buffer[5]<<16) | (kx122_buffer[6]<<24);
+  kx122_samples[0] = ((kx122_buffer[1]<<16) | (kx122_buffer[2]<<24)) >> 8;
+  kx122_samples[1] = ((kx122_buffer[3]<<16) | (kx122_buffer[4]<<24)) >> 8;
+  kx122_samples[2] = ((kx122_buffer[5]<<16) | (kx122_buffer[6]<<24)) >> 8;
 }
 
 void kx122_drdy(){
