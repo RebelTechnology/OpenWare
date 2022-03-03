@@ -25,7 +25,7 @@ CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
 C_SRC += $(BUILDROOT)/USB_HOST/Target/usbh_conf.c
 C_SRC += $(BUILDROOT)/USB_HOST/App/usb_host.c
 
-C_SRC += $(OPENWARE)/Source/flash.c
+C_SRC += $(OPENWARE)/Source/flash-qspi.c
 
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
 CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp

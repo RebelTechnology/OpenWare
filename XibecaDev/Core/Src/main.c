@@ -442,7 +442,7 @@ static void MX_QUADSPI_Init(void)
   hqspi.Init.ClockPrescaler = 9;
   hqspi.Init.FifoThreshold = 4;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-  hqspi.Init.FlashSize = 22;
+  hqspi.Init.FlashSize = POSITION_VAL(EXTERNAL_STORAGE_SIZE) - 1;
   hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
   hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
   hqspi.Init.FlashID = QSPI_FLASH_ID_1;
@@ -452,7 +452,10 @@ static void MX_QUADSPI_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN QUADSPI_Init 2 */
-
+  if( HAL_QSPI_SetFifoThreshold(&hqspi, 16) != HAL_OK)
+    {
+      Error_Handler();
+    }
   /* USER CODE END QUADSPI_Init 2 */
 
 }
