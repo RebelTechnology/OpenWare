@@ -401,6 +401,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = ENC6_A_Pin|ENC6_B_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pins : ENC2_SW_Pin ENC1_SW_Pin ENC3_SW_Pin */
@@ -413,7 +414,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = CHANGE_RDY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(CHANGE_RDY_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SPI_NCS_Pin */
