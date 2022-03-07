@@ -13,9 +13,6 @@
 #ifdef USE_NOR_FLASH
 #include "flash.h"
 
-extern char _FLASH_STORAGE_BEGIN;
-extern char _FLASH_STORAGE_END;
-
 struct NorHeader : ResourceHeader {
   uint32_t address;
 };
@@ -53,7 +50,7 @@ uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
     address -= sizeof(quad);
     progress = (end-address)*4095LL/(end-start);
 #ifndef USE_BOOTLOADER_MODE
-    if(progress % 128 == 0)
+    if(progress % 1024 == 0)
       vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
 #endif
   }
@@ -407,13 +404,13 @@ bool Storage::verifyData(Resource* resource, void* data, size_t length){
     uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
     uint32_t address = resource->getAddress();
     size_t blocks = length/sizeof(quad);
-    uint32_t* src = (uint32_t*)data;
+    uint8_t* src = (uint8_t*)data;
     while(blocks--){
       flash_read(address, (uint8_t*)quad, sizeof(quad));
-      if(quad[0] != *src++ || quad[1] != *src++ ||
-	 quad[2] != *src++ || quad[3] != *src++)
+      if(memcmp(src, quad, sizeof(quad)) != 0)
 	return false;
       address += sizeof(quad);
+      src += sizeof(quad);
     }
     return true;
 #endif
