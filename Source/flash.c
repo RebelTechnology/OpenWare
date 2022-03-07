@@ -1,48 +1,23 @@
-#include "device.h"
 #include "flash.h"
 #include "main.h"
 #include "qspi.h"
 
-#define QSPI_READ_MODE               -122
-#define QSPI_TIMEOUT                 50000
 /* #define QSPI_TIMEOUT HAL_QPSI_TIMEOUT_DEFAULT_VALUE */
+#define QSPI_TIMEOUT 50000
 
-int flash_quad_mode(uint8_t cr1, uint8_t cr2);
-int flash_qpi_mode(bool qpi);
-static int flash_read_block(int mode, uint32_t address, uint8_t* data, size_t size);
-static int flash_write_block(uint32_t address, const uint8_t* data, size_t size);
-static int flash_erase_block(uint32_t address, size_t size);
-static void qspi_write_enable(QSPI_HandleTypeDef *hqspi, bool nv);
-static int qspi_autopolling_ready(QSPI_HandleTypeDef *hqspi);
-static void qspi_dummy_cycles_cfg(QSPI_HandleTypeDef *hqspi);
+#define QSPIHandle hqspi
+extern QSPI_HandleTypeDef QSPIHandle;
 
-int flash_read(uint32_t address, uint8_t* data, size_t size){
-  flash_wait();
-  flash_read_block(QSPI_READ_MODE, address, data, size);
-  return flash_wait();
-}
+volatile uint8_t CmdCplt, RxCplt, TxCplt, StatusMatch;
 
-int flash_write(uint32_t address, const uint8_t* data, size_t size){
-  flash_wait();
-  flash_write_block(address, data, size);
-  return flash_wait();
-}
-
-int flash_erase(uint32_t address, size_t size){
-  flash_wait();
-  flash_erase_block(address, size);
-  return flash_wait();
-}
+static void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi, bool nv);
+static void QSPI_AutoPollingMemReady(QSPI_HandleTypeDef *hqspi);
+static void QSPI_DummyCyclesCfg(QSPI_HandleTypeDef *hqspi);
 
 /* Buffer used for transmission */
 
-static QSPI_HandleTypeDef* qspi_handle;
-volatile uint8_t CmdCplt, RxCplt, TxCplt, StatusMatch;
-uint8_t qspi_status = 0;
-
-// used only in flash_memory_map ? and flash_read_block
-static QSPI_CommandTypeDef      sCommand;
-static QSPI_MemoryMappedTypeDef sMemMappedCfg;
+QSPI_CommandTypeDef      sCommand;
+QSPI_MemoryMappedTypeDef sMemMappedCfg;
 
 /*
   Single bit wide commands start with an instruction and may provide an address 
@@ -51,40 +26,18 @@ static QSPI_MemoryMappedTypeDef sMemMappedCfg;
   single bit width instruction, single bit width address and modifier, single bit 
   data.
  */
-
-static int flash_reset(QSPI_HandleTypeDef *hqspi) {
-  QSPI_CommandTypeDef cmd;
-  cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-  cmd.Instruction = RESET_ENABLE_CMD;
-  cmd.AddressMode = QSPI_ADDRESS_NONE;
-  cmd.DataMode = QSPI_DATA_NONE;
-  cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-  cmd.DummyCycles = 0;
-  cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
-  cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-  cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
-  if(HAL_QSPI_Command(hqspi, &cmd, QSPI_TIMEOUT) != HAL_OK) 
-    return -1;
-  cmd.Instruction = RESET_MEMORY_CMD;
-  if(HAL_QSPI_Command(hqspi, &cmd, QSPI_TIMEOUT) != HAL_OK) 
-    return -1;
-  return qspi_autopolling_ready(hqspi);
-}
-
-#if 1
-void flash_init(void* handle){
-  qspi_handle = (QSPI_HandleTypeDef*)handle;
-  qspi_handle->Instance = QUADSPI;
+void flash_init(){
+  QSPIHandle.Instance = QUADSPI;
   /* QSPI clock = 480MHz / (1+9) = 48MHz */
   /* QSPI clock = 480MHz / (1+4) = 96MHz */
-  qspi_handle->Init.ClockPrescaler     = 9;
-  /* qspi_handle->Init.ClockPrescaler     = 4; // 4 and 5 don't work? 8 works  */
+  QSPIHandle.Init.ClockPrescaler     = 9;
+  /* QSPIHandle.Init.ClockPrescaler     = 4; // 4 and 5 don't work? 8 works  */
 /* #define IS_QSPI_FIFO_THRESHOLD(THR)        (((THR) > 0U) && ((THR) <= 32U)) */
-  qspi_handle->Init.FifoThreshold      = 4;
-  qspi_handle->Init.SampleShifting     = QSPI_SAMPLE_SHIFTING_NONE;
-  qspi_handle->Init.FlashSize          = 22; // 2^(22+1) = 8M / 64Mbit
-  qspi_handle->Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
-  qspi_handle->Init.ClockMode          = QSPI_CLOCK_MODE_0;
+  QSPIHandle.Init.FifoThreshold      = 4;
+  QSPIHandle.Init.SampleShifting     = QSPI_SAMPLE_SHIFTING_NONE;
+  QSPIHandle.Init.FlashSize          = 22; // 2^(22+1) = 8M / 64Mbit
+  QSPIHandle.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
+  QSPIHandle.Init.ClockMode          = QSPI_CLOCK_MODE_0;
 
   sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
   sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
@@ -94,51 +47,16 @@ void flash_init(void* handle){
   sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
   sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
   /* Initialize QuadSPI ------------------------------------------------ */
-  HAL_QSPI_DeInit(qspi_handle);
-
-  if ((FlagStatus)(__HAL_QSPI_GET_FLAG(qspi_handle, QSPI_FLAG_BUSY)) == SET){
-    qspi_handle->State = HAL_QSPI_STATE_BUSY;
-    HAL_QSPI_Abort(qspi_handle);
-  }
-
-  if (HAL_QSPI_Init(qspi_handle) != HAL_OK)
+  HAL_QSPI_DeInit(&QSPIHandle);
+  if (HAL_QSPI_Init(&QSPIHandle) != HAL_OK)
     {
       Error_Handler();
     }
-  if( HAL_QSPI_SetFifoThreshold(qspi_handle, 16) != HAL_OK)
+  if( HAL_QSPI_SetFifoThreshold(&QSPIHandle, 16) != HAL_OK)
     {
       Error_Handler();
     }
-
-  qspi_status = flash_status();
 }
-#else
-void flash_init(void* handle){
-  qspi_handle = (QSPI_HandleTypeDef*)handle;
-
-  sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-  sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
-  sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE; // QSPI_ALTERNATE_BYTES_8_BITS
-  sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
-  sCommand.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
-  sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
-  sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
-
-   // Important - this prevents timeout due to previous operations in some cases
-  // https://community.st.com/s/question/0D50X00009XkXMHSA3/qspi-flag-qspiflagbusy-sometimes-stays-set
-  /* if ((FlagStatus)(__HAL_QSPI_GET_FLAG(qspi_handle, QSPI_FLAG_BUSY)) == SET){ */
-  /*   qspi_handle->State = HAL_QSPI_STATE_BUSY; */
-  /*   HAL_QSPI_Abort(qspi_handle); */
-  /* } */
-  /* qspi_status = flash_status(); */
-
-  /* flash_reset(qspi_handle); */
-
-  /* qspi_dummy_cycles_cfg(qspi_handle); */
-  /* flash_quad_mode(0x00, 0x60); */
-  /* flash_qpi_mode(false); */  
-}
-#endif
 
 int flash_read_register(int instruction){
   QSPI_CommandTypeDef cmd;
@@ -154,12 +72,12 @@ int flash_read_register(int instruction){
   cmd.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
   cmd.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
 
-  if (HAL_QSPI_Command(qspi_handle, &cmd, QSPI_TIMEOUT) != HAL_OK)
+  if (HAL_QSPI_Command(&QSPIHandle, &cmd, QSPI_TIMEOUT) != HAL_OK)
     return -1;
 
   uint8_t value;
   /* Reception of the data */
-  if (HAL_QSPI_Receive(qspi_handle, &value, QSPI_TIMEOUT) != HAL_OK)
+  if (HAL_QSPI_Receive(&QSPIHandle, &value, QSPI_TIMEOUT) != HAL_OK)
     return -1;
   
   return value;
@@ -178,7 +96,7 @@ int flash_status(){
 int flash_quad_mode(uint8_t cr1, uint8_t cr2){ //, uint8_t cr3){
   uint8_t data[3] = {0x00, cr1, cr2};
   QSPI_CommandTypeDef cmd;
-  /* qspi_write_enable(qspi_handle, false); // WRENV */
+  /* QSPI_WriteEnable(&QSPIHandle, false); // WRENV */
 
   // WRENV
   cmd.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
@@ -190,7 +108,7 @@ int flash_quad_mode(uint8_t cr1, uint8_t cr2){ //, uint8_t cr3){
   cmd.DdrMode           = QSPI_DDR_MODE_DISABLE;
   cmd.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
   cmd.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
-  if (HAL_QSPI_Command(qspi_handle, &cmd, QSPI_TIMEOUT) != HAL_OK)
+  if (HAL_QSPI_Command(&QSPIHandle, &cmd, QSPI_TIMEOUT) != HAL_OK)
     return -1;
 
   // WRR
@@ -204,9 +122,9 @@ int flash_quad_mode(uint8_t cr1, uint8_t cr2){ //, uint8_t cr3){
   cmd.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
   cmd.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
   cmd.NbData            = sizeof(data);    
-  if (HAL_QSPI_Command(qspi_handle, &cmd, QSPI_TIMEOUT) != HAL_OK)
+  if (HAL_QSPI_Command(&QSPIHandle, &cmd, QSPI_TIMEOUT) != HAL_OK)
     return -1;
-  if (HAL_QSPI_Transmit(qspi_handle, data, QSPI_TIMEOUT) != HAL_OK)
+  if (HAL_QSPI_Transmit(&QSPIHandle, data, QSPI_TIMEOUT) != HAL_OK)
     return -1;
   return 0;
   /*
@@ -217,9 +135,9 @@ int flash_quad_mode(uint8_t cr1, uint8_t cr2){ //, uint8_t cr3){
   */ 
 }
 
-int flash_erase_block(uint32_t address, size_t size){
+int flash_erase(uint32_t address, uint32_t size){
   /* Enable write operations ------------------------------------------- */
-  qspi_write_enable(qspi_handle, true);
+  QSPI_WriteEnable(&QSPIHandle, true);
 
   /* Erasing Sequence -------------------------------------------------- */
   sCommand.Instruction = SECTOR_ERASE_CMD;
@@ -230,7 +148,7 @@ int flash_erase_block(uint32_t address, size_t size){
   int remain = size;
   while(remain > 0){
     sCommand.Address     = address;
-    if (HAL_QSPI_Command(qspi_handle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
+    if (HAL_QSPI_Command(&QSPIHandle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
       return -1;
     address += QSPI_ERASE_BLOCK_SIZE;
     remain -= QSPI_ERASE_BLOCK_SIZE;
@@ -242,7 +160,10 @@ int flash_erase_block(uint32_t address, size_t size){
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-int flash_write_page(uint32_t address, void* data, size_t size){
+int flash_write_page(uint32_t address, void* data, uint32_t size){
+  /* Enable write operations ----------------------------------------- */
+  QSPI_WriteEnable(&QSPIHandle, true);
+
   /* Writing Sequence ------------------------------------------------ */
   sCommand.Instruction = QUAD_IN_FAST_PROG_CMD;
   sCommand.AddressMode = QSPI_ADDRESS_1_LINE;
@@ -260,17 +181,14 @@ int flash_write_page(uint32_t address, void* data, size_t size){
 
   /* The Page Program command accepts from 1-byte up to 256 consecutive bytes of data (page) to be programmed in one operation. */
 
-  if (HAL_QSPI_Command(qspi_handle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
+  if (HAL_QSPI_Command(&QSPIHandle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
     return -1;
-  if (HAL_QSPI_Transmit(qspi_handle, data, QSPI_TIMEOUT) != HAL_OK)
+  if (HAL_QSPI_Transmit(&QSPIHandle, data, QSPI_TIMEOUT) != HAL_OK)
     return -1;
   return 0;
 }
 
-int flash_write_block(uint32_t address, const uint8_t *data, size_t size){
-  /* Enable write operations ----------------------------------------- */
-  qspi_write_enable(qspi_handle, true);
-
+int flash_write_block(uint32_t address, void* data, uint32_t size){
   size_t pages = (size+QSPI_FLASH_PAGE_SIZE-1)/QSPI_FLASH_PAGE_SIZE;
   uint8_t* source = (uint8_t*)data;
   int ret = 0;
@@ -301,14 +219,14 @@ int flash_qpi_mode(bool quad){
     // enable quad mode QPIEN
     sCommand.Instruction = ENTER_QUAD_CMD;
     sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-    if (HAL_QSPI_Command(qspi_handle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
+    if (HAL_QSPI_Command(&QSPIHandle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
       return -1;
     sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
   }else{
     // exit quad mode QPIEX
     sCommand.Instruction = EXIT_QUAD_CMD;
     sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
-    if (HAL_QSPI_Command(qspi_handle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
+    if (HAL_QSPI_Command(&QSPIHandle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
       return -1;
     sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
   }
@@ -320,7 +238,7 @@ int flash_qpi_mode(bool quad){
 
 int flash_read_mode(int mode){
 /* Configure Volatile Configuration register (with new dummy cycles) */
-  /* qspi_dummy_cycles_cfg(qspi_handle); */
+  /* QSPI_DummyCyclesCfg(&QSPIHandle); */
 
   // defaults for all modes
   sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
@@ -414,34 +332,35 @@ int flash_read_mode(int mode){
   return 0;
 }
 
-int flash_read_block(int mode, uint32_t address, uint8_t* data, size_t size){
+int flash_read_block(int mode, uint32_t address, void* data, uint32_t size){
   flash_read_mode(mode);
   sCommand.Address           = address;
   sCommand.NbData            = size;
-  if (HAL_QSPI_Command(qspi_handle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
+  if (HAL_QSPI_Command(&QSPIHandle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
     return -1;
-  if (HAL_QSPI_Receive(qspi_handle, data, QSPI_TIMEOUT) != HAL_OK)
+  if (HAL_QSPI_Receive(&QSPIHandle, data, QSPI_TIMEOUT) != HAL_OK)
     return -1;
   return 0;
 }
 
 int flash_wait(){
-  while(qspi_handle->State == HAL_QSPI_STATE_BUSY)
-    HAL_Delay(1);
-  /* return qspi_handle->State == HAL_QSPI_STATE; */
+  while(QSPIHandle.State == HAL_QSPI_STATE_BUSY)
+    HAL_Delay(10);
+  /* return QSPIHandle.State == HAL_QSPI_STATE; */
   /* while(CmdCplt != 0) */
   /*   HAL_Delay(10);   */
   /* CmdCplt = 0; */
   /* StatusMatch = 0; */
   /* /\* Configure automatic polling mode to wait for end of erase or write *\/  */
-  qspi_autopolling_ready(qspi_handle);
+  QSPI_AutoPollingMemReady(&QSPIHandle);
   /* while(StatusMatch != 0) */
   /*   HAL_Delay(10); */
   /* return 0; */
-  return HAL_QSPI_GetError(qspi_handle);
+  return HAL_QSPI_GetError(&QSPIHandle);
 }
 
 int flash_memory_map(int mode){
+
   if(mode == 114 || mode == 144 || 
      mode == -114 || mode == -144){
     flash_quad_mode(0x02, 0x60);
@@ -457,7 +376,7 @@ int flash_memory_map(int mode){
   flash_read_mode(mode);
   sMemMappedCfg.TimeOutPeriod = 0;
   sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
-  if (HAL_QSPI_MemoryMapped(qspi_handle, &sCommand, &sMemMappedCfg) != HAL_OK)
+  if (HAL_QSPI_MemoryMapped(&QSPIHandle, &sCommand, &sMemMappedCfg) != HAL_OK)
     return -1;
   return 0;
 }
@@ -508,7 +427,7 @@ void HAL_QSPI_StatusMatchCallback(QSPI_HandleTypeDef *hqspi)
   * @param  hqspi: QSPI handle
   * @retval None
   */
-void qspi_write_enable(QSPI_HandleTypeDef *hqspi, bool nv)
+static void QSPI_WriteEnable(QSPI_HandleTypeDef *hqspi, bool nv)
 {
   QSPI_CommandTypeDef     sCommand;
   QSPI_AutoPollingTypeDef sConfig;
@@ -551,7 +470,8 @@ void qspi_write_enable(QSPI_HandleTypeDef *hqspi, bool nv)
   * @param  hqspi: QSPI handle
   * @retval None
   */
-int qspi_autopolling_ready(QSPI_HandleTypeDef *hqspi){
+static void QSPI_AutoPollingMemReady(QSPI_HandleTypeDef *hqspi)
+{
   QSPI_CommandTypeDef     sCommand;
   QSPI_AutoPollingTypeDef sConfig;
 
@@ -574,8 +494,9 @@ int qspi_autopolling_ready(QSPI_HandleTypeDef *hqspi){
   sConfig.AutomaticStop   = QSPI_AUTOMATIC_STOP_ENABLE;
 
   if (HAL_QSPI_AutoPolling(hqspi, &sCommand, &sConfig, QSPI_TIMEOUT) != HAL_OK)
-    return -1;
-  return 0;
+  {
+    Error_Handler();
+  }
 }
 
 /**
@@ -583,7 +504,8 @@ int qspi_autopolling_ready(QSPI_HandleTypeDef *hqspi){
   * @param  hqspi: QSPI handle
   * @retval None
   */
-void qspi_dummy_cycles_cfg(QSPI_HandleTypeDef *hqspi){
+static void QSPI_DummyCyclesCfg(QSPI_HandleTypeDef *hqspi)
+{
   QSPI_CommandTypeDef sCommand;
   uint8_t reg;
 
@@ -610,7 +532,7 @@ void qspi_dummy_cycles_cfg(QSPI_HandleTypeDef *hqspi){
   }
 
   /* Enable write operations ---------------------------------------- */
-  qspi_write_enable(hqspi, false);
+  QSPI_WriteEnable(hqspi, false);
 
   /* Write Volatile Configuration register (with new dummy cycles) -- */  
   sCommand.Instruction = WRITE_VOL_CFG_REG_CMD;

@@ -5,8 +5,19 @@
 
 #define FIRMWARE_VERSION "v22.2.1"
 
-#if defined USE_SPI_FLASH || defined USE_QSPI_FLASH
+#ifdef USE_SPI_FLASH
 #define USE_NOR_FLASH
+#ifndef SPI_FLASH_HANDLE
+#define SPI_FLASH_HANDLE             hspi1
+#endif
+#endif
+
+#ifdef USE_QSPI_FLASH
+#define USE_NOR_FLASH
+#define QSPI_FLASH_HANDLE            hqspi
+#endif
+
+#ifdef USE_NOR_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
 #define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
 #define EXTERNAL_STORAGE_SIZE        (8*1024*1024) // 8M / 64Mbit
@@ -15,19 +26,12 @@
 #define FLASH_DEFAULT_FLAGS          RESOURCE_MEMORY_MAPPED
 #endif
 
-#ifdef USE_SPI_FLASH
-#ifndef SPI_FLASH_HANDLE
-#define SPI_FLASH_HANDLE             hspi1
-#endif
-#endif
-
-#ifdef USE_QSPI_FLASH
-#define QSPI_FLASH_SIZE              (8*1024*1024)
-#define QSPI_FLASH_HANDLE            hqspi
-#endif
-
+#ifdef NO_INTERNAL_FLASH
+#define MAX_RESOURCE_HEADERS         MAX_SPI_FLASH_HEADERS
+#else
 #define USE_FLASH
 #define MAX_RESOURCE_HEADERS         (16+MAX_SPI_FLASH_HEADERS)
+#endif
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112

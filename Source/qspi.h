@@ -105,6 +105,3 @@
 
 #define DUMMY_CLOCK_CYCLES_READ_DTR          8
 #define DUMMY_CLOCK_CYCLES_READ_QUAD_DTR     8
-
-/* End address of the QSPI memory */
-#define QSPI_END_ADDR              (1 << QSPI_FLASH_SIZE)

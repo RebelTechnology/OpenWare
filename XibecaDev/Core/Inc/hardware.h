@@ -4,8 +4,8 @@
 #define OWL_XIBECA
 #define HARDWARE_ID                  XIBECA_HARDWARE
 #define HARDWARE_VERSION             "Xibeca"
-#define NO_EXTERNAL_RAM
-#define NO_CCM_RAM
+/* #define NO_EXTERNAL_RAM */
+/* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 
 /* note that with H750, PLUS_RAM is used by firmware */
@@ -19,6 +19,7 @@
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
 #define USE_QSPI_FLASH
+#define NO_INTERNAL_FLASH
 
 /* #define AUDIO_INPUT_GAIN            114 */
 #define AUDIO_OUTPUT_GAIN           109 // 114

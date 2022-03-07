@@ -89,18 +89,20 @@ void Storage::index(){
     resources[i].setHeader(next);
     setProgress(progress += 4095/MAX_RESOURCE_HEADERS, "Indexing");
   }
-  if(!resources[i].isFree()){
+  if(resources[i].isFree()){
+    i++;
+  }else{
     error(FLASH_ERROR, "Invalid flash resource");
     // set resource to point to first free block, or NULL
     void* p = findFirstFreeBlock(resources[i].getHeader(), (void*)INTERNAL_STORAGE_END, 32);
-    resources[i].setHeader((ResourceHeader*)p);
+    resources[i++].setHeader((ResourceHeader*)p);
   }
 #endif
 #ifdef USE_NOR_FLASH
   uint32_t address = 0;
   NorHeader* header = &nor_index[0];
   header->address = address;
-  resources[++i].setHeader(header);
+  resources[i].setHeader(header);
   flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
   while(i<MAX_RESOURCE_HEADERS && resources[i].isUsed() &&
 	address < EXTERNAL_STORAGE_SIZE &&
@@ -116,10 +118,13 @@ void Storage::index(){
     error(FLASH_ERROR, "Invalid SPI resource");
     // set resource to point to first free block, or NULL
     address = findFirstFreePage(resources[i].getAddress(), EXTERNAL_STORAGE_SIZE, 256);
-    if(address < EXTERNAL_STORAGE_SIZE)
-      ((NorHeader*)resources[i].getHeader())->address = address;
-    else
+    if(address < EXTERNAL_STORAGE_SIZE){
+      header = (NorHeader*)resources[i].getHeader();
+      header->address = address;
+      flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+    }else{
       resources[i].setHeader(NULL);
+    }
   }
 #endif
   setProgress(4095, "Indexing");
@@ -324,7 +329,7 @@ size_t Storage::writeResource(const char* name, uint8_t* data, size_t datasize, 
  * 5. rebuild index
  */
 size_t Storage::writeResource(ResourceHeader* header){
-#ifdef USE_NOR_FLASH
+#ifndef USE_NOR_FLASH
   header->flags |= RESOURCE_MEMORY_MAPPED; // save everything mem mapped
 #endif
   size_t length = header->size+sizeof(ResourceHeader);

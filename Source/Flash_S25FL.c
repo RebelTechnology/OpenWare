@@ -98,7 +98,7 @@ int flash_read(uint32_t address, uint8_t* data, size_t length){
 
 // address must be on a 256-byte boundary
 /* "The Page Program command accepts from 1-byte up to 256 consecutive bytes of data (page) to be programmed in one operation. Programming means that bits can either be left at 1, or programmed from 1 to 0. Changing bits from 0 to 1 requires an erase operation." */  
-int flash_write(uint32_t address, uint8_t* data, size_t length){
+int flash_write(uint32_t address, const uint8_t* data, size_t length){
   uint8_t rgAddress[3];
 
   // PP Page Program 1-1-1, 0x02, up to 108Mhz
