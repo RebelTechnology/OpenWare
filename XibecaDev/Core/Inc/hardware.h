@@ -4,12 +4,13 @@
 #define OWL_XIBECA
 #define HARDWARE_ID                  XIBECA_HARDWARE
 #define HARDWARE_VERSION             "Xibeca"
+// causing busfault?
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 
-/* note that with H750, PLUS_RAM is used by firmware */
-/* #define USE_PLUS_RAM */
+/* note that with H750, PLUS_RAM will be used by firmware */
+#define USE_PLUS_RAM
 
 #ifdef NDEBUG
 #define USE_ICACHE
