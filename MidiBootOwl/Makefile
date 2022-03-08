@@ -2,7 +2,7 @@ BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 DFUUTIL ?= dfu-util
 
-LDSCRIPT = STM32F405ZGT6-boot.ld
+LDSCRIPT = owl1-boot.ld
 include $(OPENWARE)/Hardware/owl1.mk
 
 C_SRC = $(wildcard Src/*.c)
@@ -14,9 +14,12 @@ C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/crc32.c
 C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/message.c
+C_SRC += $(OPENWARE)/Source/support.c
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
+CPP_SRC += $(OPENWARE)/Source/MidiBoot.cpp
+CPP_SRC += $(OPENWARE)/Source/Storage.cpp
 
 ifndef PLATFORM
 PLATFORM = Pedal

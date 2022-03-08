@@ -12,8 +12,8 @@ RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K    /* total RAM is 128kb */
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
 EXTRAM (rwx)     : ORIGIN = 0x68000000, LENGTH = 1M
-BOOTLOADER (r)   : ORIGIN = 0x08000000, LENGTH = 32K    /* Sector 0-1 */
-FLASH (rx)       : ORIGIN = 0x08008000, LENGTH = 352K   /* Sector 2-6 */
+FLASH (r)        : ORIGIN = 0x08000000, LENGTH = 32K    /* Sector 0-1 */
+APPLICATION (rx) : ORIGIN = 0x08008000, LENGTH = 352K   /* Sector 2-6 */
 STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 640K   /* Sector 7-11 */
 }
 
@@ -139,11 +139,7 @@ SECTIONS
   _CCMRAM_SIZE = _CCMRAM_END - _CCMRAM;
 
   /* Bootloader end will be used for finding bootloader token */
-  .bootloader (NOLOAD) :
-  {
-    PROVIDE (_BOOTLOADER = .);
-  } >BOOTLOADER
-  _BOOTLOADER_END = ORIGIN(BOOTLOADER) + LENGTH(BOOTLOADER);
+  _BOOTLOADER_END = ORIGIN(FLASH) + LENGTH(FLASH);
 
   /* External memory, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".extdata"))); */

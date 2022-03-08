@@ -6,7 +6,6 @@
 #define HARDWARE_VERSION             "Genius"
 
 #define USE_SPI_FLASH
-#define SPI_FLASH_HSPI               hspi5
 
 /* #define USE_USBH_HID */
 

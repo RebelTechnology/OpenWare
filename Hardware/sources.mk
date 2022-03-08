@@ -3,6 +3,7 @@ C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/errorhandlers.c
 C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/callbacks.c
+C_SRC += $(OPENWARE)/Source/support.c
 C_SRC += $(OPENWARE)/Source/flash-spi.c
 CPP_SRC += $(OPENWARE)/Source/ApplicationSettings.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiHandler.cpp

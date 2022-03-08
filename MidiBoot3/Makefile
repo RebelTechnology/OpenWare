@@ -16,9 +16,11 @@ C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/message.c
 C_SRC += $(OPENWARE)/Source/support.c
 C_SRC += $(OPENWARE)/Source/flash-spi.c
+C_SRC += $(OPENWARE)/Source/flash-qspi.c
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
 CPP_SRC += $(OPENWARE)/Source/Storage.cpp
+CPP_SRC += $(OPENWARE)/Source/MidiBoot.cpp
 
 ifndef PLATFORM
 PLATFORM = Genius

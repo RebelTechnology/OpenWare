@@ -2,6 +2,8 @@
 #include "flash.h"
 #include "main.h"
 
+#ifdef USE_QSPI_FLASH
+
 // =======================
 // SPI Flash Commands info
 // =======================
@@ -577,3 +579,5 @@ int flash_memory_map(int mode){
     return -1;
   return 0;
 }
+
+#endif
