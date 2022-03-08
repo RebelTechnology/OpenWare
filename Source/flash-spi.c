@@ -125,7 +125,7 @@ int flash_write(uint32_t address, const uint8_t* data, size_t length){
     // Send and receive data
     HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
     HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
-    HAL_SPI_Transmit(FLASH_SPIConfig, data, len, 100);
+    HAL_SPI_Transmit(FLASH_SPIConfig, (uint8_t*)data, len, 100);
 
     __nop();__nop();__nop();
     flash_Deselect();

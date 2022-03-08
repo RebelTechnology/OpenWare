@@ -423,7 +423,11 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     device_reset();
     break;
   case SYSEX_BOOTLOADER_COMMAND:
-    jump_to_bootloader();
+#ifdef USE_DFU_BOOTLOADER
+    device_dfu();
+#else
+    device_bootloader();
+#endif
     break;
   case SYSEX_PROGRAM_MESSAGE:
     handleProgramMessage(data+4, size-5);

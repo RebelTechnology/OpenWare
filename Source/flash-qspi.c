@@ -1,14 +1,12 @@
 #include "device.h"
 #include "flash.h"
 #include "main.h"
-#include "qspi.h"
-
 
 // =======================
 // SPI Flash Commands info
 // =======================
 #define QSPI_WRR_CMD                 (0x01) // Single Register Write
-#define QSPI_PP_CMD                  (0x02)
+#define QSPI_PP_CMD                  (0x02) // Page Program
 #define QSPI_READ_CMD                (0x03)
 #define QSPI_WRDI_CMD                (0x04)
 #define QSPI_RDSR_CMD                (0x05)
@@ -32,52 +30,52 @@
 #define QSPI_DOR_CMD                 (0x3B) // Dual output read
 #define QSPI_4DOR_CMD                (0x3C) // Dual output read 4 Byte address 
 #define QSPI_IBLRD_CMD               (0x3D) // IBL read
-#define QSPI_DLPRD_CMD               (0x41)  // Read Data Learning Pattern
+#define QSPI_DLPRD_CMD               (0x41) // Read Data Learning Pattern
 #define QSPI_SECRP_CMD               (0x42) // security region program
-#define QSPI_PNVDLR_CMD              (0x43)  // Program NV Data Learning Register
+#define QSPI_PNVDLR_CMD              (0x43) // Program NV Data Learning Register
 #define QSPI_SECRE_CMD               (0x44) // security region erase
 #define QSPI_SECRR_CMD               (0x48) // security region read
-#define QSPI_WVDLR_CMD               (0x4A)  // Write Volatile Data Learning Register
+#define QSPI_WVDLR_CMD               (0x4A) // Write Volatile Data Learning Register
 #define QSPI_RUID_CMD                (0x4B)
 #define QSPI_WRENV_CMD               (0x50) // Write enable for Volatile status and configuration registers
 #define QSPI_HBE_CMD                 (0x52) // Half Block Erase
 #define QSPI_4HBE_CMD                (0x53) // Half Block Erase 4B address
-#define QSPI_READ_SFDP_CMD           (0x5A)  // Read Serial Flash Discoverable Parameter Register
+#define QSPI_READ_SFDP_CMD           (0x5A) // Read Serial Flash Discoverable Parameter Register
 #define QSPI_CE_CMD                  (0x60) // chip erase
-#define QSPI_RDAR_CMD                (0x65)  // Read Any Register
-#define QSPI_RSTEN_CMD               (0x66)  // Software Reset Enable
+#define QSPI_RDAR_CMD                (0x65) // Read Any Register
+#define QSPI_RSTEN_CMD               (0x66) // Software Reset Enable
 #define QSPI_QOR_CMD                 (0x6B) // Quad Output Read
 #define QSPI_4QOR_CMD                (0x6C) // Quad Output Read 4B address
-#define QSPI_WRAR_CMD                (0x71)  // Write Any Register
-#define QSPI_SETBURSTWRAP_CMD        (0x77)  // Set Burst with Wrap
+#define QSPI_WRAR_CMD                (0x71) // Write Any Register
+#define QSPI_SETBURSTWRAP_CMD        (0x77) // Set Burst with Wrap
 #define QSPI_GBL_CMD                 (0x7E) // Global IBL lock
 //#define QSPI_CLSR2_CMD               (0x82)  //Clear Status Register 1 (alternate instruction) - Erase/Prog. Fail Reset
 #define QSPI_RDID_90_CMD             (0x90)
 #define QSPI_GBUL_CMD                (0x98) // Global IBL unlock 
-#define QSPI_RESET_CMD               (0x99)  // Software Reset
+#define QSPI_RESET_CMD               (0x99) // Software Reset
 #define QSPI_RDID_9F_CMD             (0x9F)
 #define QSPI_PRL_CMD                 (0xA6) // Protection Register lock
 #define QSPI_PRRD_CMD                (0xA7) // Protection Register read
 #define QSPI_RDID_AB_CMD             (0xAB)
 #define QSPI_RES_CMD                 (0xAB)
-#define QSPI_RDQID_CMD               (0xAF)  //Read Quad ID
-#define QSPI_EPS_CMD                 (0x75)  // for FLL
+#define QSPI_RDQID_CMD               (0xAF) //Read Quad ID
+#define QSPI_EPS_CMD                 (0x75) // for FLL
 #define QSPI_EPR_CMD                 (0x7A) // for FLL
 #define QSPI_4BEN_CMD                (0xB7) // Enter 4-bytes Address Mode
 #define QSPI_DP_CMD                  (0xB9)
 #define QSPI_DIOR_CMD                (0xBB) // Dual IO read
 #define QSPI_4DIOR_CMD               (0xBC) // Dual IO read 4B address
-#define QSPI_CE1_CMD                 (0xC7) // chip erase
-#define QSPI_SE_CMD                  (0x20)  // Sector Erase
+#define QSPI_CE1_CMD                 (0xC7) // Chip erase
+#define QSPI_SE_CMD                  (0x20) // Sector Erase
 #define QSPI_SE_4B_CMD               (0x21)
-#define QSPI_BLOCK_ERASE_CMD         (0xD8)  // BLOCK ERASE
+#define QSPI_BLOCK_ERASE_CMD         (0xD8) // Block erase
 #define QSPI_4BE_CMD                 (0xDC) // Block erase 4B address
 #define QSPI_4IBLRD_CMD              (0xE0) // IBL read 4B address
 #define QSPI_4IBL_CMD                (0xE1) // IBL lock 4B address
 #define QSPI_4IBUL_CMD               (0xE2) // IBL unlock 4B address
 #define QSPI_4SPRP_CMD               (0xE3) // Set Point Region Protection 4B address
-#define QSPI_PASSRD_CMD              (0xE7)  // Password Read
-#define QSPI_PASSP_CMD               (0xE8)  // Password Program
+#define QSPI_PASSRD_CMD              (0xE7) // Password Read
+#define QSPI_PASSP_CMD               (0xE8) // Password Program
 #define QSPI_4BEX_CMD                (0xE9) // Exit 4 Byte Address mode
 #define QSPI_PASSU_CMD               (0xEA) // Password Unlock
 #define QSPI_QIOR_CMD                (0xEB) // Quad IO read
@@ -88,12 +86,14 @@
 #define QSPI_SPRP_CMD                (0xFB) // Set Pointer Region Protection
 #define QSPI_MBR_CMD                 (0xFF) // Mode Bit Reset
 
-#define QSPI_SR_WEL                  (0x02)    /* Write Enable Latch */
-#define QSPI_SR_WIP                  (0x01)    /* Write In Progress */
+#define QSPI_SR_WEL                  (0x02) // Write Enable Latch
+#define QSPI_SR_WIP                  (0x01) // Write In Progress
 
 #define QSPI_READ_MODE               -122
-#define QSPI_TIMEOUT                 5000
-/* #define QSPI_TIMEOUT HAL_QPSI_TIMEOUT_DEFAULT_VALUE */
+#define QSPI_TIMEOUT                 HAL_QPSI_TIMEOUT_DEFAULT_VALUE
+
+#define QSPI_ERASE_BLOCK_SIZE        (64*1024) // 64k block sector
+#define QSPI_FLASH_PAGE_SIZE         256 // Program page size 256 bytes
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -126,7 +126,7 @@ static int qspi_wait(uint32_t match, uint32_t mask){
   QSPI_CommandTypeDef     cmd;
   QSPI_AutoPollingTypeDef cfg;
   cmd.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-  cmd.Instruction       = READ_STATUS_REG_CMD;
+  cmd.Instruction       = QSPI_RDSR_CMD; // Read Status Register
   cmd.AddressMode       = QSPI_ADDRESS_NONE;
   cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
   cmd.DataMode          = QSPI_DATA_1_LINE;
@@ -158,7 +158,7 @@ static int qspi_write_enable() {
   QSPI_CommandTypeDef cmd;
   /* Enable write operations */
   cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-  cmd.Instruction = WRITE_ENABLE_CMD;
+  cmd.Instruction = QSPI_WREN_CMD; // Write Enable
   cmd.AddressMode = QSPI_ADDRESS_NONE;
   cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
   cmd.DataMode = QSPI_DATA_NONE;
@@ -175,7 +175,7 @@ int qspi_write_page(uint32_t address, void* data, size_t size){
   // write in 1-1-1 mode
   QSPI_CommandTypeDef cmd;
   cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-  cmd.Instruction = PAGE_PROG_CMD;
+  cmd.Instruction = QSPI_PP_CMD; // Page Program
   cmd.AddressMode = QSPI_ADDRESS_1_LINE;
   cmd.AddressSize = QSPI_ADDRESS_24_BITS;
   cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
@@ -198,7 +198,7 @@ int qspi_write_page(uint32_t address, void* data, size_t size){
 int qspi_erase_block(uint32_t address, size_t size){
   QSPI_CommandTypeDef cmd;
   cmd.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-  cmd.Instruction       = SECTOR_ERASE_CMD;
+  cmd.Instruction       = QSPI_BLOCK_ERASE_CMD;
   cmd.AddressMode       = QSPI_ADDRESS_1_LINE;
   cmd.AddressSize       = QSPI_ADDRESS_24_BITS;
   cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
@@ -414,29 +414,28 @@ int qspi_qpi_mode(bool quad){
      The enter QPI Mode (QPIEN) command enables the QPI mode by setting the volatile QPI bit (CR2V[3] = 1). The time required to enter QPI Mode is tQEN, 1.5uS, no other commands are allowed during the tQEN transition time to QPI mode.
   */
 
-  QSPI_CommandTypeDef sCommand;  
-  sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-  sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
-  sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-  sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
-  sCommand.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
-  sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
-  sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
-  sCommand.AddressMode = QSPI_ADDRESS_NONE;
-  sCommand.DataMode    = QSPI_DATA_NONE;
-  sCommand.DummyCycles = 0;
-  sCommand.NbData      = 0;
+  QSPI_CommandTypeDef cmd;  
+  cmd.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
+  cmd.AddressSize       = QSPI_ADDRESS_24_BITS;
+  cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+  cmd.DdrMode           = QSPI_DDR_MODE_DISABLE;
+  cmd.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+  cmd.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
+  cmd.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
+  cmd.AddressMode = QSPI_ADDRESS_NONE;
+  cmd.DataMode    = QSPI_DATA_NONE;
+  cmd.DummyCycles = 0;
+  cmd.NbData      = 0;
   if(quad){
-    // enable quad mode QPIEN
-    sCommand.Instruction = ENTER_QUAD_CMD;
-    sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-    if(HAL_QSPI_Command(qspi_handle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
+    cmd.Instruction = QSPI_QPIEN_CMD; // Enter Quad Mode QPIEN
+    cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    if(HAL_QSPI_Command(qspi_handle, &cmd, QSPI_TIMEOUT) != HAL_OK)
       return -1;
   }else{
     // exit quad mode QPIEX
-    sCommand.Instruction = EXIT_QUAD_CMD;
-    sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
-    if(HAL_QSPI_Command(qspi_handle, &sCommand, QSPI_TIMEOUT) != HAL_OK)
+    cmd.Instruction = QSPI_QPIEX_CMD; // Exit Quad Mode QPIEX
+    cmd.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+    if(HAL_QSPI_Command(qspi_handle, &cmd, QSPI_TIMEOUT) != HAL_OK)
       return -1;
   }
   volatile size_t counter = 10000;
@@ -463,21 +462,21 @@ int flash_read_mode(QSPI_CommandTypeDef* cmd, int mode){
   cmd->AlternateBytes     = 0xA0; // Continuous read feature is enabled if the mode bits value is Axh.
   switch(mode){
   case -111: // SPI read 1-1-1
-    cmd->Instruction       = QSPI_FLASH_CMD_FAST_READ;
+    cmd->Instruction       = QSPI_FAST_READ_CMD;
     cmd->AddressSize       = QSPI_ADDRESS_24_BITS;
     break;
   case -112: // Dual out fast read 1-1-2
-    cmd->Instruction       = QSPI_FLASH_CMD_DOR;
+    cmd->Instruction       = QSPI_DOR_CMD;
     cmd->DataMode          = QSPI_DATA_2_LINES;
     cmd->AddressSize       = QSPI_ADDRESS_24_BITS;
     break;
   case -114: // Quad out read 1-1-4
-    cmd->Instruction       = QSPI_FLASH_CMD_QOR;
+    cmd->Instruction       = QSPI_QOR_CMD;
     cmd->DataMode          = QSPI_DATA_4_LINES;
     cmd->AddressSize       = QSPI_ADDRESS_24_BITS;
     break;
   case -122: // Dual I/O 1-2-2, mode cycles 4
-    cmd->Instruction       = QSPI_FLASH_CMD_DIOR;
+    cmd->Instruction       = QSPI_DIOR_CMD;
     cmd->AddressMode       = QSPI_ADDRESS_2_LINES;
     cmd->DataMode          = QSPI_DATA_2_LINES;
     cmd->AddressSize       = QSPI_ADDRESS_24_BITS;
@@ -485,7 +484,7 @@ int flash_read_mode(QSPI_CommandTypeDef* cmd, int mode){
     cmd->SIOOMode          = QSPI_SIOO_INST_ONLY_FIRST_CMD;
     break;
   case -144: // Quad I/O read 1-4-4, mode cycles 2
-    cmd->Instruction       = QSPI_FLASH_CMD_QIOR;
+    cmd->Instruction       = QSPI_QIOR_CMD;
     cmd->AddressMode       = QSPI_ADDRESS_4_LINES;
     cmd->DataMode          = QSPI_DATA_4_LINES;
     cmd->AddressSize       = QSPI_ADDRESS_24_BITS;
@@ -494,7 +493,7 @@ int flash_read_mode(QSPI_CommandTypeDef* cmd, int mode){
     break;
   case -444: // Quad I/O 4-4-4, mode cycles 2
     // QSPI read
-    cmd->Instruction       = QSPI_FLASH_CMD_QIOR;
+    cmd->Instruction       = QSPI_QIOR_CMD;
     cmd->InstructionMode   = QSPI_INSTRUCTION_4_LINES;
     cmd->AddressMode       = QSPI_ADDRESS_4_LINES;
     cmd->DataMode          = QSPI_DATA_4_LINES;
@@ -503,26 +502,26 @@ int flash_read_mode(QSPI_CommandTypeDef* cmd, int mode){
     cmd->SIOOMode          = QSPI_SIOO_INST_ONLY_FIRST_CMD;
     break;
   case 111: // SPI read 1-1-1 
-    cmd->Instruction       = QSPI_FLASH_CMD_4FAST_READ;
+    cmd->Instruction       = QSPI_FAST_READ_4B_CMD;
     break;
   case 112: // Dual out fast read 1-1-2
-    cmd->Instruction       = QSPI_FLASH_CMD_4DOR;
+    cmd->Instruction       = QSPI_4DOR_CMD;
     cmd->DataMode          = QSPI_DATA_2_LINES;
     break;
   case 122: // Dual I/O 1-2-2, mode cycles 4
-    cmd->Instruction       = QSPI_FLASH_CMD_4DIOR;
+    cmd->Instruction       = QSPI_4DIOR_CMD;
     cmd->AddressMode       = QSPI_ADDRESS_2_LINES;
     cmd->DataMode          = QSPI_DATA_2_LINES;
     cmd->AlternateByteMode = QSPI_ALTERNATE_BYTES_2_LINES;
     cmd->SIOOMode          = QSPI_SIOO_INST_ONLY_FIRST_CMD;
     break;
   case 114: // Quad out 1-1-4
-    cmd->Instruction       = QSPI_FLASH_CMD_4QOR;
+    cmd->Instruction       = QSPI_4QOR_CMD;
     cmd->DataMode          = QSPI_DATA_4_LINES;
     break;
   case 144: // Quad I/O 1-4-4, mode cycles 2
     // QSPI read
-    cmd->Instruction       = QSPI_FLASH_CMD_4QIOR;
+    cmd->Instruction       = QSPI_4QIOR_CMD;
     cmd->AddressMode       = QSPI_ADDRESS_4_LINES;
     cmd->DataMode          = QSPI_DATA_4_LINES;
     cmd->AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES;
@@ -530,7 +529,7 @@ int flash_read_mode(QSPI_CommandTypeDef* cmd, int mode){
     break;
   case 444: // Quad I/O 4-4-4, mode cycles 2
     // QSPI read
-    cmd->Instruction       = QSPI_FLASH_CMD_4QIOR;
+    cmd->Instruction       = QSPI_4QIOR_CMD;
     cmd->InstructionMode   = QSPI_INSTRUCTION_4_LINES;
     cmd->AddressMode       = QSPI_ADDRESS_4_LINES;
     cmd->DataMode          = QSPI_DATA_4_LINES;

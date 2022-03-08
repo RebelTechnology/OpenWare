@@ -18,6 +18,7 @@
 #include "message.h"
 #include "Storage.h"
 #include "PatchRegistry.h"
+#include "support.h"
 
 #if defined USE_RGB_LED
 #include "rainbow.h"
@@ -233,24 +234,6 @@ void jump_to_bootloader(void){
   RCC->CIR = 0x00000000;
 #endif
   *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
-  __DSB(); __ISB(); // memory and instruction barriers
-  NVIC_SystemReset();
-  /* Shouldn't get here */
-  while(1);
-}
-
-void device_reset(){
-#ifdef USE_BKPSRAM
-  extern RTC_HandleTypeDef hrtc;
-  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
-#endif
-  /* Disable all interrupts */
-#ifdef STM32H7xx
-  RCC->CIER = 0x00000000;
-#else
-  RCC->CIR = 0x00000000;
-#endif
-  *OWLBOOT_MAGIC_ADDRESS = 0;
   __DSB(); __ISB(); // memory and instruction barriers
   NVIC_SystemReset();
   /* Shouldn't get here */

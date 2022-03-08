@@ -8,7 +8,11 @@
 #ifdef USE_SPI_FLASH
 #define USE_NOR_FLASH
 #ifndef SPI_FLASH_HANDLE
+#ifdef STM32H7xx
+#define SPI_FLASH_HANDLE             hspi5
+#else
 #define SPI_FLASH_HANDLE             hspi1
+#endif
 #endif
 #endif
 
