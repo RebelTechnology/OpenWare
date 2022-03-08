@@ -18,16 +18,18 @@
   #define BOOT1_Pin GPIO_PIN_10
   #define BOOT1_GPIO_Port GPIOC
   #define USE_SPI_FLASH
-  #define SPI_FLASH_HSPI               hspi5
 #elif defined OWL_MAGUS
   #define HARDWARE_VERSION    "OWL Magus Boot"
   #define HARDWARE_ID         MAGUS_HARDWARE
   #define APPLICATION_ADDRESS 0x08020000
+  #define USE_SPI_FLASH
 #elif defined OWL_XIBECA
   #define HARDWARE_VERSION    "OWL Xibeca Boot"
   #define HARDWARE_ID         XIBECA_HARDWARE
   #define APPLICATION_ADDRESS 0x08020000
   #define USE_DFU_BOOTLOADER
+  #define USE_QSPI_FLASH
+  #define NO_INTERNAL_FLASH
 #else
   #error Invalid configuration
 #endif

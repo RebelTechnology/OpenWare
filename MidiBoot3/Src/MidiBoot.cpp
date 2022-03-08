@@ -8,6 +8,7 @@
 #include "eepromcontrol.h"
 #include "MidiController.h"
 #include "Storage.h"
+#include "support.h"
 
 static SystemMidiReader midi_rx;
 MidiController midi_tx;
@@ -28,44 +29,6 @@ const char* getFirmwareVersion(){
 }
 
 #define FIRMWARE_SECTOR 0xff
-
-void JumpToBootloader(void){
-  /* Set the address of the entry point to bootloader */
-#ifdef STM32H7xx
-  volatile uint32_t BootAddr = 0x1FF09800;
-#else
-  volatile uint32_t BootAddr = 0x1FF00000;
-#endif
- 
-  /* Disable all interrupts */
-  __disable_irq();
-
-  /* Disable Systick timer */
-  SysTick->CTRL = 0;
-	 
-  /* Set the clock to the default state */
-  HAL_RCC_DeInit();
-
-  /* Clear Interrupt Enable Register & Interrupt Pending Register */
-  for(uint32_t i=0; i<5; i++){
-    NVIC->ICER[i]=0xFFFFFFFF;
-    NVIC->ICPR[i]=0xFFFFFFFF;
-  }
-	 
-  /* Re-enable all interrupts */
-  __enable_irq();
-	
-  /* Set up the jump to booloader address + 4 */
-  void (*SysMemBootJump)(void);
-  SysMemBootJump = (void (*)(void)) (*((uint32_t *) ((BootAddr + 4))));
- 
-  /* Set the main stack pointer to the bootloader stack */
-  __set_MSP(*(uint32_t *)BootAddr);
- 
-  /* Call the function to jump to bootloader location */
-  SysMemBootJump();
-  for(;;);
-}
 
 void led_off(){
 #ifdef USE_LED
@@ -126,34 +89,46 @@ void setProgress(uint16_t value, const char* msg){
   led_toggle();
 }
 
+Resource* getResource(uint8_t slot){
+  size_t len = storage.getNumberOfResources();
+  size_t resource_index = MAX_NUMBER_OF_PATCHES;
+  for(size_t i=0; i<len; ++i){
+    Resource* resource = storage.getResource(i);
+    if(resource->isValid()){
+      if(resource->isPatch()){
+	if(resource->getSlot() == slot)
+	  return resource;
+      }else if(resource_index++ == slot){
+	return resource;
+      }
+    }
+  }
+  return NULL;
+}
+
 void eraseFromFlash(uint8_t sector){
-  eeprom_unlock();
   if(sector == 0xff){
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
     storage.erase(RESOURCE_PORT_MAPPED);
 #endif
     storage.erase(RESOURCE_MEMORY_MAPPED);
     sendMessage(SYSEX_PROGRAM_MESSAGE, "Erased storage");
     led_green();
   }else{
-    eeprom_erase_sector(sector, FLASH_BANK_1);
-    sendMessage(SYSEX_PROGRAM_MESSAGE, "Erased flash sector");
-    led_green();
+    Resource* resource = getResource(sector);
+    if(resource != NULL){
+      storage.eraseResource(resource);
+      if(sector < MAX_NUMBER_OF_PATCHES)
+	sendMessage(SYSEX_PROGRAM_MESSAGE, "Erased patch");
+      else
+	sendMessage(SYSEX_PROGRAM_MESSAGE, "Erased resource");      
+    }
   }
-  eeprom_lock();
 }
 
 void saveToFlash(uint8_t sector, void* data, uint32_t length){
-  // TODO!
   if(sector == FIRMWARE_SECTOR && length <= (3*128)*1024){
     eeprom_unlock();
-    // eeprom_erase_sector(FLASH_SECTOR_1, FLASH_BANK_1);
-    // if(length > 128*1024){
-    //   eeprom_erase_sector(FLASH_SECTOR_2, FLASH_BANK_1);
-    //   if(length > (128+128)*1024){
-    //     eeprom_erase_sector(FLASH_SECTOR_3, FLASH_BANK_1);
-    //   }
-    // }
     extern char _BOOTLOADER_END;
     uint32_t addr = (uint32_t)&_BOOTLOADER_END;
     eeprom_erase(addr, length);
@@ -194,6 +169,27 @@ extern "C" {
     return false;
   }
 
+  void sendResourceNames(){
+    size_t len = storage.getNumberOfResources();
+    size_t resource_index = MAX_NUMBER_OF_PATCHES;
+    for(size_t i=0; i<len; ++i){
+      Resource* resource = storage.getResource(i);
+      if(resource->isValid()){
+	if(resource->isPatch()){
+	  midi_tx.sendName(SYSEX_PRESET_NAME_COMMAND, resource->getSlot(), resource->getName(),
+			   resource->getDataSize(), storage.getChecksum(resource));
+	}else{
+	  midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, resource_index++, resource->getName(),
+			   resource->getDataSize(), storage.getChecksum(resource));
+	}
+      }
+      midi_tx.transmit();
+      HAL_Delay(10);
+    }
+  }
+
+  static volatile bool send_resource_names = false;
+
   void setup(){
     led_green();
     midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
@@ -220,6 +216,10 @@ extern "C" {
       }
     }
 #endif
+    if(send_resource_names){
+      send_resource_names = false;
+      sendResourceNames();
+    }
     midi_tx.transmit();
   }
 
@@ -271,11 +271,6 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   error(RUNTIME_ERROR, "Invalid STORE command");
 }
 
-void device_reset(){
-  *OWLBOOT_MAGIC_ADDRESS = 0;
-  NVIC_SystemReset();
-}
-
 void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
   if(size < 5 || data[1] != MIDI_SYSEX_MANUFACTURER)     
     return;
@@ -291,8 +286,8 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     break;
   case SYSEX_BOOTLOADER_COMMAND:
 #ifdef USE_DFU_BOOTLOADER
-    sendMessage(SYSEX_PROGRAM_MESSAGE, "Jumping to  bootloader");
-    JumpToBootloader();
+    sendMessage(SYSEX_PROGRAM_MESSAGE, "Enter DFU bootloader");
+    device_dfu();
 #else
     error(RUNTIME_ERROR, "Bootloader OK");
 #endif
@@ -401,18 +396,22 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
       sendMessage();
       // midi_tx.sendDeviceInfo();
       break;
-    // case SYSEX_RESOURCE_NAME_COMMAND:
-    //   midi_tx.sendResourceNames();
-    //   break;
+    case SYSEX_RESOURCE_NAME_COMMAND:
+      // midi_tx.sendResourceNames();
+      // break;
+    case SYSEX_PRESET_NAME_COMMAND:
+      // midi_tx.sendPatchNames();
+      send_resource_names = true;
+      break;
     case SYSEX_FIRMWARE_VERSION:
       midi_tx.sendFirmwareVersion();
       break;
     case SYSEX_DEVICE_ID:
       midi_tx.sendDeviceId();
       break;
-    // case SYSEX_DEVICE_STATS:
-    //   midi_tx.sendDeviceStats();
-    //   break;
+    case SYSEX_DEVICE_STATS:
+      midi_tx.sendDeviceStats();
+      break;
     // case SYSEX_BOOTLOADER_VERSION:
     //   midi_tx.sendBootloaderVersion();
     //   break;
