@@ -234,16 +234,33 @@ int qspi_erase_block(uint32_t address, size_t size){
 
 void qspi_enter_indirect_mode(){
   if(qspi_mapped_mode == 1){
-    extern QSPI_HandleTypeDef QSPI_FLASH_HANDLE;
-    flash_init(&QSPI_FLASH_HANDLE);
     qspi_mapped_mode = 0;
+#if 1
+    // clear busy bit to deactivate memory mapped mode
+    /* The memory-mapped mode can be deactivated by changing the FMODE bits in the QUADSPI_CCR register when BUSY is cleared. In Memory-mapped mode, BUSY goes high as soon as the first memory-mapped access occurs. Because of the prefetch operations, BUSY does not fall until there is a timeout, there is an abort, or the peripheral is disabled.
+       https://community.st.com/s/question/0D50X00009XkaJuSAJ/stm32f7-qspi-exit-memory-mapped-mode
+     */
+    if((FlagStatus)(__HAL_QSPI_GET_FLAG(qspi_handle, QSPI_FLAG_BUSY)) == SET){
+      qspi_handle->State = HAL_QSPI_STATE_BUSY;
+      HAL_QSPI_Abort(qspi_handle);
+    }
+#else
+    // reinitialise driver
+    HAL_QSPI_DeInit(qspi_handle);
+    // prevents timeout due to previous operations in some cases
+    // https://community.st.com/s/question/0D50X00009XkXMHSA3/qspi-flag-qspiflagbusy-sometimes-stays-set
+    if((FlagStatus)(__HAL_QSPI_GET_FLAG(qspi_handle, QSPI_FLAG_BUSY)) == SET){
+      qspi_handle->State = HAL_QSPI_STATE_BUSY;
+      HAL_QSPI_Abort(qspi_handle);
+    }
+    if(HAL_QSPI_Init(qspi_handle) != HAL_OK)
+      Error_Handler();
+#endif
   }
 }
 
 void qspi_enter_mapped_mode(){
   if(qspi_mapped_mode == 0){
-    extern QSPI_HandleTypeDef QSPI_FLASH_HANDLE;
-    flash_init(&QSPI_FLASH_HANDLE);
     flash_status();
     flash_memory_map(-122);
     qspi_mapped_mode = 1;
@@ -296,37 +313,9 @@ int flash_erase(uint32_t address, size_t size){
 }
 #endif
 
-#if 0
-void flash_init(void* handle){
-  qspi_handle = (QSPI_HandleTypeDef*)handle;
-  qspi_handle->Instance = QUADSPI;
-  /* QSPI clock = 480MHz / (1+9) = 48MHz */
-  /* QSPI clock = 480MHz / (1+4) = 96MHz */
-  qspi_handle->Init.ClockPrescaler     = 9;
-  /* qspi_handle->Init.ClockPrescaler     = 4; // 4 and 5 don't work? 8 works  */
-  qspi_handle->Init.FifoThreshold      = 4;
-  qspi_handle->Init.SampleShifting     = QSPI_SAMPLE_SHIFTING_NONE;
-  qspi_handle->Init.FlashSize          = 22; // 2^(22+1) = 8M / 64Mbit
-  qspi_handle->Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
-  qspi_handle->Init.ClockMode          = QSPI_CLOCK_MODE_0;
-  HAL_QSPI_DeInit(qspi_handle);
-  // prevents timeout due to previous operations in some cases
-  // https://community.st.com/s/question/0D50X00009XkXMHSA3/qspi-flag-qspiflagbusy-sometimes-stays-set
-  if((FlagStatus)(__HAL_QSPI_GET_FLAG(qspi_handle, QSPI_FLAG_BUSY)) == SET){
-    qspi_handle->State = HAL_QSPI_STATE_BUSY;
-    HAL_QSPI_Abort(qspi_handle);
-  }
-  if(HAL_QSPI_Init(qspi_handle) != HAL_OK)
-    Error_Handler();
-  if(HAL_QSPI_SetFifoThreshold(qspi_handle, 16) != HAL_OK)
-    Error_Handler();
-  qspi_status = flash_status();
-}
-#else
 void flash_init(void* handle){
   qspi_handle = (QSPI_HandleTypeDef*)handle;
 }
-#endif
 
 int flash_read_register(int instruction){
   QSPI_CommandTypeDef cmd;

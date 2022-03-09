@@ -32,7 +32,7 @@ void MPU_Config(void){
   extern char _DMA_DATA;
   MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
   MPU_InitStruct.BaseAddress      = (uint32_t)&_DMA_DATA;
-  MPU_InitStruct.Size             = MPU_REGION_SIZE_32KB;
+  MPU_InitStruct.Size             = MPU_REGION_SIZE_128KB;
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
   MPU_InitStruct.IsBufferable     = MPU_ACCESS_NOT_BUFFERABLE;
   MPU_InitStruct.IsCacheable      = MPU_ACCESS_NOT_CACHEABLE;
