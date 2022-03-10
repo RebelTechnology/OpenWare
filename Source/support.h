@@ -16,6 +16,7 @@
    void device_reset_to(uint32_t address);
 
    void device_cache_invalidate();
+   void device_watchdog(); // tickle the IWDG to prevent reset
 
 #ifdef __cplusplus
 }

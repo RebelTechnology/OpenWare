@@ -2,7 +2,6 @@
 #define __OWL_H__
 #include <stdint.h>
 #include "device.h"
-#include "support.h"
 #include "callbacks.h"
 #include "ProgramVector.h"
 

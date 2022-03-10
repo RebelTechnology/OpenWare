@@ -2,7 +2,6 @@
 #define __PatchDefinition_hpp__
 
 #include "device.h"
-#include "support.h"
 #include "message.h"
 #include "ProgramVector.h"
 #include "ProgramHeader.h"

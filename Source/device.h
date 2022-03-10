@@ -2,6 +2,7 @@
 #define __DEVICE_H__
 
 #include "hardware.h"
+#include "support.h"
 
 #define FIRMWARE_VERSION "v22.2.2"
 

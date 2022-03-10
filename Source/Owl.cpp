@@ -18,7 +18,6 @@
 #include "message.h"
 #include "Storage.h"
 #include "PatchRegistry.h"
-#include "support.h"
 
 #if defined USE_RGB_LED
 #include "rainbow.h"
@@ -192,13 +191,7 @@ void Owl::loop(){
   busstatus = bus_status();
 #endif
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
-#ifdef USE_IWDG
-#ifdef STM32H7xx
-  IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
-#else
-  IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
-#endif
-#endif
+  device_watchdog();
   if(backgroundTask != NULL)
     backgroundTask->loop();
 }

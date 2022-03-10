@@ -8,7 +8,6 @@
 #include "eepromcontrol.h"
 #include "MidiController.h"
 #include "Storage.h"
-#include "support.h"
 
 static SystemMidiReader midi_rx;
 MidiController midi_tx;

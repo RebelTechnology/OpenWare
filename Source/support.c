@@ -65,10 +65,20 @@ void device_reset_to(uint32_t address){
 }
 
 void device_cache_invalidate(){
-  #ifdef USE_ICACHE
-    SCB_InvalidateICache();
+#ifdef USE_ICACHE
+  SCB_InvalidateICache();
 #endif
 #ifdef USE_DCACHE
-    SCB_CleanInvalidateDCache();
+  SCB_CleanInvalidateDCache();
+#endif
+}
+
+void device_watchdog(){
+#ifdef USE_IWDG
+#ifdef STM32H7xx
+  IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
+#else
+  IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
+#endif
 #endif
 }
