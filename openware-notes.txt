@@ -433,5 +433,6 @@ e.g. 4ch adc/dac, 4ch usb tx/rx, 8 ch fx
        
 todo:
 - use (if possible) HAL_UARTEx_ReceiveToIdle_DMA
+- make USB Audio interface optional / configurable
 
 -----------------------------------------------------------------
