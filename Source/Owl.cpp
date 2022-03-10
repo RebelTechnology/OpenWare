@@ -48,9 +48,6 @@ Codec codec;
 #ifdef USE_ADC
 uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM = {};
 #endif
-#ifdef USE_DAC
-extern DAC_HandleTypeDef hdac;
-#endif
 
 int16_t getAnalogValue(uint8_t ch){
 #ifdef USE_ADC
@@ -120,8 +117,9 @@ void Owl::setup(void){
 #endif /* USE_CODEC */
 
 #ifdef USE_DAC
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
+  extern DAC_HandleTypeDef DAC_HANDLE;
+  HAL_DAC_Start(&DAC_HANDLE, DAC_CHANNEL_1);
+  HAL_DAC_Start(&DAC_HANDLE, DAC_CHANNEL_2);
   setAnalogValue(PARAMETER_F, 0);
   setAnalogValue(PARAMETER_G, 0);
 #endif

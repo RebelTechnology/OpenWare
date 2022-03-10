@@ -211,6 +211,10 @@
 #define DMA_RAM
 #endif
 
+#ifndef DAC_HANDLE
+#define DAC_HANDLE                   hdac
+#endif
+
 #if defined USE_USBD_FS
 #define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
 #elif defined USE_USBD_HS
