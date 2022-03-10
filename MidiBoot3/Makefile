@@ -64,8 +64,8 @@ erase:
 erase-boot: # flash erase_sector num first last
 	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 0 1" -c "exit"
 
-erase-storage: # flash erase_sector num first last
-	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 1 3" -c "exit"
+erase-storage: # flash erase_sector bank first last
+	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 1 0 3" -c "exit" # Genius 1M part has dual 512K banks
 
 dump: # flash read_bank num filename [offset [length]]
 	$(OPENOCD) -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"

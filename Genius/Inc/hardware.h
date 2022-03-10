@@ -6,6 +6,7 @@
 #define HARDWARE_VERSION             "Genius"
 
 #define USE_SPI_FLASH
+#define NO_INTERNAL_FLASH
 /* #define USE_USBH_HID */
 
 /* #define USE_BKPSRAM */

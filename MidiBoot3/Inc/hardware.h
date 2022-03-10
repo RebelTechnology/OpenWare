@@ -18,6 +18,7 @@
   #define BOOT1_Pin GPIO_PIN_10
   #define BOOT1_GPIO_Port GPIOC
   #define USE_SPI_FLASH
+  #define NO_INTERNAL_FLASH
 #elif defined OWL_MAGUS
   #define HARDWARE_VERSION    "OWL Magus Boot"
   #define HARDWARE_ID         MAGUS_HARDWARE
