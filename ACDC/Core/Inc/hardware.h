@@ -19,6 +19,8 @@
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
 #define USE_QSPI_FLASH
+#define NO_INTERNAL_FLASH
+#define USE_DFU_BOOTLOADER
 
 /* #define AUDIO_INPUT_GAIN            114 */
 #define AUDIO_OUTPUT_GAIN           114

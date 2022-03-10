@@ -21,6 +21,7 @@
 
 #define USE_QSPI_FLASH
 #define NO_INTERNAL_FLASH
+#define USE_DFU_BOOTLOADER
 
 /* #define AUDIO_INPUT_GAIN            114 */
 #define AUDIO_OUTPUT_GAIN           109 // 114
