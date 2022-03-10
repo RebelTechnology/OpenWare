@@ -28,14 +28,26 @@ void device_reset_to(uint32_t address){
   SysTick->CTRL = 0;
   /* Set the clock to the default state */
   HAL_RCC_DeInit();
+  HAL_DeInit();
+
+  #ifdef USE_ICACHE
+  SCB_InvalidateICache();
+#endif
+#ifdef USE_DCACHE
+  SCB_CleanInvalidateDCache();
+#endif
+
   /* Clear Interrupt Enable Register & Interrupt Pending Register */
-  for(uint32_t i=0; i<5; i++){
-    NVIC->ICER[i]=0xFFFFFFFF;
-    NVIC->ICPR[i]=0xFFFFFFFF;
+  for(uint32_t i=0; i<8; i++){
+    NVIC->ICER[i] = 0xFFFFFFFF;
+    NVIC->ICPR[i] = 0xFFFFFFFF;
   }
-  /* Re-enable all interrupts */
+
+  /* Re-enable interrupts */
   __enable_irq();
+
   __DSB(); __ISB(); // memory and instruction barriers
+
   if(BootAddr == 0){
     NVIC_SystemReset();
   }else{
