@@ -70,6 +70,7 @@ public:
     extern char _PATCHRAM;
     buffer = (uint8_t*)&_PATCHRAM; 
 #endif
+    memset(buffer, 0, sizeof(ResourceHeader));
     index = sizeof(ResourceHeader); // start writing data after resource header
   }
   
