@@ -88,9 +88,13 @@
 #define QSPI_SPRP_CMD                (0xFB) // Set Pointer Region Protection
 #define QSPI_MBR_CMD                 (0xFF) // Mode Bit Reset
 
-#define QSPI_SR_WEL                  (0x02) // Write Enable Latch
 #define QSPI_SR_WIP                  (0x01) // Write In Progress
-
+#define QSPI_SR_WEL                  (0x02) // Write Enable Latch
+#define QSPI_SR_BLOCKPR              (0x5C) // Block protected against program and erase operations
+#define QSPI_SR_PRBOTTOM             (0x20) // Protected memory area defined by BLOCKPR starts from top or bottom
+#define QSPI_SR_QUADEN               (0x40) // Quad IO mode enabled if =1
+#define QSPI_SR_SRWREN               (0x80) // Status register write enable/disable
+  
 #define QSPI_READ_MODE               -122
 #define QSPI_TIMEOUT                 HAL_QPSI_TIMEOUT_DEFAULT_VALUE
 
@@ -173,7 +177,16 @@ static int qspi_write_enable() {
   return qspi_wait(QSPI_SR_WEL, QSPI_SR_WEL);
 }
 
-int qspi_write_page(uint32_t address, void* data, size_t size){
+static void qspi_abort() {
+  // prevents timeout due to previous operations in some cases
+  // https://community.st.com/s/question/0D50X00009XkXMHSA3/qspi-flag-qspiflagbusy-sometimes-stays-set
+  if((FlagStatus)(__HAL_QSPI_GET_FLAG(qspi_handle, QSPI_FLAG_BUSY)) == SET){
+    qspi_handle->State = HAL_QSPI_STATE_BUSY;
+    HAL_QSPI_Abort(qspi_handle);
+  }
+}
+
+static int qspi_write_page(uint32_t address, void* data, size_t size){
   // write in 1-1-1 mode
   QSPI_CommandTypeDef cmd;
   cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
@@ -240,19 +253,11 @@ void qspi_enter_indirect_mode(){
     /* The memory-mapped mode can be deactivated by changing the FMODE bits in the QUADSPI_CCR register when BUSY is cleared. In Memory-mapped mode, BUSY goes high as soon as the first memory-mapped access occurs. Because of the prefetch operations, BUSY does not fall until there is a timeout, there is an abort, or the peripheral is disabled.
        https://community.st.com/s/question/0D50X00009XkaJuSAJ/stm32f7-qspi-exit-memory-mapped-mode
      */
-    if((FlagStatus)(__HAL_QSPI_GET_FLAG(qspi_handle, QSPI_FLAG_BUSY)) == SET){
-      qspi_handle->State = HAL_QSPI_STATE_BUSY;
-      HAL_QSPI_Abort(qspi_handle);
-    }
+    qspi_abort();
 #else
     // reinitialise driver
     HAL_QSPI_DeInit(qspi_handle);
-    // prevents timeout due to previous operations in some cases
-    // https://community.st.com/s/question/0D50X00009XkXMHSA3/qspi-flag-qspiflagbusy-sometimes-stays-set
-    if((FlagStatus)(__HAL_QSPI_GET_FLAG(qspi_handle, QSPI_FLAG_BUSY)) == SET){
-      qspi_handle->State = HAL_QSPI_STATE_BUSY;
-      HAL_QSPI_Abort(qspi_handle);
-    }
+    qspi_abort();
     if(HAL_QSPI_Init(qspi_handle) != HAL_OK)
       Error_Handler();
 #endif
@@ -406,7 +411,6 @@ int qspi_qpi_mode(bool quad){
   */
 
   QSPI_CommandTypeDef cmd;  
-  cmd.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
   cmd.AddressSize       = QSPI_ADDRESS_24_BITS;
   cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
   cmd.DdrMode           = QSPI_DDR_MODE_DISABLE;
@@ -429,10 +433,12 @@ int qspi_qpi_mode(bool quad){
     if(HAL_QSPI_Command(qspi_handle, &cmd, QSPI_TIMEOUT) != HAL_OK)
       return -1;
   }
-  volatile size_t counter = 10000;
-  while(counter--)
-    __NOP();
-  /* HAL_Delay(10); */
+  /* Automatic polling to wait for QUADEN bit=1 and WIP bit=0 */
+  qspi_wait(QSPI_SR_QUADEN, QSPI_SR_QUADEN|QSPI_SR_WIP);
+
+  /* volatile size_t counter = 10000; */
+  /* while(counter--) */
+  /*   __NOP(); */
   return 0;
 }
 
