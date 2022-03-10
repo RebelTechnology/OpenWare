@@ -21,6 +21,7 @@ void device_reset(){
 }
 
 void device_reset_to(uint32_t address){
+  // https://community.st.com/s/article/STM32H7-bootloader-jump-from-application
   volatile uint32_t BootAddr = address;
   /* Disable all interrupts */
   __disable_irq();
@@ -46,7 +47,7 @@ void device_reset_to(uint32_t address){
   /* Re-enable interrupts */
   __enable_irq();
 
-  __DSB(); __ISB(); // memory and instruction barriers
+  /* __DSB(); __ISB(); // memory and instruction barriers */
 
   if(BootAddr == 0){
     NVIC_SystemReset();
@@ -61,4 +62,13 @@ void device_reset_to(uint32_t address){
   }
   /* Shouldn't get here */
   for(;;);
+}
+
+void device_cache_invalidate(){
+  #ifdef USE_ICACHE
+    SCB_InvalidateICache();
+#endif
+#ifdef USE_DCACHE
+    SCB_CleanInvalidateDCache();
+#endif
 }
