@@ -400,8 +400,8 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
 #ifdef PROGRAM_VECTOR_V13
   extern uint8_t _PATCHRAM, _PATCHRAM_END, _PATCHRAM_SIZE;
   uint8_t* end = (uint8_t*)def->getStackBase(); // program end
-  uint32_t remain = &_PATCHRAM_END - end; // space left
-  if(end < &_PATCHRAM || remain > (uint32_t)&_PATCHRAM_SIZE) // sanity check
+  uint32_t remain = &_PATCHRAM_END - end; // space left (don't use patch declared stack size)
+  if(end < &_PATCHRAM || end+remain > &_PATCHRAM_END) // sanity check
     remain = 0; // prevent errors if program stack is not linked to PATCHRAM
 #ifdef USE_CCM_RAM
   extern char _CCMRAM, _CCMRAM_SIZE;
@@ -414,7 +414,6 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
     end = (uint8_t*)&_PATCHRAM;
     remain = (uint32_t)&_PATCHRAM_SIZE; // use all of PATCHRAM for heap
     plusend = (uint8_t*)def->getStackBase();
-    plusremain = def->getStackSize();
     plusremain = &_PLUSRAM_END - plusend;
   }
 #endif
@@ -573,9 +572,6 @@ void runAudioTask(void* p){
 #ifdef USE_CODEC
     codec.clear();
 #endif
-    // memory barriers for dynamically loaded code
-    __DSB();
-    __ISB();
     // run program
     def->run();
   }
@@ -672,13 +668,8 @@ void runManagerTask(void* p){
     }
     // vTaskDelay(20);
     if(ulNotifiedValue & START_PROGRAM_NOTIFICATION){ // start
+      device_cache_invalidate();
       if(audioTask == NULL && getPatchDefinition()->isValid()){
-#ifdef USE_ICACHE
-	SCB_InvalidateICache();
-#endif
-#ifdef USE_DCACHE
-	SCB_CleanInvalidateDCache();
-#endif
 	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
 				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
 				      NULL, AUDIO_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);

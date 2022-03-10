@@ -1,13 +1,13 @@
 #ifndef __PatchDefinition_hpp__
 #define __PatchDefinition_hpp__
 
+#include "device.h"
+#include "support.h"
+#include "message.h"
 #include "ProgramVector.h"
 #include "ProgramHeader.h"
 #include "Storage.h"
 
-// todo: put implementation straight into PatchDefinition base class
-// 'load' functions should be renamed
-// 'verify' should be called 'load'
 class PatchDefinition {
 private:
   uint32_t* stackBase;
@@ -29,6 +29,8 @@ private:
       return false;
     linkAddress = header->linkAddress;
     programSize = (uint32_t)header->endAddress - (uint32_t)header->linkAddress;
+    if(programSize != binarySize)
+      error(PROGRAM_ERROR, "Invalid program size");
     stackBase = header->stackBegin;
     stackSize = (uint32_t)header->stackEnd - (uint32_t)header->stackBegin;
     programVector = header->programVector;
@@ -100,8 +102,11 @@ public:
   void run(){
     // check magic
     if((*(uint32_t*)linkAddress) == 0xDADAC0DE){
-      if(binarySize < programSize) // blank out bss area
-	memset(linkAddress+binarySize, 0, programSize - binarySize);
+      // if(binarySize < programSize) // blank out bss area
+      // 	memset(linkAddress+binarySize, 0, programSize - binarySize);
+      device_cache_invalidate();
+      // memory barriers for dynamically loaded code
+      __DSB(); __ISB();
       programFunction();
     }
   }
