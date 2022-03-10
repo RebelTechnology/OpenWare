@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v22.2.1"
+#define FIRMWARE_VERSION "v22.2.2"
 
 #ifdef USE_SPI_FLASH
 #define USE_NOR_FLASH

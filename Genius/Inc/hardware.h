@@ -6,13 +6,12 @@
 #define HARDWARE_VERSION             "Genius"
 
 #define USE_SPI_FLASH
-
 /* #define USE_USBH_HID */
 
+/* #define USE_BKPSRAM */
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
-
 #define USE_PLUS_RAM
 
 #ifndef DEBUG
@@ -20,10 +19,7 @@
 #define USE_DCACHE
 #endif
 
-/* #define USE_BKPSRAM */
-
 #define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
-
 #define hdac hdac1
 
 #define USE_SCREEN
