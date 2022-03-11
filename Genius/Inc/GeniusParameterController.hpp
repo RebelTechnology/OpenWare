@@ -19,6 +19,7 @@ extern DigitalBusReader bus;
 #include "ProgramManager.h"
 #include "PatchRegistry.h"
 #include "ApplicationSettings.h"
+#include "cmsis_os.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -601,8 +602,11 @@ void setDisplayMode(DisplayMode mode){
     uint8_t patchselect = selectPatchPage.patchselect;
     if(patchselect != program.getProgramIndex() &&
        registry.hasPatch(patchselect)){
+      program.exitProgram(false);
+      while(program.isProgramRunning())
+	vTaskDelay(2);
       program.loadProgram(patchselect);
-      program.resetProgram(false);
+      program.startProgram(false);
     }
     break;
   }
