@@ -187,9 +187,9 @@
 #define LEDS_BRIGHTNESS              20 /* default value - 0 = off, 63 = supernova */
 #endif
 
-#define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
-#define SCREEN_TASK_STACK_SIZE       (2*1024/sizeof(portSTACK_TYPE))
+#define PROGRAM_TASK_STACK_SIZE      (6*1024/sizeof(portSTACK_TYPE))
+#define MANAGER_TASK_STACK_SIZE      (2*1024/sizeof(portSTACK_TYPE))
+#define SCREEN_TASK_STACK_SIZE       (4*1024/sizeof(portSTACK_TYPE))
 
 #ifndef ARM_CYCLES_PER_SAMPLE
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
