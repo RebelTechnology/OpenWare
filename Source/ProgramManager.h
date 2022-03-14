@@ -25,6 +25,7 @@ public:
 
   void loadProgram(uint8_t index);
   void loadStaticProgram(PatchDefinition* def);
+  void loadDynamicProgram(ResourceHeader* header);
   void loadDynamicProgram(void* address, uint32_t length);
   void startManager();
   void runManager();

@@ -83,10 +83,10 @@ bool PatchRegistry::hasPatches(){
 bool PatchRegistry::loadProgram(uint8_t index){
   Resource* resource = getPatch(index-1);  
   if(resource && resource->isValid())
-    return patchDefinition.load(resource) && patchDefinition.isValid();
+    return patchDefinition.load(resource->getHeader()) && patchDefinition.isValid();
   return false;
 }
 
-bool PatchRegistry::loadProgram(void* address, uint32_t length){
-  return patchDefinition.load(address, length) && patchDefinition.isValid();
-}
+// bool PatchRegistry::loadProgram(void* address, uint32_t length){
+//   return patchDefinition.load(address, length) && patchDefinition.isValid();
+// }

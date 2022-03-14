@@ -161,7 +161,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 #define AUDIO_TASK_PRIORITY  4
 
 // #define MANAGER_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_PRIORITY  (AUDIO_TASK_PRIORITY | portPRIVILEGE_BIT)
+#define MANAGER_TASK_PRIORITY  ((AUDIO_TASK_PRIORITY + 1) | portPRIVILEGE_BIT)
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
 #define FLASH_TASK_PRIORITY 1 // allow default task to run when FLASH task yields
 #define SCREEN_TASK_PRIORITY 3 // less than AUDIO_TASK_PRIORITY, more than osPriorityNormal (which is probably 1)
@@ -177,7 +177,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 ProgramManager program;
 PatchRegistry registry;
 ProgramVector staticVector;
-ProgramVector* programVector = &staticVector;
+ProgramVector* volatile programVector = &staticVector;
 BootloaderStorage bootloader;
 static volatile TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
@@ -383,6 +383,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->audio_blocksize = AUDIO_BLOCK_SIZE;
 #endif
   pv->buttons = button_values;
+  pv->error = 0;
   pv->registerPatch = onRegisterPatch;
   pv->registerPatchParameter = onRegisterPatchParameter;
   pv->cycles_per_block = 0;
@@ -561,8 +562,7 @@ void runScreenTask(void* p){
 
 void runAudioTask(void* p){
   PatchDefinition* def = getPatchDefinition();
-  if(def->isValid()){
-    def->copy();
+  if(def->isValid() && def->copy()){
     ProgramVector* pv = def->getProgramVector();
     updateProgramVector(pv, def);
     programVector = pv;
@@ -749,12 +749,23 @@ void ProgramManager::updateProgramIndex(uint8_t index){
   }
 }
 
-void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  
-  if(registry.loadProgram(address, length))
+void ProgramManager::loadDynamicProgram(ResourceHeader* resource){
+  PatchDefinition* def = getPatchDefinition();
+  if(def->load(resource) && def->isValid())
+  // if(def->load(resource.getData(), resource.getDataSize()) && def->isValid())
     updateProgramIndex(0);
   else
     error(PROGRAM_ERROR, "Load failed");
 }
+
+// void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  
+//   // if(registry.loadProgram(address, length))
+//   PatchDefinition* def = getPatchDefinition();
+//   if(def->load(address, length) && def->isValid())
+//     updateProgramIndex(0);
+//   else
+//     error(PROGRAM_ERROR, "Load failed");
+// }
 
 void ProgramManager::loadProgram(uint8_t pid){
   if(patchindex != pid && registry.hasPatch(pid)){

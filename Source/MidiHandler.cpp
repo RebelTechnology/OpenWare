@@ -291,19 +291,14 @@ void MidiHandler::handleFirmwareRunCommand(uint8_t* data, uint16_t size){
 }
 
 void MidiHandler::runProgram(){
-  if(loader.isReady()){
-    size_t datasize = loader.getDataSize();
-    if(datasize <= MAX_SYSEX_PROGRAM_SIZE){
-      program.loadDynamicProgram(loader.getData(), datasize);
-      loader.clear();
-      // program.startProgram(true);
-      program.resetProgram(true);
-    }else{
-      error(PROGRAM_ERROR, "Patch too big");
-    }
+  if(loader.isReady() && loader.setPatchSlot(0)){
+    program.loadDynamicProgram(loader.getResourceHeader());
+    loader.clear();
+    program.startProgram(true);
+    // program.resetProgram(true);    
   }else{
     error(PROGRAM_ERROR, "No program to run");
-  }      
+  }
 }
 
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
@@ -363,24 +358,8 @@ void MidiHandler::handleFirmwareSendCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t slot = loader.decodeInt(data);
-    if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES){
-      data = (uint8_t*)loader.getResourceHeader();
-      size_t datasize = loader.getDataSize();
-      if(datasize <= MAX_SYSEX_PROGRAM_SIZE){
-	ProgramHeader* header = (ProgramHeader*)loader.getData();
-	if(header->magic == 0XDADAC0DE){	
-	  storage.writeResourceHeader(data, header->programName, datasize,
-				      FLASH_DEFAULT_FLAGS|RESOURCE_USER_PATCH|slot);
-	  program.saveToFlash(slot, data, loader.getTotalSize());
-	}else{
-	  error(PROGRAM_ERROR, "Invalid patch magic");
-	}
-      }else{
-	error(PROGRAM_ERROR, "Patch too big");
-      }
-    }else{
-      error(PROGRAM_ERROR, "Invalid STORE slot");
-    }
+    if(loader.setPatchSlot(slot))
+      program.saveToFlash(slot, loader.getResourceHeader(), loader.getTotalSize());
   }else{
     error(PROGRAM_ERROR, "Invalid STORE command");
   }
@@ -390,19 +369,8 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size > 1){
     const char* name = (const char*)data;
-    size_t len = strnlen(name, 20);
-    if(len > 0 && len < 20){
-      data = (uint8_t*)loader.getResourceHeader();
-      size_t datasize = loader.getDataSize();
-      if(datasize <= MAX_SYSEX_PAYLOAD_SIZE){
-	storage.writeResourceHeader(data, name, datasize, FLASH_DEFAULT_FLAGS);
-	program.saveToFlash(0, data, loader.getTotalSize());
-      }else{
-	error(PROGRAM_ERROR, "Resource too big");
-      }
-    }else{
-      error(PROGRAM_ERROR, "Invalid SAVE name");
-    }
+    if(loader.setResourceName(name))
+      program.saveToFlash(0, loader.getResourceHeader(), loader.getTotalSize());      
   }else{
     error(PROGRAM_ERROR, "Invalid SAVE command");
   }

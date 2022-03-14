@@ -146,17 +146,20 @@ uint32_t Storage::getChecksum(Resource* resource){
   return crc;
 }
 
-size_t Storage::readResource(Resource* resource, void* data, size_t offset, size_t length){
+size_t Storage::readResource(ResourceHeader* header, void* data, size_t offset, size_t length){
+  Resource resource(header);
   size_t ret = 0;
-  if(resource){
-    if(resource->isMemoryMapped()){
-      size_t len = std::min(resource->getDataSize()-offset, length);
-      memcpy(data, resource->getData()+offset, len);
+  if(header){
+    size_t len = std::min(resource.getDataSize()-offset, length);
+    if(resource.isInMemory()){
+      memmove(data, resource.getData()+offset, len);
+      ret = len;
+    }else if(resource.isMemoryMapped()){
+      memcpy(data, resource.getData()+offset, len);
       ret = len;
     }else{
 #ifdef USE_NOR_FLASH
-      uint32_t address = resource->getAddress();
-      size_t len = std::min(resource->getDataSize()-offset, length);
+      uint32_t address = resource.getAddress();
       flash_read(address+sizeof(ResourceHeader)+offset, (uint8_t*)data, len);
       ret = len;
 #endif
@@ -279,7 +282,7 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   for(uint8_t i=0; i<resource_count; ++i){
     if(resources[i].isValid() && resources[i].flagsContain(flags)){
       if(offset+resources[i].getTotalSize() < size){
-	readResource(&resources[i], ptr+offset,  0, resources[i].getTotalSize());
+	readResource(resources[i].getHeader(), ptr+offset,  0, resources[i].getTotalSize());
 	offset += resources[i].getTotalSize();
       }
     }
@@ -299,19 +302,23 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   index();
 }
 
-size_t Storage::writeResourceHeader(uint8_t* dest, const char* name, size_t datasize, uint32_t flags){
+size_t Storage::writeResourceHeader(void* dest, const char* name, size_t datasize, uint32_t crc, uint32_t flags){
   ResourceHeader header;
   header.magic = RESOURCE_VALID_MAGIC;
   header.size = datasize;
   strncpy(header.name, name, sizeof(header.name));
+  // strncpy(header.shortname, name, sizeof(header.shortname));
+  // header.name = name;
+  header.checksum = crc;
   header.flags = flags;
   memcpy(dest, &header, sizeof(header));
   return sizeof(header);
 }
 
-// data length must already include space for ResourceHeader
+// data must already include space for ResourceHeader
 size_t Storage::writeResource(const char* name, uint8_t* data, size_t datasize, uint32_t flags){
-  writeResourceHeader(data, name, datasize, flags);  
+  uint32_t crc = crc32(data+sizeof(ResourceHeader), datasize, 0);
+  writeResourceHeader(data, name, datasize, crc, flags);  
   return writeResource((ResourceHeader*)data);
 }
 
@@ -324,6 +331,10 @@ size_t Storage::writeResource(const char* name, uint8_t* data, size_t datasize, 
  * 5. rebuild index
  */
 size_t Storage::writeResource(ResourceHeader* header){
+  if(header->flags & RESOURCE_IN_MEMORY){
+    header->flags &= ~(RESOURCE_IN_MEMORY);
+    header->flags |= FLASH_DEFAULT_FLAGS;
+  }
 #ifndef USE_NOR_FLASH
   header->flags |= RESOURCE_MEMORY_MAPPED; // save everything mem mapped
 #endif

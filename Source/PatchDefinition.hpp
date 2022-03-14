@@ -18,9 +18,8 @@ private:
   uint32_t* linkAddress;
   uint32_t binarySize;
   uint32_t programSize;
-  char programName[20]; // ResourceHeader::name is char[20], ProgramHeader::name is char[24]
-  Resource* sourceResource = NULL;
-  void* sourceAddress = NULL;
+  char programName[16]; // ResourceHeader::name is char[16], ProgramHeader::name is char[24]
+  ResourceHeader* sourceResource;
   
   bool load(ProgramHeader* header, uint32_t sz){
     binarySize = sz;
@@ -43,23 +42,19 @@ public:
   void reset(){
     programVector = NULL;
     programFunction = NULL;
-    sourceAddress = NULL;
     sourceResource = NULL;
   }
   bool copy(){
     if(sourceResource){
-      uint32_t checksum = storage.getChecksum(sourceResource);
+      uint32_t checksum = sourceResource->checksum;
       storage.readResource(sourceResource, linkAddress, 0, binarySize);
       sourceResource = NULL;
+      device_cache_invalidate();
       uint32_t crc = crc32(linkAddress, binarySize, 0);
       if(crc != checksum){
 	error(PROGRAM_ERROR, "Invalid checksum");
 	return false;
       }
-    }else if(sourceAddress){
-      if(linkAddress != sourceAddress)
-	memmove(linkAddress, sourceAddress, binarySize);
-      sourceAddress = NULL;
     }
     return true;
   }
@@ -75,22 +70,12 @@ public:
   ProgramVector* getProgramVector(){
     return programVector;
   }
-  bool load(Resource* resource){
+  bool load(ResourceHeader* resource){
     reset();
     ProgramHeader header;
     storage.readResource(resource, &header, 0, sizeof(header));
-    if(load(&header, resource->getDataSize())){
+    if(load(&header, resource->size)){
       sourceResource = resource;
-      return true;
-    }
-    return false;
-  }
-  // called on program RUN from RAM
-  bool load(void* address, uint32_t sz){
-    reset();
-    ProgramHeader* header = (ProgramHeader*)address;
-    if(load(header, sz)){
-      sourceAddress = address;
       return true;
     }
     return false;

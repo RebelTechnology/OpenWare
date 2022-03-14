@@ -27,10 +27,10 @@ public:
   }
   Resource* getResourceByName(const char* name);  
   Resource* getResourceBySlot(uint8_t slot);  
-  size_t readResource(Resource* resource, void* data, size_t offset, size_t length);
+  size_t readResource(ResourceHeader* resource, void* data, size_t offset, size_t length);
   size_t writeResource(ResourceHeader* header);
   size_t writeResource(const char* name, uint8_t* data, size_t datasize, uint32_t flags);
-  size_t writeResourceHeader(uint8_t* dest, const char* name, size_t datasize, uint32_t flags);
+  size_t writeResourceHeader(void* dest, const char* name, size_t datasize, uint32_t crc, uint32_t flags);
   bool eraseResource(uint8_t slot);
   bool eraseResource(const char* name);
   bool eraseResource(Resource* resource);

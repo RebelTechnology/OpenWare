@@ -11,6 +11,7 @@
 #define RESOURCE_USER_PATCH      0x0200 // User patch
 #define RESOURCE_MEMORY_MAPPED   0x0400 // Internal MCU flash memory
 #define RESOURCE_PORT_MAPPED     0x0800 // External NOR flash
+#define RESOURCE_IN_MEMORY       0x1000 // In memory resource
 
 #define RESOURCE_VALID_MAGIC     0xDADADEED
 #define RESOURCE_ERASED_MAGIC    0xDADA0000
@@ -65,6 +66,9 @@ public:
   }
   bool isSystemResource(){
     return isValid() && (header->flags & RESOURCE_SYSTEM_RESOURCE);
+  }
+  bool isInMemory(){
+    return !isFree() && header->flags & RESOURCE_IN_MEMORY;
   }
   bool isMemoryMapped(){
     if(isFree()) // we can't look at the flags because they will be all ones 
@@ -125,6 +129,9 @@ public:
   }
   const char* getName(){
     return header->name;
+  }
+  uint32_t getChecksum(){
+    return header->checksum;
   }
   void setName(const char* name){
     strncpy(header->name, name, sizeof(header->name));
