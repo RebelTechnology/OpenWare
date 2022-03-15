@@ -1,4 +1,4 @@
-PROJECT = XibecaDev
+PROJECT = XibecaDevKit
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
