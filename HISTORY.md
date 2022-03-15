@@ -1,3 +1,26 @@
+22.3.0
+------
+
+* First public Genius release
+* Added CRC checksum to stored resources
+* Critical sections protect task swapping
+* Fixed 64k size limit in flash storage
+* Updated libraries
+
+Known Issues:
+* USB Host does not support reconnecting devices
+
+
+22.2.2
+------
+
+* Updated BioSignals
+* Support for AC/DC and XibecaDevKit subprojects
+* Added support for QSPI flash
+* Bootloader refactoring
+* Bootloader support for listing and deleting resources
+
+
 22.2.0
 ------
 
@@ -25,9 +48,6 @@
 * rx asynchronous mode with explicit feedback
 * tx asynchronous mode with variable output size
 * Fix USBD audio descriptor issues (Windows support)
-
-Known Issues:
-* USB Host does not support reconnecting devices
 
 
 22.0.0
