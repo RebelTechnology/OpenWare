@@ -1283,7 +1283,6 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
 	/* Mute Control */
       case AUDIO_CONTROL_REQ_FU_MUTE: {
 	usbd_audio_mute_callback(haudio->control.data[0]);
-	/* ((USBD_AUDIO_ItfTypeDef*)pdev->pUserData)->MuteCtl(haudio->control.data[0]); */
 	break;
       }
 	/* Volume Control */
@@ -1291,7 +1290,6 @@ static uint8_t  USBD_AUDIO_EP0_RxReady (USBD_HandleTypeDef *pdev)
 	int16_t vol = *(int16_t*)&haudio->control.data[0];
 	haudio->volume = vol;
 	usbd_audio_gain_callback(vol);
-	/* ((USBD_AUDIO_ItfTypeDef*)pdev->pUserData)->VolumeCtl(VOL_PERCENT(vol)); */
 	break;
       }
 #endif
@@ -1617,7 +1615,6 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
   /* get_usb_full_speed_rate(haudio->frequency, fb_data); // reset to new frequency */
 
   /* usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer); */
-  /* ((USBD_AUDIO_ItfTypeDef*)pdev->pUserData)->Init(haudio->frequency, VOL_PERCENT(haudio->volume), 0); */
 }
 #endif /* USE_USBD_AUDIO_RX */
 
@@ -1639,10 +1636,8 @@ static uint8_t  *USBD_AUDIO_GetDeviceQualifierDesc (uint16_t *length)
 * @param  fops: Audio interface callback
 * @retval status
 */
-uint8_t  USBD_AUDIO_RegisterInterface  (USBD_HandleTypeDef   *pdev, 
-                                        void *fops)
+uint8_t USBD_AUDIO_RegisterInterface(USBD_HandleTypeDef *pdev, void *fops)
 {
-  pdev->pUserData = fops;
   return USBD_OK;
 }
 
