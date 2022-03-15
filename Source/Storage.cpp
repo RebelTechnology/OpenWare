@@ -125,6 +125,11 @@ void Storage::index(){
   resource_count = i+1;
 }
 
+uint32_t Storage::getChecksum(ResourceHeader* header){
+  Resource resource(header);
+  return getChecksum(&resource);
+}
+
 uint32_t Storage::getChecksum(Resource* resource){
   uint32_t crc = 0;
   if(resource->isMemoryMapped()){
@@ -134,7 +139,6 @@ uint32_t Storage::getChecksum(Resource* resource){
     uint8_t data[32]; // read chunk of bytes at a time
     uint32_t address = resource->getAddress() + sizeof(ResourceHeader);
     uint32_t end = address + resource->getDataSize();
-    // uint32_t start = address;
     while(address < end){
       size_t len = std::min(sizeof(data), (size_t)(end-address));
       flash_read(address, data, len);
@@ -160,6 +164,7 @@ size_t Storage::readResource(ResourceHeader* header, void* data, size_t offset, 
     }else{
 #ifdef USE_NOR_FLASH
       uint32_t address = resource.getAddress();
+      memset(data, 0, len);
       flash_read(address+sizeof(ResourceHeader)+offset, (uint8_t*)data, len);
       ret = len;
 #endif
@@ -180,6 +185,11 @@ bool Storage::eraseResource(const char* name){
   if(resource)
     return eraseResource(resource);
   return false;
+}
+
+bool Storage::eraseResource(ResourceHeader* header){
+  Resource resource(header);
+  return eraseResource(&resource);
 }
 
 // mark as deleted
@@ -306,8 +316,7 @@ size_t Storage::writeResourceHeader(void* dest, const char* name, size_t datasiz
   ResourceHeader header;
   header.magic = RESOURCE_VALID_MAGIC;
   header.size = datasize;
-  strncpy(header.name, name, sizeof(header.name));
-  // strncpy(header.shortname, name, sizeof(header.shortname));
+  strlcpy(header.name, name, sizeof(header.name));
   // header.name = name;
   header.checksum = crc;
   header.flags = flags;

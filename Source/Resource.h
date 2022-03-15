@@ -52,7 +52,9 @@ public:
    * @return false if the resource is null, free, or corrupt.
    */
   bool isValidSize(){
-    if(isMemoryMapped()){
+    if(isInMemory()){
+      return getTotalSize() >  sizeof(ResourceHeader);
+    }else if(isMemoryMapped()){
       return uint32_t(header) + getTotalSize() < INTERNAL_STORAGE_END;
 #ifdef USE_NOR_FLASH
     }else{

@@ -51,7 +51,7 @@ static void flash_BulkErase (void);
 
 static void _flash_writeEN (void);
 static void _flash_writeDIS (void);
-static void spi_read_page(uint32_t address, uint8_t* data, size_t length);
+static void spi_read_page(uint32_t address, uint8_t* data, uint16_t length);
 
 SPI_HandleTypeDef* FLASH_SPIConfig;
 #ifdef DEBUG
@@ -60,6 +60,7 @@ uint32_t flash_rdid = 0;
 
 int flash_read(uint32_t address, uint8_t* data, size_t length){
   /* if(sizeof(((SPI_HandleTypeDef*)NULL)->RxXferSize) == 2){ */
+  /* if(sizeof(FLASH_SPIConfig->RxXferSize) == 2){ */
     size_t remain = length;
     while(remain){
       uint16_t len = min(remain, 0x8000); // read 32K at a time because...
@@ -74,10 +75,12 @@ int flash_read(uint32_t address, uint8_t* data, size_t length){
   return length;
 }
 
-void spi_read_page(uint32_t address, uint8_t* data, size_t length){
+/**
+ * HAL_SPI_Transmit and HAL_SPI_Receive only work with 16-bit size parameters.
+ */
+void spi_read_page(uint32_t address, uint8_t* data, uint16_t length){
   uint8_t cmd[4];
   flash_Select();	
-  __nop();__nop();__nop();
   /* The address can start at any byte location of the memory array. The address is automatically incremented to the next higher address */
   /* in sequential order after each byte of data is shifted out. The entire memory can therefore be read out with one single read */
   /* instruction and address 000000h provided. When the highest address is reached, the address counter will wrap around and roll back */
@@ -96,7 +99,6 @@ void spi_read_page(uint32_t address, uint8_t* data, size_t length){
   /* flash_WP_Disable(); // why? */
   // Send and receive data
   HAL_SPI_Transmit(FLASH_SPIConfig, cmd, 4, 100);
-  HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
   HAL_SPI_Receive(FLASH_SPIConfig,  data, length, 100);
   /* flash_WP_Enable(); // why? */
 #else // if this works, turn SPI speed up to max 108MHz

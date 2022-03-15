@@ -45,18 +45,21 @@ public:
     sourceResource = NULL;
   }
   bool copy(){
+    bool ret = false;
     if(sourceResource){
       uint32_t checksum = sourceResource->checksum;
       storage.readResource(sourceResource, linkAddress, 0, binarySize);
-      sourceResource = NULL;
       device_cache_invalidate();
       uint32_t crc = crc32(linkAddress, binarySize, 0);
-      if(crc != checksum){
-	error(PROGRAM_ERROR, "Invalid checksum");
-	return false;
+      if(crc == checksum){
+	ret = true;
+      }else{
+	if(checksum != storage.getChecksum(sourceResource))
+	  error(PROGRAM_ERROR, "Invalid checksum");
       }
+      sourceResource = NULL;
     }
-    return true;
+    return ret;
   }
   uint32_t* getStackBase(){
     return stackBase;
