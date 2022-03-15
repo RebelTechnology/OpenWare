@@ -157,14 +157,11 @@ void usbd_tx_convert(int32_t* src, size_t len){
 
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
-// #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
-#define AUDIO_TASK_PRIORITY  4
-
-// #define MANAGER_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_PRIORITY  ((AUDIO_TASK_PRIORITY + 1) | portPRIVILEGE_BIT)
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
-#define FLASH_TASK_PRIORITY 1 // allow default task to run when FLASH task yields
-#define SCREEN_TASK_PRIORITY 3 // less than AUDIO_TASK_PRIORITY, more than osPriorityNormal (which is probably 1)
+#define FLASH_TASK_PRIORITY   1 // allow default task to run when FLASH task yields
+#define SCREEN_TASK_PRIORITY  3 // less than AUDIO_TASK_PRIORITY, more than osPriorityNormal (which is probably 1)
+#define AUDIO_TASK_PRIORITY   4
+#define MANAGER_TASK_PRIORITY ((AUDIO_TASK_PRIORITY + 1) | portPRIVILEGE_BIT)
 
 #define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
 
@@ -561,6 +558,7 @@ void runScreenTask(void* p){
 #endif	// USE_SCREEN
 
 void runAudioTask(void* p){
+  taskENTER_CRITICAL();
   PatchDefinition* def = getPatchDefinition();
   if(def->isValid() && def->copy()){
     ProgramVector* pv = def->getProgramVector();
@@ -572,9 +570,12 @@ void runAudioTask(void* p){
 #ifdef USE_CODEC
     codec.clear();
 #endif
-    // run program
-    def->run();
+  }else{
+    def = NULL;
   }
+  taskEXIT_CRITICAL();  
+  if(def != NULL)
+    def->run();  // run program (should not return)
   error(PROGRAM_ERROR, "Program error");
   audioTask = NULL;
   vTaskDelete(NULL);
@@ -608,10 +609,9 @@ void bootstrap(){
 }
 
 void runManagerTask(void* p){
-  bootstrap();
-  
+  bootstrap();  
   uint32_t ulNotifiedValue = 0;
-  TickType_t xMaxBlockTime = portMAX_DELAY;  /* Block indefinitely. */
+  const TickType_t xMaxBlockTime = portMAX_DELAY;  /* Block indefinitely. */
   for(;;){
     /* Block indefinitely (without a timeout, so no need to check the function's
        return value) to wait for a notification.
@@ -621,6 +621,7 @@ void runManagerTask(void* p){
 		    UINT32_MAX,       /* Reset the notification value to 0 on exit. */
 		    &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
 		    xMaxBlockTime); 
+    taskENTER_CRITICAL();
     if(ulNotifiedValue & STOP_PROGRAM_NOTIFICATION){ // stop program
       if(audioTask != NULL){
 	// codec.softMute(true);
@@ -645,38 +646,35 @@ void runManagerTask(void* p){
 #endif
       }
     }
-    // allow idle task to garbage collect if necessary
-    vTaskDelay(20);
+    taskEXIT_CRITICAL();
+    vTaskDelay(20); // allow idle task to garbage collect if necessary
+    taskENTER_CRITICAL();
     if(ulNotifiedValue & PROGRAM_FLASH_NOTIFICATION){ // program flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      utilityTask = xTaskCreateStatic(programFlashTask, "Flash Write",
-				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
-				      NULL, FLASH_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
+      else
+	xTaskCreate(programFlashTask, "Flash Write", UTILITY_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
     }else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      utilityTask = xTaskCreateStatic(eraseFlashTask, "Flash Erase", 
-				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
-				      NULL, FLASH_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
+      else
+	xTaskCreate(eraseFlashTask, "Flash Erase", UTILITY_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
+;
     }else if(ulNotifiedValue & SEND_RESOURCE_NOTIFICATION){
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      utilityTask = xTaskCreateStatic(sendResourceTask, "Send Resource", 
-				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
-				      NULL, FLASH_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
+      else
+	xTaskCreate(sendResourceTask, "Send Resource", UTILITY_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
     }
-    // vTaskDelay(20);
     if(ulNotifiedValue & START_PROGRAM_NOTIFICATION){ // start
-      device_cache_invalidate();
       if(audioTask == NULL && getPatchDefinition()->isValid()){
-	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
-				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
+	audioTask = xTaskCreateStatic(runAudioTask, "Audio", PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
 				      NULL, AUDIO_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
       }
       if(audioTask == NULL && registry.hasPatches())
 	error(PROGRAM_ERROR, "Failed to start program task");
     }
+    taskEXIT_CRITICAL();
   }
 }
 
