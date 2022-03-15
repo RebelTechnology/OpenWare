@@ -42,58 +42,72 @@ static void flash_BulkErase (void);
 #define INST_BURSTWRAP_SET			0x77
 #define INST_READ_RDID   			0x9F
 
+#ifndef __nop
 #define __nop() __asm("NOP")
+#endif
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
 
-void _flash_writeEN (void);
-void _flash_writeDIS (void);
+static void _flash_writeEN (void);
+static void _flash_writeDIS (void);
+static void spi_read_page(uint32_t address, uint8_t* data, size_t length);
 
-// ____ SPI Config 
 SPI_HandleTypeDef* FLASH_SPIConfig;
 #ifdef DEBUG
 uint32_t flash_rdid = 0;
 #endif
 
 int flash_read(uint32_t address, uint8_t* data, size_t length){
-  uint8_t rgAddress[3];
-  uint8_t ucInstruction;
+  /* if(sizeof(((SPI_HandleTypeDef*)NULL)->RxXferSize) == 2){ */
+    size_t remain = length;
+    while(remain){
+      uint16_t len = min(remain, 0x8000); // read 32K at a time because...
+      spi_read_page(address, data, len);
+      address += len;
+      data += len;
+      remain -= len;
+    }
+  /* }else{ */
+  /*   spi_read_page(address, data, length); */
+  /* } */
+  return length;
+}
 
-  flash_Select();
-	
+void spi_read_page(uint32_t address, uint8_t* data, size_t length){
+  uint8_t cmd[4];
+  flash_Select();	
   __nop();__nop();__nop();
-/* The address can start at any byte location of the memory array. The address is automatically incremented to the next higher address */
-/* in sequential order after each byte of data is shifted out. The entire memory can therefore be read out with one single read */
-/* instruction and address 000000h provided. When the highest address is reached, the address counter will wrap around and roll back */
-/* to 000000h, allowing the read sequence to be continued indefinitely. */
+  /* The address can start at any byte location of the memory array. The address is automatically incremented to the next higher address */
+  /* in sequential order after each byte of data is shifted out. The entire memory can therefore be read out with one single read */
+  /* instruction and address 000000h provided. When the highest address is reached, the address counter will wrap around and roll back */
+  /* to 000000h, allowing the read sequence to be continued indefinitely. */
 
   /* There is also a FAST_READ 0xb instruction which requires dummy cycles after address, 
      default 8 cycles */
 
-  // Build address array
-  rgAddress[0] = (address & 0xFF0000) >> 16;
-  rgAddress[1] = (address & 0x00FF00) >> 8;
-  rgAddress[2] = (address & 0x0000FF) >> 0;
-
-#if 1
+  cmd[1] = (address & 0xFF0000) >> 16;
+  cmd[2] = (address & 0x00FF00) >> 8;
+  cmd[3] = (address & 0x0000FF) >> 0;
+  
+#if 0
   // READ 1-1-1, 0x03, no dummy cycles, up to 50Mhz
-  ucInstruction = INST_READ_EN;
-  flash_WP_Disable(); // why?
+  cmd[0] = INST_READ_EN;
+  /* flash_WP_Disable(); // why? */
   // Send and receive data
-  HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
+  HAL_SPI_Transmit(FLASH_SPIConfig, cmd, 4, 100);
   HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
   HAL_SPI_Receive(FLASH_SPIConfig,  data, length, 100);
-  flash_WP_Enable(); // why?
+  /* flash_WP_Enable(); // why? */
 #else // if this works, turn SPI speed up to max 108MHz
   // FAST_READ 1-1-1, 0x0b, up to 108Mhz
-  ucInstruction = INST_FAST_READ_EN;
-  HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
-  HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
-  HAL_SPI_Receive(FLASH_SPIConfig,  data, 1, 100); // 8 dummy cycles
-  HAL_SPI_Receive(FLASH_SPIConfig,  data, length, 100);
+  cmd[0] = INST_FAST_READ_EN;
+  HAL_SPI_Transmit(FLASH_SPIConfig, cmd, 4, 100);
+  HAL_SPI_Receive(FLASH_SPIConfig, data, 1, 100); // 8 dummy cycles
+  HAL_SPI_Receive(FLASH_SPIConfig, data, length, 100);
 #endif
   
   flash_Deselect();
-
-  return length;
 }
 
 // address must be on a 256-byte boundary
