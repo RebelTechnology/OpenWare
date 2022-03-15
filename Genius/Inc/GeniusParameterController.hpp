@@ -178,12 +178,12 @@ public:
     if(isInput(pid)){
       if(cv_assign[0] == 0 && !isInput(0))
   	cv_assign[0] = pid;
-      else if(cv_assign[1] == 0)
+      else if(cv_assign[1] == 0 && cv_assign[0] != pid)
   	cv_assign[1] = pid;
     }else if(isOutput(pid)){
       if(cv_assign[2] == 0)
   	cv_assign[2] = pid;
-      else if(cv_assign[3] == 0)
+      else if(cv_assign[3] == 0 && cv_assign[2] != pid)
   	cv_assign[3] = pid;
     }      
   }    
