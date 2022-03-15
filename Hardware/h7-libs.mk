@@ -101,8 +101,9 @@ C_SRC_DSP += $(DSPLIB)/CommonTables/arm_const_structs.c
 ### FreeRTOS ###
 C_SRC_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.c
 # C_SRC_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os2.c
-C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.c
-# C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.c
+# Recommended to use CM4F port for non-r0p1 chip revisions (H7xx is r1p1)
+# C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.c
+C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.c
 C_SRC_OS += $(FREERTOS_DIR)/tasks.c
 C_SRC_OS += $(FREERTOS_DIR)/timers.c
 C_SRC_OS += $(FREERTOS_DIR)/queue.c
