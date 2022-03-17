@@ -48,6 +48,9 @@ void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb){
   // usbd_tx->reset();
   // usbd_tx->clear();
   // usbd_tx->moveWriteHead(usbd_tx->getSize()/2);
+#ifdef DEBUG
+  printf("start tx %u %u %u\n", rate, channels, usbd_tx->getSize());
+#endif
 }
 
 void usbd_audio_tx_stop_callback(){
@@ -126,7 +129,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 #endif
     }
 #if USBD_AUDIO_TX_CHANNELS == AUDIO_CHANNELS
-#if AUDIO_BITS_PER_SAMPLE == 32
+#if false // AUDIO_BITS_PER_SAMPLE == 32
     tx->write(src, len);
 #else
     while(len--)
@@ -135,7 +138,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 #else /*  USBD_AUDIO_TX_CHANNELS != AUDIO_CHANNELS */
     len /= AUDIO_CHANNELS;
     while(len--){
-#if AUDIO_BITS_PER_SAMPLE == 32
+#if false // AUDIO_BITS_PER_SAMPLE == 32
       tx->write(src, USBD_AUDIO_TX_CHANNELS);
       src += AUDIO_CHANNELS;
 #else
@@ -154,14 +157,11 @@ void usbd_tx_convert(int32_t* src, size_t len){
 
 // FreeRTOS low priority numbers denote low priority tasks. 
 // The idle task has priority zero (tskIDLE_PRIORITY).
-// #define SCREEN_TASK_STACK_SIZE (2*1024/sizeof(portSTACK_TYPE))
-#define AUDIO_TASK_PRIORITY  4
-
-// #define MANAGER_TASK_STACK_SIZE  (2*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_PRIORITY  (AUDIO_TASK_PRIORITY | portPRIVILEGE_BIT)
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
-#define FLASH_TASK_PRIORITY 1 // allow default task to run when FLASH task yields
-#define SCREEN_TASK_PRIORITY 3 // less than AUDIO_TASK_PRIORITY, more than osPriorityNormal (which is probably 1)
+#define FLASH_TASK_PRIORITY   1 // allow default task to run when FLASH task yields
+#define SCREEN_TASK_PRIORITY  3 // less than AUDIO_TASK_PRIORITY, more than osPriorityNormal (which is probably 1)
+#define AUDIO_TASK_PRIORITY   4
+#define MANAGER_TASK_PRIORITY ((AUDIO_TASK_PRIORITY + 1) | portPRIVILEGE_BIT)
 
 #define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
 
@@ -174,7 +174,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 ProgramManager program;
 PatchRegistry registry;
 ProgramVector staticVector;
-ProgramVector* programVector = &staticVector;
+ProgramVector* volatile programVector = &staticVector;
 BootloaderStorage bootloader;
 static volatile TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
@@ -261,14 +261,30 @@ void setButtonValue(uint8_t ch, uint8_t value){
   button_values |= (bool(value)<<ch);
 }
 
+#if 0 // pre / post fx
+#ifdef USE_USBD_AUDIO_TX
+#define USE_USBD_AUDIO_TX_PRE_FX
+#endif
+#ifdef USE_USBD_AUDIO_RX
+#define USE_USBD_AUDIO_RX_PRE_FX
+#endif
+#else
+#ifdef USE_USBD_AUDIO_TX
+#define USE_USBD_AUDIO_TX_POST_FX
+#endif
+#ifdef USE_USBD_AUDIO_RX
+#define USE_USBD_AUDIO_RX_POST_FX
+#endif
+#endif
+
 /* called by the program when a block has been processed */
 void onProgramReady(){
   ProgramVector* pv = getProgramVector();
-#ifdef USE_USBD_AUDIO_TX
+#ifdef USE_USBD_AUDIO_TX_POST_FX
   // after patch runs: convert patch output to USBD audio tx
   usbd_tx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif
-#ifdef USE_USBD_AUDIO_RX
+#ifdef USE_USBD_AUDIO_RX_POST_FX
   // after patch runs: convert USBD audio rx to DAC (overwriting patch output)
   usbd_rx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
 #endif  
@@ -300,6 +316,14 @@ void onProgramReady(){
       bid = stateChanged.getFirstSetIndex();
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
+#ifdef USE_USBD_AUDIO_TX_PRE_FX
+  // before patch runs: convert audio input to USBD audio tx
+  usbd_tx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
+#endif
+#ifdef USE_USBD_AUDIO_RX_PRE_FX
+  // before patch runs: convert USBD audio rx to patch audio input
+  usbd_rx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
+#endif  
 }
 
 // called from program
@@ -356,6 +380,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->audio_blocksize = AUDIO_BLOCK_SIZE;
 #endif
   pv->buttons = button_values;
+  pv->error = 0;
   pv->registerPatch = onRegisterPatch;
   pv->registerPatchParameter = onRegisterPatchParameter;
   pv->cycles_per_block = 0;
@@ -373,12 +398,9 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
 #ifdef PROGRAM_VECTOR_V13
   extern uint8_t _PATCHRAM, _PATCHRAM_END, _PATCHRAM_SIZE;
   uint8_t* end = (uint8_t*)def->getStackBase(); // program end
-  uint32_t remain = &_PATCHRAM_END - end; // space left
-  if(end < &_PATCHRAM || remain > (uint32_t)&_PATCHRAM_SIZE) // sanity check
+  uint32_t remain = &_PATCHRAM_END - end; // space left (don't use patch declared stack size)
+  if(end < &_PATCHRAM || end+remain > &_PATCHRAM_END) // sanity check
     remain = 0; // prevent errors if program stack is not linked to PATCHRAM
-#ifdef USE_CCM_RAM
-  extern char _CCMRAM, _CCMRAM_SIZE;
-#endif
 #ifdef USE_PLUS_RAM
   extern uint8_t _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
   uint8_t* plusend = (uint8_t*)&_PLUSRAM;
@@ -387,16 +409,13 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
     end = (uint8_t*)&_PATCHRAM;
     remain = (uint32_t)&_PATCHRAM_SIZE; // use all of PATCHRAM for heap
     plusend = (uint8_t*)def->getStackBase();
-    plusremain = def->getStackSize();
     plusremain = &_PLUSRAM_END - plusend;
   }
-#endif
-#ifdef USE_EXTERNAL_RAM
-  extern char _EXTRAM, _EXTRAM_SIZE;
 #endif
   static MemorySegment heapSegments[5] = {};
   size_t segments = 0;
 #ifdef USE_CCM_RAM
+  extern char _CCMRAM, _CCMRAM_SIZE;
   heapSegments[segments++] = 
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) };
 #endif
@@ -407,10 +426,14 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
     heapSegments[segments++] = { plusend, plusremain };
 #endif
 #ifdef USE_EXTERNAL_RAM
+  extern char _EXTRAM, _EXTRAM_SIZE;
   heapSegments[segments++] = 
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) };
 #endif
-  heapSegments[segments++] = { NULL, 0 };
+  heapSegments[segments] = { NULL, 0 };
+  // zero-fill heap memory
+  for(size_t i=0; i<segments; ++i)
+    memset(heapSegments[i].location, 0, heapSegments[i].size);
   pv->heapSegments = (MemorySegment*)heapSegments;
 #ifdef USE_WM8731
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
@@ -458,6 +481,7 @@ void programFlashTask(void* p){
     if(index == 0){
       onResourceUpdate();
     }else{
+      program.resetProgramIndex();
       program.loadProgram(index);
     }
   }
@@ -530,9 +554,9 @@ void runScreenTask(void* p){
 #endif	// USE_SCREEN
 
 void runAudioTask(void* p){
+  taskENTER_CRITICAL();
   PatchDefinition* def = getPatchDefinition();
-  if(def->isValid()){
-    def->copy();
+  if(def->isValid() && def->copy()){
     ProgramVector* pv = def->getProgramVector();
     updateProgramVector(pv, def);
     programVector = pv;
@@ -542,15 +566,12 @@ void runAudioTask(void* p){
 #ifdef USE_CODEC
     codec.clear();
 #endif
-    // zero-fill heap memory
-    for(size_t i=0; i<5 && pv->heapSegments[i].location != NULL; ++i)
-      memset(pv->heapSegments[i].location, 0, pv->heapSegments[i].size);
-    // memory barriers for dynamically loaded code
-    __DSB();
-    __ISB();
-    // run program
-    def->run();
+  }else{
+    def = NULL;
   }
+  taskEXIT_CRITICAL();  
+  if(def != NULL)
+    def->run();  // run program (should not return)
   error(PROGRAM_ERROR, "Program error");
   audioTask = NULL;
   vTaskDelete(NULL);
@@ -570,9 +591,11 @@ void bootstrap(){
     extern RTC_HandleTypeDef hrtc;
     HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
-  }else{
+  }else if(registry.hasPatch(settings.program_index)){
     program.loadProgram(settings.program_index);
     program.startProgram(false);
+  }else{
+    owl.setOperationMode(CONFIGURE_MODE);
   }
 
 #ifdef USE_CODEC
@@ -582,10 +605,9 @@ void bootstrap(){
 }
 
 void runManagerTask(void* p){
-  bootstrap();
-  
+  bootstrap();  
   uint32_t ulNotifiedValue = 0;
-  TickType_t xMaxBlockTime = portMAX_DELAY;  /* Block indefinitely. */
+  const TickType_t xMaxBlockTime = portMAX_DELAY;  /* Block indefinitely. */
   for(;;){
     /* Block indefinitely (without a timeout, so no need to check the function's
        return value) to wait for a notification.
@@ -595,6 +617,7 @@ void runManagerTask(void* p){
 		    UINT32_MAX,       /* Reset the notification value to 0 on exit. */
 		    &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
 		    xMaxBlockTime); 
+    taskENTER_CRITICAL();
     if(ulNotifiedValue & STOP_PROGRAM_NOTIFICATION){ // stop program
       if(audioTask != NULL){
 	// codec.softMute(true);
@@ -619,43 +642,35 @@ void runManagerTask(void* p){
 #endif
       }
     }
-    // allow idle task to garbage collect if necessary
-    vTaskDelay(20);
+    taskEXIT_CRITICAL();
+    vTaskDelay(20); // allow idle task to garbage collect if necessary
+    taskENTER_CRITICAL();
     if(ulNotifiedValue & PROGRAM_FLASH_NOTIFICATION){ // program flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      utilityTask = xTaskCreateStatic(programFlashTask, "Flash Write",
-				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
-				      NULL, FLASH_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
+      else
+	xTaskCreate(programFlashTask, "Flash Write", UTILITY_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
     }else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      utilityTask = xTaskCreateStatic(eraseFlashTask, "Flash Erase", 
-				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
-				      NULL, FLASH_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
+      else
+	xTaskCreate(eraseFlashTask, "Flash Erase", UTILITY_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
+;
     }else if(ulNotifiedValue & SEND_RESOURCE_NOTIFICATION){
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      utilityTask = xTaskCreateStatic(sendResourceTask, "Send Resource", 
-				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
-				      NULL, FLASH_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
+      else
+	xTaskCreate(sendResourceTask, "Send Resource", UTILITY_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
     }
-    // vTaskDelay(20);
     if(ulNotifiedValue & START_PROGRAM_NOTIFICATION){ // start
       if(audioTask == NULL && getPatchDefinition()->isValid()){
-#ifdef USE_ICACHE
-	SCB_InvalidateICache();
-#endif
-#ifdef USE_DCACHE
-	SCB_CleanInvalidateDCache();
-#endif
-	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
-				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
+	audioTask = xTaskCreateStatic(runAudioTask, "Audio", PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
 				      NULL, AUDIO_TASK_PRIORITY, (StackType_t*)PROGRAMSTACK, &audioTaskBuffer);
       }
       if(audioTask == NULL && registry.hasPatches())
 	error(PROGRAM_ERROR, "Failed to start program task");
     }
+    taskEXIT_CRITICAL();
   }
 }
 
@@ -728,12 +743,23 @@ void ProgramManager::updateProgramIndex(uint8_t index){
   }
 }
 
-void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  
-  if(registry.loadProgram(address, length))
+void ProgramManager::loadDynamicProgram(ResourceHeader* resource){
+  PatchDefinition* def = getPatchDefinition();
+  if(def->load(resource) && def->isValid())
+  // if(def->load(resource.getData(), resource.getDataSize()) && def->isValid())
     updateProgramIndex(0);
   else
     error(PROGRAM_ERROR, "Load failed");
 }
+
+// void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  
+//   // if(registry.loadProgram(address, length))
+//   PatchDefinition* def = getPatchDefinition();
+//   if(def->load(address, length) && def->isValid())
+//     updateProgramIndex(0);
+//   else
+//     error(PROGRAM_ERROR, "Load failed");
+// }
 
 void ProgramManager::loadProgram(uint8_t pid){
   if(patchindex != pid && registry.hasPatch(pid)){
@@ -741,8 +767,6 @@ void ProgramManager::loadProgram(uint8_t pid){
       updateProgramIndex(pid);
     else
       error(PROGRAM_ERROR, "Load failed");
-  }else{
-    owl.setOperationMode(CONFIGURE_MODE);
   }
 }
 

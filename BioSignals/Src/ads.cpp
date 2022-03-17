@@ -204,10 +204,15 @@ int ads_read_single_sample(){
 
 void ads_process_samples(){
   ads_status = (ads_rx_buffer[0]<<24) | (ads_rx_buffer[1]<<16) | (ads_rx_buffer[2]<<8);
-  ads_samples[0] = (ads_rx_buffer[3]<<24) | (ads_rx_buffer[4]<<16) | (ads_rx_buffer[5]<<8);
-  ads_samples[1] = (ads_rx_buffer[6]<<24) | (ads_rx_buffer[7]<<16) | (ads_rx_buffer[8]<<8);
-  ads_samples[2] = (ads_rx_buffer[9]<<24) | (ads_rx_buffer[10]<<16) | (ads_rx_buffer[11]<<8);
-  ads_samples[3] = (ads_rx_buffer[12]<<24) | (ads_rx_buffer[13]<<16) | (ads_rx_buffer[14]<<8);
+  // ads_samples[0] = (ads_rx_buffer[3]<<24) | (ads_rx_buffer[4]<<16) | (ads_rx_buffer[5]<<8);
+  // ads_samples[1] = (ads_rx_buffer[6]<<24) | (ads_rx_buffer[7]<<16) | (ads_rx_buffer[8]<<8);
+  // ads_samples[2] = (ads_rx_buffer[9]<<24) | (ads_rx_buffer[10]<<16) | (ads_rx_buffer[11]<<8);
+  // ads_samples[3] = (ads_rx_buffer[12]<<24) | (ads_rx_buffer[13]<<16) | (ads_rx_buffer[14]<<8);
+
+  ads_samples[0] = ((ads_rx_buffer[3]<<24) | (ads_rx_buffer[4]<<16) | (ads_rx_buffer[5]<<8)) >> 8;
+  ads_samples[1] = ((ads_rx_buffer[6]<<24) | (ads_rx_buffer[7]<<16) | (ads_rx_buffer[8]<<8)) >> 8;
+  ads_samples[2] = ((ads_rx_buffer[9]<<24) | (ads_rx_buffer[10]<<16) | (ads_rx_buffer[11]<<8)) >> 8;
+  ads_samples[3] = ((ads_rx_buffer[12]<<24) | (ads_rx_buffer[13]<<16) | (ads_rx_buffer[14]<<8)) >> 8;
 }
 
 void ads_sample(int32_t* samples, size_t len){

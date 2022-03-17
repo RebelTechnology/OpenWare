@@ -1,26 +1,25 @@
 #ifndef __PatchDefinition_hpp__
 #define __PatchDefinition_hpp__
 
+#include "device.h"
+#include "message.h"
 #include "ProgramVector.h"
 #include "ProgramHeader.h"
 #include "Storage.h"
+#include "crc32.h"
 
-// todo: put implementation straight into PatchDefinition base class
-// 'load' functions should be renamed
-// 'verify' should be called 'load'
 class PatchDefinition {
 private:
   uint32_t* stackBase;
   uint32_t stackSize;
-  ProgramVector* programVector = NULL;
+  ProgramVector* programVector;
   typedef void (*ProgramFunction)(void);
-  ProgramFunction programFunction = NULL;
+  ProgramFunction programFunction;
   uint32_t* linkAddress;
   uint32_t binarySize;
   uint32_t programSize;
-  char programName[20]; // ResourceHeader::name is char[20]
-  Resource* sourceResource = NULL;
-  void* sourceAddress = NULL;
+  char programName[16]; // ResourceHeader::name is char[16], ProgramHeader::name is char[24]
+  ResourceHeader* sourceResource;
   
   bool load(ProgramHeader* header, uint32_t sz){
     binarySize = sz;
@@ -37,16 +36,30 @@ private:
     return true;
   }
 public:
-  PatchDefinition() {}
-  void copy(){
+  PatchDefinition() {
+    reset();
+  }
+  void reset(){
+    programVector = NULL;
+    programFunction = NULL;
+    sourceResource = NULL;
+  }
+  bool copy(){
+    bool ret = false;
     if(sourceResource){
+      uint32_t checksum = sourceResource->checksum;
       storage.readResource(sourceResource, linkAddress, 0, binarySize);
+      device_cache_invalidate();
+      uint32_t crc = crc32(linkAddress, binarySize, 0);
+      if(crc == checksum){
+	ret = true;
+      }else{
+	if(checksum != storage.getChecksum(sourceResource))
+	  error(PROGRAM_ERROR, "Invalid checksum");
+      }
       sourceResource = NULL;
-    }else if(sourceAddress){
-      if(linkAddress != sourceAddress)
-	memmove(linkAddress, sourceAddress, binarySize);
-      sourceAddress = NULL;
     }
+    return ret;
   }
   uint32_t* getStackBase(){
     return stackBase;
@@ -60,30 +73,20 @@ public:
   ProgramVector* getProgramVector(){
     return programVector;
   }
-  bool load(Resource* resource){
-    sourceAddress = NULL;
-    sourceResource = NULL;
+  bool load(ResourceHeader* resource){
+    reset();
     ProgramHeader header;
     storage.readResource(resource, &header, 0, sizeof(header));
-    if(load(&header, resource->getDataSize())){
+    if(load(&header, resource->size)){
       sourceResource = resource;
       return true;
     }
     return false;
   }
-  // called on program RUN from RAM
-  bool load(void* address, uint32_t sz){
-    sourceAddress = NULL;
-    sourceResource = NULL;
-    ProgramHeader* header = (ProgramHeader*)address;
-    if(load(header, sz)){
-      sourceAddress = address;
-      return true;
-    }
-    return false;
-  }
   bool isValid(){
-    // if(binarySize != programSize)
+    // if(programSize != binarySize)
+    //   error(PROGRAM_ERROR, "Invalid program size");
+    // if(programSize != binarySize)
     //   return false;
     if(programFunction == NULL || programVector == NULL)
       return false;
@@ -99,9 +102,12 @@ public:
   }
   void run(){
     // check magic
-    if((*(uint32_t*)linkAddress) == 0xDADAC0DE){
+    if((*linkAddress) == 0xDADAC0DE){
       if(binarySize < programSize) // blank out bss area
-	memset(linkAddress+binarySize, 0, programSize - binarySize);
+	memset((uint8_t*)linkAddress + binarySize, 0, programSize - binarySize);
+      device_cache_invalidate();
+      // memory barriers for dynamically loaded code
+      // __DSB(); __ISB();
       programFunction();
     }
   }

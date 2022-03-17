@@ -20,8 +20,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "usb_host.h"
-#include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -210,7 +208,9 @@ int main(void)
   if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
     Error_Handler();
 
-  SDRAM_Initialization_Sequence(&hsdram1);   
+#ifdef USE_EXTERNAL_RAM
+  SDRAM_Initialization_Sequence(&hsdram1);
+#endif
 
   /* USER CODE END 2 */
 

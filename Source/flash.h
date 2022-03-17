@@ -3,24 +3,24 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-
-#define QSPI_FLASH_BASE                      0x90000000
-#define QSPI_FLASH_SIZE                      (8*1024*1024) // 8M / 64Mbit
+#include <stddef.h>
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
-   void flash_init();
-   int flash_status();
-   int flash_quad_mode(uint8_t, uint8_t);
-   int flash_qpi_mode(bool qpi);
-   int flash_write_block(uint32_t address, void* data, uint32_t size);
-   int flash_read_block(int mode, uint32_t address, void* data, uint32_t size);
-   int flash_wait();
-   int flash_erase(uint32_t address, uint32_t size);
-   int flash_memory_map(int mode);
+   void flash_init(void* handle);
+   int flash_read(uint32_t address, uint8_t* data, size_t length);
+   int flash_write(uint32_t address, const uint8_t* data, size_t length);
+   int flash_erase(uint32_t address, size_t size);
 
+#ifdef USE_QSPI_FLASH
+#define QSPI_FLASH_BASE              0x90000000
+   int flash_status();
+   int flash_memory_map(int mode);
+   int flash_wait();
+#endif
+   
 #ifdef __cplusplus
 }
 #endif

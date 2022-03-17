@@ -3,8 +3,8 @@
 #include "Codec.h"
 #include "errorhandlers.h"
 #include "ApplicationSettings.h"
-#include <cstring>
 #include "ProgramManager.h"
+#include <algorithm>
 
 #ifdef USE_CS4271
 #define HSAI_RX hsai_BlockB1
@@ -62,22 +62,15 @@ uint16_t Codec::getBlockSize(){
 #endif
 
 void Codec::init(){
-  // todo: if(wet):
-  // audio_tx_buffer = CircularBuffer<int32_t>(codec_txbuf, CODEC_BUFFER_SIZE);
-  // audio_rx_buffer = CircularBuffer<int32_t>(codec_rxbuf, CODEC_BUFFER_SIZE);
-  // todo: else
-  // audio_tx_buffer = CircularBuffer<int32_t>(codec_rxbuf, CODEC_BUFFER_SIZE);
-  // audio_rx_buffer = CircularBuffer<int32_t>(codec_txbuf, CODEC_BUFFER_SIZE);
-  // audio_tx_buffer.reset();
-  // audio_rx_buffer.reset();
+  codec_blocksize = std::clamp(settings.audio_blocksize, (uint16_t)4, (uint16_t)CODEC_BLOCKSIZE);
   codec_init();
 }
 
 void Codec::reset(){
-  // todo: this is called when blocksize is changed
   stop();
-  // audio_tx_buffer.reset();
-  // audio_rx_buffer.reset();
+  // this is called when blocksize is changed
+  codec_blocksize = std::clamp(settings.audio_blocksize, (uint16_t)4, (uint16_t)CODEC_BLOCKSIZE);
+  codec_reset();
   start();
 }
 
@@ -189,7 +182,6 @@ void Codec::stop(){
 #include "ads.h"
 
 void Codec::start(){
-  codec_blocksize = AUDIO_BLOCK_SIZE;
   ads_start_continuous();
   extern TIM_HandleTypeDef htim8;
   HAL_TIM_Base_Start_IT(&htim8);
@@ -199,6 +191,7 @@ void Codec::start(){
 void Codec::stop(){
   ads_stop_continuous();
   extern TIM_HandleTypeDef htim8;
+  HAL_TIM_PWM_Stop_IT(&htim8, TIM_CHANNEL_4);
   HAL_TIM_Base_Stop(&htim8);
 }
 
@@ -217,8 +210,6 @@ void Codec::stop(){
 void Codec::start(){
   setInputGain(settings.audio_input_gain);
   setOutputGain(settings.audio_output_gain);
-  // codec_blocksize = min(AUDIO_BLOCK_SIZE, settings.audio_blocksize);
-  codec_blocksize = AUDIO_BLOCK_SIZE;
   HAL_StatusTypeDef ret;
   /* See STM32F405 Errata, I2S device limitations */
   /* The I2S peripheral must be enabled when the external master sets the WS line at: */
@@ -294,8 +285,6 @@ void Codec::stop(){
 
 void Codec::start(){
   setOutputGain(settings.audio_output_gain);
-  // codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
-  codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
   HAL_StatusTypeDef ret;
 #ifdef USE_CS4271
   ret = HAL_SAI_Receive_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);

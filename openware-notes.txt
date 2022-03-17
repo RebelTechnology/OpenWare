@@ -219,6 +219,12 @@ amidi -p hw:1 -S f07d5203424c31f7
 # request button status
 amidi -p hw:1 -S b04319
 
+# set button B1 on
+amidi -p hw:1 -S b01b04
+
+# set button B1 off
+amidi -p hw:1 -S b01c04
+
 # dump all messages received
 amidi -p hw:1 -d -a
 
@@ -425,3 +431,8 @@ e.g. 4ch adc/dac, 4ch usb tx/rx, 8 ch fx
 
 -----------------------------------------------------------------
        
+todo:
+- use (if possible) HAL_UARTEx_ReceiveToIdle_DMA
+- make USB Audio interface optional / configurable
+
+-----------------------------------------------------------------

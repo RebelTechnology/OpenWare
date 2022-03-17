@@ -57,10 +57,6 @@ extern "C"{
 extern uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM;
 #endif
 
-#ifdef USE_DAC
-extern DAC_HandleTypeDef hdac;
-#endif
-
 #ifdef USE_RGB_LED
 void updateLed();
 #endif
@@ -233,12 +229,13 @@ __weak void onChangeMode(uint8_t new_mode, uint8_t old_mode){
 
 __weak void setAnalogValue(uint8_t ch, int16_t value){
 #ifdef USE_DAC
+  extern DAC_HandleTypeDef DAC_HANDLE;
   switch(ch){
   case PARAMETER_F:
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
+    HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
   case PARAMETER_G:
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+    HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
   }
 #endif

@@ -9,6 +9,11 @@
  */
 
 extern "C" {
+  bool usbh_midi_connected(void);
+  bool usbh_midi_ready(void);
+  void usbh_midi_rx(uint8_t *buffer, uint32_t length);
+  void usbh_midi_tx(uint8_t* buffer, uint32_t length);
+
   static USBH_StatusTypeDef USBH_MIDI_InterfaceInit  (USBH_HandleTypeDef *phost);
 
   static USBH_StatusTypeDef USBH_MIDI_InterfaceDeInit  (USBH_HandleTypeDef *phost);

@@ -25,6 +25,8 @@ OBJCOPY=$(TOOLROOT)arm-none-eabi-objcopy
 OBJDUMP=$(TOOLROOT)arm-none-eabi-objdump
 SIZE=$(TOOLROOT)arm-none-eabi-size
 MKDIR=mkdir
+DFUUTIL ?= dfu-util
+FIRMWARESENDER ?= FirmwareSender
 
 # Generate dependency information
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
@@ -74,7 +76,7 @@ $(BUILD)/%.hex : $(BUILD)/%.elf
 	@$(OBJCOPY) -O ihex $< $@
 
 $(BUILD)/%.syx: $(BUILD)/%.bin
-	FirmwareSender -save $@ -in $< -flash `crc32 $<`
+	@$(FIRMWARESENDER) -q -d 0 -save $@ -in $< -flash `crc32 $<`
 
 bin: $(BIN) $(HEX)
 	@echo Built $(PROJECT) $(PLATFORM) $(CONFIG) firmware in $(BIN)

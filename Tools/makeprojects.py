@@ -7,12 +7,12 @@ import shutil
 import subprocess
 
 PROJECTS = {
-    'MidiBootOwl': [
+    'MidiBoot1': [
         {
             'OwlPedal': ['Modular=OwlModular', 'Pedal=OwlPedal']
         }
     ],
-    'MidiBoot': [
+    'MidiBoot2': [
         'Alchemist', 'Wizard', 'Magus', 'Lich', 'Witch',
         { 'OwlPedal2': ['Pedal=OwlPedal2'] }
         # 'Noctua', 'BioSignals', not needed

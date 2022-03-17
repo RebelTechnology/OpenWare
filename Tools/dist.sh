@@ -8,5 +8,5 @@ done
 # make OWL Pedal and OWL Modular bin and syx files
 make -C OwlPedal PLATFORM=Pedal clean all sysex && cp OwlPedal/Build/OwlPedal.{syx,bin} dist
 make -C OwlPedal PLATFORM=Modular clean all sysex && cp OwlPedal/Build/OwlModular.{syx,bin} dist
-make -C MidiBootOwl PLATFORM=Pedal clean all sysex && cp MidiBootOwl/Build/MidiBoot-Pedal.{syx,bin} dist
-make -C MidiBootOwl PLATFORM=Modular clean all sysex && cp MidiBootOwl/Build/MidiBoot-Modular.{syx,bin} dist
+make -C MidiBoot1 PLATFORM=Pedal clean all sysex && cp MidiBoot1/Build/MidiBoot-Pedal.{syx,bin} dist
+make -C MidiBoot1 PLATFORM=Modular clean all sysex && cp MidiBoot1/Build/MidiBoot-Modular.{syx,bin} dist

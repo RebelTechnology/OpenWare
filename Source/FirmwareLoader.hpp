@@ -70,6 +70,7 @@ public:
     extern char _PATCHRAM;
     buffer = (uint8_t*)&_PATCHRAM; 
 #endif
+    memset(buffer, 0, sizeof(ResourceHeader));
     index = sizeof(ResourceHeader); // start writing data after resource header
   }
   
@@ -121,6 +122,42 @@ public:
       return setError("Invalid SysEx checksum");
     ready = true;
     return index;
+  }
+
+  bool setResourceName(const char* name){
+    ResourceHeader* header = getResourceHeader();
+    size_t len = strnlen(name, sizeof(ResourceHeader::name));
+    if(len > 0 && len < sizeof(ResourceHeader::name)){
+      size_t datasize = getDataSize();
+      if(datasize <= MAX_SYSEX_PAYLOAD_SIZE){
+	storage.writeResourceHeader(header, name, datasize, crc, RESOURCE_IN_MEMORY); // FLASH_DEFAULT_FLAGS);
+	return true;
+      }else{
+	setError("Resource too big");
+      }
+    }else{
+      setError("Invalid SAVE name");
+    }
+    return false;
+  }
+
+  bool setPatchSlot(uint8_t slot){
+    ResourceHeader* header = getResourceHeader();
+    ProgramHeader* program = (ProgramHeader*)getData();
+    const char* name = program->programName;
+    size_t datasize = getDataSize();
+    if(slot > MAX_NUMBER_OF_PATCHES){
+      setError("Invalid STORE slot");
+    }else if(program->magic != 0XDADAC0DE){
+      setError("Invalid patch magic");
+    }else if(datasize > MAX_SYSEX_PROGRAM_SIZE){
+      setError("Patch too big");
+    }else{
+      storage.writeResourceHeader(header, name, datasize, crc, RESOURCE_IN_MEMORY|RESOURCE_USER_PATCH|slot);
+				  // FLASH_DEFAULT_FLAGS|RESOURCE_USER_PATCH|slot);
+      return true;
+    }
+    return false;
   }
 
   int32_t handleFirmwareUpload(uint8_t* data, size_t length){

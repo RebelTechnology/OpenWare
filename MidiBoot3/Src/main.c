@@ -45,6 +45,8 @@
 
 IWDG_HandleTypeDef hiwdg1;
 
+SPI_HandleTypeDef hspi5;
+
 SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN PV */
@@ -57,6 +59,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_FMC_Init(void);
 static void MX_IWDG1_Init(void);
+static void MX_SPI5_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -73,9 +76,10 @@ static int testMagic(){
 
 static int testLoop(){
   // Prevent reset cycles.
-  // Check if we've been reset without zeroing the magic address,
-  // which might indicate a corrupt firmware.
-  return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_LOOP_NUMBER;
+  /* // Check if we've been reset without zeroing the magic address, */
+  /* // which might indicate a corrupt firmware. */
+  /* return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_LOOP_NUMBER; */
+  return *OWLBOOT_MAGIC_ADDRESS == 3; // stop at third reset
 }
 
 int testButton(){
@@ -93,6 +97,16 @@ static int testNoProgram(){
 
 static int testWatchdogReset(){
   return __HAL_RCC_GET_FLAG(RCC_FLAG_IWDG1RST) != RESET;
+}
+
+static int testPowerLowReset(){
+  return __HAL_RCC_GET_FLAG(RCC_FLAG_LPWR1RST) != RESET ||
+    __HAL_RCC_GET_FLAG(RCC_FLAG_LPWR2RST) != RESET;
+}
+
+static int testBrownOutReset(){
+  return __HAL_RCC_GET_FLAG(RCC_FLAG_BORRST) != RESET && // Power down or Brown out
+    __HAL_RCC_GET_FLAG(RCC_FLAG_PORRST) == RESET; // Not power down
 }
 
 /* USER CODE END PFP */
@@ -127,48 +141,65 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   MX_GPIO_Init();
-  MX_IWDG1_Init();
-  
+
+  SCB_InvalidateDCache();
+  __DSB(); __ISB(); // memory and instruction barriers
+
   if(testMagic()){
     setMessage("Bootloader starting");
   }else if(testButton()){
     setMessage("Bootloader requested");
-  }else if(testLoop()){
-    error(RUNTIME_ERROR, "Unexpected firmware reset");
   }else if(testWatchdogReset()){
     error(RUNTIME_ERROR, "Watchdog reset");
+  }else if(testPowerLowReset()){
+    error(RUNTIME_ERROR, "Low power reset");
+  }else if(testBrownOutReset()){
+    error(RUNTIME_ERROR, "Brown out reset");
   }else if(testNoProgram()){
     error(RUNTIME_ERROR, "No valid firmware");
+  }else if(testLoop()){
+    error(RUNTIME_ERROR, "Unexpected reset");
   }else{
-    // jump to application code
-      
-      /* Disable all interrupts */
-      __disable_irq();
 
-      RCC->CIER = 0x00000000;
+    /* Put marker in to prevent reset cycles */
+    *OWLBOOT_MAGIC_ADDRESS += 1;
 
-      /* Disable and reset SysTick */
-      SysTick->CTRL = 0;
-      SysTick->LOAD = 0;
-      SysTick->VAL = 0;
+    /* Start watchdog */
+    MX_IWDG1_Init();
+    
+    /* Set the address of the entry point to bootloader */
+    volatile uint32_t BootAddr = APPLICATION_ADDRESS;
+ 
+    /* Disable all interrupts */
+    __disable_irq();
 
-      /* Clear Interrupt Enable Register & Interrupt Pending Register */
-      for (int i = 0;i < 5; i++) {
-        NVIC->ICER[i]=0xFFFFFFFF;
-        NVIC->ICPR[i]=0xFFFFFFFF;
-      }
+    /* Disable Systick timer */
+    SysTick->CTRL = 0;
+	 
+    /* Set the clock to the default state */
+    HAL_RCC_DeInit();
 
-    /* put marker in to prevent reset cycles */
-    *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_LOOP_NUMBER;
-
-    /* Jump to user application */
-    uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
-    pFunction jumpToApplication = (pFunction) JumpAddress;
-    /* Initialize user application's Stack Pointer */
-    __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
-    jumpToApplication();
+    /* Clear Interrupt Enable Register & Interrupt Pending Register */
+    for(uint32_t i=0; i<5; i++){
+      NVIC->ICER[i]=0xFFFFFFFF;
+      NVIC->ICPR[i]=0xFFFFFFFF;
+    }
+	 
+    /* Re-enable all interrupts */
+    __enable_irq();
+	
+    /* Set up the jump to booloader address + 4 */
+    void (*SysMemBootJump)(void);
+    SysMemBootJump = (void (*)(void)) (*((uint32_t *) ((BootAddr + 4))));
+ 
+    /* Set the main stack pointer to the bootloader stack */
+    __set_MSP(*(uint32_t *)BootAddr);
+ 
+    /* Call the function to jump to bootloader location */
+    SysMemBootJump();
     for(;;);
   }
+
   /* Clear reset flags */
   __HAL_RCC_CLEAR_RESET_FLAGS();
 
@@ -178,8 +209,11 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
   MX_FMC_Init();
+  MX_IWDG1_Init();
   MX_USB_DEVICE_Init();
+  MX_SPI5_Init();
   /* USER CODE BEGIN 2 */
 
   SDRAM_Initialization_Sequence(&hsdram1);   
@@ -213,7 +247,6 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
   /** Supply configuration update enable
   */
@@ -260,16 +293,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_FMC;
-  PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_D1HCLK;
-  PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Enable USB Voltage detector
-  */
-  HAL_PWREx_EnableUSBVoltageDetector();
 }
 
 /**
@@ -298,6 +321,54 @@ static void MX_IWDG1_Init(void)
   /* USER CODE BEGIN IWDG1_Init 2 */
 #endif
   /* USER CODE END IWDG1_Init 2 */
+
+}
+
+/**
+  * @brief SPI5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI5_Init(void)
+{
+
+  /* USER CODE BEGIN SPI5_Init 0 */
+
+  /* USER CODE END SPI5_Init 0 */
+
+  /* USER CODE BEGIN SPI5_Init 1 */
+
+  /* USER CODE END SPI5_Init 1 */
+  /* SPI5 parameter configuration*/
+  hspi5.Instance = SPI5;
+  hspi5.Init.Mode = SPI_MODE_MASTER;
+  hspi5.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi5.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi5.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi5.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi5.Init.NSS = SPI_NSS_SOFT;
+  hspi5.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi5.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi5.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi5.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi5.Init.CRCPolynomial = 0x0;
+  hspi5.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+  hspi5.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
+  hspi5.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
+  hspi5.Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi5.Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi5.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
+  hspi5.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
+  hspi5.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
+  hspi5.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+  hspi5.Init.IOSwap = SPI_IO_SWAP_DISABLE;
+  if (HAL_SPI_Init(&hspi5) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI5_Init 2 */
+
+  /* USER CODE END SPI5_Init 2 */
 
 }
 
@@ -358,84 +429,40 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
 
-  /*Configure GPIO pins : PE2 PE3 PE4 PE5
-                           PE6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_6;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(FLASH_WP_GPIO_Port, FLASH_WP_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PC13 PC14 PC15 PC1
-                           PC2 PC3 PC4 PC5
-                           PC6 PC7 PC8 PC9
-                           PC10 PC11 PC12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_1
-                          |GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
-                          |GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOF, FLASH_nCS_Pin|FLASH_HOLD_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PF6 PF7 PF8 PF9
-                           PF10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
-                          |GPIO_PIN_10;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  /*Configure GPIO pin : FLASH_WP_Pin */
+  GPIO_InitStruct.Pin = FLASH_WP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(FLASH_WP_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : FLASH_nCS_Pin FLASH_HOLD_Pin */
+  GPIO_InitStruct.Pin = FLASH_nCS_Pin|FLASH_HOLD_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA0 PA1 PA2 PA3
-                           PA4 PA5 PA6 PA7
-                           PA8 PA10 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_10|GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PB0 PB1 PB2 PB10
-                           PB11 PB12 PB13 PB14
-                           PB15 PB3 PB4 PB7
-                           PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
-                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
-                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PD11 PD12 PD13 PD2
-                           PD3 PD4 PD5 PD6
-                           PD7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_2
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PG2 PG3 PG6 PG7
-                           PG9 PG10 PG11 PG12
-                           PG13 PG14 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_6|GPIO_PIN_7
-                          |GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12
-                          |GPIO_PIN_13|GPIO_PIN_14;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+  /*Configure GPIO pin : PC10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 }
 

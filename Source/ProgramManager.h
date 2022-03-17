@@ -25,6 +25,7 @@ public:
 
   void loadProgram(uint8_t index);
   void loadStaticProgram(PatchDefinition* def);
+  void loadDynamicProgram(ResourceHeader* header);
   void loadDynamicProgram(void* address, uint32_t length);
   void startManager();
   void runManager();
@@ -47,6 +48,9 @@ public:
   uint32_t getHeapMemoryUsed();
   uint8_t getProgramIndex();
   bool isProgramRunning();
+  void resetProgramIndex(){
+    patchindex = 0;
+  }
 private:
   void updateProgramIndex(uint8_t index);
 };

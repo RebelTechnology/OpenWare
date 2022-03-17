@@ -97,6 +97,7 @@ void setup(void);
 void loop(void);
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void initialise_monitor_handles(void);
+void MPU_Config(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -155,6 +156,8 @@ int main(void)
   PeriphCommonClock_Config();
 
   /* USER CODE BEGIN SysInit */
+
+  MPU_Config();
 
   /* USER CODE END SysInit */
 
@@ -435,7 +438,10 @@ static void MX_QUADSPI_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN QUADSPI_Init 2 */
-
+  if( HAL_QSPI_SetFifoThreshold(&hqspi, 16) != HAL_OK)
+    {
+      Error_Handler();
+    }
   /* USER CODE END QUADSPI_Init 2 */
 
 }

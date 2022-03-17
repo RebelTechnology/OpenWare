@@ -81,7 +81,6 @@ void MidiController::sendSettings(){
   owl.setBackgroundTask(&task);
 }
 
-
 class SendPatchNamesTask : public BackgroundTask {
 private:
   uint8_t state;
@@ -113,7 +112,7 @@ public:
       if(resource)
 	midi_tx.sendName(SYSEX_RESOURCE_NAME_COMMAND, state+MAX_NUMBER_OF_PATCHES,
 			 resource->getName(), resource->getDataSize(),
-			 storage.getChecksum(resource));
+			 resource->getChecksum());
       state++;
     }else{
       owl.setBackgroundTask(NULL); // end this task
@@ -130,7 +129,7 @@ void MidiController::sendPatchName(uint8_t slot){
     Resource* resource = registry.getPatch(slot-1);
     if(resource)
       sendName(SYSEX_PRESET_NAME_COMMAND, slot, resource->getName(), resource->getDataSize(),
-	       storage.getChecksum(resource));
+	       resource->getChecksum());
   }
 }
 
@@ -179,9 +178,10 @@ public:
     }else if(offset < len){
       // data message
       size_t sz = std::min(msgsize, len-offset);
-      storage.readResource(resource, data, offset, sz);
+      storage.readResource(resource->getHeader(), data, offset, sz);
       offset += sz;
-      crc = crc32(data, sz, crc);
+      // crc = crc32(data, sz, crc);
+      crc = resource->getChecksum();
       sz = data_to_sysex(data, msg+6, sz);
       midi_tx.sendSysEx(msg, sz+6);
     }else{

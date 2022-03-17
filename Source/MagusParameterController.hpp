@@ -204,7 +204,7 @@ public:
     x += 64;
     screen.drawRectangle(x, y, max(1, min(64, parameters[pid]/64)), 6, WHITE);
     screen.fillRectangle(x, y+1, max(1, min(64, user[pid]/64)), 4, WHITE);
-}
+  }
 
   void drawBlocks(ScreenBuffer& screen){
     drawBlockValues(screen);
@@ -296,14 +296,10 @@ public:
 
   void setName(uint8_t pid, const char* name){
     ParameterController::setName(pid, name);
-#ifdef OWL_MAGUS
-    if(pid < NOF_PARAMETERS){
-      if(name[strnlen(name, 11)-1] == '>')
-        setPortMode(pid, PORT_UNI_OUTPUT);
-      else
-        setPortMode(pid, PORT_UNI_INPUT);
-    }
-#endif
+    if(isOutput(pid))
+      setPortMode(pid, PORT_UNI_OUTPUT);
+    else
+      setPortMode(pid, PORT_UNI_INPUT);
   }
 
   bool isEncoderPushed(EncoderButton enc){

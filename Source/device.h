@@ -2,22 +2,41 @@
 #define __DEVICE_H__
 
 #include "hardware.h"
+#include "support.h"
 
-#define FIRMWARE_VERSION "v22.2.0"
+#define FIRMWARE_VERSION "v22.3.0"
 
 #ifdef USE_SPI_FLASH
+#define USE_NOR_FLASH
+#ifndef SPI_FLASH_HANDLE
+#ifdef STM32H7xx
+#define SPI_FLASH_HANDLE             hspi5
+#else
+#define SPI_FLASH_HANDLE             hspi1
+#endif
+#endif
+#endif
+
+#ifdef USE_QSPI_FLASH
+#define USE_NOR_FLASH
+#define QSPI_FLASH_HANDLE            hqspi
+#endif
+
+#ifdef USE_NOR_FLASH
 #define MAX_SPI_FLASH_HEADERS        32
 #define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
-#ifndef SPI_FLASH_HSPI
-#define SPI_FLASH_HSPI               hspi1
-#endif
-#define EXTERNAL_STORAGE_SIZE        (8*1024*1024)
+#define EXTERNAL_STORAGE_SIZE        (8*1024*1024) // 8M / 64Mbit
 #else
 #define MAX_SPI_FLASH_HEADERS        0
 #define FLASH_DEFAULT_FLAGS          RESOURCE_MEMORY_MAPPED
 #endif
+
+#ifdef NO_INTERNAL_FLASH
+#define MAX_RESOURCE_HEADERS         MAX_SPI_FLASH_HEADERS
+#else
 #define USE_FLASH
 #define MAX_RESOURCE_HEADERS         (16+MAX_SPI_FLASH_HEADERS)
+#endif
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -53,7 +72,7 @@
 #define OWLBOOT_MAGIC_NUMBER        0xDADAB007
 #endif
 #define OWLBOOT_LOOP_NUMBER         0xDADADEAD
-#define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
+#define OWLBOOT_MAGIC_ADDRESS       ((volatile uint32_t*)0x2000FFF0)
 
 #ifndef STORAGE_MAX_BLOCKS
 #define STORAGE_MAX_BLOCKS           64
@@ -96,10 +115,10 @@
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           FIRMWARE_VERSION
 
-#ifndef DEBUG
+#if HARDWARE_ID != XIBECA_HARDWARE
 #define USE_FFT_TABLES
-#endif
 #define USE_FAST_POW
+#endif
 
 #ifndef MAX_NUMBER_OF_PATCHES
 #define MAX_NUMBER_OF_PATCHES        40
@@ -110,7 +129,9 @@
 #define MAX_NUMBER_OF_RESOURCES      12
 #endif
 
+#ifndef CODEC_BLOCKSIZE
 #define CODEC_BLOCKSIZE              64
+#endif
 #define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */
@@ -137,7 +158,9 @@
 #ifndef AUDIO_SAMPLINGRATE
 #define AUDIO_SAMPLINGRATE           48000
 #endif
+#ifndef AUDIO_BLOCK_SIZE
 #define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
+#endif
 
 #define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
 #define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE
@@ -164,9 +187,10 @@
 #define LEDS_BRIGHTNESS              20 /* default value - 0 = off, 63 = supernova */
 #endif
 
-#define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
-#define SCREEN_TASK_STACK_SIZE       (2*1024/sizeof(portSTACK_TYPE))
+#define PROGRAM_TASK_STACK_SIZE      (8*1024/sizeof(portSTACK_TYPE))
+#define MANAGER_TASK_STACK_SIZE      (2*1024/sizeof(portSTACK_TYPE))
+#define SCREEN_TASK_STACK_SIZE       (4*1024/sizeof(portSTACK_TYPE))
+#define UTILITY_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
 
 #ifndef ARM_CYCLES_PER_SAMPLE
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
@@ -187,6 +211,10 @@
 
 #ifndef DMA_RAM
 #define DMA_RAM
+#endif
+
+#ifndef DAC_HANDLE
+#define DAC_HANDLE                   hdac
 #endif
 
 #if defined USE_USBD_FS

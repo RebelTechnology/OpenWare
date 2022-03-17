@@ -96,9 +96,8 @@ C_SRC_DSP += $(DSPLIB)/CommonTables/arm_const_structs.c
 # C_SRC += $(DSPLIB)/SupportFunctions/arm_q15_to_float.c
 
 ### FreeRTOS ###
-C_SRC_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.c
-# C_SRC_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os2.c
-# C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.c
+C_SRC_OS  = $(OPENWARE)/Source/freertos.c
+C_SRC_OS += $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.c
 C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.c
 C_SRC_OS += $(FREERTOS_DIR)/tasks.c
 C_SRC_OS += $(FREERTOS_DIR)/timers.c
