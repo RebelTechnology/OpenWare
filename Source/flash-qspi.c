@@ -111,13 +111,9 @@ static int qspi_erase_block(uint32_t address, size_t size);
 static int qspi_write_enable();
 static int qspi_quad_mode(uint8_t cr1, uint8_t cr2);
 static int qspi_qpi_mode(bool qpi);
-/* static int qspi_autopolling_ready(QSPI_HandleTypeDef *hqspi); */
-/* static void qspi_dummy_cycles_cfg(QSPI_HandleTypeDef *hqspi); */
 
-static int qspi_mapped_mode = 0;
+static volatile int qspi_mapped_mode = 0;
 static QSPI_HandleTypeDef* qspi_handle;
-volatile uint8_t CmdCplt, RxCplt, TxCplt, StatusMatch;
-uint8_t qspi_status = 0;
 
 /**
  * Write In Progress (WIP) SR1V[0]: Indicates whether the device is performing a program, write, erase operation, or any other operation, during which a new operation command will be ignored. 
@@ -244,7 +240,6 @@ int qspi_erase_block(uint32_t address, size_t size){
   single bit width instruction, single bit width address and modifier, single bit 
   data.
  */
-
 void qspi_enter_indirect_mode(){
   if(qspi_mapped_mode == 1){
     qspi_mapped_mode = 0;
