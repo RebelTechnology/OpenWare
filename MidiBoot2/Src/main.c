@@ -47,7 +47,7 @@ IWDG_HandleTypeDef hiwdg;
 
 SPI_HandleTypeDef hspi1;
 
-#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
+#ifdef USE_EXTERNAL_RAM
 SDRAM_HandleTypeDef hsdram1;
 #endif
 
@@ -196,7 +196,7 @@ int main(void)
   /* Clear magic */
   *OWLBOOT_MAGIC_ADDRESS = 0;
 
-#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
+#ifdef USE_EXTERNAL_RAM
   MX_FMC_Init();
   SDRAM_Initialization_Sequence(&hsdram1);   
 #endif
@@ -339,7 +339,7 @@ static void MX_FMC_Init(void)
 {
 
   /* USER CODE BEGIN FMC_Init 0 */
-#if !defined OWL_PRISM && !defined OWL_BIOSIGNALS && !defined OWL_NOCTUA
+#ifdef USE_EXTERNAL_RAM
   /* USER CODE END FMC_Init 0 */
 
   FMC_SDRAM_TimingTypeDef SdramTiming = {0};

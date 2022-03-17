@@ -401,9 +401,6 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   uint32_t remain = &_PATCHRAM_END - end; // space left (don't use patch declared stack size)
   if(end < &_PATCHRAM || end+remain > &_PATCHRAM_END) // sanity check
     remain = 0; // prevent errors if program stack is not linked to PATCHRAM
-#ifdef USE_CCM_RAM
-  extern char _CCMRAM, _CCMRAM_SIZE;
-#endif
 #ifdef USE_PLUS_RAM
   extern uint8_t _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
   uint8_t* plusend = (uint8_t*)&_PLUSRAM;
@@ -415,12 +412,10 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
     plusremain = &_PLUSRAM_END - plusend;
   }
 #endif
-#ifdef USE_EXTERNAL_RAM
-  extern char _EXTRAM, _EXTRAM_SIZE;
-#endif
   static MemorySegment heapSegments[5] = {};
   size_t segments = 0;
 #ifdef USE_CCM_RAM
+  extern char _CCMRAM, _CCMRAM_SIZE;
   heapSegments[segments++] = 
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) };
 #endif
@@ -431,6 +426,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
     heapSegments[segments++] = { plusend, plusremain };
 #endif
 #ifdef USE_EXTERNAL_RAM
+  extern char _EXTRAM, _EXTRAM_SIZE;
   heapSegments[segments++] = 
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) };
 #endif
