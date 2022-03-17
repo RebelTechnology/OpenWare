@@ -15,10 +15,6 @@ C_SRC += $(OPENWARE)/Source/sdram-as4cXm32.c
 
 S_SRC = $(BUILDROOT)/Core/Src/startup_stm32h743xx.s
 
-# CPP_SRC += $(OPENWARE)/Source/usbh_midi.cpp
-# C_SRC += $(BUILDROOT)/USB_HOST/Target/usbh_conf.c
-# C_SRC += $(BUILDROOT)/USB_HOST/App/usb_host.c
-
 C_SRC += $(OPENWARE)/Source/flash-qspi.c
 
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
@@ -29,7 +25,6 @@ include $(OPENWARE)/Hardware/sources.mk
 
 C_SRC += $(C_SRC_SAI)
 C_SRC += $(C_SRC_SDRAM)
-C_SRC += $(C_SRC_USBH)
 C_SRC += $(C_SRC_DSP)
 C_SRC += $(C_SRC_OS)
 C_SRC += $(C_SRC_UART)
@@ -38,11 +33,8 @@ C_SRC += $(C_SRC_QSPI)
 C_SRC += $(C_SRC_MDMA)
 C_SRC += $(C_SRC_USBD)
 C_SRC += $(C_SRC_USBD_AUDIO)
-
-# C_SRC += $(BUILDROOT)/USB_DEVICE/App/usb_device.c
-# C_SRC += $(BUILDROOT)/USB_DEVICE/App/usbd_desc.c
-# C_SRC += $(BUILDROOT)/USB_DEVICE/Target/usbd_conf.c
-# C_SRC += $(OPENWARE)/Source/usbd_audio.c
+C_SRC += $(C_SRC_USBH)
+C_SRC += $(C_SRC_USBH_MIDI)
 
 include $(OPENWARE)/Hardware/h7.mk
 

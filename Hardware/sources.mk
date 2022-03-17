@@ -20,3 +20,12 @@ CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiReceiver.cpp
 CPP_SRC += $(OPENWARE)/Source/Storage.cpp
+
+C_SRC_USBD_AUDIO = $(OPENWARE)/Source/usb_device.c
+C_SRC_USBD_AUDIO += $(OPENWARE)/Source/usbd_conf.c
+C_SRC_USBD_AUDIO += $(OPENWARE)/Source/usbd_desc.c
+C_SRC_USBD_AUDIO += $(OPENWARE)/Source/usbd_audio.c
+
+C_SRC_USBH_MIDI = $(OPENWARE)/Source/usb_host.c
+C_SRC_USBH_MIDI += $(OPENWARE)/Source/usbh_conf.c
+C_SRC_USBH_MIDI += $(OPENWARE)/Source/usbh_midi.c

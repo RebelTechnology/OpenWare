@@ -22,11 +22,11 @@ DMA_D2   (xrw)   : ORIGIN = 0x30028000, LENGTH = 128K
 RAM_D3   (xrw)   : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM (xrw)    : ORIGIN = 0x00000000, LENGTH = 4K
 CCMRAM (xrw)     : ORIGIN = 0x00001000, LENGTH = 60K
-/* EXTRAM  (rwx)    : ORIGIN = 0xC0000000, LENGTH = 64M /\* 64M in Xibeca Rev01/Rev02 prototypes *\/ */
-EXTRAM  (rwx)    : ORIGIN = 0xC0000000, LENGTH = 32M /* 64M in Xibeca Rev01/Rev02 prototypes */
-
+EXTRAM  (rwx)    : ORIGIN = 0xC0000000, LENGTH = 32M /* 32M in Xibeca red */
+/* EXTRAM  (rwx)    : ORIGIN = 0xC0000000, LENGTH = 64M /\* 64M in Xibeca Rev01/Rev02 green prototypes *\/ */
 BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 0K
-FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 128K
+FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 128K /* 128K total flash in Xibeca red */
+/* FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 384K /\* 2M total flash in Xibeca Rev01/02 green prototypes *\/ */
 /* BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K */
 /* FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 384K */
 STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 512K  /* Assuming 1Mb FLASH */

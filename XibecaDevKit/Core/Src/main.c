@@ -869,7 +869,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : BUT_B_Pin */
   GPIO_InitStruct.Pin = BUT_B_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(BUT_B_GPIO_Port, &GPIO_InitStruct);
 
@@ -896,7 +896,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : BUT_A_Pin */
   GPIO_InitStruct.Pin = BUT_A_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(BUT_A_GPIO_Port, &GPIO_InitStruct);
 

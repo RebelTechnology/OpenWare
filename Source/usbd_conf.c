@@ -37,8 +37,7 @@
 
 /* USER CODE END PV */
 
-extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
-extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern PCD_HandleTypeDef USBD_PCD_HANDLE;
 
 void Error_Handler(void);
 
@@ -227,19 +226,9 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
   */
 USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 {
-#ifdef USE_USBD_FS
-  /* if (pdev->id == DEVICE_FS) { */
-    /* Link the driver to the stack. */
-    hpcd_USB_OTG_FS.pData = pdev;
-    pdev->pData = &hpcd_USB_OTG_FS;
-#endif
-  /* } else if (pdev->id == DEVICE_HS) { */
-#ifdef USE_USBD_HS
-    /* Link the driver to the stack. */
-    hpcd_USB_OTG_HS.pData = pdev;
-    pdev->pData = &hpcd_USB_OTG_HS;
-#endif
-  /* } */
+  /* Link the driver to the stack. */
+  USBD_PCD_HANDLE.pData = pdev;
+  pdev->pData = &USBD_PCD_HANDLE;
   USBD_AUDIO_SetFiFos(pdev->pData);
   return USBD_OK;
 }

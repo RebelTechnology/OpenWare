@@ -234,28 +234,18 @@
 #define USB_OTG_BASE_ADDRESS  USB_OTG_HS
 #endif
 
-#define USB_DIEPCTL(ep_addr) ((USB_OTG_INEndpointTypeDef *)((uint32_t)USB_OTG_BASE_ADDRESS + USB_OTG_IN_ENDPOINT_BASE \
-	    + (ep_addr&0x7FU)*USB_OTG_EP_REG_SIZE))->DIEPCTL
-#define USB_DOEPCTL(ep_addr) ((USB_OTG_OUTEndpointTypeDef *)((uint32_t)USB_OTG_BASE_ADDRESS + \
-	     USB_OTG_OUT_ENDPOINT_BASE + (ep_addr)*USB_OTG_EP_REG_SIZE))->DOEPCTL
-
-#define USB_CLEAR_INCOMPLETE_IN_EP(ep_addr)     if((((ep_addr) & 0x80U) == 0x80U)){ \
-    USB_DIEPCTL(ep_addr) |= (USB_OTG_DIEPCTL_EPDIS | USB_OTG_DIEPCTL_SNAK); \
-  };
-
-#define USB_DISABLE_EP_BEFORE_CLOSE(ep_addr)			\
-  if((((ep_addr) & 0x80U) == 0x80U))				\
-    {								\
-      if (USB_DIEPCTL(ep_addr)&USB_OTG_DIEPCTL_EPENA_Msk)	\
-	{							\
-	  USB_DIEPCTL(ep_addr)|= USB_OTG_DIEPCTL_EPDIS;		\
-	}							\
-    } ;
-
-#define IS_ISO_IN_INCOMPLETE_EP(ep_addr,current_sof, transmit_soffn) ((USB_DIEPCTL(ep_addr)&USB_OTG_DIEPCTL_EPENA_Msk)&& \
-								      (((current_sof&0x01) == ((USB_DIEPCTL(ep_addr)&USB_OTG_DIEPCTL_EONUM_DPID_Msk)>>USB_OTG_DIEPCTL_EONUM_DPID_Pos)) \
-								       ||(current_sof== ((transmit_soffn+2)&0x7FF))))
-
-#define USB_SOF_NUMBER() ((((USB_OTG_DeviceTypeDef *)((uint32_t )USB_OTG_BASE_ADDRESS + USB_OTG_DEVICE_BASE))->DSTS&USB_OTG_DSTS_FNSOF)>>USB_OTG_DSTS_FNSOF_Pos)
+#if defined USE_USBH_HS
+#define USE_USB_HOST
+#define USE_USBH_MIDI
+#define USB_HOST_RX_BUFF_SIZE       256
+#define USBH_HANDLE                 hUsbHostHS
+#define USBH_HCD_HANDLE             hhcd_USB_OTG_HS
+#elif defined USE_USBH_FS
+#define USE_USB_HOST
+#define USE_USBH_MIDI
+#define USB_HOST_RX_BUFF_SIZE       256
+#define USBH_HANDLE                 hUsbHostFS
+#define USBH_HCD_HANDLE             hhcd_USB_OTG_FS
+#endif
 
 #endif /* __DEVICE_H__ */
