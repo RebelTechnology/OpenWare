@@ -136,14 +136,12 @@ int flash_write(uint32_t address, const uint8_t* data, size_t length){
     rgAddress[2] = (address & 0x0000FF) >> 0;
 
     flash_Select();
-    __nop();__nop();__nop();
 
     // Send and receive data
     HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
     HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
     HAL_SPI_Transmit(FLASH_SPIConfig, (uint8_t*)data, len, 100);
 
-    __nop();__nop();__nop();
     flash_Deselect();
 
     length -= len;
@@ -172,13 +170,10 @@ uint32_t flash_readIdentification(){
   uint8_t ucInstruction = INST_READ_RDID;
   flash_Select();
   flash_WP_Disable();
-  __nop();__nop();__nop();
 	
   // Send and receive data
   HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, sizeof ucInstruction, 1000);
   HAL_SPI_Receive(FLASH_SPIConfig,  (uint8_t*)&ucData, sizeof ucData, 1000);
-	
-  __nop();__nop();__nop();
 	
   flash_WP_Enable();
   flash_Deselect();
@@ -193,13 +188,10 @@ uint8_t flash_readStatusReg (uint8_t ucInstruction)
 		
   flash_Select();
   flash_WP_Disable();
-  __nop();__nop();__nop();
 	
   // Send and receive data
   HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, sizeof ucInstruction, 1000);
   HAL_SPI_Receive(FLASH_SPIConfig,  &ucData, sizeof ucData, 1000);
-	
-  __nop();__nop();__nop();
 	
   flash_WP_Enable();
   flash_Deselect();
@@ -216,13 +208,9 @@ void flash_writeStatusReg (uint8_t reg, uint8_t data)
 	flash_Select();								// Select device
 	flash_WP_Disable();						// Disable write protect	
 	
-	__nop();__nop();__nop();
-	
 	// Send and receive data
 	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, sizeof ucInstruction, 1000);
 	HAL_SPI_Transmit(FLASH_SPIConfig, &data, sizeof data, 1000);
-	
-	__nop();__nop();__nop();
 	
 	flash_WP_Enable();						// Enable write protect
 	flash_Deselect();							// Deselect device
@@ -258,11 +246,7 @@ void flash_BulkErase (void)
 	flash_Select();									// Select device
 	flash_WP_Disable();							// Disable write protect	
 	
-	__nop();__nop();__nop();
-	
 	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
-	
-	__nop();__nop();__nop();
 	
 	flash_WP_Enable();							// Enable write protect
 	flash_Deselect();								// Deselect device
@@ -301,9 +285,7 @@ int flash_erase(uint32_t address, size_t size){
   flash_Select();
   flash_WP_Disable();
 	
-  __nop();__nop();__nop();
   HAL_SPI_Transmit(FLASH_SPIConfig, data, sizeof(data), 100);
-  __nop();__nop();__nop();
 	
   flash_WP_Enable();
   flash_Deselect();
@@ -325,12 +307,8 @@ void _flash_writeEN (void)
 	flash_Select();								// Select device
 	flash_WP_Disable();						// Disable write protect	
 	
-	__nop();__nop();__nop();
-	
 	// Send Command
 	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, sizeof ucInstruction, 100);
-	
-	__nop();__nop();__nop();
 	
 	flash_WP_Enable();						// Enable write protect
 	flash_Deselect();							// Deselect device
@@ -343,12 +321,8 @@ void _flash_writeDIS (void)
 	flash_Select();								// Select device
 	flash_WP_Disable();						// Disable write protect	
 	
-	__nop();__nop();__nop();
-	
 	// Send Command
 	HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, sizeof ucInstruction, 100);
-	
-	__nop();__nop();__nop();
 	
 	flash_WP_Enable();						// Enable write protect
 	flash_Deselect();							// Deselect device
