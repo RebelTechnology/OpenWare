@@ -115,10 +115,10 @@
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           FIRMWARE_VERSION
 
-#ifndef DEBUG
+#if HARDWARE_ID != XIBECA_HARDWARE
 #define USE_FFT_TABLES
-#endif
 #define USE_FAST_POW
+#endif
 
 #ifndef MAX_NUMBER_OF_PATCHES
 #define MAX_NUMBER_OF_PATCHES        40
