@@ -4,6 +4,7 @@
 #define OWL_GENIUS
 #define HARDWARE_ID                  GENIUS_HARDWARE
 #define HARDWARE_VERSION             "Genius"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-GENIUS"
 
 #define USE_SPI_FLASH
 #define NO_INTERNAL_FLASH
@@ -34,6 +35,7 @@
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
+#define CODEC_DAC_INVERT
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
@@ -51,7 +53,6 @@
 #define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX  // microphone
 #define USE_USBD_FS
-#define USBD_HANDLE hUsbDeviceFS
 #define USBH_HANDLE hUsbHostHS
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USB_HOST
@@ -75,6 +76,6 @@
 #define ADC_B 1
 #define NOF_ADC_VALUES               2
 #define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  (4+2)
+#define NOF_BUTTONS                  16
 #define USE_DAC
 #define DAC_HANDLE                   hdac1

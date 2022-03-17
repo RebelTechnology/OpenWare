@@ -6,6 +6,12 @@
 #include "OpenWareMidiControl.h"
 #include "message.h"
 #include "Codec.h"
+#ifdef USE_USB_DEVICE
+#include "usb_device.h"
+#endif
+#ifdef USE_USB_HOST
+#include "usb_host.h"
+#endif
 
 #define XIBECA_PIN3  GPIOD, GPIO_PIN_2
 #define XIBECA_PIN4  GPIOG, GPIO_PIN_10
@@ -144,14 +150,22 @@ void setup(){
   if(flash_erase(memloc, size) != 0)
     printf("QSPI erase failed");
 
+#ifdef USE_USB_DEVICE
+  MX_USB_DEVICE_Init();
+#endif
+#ifdef USE_USB_HOST
+  MX_USB_HOST_Init();
+#endif
+
   owl.setup();
   onSetup();
 }
 #endif
 
 void onSetup(){
-  for(size_t i=1; i<=2; ++i)
-    setLed(i, NO_COLOUR);
+
+  setLed(1, NO_COLOUR);
+  setLed(2, NO_COLOUR);
 }
 
 void onLoop(void){

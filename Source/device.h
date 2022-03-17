@@ -56,7 +56,6 @@
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
 #endif
-#define USE_USBD_MIDI
 #define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
 #define MIDI_OUTPUT_BUFFER_SIZE      1024
@@ -115,7 +114,7 @@
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           FIRMWARE_VERSION
 
-#if HARDWARE_ID != XIBECA_HARDWARE
+#if 1 // HARDWARE_ID != XIBECA_HARDWARE
 #define USE_FFT_TABLES
 #define USE_FAST_POW
 #endif
@@ -218,9 +217,21 @@
 #endif
 
 #if defined USE_USBD_FS
-#define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
+#define USE_USB_DEVICE
+#define USE_USBD_MIDI
+#define USBD_DESC FS_Desc
+#define USBD_HSFS DEVICE_FS
+#define USBD_HANDLE hUsbDeviceFS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_FS
+#define USB_OTG_BASE_ADDRESS  USB_OTG_FS
 #elif defined USE_USBD_HS
-#define USB_OTG_BASE_ADDRESS  USB_OTG_HS   
+#define USE_USB_DEVICE
+#define USE_USBD_MIDI
+#define USBD_DESC HS_Desc
+#define USBD_HSFS DEVICE_HS
+#define USBD_HANDLE hUsbDeviceHS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_HS
+#define USB_OTG_BASE_ADDRESS  USB_OTG_HS
 #endif
 
 #define USB_DIEPCTL(ep_addr) ((USB_OTG_INEndpointTypeDef *)((uint32_t)USB_OTG_BASE_ADDRESS + USB_OTG_IN_ENDPOINT_BASE \

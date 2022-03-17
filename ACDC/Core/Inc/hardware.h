@@ -4,6 +4,8 @@
 #define OWL_XIBECA
 #define HARDWARE_ID                  XIBECA_HARDWARE
 #define HARDWARE_VERSION             "AC/DC"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-ACDC"
+
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))

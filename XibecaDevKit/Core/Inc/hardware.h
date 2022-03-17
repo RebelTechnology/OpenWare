@@ -4,7 +4,8 @@
 #define OWL_XIBECA
 #define HARDWARE_ID                  XIBECA_HARDWARE
 #define HARDWARE_VERSION             "Xibeca"
-// causing busfault?
+#define USBD_PRODUCT_STRING_FSHS     "OWL-XIBECA"
+
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
@@ -48,11 +49,11 @@
 #define USBD_AUDIO_RX_CHANNELS      4
 #define USE_USBD_RX_FB
 #define USE_USBD_FS
-#define USBD_HANDLE                 hUsbDeviceFS
-#define USBH_HANDLE                 hUsbHostHS
+
+/* #define USBH_HANDLE                 hUsbHostHS */
 /* #define USE_USB_HOST */
 /* #define USE_USBH_MIDI */
-#define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
+/* #define USB_HOST_RX_BUFF_SIZE 256  /\* Max Received data 64 bytes *\/ */
 
 // Serial MIDI
 #define USE_UART_MIDI_RX
