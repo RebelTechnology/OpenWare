@@ -16,6 +16,7 @@ Known Issues:
 
 * Updated BioSignals
 * Support for AC/DC and XibecaDevKit subprojects
+* Configurable audio block size
 * Added support for QSPI flash
 * Bootloader refactoring
 * Bootloader support for listing and deleting resources
