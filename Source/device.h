@@ -115,7 +115,7 @@
 #define BOOTLOADER_VERSION           FIRMWARE_VERSION
 
 #if 1 // HARDWARE_ID != XIBECA_HARDWARE
-#define USE_FFT_TABLES
+/* #define USE_FFT_TABLES */
 #define USE_FAST_POW
 #endif
 

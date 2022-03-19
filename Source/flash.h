@@ -9,7 +9,8 @@
  extern "C" {
 #endif
 
-   void flash_init(void* handle);
+   int flash_init(void* handle);
+   int flash_wait();
    int flash_read(uint32_t address, uint8_t* data, size_t length);
    int flash_write(uint32_t address, const uint8_t* data, size_t length);
    int flash_erase(uint32_t address, size_t size);

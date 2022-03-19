@@ -60,12 +60,12 @@ uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
 void Storage::init(){
 #if defined USE_SPI_FLASH
   extern SPI_HandleTypeDef SPI_FLASH_HANDLE;
-  flash_init(&SPI_FLASH_HANDLE);
-  memset(nor_index, 0, sizeof(nor_index));
+  if(flash_init(&SPI_FLASH_HANDLE))
+    error(FLASH_ERROR, "Init failed");     
 #elif defined USE_QSPI_FLASH
   extern QSPI_HandleTypeDef QSPI_FLASH_HANDLE;
-  flash_init(&QSPI_FLASH_HANDLE);
-  memset(nor_index, 0, sizeof(nor_index));
+  if(flash_init(&QSPI_FLASH_HANDLE))
+    error(FLASH_ERROR, "Init failed");     
 #endif
   index();
 }
@@ -86,7 +86,7 @@ void Storage::index(){
   if(resources[i].isFree()){
     i++;
   }else{
-    error(FLASH_ERROR, "Invalid flash resource");
+    error(FLASH_ERROR, "Invalid resource");
     // set resource to point to first free block, or NULL
     void* p = findFirstFreeBlock(resources[i].getHeader(), (void*)INTERNAL_STORAGE_END, 32);
     resources[i++].setHeader((ResourceHeader*)p);
@@ -95,6 +95,7 @@ void Storage::index(){
 #ifdef USE_NOR_FLASH
   uint32_t address = 0;
   NorHeader* header = &nor_index[0];
+  memset(nor_index, 0, sizeof(nor_index));
   header->address = address;
   resources[i].setHeader(header);
   flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
@@ -109,7 +110,7 @@ void Storage::index(){
     setProgress(progress += 4095/MAX_RESOURCE_HEADERS, "Indexing");
   }
   if(!resources[i].isFree()){
-    error(FLASH_ERROR, "Invalid SPI resource");
+    error(FLASH_ERROR, "Invalid resource");
     // set resource to point to first free block, or NULL
     address = findFirstFreePage(resources[i].getAddress(), EXTERNAL_STORAGE_SIZE, 256);
     if(address < EXTERNAL_STORAGE_SIZE){
@@ -386,7 +387,7 @@ size_t Storage::writeResource(ResourceHeader* header){
     error(FLASH_ERROR, "No free resources");
     return 0;
   }
-
+  taskENTER_CRITICAL();
   int status = -1;
   if(dest->isMemoryMapped()){
 #ifdef USE_FLASH
@@ -398,17 +399,20 @@ size_t Storage::writeResource(ResourceHeader* header){
   }else{
 #ifdef USE_NOR_FLASH
     uint32_t address = dest->getAddress();
-    flash_write(address, data, length);
-    flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)); // read back resource header
-    status = 0;
+    status = flash_write(address, data, length);
+    // if(status == 0)
+      // status = flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)); // read back resource header
+    if(status == 0 && flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)) != 0)
+      error(FLASH_ERROR, "Readback failed");
 #endif
   }
+  taskEXIT_CRITICAL();
   if(status){
-    error(FLASH_ERROR, "Flash write failed");
+    error(FLASH_ERROR, "Write failed");
   }else if(dest->getTotalSize() < length){ // allow for storage-specific alignment
-    error(FLASH_ERROR, "Size verification failed");
+    error(FLASH_ERROR, "Size mismatch");
   }else if(!verifyData(dest, data, length)){
-    error(FLASH_ERROR, "Data verification failed");
+    error(FLASH_ERROR, "Data mismatch");
   }
   index(); // rebuild index
   return length;

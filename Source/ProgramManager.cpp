@@ -642,9 +642,6 @@ void runManagerTask(void* p){
 #endif
       }
     }
-    taskEXIT_CRITICAL();
-    vTaskDelay(20); // allow idle task to garbage collect if necessary
-    taskENTER_CRITICAL();
     if(ulNotifiedValue & PROGRAM_FLASH_NOTIFICATION){ // program flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
@@ -656,7 +653,7 @@ void runManagerTask(void* p){
       else
 	xTaskCreate(eraseFlashTask, "Flash Erase", UTILITY_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
 ;
-    }else if(ulNotifiedValue & SEND_RESOURCE_NOTIFICATION){
+    }else if(ulNotifiedValue & SEND_RESOURCE_NOTIFICATION){ // send resource
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
       else
@@ -698,13 +695,11 @@ void ProgramManager::notifyManagerFromISR(uint32_t ulValue){
   if(managerTask != NULL)
     xTaskNotifyFromISR(managerTask, ulValue, eSetBits, &xHigherPriorityTaskWoken );
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-  // managerTask.notifyFromISR(ulValue);
 }
 
 void ProgramManager::notifyManager(uint32_t ulValue){
   if(managerTask != NULL)
     xTaskNotify(managerTask, ulValue, eSetBits );
-  // managerTask.notify(ulValue);
 }
 
 void ProgramManager::startProgram(bool isr){

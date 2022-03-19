@@ -114,7 +114,6 @@ public:
 
   int32_t finishFirmwareUpload(uint8_t* data, size_t length, size_t offset){
     // last package: index and checksum
-    // crc = crc32(getData(), getDataSize(), 0);
     if(length < 5)
       return setError("Missing checksum");
     uint32_t checksum = decodeInt(data+offset);

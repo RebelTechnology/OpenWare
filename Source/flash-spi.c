@@ -42,12 +42,15 @@ static void flash_BulkErase (void);
 #define INST_BURSTWRAP_SET			0x77
 #define INST_READ_RDID   			0x9F
 
-#ifndef __nop
-#define __nop() __asm("NOP")
-#endif
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
+
+
+int flash_wait(){
+  while (!(flash_readStatusReg(INST_READ_STATREG_1) & 0xff)){}
+  return 0;
+}
 
 static void _flash_writeEN (void);
 static void _flash_writeDIS (void);
@@ -222,7 +225,7 @@ void flash_writeStatusReg (uint8_t reg, uint8_t data)
 	while (flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_flash_writeDIS();}
 }
 
-void flash_init(void* handle) {
+int flash_init(void* handle) {
   // Copy SPI configuration to local variable
 	FLASH_SPIConfig = (SPI_HandleTypeDef*)handle;
 		
@@ -233,6 +236,7 @@ void flash_init(void* handle) {
 #ifdef DEBUG
 	flash_rdid = flash_readIdentification();
 #endif
+	return flash_readStatusReg(INST_READ_STATREG_1);
 }
 
 //_____ Erase Functions 
@@ -252,10 +256,10 @@ void flash_BulkErase (void)
 	flash_Deselect();								// Deselect device
 	
 	// Wait for write to finish
-	while (flash_readStatusReg(INST_READ_STATREG_1) & 0x01){__nop();__nop();__nop();}
+	while (flash_readStatusReg(INST_READ_STATREG_1) & 0x01){}
 	
 	// Check that the write enable latch has been cleared
-	while (flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_flash_writeDIS();__nop();}
+	while (flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_flash_writeDIS();}
 }
 
 /* individual 4 KB sector erase, 32 KB half block sector, 64 KB block sector erase */		
@@ -291,10 +295,10 @@ int flash_erase(uint32_t address, size_t size){
   flash_Deselect();
 	
   // Wait for write to finish
-  while (flash_readStatusReg(INST_READ_STATREG_1) & 0x01){__nop();__nop();__nop();}
+  while (flash_readStatusReg(INST_READ_STATREG_1) & 0x01){}
 	
   // Check that the write enable latch has been cleared
-  while (flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_flash_writeDIS();__nop();}
+  while (flash_readStatusReg(INST_READ_STATREG_1) & 0x02) {_flash_writeDIS();}
 
   return size;
 }
