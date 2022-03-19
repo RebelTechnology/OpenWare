@@ -52,11 +52,9 @@
 #define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX  // microphone
+
 #define USE_USBD_FS
-#define USBH_HANDLE hUsbHostHS
-#define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
-#define USE_USB_HOST
-#define USE_USBH_MIDI
+#define USE_USBH_HS
 /* #define USE_USBH_HID */
 
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
