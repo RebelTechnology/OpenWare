@@ -190,6 +190,7 @@ SECTIONS
 
   .heapd2 (NOLOAD) :
   {
+    *(.d2data)
     PROVIDE (_HEAP_D2 = .);
   } >HEAP_D2
   _HEAP_D2_END = ORIGIN(HEAP_D2) + LENGTH(HEAP_D2);
