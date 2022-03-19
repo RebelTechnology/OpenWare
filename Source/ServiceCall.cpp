@@ -13,8 +13,15 @@
 #include "arm_const_structs.h"
 #endif /* USE_FFT_TABLES */
 #ifdef USE_FAST_POW
+#ifdef USE_FAST_POW_RESOURCES
+extern uint32_t fast_log_table_size;
+extern uint32_t fast_pow_table_size;
+extern float* fast_log_table;
+extern float* fast_pow_table;
+#else
 #include "FastLogTable.h"
 #include "FastPowTable.h"
+#endif
 #endif /* USE_FAST_POW */
 #ifdef USE_SCREEN
 #include "Graphics.h"
@@ -62,6 +69,76 @@ int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
   return OWL_SERVICE_OK;
 }
 #endif /* USE_FFT_TABLES */
+#if 0
+  case 32U:
+    #define ARMBITREVINDEXTABLE_16_TABLE_LENGTH ((uint16_t)20)
+    extern const uint16_t armBitRevIndexTable16[ARMBITREVINDEXTABLE_16_TABLE_LENGTH];
+    extern const float32_t twiddleCoef_16[32];
+    extern const float32_t twiddleCoef_rfft_32[32];
+// size: 32*4 + 32*4 + 20*2 bytes == 16*2 words + 20 halfwords
+
+  case 64U:
+    #define ARMBITREVINDEXTABLE_32_TABLE_LENGTH ((uint16_t)48)
+    extern const uint16_t armBitRevIndexTable32[ARMBITREVINDEXTABLE_32_TABLE_LENGTH];
+    extern const float32_t twiddleCoef_32[64];
+    extern const float32_t twiddleCoef_rfft_64[64];
+// size: 64*4 + 64*4 + 48*2 bytes == 32*2 words + 48 halfwords
+
+  case 128U:
+    #define ARMBITREVINDEXTABLE_64_TABLE_LENGTH ((uint16_t)56)
+    extern const uint16_t armBitRevIndexTable64[ARMBITREVINDEXTABLE_64_TABLE_LENGTH];
+
+  case 256U:
+    #define ARMBITREVINDEXTABLE_128_TABLE_LENGTH ((uint16_t)208)
+    extern const uint16_t armBitRevIndexTable128[ARMBITREVINDEXTABLE_128_TABLE_LENGTH];
+
+template<size_t fftlen, size_t bitrevlen>
+struct arm_rfft_tables {
+  const float32_t twiddle[fftlen];
+  const float32_t twiddle_rfft[fftlen];  
+  const uint16_t bit_rev[bitrevlen];
+  size_t getTotalSize(){
+    return fftlen*2*sizeof(float32_t) + bitrevlen*sizeof(uint16_t);
+  }
+  void arm_rfft_fast_init_f32(arm_rfft_fast_instance_f32* S){
+    arm_cfft_instance_f32* Sint = &(S->Sint);
+    Sint->fftLen = fftlen/2;
+    S->fftLenRFFT = fftlen;
+    Sint->bitRevLength = bitrevlen;
+    Sint->pBitRevTable = bit_rev;
+    Sint->pTwiddle     = twiddle;
+    S->pTwiddleRFFT    = twiddle_rfft;
+  }
+};
+
+arm_rfft_tables<32, ARMBITREVINDEXTABLE_16_TABLE_LENGTH> rfft_32 = {
+  twiddleCoef_16,
+  twiddleCoef_rfft_32,
+  armBitRevIndexTable16
+};
+
+arm_status arm_rfft_fast_init_f32( arm_rfft_fast_instance_f32 * S, size_t fftlen) {
+  arm_cfft_instance_f32* Sint = &(S->Sint);
+  switch(fftlen){
+  case 32U:
+    Sint->fftLen = 16U;
+    S->fftLenRFFT = 32U;
+    Sint->bitRevLength = ARMBITREVINDEXTABLE_16_TABLE_LENGTH;
+    Sint->pBitRevTable = (uint16_t *)armBitRevIndexTable16;
+    Sint->pTwiddle     = (float32_t *) twiddleCoef_16;
+    S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_32;
+
+  case 1024:
+    Sint->fftLen = 512U;
+    S->fftLenRFFT = 1024U;
+    Sint->bitRevLength = ARMBITREVINDEXTABLE_512_TABLE_LENGTH;
+    Sint->pBitRevTable = (uint16_t *)armBitRevIndexTable512;
+    Sint->pTwiddle     = (float32_t *) twiddleCoef_512;
+    S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_1024;
+  }
+  return ARM_MATH_SUCCESS;
+}
+#endif
 
 static int handleVersion(void** params, int len){
   int ret = OWL_SERVICE_INVALID_ARGS;
@@ -165,26 +242,44 @@ static int handleGetArray(void** params, int len){
   // get array and array size
   // expects three parameters: name, &array and &size
 #ifdef USE_FAST_POW
-  int index = 0;
-  ret = OWL_SERVICE_OK;
-  if(len >= index+3){
-    char* p = (char*)params[index++];
-    void** array = (void**)params[index++];
-    int* size = (int*)params[index++];
+  if(len >= 3){
+    char* p = (char*)params[0];
+    void** array = (void**)params[1];
+    int* size = (int*)params[2];
     if(strncmp(SYSTEM_TABLE_LOG, p, 3) == 0){
       *array = (void*)fast_log_table;
       *size = fast_log_table_size;
     }else if(strncmp(SYSTEM_TABLE_POW, p, 3) == 0){
       *array = (void*)fast_pow_table;
       *size = fast_pow_table_size;
+      ret = OWL_SERVICE_OK;
     }else{
       *array = NULL;
       *size = 0;
-      ret = OWL_SERVICE_INVALID_ARGS;
     }
   }
-#else
-  ret = OWL_SERVICE_INVALID_ARGS;    
+// #else
+//   // look for it in resources
+//   if(len >= 3){
+//     char* p = (char*)params[0];
+//     void** array = (void**)params[1];
+//     int* size = (int*)params[2];
+//     Resource* res = NULL;
+//     if(strncmp(SYSTEM_TABLE_LOG, p, 3) == 0){
+//       res = storage.getResourceByName(SYSTEM_TABLE_LOG ".bin");
+//     }else if(strncmp(SYSTEM_TABLE_POW, p, 3) == 0){
+//       res = storage.getResourceByName(SYSTEM_TABLE_POW ".bin");
+//     }
+//     if(res && res->isValid()){
+//       static float fast_pow_table[fast_pow_table_size] __attribute__ ((section (".d2data")));
+//       static float fast_log_table[fast_log_table_size] __attribute__ ((section (".d2data")));
+//       *array = res->getData();
+//       *size = res->getDataSize();
+//       ret = OWL_SERVICE_OK;
+//     }else{
+//       *array = NULL;
+//       *size = 0;
+//     }
 #endif /* USE_FAST_POW */
   return ret;
 }
