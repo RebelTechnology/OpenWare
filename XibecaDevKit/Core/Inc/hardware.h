@@ -10,6 +10,8 @@
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 
+#define USE_FAST_POW_RESOURCES
+
 /* note that with H750, PLUS_RAM will be used by firmware */
 #define USE_PLUS_RAM
 
@@ -73,4 +75,4 @@
   
 #define NOF_ADC_VALUES               8
 #define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  (2+4)
+#define NOF_BUTTONS                  16

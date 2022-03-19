@@ -2,7 +2,7 @@ PROJECT = XibecaDevKit
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-LDSCRIPT = $(OPENWARE)/Hardware/xibeca-big.ld
+LDSCRIPT = $(OPENWARE)/Hardware/xibeca.ld
 include $(OPENWARE)/Hardware/owl3.mk
 
 C_SRC = $(wildcard Core/Src/*.c)
@@ -38,6 +38,24 @@ C_SRC += $(C_SRC_USBH_MIDI)
 
 include $(OPENWARE)/Hardware/h7.mk
 
+.PHONY: dfu fastpow fastlog
+
 dfu: Build/${PROJECT}.bin
 	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s 0x8000000 -D $<
 	@echo Uploaded $< to Xibeca bootsector
+
+Build/fastpow.bin: ../Source/fastpow.cpp
+	arm-none-eabi-gcc -c ../Source/fastpow.cpp -o Build/fastpow.o
+	arm-none-eabi-objcopy -O binary Build/fastpow.o
+	dd if=Build/fastpow.o bs=4 skip=2 of=Build/fastpow.bin
+
+Build/fastlog.bin: ../Source/fastlog.cpp
+	arm-none-eabi-gcc -c ../Source/fastlog.cpp -o Build/fastlog.o
+	arm-none-eabi-objcopy -O binary Build/fastlog.o
+	dd if=Build/fastlog.o bs=4 skip=2 of=Build/fastlog.bin
+
+fastpow: Build Build/fastpow.bin
+	FirmwareSender -out "OWL*" -in Build/fastpow.bin -name SPW.bin
+
+fastlog: Build Build/fastlog.bin
+	FirmwareSender -out "OWL*" -in Build/fastlog.bin -name SLG.bin
