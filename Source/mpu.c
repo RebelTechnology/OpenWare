@@ -1,4 +1,5 @@
 #include "sdram.h"
+#include "device.h"
 
 void MPU_Config(void){
   HAL_MPU_Disable();
@@ -32,7 +33,7 @@ void MPU_Config(void){
 #endif /* USE_ICACHE || USE_DCACHE */
 
   /* Configure the MPU attributes for SDRAM */
-#if 0 // using defaults instead
+#if 0 // using defaults
 // #ifdef USE_EXTERNAL_RAM
   // special configuration is probably not required for SDRAM
   // if enabled, make sure that REGION_SIZE is correct
@@ -53,7 +54,7 @@ void MPU_Config(void){
 #endif
 
   /* Configure the MPU attributes for D1 PLUSRAM */
-#if 0 // using defaults instead
+#if 0 // using defaults
 // #ifdef USE_PLUS_RAM  
   // AXISRAM D1 (+RAM) - write back with no write allocate, execute
   extern char _PLUSRAM;
@@ -93,6 +94,4 @@ void MPU_Config(void){
 
   /* Differentiate MemManage, BusFault and UsageFault */
   SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk;
-
-  /* ARM_MPU_Enable(MPU_CTRL_PRIVDEFENA_Msk); */
 }
