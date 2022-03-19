@@ -36,6 +36,9 @@
 /* #define CODEC_HP_FILTER */
 #define CODEC_SPI hspi2
 
+#define CODEC_BLOCKSIZE              256 // with bs=512 DMA_D2=64k overflows by 1580 bytes
+#define AUDIO_BLOCK_SIZE             32
+
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)

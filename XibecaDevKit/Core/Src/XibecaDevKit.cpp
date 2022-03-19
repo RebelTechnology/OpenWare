@@ -104,15 +104,32 @@ void setGateValue(uint8_t ch, int16_t value){
   }
 }
 
+static uint16_t smooth_adc_values[NOF_ADC_VALUES];
+extern "C"{
+  void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+    extern uint16_t adc_values[NOF_ADC_VALUES];
+    for(size_t i=0; i<NOF_ADC_VALUES; ++i){
+      // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+      smooth_adc_values[i] = ((uint32_t)smooth_adc_values[i]*3 + adc_values[i]) >> 2;
+    }
+    // ADC 25 Mhz, 64.5 cycles
+    // 12-bit Prescaler=128, os=1 : 86 Hz
+    // 16-bit Prescaler=8,   os=4 : 334 Hz
+    // pin_led_b1.toggle();
+  }
+}
+
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A])>>2;
-  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_B])>>2;
-  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_C])>>2;
-  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_D])>>2;
-  parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_E])>>2;
-  parameter_values[5] = (parameter_values[5]*3 + adc_values[ADC_F])>>2;
-  parameter_values[6] = (parameter_values[6]*3 + adc_values[ADC_G])>>2;
-  parameter_values[7] = (parameter_values[7]*3 + adc_values[ADC_H])>>2;
+  // parameter_values[0] = (parameter_values[0]*3 + smooth_adc_values[ADC_A])>>2;
+  // parameter_values[1] = (parameter_values[1]*3 + smooth_adc_values[ADC_B])>>2;
+  // parameter_values[2] = (parameter_values[2]*3 + smooth_adc_values[ADC_C])>>2;
+  // parameter_values[3] = (parameter_values[3]*3 + smooth_adc_values[ADC_D])>>2;
+  // parameter_values[4] = (parameter_values[4]*3 + smooth_adc_values[ADC_E])>>2;
+  // parameter_values[5] = (parameter_values[5]*3 + smooth_adc_values[ADC_F])>>2;
+  // parameter_values[6] = (parameter_values[6]*3 + smooth_adc_values[ADC_G])>>2;
+  // parameter_values[7] = (parameter_values[7]*3 + smooth_adc_values[ADC_H])>>2;
+  for(size_t i=0; i<NOF_ADC_VALUES; ++i)
+    parameter_values[i] = smooth_adc_values[i] >> 4;
 }
 
 #if 0
