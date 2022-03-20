@@ -13,6 +13,8 @@
 /* note that with H750, PLUS_RAM may be used by firmware */
 #define USE_PLUS_RAM
 
+#define USE_FAST_POW_RESOURCES
+
 #ifdef NDEBUG
 #define USE_ICACHE
 #define USE_DCACHE

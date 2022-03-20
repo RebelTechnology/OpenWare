@@ -10,10 +10,10 @@
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 
-#define USE_FAST_POW_RESOURCES
-
 /* note that with H750, PLUS_RAM will be used by firmware */
 #define USE_PLUS_RAM
+
+#define USE_FAST_POW_RESOURCES
 
 #ifdef NDEBUG
 #define USE_ICACHE
@@ -27,7 +27,7 @@
 #define USE_DFU_BOOTLOADER
 
 /* #define AUDIO_INPUT_GAIN            114 */
-#define AUDIO_OUTPUT_GAIN           109 // 114
+#define AUDIO_OUTPUT_GAIN           50 // 114
 
 #define USE_CODEC
 #define USE_PCM3168A

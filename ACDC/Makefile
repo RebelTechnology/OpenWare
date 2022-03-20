@@ -2,7 +2,7 @@ PROJECT = ACDC
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-LDSCRIPT = $(OPENWARE)/Hardware/xibeca-big.ld
+LDSCRIPT = $(OPENWARE)/Hardware/xibeca.ld
 include $(OPENWARE)/Hardware/owl3.mk
 
 C_SRC = $(wildcard Core/Src/*.c)

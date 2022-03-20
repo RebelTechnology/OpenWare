@@ -246,10 +246,11 @@ static int handleGetArray(void** params, int len){
     char* p = (char*)params[0];
     void** array = (void**)params[1];
     int* size = (int*)params[2];
-    if(strncmp(SYSTEM_TABLE_LOG, p, 3) == 0){
+    if(strncmp(SYSTEM_TABLE_LOG, p, 3) == 0 && fast_log_table_size != 0){
       *array = (void*)fast_log_table;
       *size = fast_log_table_size;
-    }else if(strncmp(SYSTEM_TABLE_POW, p, 3) == 0){
+      ret = OWL_SERVICE_OK;
+    }else if(strncmp(SYSTEM_TABLE_POW, p, 3) == 0 && fast_pow_table_size != 0){
       *array = (void*)fast_pow_table;
       *size = fast_pow_table_size;
       ret = OWL_SERVICE_OK;

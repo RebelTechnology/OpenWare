@@ -219,15 +219,11 @@ void onLoop(void){
 // #endif
 }
 
-#ifdef STATIC_FAST_POW
-#include "FastLogTable.h"
-#include "FastPowTable.h"
-#else
+#ifdef USE_FAST_POW_RESOURCES
 uint32_t fast_log_table_size = 0;
 uint32_t fast_pow_table_size = 0;
-float fast_log_table[16384] __attribute__ ((section (".d2data"))) = {};
-uint32_t fast_pow_table[2048] __attribute__ ((section (".d2data"))) = {};
-
+float fast_log_table[16384] __attribute__ ((section (".d2data")));
+uint32_t fast_pow_table[2048] __attribute__ ((section (".d2data")));
 void onResourceUpdate(){
   Resource* res = storage.getResourceByName(SYSTEM_TABLE_LOG ".bin");
   if(res && res->isValid()){
@@ -245,4 +241,7 @@ void onResourceUpdate(){
   }
   debugMessage("log/pow", fast_log_table_size, fast_pow_table_size);
 }
+#else
+#include "FastLogTable.h"
+#include "FastPowTable.h"
 #endif
