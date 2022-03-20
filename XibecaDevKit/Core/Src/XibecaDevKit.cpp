@@ -222,7 +222,7 @@ void onLoop(void){
 #ifdef USE_FAST_POW_RESOURCES
 uint32_t fast_log_table_size = 0;
 uint32_t fast_pow_table_size = 0;
-float fast_log_table[16384] __attribute__ ((section (".d2data")));
+float fast_log_table[16384] __attribute__ ((section (".d3data")));
 uint32_t fast_pow_table[2048] __attribute__ ((section (".d2data")));
 void onResourceUpdate(){
   Resource* res = storage.getResourceByName(SYSTEM_TABLE_LOG ".bin");

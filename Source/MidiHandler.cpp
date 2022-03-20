@@ -292,10 +292,10 @@ void MidiHandler::handleFirmwareRunCommand(uint8_t* data, uint16_t size){
 
 void MidiHandler::runProgram(){
   if(loader.isReady() && loader.setPatchSlot(0)){
+    program.exitProgram(true);
     program.loadDynamicProgram(loader.getResourceHeader());
     loader.clear();
-    program.startProgram(true);
-    // program.resetProgram(true);    
+    program.startProgram(true);    
   }else{
     error(PROGRAM_ERROR, "No program to run");
   }
