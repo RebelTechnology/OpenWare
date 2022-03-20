@@ -63,10 +63,13 @@ public:
 
   void allocateBuffer(size_t size){
 #ifdef USE_EXTERNAL_RAM
+    // stop running program and free its memory
+    program.exitProgram(true);
     extern char _EXTRAM; // defined in link script
     buffer = (uint8_t*)&_EXTRAM;
-#else
-    // required by devices with no ext mem
+#else // required by devices with no ext mem
+    // stop running program and free its memory
+    program.exitProgram(true);
     extern char _PATCHRAM;
     buffer = (uint8_t*)&_PATCHRAM; 
 #endif
@@ -88,8 +91,6 @@ public:
     // first package
     if(length < 3+5+5)
       return setError("Invalid SysEx package");
-    // stop running program and free its memory
-    program.exitProgram(true);
 #ifndef USE_BOOTLOADER_MODE
     owl.setOperationMode(LOAD_MODE);
 #endif
