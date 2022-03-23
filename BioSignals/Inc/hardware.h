@@ -20,6 +20,9 @@
 #define USE_CODEC
 #define USE_ADS1294
 
+#define CODEC_BLOCKSIZE              256
+#define AUDIO_BLOCK_SIZE             16
+
 #define USE_USBD_HS
 #define USBD_DESC HS_Desc
 #define USBD_HSFS DEVICE_HS
