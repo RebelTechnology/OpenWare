@@ -1,7 +1,7 @@
 # Debug / Release
 CONFIG ?= Release
 ifeq ($(CONFIG),Debug)
-  CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
+  CPPFLAGS = -Os -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g3
   CFLAGS   = -g3
 else ifeq ($(CONFIG),Release)
