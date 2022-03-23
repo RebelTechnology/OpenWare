@@ -79,3 +79,6 @@
 #define NOF_ADC_VALUES               8
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  16
+
+#define USE_DAC
+#define DAC_HANDLE                   hdac1

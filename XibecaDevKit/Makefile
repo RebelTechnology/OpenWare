@@ -20,6 +20,7 @@ CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
 include $(OPENWARE)/Hardware/sources.mk
 
 C_SRC += $(C_SRC_SAI)
+C_SRC += $(C_SRC_DAC)
 C_SRC += $(C_SRC_SDRAM)
 C_SRC += $(C_SRC_DSP)
 C_SRC += $(C_SRC_OS)
