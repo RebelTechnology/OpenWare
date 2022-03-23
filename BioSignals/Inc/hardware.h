@@ -5,6 +5,7 @@
 #define HARDWARE_ID                  BIOSIGNALS_HARDWARE
 #define HARDWARE_VERSION             "BioSignals"
 #define NO_EXTERNAL_RAM
+#define USBD_PRODUCT_STRING_FSHS     "OWL-BIOSIGNALS"
 
 #define USE_BLE_MIDI
 #define BLE_SPI hspi2
@@ -82,3 +83,5 @@
 #define NOF_ADC_VALUES               0
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (2+1)
+
+#define USE_DFU_BOOTLOADER
