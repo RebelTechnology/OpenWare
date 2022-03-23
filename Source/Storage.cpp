@@ -387,7 +387,9 @@ size_t Storage::writeResource(ResourceHeader* header){
     error(FLASH_ERROR, "No free resources");
     return 0;
   }
+#ifndef USE_BOOTLOADER_MODE
   taskENTER_CRITICAL();
+#endif
   int status = -1;
   if(dest->isMemoryMapped()){
 #ifdef USE_FLASH
@@ -406,7 +408,9 @@ size_t Storage::writeResource(ResourceHeader* header){
       error(FLASH_ERROR, "Readback failed");
 #endif
   }
+#ifndef USE_BOOTLOADER_MODE
   taskEXIT_CRITICAL();
+#endif
   if(status){
     error(FLASH_ERROR, "Write failed");
   }else if(dest->getTotalSize() < length){ // allow for storage-specific alignment
