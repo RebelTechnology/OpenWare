@@ -4,18 +4,9 @@
 
 #define USE_BOOTLOADER_MODE
 #define USE_USBD_MIDI
+#define USBD_PRODUCT_STRING_FSHS "OWL-BOOT"
 
-#ifdef USE_USBD_FS
-#define USBD_DESC FS_Desc
-#define USBD_HSFS DEVICE_FS
-#define USBD_HANDLE hUsbDeviceFS
-#define USBD_PCD_HANDLE hpcd_USB_OTG_FS
-#else
-#define USBD_DESC HS_Desc
-#define USBD_HSFS DEVICE_HS
-#define USBD_HANDLE hUsbDeviceHS
-#define USBD_PCD_HANDLE hpcd_USB_OTG_HS
-#endif
+#define AUDIO_BITS_PER_SAMPLE       16
 
 #if defined OWL_MAGUS
   #define HARDWARE_VERSION    "OWL Magus Boot"
@@ -99,6 +90,7 @@
   #define HARDWARE_VERSION    "OWL BioSignals Boot"
   #define HARDWARE_ID         BIOSIGNALS_HARDWARE
   #define APPLICATION_ADDRESS 0x08010000
+  #define USE_DFU_BOOTLOADER
   #define NO_EXTERNAL_RAM
 #else
   #error Invalid configuration

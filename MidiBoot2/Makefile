@@ -7,8 +7,6 @@ include $(OPENWARE)/Hardware/owl2.mk
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 
-# C_SRC += usbd_audio.c
-C_SRC += $(OPENWARE)/Source/usbd_midi.c
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/crc32.c
@@ -28,38 +26,26 @@ endif
 
 PROJECT = MidiBoot-$(PLATFORM)
 
-C_SRC += usbd_desc.c usbd_conf.c
-
 ifeq ($(PLATFORM),Magus)
-  CPPFLAGS += -Iusbd-fs -DOWL_MAGUS -DUSE_USBD_FS
-  vpath %.c usbd-fs
+  CPPFLAGS += -DOWL_MAGUS -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Lich)
-  CPPFLAGS += -Iusbd-fs -DOWL_LICH -DUSE_USBD_FS
-  vpath %.c usbd-fs
+  CPPFLAGS += -DOWL_LICH -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Witch)
-  CPPFLAGS += -Iusbd-fs -DOWL_WITCH -DUSE_USBD_FS
-  vpath %.c usbd-fs
+  CPPFLAGS += -DOWL_WITCH -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Alchemist)
-  CPPFLAGS += -Iusbd-hs -DOWL_ALCHEMIST -DUSE_USBD_HS
-  vpath %.c usbd-hs
+  CPPFLAGS += -DOWL_ALCHEMIST -DUSE_USBD_HS
 else ifeq ($(PLATFORM),Wizard)
-  CPPFLAGS += -Iusbd-hs -DOWL_WIZARD -DUSE_USBD_HS
-  vpath %.c usbd-hs
+  CPPFLAGS += -DOWL_WIZARD -DUSE_USBD_HS
 else ifeq ($(PLATFORM),Pedal)
-  CPPFLAGS += -Iusbd-hs -DOWL_PEDAL -DUSE_USBD_HS
-  vpath %.c usbd-hs
+  CPPFLAGS += -DOWL_PEDAL -DUSE_USBD_HS
 else ifeq ($(PLATFORM),EuroWizard)
-  CPPFLAGS += -Iusbd-fs -DOWL_WIZARD -DUSE_USBD_FS
-  vpath %.c usbd-fs
+  CPPFLAGS += -DOWL_WIZARD -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Rack)
-  CPPFLAGS += -Iusbd-hs -DOWL_RACK -DUSE_USBD_HS
-  vpath %.c usbd-hs
+  CPPFLAGS += -DOWL_RACK -DUSE_USBD_HS
 else ifeq ($(PLATFORM),Noctua)
-  CPPFLAGS += -Iusbd-fs -DOWL_NOCTUA -DUSE_USBD_FS
-  vpath %.c usbd-fs
+  CPPFLAGS += -DOWL_NOCTUA -DUSE_USBD_FS
 else ifeq ($(PLATFORM),BioSignals)
-  CPPFLAGS += -Iusbd-hs -DOWL_BIOSIGNALS -DUSE_USBD_HS
-  vpath %.c usbd-hs
+  CPPFLAGS += -DOWL_BIOSIGNALS -DUSE_USBD_HS
 else
   $(error Invalid PLATFORM=$(PLATFORM))
 endif
@@ -67,9 +53,10 @@ endif
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 
 C_SRC += $(C_SRC_SDRAM)
-C_SRC += $(C_SRC_USBD)
 C_SRC += $(C_SRC_UART)
 C_SRC += $(C_SRC_IWDG)
+C_SRC += $(C_SRC_USBD)
+C_SRC += $(C_SRC_USBD_AUDIO)
 
 include $(OPENWARE)/Hardware/f4.mk
 
