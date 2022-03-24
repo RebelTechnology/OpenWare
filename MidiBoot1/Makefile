@@ -7,8 +7,6 @@ include $(OPENWARE)/Hardware/owl1.mk
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 
-# C_SRC += usbd_audio.c
-C_SRC += $(OPENWARE)/Source/usbd_midi.c
 C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/crc32.c
 C_SRC += $(OPENWARE)/Source/eepromcontrol.c
@@ -30,19 +28,18 @@ ifeq ($(PLATFORM),Pedal)
   CPPFLAGS += -Iusbd-fs -DOWL_PEDAL
 #  vpath %.c usbd-fs
 else ifeq ($(PLATFORM),Modular)
-  CPPFLAGS += -Iusbd-fs -DOWL_MODULAR
-#  vpath %.c usbd-fs
+  CPPFLAGS += -DOWL_MODULAR
 else ifeq ($(PLATFORM),Rack)
-  CPPFLAGS += -Iusbd-fs -IOWL_PEDAL -DOWL_RACK
-#  vpath %.c usbd-fs
+  CPPFLAGS += -IOWL_PEDAL -DOWL_RACK
 else
   $(error Invalid PLATFORM=$(PLATFORM))
 endif
 
 C_SRC += $(C_SRC_SRAM)
-C_SRC += $(C_SRC_USBD)
 C_SRC += $(C_SRC_UART)
 C_SRC += $(C_SRC_IWDG)
+C_SRC += $(C_SRC_USBD)
+C_SRC += $(C_SRC_USBD_AUDIO)
 
 include $(OPENWARE)/Hardware/f4.mk
 
