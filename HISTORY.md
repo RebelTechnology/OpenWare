@@ -1,3 +1,9 @@
+22.3.2
+------
+
+* Refactor startup code to support system/dfu bootloader
+* Unified USB device and host drivers
+
 22.3.1
 ------
 
