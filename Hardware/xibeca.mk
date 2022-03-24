@@ -36,4 +36,4 @@ ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16
 ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32H750xx -DSTM32H7xx -DARM_MATH_CM7
 DEF_FLAGS += -D__FPU_PRESENT=1
-S_SRC = $(BUILDROOT)/Core/Src/startup_stm32h750xx.s
+S_SRC = $(OPENWARE)/Source/startup_owl3.s
