@@ -5,6 +5,7 @@
 #define OWL_ALCHEMIST
 #define HARDWARE_ID                  ALCHEMIST_HARDWARE
 #define HARDWARE_VERSION             "Alchemist"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-ALCHEMIST"
 
 #define USE_SPI_FLASH
 
