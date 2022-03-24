@@ -285,8 +285,6 @@ void onSetup(){
 
   setLed(0, RED_COLOUR);
 
-  MX_USB_DEVICE_Init();  
-
   setBufferedBypass(false);
 }
 

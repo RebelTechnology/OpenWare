@@ -18,7 +18,6 @@ CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
 CPP_SRC += $(OPENWARE)/Source/Storage.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiBoot.cpp
-# S_SRC = startup_openboot.s
 
 ifndef PLATFORM
 PLATFORM = Alchemist
