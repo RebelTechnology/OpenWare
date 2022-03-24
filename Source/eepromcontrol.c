@@ -2,6 +2,10 @@
 #include <string.h> /* for memcpy */
 #include "device.h"
 
+#ifndef FLASH_BANK_2
+#define FLASH_BANK_2 (-1)
+#endif
+
 extern void device_reset(void);
 
 void eeprom_lock(){

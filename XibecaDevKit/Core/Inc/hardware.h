@@ -4,13 +4,16 @@
 #define OWL_XIBECA
 #define HARDWARE_ID                  XIBECA_HARDWARE
 #define HARDWARE_VERSION             "Xibeca"
-// causing busfault?
+#define USBD_PRODUCT_STRING_FSHS     "OWL-XIBECA"
+
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 
 /* note that with H750, PLUS_RAM will be used by firmware */
 #define USE_PLUS_RAM
+
+#define USE_FAST_POW_RESOURCES
 
 #ifdef NDEBUG
 #define USE_ICACHE
@@ -24,7 +27,7 @@
 #define USE_DFU_BOOTLOADER
 
 /* #define AUDIO_INPUT_GAIN            114 */
-#define AUDIO_OUTPUT_GAIN           109 // 114
+#define AUDIO_OUTPUT_GAIN           50 // 114
 
 #define USE_CODEC
 #define USE_PCM3168A
@@ -32,6 +35,9 @@
 #define CODEC_DAC_INVERT
 /* #define CODEC_HP_FILTER */
 #define CODEC_SPI hspi2
+
+#define CODEC_BLOCKSIZE              256 // with bs=512 DMA_D2=64k overflows by 1580 bytes
+#define AUDIO_BLOCK_SIZE             32
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
@@ -47,12 +53,9 @@
 #define USBD_AUDIO_TX_CHANNELS      4
 #define USBD_AUDIO_RX_CHANNELS      4
 #define USE_USBD_RX_FB
+
 #define USE_USBD_FS
-#define USBD_HANDLE                 hUsbDeviceFS
-#define USBH_HANDLE                 hUsbHostHS
-/* #define USE_USB_HOST */
-/* #define USE_USBH_MIDI */
-#define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
+#define USE_USBH_HS
 
 // Serial MIDI
 #define USE_UART_MIDI_RX
@@ -75,4 +78,4 @@
   
 #define NOF_ADC_VALUES               8
 #define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  (2+4)
+#define NOF_BUTTONS                  16

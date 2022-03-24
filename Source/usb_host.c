@@ -80,7 +80,8 @@ void USBH_HID_EventCallback(USBH_HandleTypeDef *phost){
 void MX_USB_HOST_Process() 
 {
   /* USB Host Background task */
-  USBH_Process(&HUSB_HOST);
+  USBH_HandleTypeDef *phost = &HUSB_HOST;
+  USBH_Process(phost);
   /* if(Appli_state == APPLICATION_DISCONNECT){ */
     /* USBH_Stop(&HUSB_HOST); */
     /* USBH_DeInit(&HUSB_HOST); */
@@ -89,20 +90,19 @@ void MX_USB_HOST_Process()
   /*   MX_USB_HOST_Init(); */
   /*   Appli_state = APPLICATION_IDLE; */
   /* }   */
-  USBH_HandleTypeDef *phost = &HUSB_HOST;
 #ifdef USE_USBH_HID
-    if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD){
-      HID_KEYBD_Info_TypeDef* pinfo = USBH_HID_GetKeybdInfo(phost);
-      if(pinfo != NULL){
-	uint8_t c = USBH_HID_GetASCIICode(pinfo);
-	// or c = pinfo->keys[0];
-	if(c >= 32 && c <= 126) { // readable ascii
-	  char* msg = "char[ ]";
-	  msg[5] = c;
-	  debugMessage(msg);
-	}
+  if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD){
+    HID_KEYBD_Info_TypeDef* pinfo = USBH_HID_GetKeybdInfo(phost);
+    if(pinfo != NULL){
+      uint8_t c = USBH_HID_GetASCIICode(pinfo);
+      // or c = pinfo->keys[0];
+      if(c >= 32 && c <= 126) { // readable ascii
+	char* msg = "char[ ]";
+	msg[5] = c;
+	debugMessage(msg);
       }
     }
+  }
 #endif
 }
 
@@ -141,7 +141,7 @@ void MX_USB_HOST_Init(void)
   }
   /* USER CODE BEGIN USB_HOST_Init_PostTreatment */
 
-  HAL_PWREx_EnableUSBVoltageDetector();
+  /* HAL_PWREx_EnableUSBVoltageDetector(); */
   
   /* USER CODE END USB_HOST_Init_PostTreatment */
 }

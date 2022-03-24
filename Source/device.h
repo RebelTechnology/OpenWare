@@ -56,7 +56,6 @@
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
 #endif
-#define USE_USBD_MIDI
 #define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
 #define MIDI_OUTPUT_BUFFER_SIZE      1024
@@ -115,8 +114,8 @@
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           FIRMWARE_VERSION
 
-#if HARDWARE_ID != XIBECA_HARDWARE
-#define USE_FFT_TABLES
+#if 1 // HARDWARE_ID != XIBECA_HARDWARE
+/* #define USE_FFT_TABLES */
 #define USE_FAST_POW
 #endif
 
@@ -218,33 +217,35 @@
 #endif
 
 #if defined USE_USBD_FS
-#define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
+#define USE_USB_DEVICE
+#define USE_USBD_MIDI
+#define USBD_DESC FS_Desc
+#define USBD_HSFS DEVICE_FS
+#define USBD_HANDLE hUsbDeviceFS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_FS
+#define USB_OTG_BASE_ADDRESS  USB_OTG_FS
 #elif defined USE_USBD_HS
-#define USB_OTG_BASE_ADDRESS  USB_OTG_HS   
+#define USE_USB_DEVICE
+#define USE_USBD_MIDI
+#define USBD_DESC HS_Desc
+#define USBD_HSFS DEVICE_HS
+#define USBD_HANDLE hUsbDeviceHS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_HS
+#define USB_OTG_BASE_ADDRESS  USB_OTG_HS
 #endif
 
-#define USB_DIEPCTL(ep_addr) ((USB_OTG_INEndpointTypeDef *)((uint32_t)USB_OTG_BASE_ADDRESS + USB_OTG_IN_ENDPOINT_BASE \
-	    + (ep_addr&0x7FU)*USB_OTG_EP_REG_SIZE))->DIEPCTL
-#define USB_DOEPCTL(ep_addr) ((USB_OTG_OUTEndpointTypeDef *)((uint32_t)USB_OTG_BASE_ADDRESS + \
-	     USB_OTG_OUT_ENDPOINT_BASE + (ep_addr)*USB_OTG_EP_REG_SIZE))->DOEPCTL
-
-#define USB_CLEAR_INCOMPLETE_IN_EP(ep_addr)     if((((ep_addr) & 0x80U) == 0x80U)){ \
-    USB_DIEPCTL(ep_addr) |= (USB_OTG_DIEPCTL_EPDIS | USB_OTG_DIEPCTL_SNAK); \
-  };
-
-#define USB_DISABLE_EP_BEFORE_CLOSE(ep_addr)			\
-  if((((ep_addr) & 0x80U) == 0x80U))				\
-    {								\
-      if (USB_DIEPCTL(ep_addr)&USB_OTG_DIEPCTL_EPENA_Msk)	\
-	{							\
-	  USB_DIEPCTL(ep_addr)|= USB_OTG_DIEPCTL_EPDIS;		\
-	}							\
-    } ;
-
-#define IS_ISO_IN_INCOMPLETE_EP(ep_addr,current_sof, transmit_soffn) ((USB_DIEPCTL(ep_addr)&USB_OTG_DIEPCTL_EPENA_Msk)&& \
-								      (((current_sof&0x01) == ((USB_DIEPCTL(ep_addr)&USB_OTG_DIEPCTL_EONUM_DPID_Msk)>>USB_OTG_DIEPCTL_EONUM_DPID_Pos)) \
-								       ||(current_sof== ((transmit_soffn+2)&0x7FF))))
-
-#define USB_SOF_NUMBER() ((((USB_OTG_DeviceTypeDef *)((uint32_t )USB_OTG_BASE_ADDRESS + USB_OTG_DEVICE_BASE))->DSTS&USB_OTG_DSTS_FNSOF)>>USB_OTG_DSTS_FNSOF_Pos)
+#if defined USE_USBH_HS
+#define USE_USB_HOST
+#define USE_USBH_MIDI
+#define USB_HOST_RX_BUFF_SIZE       256
+#define USBH_HANDLE                 hUsbHostHS
+#define USBH_HCD_HANDLE             hhcd_USB_OTG_HS
+#elif defined USE_USBH_FS
+#define USE_USB_HOST
+#define USE_USBH_MIDI
+#define USB_HOST_RX_BUFF_SIZE       256
+#define USBH_HANDLE                 hUsbHostFS
+#define USBH_HCD_HANDLE             hhcd_USB_OTG_FS
+#endif
 
 #endif /* __DEVICE_H__ */

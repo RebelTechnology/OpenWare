@@ -105,14 +105,19 @@
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-static int flash_read_block(int mode, uint32_t address, uint8_t* data, size_t size);
+ int flash_read_block(int mode, uint32_t address, uint8_t* data, size_t size);
 static int flash_write_block(uint32_t address, const uint8_t* data, size_t size);
 static int qspi_erase_block(uint32_t address, size_t size);
 static int qspi_write_enable();
 static int qspi_quad_mode(uint8_t cr1, uint8_t cr2);
 static int qspi_qpi_mode(bool qpi);
+void qspi_exit_mapped_mode();
+void qspi_enter_mapped_mode();
 
-static volatile int qspi_mapped_mode = 0;
+#define QSPI_ERROR_MODE    (-1)
+#define QSPI_INDIRECT_MODE   0
+#define QSPI_MAPPED_MODE     1
+static volatile int qspi_mapped_mode = QSPI_INDIRECT_MODE;
 static QSPI_HandleTypeDef* qspi_handle;
 
 /**
@@ -184,6 +189,8 @@ static void qspi_abort() {
 
 static int qspi_write_page(uint32_t address, void* data, size_t size){
   // write in 1-1-1 mode
+  if(qspi_write_enable() != 0)
+    return -1;
   QSPI_CommandTypeDef cmd;
   cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
   cmd.Instruction = QSPI_PP_CMD; // Page Program
@@ -197,8 +204,6 @@ static int qspi_write_page(uint32_t address, void* data, size_t size){
   cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
   cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
   cmd.Address = address;
-  if(qspi_write_enable() != 0)
-    return -1;
   if(HAL_QSPI_Command(qspi_handle, &cmd, QSPI_TIMEOUT) != HAL_OK)
     return -1;
   if(HAL_QSPI_Transmit(qspi_handle, (uint8_t *)data, QSPI_TIMEOUT) != HAL_OK)
@@ -240,30 +245,37 @@ int qspi_erase_block(uint32_t address, size_t size){
   single bit width instruction, single bit width address and modifier, single bit 
   data.
  */
-void qspi_enter_indirect_mode(){
-  if(qspi_mapped_mode == 1){
-    qspi_mapped_mode = 0;
+void qspi_exit_mapped_mode(){
+  if(qspi_mapped_mode != QSPI_INDIRECT_MODE){
 #if 1
     // clear busy bit to deactivate memory mapped mode
     /* The memory-mapped mode can be deactivated by changing the FMODE bits in the QUADSPI_CCR register when BUSY is cleared. In Memory-mapped mode, BUSY goes high as soon as the first memory-mapped access occurs. Because of the prefetch operations, BUSY does not fall until there is a timeout, there is an abort, or the peripheral is disabled.
        https://community.st.com/s/question/0D50X00009XkaJuSAJ/stm32f7-qspi-exit-memory-mapped-mode
      */
     qspi_abort();
+    if(flash_status() == 0)
+      qspi_mapped_mode = QSPI_INDIRECT_MODE;
+    else
+      qspi_mapped_mode = QSPI_ERROR_MODE;
 #else
     // reinitialise driver
     HAL_QSPI_DeInit(qspi_handle);
     qspi_abort();
-    if(HAL_QSPI_Init(qspi_handle) != HAL_OK)
-      Error_Handler();
+    if(HAL_QSPI_Init(qspi_handle) == HAL_OK)
+      qspi_mapped_mode = QSPI_INDIRECT_MODE;
+    else
+      qspi_mapped_mode = QSPI_ERROR_MODE;
 #endif
   }
 }
 
 void qspi_enter_mapped_mode(){
-  if(qspi_mapped_mode == 0){
-    flash_status();
-    flash_memory_map(-122);
-    qspi_mapped_mode = 1;
+  if(qspi_mapped_mode != QSPI_MAPPED_MODE){
+    qspi_abort();
+    if(flash_memory_map(QSPI_READ_MODE))
+      qspi_mapped_mode = QSPI_MAPPED_MODE;
+    else
+      qspi_mapped_mode = QSPI_ERROR_MODE;
   }
 }
 
@@ -281,40 +293,49 @@ int flash_write_block(uint32_t address, const uint8_t *data, size_t size){
   return ret;
 }
 
-#if 1
+#if 0
 int flash_write(uint32_t address, const uint8_t* data, size_t size){
-  qspi_enter_indirect_mode();
-  flash_write_block(address, data, size);  
-  return 0;
+  qspi_exit_mapped_mode();
+  return flash_write_block(address, data, size);  
 }
 int flash_erase(uint32_t address, size_t size){
-  qspi_enter_indirect_mode();
-  qspi_erase_block(address, size);
-  return 0;
+  qspi_exit_mapped_mode();
+  return qspi_erase_block(address, size);
 }
-
 #include <string.h>
 int flash_read(uint32_t address, uint8_t* data, size_t size){
   qspi_enter_mapped_mode();
-  memcpy(data, (void*)(QSPI_FLASH_BASE+address), size);
-  return 0;
+  if(qspi_mapped_mode == QSPI_MAPPED_MODE){
+    memcpy(data, (void*)(QSPI_FLASH_BASE+address), size);
+    return 0;
+  }
+  return -1;
 }
 #else
 int flash_read(uint32_t address, uint8_t* data, size_t size){
+  flash_wait();
   return flash_read_block(QSPI_READ_MODE, address, data, size);
 }
-
 int flash_write(uint32_t address, const uint8_t* data, size_t size){
+  qspi_abort();
+  flash_wait();
   return flash_write_block(address, data, size);
 }
-
 int flash_erase(uint32_t address, size_t size){
+  qspi_abort();
+  flash_wait();
   return qspi_erase_block(address, size);  
 }
 #endif
 
-void flash_init(void* handle){
+int flash_wait(){
+  return qspi_wait(0, 0xff);
+}
+  
+int flash_init(void* handle){
   qspi_handle = (QSPI_HandleTypeDef*)handle;
+  qspi_abort();
+  return flash_wait();
 }
 
 int flash_read_register(int instruction){
@@ -349,7 +370,7 @@ int flash_status(){
   // Read Configuration Register 2 (RDCR2 15h)
   // Read Configuration Register 3 (RDCR3 33h)
   /* It is possible to read CR1V, CR2V and CR3V continuously by providing multiples of eight clock cycles. */
-  return flash_read_register(0x35);
+  return flash_read_register(0x05);
 }
 
 int qspi_quad_mode(uint8_t cr1, uint8_t cr2){
@@ -562,10 +583,14 @@ int flash_memory_map(int mode){
 #endif
   QSPI_CommandTypeDef cmd;
   flash_read_mode(&cmd, mode);
+  cmd.Address           = 0;
+  cmd.NbData            = 0;  
   QSPI_MemoryMappedTypeDef cfg;
   cfg.TimeOutPeriod = 0;
   cfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
   if(HAL_QSPI_MemoryMapped(qspi_handle, &cmd, &cfg) != HAL_OK)
+    return -1;
+  if(qspi_handle->State != HAL_QSPI_STATE_BUSY_MEM_MAPPED)
     return -1;
   return 0;
 }

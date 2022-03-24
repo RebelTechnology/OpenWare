@@ -13,7 +13,7 @@ MEMORY
 /* RAM_D2   (rwx)   : ORIGIN = 0x30000000, LENGTH = 288K */
 /* RAM_D3   (rwx)   : ORIGIN = 0x38000000, LENGTH = 64K */
 /* ITCMRAM  (rwx)   : ORIGIN = 0x00000000, LENGTH = 64K */
-/* FLASH    (rx)    : ORIGIN = 0x08000000, LENGTH = 2048K */
+/* FLASH    (rx)    : ORIGIN = 0x08000000, LENGTH = 128K */
 DTCMRAM  (rwx)   : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K
 PLUSRAM  (rwx)   : ORIGIN = 0x24000000, LENGTH = 512K /* D1 RAM */
@@ -22,13 +22,15 @@ HEAP_D2  (rwx)   : ORIGIN = 0x30010000, LENGTH = 224K
 RAM_D3   (rwx)   : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM  (rwx)   : ORIGIN = 0x00000000, LENGTH = 4K
 CCMRAM   (rwx)   : ORIGIN = 0x00001000, LENGTH = 60K
-EXTRAM   (rwx)   : ORIGIN = 0xD0000000, LENGTH = 8M
-/* BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 0K */
-/* FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 512K */
-BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K
-FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 384K
-STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 512K  /* Assuming 1Mb FLASH */
-/* STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 1536K /\* Assuming 2Mb FLASH *\/ */
+/* EXTRAM  (rwx)    : ORIGIN = 0xC0000000, LENGTH = 32M /\* 32M in Xibeca red *\/ */
+EXTRAM   (rwx)   : ORIGIN = 0xC0000000, LENGTH = 64M /* 64M in Xibeca Rev01/Rev02 green prototypes */
+BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 0K
+/* FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 128K /\* 128K total flash in Xibeca red *\/ */
+FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 512K /* 2M total flash in Xibeca Rev01/02 green prototypes */
+/* BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K */
+/* FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 384K */
+/* STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 512K  /\* Assuming 1Mb FLASH *\/ */
+STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 1536K /* Assuming 2Mb FLASH */
 }
 
 /* Define output sections */
