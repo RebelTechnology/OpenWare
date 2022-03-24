@@ -38,6 +38,26 @@
 #define XIBECA_PIN23 GPIOD, GPIO_PIN_12
 #define XIBECA_PIN24 GPIOD, GPIO_PIN_13
 
+Pin pin_gpio1(XIBECA_PIN11);
+Pin pin_gpio2(XIBECA_PIN12);
+Pin pin_gpio3(XIBECA_PIN9);
+
+// GPIO3         EXTI0 (PIN9)
+// GPIO2        TIM1CH2 (PIN12)
+// GPIO1         TIM1CH1 (PIN11)
+// DAC1           (PIN69)
+// DAC2        (PIN70)
+// ADC1        (PIN31)
+// ADC2            (PIN32)
+
+// UART_RX     (NOT CONNECTED)
+// UART_TX    (NOT CONNECTED)
+// SPI_CLK        SPI3_SCK (PIN80)
+// SPI_MOSI       SPI3_MOSI(PIN76)
+// SPI_MISO       SPI3_MISO (PIN78)
+// SCL_TX        I2C_SCL (PIN73)
+// DAA_RX         I2C_SDA (PIN74) 
+
 // Pin pin_b1(XIBECA_PIN3);
 // Pin pin_b2(XIBECA_PIN3);
 Pin pin_led_b1(XIBECA_PIN17);
@@ -101,6 +121,15 @@ void setGateValue(uint8_t ch, int16_t value){
   case BUTTON_2:
     setLed(2, value);
     break;
+  case BUTTON_3:
+    pin_gpio1.set(value == 0);
+    break;
+  case BUTTON_4:
+    pin_gpio2.set(value == 0);
+    break;
+  case BUTTON_5:
+    pin_gpio3.set(value == 0);
+    break;
   }
 }
 
@@ -132,97 +161,28 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
     parameter_values[i] = smooth_adc_values[i] >> 4;
 }
 
-#if 0
-#include <cstdio>
-#include "test-qspi.h"
-
-extern "C" void setup();
-extern "C" int flash_read_block(int mode, uint32_t address, void* data, uint32_t size);
-
-void setup(){
-  const char flashdata[] = "We will put this away.";
-  printf("QSPI flash test: %s.\n", flashdata);
-  extern QSPI_HandleTypeDef QSPI_FLASH_HANDLE;
-  flash_init(&QSPI_FLASH_HANDLE);
-  size_t size = sizeof(flashdata);
-  uint32_t memloc = 0;
-  if(flash_erase(memloc, size) != 0)
-    printf("QSPI erase failed");
-  flash_wait();
-  if(flash_write(memloc, (const uint8_t*)flashdata, size) != 0)
-    printf("QSPI write failed");
-  flash_wait();
-  char readback[size] = {};
-  if(flash_read_block(-122, memloc, readback, size) != 0)
-    printf("QSPI read failed");
-  printf("DATA %s.\n", readback);
-  int fs1 = flash_status();
-  // flash_reset();
-  flash_init(&QSPI_FLASH_HANDLE); // re-init
-  int fs2 = flash_status();
-  flash_memory_map(-122);
-  // flash_memory_map(-444);
-  printf("FLASH %s %d %d.\n", (const char*)QSPI_FLASH_BASE, fs1, fs2);
-
-  flash_init(&QSPI_FLASH_HANDLE);
-  flash_wait();
-  if(flash_erase(memloc, size) != 0)
-    printf("QSPI erase failed");
-
-#ifdef USE_USB_DEVICE
-  MX_USB_DEVICE_Init();
-#endif
-#ifdef USE_USB_HOST
-  MX_USB_HOST_Init();
-#endif
-
-  owl.setup();
-  onSetup();
-}
-#endif
-
-#if 0
-extern "C" void qspi_abort();
-extern "C" void qspi_exit_mapped_mode();
-extern "C" void qspi_enter_mapped_mode();
-extern "C" int flash_read_block(int mode, uint32_t address, uint8_t* data, size_t size);
-#define QSPI_FLASH_BASE              0x90000000
-
 void onSetup(){
-
+  pin_gpio1.outputMode();
+  pin_gpio2.outputMode();
+  pin_gpio3.outputMode();
+  pin_gpio1.high();
+  pin_gpio2.high();
+  pin_gpio3.high();
   setLed(1, NO_COLOUR);
   setLed(2, NO_COLOUR);
-
-  uint8_t data[32];
-  qspi_enter_mapped_mode();
-  memcpy(data, (void*)(QSPI_FLASH_BASE+0), sizeof(data));
-  printf("qspi %d %d\n", -1, data[0]);
-  qspi_exit_mapped_mode();
-  int ret = flash_read_block(-122, 0, data, sizeof(data));
-  printf("qspi %d %d\n", ret, data[0]);
-}
-#else
-void onSetup(){
-  setLed(1, NO_COLOUR);
-  setLed(2, NO_COLOUR);
-  // uint8_t data[32];
-  // int ret = flash_read_block(-122, 0, data, sizeof(data));
-  // printf("qspi %d %d\n", ret, data[0]);
-}
+#ifdef DEBUG
+  printf("Device ID 0x%lx Revision 0x%lx\n", HAL_GetDEVID(), HAL_GetREVID());
 #endif
+}
 
 void onLoop(void){
-  //
-// #ifdef USE_USB_HOST
-  // done in callbacks.cpp loop()
-//   MX_USB_HOST_Process();
-// #endif
+  // do smth
 }
 
 #ifdef USE_FAST_POW_RESOURCES
 uint32_t fast_log_table_size = 0;
 uint32_t fast_pow_table_size = 0;
-float fast_log_table[16384] __attribute__ ((section (".d2data")));
+float fast_log_table[16384] __attribute__ ((section (".d3data")));
 uint32_t fast_pow_table[2048] __attribute__ ((section (".d2data")));
 void onResourceUpdate(){
   Resource* res = storage.getResourceByName(SYSTEM_TABLE_LOG ".bin");

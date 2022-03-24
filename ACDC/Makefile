@@ -2,15 +2,13 @@ PROJECT = ACDC
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-LDSCRIPT = $(OPENWARE)/Hardware/xibeca.ld
-include $(OPENWARE)/Hardware/owl3.mk
+include $(OPENWARE)/Hardware/xibeca.mk
 
 C_SRC = $(wildcard Core/Src/*.c)
 CPP_SRC = $(wildcard Core/Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/pcm3168a.c
 C_SRC += $(OPENWARE)/Source/sdram-as4cXm32.c
 C_SRC += $(OPENWARE)/Source/flash-qspi.c
-S_SRC = $(BUILDROOT)/Core/Src/startup_stm32h743xx.s
 
 include $(OPENWARE)/Hardware/sources.mk
 

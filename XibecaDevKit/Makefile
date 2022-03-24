@@ -2,18 +2,14 @@ PROJECT = XibecaDevKit
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-LDSCRIPT = $(OPENWARE)/Hardware/xibeca.ld
-include $(OPENWARE)/Hardware/owl3.mk
+include $(OPENWARE)/Hardware/xibeca.mk
+# LDSCRIPT = $(OPENWARE)/Hardware/xibeca-big.ld
+# S_SRC = $(BUILDROOT)/Core/Src/startup_stm32h750xx.s
 
 C_SRC = $(wildcard Core/Src/*.c)
 CPP_SRC = $(wildcard Core/Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/pcm3168a.c
 C_SRC += $(OPENWARE)/Source/sdram-as4cXm32.c
-
-# CPP_SRC += $(OPENWARE)/Source/uart.cpp
-# CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
-
-S_SRC = $(BUILDROOT)/Core/Src/startup_stm32h743xx.s
 
 C_SRC += $(OPENWARE)/Source/flash-qspi.c
 
@@ -24,6 +20,7 @@ CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
 include $(OPENWARE)/Hardware/sources.mk
 
 C_SRC += $(C_SRC_SAI)
+C_SRC += $(C_SRC_DAC)
 C_SRC += $(C_SRC_SDRAM)
 C_SRC += $(C_SRC_DSP)
 C_SRC += $(C_SRC_OS)

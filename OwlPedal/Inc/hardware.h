@@ -6,14 +6,17 @@
 #define BUS_HUART huart4
 #define HARDWARE_ID                  OWL_RACK_HARDWARE
 #define HARDWARE_VERSION             "OWL Rack"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-RACK"
 #elif defined OWL_MODULAR
 #define HARDWARE_ID                  OWL_MODULAR_HARDWARE
 #define HARDWARE_VERSION             "OWL Modular"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-MODULAR"
 #define AUDIO_INPUT_GAIN             92
 #define AUDIO_OUTPUT_GAIN            121
 #elif defined OWL_PEDAL
 #define HARDWARE_ID                  OWL_PEDAL_HARDWARE
 #define HARDWARE_VERSION             "OWL Pedal"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-PEDAL"
 #define AUDIO_INPUT_GAIN             108
 #define AUDIO_OUTPUT_GAIN            115
 #define OWL_PEDAL_LEGACY
@@ -35,10 +38,6 @@
 #define USE_WM8731
 
 #define USE_USBD_FS
-#define USBD_DESC FS_Desc
-#define USBD_HSFS DEVICE_FS
-#define USBD_HANDLE hUsbDeviceFS
-#define USBD_PCD_HANDLE hpcd_USB_OTG_FS
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16

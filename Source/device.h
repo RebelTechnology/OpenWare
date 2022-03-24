@@ -70,6 +70,7 @@
 #ifndef OWLBOOT_MAGIC_NUMBER
 #define OWLBOOT_MAGIC_NUMBER        0xDADAB007
 #endif
+#define OWLBOOT_DFU_NUMBER          0xDADADEAF
 #define OWLBOOT_LOOP_NUMBER         0xDADADEAD
 #define OWLBOOT_MAGIC_ADDRESS       ((volatile uint32_t*)0x2000FFF0)
 
@@ -240,12 +241,14 @@
 #define USB_HOST_RX_BUFF_SIZE       256
 #define USBH_HANDLE                 hUsbHostHS
 #define USBH_HCD_HANDLE             hhcd_USB_OTG_HS
+#define USBH_HSFS                   HOST_HS
 #elif defined USE_USBH_FS
 #define USE_USB_HOST
 #define USE_USBH_MIDI
 #define USB_HOST_RX_BUFF_SIZE       256
 #define USBH_HANDLE                 hUsbHostFS
 #define USBH_HCD_HANDLE             hhcd_USB_OTG_FS
+#define USBH_HSFS                   HOST_FS
 #endif
 
 #endif /* __DEVICE_H__ */

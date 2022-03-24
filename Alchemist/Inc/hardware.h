@@ -5,6 +5,7 @@
 #define OWL_ALCHEMIST
 #define HARDWARE_ID                  ALCHEMIST_HARDWARE
 #define HARDWARE_VERSION             "Alchemist"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-ALCHEMIST"
 
 #define USE_SPI_FLASH
 
@@ -22,7 +23,6 @@
 #define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX  // microphone
-#define USBD_HANDLE hUsbDeviceHS
 
 #define USE_MODE_BUTTON
 #define MODE_BUTTON_PIN SW3_Pin

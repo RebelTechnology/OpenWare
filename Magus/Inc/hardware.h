@@ -4,6 +4,7 @@
 #define OWL_MAGUS
 #define HARDWARE_ID                  MAGUS_HARDWARE
 #define HARDWARE_VERSION             "Magus"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-MAGUS"
 
 #define USE_SPI_FLASH
 
@@ -30,8 +31,7 @@
 #define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX  // microphone
 #define USE_USBD_FS
-#define USBD_HANDLE hUsbDeviceFS
-#define USBH_HANDLE hUsbHostHS
+#define USE_USBH_HS
 #define USE_USB_HOST
 #define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI

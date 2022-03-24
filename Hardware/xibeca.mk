@@ -1,7 +1,7 @@
 # Debug / Release
 CONFIG ?= Release
 ifeq ($(CONFIG),Debug)
-  CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
+  CPPFLAGS = -Os -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g3
   CFLAGS   = -g3
 else ifeq ($(CONFIG),Release)
@@ -24,7 +24,7 @@ endif
 
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
-LDSCRIPT ?= $(OPENWARE)/Hardware/owl2.ld
+LDSCRIPT ?= $(OPENWARE)/Hardware/xibeca.ld
 LDLIBS += -lc -lm
 CPPFLAGS += -Wdouble-promotion -Werror=double-promotion
 CPPFLAGS += -fdata-sections -ffunction-sections
@@ -32,8 +32,8 @@ CPPFLAGS += -fno-builtin -ffreestanding
 LDFLAGS += -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17
 CFLAGS  += -std=gnu99
-ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16
 ARCH_FLAGS += -fsingle-precision-constant
-DEF_FLAGS = -DSTM32F427xx -DARM_MATH_CM4
-DEF_FLAGS += -D__FPU_PRESENT=1U
-S_SRC = $(OPENWARE)/Source/startup_owl2.s
+DEF_FLAGS = -DSTM32H750xx -DSTM32H7xx -DARM_MATH_CM7
+DEF_FLAGS += -D__FPU_PRESENT=1
+S_SRC = $(OPENWARE)/Source/startup_owl3.s
