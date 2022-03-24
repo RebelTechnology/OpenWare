@@ -38,8 +38,6 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-#define HUSB_HOST hUsbHostHS
-#define HUSB_HOST_HSFS HOST_HS
 /* USER CODE END PV */
 
 /* USER CODE BEGIN PFP */
@@ -48,7 +46,7 @@
 /* USER CODE END PFP */
 
 /* USB Host core handle declaration */
-USBH_HandleTypeDef HUSB_HOST;
+USBH_HandleTypeDef USBH_HANDLE;
 ApplicationTypeDef Appli_state = APPLICATION_IDLE;
 
 /*
@@ -80,11 +78,11 @@ void USBH_HID_EventCallback(USBH_HandleTypeDef *phost){
 void MX_USB_HOST_Process() 
 {
   /* USB Host Background task */
-  USBH_HandleTypeDef *phost = &HUSB_HOST;
+  USBH_HandleTypeDef *phost = &USBH_HANDLE;
   USBH_Process(phost);
   /* if(Appli_state == APPLICATION_DISCONNECT){ */
-    /* USBH_Stop(&HUSB_HOST); */
-    /* USBH_DeInit(&HUSB_HOST); */
+    /* USBH_Stop(&USBH_HANDLE); */
+    /* USBH_DeInit(&USBH_HANDLE); */
   /*   Appli_state = APPLICATION_DISCONNECTED; */
   /* }else if(Appli_state == APPLICATION_DISCONNECTED){ */
   /*   MX_USB_HOST_Init(); */
@@ -119,23 +117,23 @@ void MX_USB_HOST_Init(void)
   /* USER CODE END USB_HOST_Init_PreTreatment */
   
   /* Init host Library, add supported class and start the library. */
-  if (USBH_Init(&HUSB_HOST, USBH_UserProcess, HUSB_HOST_HSFS) != USBH_OK)
+  if (USBH_Init(&USBH_HANDLE, USBH_UserProcess, USBH_HSFS) != USBH_OK)
   {
     Error_Handler();
   }
 #ifdef USE_USBH_MIDI
-  if (USBH_RegisterClass(&HUSB_HOST, USBH_MIDI_CLASS) != USBH_OK)
+  if (USBH_RegisterClass(&USBH_HANDLE, USBH_MIDI_CLASS) != USBH_OK)
   {
     Error_Handler();
   }
 #endif
 #ifdef USE_USBH_HID
-  if (USBH_RegisterClass(&HUSB_HOST, USBH_HID_CLASS) != USBH_OK)
+  if (USBH_RegisterClass(&USBH_HANDLE, USBH_HID_CLASS) != USBH_OK)
   {
     Error_Handler();
   }
 #endif
-  if (USBH_Start(&HUSB_HOST) != USBH_OK)
+  if (USBH_Start(&USBH_HANDLE) != USBH_OK)
   {
     Error_Handler();
   }
