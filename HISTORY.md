@@ -1,3 +1,8 @@
+22.3.1
+------
+
+* Revert ST libraries to prevent USB issues
+
 22.3.0
 ------
 
