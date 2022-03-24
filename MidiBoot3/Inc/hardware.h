@@ -4,11 +4,9 @@
 
 #define USE_BOOTLOADER_MODE
 #define USE_USBD_MIDI
-#ifdef USE_USBD_FS
-#define USBD_HANDLE hUsbDeviceFS
-#else
-#define USBD_HANDLE hUsbDeviceHS
-#endif
+#define USBD_PRODUCT_STRING_FSHS "OWL-BOOT"
+
+#define AUDIO_BITS_PER_SAMPLE       16
 
 #if defined OWL_GENIUS
   #define HARDWARE_VERSION    "OWL Genius Boot"
