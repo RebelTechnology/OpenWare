@@ -178,9 +178,11 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   params.updateValues((int16_t*)smooth_adc_values, adc_len);
   extern DAC_HandleTypeDef DAC_HANDLE;
   int16_t value;
-  value = params.getValue(params.getAssignedCV(2));
+  int8_t assign = params.getAssignedCV(2);
+  value = assign == NO_ASSIGN ? 0 : params.getValue(assign);
   HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_1, DAC_ALIGN_12B_R, scaleForDac(value));
-  value = params.getValue(params.getAssignedCV(3));
+  assign = params.getAssignedCV(3);
+  value = assign == NO_ASSIGN ? 0 : params.getValue(assign);
   HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_2, DAC_ALIGN_12B_R, scaleForDac(value));
 #endif
 }
