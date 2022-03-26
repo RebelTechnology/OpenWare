@@ -179,14 +179,14 @@ public:
   void setName(uint8_t pid, const char* name){
     ParameterController::setName(pid, name);
     if(isInput(pid)){
-      if(cv_assign[0] == NO_ASSIGN && !isInput(0))
+      if(cv_assign[0] == NO_ASSIGN)
   	cv_assign[0] = pid;
-      else if(cv_assign[1] == NO_ASSIGN && cv_assign[0] != pid)
+      else if(cv_assign[1] == NO_ASSIGN)
   	cv_assign[1] = pid;
     }else if(isOutput(pid)){
-      if(cv_assign[2] == 0)
+      if(cv_assign[2] == NO_ASSIGN)
   	cv_assign[2] = pid;
-      else if(cv_assign[3] == NO_ASSIGN && cv_assign[2] != pid)
+      else if(cv_assign[3] == NO_ASSIGN)
   	cv_assign[3] = pid;
     }      
   }    
@@ -306,17 +306,20 @@ public:
       select = std::clamp(select + getDiscreteEncoderValue(current, previous), 0, 3);
     }else{
       int8_t assign = params.getAssignedCV(select);
-      int16_t delta = getDiscreteEncoderValue(current, previous);
-      assign = std::clamp(assign + delta, 0, NOF_PARAMETERS-1);
+      int8_t delta = getDiscreteEncoderValue(current, previous);
+      assign = std::clamp(assign + delta, -1, NOF_PARAMETERS-1);
       if(select < 2 && delta){ // assigning input CV
-	while(params.isOutput(assign))
+	while(params.isOutput(assign) ||
+	      (assign != NO_ASSIGN && params.getAssignedCV(select ^ 1) == assign))
+	  // prevent assigning to output or to the same pid as the other CV input
 	  assign += delta;
-	if(params.isInput(assign))
+	if(assign == NO_ASSIGN || params.isInput(assign))
 	  params.setAssignedCV(select, assign);
       }else if(delta){ // assigning output CV
 	while(params.isInput(assign))
+	  // prevent assigning to input
 	  assign += delta;
-	if(params.isOutput(assign))
+	if(assign == NO_ASSIGN || params.isOutput(assign))
 	  params.setAssignedCV(select, assign);	
       }      
     }
