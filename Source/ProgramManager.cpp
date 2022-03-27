@@ -38,8 +38,8 @@ static uint32_t usbd_audio_rx_count = 0;
 /* Get number of samples transmitted since previous request */
 uint32_t usbd_audio_get_rx_count(){
   // return 0;
-  uint32_t pos = usbd_audio_rx_count + codec.getSampleCounter();
-  usbd_audio_rx_count = 0;
+  uint32_t pos = usbd_audio_rx_count + codec.getSampleCounter(); // problem: counting from codec block start
+  usbd_audio_rx_count = 0; // problem: next block will increment by a full blocksize
   return pos;
 }
 
@@ -252,21 +252,17 @@ void setButtonValue(uint8_t ch, uint8_t value){
   if(ch < NOF_BUTTONS){
     timestamps[ch] = getSampleCounter();
     stateChanged.set(ch);
-  // if(value)
-  //   button_values |= (1<<ch);
-  // else
-  //   button_values &= ~(1<<ch);
   }
   button_values &= ~((!value)<<ch);
   button_values |= (bool(value)<<ch);
 }
 
 // pre / post fx routing
-#if defined USE_USBD_AUDIO_RX and !defined USE_USBD_AUDIO_RX_POST_FX
-#define USE_USBD_AUDIO_RX_PRE_FX
+#if defined USE_USBD_AUDIO_RX and !defined USE_USBD_AUDIO_RX_PRE_FX
+#define USE_USBD_AUDIO_RX_POST_FX
 #endif
-#if defined USE_USBD_AUDIO_TX and !defined USE_USBD_AUDIO_TX_POST_FX
-#define USE_USBD_AUDIO_TX_PRE_FX
+#if defined USE_USBD_AUDIO_TX and !defined USE_USBD_AUDIO_TX_PRE_FX
+#define USE_USBD_AUDIO_TX_POST_FX
 #endif
 
 /* called by the program when a block has been processed */

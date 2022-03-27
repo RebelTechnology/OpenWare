@@ -39,8 +39,8 @@
 #define CODEC_BLOCKSIZE              256 // with bs=512 DMA_D2=64k overflows by 1580 bytes
 #define AUDIO_BLOCK_SIZE             32
 
-#define USE_USBD_AUDIO_RX_POST_FX
-#define USE_USBD_AUDIO_TX_POST_FX
+#define USE_USBD_AUDIO_RX_PRE_FX
+#define USE_USBD_AUDIO_TX_PRE_FX
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
