@@ -261,20 +261,12 @@ void setButtonValue(uint8_t ch, uint8_t value){
   button_values |= (bool(value)<<ch);
 }
 
-#if 0 // pre / post fx
-#ifdef USE_USBD_AUDIO_TX
-#define USE_USBD_AUDIO_TX_PRE_FX
-#endif
-#ifdef USE_USBD_AUDIO_RX
+// pre / post fx routing
+#if defined USE_USBD_AUDIO_RX and !defined USE_USBD_AUDIO_RX_POST_FX
 #define USE_USBD_AUDIO_RX_PRE_FX
 #endif
-#else
-#ifdef USE_USBD_AUDIO_TX
-#define USE_USBD_AUDIO_TX_POST_FX
-#endif
-#ifdef USE_USBD_AUDIO_RX
-#define USE_USBD_AUDIO_RX_POST_FX
-#endif
+#if defined USE_USBD_AUDIO_TX and !defined USE_USBD_AUDIO_TX_POST_FX
+#define USE_USBD_AUDIO_TX_PRE_FX
 #endif
 
 /* called by the program when a block has been processed */
