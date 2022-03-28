@@ -27,6 +27,8 @@
 #define USE_USB_HOST
 #define USE_USBH_MIDI
 
+#define AUDIO_BLOCK_SIZE             128
+
 #define USE_BKPSRAM
 
 #define ADC_A 0
