@@ -1,8 +1,14 @@
-22.3.2
+22.3.rc1
 ------
 
+* Improved Genius CV assignment
+* Debounce Genius encoder switches
+* Fix USB Host performance in H7 libs (NAK flood)
 * Refactor startup code to support system/dfu bootloader
 * Unified USB device and host drivers
+
+Known Issues:
+* USB Host does not support reconnecting devices
 
 22.3.1
 ------
@@ -17,9 +23,6 @@
 * Critical sections protect task swapping
 * Fixed 64k size limit in flash storage
 * Updated libraries
-
-Known Issues:
-* USB Host does not support reconnecting devices
 
 
 22.2.2
