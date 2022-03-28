@@ -20,9 +20,6 @@ CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
 # CPP_SRC += $(OPENWARE)/Source/DigitalBusReader.cpp
 # CPP_SRC += $(OPENWARE)/Source/DigitalBusStreamReader.cpp
 
-CPP_SRC += $(OPENWARE)/Source/fastlog.cpp
-CPP_SRC += $(OPENWARE)/Source/fastpow.cpp
-
 C_SRC += $(C_SRC_USBH)
 C_SRC += $(C_SRC_USBH_MIDI)
 C_SRC += $(C_SRC_USBH_HID)
