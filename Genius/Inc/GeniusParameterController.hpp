@@ -147,10 +147,15 @@ public:
     return sw1() | (sw2() << 1);
   }
   void updateEncoders(int16_t* data, uint8_t size){
+    static constexpr uint32_t debounce_threshold = 40; // debounce time in mS
+    static uint32_t lastbounce = 0;
     uint32_t bstate = readButtons();
-    if(bstate != buttons){
+    if(bstate == buttons){
+      lastbounce = HAL_GetTick();
+    }else if((HAL_GetTick() - lastbounce) > debounce_threshold){
       page->buttonsChanged(bstate, buttons);
       buttons = bstate;
+      lastbounce = HAL_GetTick();
     }
     if(data[0] != encoders[0]){
       page->encoderChanged(0, data[0], encoders[0]);
