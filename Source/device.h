@@ -23,7 +23,7 @@
 #endif
 
 #ifdef USE_NOR_FLASH
-#define MAX_SPI_FLASH_HEADERS        32
+#define MAX_SPI_FLASH_HEADERS        48
 #define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
 #define EXTERNAL_STORAGE_SIZE        (8*1024*1024) // 8M / 64Mbit
 #else
@@ -35,7 +35,7 @@
 #define MAX_RESOURCE_HEADERS         MAX_SPI_FLASH_HEADERS
 #else
 #define USE_FLASH
-#define MAX_RESOURCE_HEADERS         (16+MAX_SPI_FLASH_HEADERS)
+#define MAX_RESOURCE_HEADERS         (8+MAX_SPI_FLASH_HEADERS)
 #endif
 
 #ifndef AUDIO_OUTPUT_GAIN
@@ -115,10 +115,10 @@
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           FIRMWARE_VERSION
 
-#if 1 // HARDWARE_ID != XIBECA_HARDWARE
-/* #define USE_FFT_TABLES */
-#define USE_FAST_POW
+#ifndef OWL_XIBECA
+#define USE_FFT_TABLES
 #endif
+#define USE_FAST_POW
 
 #ifndef MAX_NUMBER_OF_PATCHES
 #define MAX_NUMBER_OF_PATCHES        40
@@ -128,11 +128,6 @@
 #ifndef MAX_NUMBER_OF_RESOURCES
 #define MAX_NUMBER_OF_RESOURCES      12
 #endif
-
-#ifndef CODEC_BLOCKSIZE
-#define CODEC_BLOCKSIZE              64
-#endif
-#define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */
 #ifndef AUDIO_INPUT_OFFSET
@@ -158,9 +153,15 @@
 #ifndef AUDIO_SAMPLINGRATE
 #define AUDIO_SAMPLINGRATE           48000
 #endif
+
 #ifndef AUDIO_BLOCK_SIZE
-#define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
+#define AUDIO_BLOCK_SIZE             32 /* default size in samples of a single channel audio block */
 #endif
+#ifndef CODEC_BLOCKSIZE
+#define CODEC_BLOCKSIZE              512 /* maximum audio blocksize */
+#endif
+#define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
+
 
 #define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
 #define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE
