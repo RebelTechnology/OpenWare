@@ -115,15 +115,13 @@ void spi_read_page(uint32_t address, uint8_t* data, uint16_t length){
   flash_Deselect();
 }
 
-// address must be on a 256-byte boundary
 /* "The Page Program command accepts from 1-byte up to 256 consecutive bytes of data (page) to be programmed in one operation. Programming means that bits can either be left at 1, or programmed from 1 to 0. Changing bits from 0 to 1 requires an erase operation." */  
 int flash_write(uint32_t address, const uint8_t* data, size_t length){
-  uint8_t rgAddress[3];
+  uint8_t cmd[4];
+  cmd[0] = INST_PAGE_PROGRAM; // PP Page Program 1-1-1, 0x02, up to 108Mhz
 
-  // PP Page Program 1-1-1, 0x02, up to 108Mhz
-  uint8_t ucInstruction = INST_PAGE_PROGRAM;
-  size_t ret = length;
-  while(length){
+  size_t ret = 0;
+  while(ret == 0 && length > 0){
 
     _flash_writeEN();
     flash_WP_Disable();
@@ -134,16 +132,16 @@ int flash_write(uint32_t address, const uint8_t* data, size_t length){
     size_t len = length > 256 ? 256 : length;
 
     // Build address array
-    rgAddress[0] = (address & 0xFF0000) >> 16;
-    rgAddress[1] = (address & 0x00FF00) >> 8;
-    rgAddress[2] = (address & 0x0000FF) >> 0;
+    // address must be on a 256-byte boundary
+    cmd[1] = (address & 0xFF0000) >> 16;
+    cmd[2] = (address & 0x00FF00) >> 8;
+    cmd[3] = (address & 0x0000FF) >> 0;
 
     flash_Select();
 
     // Send and receive data
-    HAL_SPI_Transmit(FLASH_SPIConfig, &ucInstruction, 1, 100);
-    HAL_SPI_Transmit(FLASH_SPIConfig, rgAddress, 3, 100);
-    HAL_SPI_Transmit(FLASH_SPIConfig, (uint8_t*)data, len, 100);
+    HAL_SPI_Transmit(FLASH_SPIConfig, cmd, 4, 100);
+    ret = HAL_SPI_Transmit(FLASH_SPIConfig, (uint8_t*)data, len, 100);
 
     flash_Deselect();
 
@@ -281,9 +279,9 @@ int flash_erase(uint32_t address, size_t size){
 
   uint8_t data[4];
   data[0] = cmd;
-  data[1] =  (address & 0xFF0000) >> 16;
-  data[2] =  (address & 0x00FF00) >> 8;
-  data[3] =  (address & 0x0000FF) >> 0;
+  data[1] = (address & 0xFF0000) >> 16;
+  data[2] = (address & 0x00FF00) >> 8;
+  data[3] = (address & 0x0000FF) >> 0;
 	
   _flash_writeEN();
   flash_Select();
