@@ -33,8 +33,9 @@
 #define USE_USBD_FS
 #define USE_USBH_HS
 #define USE_USB_HOST
-#define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
+
+#define CODEC_BLOCKSIZE              256 /* maximum audio blocksize */
 
 // Serial MIDI TX only
 #define USE_UART_MIDI_TX
