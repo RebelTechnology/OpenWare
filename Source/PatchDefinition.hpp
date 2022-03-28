@@ -45,7 +45,7 @@ public:
     sourceResource = NULL;
   }
   bool copy(){
-    bool ret = false;
+    bool ret = true;
     if(sourceResource){
       uint32_t checksum = sourceResource->checksum;
       if(checksum == 0)
@@ -53,10 +53,9 @@ public:
       storage.readResource(sourceResource, linkAddress, 0, binarySize);
       device_cache_invalidate();
       uint32_t crc = crc32(linkAddress, binarySize, 0);
-      if(crc == checksum){
-	ret = true;
-      }else{
+      if(crc != checksum){
 	error(PROGRAM_ERROR, "Invalid checksum");
+	ret = false;
       }
       sourceResource = NULL;
     }
