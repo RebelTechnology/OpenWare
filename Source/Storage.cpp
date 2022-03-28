@@ -318,7 +318,6 @@ size_t Storage::writeResourceHeader(void* dest, const char* name, size_t datasiz
   header.magic = RESOURCE_VALID_MAGIC;
   header.size = datasize;
   strlcpy(header.name, name, sizeof(header.name));
-  // header.name = name;
   header.checksum = crc;
   header.flags = flags;
   memcpy(dest, &header, sizeof(header));
@@ -359,15 +358,10 @@ size_t Storage::writeResource(ResourceHeader* header){
     old = getResourceByName(header->name);
   }      
   if(old){
-    // compare CRC
-    uint32_t crc = crc32(data+sizeof(ResourceHeader), header->size, 0);
-    if(old->getDataSize() == header->size){
-      if(crc == getChecksum(old))
-	debugMessage("Resource checksum match");
-      if(verifyData(old, data, length)){
-	debugMessage("Resource identical");
-	return 0;
-      }
+    if(old->getDataSize() == header->size &&
+       header->checksum == old->getChecksum()){
+      debugMessage("Resource identical");
+      return 0;
     }
     eraseResource(old); // mark as deleted if it exists but is non-identical
   }
