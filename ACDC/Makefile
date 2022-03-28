@@ -2,33 +2,26 @@ PROJECT = ACDC
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-LDSCRIPT = $(OPENWARE)/Hardware/xibeca.ld
-include $(OPENWARE)/Hardware/owl3.mk
+include $(OPENWARE)/Hardware/xibeca.mk
 
 C_SRC = $(wildcard Core/Src/*.c)
 CPP_SRC = $(wildcard Core/Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/pcm3168a.c
-C_SRC += $(OPENWARE)/Source/usbd_audio.c
 C_SRC += $(OPENWARE)/Source/sdram-as4cXm32.c
 C_SRC += $(OPENWARE)/Source/flash-qspi.c
-S_SRC = $(BUILDROOT)/Core/Src/startup_stm32h743xx.s
-C_SRC += $(BUILDROOT)/USB_DEVICE/App/usb_device.c
-C_SRC += $(BUILDROOT)/USB_DEVICE/App/usbd_desc.c
-C_SRC += $(BUILDROOT)/USB_DEVICE/Target/usbd_conf.c
 
 include $(OPENWARE)/Hardware/sources.mk
 
 C_SRC += $(C_SRC_SAI)
-# C_SRC += $(C_SRC_DAC)
 C_SRC += $(C_SRC_SDRAM)
-C_SRC += $(C_SRC_USBD)
-# C_SRC += $(C_SRC_USBH)
 C_SRC += $(C_SRC_DSP)
 C_SRC += $(C_SRC_OS)
 C_SRC += $(C_SRC_UART)
 C_SRC += $(C_SRC_I2C)
 C_SRC += $(C_SRC_QSPI)
 C_SRC += $(C_SRC_MDMA)
+C_SRC += $(C_SRC_USBD)
+C_SRC += $(C_SRC_USBD_AUDIO)
 
 include $(OPENWARE)/Hardware/h7.mk
 

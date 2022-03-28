@@ -161,7 +161,7 @@ static USBH_StatusTypeDef USBH_MIDI_ClassRequest (USBH_HandleTypeDef *phost){
   */
 USBH_StatusTypeDef  USBH_MIDI_Stop(USBH_HandleTypeDef *phost){
   USBH_DbgLog ("USBH Stop 0x%x", phost->gState);
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+  MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
   if(phost->gState == HOST_CLASS){
     MIDI_Handle->state = MIDI_IDLE_STATE;
     USBH_ClosePipe(phost, MIDI_Handle->InPipe);
@@ -172,10 +172,11 @@ USBH_StatusTypeDef  USBH_MIDI_Stop(USBH_HandleTypeDef *phost){
 
 extern "C"{
   void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state){
-    MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+    USBH_HandleTypeDef *phost = (USBH_HandleTypeDef*)hhcd->pData;
+    MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
     if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
        MIDI_Handle->state == MIDI_TRANSFER_DATA){
-      size_t len = USBH_LL_GetLastXferSize((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->InPipe);
+      size_t len = USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
       USBH_MIDI_ReceiveCallback((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->pRxData, len);
     }
   }
@@ -189,9 +190,9 @@ extern "C"{
  * @retval USBH Status
  */
 static USBH_StatusTypeDef USBH_MIDI_Process (USBH_HandleTypeDef *phost){
+  MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
   USBH_StatusTypeDef status = USBH_BUSY;
   USBH_StatusTypeDef req_status = USBH_OK;
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
   switch(MIDI_Handle->state){
   case MIDI_IDLE_STATE:
     status = USBH_OK;
@@ -219,7 +220,7 @@ static USBH_StatusTypeDef USBH_MIDI_Process (USBH_HandleTypeDef *phost){
   * @retval USBH Status
   */
 static USBH_StatusTypeDef USBH_MIDI_SOFProcess (USBH_HandleTypeDef *phost){
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+  MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
 
   USBH_URBStateTypeDef URB_Status = USBH_LL_GetURBState(phost, MIDI_Handle->InPipe);
   if(URB_Status == USBH_URB_STALL) {
@@ -236,7 +237,7 @@ static USBH_StatusTypeDef USBH_MIDI_SOFProcess (USBH_HandleTypeDef *phost){
  * @retval None
  */
 uint16_t USBH_MIDI_GetLastReceivedDataSize(USBH_HandleTypeDef *phost){
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+  MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
   if(phost->gState == HOST_CLASS)
     return USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
   else
@@ -249,8 +250,8 @@ uint16_t USBH_MIDI_GetLastReceivedDataSize(USBH_HandleTypeDef *phost){
  * @retval None
  */
 USBH_StatusTypeDef  USBH_MIDI_Transmit(USBH_HandleTypeDef *phost, uint8_t *pbuff, uint16_t length){
+  MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
   USBH_StatusTypeDef Status = USBH_BUSY;
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
 
   if((MIDI_Handle->state == MIDI_IDLE_STATE) || (MIDI_Handle->state == MIDI_TRANSFER_DATA))
     {
@@ -272,8 +273,8 @@ USBH_StatusTypeDef  USBH_MIDI_Transmit(USBH_HandleTypeDef *phost, uint8_t *pbuff
  * @retval None
  */
 USBH_StatusTypeDef  USBH_MIDI_Receive(USBH_HandleTypeDef *phost, uint8_t *pbuff, uint16_t length){
+  MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
   USBH_StatusTypeDef Status = USBH_BUSY;
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
 
     if((MIDI_Handle->state == MIDI_IDLE_STATE) || (MIDI_Handle->state == MIDI_TRANSFER_DATA)){
       MIDI_Handle->pRxData = pbuff;
@@ -297,7 +298,7 @@ USBH_StatusTypeDef  USBH_MIDI_Receive(USBH_HandleTypeDef *phost, uint8_t *pbuff,
  * @retval None
  */
 static void MIDI_ProcessTransmission(USBH_HandleTypeDef *phost){
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+  MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
   USBH_URBStateTypeDef URB_Status = USBH_URB_IDLE;
 
   switch(MIDI_Handle->data_tx_state)

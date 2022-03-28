@@ -29,6 +29,9 @@ private:
 public:
   Resource() : header(NULL){}
   Resource(ResourceHeader* header) : header(header){}
+  bool exists(){
+    return header && isValidSize();
+  }
   bool isFree(){
     return header && header->magic == RESOURCE_FREE_MAGIC;
   }
@@ -57,8 +60,8 @@ public:
     }else if(isMemoryMapped()){
       return uint32_t(header) + getTotalSize() < INTERNAL_STORAGE_END;
 #ifdef USE_NOR_FLASH
-    }else{
-      return getAddress() < EXTERNAL_STORAGE_SIZE;
+    }else if(!isFree()){
+      return getAddress() + getTotalSize() < EXTERNAL_STORAGE_SIZE;
 #endif
     }
     return false;

@@ -4,19 +4,18 @@
 #define OWL_WIZARD
 #define HARDWARE_ID                  WIZARD_HARDWARE
 #define HARDWARE_VERSION             "Wizard"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-WIZARD"
 /* #define FASCINATION_MACHINE */
 
 #define USE_SPI_FLASH
 
 #ifndef OWL_EUROWIZARD
 #define USE_USBD_HS
-#define USBD_HANDLE hUsbDeviceHS
-#define USBH_HANDLE hUsbHostFS
+#define USE_USBH_FS
 #define CODEC_HP_FILTER
 #else
 #define USE_USBD_FS
-#define USBD_HANDLE hUsbDeviceFS
-#define USBH_HANDLE hUsbHostHS
+#define USE_USBH_HS
 #define CODEC_HP_FILTER
 #define CODEC_LR_SWAP
 #endif

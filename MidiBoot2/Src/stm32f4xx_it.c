@@ -56,16 +56,13 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-/* USER CODE BEGIN EV */
-#ifdef USE_USBD_FS
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
-#else
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
-#endif
+/* USER CODE BEGIN EV */
 /* USER CODE END EV */
 
 /******************************************************************************/
-/*           Cortex-M4 Processor Interruption and Exception Handlers          */ 
+/*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
   * @brief This function handles System service call via SWI instruction.
@@ -113,11 +110,10 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f4xx.s).                    */
 /******************************************************************************/
-/* USER CODE BEGIN 1 */
-#ifdef USE_USBD_FS
+
 /**
- * @brief This function handles USB On The Go FS global interrupt.
- */
+  * @brief This function handles USB On The Go FS global interrupt.
+  */
 void OTG_FS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
@@ -128,7 +124,7 @@ void OTG_FS_IRQHandler(void)
 
   /* USER CODE END OTG_FS_IRQn 1 */
 }
-#else /* USE_USBD_FS */
+
 /**
   * @brief This function handles USB On The Go HS global interrupt.
   */
@@ -142,6 +138,7 @@ void OTG_HS_IRQHandler(void)
 
   /* USER CODE END OTG_HS_IRQn 1 */
 }
-#endif /* USE_USBD_FS */
+
+/* USER CODE BEGIN 1 */
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

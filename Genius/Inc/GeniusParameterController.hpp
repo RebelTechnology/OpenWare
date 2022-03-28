@@ -101,6 +101,8 @@ public:
   }
 };
 
+static constexpr int8_t NO_ASSIGN = -1;
+
 class GeniusParameterController : public ParameterController {
 private:
 public:
@@ -118,12 +120,13 @@ public:
     encoders[1] = 0;
   }
   void reset();
-  uint8_t getAssignedCV(uint8_t cv){
+  int8_t getAssignedCV(uint8_t cv){
     return cv_assign[cv];
   }
-  void setAssignedCV(uint8_t cv, uint8_t pid){
+  void setAssignedCV(uint8_t cv, int8_t pid){
     if(cv_assign[cv] != pid){
-      parameters[cv_assign[cv]] = user[cv];
+      if(cv_assign[cv] != NO_ASSIGN)
+	parameters[cv_assign[cv]] = user[cv];
       user[cv] = parameters[pid];
       cv_assign[cv] = pid;
     }
@@ -144,10 +147,15 @@ public:
     return sw1() | (sw2() << 1);
   }
   void updateEncoders(int16_t* data, uint8_t size){
+    static constexpr uint32_t debounce_threshold = 40; // debounce time in mS
+    static uint32_t lastbounce = 0;
     uint32_t bstate = readButtons();
-    if(bstate != buttons){
+    if(bstate == buttons){
+      lastbounce = HAL_GetTick();
+    }else if((HAL_GetTick() - lastbounce) > debounce_threshold){
       page->buttonsChanged(bstate, buttons);
       buttons = bstate;
+      lastbounce = HAL_GetTick();
     }
     if(data[0] != encoders[0]){
       page->encoderChanged(0, data[0], encoders[0]);
@@ -176,14 +184,14 @@ public:
   void setName(uint8_t pid, const char* name){
     ParameterController::setName(pid, name);
     if(isInput(pid)){
-      if(cv_assign[0] == 0 && !isInput(0))
+      if(cv_assign[0] == NO_ASSIGN)
   	cv_assign[0] = pid;
-      else if(cv_assign[1] == 0 && cv_assign[0] != pid)
+      else if(cv_assign[1] == NO_ASSIGN)
   	cv_assign[1] = pid;
     }else if(isOutput(pid)){
-      if(cv_assign[2] == 0)
+      if(cv_assign[2] == NO_ASSIGN)
   	cv_assign[2] = pid;
-      else if(cv_assign[3] == 0 && cv_assign[2] != pid)
+      else if(cv_assign[3] == NO_ASSIGN)
   	cv_assign[3] = pid;
     }      
   }    
@@ -197,8 +205,10 @@ public:
     }
   }
   void updateValues(int16_t* values, size_t len){
-    parameters[cv_assign[0]] = std::clamp(user[0] + values[0] + GENIUS_ADC_OFFSET, 0, 4095);
-    parameters[cv_assign[1]] = std::clamp(user[1] + values[1] + GENIUS_ADC_OFFSET, 0, 4095);
+    if(cv_assign[0] != NO_ASSIGN)
+      parameters[cv_assign[0]] = std::clamp(user[0] + values[0] + GENIUS_ADC_OFFSET, 0, 4095);
+    if(cv_assign[1] != NO_ASSIGN)
+      parameters[cv_assign[1]] = std::clamp(user[1] + values[1] + GENIUS_ADC_OFFSET, 0, 4095);
   }
   void drawTitle(const char* title, ScreenBuffer& screen){
     if(strnlen(title, 11) < 11)
@@ -293,25 +303,28 @@ SelectControlPage selectTwoPage(1, 1);
 
 class AssignPage : public Page {
 private:
-  uint8_t select = 0;
+  int8_t select = 0;
   static constexpr const char* assignations[] = {"CV A In", "CV B In", "CV A Out", "CV B Out"};
 public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == ENCODER_TOP){
       select = std::clamp(select + getDiscreteEncoderValue(current, previous), 0, 3);
     }else{
-      uint8_t assign = params.getAssignedCV(select);
-      int16_t delta = getDiscreteEncoderValue(current, previous);
-      assign = std::clamp(assign + delta, 0, NOF_PARAMETERS-1);
+      int8_t assign = params.getAssignedCV(select);
+      int8_t delta = getDiscreteEncoderValue(current, previous);
+      assign = std::clamp(assign + delta, -1, NOF_PARAMETERS-1);
       if(select < 2 && delta){ // assigning input CV
-	while(params.isOutput(assign))
+	while(params.isOutput(assign) ||
+	      (assign != NO_ASSIGN && params.getAssignedCV(select ^ 1) == assign))
+	  // prevent assigning to output or to the same pid as the other CV input
 	  assign += delta;
-	if(params.isInput(assign))
+	if(assign == NO_ASSIGN || params.isInput(assign))
 	  params.setAssignedCV(select, assign);
       }else if(delta){ // assigning output CV
 	while(params.isInput(assign))
+	  // prevent assigning to input
 	  assign += delta;
-	if(params.isOutput(assign))
+	if(assign == NO_ASSIGN || params.isOutput(assign))
 	  params.setAssignedCV(select, assign);	
       }      
     }
@@ -321,12 +334,15 @@ public:
       setDisplayMode(EXIT_DISPLAY_MODE);
   }
   void draw(ScreenBuffer& screen){
-    uint8_t assign = params.getAssignedCV(select);
+    int8_t assign = params.getAssignedCV(select);
     params.drawTitle("ASSIGN", screen);
     screen.setTextSize(1);
     screen.print(1, 26, assignations[select]);
     screen.print(": ");
-    screen.print(params.getName(assign));
+    if(assign == NO_ASSIGN)
+      screen.print("--");
+    else
+      screen.print(params.getName(assign));
   }
 };
 
@@ -618,7 +634,7 @@ void GeniusParameterController::reset(){
   ParameterController::reset();
   for(size_t i=0; i<NOF_CV_VALUES; ++i){
     user[i] = 0;
-    cv_assign[i] = 0;
+    cv_assign[i] = NO_ASSIGN;
   }
   buttons = readButtons();
   selectOnePage.select = 0;

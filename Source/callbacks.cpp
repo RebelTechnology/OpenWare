@@ -21,6 +21,12 @@
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
+#ifdef USE_USB_DEVICE
+#include "usb_device.h"
+#endif
+#ifdef USE_USB_HOST
+#include "usb_host.h"
+#endif
 
 #if defined USE_RGB_LED
 #include "rainbow.h"
@@ -160,6 +166,12 @@ __weak void setup(){
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
 #endif /* USE_ENCODERS */
+#ifdef USE_USB_DEVICE
+  MX_USB_DEVICE_Init();
+#endif
+#ifdef USE_USB_HOST
+  MX_USB_HOST_Init();
+#endif
   owl.setup();
   onSetup();
 }

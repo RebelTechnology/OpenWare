@@ -3,11 +3,13 @@
 void device_dfu(){
   /* Set the address of the entry point to bootloader */
 #ifdef STM32H7xx
-  const uint32_t BootAddr = 0x1FF09800;
+  /* device_reset_to(0x1FF09800); */
+ /* or: */
+  *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_DFU_NUMBER;
+  device_reset_to(0);
 #else
-  const uint32_t BootAddr = 0x1FF00000;
-#endif
-  device_reset_to(BootAddr);
+  device_reset_to(0x1FFF0000);
+#endif  
 } 
 
 void device_bootloader(){
@@ -22,7 +24,6 @@ void device_reset(){
 
 void device_reset_to(uint32_t address){
   // https://community.st.com/s/article/STM32H7-bootloader-jump-from-application
-  volatile uint32_t BootAddr = address;
   /* Disable all interrupts */
   __disable_irq();
   /* Disable Systick timer */
@@ -47,16 +48,14 @@ void device_reset_to(uint32_t address){
   /* Re-enable interrupts */
   __enable_irq();
 
-  /* __DSB(); __ISB(); // memory and instruction barriers */
-
-  if(BootAddr == 0){
+  if(address == 0){
     NVIC_SystemReset();
   }else{
     /* Set up the jump to booloader address + 4 */
     void (*SysMemBootJump)(void);
-    SysMemBootJump = (void (*)(void)) (*((uint32_t *) ((BootAddr + 4))));
+    SysMemBootJump = (void (*)(void)) (*((uint32_t *) ((address + 4))));
     /* Set the main stack pointer to the bootloader stack */
-    __set_MSP(*(uint32_t *)BootAddr);
+    __set_MSP(*(uint32_t*)address);
     /* Call the function to jump to bootloader location */
     SysMemBootJump();
   }

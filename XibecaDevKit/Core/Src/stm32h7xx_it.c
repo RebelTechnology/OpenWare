@@ -58,8 +58,6 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
-extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
 extern DMA_HandleTypeDef hdma_adc1;
 extern ADC_HandleTypeDef hadc1;
 extern QSPI_HandleTypeDef hqspi;
@@ -70,6 +68,8 @@ extern SAI_HandleTypeDef hsai_BlockB1;
 extern DMA_HandleTypeDef hdma_uart7_rx;
 extern DMA_HandleTypeDef hdma_uart7_tx;
 extern UART_HandleTypeDef huart7;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */

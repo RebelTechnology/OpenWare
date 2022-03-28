@@ -105,3 +105,12 @@ C_SRC_OS += $(FREERTOS_DIR)/queue.c
 C_SRC_OS += $(FREERTOS_DIR)/list.c
 C_SRC_OS += $(FREERTOS_DIR)/croutine.c
 C_SRC_OS += $(FREERTOS_DIR)/portable/MemMang/heap_4.c
+
+C_SRC_USBD_AUDIO = $(OPENWARE)/Source/usb_device.c
+C_SRC_USBD_AUDIO += $(OPENWARE)/Source/usbd_conf.c
+C_SRC_USBD_AUDIO += $(OPENWARE)/Source/usbd_desc.c
+C_SRC_USBD_AUDIO += $(OPENWARE)/Source/usbd_audio.c
+
+C_SRC_USBH_MIDI = $(OPENWARE)/Source/usb_host.c
+C_SRC_USBH_MIDI += $(OPENWARE)/Source/usbh_conf.c
+C_SRC_USBH_MIDI += $(OPENWARE)/Source/usbh_midi.c

@@ -38,8 +38,8 @@ static uint32_t usbd_audio_rx_count = 0;
 /* Get number of samples transmitted since previous request */
 uint32_t usbd_audio_get_rx_count(){
   // return 0;
-  uint32_t pos = usbd_audio_rx_count + codec.getSampleCounter();
-  usbd_audio_rx_count = 0;
+  uint32_t pos = usbd_audio_rx_count + codec.getSampleCounter(); // problem: counting from codec block start
+  usbd_audio_rx_count = 0; // problem: next block will increment by a full blocksize
   return pos;
 }
 
@@ -252,29 +252,17 @@ void setButtonValue(uint8_t ch, uint8_t value){
   if(ch < NOF_BUTTONS){
     timestamps[ch] = getSampleCounter();
     stateChanged.set(ch);
-  // if(value)
-  //   button_values |= (1<<ch);
-  // else
-  //   button_values &= ~(1<<ch);
   }
   button_values &= ~((!value)<<ch);
   button_values |= (bool(value)<<ch);
 }
 
-#if 0 // pre / post fx
-#ifdef USE_USBD_AUDIO_TX
-#define USE_USBD_AUDIO_TX_PRE_FX
-#endif
-#ifdef USE_USBD_AUDIO_RX
-#define USE_USBD_AUDIO_RX_PRE_FX
-#endif
-#else
-#ifdef USE_USBD_AUDIO_TX
-#define USE_USBD_AUDIO_TX_POST_FX
-#endif
-#ifdef USE_USBD_AUDIO_RX
+// pre / post fx routing
+#if defined USE_USBD_AUDIO_RX and !defined USE_USBD_AUDIO_RX_PRE_FX
 #define USE_USBD_AUDIO_RX_POST_FX
 #endif
+#if defined USE_USBD_AUDIO_TX and !defined USE_USBD_AUDIO_TX_PRE_FX
+#define USE_USBD_AUDIO_TX_POST_FX
 #endif
 
 /* called by the program when a block has been processed */
@@ -642,9 +630,6 @@ void runManagerTask(void* p){
 #endif
       }
     }
-    taskEXIT_CRITICAL();
-    vTaskDelay(20); // allow idle task to garbage collect if necessary
-    taskENTER_CRITICAL();
     if(ulNotifiedValue & PROGRAM_FLASH_NOTIFICATION){ // program flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
@@ -656,7 +641,7 @@ void runManagerTask(void* p){
       else
 	xTaskCreate(eraseFlashTask, "Flash Erase", UTILITY_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
 ;
-    }else if(ulNotifiedValue & SEND_RESOURCE_NOTIFICATION){
+    }else if(ulNotifiedValue & SEND_RESOURCE_NOTIFICATION){ // send resource
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
       else
@@ -698,13 +683,11 @@ void ProgramManager::notifyManagerFromISR(uint32_t ulValue){
   if(managerTask != NULL)
     xTaskNotifyFromISR(managerTask, ulValue, eSetBits, &xHigherPriorityTaskWoken );
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-  // managerTask.notifyFromISR(ulValue);
 }
 
 void ProgramManager::notifyManager(uint32_t ulValue){
   if(managerTask != NULL)
     xTaskNotify(managerTask, ulValue, eSetBits );
-  // managerTask.notify(ulValue);
 }
 
 void ProgramManager::startProgram(bool isr){

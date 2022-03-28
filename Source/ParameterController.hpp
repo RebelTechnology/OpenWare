@@ -45,11 +45,11 @@ public:
   virtual void setName(uint8_t pid, const char* name){
     // todo : take flags, set type (parameter/button), set polarity (unipolar/bipolar)
     if(pid < NOF_PARAMETERS){
-      strncpy(names[pid], name, 11);
-      if(name[strnlen(name, 11)-1] == '>')
+      if(name[strlen(name)-1] == '>')
         outputs |= 1<<pid;
       else
         outputs &= ~(1<<pid);
+      strncpy(names[pid], name, 11);
     }
   }
   int16_t getValue(uint8_t pid){

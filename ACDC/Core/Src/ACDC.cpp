@@ -7,6 +7,8 @@
 #include "message.h"
 #include "Codec.h"
 #include "flash.h"
+#include "Storage.h"
+#include "ServiceCall.h"
 
 #define XIBECA_PIN3  GPIOD, GPIO_PIN_2
 #define XIBECA_PIN4  GPIOG, GPIO_PIN_10
@@ -182,3 +184,30 @@ void onLoop(void){
     setLed(i+5, getParameterValue(PARAMETER_BA+i));
   }
 }
+
+#ifdef USE_FAST_POW_RESOURCES
+uint32_t fast_log_table_size = 0;
+uint32_t fast_pow_table_size = 0;
+float fast_log_table[16384] __attribute__ ((section (".d2data")));
+uint32_t fast_pow_table[2048] __attribute__ ((section (".d2data")));
+void onResourceUpdate(){
+  Resource* res = storage.getResourceByName(SYSTEM_TABLE_LOG ".bin");
+  if(res && res->isValid()){
+    fast_log_table_size = std::min(res->getDataSize()/sizeof(float), 16384U);
+    storage.readResource(res->getHeader(), fast_log_table, 0, fast_log_table_size*sizeof(float));
+  }else{
+    fast_log_table_size = 0;
+  }
+  res = storage.getResourceByName(SYSTEM_TABLE_POW ".bin");
+  if(res && res->isValid()){
+    fast_pow_table_size = std::min(res->getDataSize()/sizeof(uint32_t), 2048U);
+    storage.readResource(res->getHeader(), fast_pow_table, 0, fast_pow_table_size*sizeof(uint32_t));
+  }else{
+    fast_pow_table_size = 0;
+  }
+  debugMessage("log/pow", fast_log_table_size, fast_pow_table_size);
+}
+#else
+#include "FastLogTable.h"
+#include "FastPowTable.h"
+#endif

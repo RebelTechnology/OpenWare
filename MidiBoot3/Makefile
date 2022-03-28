@@ -7,8 +7,6 @@ include $(OPENWARE)/Hardware/owl3.mk
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 
-# C_SRC += usbd_audio.c
-C_SRC += $(OPENWARE)/Source/usbd_midi.c
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/crc32.c
@@ -29,14 +27,11 @@ endif
 PROJECT = MidiBoot-$(PLATFORM)
 
 ifeq ($(PLATFORM),Genius)
-  CPPFLAGS += -Iusbd-fs -DOWL_GENIUS -DUSE_USBD_FS
-  vpath %.c usbd-fs
+  CPPFLAGS += -DOWL_GENIUS -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Magus)
-  CPPFLAGS += -Iusbd-fs -DOWL_MAGUS -DUSE_USBD_FS
-  vpath %.c usbd-fs
+  CPPFLAGS += -DOWL_MAGUS -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Xibeca)
-  CPPFLAGS += -Iusbd-fs -DOWL_XIBECA -DUSE_USBD_FS
-  vpath %.c usbd-fs
+  CPPFLAGS += -DOWL_XIBECA -DUSE_USBD_FS
 else
   $(error Invalid PLATFORM=$(PLATFORM))
 endif
@@ -45,6 +40,7 @@ CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 
 C_SRC += $(C_SRC_SDRAM)
 C_SRC += $(C_SRC_USBD)
+C_SRC += $(C_SRC_USBD_AUDIO)
 C_SRC += $(C_SRC_IWDG)
 
 include $(OPENWARE)/Hardware/h7.mk

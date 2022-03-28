@@ -125,8 +125,7 @@ void Owl::setup(void){
 
 #if defined USE_ADC && !defined OWL_WAVETABLE
   extern ADC_HandleTypeDef ADC_PERIPH;
-  HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES);
-  if(ret != HAL_OK)
+  if(HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES) != HAL_OK)
     error(CONFIG_ERROR, "ADC Start failed");
 #endif /* USE_ADC */
 

@@ -279,8 +279,13 @@ void Codec::txrx(){
 }
 
 void Codec::stop(){
+#ifdef USE_CS4271
+  HAL_SAI_DMAStop(&HSAI_TX);
+  HAL_SAI_DMAStop(&HSAI_RX);
+#else
   HAL_SAI_DMAStop(&HSAI_RX);
   HAL_SAI_DMAStop(&HSAI_TX);
+#endif
 }
 
 void Codec::start(){
@@ -300,13 +305,23 @@ void Codec::start(){
 }
 
 void Codec::pause(){
+#ifdef USE_CS4271
+  HAL_SAI_DMAPause(&HSAI_TX);
+  HAL_SAI_DMAPause(&HSAI_RX);
+#else
   HAL_SAI_DMAPause(&HSAI_RX);
   HAL_SAI_DMAPause(&HSAI_TX);
+#endif
 }
 
 void Codec::resume(){
+#ifdef USE_CS4271
   HAL_SAI_DMAResume(&HSAI_RX);
   HAL_SAI_DMAResume(&HSAI_TX);
+#else
+  HAL_SAI_DMAResume(&HSAI_TX);
+  HAL_SAI_DMAResume(&HSAI_RX);
+#endif
 }
 
 #endif /* USE_PCM3168A */

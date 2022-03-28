@@ -5,6 +5,7 @@ C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/callbacks.c
 C_SRC += $(OPENWARE)/Source/support.c
 C_SRC += $(OPENWARE)/Source/flash-spi.c
+C_SRC += $(OPENWARE)/Source/mpu.c
 CPP_SRC += $(OPENWARE)/Source/ApplicationSettings.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiHandler.cpp
 CPP_SRC += $(OPENWARE)/Source/Codec.cpp

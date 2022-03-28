@@ -62,11 +62,24 @@ public:
   }
 
   void allocateBuffer(size_t size){
-#ifdef USE_EXTERNAL_RAM
+#if defined OWL_XIBECA
+    extern char _HEAP_D2, _HEAP_D2_SIZE;
+    if(size <= (size_t)&_HEAP_D2_SIZE){
+      // load into spare space without stopping patch first
+      buffer = (uint8_t*)&_HEAP_D2;
+    }else{
+      program.exitProgram(true);
+      extern char _EXTRAM; // defined in link script
+      buffer = (uint8_t*)&_EXTRAM;
+    }
+#elif defined USE_EXTERNAL_RAM
+    // stop running program and free its memory
+    program.exitProgram(true);
     extern char _EXTRAM; // defined in link script
     buffer = (uint8_t*)&_EXTRAM;
-#else
-    // required by devices with no ext mem
+#else // required by devices with no ext mem
+    // stop running program and free its memory
+    program.exitProgram(true);
     extern char _PATCHRAM;
     buffer = (uint8_t*)&_PATCHRAM; 
 #endif
@@ -88,8 +101,6 @@ public:
     // first package
     if(length < 3+5+5)
       return setError("Invalid SysEx package");
-    // stop running program and free its memory
-    program.exitProgram(true);
 #ifndef USE_BOOTLOADER_MODE
     owl.setOperationMode(LOAD_MODE);
 #endif
@@ -114,7 +125,6 @@ public:
 
   int32_t finishFirmwareUpload(uint8_t* data, size_t length, size_t offset){
     // last package: index and checksum
-    // crc = crc32(getData(), getDataSize(), 0);
     if(length < 5)
       return setError("Missing checksum");
     uint32_t checksum = decodeInt(data+offset);

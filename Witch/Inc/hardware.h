@@ -4,6 +4,7 @@
 #define OWL_WITCH
 #define HARDWARE_ID                  WITCH_HARDWARE
 #define HARDWARE_VERSION             "Witch"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-WITCH"
 
 #define USE_SPI_FLASH
 
@@ -22,12 +23,11 @@
 #define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX  // microphone
 #define USE_USBD_FS
-#define USBD_HSFS DEVICE_FS
-#define USBD_HANDLE hUsbDeviceFS
-#define USBH_HANDLE hUsbHostHS
+#define USE_USBH_HS
 #define USE_USB_HOST
-#define USB_HOST_RX_BUFF_SIZE 256  /* Max Received data 64 bytes */
 #define USE_USBH_MIDI
+
+#define AUDIO_BLOCK_SIZE             128
 
 #define USE_BKPSRAM
 
