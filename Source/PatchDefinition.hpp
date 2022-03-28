@@ -48,14 +48,15 @@ public:
     bool ret = false;
     if(sourceResource){
       uint32_t checksum = sourceResource->checksum;
+      if(checksum == 0)
+	checksum = storage.getChecksum(sourceResource);
       storage.readResource(sourceResource, linkAddress, 0, binarySize);
       device_cache_invalidate();
       uint32_t crc = crc32(linkAddress, binarySize, 0);
       if(crc == checksum){
 	ret = true;
       }else{
-	if(checksum != storage.getChecksum(sourceResource))
-	  error(PROGRAM_ERROR, "Invalid checksum");
+	error(PROGRAM_ERROR, "Invalid checksum");
       }
       sourceResource = NULL;
     }
