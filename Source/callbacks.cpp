@@ -159,15 +159,15 @@ __weak void setup(){
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
 #endif /* USE_ENCODERS */
-#ifdef USE_USB_DEVICE
-  MX_USB_DEVICE_Init();
-#endif
+  owl.setup();
+  onSetup();
 #ifdef USE_USB_HOST
   /* NOTE: we get frequent boot failures if host is called before device */
   MX_USB_HOST_Init();
 #endif
-  owl.setup();
-  onSetup();
+#ifdef USE_USB_DEVICE
+  MX_USB_DEVICE_Init();
+#endif
 }
 
 __weak void onLoop(){
