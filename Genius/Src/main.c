@@ -1175,27 +1175,11 @@ static void MX_GPIO_Init(void)
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
-#if 0
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
+
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-#endif
-  void StartDefaultTask(void const * argument) {
-  /* init code for USB_DEVICE */
-  /* NOTE: we get frequent boot failures if host is called first */
-  MX_USB_DEVICE_Init();
-  
-#ifdef USE_USB_HOST
-  /* init code for USB_HOST */
-  MX_USB_HOST_Init();
-#endif
-
   setup();
 
   /* Infinite loop */
