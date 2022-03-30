@@ -8,6 +8,7 @@
 #include "eepromcontrol.h"
 #include "MidiController.h"
 #include "Storage.h"
+#include "usb_device.h"
 
 static SystemMidiReader midi_rx;
 MidiController midi_tx;
@@ -190,6 +191,7 @@ extern "C" {
   static volatile bool send_resource_names = false;
 
   void setup(){
+    MX_USB_DEVICE_Init();
     led_green();
     midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
     midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
