@@ -25,8 +25,6 @@
 /* USER CODE BEGIN Includes */
 #include "device.h"
 #include "errorhandlers.h"
-#include "usb_device.h"
-#include "usb_host.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
