@@ -1,4 +1,4 @@
-22.4.rc1
+22.4.0
 ------
 
 * Improved Genius CV assignment
