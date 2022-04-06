@@ -124,7 +124,6 @@ void StartDefaultTask(void const * argument);
 /* Private function prototypes -----------------------------------------------*/
 void setup(void);
 void loop(void);
-void MX_USB_HOST_Process(void);
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void initialise_monitor_handles(void);
 

@@ -161,6 +161,18 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
     parameter_values[i] = smooth_adc_values[i] >> 4;
 }
 
+// override setup() to reverse order of USBH/USBD init
+void setup(){
+  owl.setup();
+  onSetup();
+#ifdef USE_USB_HOST
+  MX_USB_HOST_Init();
+#endif
+#ifdef USE_USB_DEVICE
+  MX_USB_DEVICE_Init();
+#endif
+}
+
 void onSetup(){
   pin_gpio1.outputMode();
   pin_gpio2.outputMode();
