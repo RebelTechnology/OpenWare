@@ -177,18 +177,6 @@ void onScreenDraw(){
 }
 
 void onLoop(){
-
-#ifdef USE_USB_HOST
-  if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
-    if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
-      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
-      error(USB_ERROR, "USBH PWR Fault");
-    }
-  }else{
-    MX_USB_HOST_Process();
-  }
-#endif
-
   if(updateMAX11300){
     MAX11300_setDeviceControl(DCR_DACCTL_ImmUpdate|DCR_DACREF_Int|DCR_ADCCTL_ContSweep /* |DCR_ADCCONV_200ksps|DCR_BRST_Contextual*/);
     for(int i=0; i<20; ++i){
