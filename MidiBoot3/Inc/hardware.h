@@ -3,7 +3,6 @@
 #include "hardware_ids.h"
 
 #define USE_BOOTLOADER_MODE
-#define USE_USBD_MIDI
 #define USBD_PRODUCT_STRING_FSHS "OWL-BOOT"
 
 #define AUDIO_BITS_PER_SAMPLE       16
@@ -22,6 +21,7 @@
   #define HARDWARE_ID         MAGUS_HARDWARE
   #define APPLICATION_ADDRESS 0x08020000
   #define USE_SPI_FLASH
+  #define NO_INTERNAL_FLASH
 #elif defined OWL_XIBECA
   #define HARDWARE_VERSION    "OWL Xibeca Boot"
   #define HARDWARE_ID         XIBECA_HARDWARE

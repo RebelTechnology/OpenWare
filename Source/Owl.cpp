@@ -23,13 +23,6 @@
 #include "rainbow.h"
 #endif /* USE_RGB_LED */
 
-#ifdef USE_USB_HOST
-#include "usbh_core.h"
-extern "C"{
-  void MX_USB_HOST_Process(void);
-}
-#endif /* USE_USB_HOST */
-
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif /* USE_DIGITALBUS */

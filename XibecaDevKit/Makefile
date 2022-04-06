@@ -2,9 +2,21 @@ PROJECT = XibecaDevKit
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
+ifndef PLATFORM
+PLATFORM = Red
+endif
+
+ifeq ($(PLATFORM),Green)
+  CPPFLAGS += -DUSE_FFT_TABLES
+  LDSCRIPT = $(OPENWARE)/Hardware/xibeca-big.ld
+else ifeq ($(PLATFORM),Red)
+  CPPFLAGS += -DUSE_FAST_POW_RESOURCES
+  LDSCRIPT = $(OPENWARE)/Hardware/xibeca.ld
+else
+  $(error Invalid PLATFORM=$(PLATFORM))
+endif
+
 include $(OPENWARE)/Hardware/xibeca.mk
-# LDSCRIPT = $(OPENWARE)/Hardware/xibeca-big.ld
-# S_SRC = $(BUILDROOT)/Core/Src/startup_stm32h750xx.s
 
 C_SRC = $(wildcard Core/Src/*.c)
 CPP_SRC = $(wildcard Core/Src/*.cpp)

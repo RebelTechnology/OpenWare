@@ -60,10 +60,9 @@ defined in linker script */
   .type  Reset_Handler, %function
 Reset_Handler:  
 /* Check for magic number to jump to system bootloader */
-  ldr  r0, =0x2000FFF0 /* put address into r0 */
+  ldr  r0, =0x2000FFF0 /* put magic address into r0 */
   ldr  r1, =0xDADADEAF
   ldr  r2, [r0, #0]    /* copy value from address r0 to r2 */
-  str  r0, [r0, #0]    /* Invalidate */
   cmp  r2, r1	       /* compare the two registers */
   beq  Reboot_Loader   /* branch to DFU copy */
 
@@ -109,6 +108,8 @@ LoopFillZerobss:
 .size  Reset_Handler, .-Reset_Handler
 
 Reboot_Loader:
+  ldr  r0, =0x2000FFF0 /* put magic address into r0 */
+  str  r0, [r0, #0]    /* Invalidate magic */
   ldr  r0, =0x1FF09800 /* address of the system memory for DFU */
   ldr  sp, [r0, #0]
   ldr  r0, [r0, #4]

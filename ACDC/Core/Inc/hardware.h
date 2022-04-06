@@ -26,7 +26,7 @@
 #define NO_INTERNAL_FLASH
 #define USE_DFU_BOOTLOADER
 
-/* #define AUDIO_INPUT_GAIN            114 */
+#define AUDIO_INPUT_GAIN            104
 #define AUDIO_OUTPUT_GAIN           114
 
 #define USE_CODEC
@@ -52,12 +52,6 @@
 #define USE_USBD_AUDIO_RX           // speaker
 #define USE_USBD_RX_FB
 #define USE_USBD_FS
-#define USBD_HANDLE                 hUsbDeviceFS
-
-/* #define USE_UART_MIDI_RX */
-/* #define USE_UART_MIDI_TX */
-/* #define UART_MIDI_HANDLE            huart2 */
-/* #define UART_MIDI_RX_BUFFER_SIZE    256 */
 
 #define AUDIO_SAMPLINGRATE          48000
 

@@ -32,13 +32,6 @@
 #include "rainbow.h"
 #endif /* USE_RGB_LED */
 
-#ifdef USE_USB_HOST
-#include "usbh_core.h"
-extern "C"{
-  void MX_USB_HOST_Process(void);
-}
-#endif /* USE_USB_HOST */
-
 #ifdef USE_ENCODERS
 extern TIM_HandleTypeDef ENCODER_TIM1;
 extern TIM_HandleTypeDef ENCODER_TIM2;
@@ -166,14 +159,15 @@ __weak void setup(){
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
 #endif /* USE_ENCODERS */
+  owl.setup();
+  onSetup();
 #ifdef USE_USB_DEVICE
   MX_USB_DEVICE_Init();
 #endif
 #ifdef USE_USB_HOST
+  /* NOTE: we get frequent boot failures if host is called before device */
   MX_USB_HOST_Init();
 #endif
-  owl.setup();
-  onSetup();
 }
 
 __weak void onLoop(){
