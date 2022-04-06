@@ -1,10 +1,8 @@
-#include <stm32h7xx_hal.h>
 #include "sdram.h"
 
 /**
  * Alliance Memory DRAM 256Mbits, 3.3V, 8Mx32 AS4C8M32SA-6BIN
  */
-
 #define SDRAM_MODEREG_BURST_LENGTH_2               (1 << 0)
 #define SDRAM_MODEREG_BURST_LENGTH_4               (1 << 1)
 #define SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL        (0 << 3)

@@ -46,9 +46,6 @@ extern "C" {
   void delay(uint32_t ms);
 
   void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
-
-  void jump_to_bootloader(void);  
-  void device_reset(void);
   void MX_USB_HOST_Process(void);
 
 #ifdef __cplusplus

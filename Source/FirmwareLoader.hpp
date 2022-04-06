@@ -62,14 +62,28 @@ public:
   }
 
   void allocateBuffer(size_t size){
-#ifdef USE_EXTERNAL_RAM
+#if defined OWL_XIBECA
+    extern char _HEAP_D2, _HEAP_D2_SIZE;
+    if(size <= (size_t)&_HEAP_D2_SIZE){
+      // load into spare space without stopping patch first
+      buffer = (uint8_t*)&_HEAP_D2;
+    }else{
+      program.exitProgram(true);
+      extern char _EXTRAM; // defined in link script
+      buffer = (uint8_t*)&_EXTRAM;
+    }
+#elif defined USE_EXTERNAL_RAM
+    // stop running program and free its memory
+    program.exitProgram(true);
     extern char _EXTRAM; // defined in link script
     buffer = (uint8_t*)&_EXTRAM;
-#else
-    // required by devices with no ext mem
+#else // required by devices with no ext mem
+    // stop running program and free its memory
+    program.exitProgram(true);
     extern char _PATCHRAM;
     buffer = (uint8_t*)&_PATCHRAM; 
 #endif
+    memset(buffer, 0, sizeof(ResourceHeader));
     index = sizeof(ResourceHeader); // start writing data after resource header
   }
   
@@ -87,8 +101,6 @@ public:
     // first package
     if(length < 3+5+5)
       return setError("Invalid SysEx package");
-    // stop running program and free its memory
-    program.exitProgram(true);
 #ifndef USE_BOOTLOADER_MODE
     owl.setOperationMode(LOAD_MODE);
 #endif
@@ -113,7 +125,6 @@ public:
 
   int32_t finishFirmwareUpload(uint8_t* data, size_t length, size_t offset){
     // last package: index and checksum
-    // crc = crc32(getData(), getDataSize(), 0);
     if(length < 5)
       return setError("Missing checksum");
     uint32_t checksum = decodeInt(data+offset);
@@ -121,6 +132,42 @@ public:
       return setError("Invalid SysEx checksum");
     ready = true;
     return index;
+  }
+
+  bool setResourceName(const char* name){
+    ResourceHeader* header = getResourceHeader();
+    size_t len = strnlen(name, sizeof(ResourceHeader::name));
+    if(len > 0 && len < sizeof(ResourceHeader::name)){
+      size_t datasize = getDataSize();
+      if(datasize <= MAX_SYSEX_PAYLOAD_SIZE){
+	storage.writeResourceHeader(header, name, datasize, crc, RESOURCE_IN_MEMORY); // FLASH_DEFAULT_FLAGS);
+	return true;
+      }else{
+	setError("Resource too big");
+      }
+    }else{
+      setError("Invalid SAVE name");
+    }
+    return false;
+  }
+
+  bool setPatchSlot(uint8_t slot){
+    ResourceHeader* header = getResourceHeader();
+    ProgramHeader* program = (ProgramHeader*)getData();
+    const char* name = program->programName;
+    size_t datasize = getDataSize();
+    if(slot > MAX_NUMBER_OF_PATCHES){
+      setError("Invalid STORE slot");
+    }else if(program->magic != 0XDADAC0DE){
+      setError("Invalid patch magic");
+    }else if(datasize > MAX_SYSEX_PROGRAM_SIZE){
+      setError("Patch too big");
+    }else{
+      storage.writeResourceHeader(header, name, datasize, crc, RESOURCE_IN_MEMORY|RESOURCE_USER_PATCH|slot);
+				  // FLASH_DEFAULT_FLAGS|RESOURCE_USER_PATCH|slot);
+      return true;
+    }
+    return false;
   }
 
   int32_t handleFirmwareUpload(uint8_t* data, size_t length){

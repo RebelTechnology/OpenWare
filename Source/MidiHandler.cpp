@@ -291,14 +291,14 @@ void MidiHandler::handleFirmwareRunCommand(uint8_t* data, uint16_t size){
 }
 
 void MidiHandler::runProgram(){
-  if(loader.isReady()){
-    program.loadDynamicProgram(loader.getData(), loader.getDataSize());
+  if(loader.isReady() && loader.setPatchSlot(0)){
+    program.exitProgram(true);
+    program.loadDynamicProgram(loader.getResourceHeader());
     loader.clear();
-    // program.startProgram(true);
-    program.resetProgram(true);
+    program.startProgram(true);    
   }else{
     error(PROGRAM_ERROR, "No program to run");
-  }      
+  }
 }
 
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
@@ -358,20 +358,8 @@ void MidiHandler::handleFirmwareSendCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t slot = loader.decodeInt(data);
-    if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES){
-      data = (uint8_t*)loader.getResourceHeader();
-      size_t datasize = loader.getDataSize();
-      ProgramHeader* header = (ProgramHeader*)loader.getData();
-      if(header->magic == 0XDADAC0DE){	
-	storage.writeResourceHeader(data, header->programName, datasize,
-				    FLASH_DEFAULT_FLAGS|RESOURCE_USER_PATCH|slot);
-	program.saveToFlash(slot, data, loader.getTotalSize());
-      }else{
-	error(PROGRAM_ERROR, "Invalid patch magic");
-      }
-    }else{
-      error(PROGRAM_ERROR, "Invalid STORE slot");
-    }
+    if(loader.setPatchSlot(slot))
+      program.saveToFlash(slot, loader.getResourceHeader(), loader.getTotalSize());
   }else{
     error(PROGRAM_ERROR, "Invalid STORE command");
   }
@@ -381,15 +369,8 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
 void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size > 1){
     const char* name = (const char*)data;
-    size_t len = strnlen(name, 20);
-    if(len > 0 && len < 20){
-      data = (uint8_t*)loader.getResourceHeader();
-      size_t datasize = loader.getDataSize();
-      storage.writeResourceHeader(data, name, datasize, FLASH_DEFAULT_FLAGS);
-      program.saveToFlash(0, data, loader.getTotalSize());
-    }else{
-      error(PROGRAM_ERROR, "Invalid SAVE name");
-    }
+    if(loader.setResourceName(name))
+      program.saveToFlash(0, loader.getResourceHeader(), loader.getTotalSize());      
   }else{
     error(PROGRAM_ERROR, "Invalid SAVE command");
   }
@@ -410,7 +391,11 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     device_reset();
     break;
   case SYSEX_BOOTLOADER_COMMAND:
-    jump_to_bootloader();
+#ifdef USE_DFU_BOOTLOADER
+    device_dfu();
+#else
+    device_bootloader();
+#endif
     break;
   case SYSEX_PROGRAM_MESSAGE:
     handleProgramMessage(data+4, size-5);

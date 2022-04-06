@@ -21,17 +21,16 @@
 #ifdef USE_CODEC
 #include "Codec.h"
 #endif
+#ifdef USE_USB_DEVICE
+#include "usb_device.h"
+#endif
+#ifdef USE_USB_HOST
+#include "usb_host.h"
+#endif
 
 #if defined USE_RGB_LED
 #include "rainbow.h"
 #endif /* USE_RGB_LED */
-
-#ifdef USE_USB_HOST
-#include "usbh_core.h"
-extern "C"{
-  void MX_USB_HOST_Process(void);
-}
-#endif /* USE_USB_HOST */
 
 #ifdef USE_ENCODERS
 extern TIM_HandleTypeDef ENCODER_TIM1;
@@ -55,10 +54,6 @@ extern "C"{
 
 #ifdef USE_ADC
 extern uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM;
-#endif
-
-#ifdef USE_DAC
-extern DAC_HandleTypeDef hdac;
 #endif
 
 #ifdef USE_RGB_LED
@@ -166,6 +161,13 @@ __weak void setup(){
 #endif /* USE_ENCODERS */
   owl.setup();
   onSetup();
+#ifdef USE_USB_DEVICE
+  MX_USB_DEVICE_Init();
+#endif
+#ifdef USE_USB_HOST
+  /* NOTE: we get frequent boot failures if host is called before device */
+  MX_USB_HOST_Init();
+#endif
 }
 
 __weak void onLoop(){
@@ -233,12 +235,13 @@ __weak void onChangeMode(uint8_t new_mode, uint8_t old_mode){
 
 __weak void setAnalogValue(uint8_t ch, int16_t value){
 #ifdef USE_DAC
+  extern DAC_HandleTypeDef DAC_HANDLE;
   switch(ch){
   case PARAMETER_F:
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
+    HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
   case PARAMETER_G:
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+    HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
   }
 #endif

@@ -30,7 +30,8 @@ public:
   Resource* getPatch(uint8_t index);
   Resource* getResource(uint8_t index);
   bool loadProgram(uint8_t slot); // load program from storage
-  bool loadProgram(void* address, uint32_t length); // load program from RAM
+  // bool loadProgram(void* address, uint32_t length); // load program from RAM
+  // bool loadProgram(ResourceHeader* header); // load program from RAM
 private:
   Resource* patches[MAX_NUMBER_OF_PATCHES];
   Resource* resources[MAX_NUMBER_OF_RESOURCES];

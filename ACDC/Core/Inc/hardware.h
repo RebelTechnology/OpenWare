@@ -3,11 +3,17 @@
 
 #define OWL_XIBECA
 #define HARDWARE_ID                  XIBECA_HARDWARE
-#define HARDWARE_VERSION             "Xibeca"
+#define HARDWARE_VERSION             "AC/DC"
+#define USBD_PRODUCT_STRING_FSHS     "OWL-ACDC"
+
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
+
+/* note that with H750, PLUS_RAM may be used by firmware */
 #define USE_PLUS_RAM
+
+#define USE_FAST_POW_RESOURCES
 
 #ifdef NDEBUG
 #define USE_ICACHE
@@ -16,11 +22,11 @@
 
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
-// todo: quad SPI
-/* #define USE_SPI_FLASH */
-/* #define SPI_FLASH_HSPI              hqspi */
+#define USE_QSPI_FLASH
+#define NO_INTERNAL_FLASH
+#define USE_DFU_BOOTLOADER
 
-/* #define AUDIO_INPUT_GAIN            114 */
+#define AUDIO_INPUT_GAIN            104
 #define AUDIO_OUTPUT_GAIN           114
 
 #define USE_CODEC
@@ -29,6 +35,9 @@
 #define CODEC_DAC_INVERT
 /* #define CODEC_HP_FILTER */
 #define CODEC_SPI hspi2
+
+#define CODEC_BLOCKSIZE              256
+#define AUDIO_BLOCK_SIZE             16
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
@@ -43,12 +52,6 @@
 #define USE_USBD_AUDIO_RX           // speaker
 #define USE_USBD_RX_FB
 #define USE_USBD_FS
-#define USBD_HANDLE                 hUsbDeviceFS
-
-/* #define USE_UART_MIDI_RX */
-/* #define USE_UART_MIDI_TX */
-/* #define UART_MIDI_HANDLE            huart2 */
-/* #define UART_MIDI_RX_BUFFER_SIZE    256 */
 
 #define AUDIO_SAMPLINGRATE          48000
 
@@ -61,4 +64,4 @@
   
 #define NOF_ADC_VALUES               4
 #define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  (0+4)
+#define NOF_BUTTONS                  16

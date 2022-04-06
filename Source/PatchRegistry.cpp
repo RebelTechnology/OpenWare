@@ -54,7 +54,7 @@ const char* PatchRegistry::getResourceName(unsigned int index){
 
 const char* PatchRegistry::getPatchName(unsigned int index){
   if(index == 0){
-    patchDefinition.getName();
+    return patchDefinition.getName();
   }else{
     Resource* resource = getPatch(index-1);
     if(resource)
@@ -83,10 +83,10 @@ bool PatchRegistry::hasPatches(){
 bool PatchRegistry::loadProgram(uint8_t index){
   Resource* resource = getPatch(index-1);  
   if(resource && resource->isValid())
-    return patchDefinition.load(resource) && patchDefinition.isValid();
+    return patchDefinition.load(resource->getHeader()) && patchDefinition.isValid();
   return false;
 }
 
-bool PatchRegistry::loadProgram(void* address, uint32_t length){
-  return patchDefinition.load(address, length) && patchDefinition.isValid();
-}
+// bool PatchRegistry::loadProgram(void* address, uint32_t length){
+//   return patchDefinition.load(address, length) && patchDefinition.isValid();
+// }

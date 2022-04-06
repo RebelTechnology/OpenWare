@@ -5,6 +5,7 @@
 #define HARDWARE_ID                  BIOSIGNALS_HARDWARE
 #define HARDWARE_VERSION             "BioSignals"
 #define NO_EXTERNAL_RAM
+#define USBD_PRODUCT_STRING_FSHS     "OWL-BIOSIGNALS"
 
 #define USE_BLE_MIDI
 #define BLE_SPI hspi2
@@ -20,13 +21,36 @@
 #define USE_CODEC
 #define USE_ADS1294
 
+#define CODEC_BLOCKSIZE              256
+#define AUDIO_BLOCK_SIZE             16
+
+#define USE_USBD_HS
+#define USBD_DESC HS_Desc
+#define USBD_HSFS DEVICE_HS
+#define USBD_HANDLE hUsbDeviceHS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_HS
+
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX  // microphone
 /* #define USE_USBD_AUDIO_RX  // speaker */
-#define USE_USBD_FS
-#define USBD_HANDLE hUsbDeviceHS
+/* #define USE_USBD_RX_FB */
+/* #define USE_USBD_AUDIO_FEATURES */
+#define AUDIO_BITS_PER_SAMPLE       32
+#if AUDIO_BITS_PER_SAMPLE == 16
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
+/* #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>16) */
+/* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<16) */
+#else
+/* #define AUDIO_INT32_TO_SAMPLE(x)    (x) */
+/* #define AUDIO_SAMPLE_TO_INT32(x)    (x) */
+#define AUDIO_INT32_TO_SAMPLE(x)    ((x)<<8)
+#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)>>8)
+/* #define AUDIO_INT32_TO_SAMPLE(x)    (__REV(x)) */
+/* #define AUDIO_SAMPLE_TO_INT32(x)    (__REV(x)) */
+#endif
+#define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
+#define AUDIO_SAMPLINGRATE          8000
 
 #define USE_KX122
 #define KX122_ACTIVE_CHANNELS         3
@@ -44,13 +68,6 @@
 #define ADS_ACTIVE_CHANNELS         4
 #define ADS_HSPI                    hspi1
 
-#define AUDIO_RINGBUFFER_SIZE       (CODEC_BLOCKSIZE*USBD_AUDIO_TX_CHANNELS*4)
-
-/* USB audio settings */
-#define AUDIO_BITS_PER_SAMPLE       32
-#define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define AUDIO_SAMPLINGRATE          8000
-
 #define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
 #if defined USE_KX122 && defined USE_CODEC
@@ -64,5 +81,7 @@
 #endif
 
 #define NOF_ADC_VALUES               0
-#define NOF_PARAMETERS               5
+#define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (2+1)
+
+#define USE_DFU_BOOTLOADER

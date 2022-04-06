@@ -8,27 +8,24 @@ _Min_Stack_Size = 0x200; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-  /* DTCMRAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K */
-  /* RAM_D1 (xrw)      : ORIGIN = 0x24000000, LENGTH = 512K */
-  /* RAM_D2 (xrw)      : ORIGIN = 0x30000000, LENGTH = 288K */
-  /* RAM_D3 (xrw)      : ORIGIN = 0x38000000, LENGTH = 64K */
-  /* ITCMRAM (xrw)      : ORIGIN = 0x00000000, LENGTH = 64K */
-  /* FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 2048K */
-DTCMRAM  (xrw)   : ORIGIN = 0x20000000, LENGTH = 48K
+/* DTCMRAM  (rwx)   : ORIGIN = 0x20000000, LENGTH = 128K */
+/* RAM_D1   (rwx)   : ORIGIN = 0x24000000, LENGTH = 512K */
+/* RAM_D2   (rwx)   : ORIGIN = 0x30000000, LENGTH = 288K */
+/* RAM_D3   (rwx)   : ORIGIN = 0x38000000, LENGTH = 64K */
+/* ITCMRAM  (rwx)   : ORIGIN = 0x00000000, LENGTH = 64K */
+/* FLASH    (rx)    : ORIGIN = 0x08000000, LENGTH = 2048K */
+DTCMRAM  (rwx)   : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K
-PLUSRAM  (xrw)   : ORIGIN = 0x24000000, LENGTH = 512K /* D1 RAM */
-HEAP_D2  (xrw)   : ORIGIN = 0x30000000, LENGTH = 256K
-DMA_D2   (xrw)   : ORIGIN = 0x30040000, LENGTH = 32K
-RAM_D3   (xrw)   : ORIGIN = 0x38000000, LENGTH = 64K
-ITCMRAM (xrw)    : ORIGIN = 0x00000000, LENGTH = 4K
-CCMRAM (xrw)     : ORIGIN = 0x00001000, LENGTH = 60K
-EXTRAM  (rwx)    : ORIGIN = 0xD0000000, LENGTH = 8M
-/* BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 0K */
-/* FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 512K */
+PLUSRAM  (rwx)   : ORIGIN = 0x24000000, LENGTH = 512K /* D1 RAM */
+DMA_D2   (rwx)   : ORIGIN = 0x30000000, LENGTH = 64K
+HEAP_D2  (rwx)   : ORIGIN = 0x30010000, LENGTH = 224K
+RAM_D3   (rwx)   : ORIGIN = 0x38000000, LENGTH = 64K
+ITCMRAM  (rwx)   : ORIGIN = 0x00000000, LENGTH = 4K
+CCMRAM   (rwx)   : ORIGIN = 0x00001000, LENGTH = 60K
+EXTRAM   (rwx)   : ORIGIN = 0xD0000000, LENGTH = 8M
 BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K
-FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 384K
-STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 512K  /* Assuming 1Mb FLASH */
-/* STORAGE (rx)     : ORIGIN = 0x08080000, LENGTH = 1536K /\* Assuming 2Mb FLASH *\/ */
+FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 512K
+STORAGE (rx)     : ORIGIN = 0x080a0000, LENGTH = 384K
 }
 
 /* Define output sections */
@@ -190,6 +187,7 @@ SECTIONS
 
   .heapd2 (NOLOAD) :
   {
+    *(.d2data)
     PROVIDE (_HEAP_D2 = .);
   } >HEAP_D2
   _HEAP_D2_END = ORIGIN(HEAP_D2) + LENGTH(HEAP_D2);

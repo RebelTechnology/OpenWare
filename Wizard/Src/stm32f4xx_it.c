@@ -74,24 +74,19 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-#ifdef USE_USBD_FS
-extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
-extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
-#else
-extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
-extern HCD_HandleTypeDef hhcd_USB_OTG_FS;
-#endif
 extern DMA_HandleTypeDef hdma_adc3;
 extern DMA_HandleTypeDef hdma_sai1_a;
 extern DMA_HandleTypeDef hdma_sai1_b;
 extern SAI_HandleTypeDef hsai_BlockA1;
 extern SAI_HandleTypeDef hsai_BlockB1;
+extern HCD_HandleTypeDef hhcd_USB_OTG_FS;
+extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
 
 /******************************************************************************/
-/*           Cortex-M4 Processor Interruption and Exception Handlers          */ 
+/*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
   * @brief This function handles System tick timer.
@@ -215,7 +210,7 @@ void OTG_FS_IRQHandler(void)
 
 #ifdef USE_USBD_FS
   /* USER CODE END OTG_FS_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
+  HAL_HCD_IRQHandler(&hhcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
 #else
   HAL_HCD_IRQHandler(&hhcd_USB_OTG_FS);
@@ -232,7 +227,7 @@ void OTG_HS_IRQHandler(void)
 
 #ifdef USE_USBD_FS
   /* USER CODE END OTG_HS_IRQn 0 */
-  HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
+  HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
   /* USER CODE BEGIN OTG_HS_IRQn 1 */
 #else
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);

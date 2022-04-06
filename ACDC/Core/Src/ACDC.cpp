@@ -6,6 +6,9 @@
 #include "OpenWareMidiControl.h"
 #include "message.h"
 #include "Codec.h"
+#include "flash.h"
+#include "Storage.h"
+#include "ServiceCall.h"
 
 #define XIBECA_PIN3  GPIOD, GPIO_PIN_2
 #define XIBECA_PIN4  GPIOG, GPIO_PIN_10
@@ -30,10 +33,10 @@
 #define XIBECA_PIN23 GPIOD, GPIO_PIN_12
 #define XIBECA_PIN24 GPIOD, GPIO_PIN_13
 
-// Pin led_in1(XIBECA_PIN13);
-// Pin led_in2(XIBECA_PIN14);
-// Pin led_in3(XIBECA_PIN19);
-// Pin led_in4(XIBECA_PIN20);
+Pin led_in1(XIBECA_PIN13);
+Pin led_in2(XIBECA_PIN14);
+Pin led_in3(XIBECA_PIN19);
+Pin led_in4(XIBECA_PIN20);
 
 Pin led_clip1(XIBECA_PIN10);
 Pin led_clip2(XIBECA_PIN7);
@@ -45,22 +48,24 @@ Pin led_clip4(XIBECA_PIN5);
 // Pin led_out3(XIBECA_PIN23);
 // Pin led_out4(XIBECA_PIN24);
 
+#define ACDC_CLIPPING_LEVEL 4000
+#define ACDC_LED_OFF 1024
 void setLed(uint8_t led, uint32_t rgb){
-  uint32_t pwm = 1023 - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
+  uint32_t pwm = ACDC_LED_OFF - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
   switch(led){
   case 1:
     if(rgb == RED_COLOUR){
       led_clip1.low();
-      TIM2->CCR1 = 0xFFFFFFFFU;
+      // TIM3->CCR2 = ACDC_LED_OFF;
     }else{
       led_clip1.high();
-      TIM2->CCR1 = pwm;
+      TIM3->CCR2 = pwm;
     }
     break;
   case 2:
     if(rgb == RED_COLOUR){
       led_clip2.low();
-      TIM2->CCR4 = 0xFFFFFFFFU;
+      // TIM2->CCR4 = ACDC_LED_OFF;
     }else{
       led_clip2.high();
       TIM2->CCR4 = pwm;
@@ -69,16 +74,16 @@ void setLed(uint8_t led, uint32_t rgb){
   case 3:
     if(rgb == RED_COLOUR){
       led_clip3.low();
-      TIM3->CCR2 = 0xFFFFFFFFU;
+      // TIM2->CCR1 = ACDC_LED_OFF;
     }else{
       led_clip3.high();
-      TIM3->CCR2 = pwm;
+      TIM2->CCR1 = pwm;
     }
     break;
   case 4:
     if(rgb == RED_COLOUR){
       led_clip4.low();
-      TIM2->CCR2 = 0xFFFFFFFFU;
+      // TIM2->CCR2 = ACDC_LED_OFF;
     }else{
       led_clip4.high();
       TIM2->CCR2 = pwm;
@@ -115,10 +120,10 @@ void initLed(){
   HAL_TIM_Base_Start(&htim3);
   HAL_TIM_Base_Start(&htim4);
   HAL_TIM_Base_Start(&htim8);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // in1
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); // in3
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2); // in4
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4); // in2
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); // in3
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); // in1
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1); // out3
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2); // out4
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1); // out1
@@ -130,17 +135,79 @@ void initLed(){
   led_clip4.outputMode();
 }
 
+#if 0
+void initFlash(){
+#define QSPIHandle hqspi
+  extern QSPI_HandleTypeDef QSPIHandle;
+  QSPIHandle.Instance = QUADSPI;
+  /* QSPI clock = 480MHz / (1+9) = 48MHz */
+  /* QSPI clock = 480MHz / (1+4) = 96MHz */
+  QSPIHandle.Init.ClockPrescaler     = 9;
+  /* QSPIHandle.Init.ClockPrescaler     = 4; // 4 and 5 don't work? 8 works  */
+/* #define IS_QSPI_FIFO_THRESHOLD(THR)        (((THR) > 0U) && ((THR) <= 32U)) */
+  QSPIHandle.Init.FifoThreshold      = 4;
+  QSPIHandle.Init.SampleShifting     = QSPI_SAMPLE_SHIFTING_NONE;
+  QSPIHandle.Init.FlashSize          = 22; // 2^(22+1) = 8M / 64Mbit
+  QSPIHandle.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
+  QSPIHandle.Init.ClockMode          = QSPI_CLOCK_MODE_0;
+
+  // QSPIHandle.Init.FlashID = QSPI_FLASH_ID_1;
+  // QSPIHandle.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
+
+  /* Initialize QuadSPI ------------------------------------------------ */
+  HAL_QSPI_DeInit(&QSPIHandle);
+  if (HAL_QSPI_Init(&QSPIHandle) != HAL_OK)
+    {
+      Error_Handler();
+    }
+  if( HAL_QSPI_SetFifoThreshold(&QSPIHandle, 16) != HAL_OK)
+    {
+      Error_Handler();
+    }
+  // flash_init(&QSPIHandle);
+}
+#endif
+
 void onSetup(){
   initLed();
   for(size_t i=1; i<=8; ++i)
     setLed(i, NO_COLOUR);
   // codec.set((1<<22)-1);
+  led_in1.outputMode();
+  led_in1.afMode();
 }
 
 void onLoop(void){  
   for(size_t i=0; i<4; ++i){
     int16_t value = getParameterValue(PARAMETER_AA+i);
-    setLed(i+1, value >= 4000 ? RED_COLOUR : value);
+    setLed(i+1, value >= ACDC_CLIPPING_LEVEL ? RED_COLOUR : value);
     setLed(i+5, getParameterValue(PARAMETER_BA+i));
   }
 }
+
+#ifdef USE_FAST_POW_RESOURCES
+uint32_t fast_log_table_size = 0;
+uint32_t fast_pow_table_size = 0;
+float fast_log_table[16384] __attribute__ ((section (".d2data")));
+uint32_t fast_pow_table[2048] __attribute__ ((section (".d2data")));
+void onResourceUpdate(){
+  Resource* res = storage.getResourceByName(SYSTEM_TABLE_LOG ".bin");
+  if(res && res->isValid()){
+    fast_log_table_size = std::min(res->getDataSize()/sizeof(float), 16384U);
+    storage.readResource(res->getHeader(), fast_log_table, 0, fast_log_table_size*sizeof(float));
+  }else{
+    fast_log_table_size = 0;
+  }
+  res = storage.getResourceByName(SYSTEM_TABLE_POW ".bin");
+  if(res && res->isValid()){
+    fast_pow_table_size = std::min(res->getDataSize()/sizeof(uint32_t), 2048U);
+    storage.readResource(res->getHeader(), fast_pow_table, 0, fast_pow_table_size*sizeof(uint32_t));
+  }else{
+    fast_pow_table_size = 0;
+  }
+  debugMessage("log/pow", fast_log_table_size, fast_pow_table_size);
+}
+#else
+#include "FastLogTable.h"
+#include "FastPowTable.h"
+#endif

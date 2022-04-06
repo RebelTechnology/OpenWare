@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "device.h"
 #include "Owl.h"
+#include "usb_device.h"
 
 #include "ads.h"
 #ifdef USE_KX122
@@ -9,10 +10,10 @@
 #endif
 #include "ble_midi.h"
 
-void setup(){
+void onSetup(){
   ble_init();
   setLed(1, NO_COLOUR);
-  owl.setup();
+  MX_USB_DEVICE_Init();
 }
 
 void initLed(){

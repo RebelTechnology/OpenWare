@@ -113,8 +113,6 @@ void Error_Handler(void);
 #define EXP1_RING_GPIO_Port GPIOA
 #define EXP1_TIP_Pin GPIO_PIN_3
 #define EXP1_TIP_GPIO_Port GPIOA
-#define FLASH_nCS_Pin GPIO_PIN_5
-#define FLASH_nCS_GPIO_Port GPIOC
 #define I2C_SCK_Pin GPIO_PIN_10
 #define I2C_SCK_GPIO_Port GPIOB
 #define I2C_SDA_Pin GPIO_PIN_11

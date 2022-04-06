@@ -10,11 +10,8 @@
 #include "cmsis_os.h"
 #endif
 
-#ifdef USE_SPI_FLASH
-#include "Flash_S25FL.h"
-
-extern char _FLASH_STORAGE_BEGIN;
-extern char _FLASH_STORAGE_END;
+#ifdef USE_NOR_FLASH
+#include "flash.h"
 
 struct NorHeader : ResourceHeader {
   uint32_t address;
@@ -40,22 +37,19 @@ void* findFirstFreeBlock(void* begin, void* end, uint32_t align){
   return NULL;
 }
 
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
 uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
   uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
   uint32_t address = end-align; // start at the end
   uint16_t progress = 0;
   while(address > start){
     setProgress(progress, "Index");
-    Flash_read(address, (uint8_t*)quad, sizeof(quad));
+    flash_read(address, (uint8_t*)quad, sizeof(quad));
     if(RESOURCE_FREE_MAGIC != (quad[0] & quad[1] & quad[2] & quad[3]))
       break;
     address -= sizeof(quad);
     progress = (end-address)*4095LL/(end-start);
-#ifndef USE_BOOTLOADER_MODE
-    if(progress % 128 == 0)
-      vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
-#endif
+    device_watchdog();
   }
   if(address > start)
     return (address+sizeof(quad) + (align-1)) & ~(align-1) ;
@@ -64,10 +58,14 @@ uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
 #endif
   
 void Storage::init(){
-#ifdef USE_SPI_FLASH
-  extern SPI_HandleTypeDef SPI_FLASH_HSPI;
-  Flash_S25FL_init(&SPI_FLASH_HSPI);
-  memset(nor_index, 0, sizeof(nor_index));
+#if defined USE_SPI_FLASH
+  extern SPI_HandleTypeDef SPI_FLASH_HANDLE;
+  if(flash_init(&SPI_FLASH_HANDLE))
+    error(FLASH_ERROR, "Init failed");     
+#elif defined USE_QSPI_FLASH
+  extern QSPI_HandleTypeDef QSPI_FLASH_HANDLE;
+  if(flash_init(&QSPI_FLASH_HANDLE))
+    error(FLASH_ERROR, "Init failed");     
 #endif
   index();
 }
@@ -85,19 +83,22 @@ void Storage::index(){
     resources[i].setHeader(next);
     setProgress(progress += 4095/MAX_RESOURCE_HEADERS, "Indexing");
   }
-  if(!resources[i].isFree()){
-    error(FLASH_ERROR, "Invalid flash resource");
+  if(resources[i].isFree()){
+    i++;
+  }else{
+    error(FLASH_ERROR, "Invalid resource");
     // set resource to point to first free block, or NULL
     void* p = findFirstFreeBlock(resources[i].getHeader(), (void*)INTERNAL_STORAGE_END, 32);
-    resources[i].setHeader((ResourceHeader*)p);
+    resources[i++].setHeader((ResourceHeader*)p);
   }
 #endif
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   uint32_t address = 0;
   NorHeader* header = &nor_index[0];
+  memset(nor_index, 0, sizeof(nor_index));
   header->address = address;
-  resources[++i].setHeader(header);
-  Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+  resources[i].setHeader(header);
+  flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
   while(i<MAX_RESOURCE_HEADERS && resources[i].isUsed() &&
 	address < EXTERNAL_STORAGE_SIZE &&
 	header < &nor_index[MAX_SPI_FLASH_HEADERS]){
@@ -105,36 +106,43 @@ void Storage::index(){
     if(resources[i].isValid())
       resources[++i].setHeader(++header);
     header->address = address;
-    Flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+    flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
     setProgress(progress += 4095/MAX_RESOURCE_HEADERS, "Indexing");
   }
   if(!resources[i].isFree()){
-    error(FLASH_ERROR, "Invalid SPI resource");
+    error(FLASH_ERROR, "Invalid resource");
     // set resource to point to first free block, or NULL
     address = findFirstFreePage(resources[i].getAddress(), EXTERNAL_STORAGE_SIZE, 256);
-    if(address < EXTERNAL_STORAGE_SIZE)
-      ((NorHeader*)resources[i].getHeader())->address = address;
-    else
+    if(address < EXTERNAL_STORAGE_SIZE){
+      header = (NorHeader*)resources[i].getHeader();
+      header->address = address;
+      flash_read(address, (uint8_t*)header, sizeof(ResourceHeader));
+    }else{
       resources[i].setHeader(NULL);
+    }
   }
 #endif
   setProgress(4095, "Indexing");
   resource_count = i+1;
 }
 
+uint32_t Storage::getChecksum(ResourceHeader* header){
+  Resource resource(header);
+  return getChecksum(&resource);
+}
+
 uint32_t Storage::getChecksum(Resource* resource){
   uint32_t crc = 0;
   if(resource->isMemoryMapped()){
     crc = crc32(resource->getData(), resource->getDataSize(), 0);
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   }else{
     uint8_t data[32]; // read chunk of bytes at a time
     uint32_t address = resource->getAddress() + sizeof(ResourceHeader);
     uint32_t end = address + resource->getDataSize();
-    // uint32_t start = address;
     while(address < end){
       size_t len = std::min(sizeof(data), (size_t)(end-address));
-      Flash_read(address, data, len);
+      flash_read(address, data, len);
       crc = crc32(data, len, crc);
       address += len;
     }
@@ -143,18 +151,22 @@ uint32_t Storage::getChecksum(Resource* resource){
   return crc;
 }
 
-size_t Storage::readResource(Resource* resource, void* data, size_t offset, size_t length){
+size_t Storage::readResource(ResourceHeader* header, void* data, size_t offset, size_t length){
+  Resource resource(header);
   size_t ret = 0;
-  if(resource){
-    if(resource->isMemoryMapped()){
-      size_t len = std::min(resource->getDataSize()-offset, length);
-      memcpy(data, resource->getData()+offset, len);
+  if(header){
+    size_t len = std::min(resource.getDataSize()-offset, length);
+    if(resource.isInMemory()){
+      memmove(data, resource.getData()+offset, len);
+      ret = len;
+    }else if(resource.isMemoryMapped()){
+      memcpy(data, resource.getData()+offset, len);
       ret = len;
     }else{
-#ifdef USE_SPI_FLASH
-      uint32_t address = resource->getAddress();
-      size_t len = std::min(resource->getDataSize()-offset, length);
-      Flash_read(address+sizeof(ResourceHeader)+offset, (uint8_t*)data, len);
+#ifdef USE_NOR_FLASH
+      uint32_t address = resource.getAddress();
+      memset(data, 0, len);
+      flash_read(address+sizeof(ResourceHeader)+offset, (uint8_t*)data, len);
       ret = len;
 #endif
     }
@@ -176,6 +188,11 @@ bool Storage::eraseResource(const char* name){
   return false;
 }
 
+bool Storage::eraseResource(ResourceHeader* header){
+  Resource resource(header);
+  return eraseResource(&resource);
+}
+
 // mark as deleted
 bool Storage::eraseResource(Resource* resource){
   bool status = false;  
@@ -194,10 +211,10 @@ bool Storage::eraseResource(Resource* resource){
     eeprom_lock();
 #endif
   }else{
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
     uint32_t address = resource->getAddress();
     resource->getHeader()->magic = RESOURCE_ERASED_MAGIC;
-    Flash_write(address, (uint8_t*)resource->getHeader(), 4); // write new magic
+    flash_write(address, (uint8_t*)resource->getHeader(), 4); // write new magic
 #endif
   }
   return status;
@@ -250,15 +267,16 @@ void Storage::erase(uint32_t flags){
     eeprom_lock();
   }
 #endif
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   if(flags & RESOURCE_PORT_MAPPED){
-    const size_t blocksize = (64*1024);
+    constexpr size_t blocksize = 64*1024;
     uint32_t endaddress = findFirstFreePage(0, EXTERNAL_STORAGE_SIZE, blocksize);
     for(uint32_t address=0; address < endaddress; address += blocksize){
       setProgress(address*4095LL/endaddress, "Erasing");
-      Flash_erase(address, ERASE_64KB); // 450 to 1150 mS each
+      flash_erase(address, blocksize); // 450 to 1150 mS each
+      device_watchdog();
 #ifndef USE_BOOTLOADER_MODE
-      vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
+      vTaskDelay(2);
 #endif
     }
     setProgress(4095, "Erasing");
@@ -275,7 +293,7 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
   for(uint8_t i=0; i<resource_count; ++i){
     if(resources[i].isValid() && resources[i].flagsContain(flags)){
       if(offset+resources[i].getTotalSize() < size){
-	readResource(&resources[i], ptr+offset,  0, resources[i].getTotalSize());
+	readResource(resources[i].getHeader(), ptr+offset,  0, resources[i].getTotalSize());
 	offset += resources[i].getTotalSize();
       }
     }
@@ -288,26 +306,28 @@ void Storage::defrag(void* buffer, size_t size, uint32_t flags){
     eeprom_lock();
 #endif
   }else{
-#ifdef USE_SPI_FLASH
-    Flash_write(0, (uint8_t*)buffer, offset);
+#ifdef USE_NOR_FLASH
+    flash_write(0, (uint8_t*)buffer, offset);
 #endif
   }
   index();
 }
 
-size_t Storage::writeResourceHeader(uint8_t* dest, const char* name, size_t datasize, uint32_t flags){
+size_t Storage::writeResourceHeader(void* dest, const char* name, size_t datasize, uint32_t crc, uint32_t flags){
   ResourceHeader header;
   header.magic = RESOURCE_VALID_MAGIC;
   header.size = datasize;
-  strncpy(header.name, name, sizeof(header.name));
+  strlcpy(header.name, name, sizeof(header.name));
+  header.checksum = crc;
   header.flags = flags;
   memcpy(dest, &header, sizeof(header));
   return sizeof(header);
 }
 
-// data length must already include space for ResourceHeader
+// data must already include space for ResourceHeader
 size_t Storage::writeResource(const char* name, uint8_t* data, size_t datasize, uint32_t flags){
-  writeResourceHeader(data, name, datasize, flags);  
+  uint32_t crc = crc32(data+sizeof(ResourceHeader), datasize, 0);
+  writeResourceHeader(data, name, datasize, crc, flags);  
   return writeResource((ResourceHeader*)data);
 }
 
@@ -320,7 +340,11 @@ size_t Storage::writeResource(const char* name, uint8_t* data, size_t datasize, 
  * 5. rebuild index
  */
 size_t Storage::writeResource(ResourceHeader* header){
-#ifndef USE_SPI_FLASH
+  if(header->flags & RESOURCE_IN_MEMORY){
+    header->flags &= ~(RESOURCE_IN_MEMORY);
+    header->flags |= FLASH_DEFAULT_FLAGS;
+  }
+#ifndef USE_NOR_FLASH
   header->flags |= RESOURCE_MEMORY_MAPPED; // save everything mem mapped
 #endif
   size_t length = header->size+sizeof(ResourceHeader);
@@ -334,15 +358,10 @@ size_t Storage::writeResource(ResourceHeader* header){
     old = getResourceByName(header->name);
   }      
   if(old){
-    // compare CRC
-    uint32_t crc = crc32(data+sizeof(ResourceHeader), header->size, 0);
-    if(old->getDataSize() == header->size){
-      if(crc == getChecksum(old))
-	debugMessage("Resource checksum match");
-      if(verifyData(old, data, length)){
-	debugMessage("Resource identical");
-	return 0;
-      }
+    if(old->getDataSize() == header->size &&
+       header->checksum == old->getChecksum()){
+      debugMessage("Resource identical");
+      return 0;
     }
     eraseResource(old); // mark as deleted if it exists but is non-identical
   }
@@ -362,7 +381,9 @@ size_t Storage::writeResource(ResourceHeader* header){
     error(FLASH_ERROR, "No free resources");
     return 0;
   }
-
+#ifndef USE_BOOTLOADER_MODE
+  taskENTER_CRITICAL();
+#endif
   int status = -1;
   if(dest->isMemoryMapped()){
 #ifdef USE_FLASH
@@ -372,19 +393,24 @@ size_t Storage::writeResource(ResourceHeader* header){
     eeprom_lock();
 #endif
   }else{
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
     uint32_t address = dest->getAddress();
-    Flash_write(address, data, length);
-    Flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)); // read back resource header
-    status = 0;
+    status = flash_write(address, data, length);
+    // if(status == 0)
+      // status = flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)); // read back resource header
+    if(status == 0 && flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)) != 0)
+      error(FLASH_ERROR, "Readback failed");
 #endif
   }
+#ifndef USE_BOOTLOADER_MODE
+  taskEXIT_CRITICAL();
+#endif
   if(status){
-    error(FLASH_ERROR, "Flash write failed");
+    error(FLASH_ERROR, "Write failed");
   }else if(dest->getTotalSize() < length){ // allow for storage-specific alignment
-    error(FLASH_ERROR, "Size verification failed");
+    error(FLASH_ERROR, "Size mismatch");
   }else if(!verifyData(dest, data, length)){
-    error(FLASH_ERROR, "Data verification failed");
+    error(FLASH_ERROR, "Data mismatch");
   }
   index(); // rebuild index
   return length;
@@ -393,18 +419,18 @@ size_t Storage::writeResource(ResourceHeader* header){
 bool Storage::verifyData(Resource* resource, void* data, size_t length){
   if(resource->isMemoryMapped()){
     return memcmp(data, resource->getHeader(), length) == 0;
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   }else{
     uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)
     uint32_t address = resource->getAddress();
     size_t blocks = length/sizeof(quad);
-    uint32_t* src = (uint32_t*)data;
+    uint8_t* src = (uint8_t*)data;
     while(blocks--){
-      Flash_read(address, (uint8_t*)quad, sizeof(quad));
-      if(quad[0] != *src++ || quad[1] != *src++ ||
-	 quad[2] != *src++ || quad[3] != *src++)
+      flash_read(address, (uint8_t*)quad, sizeof(quad));
+      if(memcmp(src, quad, sizeof(quad)) != 0)
 	return false;
       address += sizeof(quad);
+      src += sizeof(quad);
     }
     return true;
 #endif
@@ -421,7 +447,7 @@ size_t Storage::getFreeSize(uint32_t flags){
       total += INTERNAL_STORAGE_END - (uint32_t)resource->getHeader();
   }
 #endif
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   if(flags & RESOURCE_PORT_MAPPED){
     Resource* resource = getFreeResource(RESOURCE_PORT_MAPPED);
     if(resource)
@@ -437,7 +463,7 @@ size_t Storage::getTotalCapacity(uint32_t flags){
   if(flags & RESOURCE_MEMORY_MAPPED)
     total += INTERNAL_STORAGE_SIZE;
 #endif
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   if(flags & RESOURCE_PORT_MAPPED)
     total += EXTERNAL_STORAGE_SIZE;
 #endif

@@ -2,8 +2,8 @@
 ENTRY(Reset_Handler)
 
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size  = 0x000; /* required amount of heap  */
-_Min_Stack_Size = 0x600; /* required amount of stack */
+_Min_Heap_Size  = 0x200; /* required amount of heap  */
+_Min_Stack_Size = 0x200; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
@@ -12,11 +12,6 @@ RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K    /* total RAM is 128kb */
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K    /* Closely Coupled Memory */
 EXTRAM (rwx)     : ORIGIN = 0x68000000, LENGTH = 1M
-/* configured for no bootloader */
-/* FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 384K   /\* Sector 0-5 *\/ */
-/* configured for new OwlBoot bootloader */
-/* FLASH (rx)       : ORIGIN = 0x08010000, LENGTH = 320K   /\* Sector 4-7 *\/ */
-/* configured for classic OWL bootloader */
 BOOTLOADER (r)   : ORIGIN = 0x08000000, LENGTH = 32K    /* Sector 0-1 */
 FLASH (rx)       : ORIGIN = 0x08008000, LENGTH = 352K   /* Sector 2-6 */
 STORAGE (rw)     : ORIGIN = 0x08060000, LENGTH = 640K   /* Sector 7-11 */

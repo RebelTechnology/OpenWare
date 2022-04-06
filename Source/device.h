@@ -2,22 +2,41 @@
 #define __DEVICE_H__
 
 #include "hardware.h"
+#include "support.h"
 
-#define FIRMWARE_VERSION "v22.2.0"
+#define FIRMWARE_VERSION "v22.4.0"
 
 #ifdef USE_SPI_FLASH
-#define MAX_SPI_FLASH_HEADERS        32
-#define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
-#ifndef SPI_FLASH_HSPI
-#define SPI_FLASH_HSPI               hspi1
+#define USE_NOR_FLASH
+#ifndef SPI_FLASH_HANDLE
+#ifdef STM32H7xx
+#define SPI_FLASH_HANDLE             hspi5
+#else
+#define SPI_FLASH_HANDLE             hspi1
 #endif
-#define EXTERNAL_STORAGE_SIZE        (8*1024*1024)
+#endif
+#endif
+
+#ifdef USE_QSPI_FLASH
+#define USE_NOR_FLASH
+#define QSPI_FLASH_HANDLE            hqspi
+#endif
+
+#ifdef USE_NOR_FLASH
+#define MAX_SPI_FLASH_HEADERS        48
+#define FLASH_DEFAULT_FLAGS          RESOURCE_PORT_MAPPED
+#define EXTERNAL_STORAGE_SIZE        (8*1024*1024) // 8M / 64Mbit
 #else
 #define MAX_SPI_FLASH_HEADERS        0
 #define FLASH_DEFAULT_FLAGS          RESOURCE_MEMORY_MAPPED
 #endif
+
+#ifdef NO_INTERNAL_FLASH
+#define MAX_RESOURCE_HEADERS         MAX_SPI_FLASH_HEADERS
+#else
 #define USE_FLASH
-#define MAX_RESOURCE_HEADERS         (16+MAX_SPI_FLASH_HEADERS)
+#define MAX_RESOURCE_HEADERS         (8+MAX_SPI_FLASH_HEADERS)
+#endif
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -37,7 +56,6 @@
 #define DIGITAL_BUS_ENABLED          0
 #define DIGITAL_BUS_FORWARD_MIDI     0
 #endif
-#define USE_USBD_MIDI
 #define USE_MIDI_TX_BUFFER
 #define USE_MIDI_CALLBACK
 #define MIDI_OUTPUT_BUFFER_SIZE      1024
@@ -52,8 +70,9 @@
 #ifndef OWLBOOT_MAGIC_NUMBER
 #define OWLBOOT_MAGIC_NUMBER        0xDADAB007
 #endif
+#define OWLBOOT_DFU_NUMBER          0xDADADEAF
 #define OWLBOOT_LOOP_NUMBER         0xDADADEAD
-#define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
+#define OWLBOOT_MAGIC_ADDRESS       ((volatile uint32_t*)0x2000FFF0)
 
 #ifndef STORAGE_MAX_BLOCKS
 #define STORAGE_MAX_BLOCKS           64
@@ -96,7 +115,7 @@
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           FIRMWARE_VERSION
 
-#ifndef DEBUG
+#ifndef OWL_XIBECA
 #define USE_FFT_TABLES
 #endif
 #define USE_FAST_POW
@@ -109,9 +128,6 @@
 #ifndef MAX_NUMBER_OF_RESOURCES
 #define MAX_NUMBER_OF_RESOURCES      12
 #endif
-
-#define CODEC_BLOCKSIZE              64
-#define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
 
 /* +0db in and out */
 #ifndef AUDIO_INPUT_OFFSET
@@ -137,7 +153,15 @@
 #ifndef AUDIO_SAMPLINGRATE
 #define AUDIO_SAMPLINGRATE           48000
 #endif
-#define AUDIO_BLOCK_SIZE             CODEC_BLOCKSIZE   /* size in samples of a single channel audio block */
+
+#ifndef AUDIO_BLOCK_SIZE
+#define AUDIO_BLOCK_SIZE             32 /* default size in samples of a single channel audio block */
+#endif
+#ifndef CODEC_BLOCKSIZE
+#define CODEC_BLOCKSIZE              512 /* maximum audio blocksize */
+#endif
+#define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
+
 
 #define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
 #define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE
@@ -164,9 +188,10 @@
 #define LEDS_BRIGHTNESS              20 /* default value - 0 = off, 63 = supernova */
 #endif
 
-#define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
-#define MANAGER_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
-#define SCREEN_TASK_STACK_SIZE       (2*1024/sizeof(portSTACK_TYPE))
+#define PROGRAM_TASK_STACK_SIZE      (8*1024/sizeof(portSTACK_TYPE))
+#define MANAGER_TASK_STACK_SIZE      (2*1024/sizeof(portSTACK_TYPE))
+#define SCREEN_TASK_STACK_SIZE       (4*1024/sizeof(portSTACK_TYPE))
+#define UTILITY_TASK_STACK_SIZE      (1*1024/sizeof(portSTACK_TYPE))
 
 #ifndef ARM_CYCLES_PER_SAMPLE
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
@@ -189,34 +214,42 @@
 #define DMA_RAM
 #endif
 
-#if defined USE_USBD_FS
-#define USB_OTG_BASE_ADDRESS  USB_OTG_FS   
-#elif defined USE_USBD_HS
-#define USB_OTG_BASE_ADDRESS  USB_OTG_HS   
+#ifndef DAC_HANDLE
+#define DAC_HANDLE                   hdac
 #endif
 
-#define USB_DIEPCTL(ep_addr) ((USB_OTG_INEndpointTypeDef *)((uint32_t)USB_OTG_BASE_ADDRESS + USB_OTG_IN_ENDPOINT_BASE \
-	    + (ep_addr&0x7FU)*USB_OTG_EP_REG_SIZE))->DIEPCTL
-#define USB_DOEPCTL(ep_addr) ((USB_OTG_OUTEndpointTypeDef *)((uint32_t)USB_OTG_BASE_ADDRESS + \
-	     USB_OTG_OUT_ENDPOINT_BASE + (ep_addr)*USB_OTG_EP_REG_SIZE))->DOEPCTL
+#if defined USE_USBD_FS
+#define USE_USB_DEVICE
+#define USE_USBD_MIDI
+#define USBD_DESC FS_Desc
+#define USBD_HSFS DEVICE_FS
+#define USBD_HANDLE hUsbDeviceFS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_FS
+#define USB_OTG_BASE_ADDRESS  USB_OTG_FS
+#elif defined USE_USBD_HS
+#define USE_USB_DEVICE
+#define USE_USBD_MIDI
+#define USBD_DESC HS_Desc
+#define USBD_HSFS DEVICE_HS
+#define USBD_HANDLE hUsbDeviceHS
+#define USBD_PCD_HANDLE hpcd_USB_OTG_HS
+#define USB_OTG_BASE_ADDRESS  USB_OTG_HS
+#endif
 
-#define USB_CLEAR_INCOMPLETE_IN_EP(ep_addr)     if((((ep_addr) & 0x80U) == 0x80U)){ \
-    USB_DIEPCTL(ep_addr) |= (USB_OTG_DIEPCTL_EPDIS | USB_OTG_DIEPCTL_SNAK); \
-  };
-
-#define USB_DISABLE_EP_BEFORE_CLOSE(ep_addr)			\
-  if((((ep_addr) & 0x80U) == 0x80U))				\
-    {								\
-      if (USB_DIEPCTL(ep_addr)&USB_OTG_DIEPCTL_EPENA_Msk)	\
-	{							\
-	  USB_DIEPCTL(ep_addr)|= USB_OTG_DIEPCTL_EPDIS;		\
-	}							\
-    } ;
-
-#define IS_ISO_IN_INCOMPLETE_EP(ep_addr,current_sof, transmit_soffn) ((USB_DIEPCTL(ep_addr)&USB_OTG_DIEPCTL_EPENA_Msk)&& \
-								      (((current_sof&0x01) == ((USB_DIEPCTL(ep_addr)&USB_OTG_DIEPCTL_EONUM_DPID_Msk)>>USB_OTG_DIEPCTL_EONUM_DPID_Pos)) \
-								       ||(current_sof== ((transmit_soffn+2)&0x7FF))))
-
-#define USB_SOF_NUMBER() ((((USB_OTG_DeviceTypeDef *)((uint32_t )USB_OTG_BASE_ADDRESS + USB_OTG_DEVICE_BASE))->DSTS&USB_OTG_DSTS_FNSOF)>>USB_OTG_DSTS_FNSOF_Pos)
+#if defined USE_USBH_HS
+#define USE_USB_HOST
+#define USE_USBH_MIDI
+#define USB_HOST_RX_BUFF_SIZE       256
+#define USBH_HANDLE                 hUsbHostHS
+#define USBH_HCD_HANDLE             hhcd_USB_OTG_HS
+#define USBH_HSFS                   HOST_HS
+#elif defined USE_USBH_FS
+#define USE_USB_HOST
+#define USE_USBH_MIDI
+#define USB_HOST_RX_BUFF_SIZE       256
+#define USBH_HANDLE                 hUsbHostFS
+#define USBH_HCD_HANDLE             hhcd_USB_OTG_FS
+#define USBH_HSFS                   HOST_FS
+#endif
 
 #endif /* __DEVICE_H__ */

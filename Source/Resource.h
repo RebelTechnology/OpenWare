@@ -11,6 +11,7 @@
 #define RESOURCE_USER_PATCH      0x0200 // User patch
 #define RESOURCE_MEMORY_MAPPED   0x0400 // Internal MCU flash memory
 #define RESOURCE_PORT_MAPPED     0x0800 // External NOR flash
+#define RESOURCE_IN_MEMORY       0x1000 // In memory resource
 
 #define RESOURCE_VALID_MAGIC     0xDADADEED
 #define RESOURCE_ERASED_MAGIC    0xDADA0000
@@ -28,6 +29,9 @@ private:
 public:
   Resource() : header(NULL){}
   Resource(ResourceHeader* header) : header(header){}
+  bool exists(){
+    return header && isValidSize();
+  }
   bool isFree(){
     return header && header->magic == RESOURCE_FREE_MAGIC;
   }
@@ -51,11 +55,13 @@ public:
    * @return false if the resource is null, free, or corrupt.
    */
   bool isValidSize(){
-    if(isMemoryMapped()){
+    if(isInMemory()){
+      return getTotalSize() >  sizeof(ResourceHeader);
+    }else if(isMemoryMapped()){
       return uint32_t(header) + getTotalSize() < INTERNAL_STORAGE_END;
-#ifdef USE_SPI_FLASH
-    }else{
-      return getAddress() < EXTERNAL_STORAGE_SIZE;
+#ifdef USE_NOR_FLASH
+    }else if(!isFree()){
+      return getAddress() + getTotalSize() < EXTERNAL_STORAGE_SIZE;
 #endif
     }
     return false;
@@ -65,6 +71,9 @@ public:
   }
   bool isSystemResource(){
     return isValid() && (header->flags & RESOURCE_SYSTEM_RESOURCE);
+  }
+  bool isInMemory(){
+    return !isFree() && header->flags & RESOURCE_IN_MEMORY;
   }
   bool isMemoryMapped(){
     if(isFree()) // we can't look at the flags because they will be all ones 
@@ -99,7 +108,7 @@ public:
   uint8_t* getData(){
     return ((uint8_t*)header)+sizeof(ResourceHeader);
   }
-#ifdef USE_SPI_FLASH
+#ifdef USE_NOR_FLASH
   /**
    * Get address of port-mapped resource. 
    * Assumes header is immediately followed by a 32-bit address value.
@@ -125,6 +134,9 @@ public:
   }
   const char* getName(){
     return header->name;
+  }
+  uint32_t getChecksum(){
+    return header->checksum;
   }
   void setName(const char* name){
     strncpy(header->name, name, sizeof(header->name));

@@ -10,6 +10,7 @@ protected:
   char title[11];
   int16_t parameters[NOF_PARAMETERS];
   char names[NOF_PARAMETERS][12];
+  uint64_t outputs;
 public:
   virtual void reset(){
     for(size_t i=0; i<NOF_PARAMETERS; ++i){
@@ -20,6 +21,7 @@ public:
       names[i][c] = '\0';
       parameters[i] = 0;
     }
+    outputs = 0;
   }
   virtual void draw(ScreenBuffer& screen) = 0;
   /* Update parameters with encoders */
@@ -34,12 +36,21 @@ public:
       return names[pid];
     return "";
   }
-  // bool isInput(uint8_t pid)
-  // bool isBipolar(uint8_t pid)
+  bool isInput(uint8_t pid){
+    return pid < NOF_PARAMETERS && !(outputs & (1<<pid));
+  }
+  bool isOutput(uint8_t pid){
+    return pid < NOF_PARAMETERS && outputs & (1<<pid);
+  }
   virtual void setName(uint8_t pid, const char* name){
-    // todo : set direction (input/output), type (parameter/button)
-    if(pid < NOF_PARAMETERS)
+    // todo : take flags, set type (parameter/button), set polarity (unipolar/bipolar)
+    if(pid < NOF_PARAMETERS){
+      if(name[strlen(name)-1] == '>')
+        outputs |= 1<<pid;
+      else
+        outputs &= ~(1<<pid);
       strncpy(names[pid], name, 11);
+    }
   }
   int16_t getValue(uint8_t pid){
     return parameters[pid];

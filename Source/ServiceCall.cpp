@@ -6,15 +6,20 @@
 #include "OpenWareMidiControl.h"
 #include "Storage.h"
 #include "Owl.h"
-
 #include "cmsis_os.h"
-
 #ifdef USE_FFT_TABLES
 #include "arm_const_structs.h"
 #endif /* USE_FFT_TABLES */
 #ifdef USE_FAST_POW
+#ifdef USE_FAST_POW_RESOURCES
+extern uint32_t fast_log_table_size;
+extern uint32_t fast_pow_table_size;
+extern float* fast_log_table;
+extern float* fast_pow_table;
+#else
 #include "FastLogTable.h"
 #include "FastPowTable.h"
+#endif
 #endif /* USE_FAST_POW */
 #ifdef USE_SCREEN
 #include "Graphics.h"
@@ -72,6 +77,7 @@ static int handleVersion(void** params, int len){
   }
   return ret;
 }
+
 #ifdef USE_FFT_TABLES
 static int handleRFFT(void** params, int len){
   int ret = OWL_SERVICE_INVALID_ARGS;
@@ -151,7 +157,7 @@ static int handleLoadResource(void** params, int len){
       }else{
 	uint32_t copy_size = min(*max_size, res->getDataSize() - offset);
         // Buffer pointer is given. We'll copy no more than max_size data into it.
-	storage.readResource(res, *buffer, offset, copy_size);
+	storage.readResource(res->getHeader(), *buffer, offset, copy_size);
 	*max_size = copy_size; // update max_size parameter with amount of data actually copied
       }
       ret = OWL_SERVICE_OK;
@@ -165,26 +171,23 @@ static int handleGetArray(void** params, int len){
   // get array and array size
   // expects three parameters: name, &array and &size
 #ifdef USE_FAST_POW
-  int index = 0;
-  ret = OWL_SERVICE_OK;
-  if(len >= index+3){
-    char* p = (char*)params[index++];
-    void** array = (void**)params[index++];
-    int* size = (int*)params[index++];
-    if(strncmp(SYSTEM_TABLE_LOG, p, 3) == 0){
+  if(len >= 3){
+    char* p = (char*)params[0];
+    void** array = (void**)params[1];
+    int* size = (int*)params[2];
+    if(strncmp(SYSTEM_TABLE_LOG, p, 3) == 0 && fast_log_table_size != 0){
       *array = (void*)fast_log_table;
       *size = fast_log_table_size;
-    }else if(strncmp(SYSTEM_TABLE_POW, p, 3) == 0){
+      ret = OWL_SERVICE_OK;
+    }else if(strncmp(SYSTEM_TABLE_POW, p, 3) == 0 && fast_pow_table_size != 0){
       *array = (void*)fast_pow_table;
       *size = fast_pow_table_size;
+      ret = OWL_SERVICE_OK;
     }else{
       *array = NULL;
       *size = 0;
-      ret = OWL_SERVICE_INVALID_ARGS;
     }
   }
-#else
-  ret = OWL_SERVICE_INVALID_ARGS;    
 #endif /* USE_FAST_POW */
   return ret;
 }

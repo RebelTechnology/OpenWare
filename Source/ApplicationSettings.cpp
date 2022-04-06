@@ -56,7 +56,7 @@ bool ApplicationSettings::settingsInFlash(){
 void ApplicationSettings::loadFromFlash(){
   Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
   if(resource)
-    storage.readResource(resource, this, 0, sizeof(*this));
+    storage.readResource(resource->getHeader(), this, 0, sizeof(*this));
 }
 
 void ApplicationSettings::saveToFlash(){

@@ -21,6 +21,7 @@ enum PinSpeed {
 };
 
 typedef uint16_t pin_t;
+#define GPIO_OUTPUT_TYPE      (0x00000010U)
 
 class Pin {
 private:
@@ -75,10 +76,16 @@ public:
     port->AFR[pin >> 3U] = tmp;
   }
   void pushPullMode(){
-    port->OTYPER |= 1<<pin;
+    uint32_t tmp = port->OTYPER;
+    tmp &= ~(GPIO_OTYPER_OT0 << pin) ;
+    tmp |= (((GPIO_MODE_OUTPUT_PP & GPIO_OUTPUT_TYPE) >> 4U) << pin);
+    port->OTYPER = tmp;
   }
   void openDrainMode(){
-    port->OTYPER |= 1<<pin;
+    uint32_t tmp = port->OTYPER;
+    tmp &= ~(GPIO_OTYPER_OT0 << pin) ;
+    tmp |= (((GPIO_MODE_OUTPUT_OD & GPIO_OUTPUT_TYPE) >> 4U) << pin);
+    port->OTYPER = tmp;
   }
   void setPull(uint32_t pull){
     uint32_t tmp = port->PUPDR;
@@ -128,7 +135,7 @@ public:
   }
   void pushPullMode(){
     port->OTYPER |= 1<<pin;
-  }
+  } // todo: these two can't be the same
   void openDrainMode(){
     port->OTYPER |= 1<<pin;
   }

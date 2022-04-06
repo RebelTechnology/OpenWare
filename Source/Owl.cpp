@@ -23,13 +23,6 @@
 #include "rainbow.h"
 #endif /* USE_RGB_LED */
 
-#ifdef USE_USB_HOST
-#include "usbh_core.h"
-extern "C"{
-  void MX_USB_HOST_Process(void);
-}
-#endif /* USE_USB_HOST */
-
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif /* USE_DIGITALBUS */
@@ -46,9 +39,6 @@ Codec codec;
 #endif
 #ifdef USE_ADC
 uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM = {};
-#endif
-#ifdef USE_DAC
-extern DAC_HandleTypeDef hdac;
 #endif
 
 int16_t getAnalogValue(uint8_t ch){
@@ -78,7 +68,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
-void Owl::setup(void){
+static void iwdg_setup(){
 #ifdef USE_IWDG
 #ifdef STM32H7xx
   IWDG1->KR = 0xCCCC; // Enable IWDG and turn on LSI
@@ -95,7 +85,11 @@ void Owl::setup(void){
   while(IWDG->SR != 0x00u); // wait to count down
   IWDG->KR = 0xaaaa; // reset the watchdog timer
 #endif
-#endif
+#endif  
+}
+
+void Owl::setup(void){
+  iwdg_setup();
 #ifdef USE_BKPSRAM
   HAL_PWR_EnableBkUpAccess();
 #endif
@@ -115,16 +109,16 @@ void Owl::setup(void){
 #endif /* USE_CODEC */
 
 #ifdef USE_DAC
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
+  extern DAC_HandleTypeDef DAC_HANDLE;
+  HAL_DAC_Start(&DAC_HANDLE, DAC_CHANNEL_1);
+  HAL_DAC_Start(&DAC_HANDLE, DAC_CHANNEL_2);
   setAnalogValue(PARAMETER_F, 0);
   setAnalogValue(PARAMETER_G, 0);
 #endif
 
 #if defined USE_ADC && !defined OWL_WAVETABLE
   extern ADC_HandleTypeDef ADC_PERIPH;
-  HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES);
-  if(ret != HAL_OK)
+  if(HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES) != HAL_OK)
     error(CONFIG_ERROR, "ADC Start failed");
 #endif /* USE_ADC */
 
@@ -189,13 +183,7 @@ void Owl::loop(){
   busstatus = bus_status();
 #endif
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
-#ifdef USE_IWDG
-#ifdef STM32H7xx
-  IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
-#else
-  IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
-#endif
-#endif
+  device_watchdog();
   if(backgroundTask != NULL)
     backgroundTask->loop();
 }
@@ -229,23 +217,7 @@ void jump_to_bootloader(void){
   RCC->CIR = 0x00000000;
 #endif
   *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
-  NVIC_SystemReset();
-  /* Shouldn't get here */
-  while(1);
-}
-
-void device_reset(){
-#ifdef USE_BKPSRAM
-  extern RTC_HandleTypeDef hrtc;
-  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
-#endif
-  /* Disable all interrupts */
-#ifdef STM32H7xx
-  RCC->CIER = 0x00000000;
-#else
-  RCC->CIR = 0x00000000;
-#endif
-  *OWLBOOT_MAGIC_ADDRESS = 0;
+  __DSB(); __ISB(); // memory and instruction barriers
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);

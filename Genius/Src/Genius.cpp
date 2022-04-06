@@ -1,9 +1,12 @@
 #include "Owl.h"
 
 #include "OpenWareMidiControl.h"
-#include "Graphics.h"
 #include "Pin.h"
+#include "errorhandlers.h"
+#ifdef USE_SCREEN
+#include "Graphics.h"
 #include "GeniusParameterController.hpp"
+#endif
 
 extern "C"{
 #if 0
@@ -39,8 +42,10 @@ extern TIM_HandleTypeDef ENCODER_TIM2;
 Pin tr_out_a_pin(GPIOD, GPIO_PIN_4);
 Pin tr_out_b_pin(GPIOD, GPIO_PIN_3);
 
+#ifdef USE_SCREEN
 GeniusParameterController params;
 Graphics graphics DMA_RAM;
+#endif
 
 char* progress_message = NULL;
 uint16_t progress_counter = 0;
@@ -51,6 +56,7 @@ void setProgress(uint16_t value, const char* reason){
 }
 
 void onChangeMode(uint8_t new_mode, uint8_t old_mode){
+#ifdef USE_SCREEN
   switch(new_mode){
   case STARTUP_MODE:
   case STREAM_MODE:
@@ -58,7 +64,7 @@ void onChangeMode(uint8_t new_mode, uint8_t old_mode){
     setDisplayMode(PROGRESS_DISPLAY_MODE);
     break;
   case CONFIGURE_MODE:
-    setDisplayMode(CONFIGURATION_DISPLAY_MODE);
+    setDisplayMode(CONFIG_STATS_DISPLAY_MODE);
     break;
   case RUN_MODE:
     setDisplayMode(STANDARD_DISPLAY_MODE);
@@ -67,6 +73,7 @@ void onChangeMode(uint8_t new_mode, uint8_t old_mode){
     setDisplayMode(ERROR_DISPLAY_MODE);
     break;
   }
+#endif
 }
 
 void onSetup(){
@@ -77,9 +84,12 @@ void onSetup(){
   tr_out_b_pin.high();
   setAnalogValue(PARAMETER_F, 0);
   setAnalogValue(PARAMETER_G, 0);
+#ifdef USE_SCREEN
+  params.reset();
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&params, &OLED_SPI);
+#endif
   progress_counter = 2000;
 #ifdef USE_USB_HOST
   // enable USB Host power
@@ -111,19 +121,19 @@ static uint16_t scaleForDac(int16_t value){
   return value;
 }
 
-void setAnalogValue(uint8_t ch, int16_t value){
-  // if(owl.getOperationMode() == RUN_MODE){
-    extern DAC_HandleTypeDef hdac;
-    switch(ch){
-    case PARAMETER_F:
-      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, scaleForDac(value));
-      break;
-    case PARAMETER_G:
-      HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, scaleForDac(value));
-      break;
-    }
-  // }
-}
+// void setAnalogValue(uint8_t ch, int16_t value){
+//   // if(owl.getOperationMode() == RUN_MODE){
+// extern DAC_HandleTypeDef DAC_HANDLE;
+//     switch(ch){
+//     case PARAMETER_F:
+//       HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_1, DAC_ALIGN_12B_R, scaleForDac(value));
+//       break;
+//     case PARAMETER_G:
+//       HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_2, DAC_ALIGN_12B_R, scaleForDac(value));
+//       break;
+//     }
+//   // }
+// }
 
 void onChangePin(uint16_t pin){
   switch(pin){
@@ -161,26 +171,28 @@ extern "C"{
   void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc){
     error(CONFIG_ERROR, "ADC error");
   }
-  void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-    params.updateValues((int16_t*)smooth_adc_values, adc_len);
-  }
+}
+
+void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
+#ifdef USE_SCREEN
+  params.updateValues((int16_t*)smooth_adc_values, adc_len);
+  extern DAC_HandleTypeDef DAC_HANDLE;
+  int16_t value;
+  int8_t assign = params.getAssignedCV(2);
+  value = assign == NO_ASSIGN ? 0 : params.getValue(assign);
+  HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_1, DAC_ALIGN_12B_R, scaleForDac(value));
+  assign = params.getAssignedCV(3);
+  value = assign == NO_ASSIGN ? 0 : params.getValue(assign);
+  HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_2, DAC_ALIGN_12B_R, scaleForDac(value));
+#endif
 }
 
 void updateEncoders(){
   int16_t encoder_values[2] = {(int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM1),
                                (int16_t)__HAL_TIM_GET_COUNTER(&ENCODER_TIM2)};
+#ifdef USE_SCREEN
   params.updateEncoders(encoder_values, 2);
-  // static int16_t encoder_values[2] = {INT16_MAX/2, INT16_MAX/2};
-  // int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
-  // int16_t delta = value - encoder_values[0];
-  // if(delta)
-  //   graphics.params.encoderChanged(0, delta);
-  // encoder_values[0] = value;
-  // value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
-  // delta = value - encoder_values[1];
-  // if(delta)
-  //   graphics.params.encoderChanged(1, delta);
-  // encoder_values[1] = value;
+#endif
 }
 
 void onLoop(void){
