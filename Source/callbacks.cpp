@@ -161,12 +161,12 @@ __weak void setup(){
 #endif /* USE_ENCODERS */
   owl.setup();
   onSetup();
+#ifdef USE_USB_DEVICE
+  MX_USB_DEVICE_Init();
+#endif
 #ifdef USE_USB_HOST
   /* NOTE: we get frequent boot failures if host is called before device */
   MX_USB_HOST_Init();
-#endif
-#ifdef USE_USB_DEVICE
-  MX_USB_DEVICE_Init();
 #endif
 }
 
