@@ -8,7 +8,6 @@
 Graphics::Graphics() :
   screen(OLED_WIDTH, OLED_HEIGHT),
   drawCallback(defaultDrawCallback) {
-  screen.clear();
 }
 
 void Graphics::begin(ParameterController* pc, SPI_HandleTypeDef *spi) {
