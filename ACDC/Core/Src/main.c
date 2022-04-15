@@ -488,7 +488,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.SlotInit.FirstBitOffset = 0;
   hsai_BlockA1.SlotInit.SlotSize = SAI_SLOTSIZE_32B;
   hsai_BlockA1.SlotInit.SlotNumber = 8;
-  hsai_BlockA1.SlotInit.SlotActive = 0x0000FFFF;
+  hsai_BlockA1.SlotInit.SlotActive = SAI_SLOTACTIVE_0|SAI_SLOTACTIVE_1|SAI_SLOTACTIVE_2|SAI_SLOTACTIVE_3;
   if (HAL_SAI_Init(&hsai_BlockA1) != HAL_OK)
   {
     Error_Handler();
@@ -517,7 +517,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.SlotInit.FirstBitOffset = 0;
   hsai_BlockB1.SlotInit.SlotSize = SAI_SLOTSIZE_32B;
   hsai_BlockB1.SlotInit.SlotNumber = 8;
-  hsai_BlockB1.SlotInit.SlotActive = 0x0000FFFF;
+  hsai_BlockB1.SlotInit.SlotActive = SAI_SLOTACTIVE_0|SAI_SLOTACTIVE_1|SAI_SLOTACTIVE_2|SAI_SLOTACTIVE_3;
   if (HAL_SAI_Init(&hsai_BlockB1) != HAL_OK)
   {
     Error_Handler();
