@@ -33,6 +33,8 @@ Pin bypass_pin(GPIOA, GPIO_PIN_0);
 Pin bufpass_pin(GPIOF, GPIO_PIN_9); // high is bypass
 Pin exp1_tip_pin(GPIOA, GPIO_PIN_2);
 Pin exp1_ring_pin(GPIOA, GPIO_PIN_3);
+Pin exp2_tip_pin(GPIOF, GPIO_PIN_7);
+Pin exp2_ring_pin(GPIOF, GPIO_PIN_8);
 
 #ifndef OWL_PEDAL_PWM_LEDS
 Pin led_green_pin(GPIOB, GPIO_PIN_8);
@@ -245,32 +247,37 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
     switch(expression_mode){
     case EXPRESSION_MODE_EXP_TRS:
       parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_E])>>2;
+      buttons |= (!exp2_tip_pin.get())  << BUTTON_1;
+      buttons |= (!exp2_ring_pin.get()) << BUTTON_2;
       break;
     case EXPRESSION_MODE_EXP_RTS:
       parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[ADC_F])>>2;
+      buttons |= (!exp2_tip_pin.get())  << BUTTON_1;
+      buttons |= (!exp2_ring_pin.get()) << BUTTON_2;
       break;
     case EXPRESSION_MODE_FS_TRS:
-      buttons = (!exp1_ring_pin.get()) << BUTTON_2;
-      buttons |= (!exp1_tip_pin.get()) << BUTTON_1;
-      if(buttons != fs_state){
-	if((buttons & (1 << BUTTON_2)) != (fs_state & (1 << BUTTON_2))){
-	  setButtonValue(BUTTON_2, buttons & (1 << BUTTON_2));
-	}
-	if((buttons & (1 << BUTTON_1)) != (fs_state & (1 << BUTTON_1))){
-	  setButtonValue(BUTTON_1, buttons & (1 << BUTTON_1));
-	  setButtonValue(PUSHBUTTON, buttons & (1 << BUTTON_1));
-	}
-	fs_state = buttons;
-      }
+      buttons |= (!exp1_tip_pin.get())  << BUTTON_1;
+      buttons |= (!exp1_ring_pin.get()) << BUTTON_2;
+      buttons |= (!exp2_tip_pin.get())  << BUTTON_3;
+      buttons |= (!exp2_ring_pin.get()) << BUTTON_4;
       break;
     case EXPRESSION_MODE_FS_TS:
-      buttons = (!exp1_tip_pin.get()) << BUTTON_1;
-      if(buttons != fs_state){
+      buttons |= (!exp1_tip_pin.get())  << BUTTON_1;
+      buttons |= (!exp2_tip_pin.get())  << BUTTON_2;
+      break;
+    }
+    if(buttons != fs_state){
+      if((buttons & (1 << BUTTON_4)) != (fs_state & (1 << BUTTON_4)))
+	setButtonValue(BUTTON_4, buttons & (1 << BUTTON_4));
+      if((buttons & (1 << BUTTON_3)) != (fs_state & (1 << BUTTON_3)))
+	setButtonValue(BUTTON_3, buttons & (1 << BUTTON_3));
+      if((buttons & (1 << BUTTON_2)) != (fs_state & (1 << BUTTON_2)))
+	setButtonValue(BUTTON_2, buttons & (1 << BUTTON_2));
+      if((buttons & (1 << BUTTON_1)) != (fs_state & (1 << BUTTON_1))){
 	setButtonValue(BUTTON_1, buttons & (1 << BUTTON_1));
 	setButtonValue(PUSHBUTTON, buttons & (1 << BUTTON_1));
-	fs_state = buttons;
       }
-      break;
+      fs_state = buttons;
     }
   }
 }
@@ -281,6 +288,10 @@ void onSetup(){
   bypass_pin.low();
   bufpass_pin.outputMode();
   bufpass_pin.low();
+  exp2_tip_pin.inputMode();
+  exp2_tip_pin.setPull(PIN_PULL_UP);
+  exp2_ring_pin.inputMode();
+  exp2_ring_pin.setPull(PIN_PULL_UP);
   configureExpression(settings.expression_mode);
 
   setLed(0, RED_COLOUR);
