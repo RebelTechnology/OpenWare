@@ -184,7 +184,9 @@ void onLoop(void){
   for(size_t i=0; i<4; ++i){
     int16_t value = getParameterValue(PARAMETER_AA+i);
     setLed(i+1, value >= ACDC_CLIPPING_LEVEL ? RED_COLOUR : value);
-    setLed(i+5, getParameterValue(PARAMETER_BA+i));
+    extern float tx_levels[4];
+    setLed(i+5, tx_levels[i]*4096);
+    setParameterValue(PARAMETER_BA+i, tx_levels[i]*4096);
   }
 }
 
@@ -208,7 +210,7 @@ void onResourceUpdate(){
   }else{
     fast_pow_table_size = 0;
   }
-  debugMessage("log/pow", fast_log_table_size, fast_pow_table_size);
+  // debugMessage("log/pow", fast_log_table_size, fast_pow_table_size);
 }
 #else
 #include "FastLogTable.h"
