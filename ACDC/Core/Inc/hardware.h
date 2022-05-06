@@ -26,8 +26,17 @@
 #define NO_INTERNAL_FLASH
 #define USE_DFU_BOOTLOADER
 
-#define AUDIO_INPUT_GAIN            104
-#define AUDIO_OUTPUT_GAIN           114
+// 84 too low, 92 too high
+#define AUDIO_INPUT_GAIN            88 // half decibel steps
+// 106 too low 114 too high
+#define AUDIO_OUTPUT_GAIN           114 // half decibel steps
+
+/* 88 / 114 : 10Vpp in, 5.3/4.99Vpp out */
+/* 88 / 112 : 10Vpp in, 4.7/4.4Vpp out */
+/* 84 / 106 : 10Vpp in, 2.6/2.4Vpp out */
+
+/* -#define AUDIO_INPUT_GAIN            104 */
+/* -#define AUDIO_OUTPUT_GAIN           114 */
 
 #define USE_CODEC
 #define USE_PCM3168A

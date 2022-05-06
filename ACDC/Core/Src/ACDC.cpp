@@ -48,7 +48,10 @@ Pin led_clip4(XIBECA_PIN5);
 // Pin led_out3(XIBECA_PIN23);
 // Pin led_out4(XIBECA_PIN24);
 
-#define ACDC_CLIPPING_LEVEL 4000
+// static constexpr float MINUS4DB = 0.630957f;
+// static constexpr uint16_t ACDC_CLIPPING_LEVEL = (4096*MINUS4DB);
+static constexpr uint16_t ACDC_CLIPPING_LEVEL = 4090;
+
 #define ACDC_LED_OFF 1024
 void setLed(uint8_t led, uint32_t rgb){
   uint32_t pwm = ACDC_LED_OFF - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
