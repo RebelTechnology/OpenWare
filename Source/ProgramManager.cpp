@@ -60,12 +60,18 @@ void usbd_audio_tx_stop_callback(){
 #endif
 }
 
+float tx_levels[AUDIO_CHANNELS];
+static constexpr float LEVELS_SMOOTHING = 0.98;
+#define MULTIPLIER_23B 0x00800000
+#define MULTIPLIER_31B 0x80000000
+
 void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
   usbd_rx = (CircularBuffer<audio_t>*)cb;
   // usbd_rx->reset();
   // usbd_rx->clear();
   // usbd_rx->moveReadHead(usbd_rx->getSize()/2);
   usbd_audio_rx_count = 0;
+  memset(tx_levels, 0, sizeof(tx_levels));
 #ifdef DEBUG
   printf("start rx %u %u %u\n", rate, channels, usbd_rx->getSize());
 #endif
@@ -73,6 +79,7 @@ void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
 
 void usbd_audio_rx_stop_callback(){
   usbd_rx = NULL;
+  memset(tx_levels, 0, sizeof(tx_levels));
 #ifdef DEBUG
   printf("stop rx\n");
 #endif
@@ -95,8 +102,10 @@ void usbd_rx_convert(int32_t* dst, size_t len){
 #if AUDIO_BITS_PER_SAMPLE == 32
     rx->read(dst, len);
 #else
-    while(len--)
-      *dst++ = AUDIO_SAMPLE_TO_INT32(rx->read());
+    while(len--){
+        int32_t sample = AUDIO_SAMPLE_TO_INT32(rx->read());
+        *dst++ = sample;
+    }
 #endif
 #else /* USBD_AUDIO_RX_CHANNELS != AUDIO_CHANNELS */
     len /= AUDIO_CHANNELS;
@@ -206,6 +215,14 @@ void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
   pv->audio_input = rx;
   pv->audio_output = tx;
   pv->audio_blocksize = size;
+
+  constexpr float mul = 1.0f/MULTIPLIER_23B;
+  for(uint16_t i=0; i<size; ++i){
+      float s = *tx++ * mul;
+      int ch = i % AUDIO_CHANNELS;
+      tx_levels[ch] = tx_levels[ch] * LEVELS_SMOOTHING + s * s * (1 - LEVELS_SMOOTHING);
+  }
+
   if(audioTask != NULL){
     BaseType_t yield;
     // wake up audio task
