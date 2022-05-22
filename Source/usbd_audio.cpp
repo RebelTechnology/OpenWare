@@ -1374,7 +1374,7 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
   /* SOF (Start of Frame) Every millisecond the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
   USBD_AUDIO_HandleTypeDef* haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;  
-#if 0 // defined(USE_USBD_RX_FB)
+#if defined(USE_USBD_RX_FB)
   static uint32_t sof_count = 0;
   if(haudio->audio_rx_active){
     if(++sof_count == FB_RATE){
@@ -1387,9 +1387,8 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
       // samples = std::clamp(samples, 0x0c0000UL - 0x2000, 0x0c0000UL + 0x2000);
       // if(samples > 0x0c0000 - 0x2000 && samples < 0x0c0000 + 0x2000) // maximum 1/2 sample difference
       // 	haudio->fb_data.val = samples;
-      haudio->fb_data.val = std::clamp(samples, 0x0c0000UL - 0x1000, 0x0c0000UL + 0x1000);
-      
-      // debugMessage("fb", fb_data.val*1.0f/(1<<14), rx_buffer.getWriteCapacity()*1.0f/rx_buffer.getSize());
+      haudio->fb_data.val = std::clamp(samples, 0x0c0000UL - 0x2000, 0x0c0000UL + 0x2000);
+
       size_t capacity = rx_buffer.getWriteCapacity();
       capacity += codec.getSampleCounter();
       debugMessage("fb", samples*1.0f/(1<<14), capacity*1.0f/rx_buffer.getSize(), codec.getSampleCounter()*1.0f/(codec.getBlockSize()*AUDIO_CHANNELS));
@@ -1505,7 +1504,7 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
       usbd_rx_flow += 100000;
 #endif
     }
-#if defined(USE_USBD_RX_FB)
+#if 0 // defined(USE_USBD_RX_FB)
     // in asynch / adaptive mode, we have no control over the number of samples transferred
     // instead we update the feedback value
     // capacity -= len;
