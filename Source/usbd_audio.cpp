@@ -1508,10 +1508,11 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
 #if defined(USE_USBD_RX_FB)
     // in asynch / adaptive mode, we have no control over the number of samples transferred
     // instead we update the feedback value
-    capacity -= len;
+    // capacity -= len;
 
-    // scale from [0 to buffer size] to [48 +/- 1] in n.14 format
-    size_t samples = scale(capacity, 0, rx_buffer.getSize(), 0x0c0000 - 0x1000, 0x0c0000 + 0x1000);
+    // scale from [0 to buffer size] to [48 +/- 0.5] in n.14 format
+    size_t samples = scale(capacity, 0, rx_buffer.getSize(), 0x0c0000 - 0x2000, 0x0c0000 + 0x2000);
+    samples = (haudio->fb_data.val * 3 + samples) / 4; // exponential smoothing filter
     haudio->fb_data.val = samples;
     debugMessage("fb", samples*1.0f/(1<<14), capacity*1.0f/rx_buffer.getSize());//, codec.getSampleCounter()*1.0f/(codec.getBlockSize()*AUDIO_CHANNELS));
 #endif
