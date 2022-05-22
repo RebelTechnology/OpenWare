@@ -1513,7 +1513,7 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
     // scale from [0 to buffer size] to [48 +/- 0.5] in n.14 format
     size_t samples = scale(capacity, 0, rx_buffer.getSize(), 0x0c0000 - 0x2000, 0x0c0000 + 0x2000);
     samples = (haudio->fb_data.val * 3 + samples) / 4; // exponential smoothing filter
-    haudio->fb_data.val = samples;
+    // haudio->fb_data.val = samples;
     debugMessage("fb", samples*1.0f/(1<<14), capacity*1.0f/rx_buffer.getSize());//, codec.getSampleCounter()*1.0f/(codec.getBlockSize()*AUDIO_CHANNELS));
 #endif
     rx_buffer.write((audio_t*)haudio->audio_rx_transmit, len);
