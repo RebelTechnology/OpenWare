@@ -77,7 +77,9 @@
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     0U
 /*---------- -----------*/
+#ifndef USBD_SELF_POWERED
 #define USBD_SELF_POWERED     0U
+#endif
 /*---------- -----------*/
 
 /****************************************/
