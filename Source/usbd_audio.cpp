@@ -17,8 +17,8 @@
 #include "usbd_conf.h"
 #include "usbd_ctlreq.h"
 
-#ifdef DEBUG_USBD_AUDIO
 #include "message.h"
+#ifdef DEBUG_USBD_AUDIO
 int usbd_tx_flow = 0;
 int usbd_rx_flow = 0;
 int usbd_tx_capacity = 0;
@@ -535,7 +535,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_NOSYNC,  /* bmAttributes */
   LOBYTE(AUDIO_FB_PACKET_SIZE),		   /* wMaxPacketSize */
   HIBYTE(AUDIO_FB_PACKET_SIZE),
-  0x01,                                    /* bInterval : Must be set to 1 */
+  0x01,                                    /* bInterval : Must be set to 1 for compliance */
   FB_REFRESH,                              /* bRefresh SOF_RATE */
   0x00,                                    /* bSynchAddress : Must be reset to zero */
   /* 09 byte*/
@@ -1373,23 +1373,19 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
   /* SOF (Start of Frame) Every millisecond the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
   USBD_AUDIO_HandleTypeDef* haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;  
-#if 0 // defined USE_USBD_RX_FB
+#if defined(USE_USBD_RX_FB)
   static uint32_t sof_count = 0;
   if(haudio->audio_rx_active){
     if(++sof_count == FB_RATE){
       sof_count = 0;
-    // number of samples since last request (or 0 if unknown)
+      // number of samples since last request (or 0 if unknown)
       uint32_t samples = usbd_audio_get_rx_count(); // across channels and fb rate
-      if(samples != 0){
-	// if(abs(samples - USBD_AUDIO_RX_FREQ*FB_RATE*USBD_AUDIO_RX_CHANNELS/1000) < 8){
-	samples *= (1<<14); // convert to n.14 format
-	samples /= USBD_AUDIO_RX_CHANNELS * FB_RATE;
-#ifdef DEBUG_USBD_AUDIO
-	usbd_rx_capacity = samples - 786432;
-#endif
-	// AUDIO_FREQ_TO_DATA(samples, haudio->fb_data.buf); // pack into 3 bytes (todo: make this atomic)
-	// }
-      }
+      samples *= (1<<14); // convert to n.14 format
+      samples /= USBD_AUDIO_RX_CHANNELS * FB_RATE;
+      if(samples > 0x0c0000 - 0x4000 && samples < 0x0c0000 + 0x4000)
+   	haudio->fb_data.val = samples;
+      // debugMessage("fb", fb_data.val*1.0f/(1<<14), rx_buffer.getWriteCapacity()*1.0f/rx_buffer.getSize());
+      debugMessage("fb", samples*1.0f/(1<<14), rx_buffer.getWriteCapacity()*1.0f/rx_buffer.getSize());
     }
     // transmit on every SOF if audio_rx_active
     // USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, AUDIO_FB_PACKET_SIZE);
@@ -1498,7 +1494,7 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
       usbd_rx_flow += 100000;
 #endif
     }
-#ifdef USE_USBD_RX_FB
+#if 0 // defined(USE_USBD_RX_FB)
     // in asynch / adaptive mode, we have no control over the number of samples transferred
     // instead we update the feedback value
     capacity -= len;

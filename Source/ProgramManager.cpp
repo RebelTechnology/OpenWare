@@ -33,13 +33,13 @@
 #ifdef USE_USBD_AUDIO
 CircularBuffer<audio_t>* volatile usbd_rx = NULL;
 CircularBuffer<audio_t>* volatile usbd_tx = NULL;
-static uint32_t usbd_audio_rx_count = 0;
+static int32_t usbd_audio_rx_count = 0;
 
 /* Get number of samples transmitted since previous request */
 uint32_t usbd_audio_get_rx_count(){
-  // return 0;
-  uint32_t pos = usbd_audio_rx_count + codec.getSampleCounter(); // problem: counting from codec block start
-  usbd_audio_rx_count = 0; // problem: next block will increment by a full blocksize
+  uint32_t curr = codec.getSampleCounter();
+  uint32_t pos = usbd_audio_rx_count + curr;
+  usbd_audio_rx_count = -curr; // next block will increment by a full blocksize
   return pos;
 }
 
