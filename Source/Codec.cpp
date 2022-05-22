@@ -155,9 +155,8 @@ void Codec::setHighPass(bool hpf){
  * transferred to/from the codec in this block 
  */
 size_t Codec::getSampleCounter(){
-  // read NDTR: the number of remaining data units in the current DMA Stream transfer.
-  return (CODEC_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&HDMA_TX)) % (codec_blocksize*AUDIO_CHANNELS);
-  // return (DWT->CYCCNT)/ARM_CYCLES_PER_SAMPLE;
+  // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  return codec_blocksize - __HAL_DMA_GET_COUNTER(&HDMA_TX);
 }
 
 #ifdef USE_IIS3DWB
