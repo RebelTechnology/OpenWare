@@ -152,11 +152,13 @@ void Codec::setHighPass(bool hpf){
 }
 
 /** Get the number of individual samples (across channels) that have already been 
- * transferred to/from the codec in this block 
+ * transferred to the codec in this block 
  */
 size_t Codec::getSampleCounter(){
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  return codec_blocksize - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  // return codec_blocksize - std::clamp(__HAL_DMA_GET_COUNTER(&HDMA_TX), 0, codec_blocksize);
+  // return codec_blocksize * AUDIO_CHANNELS - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  return (codec_blocksize * AUDIO_CHANNELS - __HAL_DMA_GET_COUNTER(&HDMA_TX)) % (codec_blocksize * AUDIO_CHANNELS);
 }
 
 #ifdef USE_IIS3DWB
