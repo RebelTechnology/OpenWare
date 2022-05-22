@@ -40,6 +40,8 @@ uint32_t usbd_audio_get_rx_count(){
   uint32_t curr = codec.getSampleCounter();
   uint32_t pos = usbd_audio_rx_count + curr;
   usbd_audio_rx_count = -curr; // next block will increment by a full blocksize
+  // uint32_t pos = usbd_audio_rx_count;
+  // usbd_audio_rx_count = 0;
   return pos;
 }
 
@@ -122,6 +124,9 @@ void usbd_rx_convert(int32_t* dst, size_t len){
 #endif
     }
 #endif
+  }else{
+    // TODO: remove hack to prevent ACDC audio pass-through
+    memset(dst, 0, len*sizeof(int32_t));
   }
 }
 
