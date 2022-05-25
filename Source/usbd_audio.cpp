@@ -1385,8 +1385,10 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
       sof_count = 0;
       // number of samples since last request (or 0 if unknown)
       uint32_t samples = usbd_audio_get_rx_count(); // across channels and fb rate
-      samples *= (1<<14); // convert to n.14 format
-      samples /= AUDIO_CHANNELS * FB_RATE;
+      // write capacity disminuing, usb writing too fast, reporting fb too high: adjust by one block
+      samples -= AUDIO_FB_PACKET_SIZE/(2*sizeof(audio_t));
+      samples *= (1 << (14 - FB_REFRESH) ); // convert to n.14 format
+      samples /= AUDIO_CHANNELS;
 
       if(samples > 0x0c0000 - 0x4000 && samples < 0x0c0000 + 0x4000) // maximum 1 sample difference
 	haudio->fb_data.val = samples;
@@ -1397,6 +1399,7 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
       capacity += codec.getSampleCounter();
       debugMessage("fb", samples*1.0f/(1<<14), capacity*1.0f/rx_buffer.getSize(), codec.getSampleCounter()*1.0f/(codec.getBlockSize()*AUDIO_CHANNELS));
     }
+    
     // transmit on every SOF if audio_rx_active
     // USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, AUDIO_FB_PACKET_SIZE);
     // }else{
