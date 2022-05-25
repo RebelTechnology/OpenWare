@@ -106,7 +106,7 @@ USBD_ClassTypeDef  USBD_AUDIO =
 
 #ifdef USE_USBD_RX_FB
 
-#define FB_REFRESH 4 /* Feedback refresh rate */
+#define FB_REFRESH 5 /* Feedback refresh rate */
 #define FB_RATE (1<<FB_REFRESH)
 
 /**
@@ -1386,11 +1386,11 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
       // number of samples since last request (or 0 if unknown)
       uint32_t samples = usbd_audio_get_rx_count(); // across channels and fb rate
       // write capacity disminuing, usb writing too fast, reporting fb too high: adjust by one block
-      samples -= AUDIO_FB_PACKET_SIZE/(2*sizeof(audio_t));
+      // samples -= AUDIO_FB_PACKET_SIZE/(2*sizeof(audio_t));
       samples *= (1 << (14 - FB_REFRESH) ); // convert to n.14 format
       samples /= AUDIO_CHANNELS;
 
-      if(samples > 0x0c0000 - 0x4000 && samples < 0x0c0000 + 0x4000) // maximum 1 sample difference
+      if(samples > 0x0c0000 - 0x2000 && samples < 0x0c0000 + 0x2000) // maximum 1/2 sample difference
 	haudio->fb_data.val = samples;
 
       // haudio->fb_data.val = std::clamp(samples, 0x0c0000UL - 0x2000, 0x0c0000UL + 0x2000);
