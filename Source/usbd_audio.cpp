@@ -1385,10 +1385,9 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
       sof_count = 0;
       // number of samples since last request (or 0 if unknown)
       uint32_t samples = usbd_audio_get_rx_count(); // across channels and fb rate
-      // write capacity disminuing, usb writing too fast, reporting fb too high: adjust by one block
-      // samples -= AUDIO_FB_PACKET_SIZE/(2*sizeof(audio_t));
       samples *= (1 << (14 - FB_REFRESH) ); // convert to n.14 format
       samples /= AUDIO_CHANNELS;
+      samples -= 96; // 6, 50, 120+, 90
 
       if(samples > 0x0c0000 - 0x2000 && samples < 0x0c0000 + 0x2000) // maximum 1/2 sample difference
 	haudio->fb_data.val = samples;
