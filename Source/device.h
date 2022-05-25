@@ -4,7 +4,7 @@
 #include "hardware.h"
 #include "support.h"
 
-#define FIRMWARE_VERSION "v22.4.d"
+#define FIRMWARE_VERSION "v22.4.e"
 
 #ifdef USE_SPI_FLASH
 #define USE_NOR_FLASH
