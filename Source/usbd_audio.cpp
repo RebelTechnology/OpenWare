@@ -911,6 +911,7 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
 	tx_buffer.reset();
 	tx_buffer.clear();
 	tx_buffer.moveWriteHead(AUDIO_TX_PACKET_SIZE/sizeof(audio_t));
+	// tx_buffer.moveWriteHead(tx_buffer.getSize()/2);
 	usbd_audio_tx_start_callback(USBD_AUDIO_TX_FREQ, USBD_AUDIO_TX_CHANNELS, &tx_buffer);
 	/* send first audio data */
 	memset(haudio->audio_tx_transmit, 0, sizeof(haudio->audio_tx_transmit));
@@ -1388,7 +1389,7 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
       uint32_t samples = usbd_audio_get_rx_count(); // across channels and fb rate
       samples *= (1 << (14 - FB_REFRESH) ); // convert to n.14 format
       samples /= AUDIO_CHANNELS;
-      samples -= 100; // 6, 50, 120+, 90, 96
+      // samples -= 80; // 6, 50, 120+, 90, 96, 100+, 98+, 96+
 
       if(samples > 0x0c0000 - 0x4000 && samples < 0x0c0000 + 0x4000) // maximum 1 sample difference
 	haudio->fb_data.val = samples;
@@ -1484,25 +1485,26 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
   switch(epnum){
 #ifdef USE_USBD_AUDIO_RX
   case AUDIO_RX_EP:{
-    // if(haudio->audio_rx_active == 0){
-    //   // todo: see if we can move this to AUDIO_OUT_Restart and remove the conditional around rx_active
-    //   haudio->audio_rx_active = 1;
-    //   usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
-    //   usbd_rx_flow = 0;
-    //   rx_buffer.reset();
-    //   rx_buffer.clear();
-    //   rx_buffer.moveWriteHead(2*AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
-    //   debugMessage("rx");
-    // }
+#if 1
+    if(haudio->audio_rx_active == 0){
+      // todo: see if we can move this to AUDIO_OUT_Restart and remove the conditional around rx_active
+      haudio->audio_rx_active = 1;
+      usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
+      rx_buffer.reset();
+      rx_buffer.clear();
+      rx_buffer.moveWriteHead(rx_buffer.getSize()/2);
+      // rx_buffer.moveWriteHead(2*AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
+      // debugMessage("rx");
+    }
+#endif
     size_t len = USBD_LL_GetRxDataSize(pdev, AUDIO_RX_EP) / sizeof(audio_t);
     // we are required to support null packets: len may be zero
 
-    size_t capacity = rx_buffer.getWriteCapacity();
-    capacity += codec.getSampleCounter();
-#ifdef DEBUG_USBD_AUDIO
-    usbd_rx_capacity = capacity;
-#endif
-
+//     size_t capacity = rx_buffer.getWriteCapacity();
+//     capacity += codec.getSampleCounter();
+// #ifdef DEBUG_USBD_AUDIO
+//     usbd_rx_capacity = capacity;
+// #endif
 //     if(capacity < len){
 //       // rx buffer overflow
 //       len = capacity;
@@ -1594,6 +1596,7 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
   USBD_LL_Transmit(pdev, AUDIO_FB_EP, haudio->fb_data.buf, AUDIO_FB_PACKET_SIZE);
 #endif
 
+#if 0
   // moved from USBD_AUDIO_DataOut
   haudio->audio_rx_active = 1;
   usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
@@ -1603,8 +1606,10 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
 #endif
   rx_buffer.reset();
   rx_buffer.clear();
-  rx_buffer.moveWriteHead(-AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
-
+  // rx_buffer.moveWriteHead(-AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
+  // rx_buffer.moveWriteHead(rx_buffer.getSize()/2);
+#endif
+  
   /* get_usb_full_speed_rate(haudio->frequency, fb_data); // reset to new frequency */
 
   /* usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer); */
