@@ -47,7 +47,7 @@
 #define CODEC_SPI hspi2
 
 #define CODEC_BLOCKSIZE              256
-#define AUDIO_BLOCK_SIZE             16
+#define AUDIO_BLOCK_SIZE             8
 
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16

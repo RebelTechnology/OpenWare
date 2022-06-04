@@ -53,6 +53,19 @@ uint32_t pcm3168a_dz = 0;
 uint32_t pcm3168a_adc_ovf = 0;
 uint32_t pcm3168a_check = 0;
 
+void codec_highpass(bool hpf){
+  uint8_t value;
+#if AUDIO_CHANNELS == 4
+  value = 0b01000000; // disable ADC channels 5/6
+#else
+  value = 0b00000000;
+#endif
+  if(!hpf)
+    value |= 0b00000111; // disable HPF for all ADC channels
+  /* Register: ADC Control 2 */
+  codec_write(82, value);
+}
+
 void codec_init(){
   clearPin(ADC_RESET_GPIO_Port, ADC_RESET_Pin);
   /* HAL_GPIO_WritePin(ADC_RESET_GPIO_Port, ADC_RESET_Pin, GPIO_PIN_RESET); */

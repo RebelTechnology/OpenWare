@@ -45,6 +45,13 @@ void codec_reset(){
 #endif
 }
 
+void codec_highpass(bool hpf){
+  if(hpf)
+    codec_write(0x06, 0x10); // hp filters enabled, i2s data
+  else
+    codec_write(0x06, 0x10 | 0x03 ); // hp filters disabled
+}
+
 void codec_init(){
   /* 1) When using the CS4271 with internally generated MCLK, hold RST low until
    * the power supply is stable. In this state, the Control Port is reset to its 
