@@ -173,16 +173,17 @@ void initFlash(){
 
 void onSetup(){
   initLed();
+  codec.setHighPass(true);
   for(size_t i=1; i<=8; ++i){
-    setLed(i, GREEN_COLOUR);
-    HAL_Delay(10);
+    setLed(i, 4095);
+    HAL_Delay(40);
   }
+  HAL_Delay(100);
   for(size_t i=1; i<=8; ++i)
     setLed(i, NO_COLOUR);
-  // codec.set((1<<22)-1);
+  codec.setHighPass(false);
   led_in1.outputMode();
   led_in1.afMode();
-  codec.setHighPass(false);
 }
 
 void onLoop(void){  
