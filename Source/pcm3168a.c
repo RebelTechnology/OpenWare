@@ -55,7 +55,9 @@ uint32_t pcm3168a_check = 0;
 
 void codec_highpass(bool hpf){
   uint8_t value;
-#if AUDIO_CHANNELS == 4
+#if AUDIO_CHANNELS == 2
+  value = 0b01100000; // disable ADC channels 3/4 and 5/6
+#elif AUDIO_CHANNELS == 4
   value = 0b01000000; // disable ADC channels 5/6
 #else
   value = 0b00000000;
@@ -123,7 +125,9 @@ void codec_init(){
   /* codec_write(81, 0b00000111); // Slave mode 24-bit left-justified mode TDM format */
 
   uint8_t value;
-#if AUDIO_CHANNELS == 4
+#if AUDIO_CHANNELS == 2
+  value = 0b01100000; // disable ADC channels 3/4 and 5/6
+#elif AUDIO_CHANNELS == 4
   value = 0b01000000; // disable ADC channels 5/6
 #else
   value = 0b00000000;

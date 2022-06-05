@@ -38,10 +38,10 @@ Pin led_in2(XIBECA_PIN14);
 Pin led_in3(XIBECA_PIN19);
 Pin led_in4(XIBECA_PIN20);
 
-Pin led_clip1(XIBECA_PIN10);
-Pin led_clip2(XIBECA_PIN7);
-Pin led_clip3(XIBECA_PIN8);
-Pin led_clip4(XIBECA_PIN5);
+Pin led_clip1(XIBECA_PIN10); // PA0
+Pin led_clip2(XIBECA_PIN7);  // PC13
+Pin led_clip3(XIBECA_PIN8);  // PI11
+Pin led_clip4(XIBECA_PIN5);  // PC9
 
 // Pin led_out1(XIBECA_PIN21);
 // Pin led_out2(XIBECA_PIN22);
@@ -172,16 +172,21 @@ void initFlash(){
 #endif
 
 void onSetup(){
+  // codec.setHighPass(true);
   initLed();
-  codec.setHighPass(true);
-  for(size_t i=1; i<=8; ++i){
-    setLed(i, 4095);
-    HAL_Delay(40);
-  }
-  HAL_Delay(100);
   for(size_t i=1; i<=8; ++i)
     setLed(i, NO_COLOUR);
-  codec.setHighPass(false);
+  for(size_t i=1; i<=8; ++i){
+    for(size_t c=0; c<2048; c+=40){
+      setLed(i, c);
+      HAL_Delay(1);
+    }
+  }
+  for(size_t i=1; i<=8; ++i){
+    HAL_Delay(60);
+    setLed(i, NO_COLOUR);
+  }
+  // codec.setHighPass(false);
   led_in1.outputMode();
   led_in1.afMode();
 }
@@ -189,7 +194,9 @@ void onSetup(){
 void onLoop(void){  
   for(size_t i=0; i<4; ++i){
     int16_t value = getParameterValue(PARAMETER_AA+i);
-    setLed(i+1, value >= ACDC_CLIPPING_LEVEL ? RED_COLOUR : value);
+    setLed(i+1, value);
+    if(value >= ACDC_CLIPPING_LEVEL)
+      setLed(i+1, RED_COLOUR);
     extern float tx_levels[4];
     setLed(i+5, tx_levels[i]*4096);
     setParameterValue(PARAMETER_BA+i, tx_levels[i]*4096);
