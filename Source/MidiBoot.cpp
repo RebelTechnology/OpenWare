@@ -9,17 +9,18 @@
 #include "MidiController.h"
 #include "Storage.h"
 #include "usb_device.h"
+#include "ProgramVector.h"
 
 static SystemMidiReader midi_rx;
 MidiController midi_tx;
 FirmwareLoader loader;
 ProgramManager program;
-
-extern "C" int testButton();
+ProgramVector staticVector;
 
 MidiHandler::MidiHandler(){}
 ProgramManager::ProgramManager(){}
 void ProgramManager::exitProgram(bool isr){}
+ProgramVector* getProgramVector() { return &staticVector; }
 void setParameterValue(uint8_t ch, int16_t value){}
 void SystemMidiReader::reset(){}
 void Owl::setOperationMode(uint8_t mode){}
@@ -72,8 +73,12 @@ void sendMessage(uint8_t cmd, const char* msg){
 }
 
 void sendMessage(){
-  if(getErrorStatus() != NO_ERROR)
+  if(getErrorStatus() != NO_ERROR){
     message = getErrorMessage() == NULL ? "Error" : getErrorMessage();
+  }else if(getProgramVector()->message != NULL){
+    message = getProgramVector()->message;
+    getProgramVector()->message = NULL;
+  }
   if(message != NULL){
     char buffer[64];
     buffer[0] = SYSEX_PROGRAM_MESSAGE;
@@ -196,6 +201,7 @@ extern "C" {
     midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
     midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
     storage.init();
+    getProgramVector()->message = NULL;
     sendMessage(SYSEX_PROGRAM_MESSAGE, "OWL Bootloader Ready");
   }
 
@@ -291,6 +297,7 @@ void MidiHandler::handleSysEx(uint8_t* data, uint16_t size){
     device_dfu();
 #else
     error(RUNTIME_ERROR, "Bootloader OK");
+    setErrorStatus(NO_ERROR);
 #endif
     break;
   case SYSEX_FIRMWARE_UPLOAD:
