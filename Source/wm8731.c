@@ -24,6 +24,13 @@ void codec_reset(){
   codec_write(RESET_CONTROL_REGISTER, 0); // reset
 }
 
+void codec_highpass(bool hpf){
+  if(hpf)
+    codec_write(DIGITAL_AUDIO_PATH_CONTROL_REGISTER, WM8731_DEEMP_NONE);
+  else /* ADCHPD ADC High Pass Filter Disable */
+    codec_write(DIGITAL_AUDIO_PATH_CONTROL_REGISTER, WM8731_DEEMP_NONE|WM8731_ADCHPD);
+}
+
 void codec_init(){
   /* Load default values */
   for(int i=0;i<WM8731_NUM_REGS-1;i++)
