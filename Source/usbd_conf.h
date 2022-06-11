@@ -38,7 +38,7 @@
 #ifdef DEBUG
 #define DEBUG_LEVEL     3
 #else
-#define DEBUG_LEVEL     0
+#define DEBUG_LEVEL     1
 #endif
 /* USER CODE END INCLUDE */
 
@@ -77,7 +77,9 @@
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     0U
 /*---------- -----------*/
+#ifndef USBD_SELF_POWERED
 #define USBD_SELF_POWERED     0U
+#endif
 /*---------- -----------*/
 
 /****************************************/
@@ -137,8 +139,7 @@
 /* DEBUG macros */
 
 #if (USBD_DEBUG_LEVEL > 0)
-#define USBD_UsrLog(...)    do { printf(__VA_ARGS__);	\
-                            printf("\n"); } while(0)
+#define USBD_UsrLog(...)    debugMessage(__VA_ARGS__)
 #else
 #define USBD_UsrLog(...)
 #endif
