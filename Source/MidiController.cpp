@@ -146,7 +146,6 @@ void MidiController::sendResourceNames(){
 class SendResourceTask : public BackgroundTask {
 private:
   size_t index;
-  uint32_t crc;
   Resource* resource;
   static constexpr size_t msgsize = 203; // number of resource bytes we send with each SysEx
 public:
@@ -155,7 +154,6 @@ public:
   }
   void begin(){
     index = 0;
-    crc = 0;
   }
   void loop(){
     if(!resource){      
@@ -180,12 +178,11 @@ public:
       size_t sz = std::min(msgsize, len-offset);
       storage.readResource(resource->getHeader(), data, offset, sz);
       offset += sz;
-      // crc = crc32(data, sz, crc);
-      crc = resource->getChecksum();
       sz = data_to_sysex(data, msg+6, sz);
       midi_tx.sendSysEx(msg, sz+6);
     }else{
       // last message with CRC checksum
+      uint32_t crc = resource->getChecksum();
       word = __REV(crc);
       data_to_sysex((uint8_t*)&word, msg+6, 4);
       midi_tx.sendSysEx(msg, 11);
