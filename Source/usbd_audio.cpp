@@ -11,19 +11,14 @@
   *           
   *      
   */ 
+#include <algorithm>
 
 #include "usbd_audio.h"
 #include "usbd_desc.h"
 #include "usbd_conf.h"
 #include "usbd_ctlreq.h"
 
-#ifdef DEBUG_USBD_AUDIO
 #include "message.h"
-int usbd_tx_flow = 0;
-int usbd_rx_flow = 0;
-int usbd_tx_capacity = 0;
-int usbd_rx_capacity = 0;
-#endif
 
 // #ifdef DEBUG
 // #define FLOW_ASSERT(x, y) if(!(x)){debugMessage(y, usbd_rx_flow, usbd_tx_flow, this->getWriteCapacity());}
@@ -31,7 +26,7 @@ int usbd_rx_capacity = 0;
 #include "CircularBuffer.h"
 #include "Codec.h"
 
-// todo: not static/global; move the buffers out of this compilation unit
+// TODO: not static/global; move the buffers out of this compilation unit
 CircularBuffer<audio_t> rx_buffer;
 CircularBuffer<audio_t> tx_buffer;
 
@@ -105,7 +100,7 @@ USBD_ClassTypeDef  USBD_AUDIO =
 
 #ifdef USE_USBD_RX_FB
 
-#define FB_REFRESH 4 /* Feedback refresh rate */
+#define FB_REFRESH 5 /* Feedback refresh rate */
 #define FB_RATE (1<<FB_REFRESH)
 
 /**
@@ -535,7 +530,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USBD_AUDIO_CONFIG_DESC_SIZ] __AL
   USBD_EP_TYPE_ISOC|USBD_EP_ATTR_ISOC_NOSYNC,  /* bmAttributes */
   LOBYTE(AUDIO_FB_PACKET_SIZE),		   /* wMaxPacketSize */
   HIBYTE(AUDIO_FB_PACKET_SIZE),
-  0x01,                                    /* bInterval : Must be set to 1 */
+  0x01,                                    /* bInterval : Must be set to 1 for compliance */
   FB_REFRESH,                              /* bRefresh SOF_RATE */
   0x00,                                    /* bSynchAddress : Must be reset to zero */
   /* 09 byte*/
@@ -773,7 +768,7 @@ static USBD_StatusTypeDef USBD_AUDIO_OpenEndpoint(USBD_HandleTypeDef *pdev,
       pdev->ep_out[ep & 0xFU].is_used = 1U;
   }
   if(rv != USBD_OK)
-    USBD_ErrLog("Failed to open endpoint %d. error %d\n", ep, rv);
+    USBD_UsrLog("Failed to open endpoint", ep, rv);
   return rv;
 }
 
@@ -905,19 +900,17 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
       }else{
   	// open new
   	USBD_AUDIO_OpenEndpoint(pdev, haudio, AUDIO_TX_EP, USBD_EP_TYPE_ISOC, AUDIO_TX_MAX_PACKET_SIZE);
-	haudio->audio_tx_active = 1;
 	haudio->tx_soffn = USB_SOF_NUMBER();
+
+	// Start writing to tx_buffer. Transmit one empty block.
+	// When first DataIn comes, reset read head.
 	tx_buffer.reset();
 	tx_buffer.clear();
-	tx_buffer.moveWriteHead(AUDIO_TX_PACKET_SIZE/sizeof(audio_t));
 	usbd_audio_tx_start_callback(USBD_AUDIO_TX_FREQ, USBD_AUDIO_TX_CHANNELS, &tx_buffer);
-	/* send first audio data */
-	memset(haudio->audio_tx_transmit, 0, sizeof(haudio->audio_tx_transmit));
+
+	/* send first empty audio data packet */
+	memset(haudio->audio_tx_transmit, 0, AUDIO_TX_MAX_PACKET_SIZE);
 	usbd_audio_write((uint8_t*)haudio->audio_tx_transmit, AUDIO_TX_PACKET_SIZE);
-#ifdef DEBUG_USBD_AUDIO
-	usbd_tx_flow = 0;
-	debugMessage("tx");
-#endif
       }
       haudio->tx_alt_setting = new_alt;
     }
@@ -1074,37 +1067,37 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 #ifdef USE_USBD_AUDIO_TX
   case AUDIO_TX_EP: {
     haudio->tx_soffn = USB_SOF_NUMBER();
-    // decide if we should send one set of samples more or less than expected
+    
     size_t len = AUDIO_TX_PACKET_SIZE/sizeof(audio_t);
     size_t capacity = tx_buffer.getReadCapacity();
     capacity += codec.getSampleCounter();
-#ifdef DEBUG_USBD_AUDIO
-    usbd_tx_capacity = capacity;
-#endif
-    if(capacity < 2*AUDIO_TX_PACKET_SIZE/sizeof(audio_t)){
+    // Round down to nearest frame
+    capacity = (capacity / USBD_AUDIO_TX_CHANNELS) * USBD_AUDIO_TX_CHANNELS;
+
+    if(haudio->audio_tx_active == 0){
+      haudio->audio_tx_active = 1;
+      // Initialise read position to 1/2 buffer from current write position.
+      // Read pos is zero, so write pos == capacity
+      tx_buffer.setReadIndex(capacity + tx_buffer.getSize()/2);
+    }
+    // decide if we should send one set of samples more or less than expected
+    constexpr size_t margin = 1.25*AUDIO_TX_PACKET_SIZE/sizeof(audio_t);
+    if(capacity < margin){
       // read capacity too low: slow down
       len -= USBD_AUDIO_TX_CHANNELS;
-#ifdef DEBUG_USBD_AUDIO
-      usbd_tx_flow -= 1;
-#endif
-    }else if(tx_buffer.getSize() - capacity < 2*AUDIO_TX_PACKET_SIZE/sizeof(audio_t)){
+      if(capacity < len){
+        // tx buffer underflow
+        USBD_UsrLog("tx unf", (int)capacity, (int)len);
+        len = capacity;
+      }else{
+        USBD_DbgLog("tx--");
+      }
+    }else if(tx_buffer.getSize() - capacity < margin){
       // write capacity too low: speed up
       len += USBD_AUDIO_TX_CHANNELS;
-#ifdef DEBUG_USBD_AUDIO
-      usbd_tx_flow += 1;
-#endif
+      USBD_DbgLog("tx++");
     }
-    if(capacity < len){
-      // tx buffer underflow
-#ifdef DEBUG_USBD_AUDIO
-      debugMessage("tx unf", (int)(len - capacity));
-      usbd_tx_flow -= 1000;
-#endif
-      memset(haudio->audio_tx_transmit, 0, sizeof(haudio->audio_tx_transmit));
-      tx_buffer.read((audio_t*)haudio->audio_tx_transmit, capacity);
-    }else{
-      tx_buffer.read((audio_t*)haudio->audio_tx_transmit, len);
-    }
+    tx_buffer.read((audio_t*)haudio->audio_tx_transmit, len);
     usbd_audio_write((uint8_t*)haudio->audio_tx_transmit, len*sizeof(audio_t));
     break;
   }
@@ -1373,28 +1366,24 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
   /* SOF (Start of Frame) Every millisecond the USB host transmits a special SOF (start of frame) token, containing an 11-bit incrementing frame number in place of a device address. This is used to synchronize isochronous and interrupt data transfers. */
   USBD_AUDIO_HandleTypeDef* haudio;
   haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;  
-#if 0 // defined USE_USBD_RX_FB
+#if defined(USE_USBD_RX_FB)
   static uint32_t sof_count = 0;
   if(haudio->audio_rx_active){
     if(++sof_count == FB_RATE){
       sof_count = 0;
-    // number of samples since last request (or 0 if unknown)
+      // number of samples since last request (or 0 if unknown)
       uint32_t samples = usbd_audio_get_rx_count(); // across channels and fb rate
-      if(samples != 0){
-	// if(abs(samples - USBD_AUDIO_RX_FREQ*FB_RATE*USBD_AUDIO_RX_CHANNELS/1000) < 8){
-	samples *= (1<<14); // convert to n.14 format
-	samples /= USBD_AUDIO_RX_CHANNELS * FB_RATE;
-#ifdef DEBUG_USBD_AUDIO
-	usbd_rx_capacity = samples - 786432;
-#endif
-	// AUDIO_FREQ_TO_DATA(samples, haudio->fb_data.buf); // pack into 3 bytes (todo: make this atomic)
-	// }
+      samples *= (1 << (14 - FB_REFRESH) ); // convert to n.14 format
+      samples /= AUDIO_CHANNELS;
+
+      if(samples > 0x0c0000 - 0x4000 && samples < 0x0c0000 + 0x4000) // maximum 1 sample difference
+	haudio->fb_data.val = samples;
+      else {
+	size_t capacity = rx_buffer.getWriteCapacity();
+	capacity += codec.getSampleCounter();
+        USBD_DbgLog("fb", samples*1.0f/(1<<14), capacity*1.0f/rx_buffer.getSize());
       }
     }
-    // transmit on every SOF if audio_rx_active
-    // USBD_LL_Transmit(pdev, AUDIO_FB_EP, fb_data, AUDIO_FB_PACKET_SIZE);
-    // }else{
-  //   sof_count = 0;
   }
 #endif
   return USBD_OK;
@@ -1457,6 +1446,10 @@ static uint8_t  USBD_AUDIO_IsoOutIncomplete (USBD_HandleTypeDef *pdev, uint8_t e
   return USBD_OK;
 }
 
+static size_t scale(size_t x, size_t x0, size_t x1, size_t y0, size_t y1){
+  return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
+}
+
 /**
   * @brief  USBD_AUDIO_DataOut
   *         handle data OUT Stage
@@ -1471,64 +1464,29 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
   switch(epnum){
 #ifdef USE_USBD_AUDIO_RX
   case AUDIO_RX_EP:{
-    // if(haudio->audio_rx_active == 0){
-    //   // todo: see if we can move this to AUDIO_OUT_Restart and remove the conditional around rx_active
-    //   haudio->audio_rx_active = 1;
-    //   usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
-    //   usbd_rx_flow = 0;
-    //   rx_buffer.reset();
-    //   rx_buffer.clear();
-    //   rx_buffer.moveWriteHead(2*AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
-    //   debugMessage("rx");
-    // }
-    size_t len = USBD_LL_GetRxDataSize(pdev, AUDIO_RX_EP) / sizeof(audio_t);
+#if 1
+    if(haudio->audio_rx_active == 0){
+      haudio->audio_rx_active = 1;
+      usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
+      rx_buffer.reset();
+      rx_buffer.clear();
+      rx_buffer.moveWriteHead(rx_buffer.getSize()/2);
+    }
+#endif
     // we are required to support null packets: len may be zero
+    size_t len = USBD_LL_GetRxDataSize(pdev, AUDIO_RX_EP) / sizeof(audio_t);
 
     size_t capacity = rx_buffer.getWriteCapacity();
     capacity += codec.getSampleCounter();
-#ifdef DEBUG_USBD_AUDIO
-    usbd_rx_capacity = capacity;
-#endif
-
     if(capacity < len){
       // rx buffer overflow
-      len = capacity;
-#ifdef DEBUG_USBD_AUDIO
-      debugMessage("rx ovf", (int)(len - capacity));
-      usbd_rx_flow += 100000;
+      // we still write len bytes
+#if defined(USE_USBD_RX_FB)
+      USBD_UsrLog("rx ovf", (float)capacity, len, haudio->fb_data.val*1.0f/(1<<14));
+#else
+      USBD_UsrLog("rx ovf", (int)capacity, (int)len);
 #endif
     }
-#ifdef USE_USBD_RX_FB
-    // in asynch / adaptive mode, we have no control over the number of samples transferred
-    // instead we update the feedback value
-    capacity -= len;
-    if(capacity < AUDIO_RX_PACKET_SIZE/sizeof(audio_t)){
-      // write capacity too small: slow down
-#ifdef DEBUG_USBD_AUDIO
-      usbd_rx_flow += 1000;
-#endif
-      haudio->fb_data.val = 0x0c0000 - 0x4000;
-    }else if(capacity < 2*AUDIO_RX_PACKET_SIZE/sizeof(audio_t)){
-#ifdef DEBUG_USBD_AUDIO
-      usbd_rx_flow += 1;
-#endif
-      haudio->fb_data.val = 0x0c0000 - 0x2000;
-      // 0x2000 == 0.5<<14, one half sample per frame
-    }else if(rx_buffer.getSize() - capacity < 2*AUDIO_RX_PACKET_SIZE/sizeof(audio_t)){
-      // read capacity too small: speed up
-#ifdef DEBUG_USBD_AUDIO
-      usbd_rx_flow -= 1;
-#endif
-      haudio->fb_data.val = 0x0c0000 + 0x2000;
-    }else if(rx_buffer.getSize() - capacity < AUDIO_RX_PACKET_SIZE/sizeof(audio_t)){
-#ifdef DEBUG_USBD_AUDIO
-      usbd_rx_flow -= 1000;
-#endif
-      haudio->fb_data.val = 0x0c0000 + 0x4000;
-    }else{
-      haudio->fb_data.val = 0x0c0000; // 48 * 16384
-    }
-#endif
     rx_buffer.write((audio_t*)haudio->audio_rx_transmit, len);
     /* Prepare Out endpoint to receive next audio packet */
     USBD_LL_PrepareReceive(pdev, AUDIO_RX_EP, (uint8_t*)haudio->audio_rx_transmit, AUDIO_RX_PACKET_SIZE);
@@ -1600,21 +1558,6 @@ static void AUDIO_OUT_Restart(USBD_HandleTypeDef* pdev)
   haudio->fb_soffn = USB_SOF_NUMBER();
   USBD_LL_Transmit(pdev, AUDIO_FB_EP, haudio->fb_data.buf, AUDIO_FB_PACKET_SIZE);
 #endif
-
-  // moved from USBD_AUDIO_DataOut
-  haudio->audio_rx_active = 1;
-  usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
-#ifdef DEBUG_USBD_AUDIO
-  usbd_rx_flow = 0;
-  debugMessage("rx");
-#endif
-  rx_buffer.reset();
-  rx_buffer.clear();
-  rx_buffer.moveWriteHead(-AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
-
-  /* get_usb_full_speed_rate(haudio->frequency, fb_data); // reset to new frequency */
-
-  /* usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer); */
 }
 #endif /* USE_USBD_AUDIO_RX */
 
@@ -1642,10 +1585,10 @@ uint8_t USBD_AUDIO_RegisterInterface(USBD_HandleTypeDef *pdev, void *fops)
 }
 
 uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd){
- // HAL_PCDEx_SetTxFiFo() must be called after HAL_PCDEx_SetRxFiFo().
- // HAL_PCDEx_SetTxFiFo() must be called in the order of the endpoint number.
- // Size is represented in terms of 4-byte words. Minimum: 16 words, maximum: 256 words
- // The total of FIFO sizes should be no more than the 1.25 Kbytes USB RAM
+  // HAL_PCDEx_SetTxFiFo() must be called after HAL_PCDEx_SetRxFiFo().
+  // HAL_PCDEx_SetTxFiFo() must be called in the order of the endpoint number.
+  // Size is represented in terms of 4-byte words. Minimum: 16 words, maximum: 256 words
+  // The total of FIFO sizes should be no more than the 1.25 Kbytes USB RAM
   // Total 0x140 words / 1280 bytes available for rx and tx fifos
   // The FIFO is used optimally when used TxFIFOs are allocated in the top
   // of the FIFO. Ex: use EP1 and EP2 as IN instead of EP1 and EP3 as IN ones.
@@ -1679,7 +1622,7 @@ void usbd_audio_write(uint8_t* buf, size_t len) {
 #ifdef USE_USBD_AUDIO_TX
   extern USBD_HandleTypeDef USBD_HANDLE;
   USBD_AUDIO_HandleTypeDef *haudio = (USBD_AUDIO_HandleTypeDef*)USBD_HANDLE.pClassData;
-  if(USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED && haudio->audio_tx_active)
+  if(USBD_HANDLE.dev_state == USBD_STATE_CONFIGURED)
     USBD_LL_Transmit(&USBD_HANDLE, AUDIO_TX_EP, buf, len);
 #endif
 }
