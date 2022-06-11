@@ -1,3 +1,12 @@
+22.5.rc1
+------
+
+* Improved USBD Audio host synchronisation
+* Fix initialisation bug in Genius/Magus Graphics
+
+Known Issues:
+* OWL1/2 USB Host does not support reconnecting devices
+
 22.4.0
 ------
 
@@ -8,7 +17,7 @@
 * Unified USB device and host drivers
 
 Known Issues:
-* USB Host does not support reconnecting devices
+* Initialisation bug in Genius/Magus Graphics
 
 22.3.1
 ------
