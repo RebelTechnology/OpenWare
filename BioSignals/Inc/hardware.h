@@ -5,6 +5,7 @@
 #define HARDWARE_ID                  BIOSIGNALS_HARDWARE
 #define HARDWARE_VERSION             "BioSignals"
 #define NO_EXTERNAL_RAM
+#define USE_DFU_BOOTLOADER
 #define USBD_PRODUCT_STRING_FSHS     "OWL-BIOSIGNALS"
 
 #define USE_BLE_MIDI
