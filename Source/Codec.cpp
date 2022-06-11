@@ -139,8 +139,7 @@ void Codec::setHighPass(bool hpf){
  */
 size_t Codec::getSampleCounter(){
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  // return codec_blocksize - std::clamp(__HAL_DMA_GET_COUNTER(&HDMA_TX), 0, codec_blocksize);
-  // return codec_blocksize * AUDIO_CHANNELS - __HAL_DMA_GET_COUNTER(&HDMA_TX);
+  // NDTR spans two block sizes of samples.
   return (codec_blocksize * AUDIO_CHANNELS - __HAL_DMA_GET_COUNTER(&HDMA_TX)) % (codec_blocksize * AUDIO_CHANNELS);
 }
 
