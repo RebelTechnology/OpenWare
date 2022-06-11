@@ -38,10 +38,9 @@ void codec_reset(){
   rxfull = 2*rxhalf;    
 }
 
+void codec_highpass(bool hpf){}
 void codec_bypass(int bypass){}
-
-void codec_set_gain_in(int8_t volume){
-}
+void codec_set_gain_in(int8_t volume){}
 
 void codec_set_gain_out(int8_t volume){
   volume /= 10;
