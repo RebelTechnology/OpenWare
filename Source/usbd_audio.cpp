@@ -768,7 +768,7 @@ static USBD_StatusTypeDef USBD_AUDIO_OpenEndpoint(USBD_HandleTypeDef *pdev,
       pdev->ep_out[ep & 0xFU].is_used = 1U;
   }
   if(rv != USBD_OK)
-    USBD_UsrLog("Failed to open endpoint", ep, rv);
+    USBD_UsrLog("Failed to open endpoint %d %d", ep, rv);
   return rv;
 }
 
@@ -1082,12 +1082,12 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
     }
     // decide if we should send one set of samples more or less than expected
     constexpr size_t margin = 1.25*AUDIO_TX_PACKET_SIZE/sizeof(audio_t);
-    if(capacity < margin){
+    if(capacity && capacity < margin){
       // read capacity too low: slow down
       len -= USBD_AUDIO_TX_CHANNELS;
       if(capacity < len){
         // tx buffer underflow
-        USBD_UsrLog("tx unf", (int)capacity, (int)len);
+        USBD_UsrLog("tx unf %d %d", (int)capacity, (int)len);
         len = capacity;
       }else{
         USBD_DbgLog("tx--");
@@ -1342,7 +1342,7 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
   haudio = (USBD_AUDIO_HandleTypeDef*) pdev->pClassData;
   if (haudio->control.cmd == AUDIO_REQ_SET_CUR)
   {/* In this driver, to simplify code, only SET_CUR request is managed */
-    USBD_DbgLog("SET_CUR %d\n", haudio->control.unit);
+    USBD_DbgLog("GET_CUR 0x%x", haudio->control.unit);
     if (haudio->control.unit == AUDIO_OUT_STREAMING_CTRL ||
 	haudio->control.unit == AUDIO_IN_STREAMING_CTRL)
     {
@@ -1381,7 +1381,7 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
       else {
 	size_t capacity = rx_buffer.getWriteCapacity();
 	capacity += codec.getSampleCounter();
-        USBD_DbgLog("fb", samples*1.0f/(1<<14), capacity*1.0f/rx_buffer.getSize());
+        USBD_DbgLog("fb %f %f", samples*1.0f/(1<<14), capacity*1.0f/rx_buffer.getSize());
       }
     }
   }
@@ -1482,9 +1482,9 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
       // rx buffer overflow
       // we still write len bytes
 #if defined(USE_USBD_RX_FB)
-      USBD_UsrLog("rx ovf", (float)capacity, len, haudio->fb_data.val*1.0f/(1<<14));
+      USBD_UsrLog("rx ovf %f %d %f", (float)capacity, len, haudio->fb_data.val*1.0f/(1<<14));
 #else
-      USBD_UsrLog("rx ovf", (int)capacity, (int)len);
+      USBD_UsrLog("rx ovf %d %d", (int)capacity, (int)len);
 #endif
     }
     rx_buffer.write((audio_t*)haudio->audio_rx_transmit, len);
