@@ -24,6 +24,12 @@ void codec_reset(){
   codec_write(RESET_CONTROL_REGISTER, 0); // reset
 }
 
+size_t codec_ndtr(){
+#define HDMA_RX hdma_i2s2_ext_rx
+  extern DMA_HandleTypeDef HDMA_RX;
+  return __HAL_DMA_GET_COUNTER(&HDMA_RX);
+}
+
 void codec_highpass(bool hpf){
   if(hpf)
     codec_write(DIGITAL_AUDIO_PATH_CONTROL_REGISTER, WM8731_DEEMP_NONE);
