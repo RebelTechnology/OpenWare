@@ -8,7 +8,10 @@ void device_dfu(){
   *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_DFU_NUMBER;
   device_reset_to(0);
 #else
-  device_reset_to(0x1FFF0000);
+  /* device_reset_to(0x1FFF0000); */
+ /* or: */
+  *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_DFU_NUMBER;
+  device_reset_to(0);
 #endif  
 } 
 
