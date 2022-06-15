@@ -22,7 +22,7 @@
 #define USE_CODEC
 #define USE_ADS1294
 
-#define CODEC_BLOCKSIZE              256
+#define CODEC_BLOCKSIZE              32
 #define AUDIO_BLOCK_SIZE             16
 
 #define USE_USBD_HS
@@ -69,7 +69,7 @@
 #define ADS_ACTIVE_CHANNELS         4
 #define ADS_HSPI                    hspi1
 
-#define TIM8_PERIOD                 (871*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
+#define TIM8_PERIOD                 (870*48000/AUDIO_SAMPLINGRATE) /* experimentally determined */
 
 #if defined USE_KX122 && defined USE_CODEC
 #define AUDIO_CHANNELS              (ADS_ACTIVE_CHANNELS + KX122_ACTIVE_CHANNELS)
