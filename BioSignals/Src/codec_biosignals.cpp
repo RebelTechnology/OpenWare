@@ -38,6 +38,13 @@ void codec_reset(){
   rxfull = 2*rxhalf;    
 }
 
+size_t codec_ndtr(){
+// #define HDMA_RX hdma_spi1_rx
+//   extern DMA_HandleTypeDef HDMA_RX;
+//   return rxfull - rxindex + 4 - __HAL_DMA_GET_COUNTER(&HDMA_RX);
+  return rxfull - rxindex;
+}
+
 void codec_highpass(bool hpf){}
 void codec_bypass(int bypass){}
 void codec_set_gain_in(int8_t volume){}
