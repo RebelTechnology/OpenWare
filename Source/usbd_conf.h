@@ -151,18 +151,25 @@
 #endif
 
 #if (USBD_DEBUG_LEVEL > 1)
-
+#ifdef DEBUG
 #define USBD_ErrLog(...)    do { printf("ERROR: ") ;\
                             printf(__VA_ARGS__);\
                             printf("\n"); } while(0)
+#else
+#define USBD_ErrLog(...)    debugMessage(__VA_ARGS__)
+#endif
 #else
 #define USBD_ErrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 2)
+#ifdef DEBUG
 #define USBD_DbgLog(...)    do { printf("DEBUG : ") ;	\
                             printf(__VA_ARGS__);\
                             printf("\n"); } while(0)
+#else
+#define USBD_DbgLog(...)    debugMessage(__VA_ARGS__)
+#endif
 #else
 #define USBD_DbgLog(...)
 #endif
