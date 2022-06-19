@@ -30,6 +30,7 @@
 #define USBD_HSFS DEVICE_HS
 #define USBD_HANDLE hUsbDeviceHS
 #define USBD_PCD_HANDLE hpcd_USB_OTG_HS
+#define USBD_AUDIO_BUFFER_PACKETS   12
 
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX  // microphone

@@ -64,6 +64,7 @@
 #define USE_USBD_FS
 #define USBD_AUDIO_TX_CHANNELS      4
 #define USBD_AUDIO_RX_CHANNELS      4
+#define USBD_AUDIO_BUFFER_PACKETS   3
 
 #define AUDIO_SAMPLINGRATE          48000
 
