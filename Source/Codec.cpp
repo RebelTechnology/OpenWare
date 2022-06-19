@@ -9,26 +9,15 @@
 #ifdef USE_CS4271
 #define HSAI_RX hsai_BlockB1
 #define HSAI_TX hsai_BlockA1
-#define HDMA_RX hdma_sai1_b
-#define HDMA_TX hdma_sai1_a
 #elif defined USE_PCM3168A
 #define HSAI_RX hsai_BlockA1
 #define HSAI_TX hsai_BlockB1
-#define HDMA_RX hdma_sai1_a
-#define HDMA_TX hdma_sai1_b
-#elif defined USE_WM8731
-#define HDMA_RX hdma_i2s2_ext_rx
-#define HDMA_TX hdma_i2s2_ext_rx // linked
-#elif defined USE_ADS1294
-#define HDMA_TX hdma_spi1_rx
 #endif
 
 extern "C" {
   uint16_t codec_blocksize = AUDIO_BLOCK_SIZE;
   int32_t codec_rxbuf[CODEC_BUFFER_SIZE] DMA_RAM;
   int32_t codec_txbuf[CODEC_BUFFER_SIZE] DMA_RAM;
-  extern DMA_HandleTypeDef HDMA_TX;
-  extern DMA_HandleTypeDef HDMA_RX;
 #if defined USE_CS4271 || defined USE_PCM3168A
   extern SAI_HandleTypeDef HSAI_RX;
   extern SAI_HandleTypeDef HSAI_TX;
@@ -138,9 +127,8 @@ void Codec::setHighPass(bool hpf){
  * transferred to the codec in this block 
  */
 size_t Codec::getSampleCounter(){
-  // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  // NDTR spans two block sizes of samples.
-  return (codec_blocksize * AUDIO_CHANNELS - __HAL_DMA_GET_COUNTER(&HDMA_TX)) % (codec_blocksize * AUDIO_CHANNELS);
+  // Double buffered DMA NDTR spans two block sizes of samples.
+  return (codec_blocksize * AUDIO_CHANNELS - codec_ndtr()) % (codec_blocksize * AUDIO_CHANNELS);
 }
 
 #ifdef USE_IIS3DWB
@@ -168,13 +156,17 @@ void Codec::start(){
   ads_start_continuous();
   extern TIM_HandleTypeDef htim8;
   HAL_TIM_Base_Start_IT(&htim8);
+#ifdef DEBUG
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
+#endif
 }
 
 void Codec::stop(){
   ads_stop_continuous();
   extern TIM_HandleTypeDef htim8;
+#ifdef DEBUG
   HAL_TIM_PWM_Stop_IT(&htim8, TIM_CHANNEL_4);
+#endif
   HAL_TIM_Base_Stop(&htim8);
 }
 

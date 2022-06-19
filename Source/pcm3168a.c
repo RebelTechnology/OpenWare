@@ -48,6 +48,12 @@ void codec_reset(){
 /* the SRST bit to 1 is unneccesary; it is automatically set to 1 after triggering a system reset. */
 }
 
+size_t codec_ndtr(){
+#define HDMA_TX hdma_sai1_b
+  extern DMA_HandleTypeDef HDMA_TX;
+  return __HAL_DMA_GET_COUNTER(&HDMA_TX);
+}
+
 // todo: remove
 uint32_t pcm3168a_dz = 0;
 uint32_t pcm3168a_adc_ovf = 0;

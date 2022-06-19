@@ -2,7 +2,7 @@ PROJECT = BioSignals
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
-# LDSCRIPT = STM32F427VGTx_FLASH.ld
+LDSCRIPT = biosignals.ld
 include $(OPENWARE)/Hardware/owl2.mk
 
 C_SRC = $(wildcard Src/*.c)

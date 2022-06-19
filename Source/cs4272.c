@@ -45,6 +45,12 @@ void codec_reset(){
 #endif
 }
 
+size_t codec_ndtr(){
+#define HDMA_TX hdma_sai1_a
+  extern DMA_HandleTypeDef HDMA_TX;
+  return __HAL_DMA_GET_COUNTER(&HDMA_TX);
+}
+
 void codec_highpass(bool hpf){
   if(hpf)
     codec_write(0x06, 0x10); // hp filters enabled, i2s data

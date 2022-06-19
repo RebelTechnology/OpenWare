@@ -8,8 +8,8 @@
 extern "C" {
 #endif
 
-  void codec_init();
-  void codec_reset();
+  void codec_init(void);
+  void codec_reset(void);
   void codec_bypass(int bypass);
   void codec_set_gain_in(int8_t volume);
   void codec_set_gain_out(int8_t volume);
@@ -22,6 +22,10 @@ extern "C" {
   void codec_write(uint8_t reg, uint8_t data);
 #endif
   void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
+  /**
+   * Get NDTR: the number of remaining data units in the current transfer
+   */
+  size_t codec_ndtr(void);
 
 #ifdef __cplusplus
 }

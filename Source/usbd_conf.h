@@ -38,7 +38,7 @@
 #ifdef DEBUG
 #define DEBUG_LEVEL     3
 #else
-#define DEBUG_LEVEL     1
+#define DEBUG_LEVEL     0
 #endif
 /* USER CODE END INCLUDE */
 
@@ -139,24 +139,37 @@
 /* DEBUG macros */
 
 #if (USBD_DEBUG_LEVEL > 0)
+#ifdef DEBUG
+#define USBD_UsrLog(...)    do { printf("USBD: ") ;\
+                            printf(__VA_ARGS__);\
+                            printf("\n"); } while(0)
+#else
 #define USBD_UsrLog(...)    debugMessage(__VA_ARGS__)
+#endif
 #else
 #define USBD_UsrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 1)
-
+#ifdef DEBUG
 #define USBD_ErrLog(...)    do { printf("ERROR: ") ;\
                             printf(__VA_ARGS__);\
                             printf("\n"); } while(0)
+#else
+#define USBD_ErrLog(...)    debugMessage(__VA_ARGS__)
+#endif
 #else
 #define USBD_ErrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 2)
+#ifdef DEBUG
 #define USBD_DbgLog(...)    do { printf("DEBUG : ") ;	\
                             printf(__VA_ARGS__);\
                             printf("\n"); } while(0)
+#else
+#define USBD_DbgLog(...)    debugMessage(__VA_ARGS__)
+#endif
 #else
 #define USBD_DbgLog(...)
 #endif

@@ -43,6 +43,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#ifdef DEBUG
+#include <stdio.h>
+#endif
 
 /* USER CODE END Includes */
 

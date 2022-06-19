@@ -406,13 +406,13 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
-  extern uint8_t _PATCHRAM, _PATCHRAM_END, _PATCHRAM_SIZE;
+  extern uint8_t _PATCHRAM, _PATCHRAM_END;
   uint8_t* end = (uint8_t*)def->getStackBase(); // program end
   uint32_t remain = &_PATCHRAM_END - end; // space left (don't use patch declared stack size)
   if(end < &_PATCHRAM || end+remain > &_PATCHRAM_END) // sanity check
     remain = 0; // prevent errors if program stack is not linked to PATCHRAM
 #ifdef USE_PLUS_RAM
-  extern uint8_t _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
+  extern uint8_t _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE, _PATCHRAM_SIZE;
   uint8_t* plusend = (uint8_t*)&_PLUSRAM;
   uint32_t plusremain = (uint32_t)&_PLUSRAM_SIZE;
   if(def->getLinkAddress() == (uint32_t*)&_PLUSRAM){
