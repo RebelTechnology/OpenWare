@@ -94,11 +94,9 @@ void usbd_rx_convert(int32_t* dst, size_t len){
     size_t cap = rx->getReadCapacity();
     if(cap < len){
       // rx buffer underflow
+      usbd_audio_error("rx unf", len - cap);
       memset(dst+cap, 0, (len - cap)*sizeof(int32_t));
       len = cap;
-#ifdef DEBUG_USBD_AUDIO
-      debugMessage("rx unf", (int)(len - cap));
-#endif
     }
 #if USBD_AUDIO_RX_CHANNELS == AUDIO_CHANNELS
 #if AUDIO_BITS_PER_SAMPLE == 32
@@ -133,14 +131,11 @@ void usbd_rx_convert(int32_t* dst, size_t len){
 void usbd_tx_convert(int32_t* src, size_t len){
   CircularBuffer<audio_t>* tx = usbd_tx;
   if(tx){
-    size_t cap = tx->getWriteCapacity() - USBD_AUDIO_TX_CHANNELS;
-    // leave a bit of space to prevent wrapping read/write pointers
+    size_t cap = tx->getWriteCapacity();
     if(cap < len){
       // tx buffer overflow
+      usbd_audio_error("tx ovf", len - cap);
       len = cap;
-#ifdef DEBUG_USBD_AUDIO
-      debugMessage("tx ovf", (int)(len - cap));
-#endif
     }
 #if USBD_AUDIO_TX_CHANNELS == AUDIO_CHANNELS
 #if false // AUDIO_BITS_PER_SAMPLE == 32

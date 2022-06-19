@@ -181,6 +181,7 @@ void usbd_midi_rx(uint8_t *buffer, uint32_t length);
 void usbd_midi_tx(uint8_t* buffer, uint32_t length);
 uint8_t usbd_midi_connected(void);
 uint8_t usbd_midi_ready(void);
+void usbd_audio_error(const char* msg, int diff);
 
 #ifdef __cplusplus
 }
