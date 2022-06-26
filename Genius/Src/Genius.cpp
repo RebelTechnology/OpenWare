@@ -212,25 +212,38 @@ void onLoop(void){
   updateEncoders();
 }
 
+// #define DEBUG_USBD_AUDIO
 #ifdef DEBUG_USBD_AUDIO
+#include "usbd_audio.h"
+#include "CircularBuffer.h"
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
-  extern int usbd_tx_flow;
-  extern int usbd_rx_flow;
-  extern int usbd_tx_capacity;
-  extern int usbd_rx_capacity;
+  extern CircularBuffer<audio_t> rx_buffer;
+  extern CircularBuffer<audio_t> tx_buffer;
+  extern USBD_AUDIO_HandleTypeDef usbd_audio_handle;
+
+  size_t samples = 0; // codec.getSampleCounter();
+  float rx = (rx_buffer.getWriteCapacity()+samples)*1.0f/rx_buffer.getSize();
+  float tx = (tx_buffer.getReadCapacity()+samples)*1.0f/tx_buffer.getSize();
+  float fb = usbd_audio_handle.fb_data.val*1.0f/(1<<14);
+
   ScreenBuffer& screen = graphics.screen;
-  params.drawTitle(screen);
-  params.drawMessage(26, screen);
+  // params.drawTitle(screen);
+  // params.drawMessage(26, screen);
 
   screen.setTextSize(1);
-  screen.print(2, 36, "rx ");
-  screen.print(usbd_rx_flow);
+  if(getErrorMessage() != NULL)
+    screen.print(2, 16, getErrorMessage());
+  if(getDebugMessage() != NULL)
+    screen.print(2, 26, getDebugMessage());
+
+
+  screen.setTextSize(1);
+  screen.print(2, 36, "rx/tx ");
+  screen.print(rx);
   screen.print(" / ");
-  screen.print(usbd_rx_capacity);
-  screen.print(2, 46, "tx ");
-  screen.print(usbd_tx_flow);
-  screen.print(" / ");
-  screen.print(usbd_tx_capacity);
+  screen.print(tx);
+  screen.print(2, 46, "fb ");
+  screen.print(fb);
 }
 // #else
 // void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
