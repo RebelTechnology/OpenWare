@@ -37,19 +37,14 @@ static int32_t usbd_audio_rx_count = 0;
 
 /* Get number of samples transmitted since previous request */
 uint32_t usbd_audio_get_rx_count(){
-  uint32_t curr = codec.getSampleCounter();
-  uint32_t pos = usbd_audio_rx_count + curr;
-  usbd_audio_rx_count = -curr; // next block will increment by a full blocksize
-  // uint32_t pos = usbd_audio_rx_count;
-  // usbd_audio_rx_count = 0;
+  uint32_t samples = codec.getSampleCounter();
+  uint32_t pos = usbd_audio_rx_count + samples;
+  usbd_audio_rx_count = -samples; // next block will increment by a full blocksize
   return pos;
 }
 
 void usbd_audio_tx_start_callback(size_t rate, uint8_t channels, void* cb){
   usbd_tx = (CircularBuffer<audio_t>*)cb;
-  // usbd_tx->reset();
-  // usbd_tx->clear();
-  // usbd_tx->moveWriteHead(usbd_tx->getSize()/2);
 #ifdef DEBUG
   printf("start tx %u %u %u\n", rate, channels, usbd_tx->getSize());
 #endif
@@ -69,10 +64,6 @@ static constexpr float LEVELS_SMOOTHING = 0.98;
 
 void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
   usbd_rx = (CircularBuffer<audio_t>*)cb;
-  // usbd_rx->reset();
-  // usbd_rx->clear();
-  // usbd_rx->moveReadHead(usbd_rx->getSize()/2);
-  // usbd_audio_rx_count = 0;
   memset(tx_levels, 0, sizeof(tx_levels));
 #ifdef DEBUG
   printf("start rx %u %u %u\n", rate, channels, usbd_rx->getSize());
@@ -123,8 +114,10 @@ void usbd_rx_convert(int32_t* dst, size_t len){
     }
 #endif
   }else{
+#ifdef OWL_ACDC
     // TODO: remove hack to prevent ACDC audio pass-through
     memset(dst, 0, len*sizeof(int32_t));
+#endif
   }
 }
 
