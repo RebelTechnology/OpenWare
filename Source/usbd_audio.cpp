@@ -813,6 +813,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
   haudio->midi_tx_lock = 0;
 #endif
 
+
   return USBD_OK;
 }
 
@@ -835,14 +836,18 @@ static uint8_t  USBD_AUDIO_DeInit (USBD_HandleTypeDef *pdev,
 #ifdef USE_USBD_RX_FB
   USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_FB_EP);
 #endif
-  haudio->audio_rx_active = 0;
-  usbd_audio_rx_stop_callback();
+  if(haudio->audio_rx_active){
+    haudio->audio_rx_active = 0;
+    usbd_audio_rx_stop_callback();
+  }
 #endif
 
 #ifdef USE_USBD_AUDIO_TX
   USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_TX_EP);
-  haudio->audio_tx_active = 0;
-  usbd_audio_tx_stop_callback();
+  if(haudio->audio_tx_active){
+    haudio->audio_tx_active = 0;
+    usbd_audio_tx_stop_callback();
+  }
 #endif
 
 #ifdef USE_USBD_MIDI
@@ -875,6 +880,7 @@ static uint8_t USBD_AUDIO_SetInterfaceAlternate(USBD_HandleTypeDef *pdev,
 	USBD_AUDIO_CloseEndpoint(pdev, haudio, AUDIO_FB_EP);
 #endif
 	haudio->audio_rx_active = 0;
+	haudio->fb_data.val = 0;
 	usbd_audio_rx_stop_callback();
 	// AUDIO_OUT_StopAndReset(pdev);
       }else{
@@ -1088,6 +1094,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
       tx_buffer.setReadIndex(pos);
       capacity = 0;
     }
+
     // Decide if we should send one set of samples more or less than expected
     constexpr size_t margin = 1.5f * AUDIO_TX_PACKET_SIZE/sizeof(audio_t);
     if(capacity && capacity < margin){
@@ -1378,7 +1385,7 @@ void usbd_audio_sof_callback(void){
     haudio->fb_data.val = samples;
   }else if(std::abs(current - samples * 2) < 0x4000){
     haudio->fb_data.val = samples * 2; // adjust for devices with 1/2 readings
-  }else{
+  }else if(haudio->fb_data.val){
     size_t capacity = rx_buffer.getWriteCapacity() + codec.getSampleCounter();
     debugMessage("fb", haudio->fb_data.val*1.0f/(1<<14), samples*1.0f/(1<<14));
   }
@@ -1480,6 +1487,9 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
   switch(epnum){
 #ifdef USE_USBD_AUDIO_RX
   case AUDIO_RX_EP:{
+    // we are required to support null packets: len may be zero
+    size_t len = USBD_LL_GetRxDataSize(pdev, AUDIO_RX_EP) / sizeof(audio_t);
+
     if(haudio->audio_rx_active == 0){
       // It is the first time DataOut is called since rx was activated
       haudio->audio_rx_active = 1;
@@ -1487,13 +1497,11 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
       rx_buffer.reset();
       rx_buffer.clear();
       // Set write head to provide 1/2 buffer margin
-      size_t pos = rx_buffer.getSize()/2;
+      size_t pos = rx_buffer.getSize()/2 - len;
       // Round to nearest frame
-      pos = (pos / USBD_AUDIO_RX_CHANNELS - 1) * USBD_AUDIO_RX_CHANNELS;
+      pos = (pos / USBD_AUDIO_RX_CHANNELS) * USBD_AUDIO_RX_CHANNELS;
       rx_buffer.setWriteIndex(pos);
     }
-    // we are required to support null packets: len may be zero
-    size_t len = USBD_LL_GetRxDataSize(pdev, AUDIO_RX_EP) / sizeof(audio_t);
 
     size_t capacity = rx_buffer.getWriteCapacity();
     capacity += codec.getSampleCounter();
