@@ -8,103 +8,108 @@
 #define FLOW_ASSERT(x, y)
 #endif
 
-// #ifdef DEBUG_CIRCULAR_BUFFER
-// #define FLOW_ASSERT(x, y) ASSERT(x, y)
-// #else
-// #define FLOW_ASSERT(x, y)
-// // #define FLOW_ASSERT(x, y) if(!x){debugMessage(y, this->getReadCapacity(), this->getWriteCapacity());}
-// #endif
-
-template<typename T>
+template<typename DataType, typename IndexType = size_t>
 class CircularBuffer {
 protected:
-  T* data;
-  size_t size;
-  volatile size_t writepos = 0;
-  volatile size_t readpos = 0;
+  DataType* data;
+  IndexType size;
+  IndexType writepos = 0;
+  IndexType readpos = 0;
+  bool empty = true;
 public:
   CircularBuffer(): data(NULL), size(0){}
-  CircularBuffer(T* data, size_t size): data(data), size(size){}
+  CircularBuffer(DataType* data, IndexType size): data(data), size(size){}
 
-  void setData(T* data, size_t len) {
+  void setData(DataType* data, IndexType len) {
     this->data = data;
     size = len;
   }
 
-  size_t getSize() const {
+  IndexType getSize() const {
     return size;
   }
 
-  T* getData() {
+  DataType* getData() {
     return data;
   }
   
   bool isEmpty() const {
-    return writepos == readpos;
+    return empty;
+  }
+  
+  bool isFull() const {
+    return (writepos == readpos) && !empty;
   }
 
-  void write(T c){
+  void write(DataType c){
+    FLOW_ASSERT(getWriteCapacity() > 0, "overflow");
     data[writepos++] = c;
     if(writepos >= size)
       writepos = 0;
+    empty = false;
   }
 
-  void write(T* source, size_t len){
+  void write(DataType* source, IndexType len){
     FLOW_ASSERT(getWriteCapacity() >= len, "overflow");
-    T* dest = getWriteHead();
-    size_t rem = size-writepos;
-    if(len > rem){
-      memcpy(dest, source, rem*sizeof(T));
+    DataType* dest = getWriteHead();
+    IndexType rem = size-writepos;
+    if(len >= rem){
+      memcpy(dest, source, rem*sizeof(DataType));
       writepos = len-rem;
-      memcpy(data, source+rem, writepos*sizeof(T));
+      memcpy(data, source+rem, writepos*sizeof(DataType));
     }else{
-      memcpy(dest, source, len*sizeof(T));
+      memcpy(dest, source, len*sizeof(DataType));
       writepos += len;
     }
+    empty = false;
   }
     
-  void writeAt(size_t index, T value){
+  void writeAt(IndexType index, DataType value){
     data[index % size] = value;
   }
 
-  void overdub(T c){
+  void overdub(DataType c){
     data[writepos++] += c;
     if(writepos >= size)
       writepos = 0;
+    empty = false;
   }
 
-  void overdubAt(size_t index, T value){
+  void overdubAt(IndexType index, DataType value){
     data[index % size] += value;
   }
 
-  T read(){
-    T c = data[readpos++];
+  DataType read(){
+    FLOW_ASSERT(getReadCapacity() > 0, "underflow");
+    DataType c = data[readpos++];
     if(readpos >= size)
       readpos = 0;
+    empty = readpos == writepos;
     return c;
   }
 
-  void read(T* dst, size_t len){
+  void read(DataType* dst, IndexType len){
     FLOW_ASSERT(getReadCapacity() >= len, "underflow");
-    T* src = getReadHead();
-    size_t rem = size-readpos;
+    DataType* src = getReadHead();
+    IndexType rem = size-readpos;
     if(len > rem){
-      memcpy(dst, src, rem*sizeof(T));
+      memcpy(dst, src, rem*sizeof(DataType));
       readpos = len-rem;
-      memcpy(dst+rem, data, readpos*sizeof(T));
+      memcpy(dst+rem, data, readpos*sizeof(DataType));
     }else{
-      memcpy(dst, src, len*sizeof(T));
+      memcpy(dst, src, len*sizeof(DataType));
       readpos += len;
     }
+    empty = readpos == writepos;
   }
   
-  T readAt(size_t index){
+  DataType readAt(IndexType index){
     return data[index % size];
   }
 
   void skipUntilLast(char c){
-    T* src = getReadHead();
-    size_t rem = size-readpos;
+    DataType* src = getReadHead();
+    IndexType rem = size-readpos;
     for(int i=0; i<rem; ++i){
       if(src[i] != c){
 	readpos += i;
@@ -118,40 +123,43 @@ public:
 	return;
       }
     }
+    empty = readpos == writepos;
   }
 
-  size_t getWriteIndex(){
+  IndexType getWriteIndex(){
     return writepos;
   }
 
-  void setWriteIndex(size_t pos){
+  void setWriteIndex(IndexType pos){
     writepos = pos % size;
   }
 
-  T* getWriteHead(){
+  DataType* getWriteHead(){
     return data+writepos;
   }
 
   void moveWriteHead(int32_t samples){
     FLOW_ASSERT(getWriteCapacity() >= samples, "overflow");
     writepos = (writepos + samples) % size;
+    empty = false;
   }
 
-  size_t getReadIndex(){
+  IndexType getReadIndex(){
     return readpos;
   }
 
-  void setReadIndex(size_t pos){
+  void setReadIndex(IndexType pos){
     readpos = pos % size;
   }
 
-  T* getReadHead(){
+  DataType* getReadHead(){
     return data+readpos;
   }
 
   void moveReadHead(int32_t samples){
     FLOW_ASSERT(getReadCapacity() < samples, "underflow");
     readpos = (readpos + samples) % size;
+    empty = readpos == writepos;
   }
 
   /**
@@ -164,61 +172,62 @@ public:
   /**
    * Get the read index expressed as delay behind the write index.
    */
-  int getDelay(){
+  IndexType getDelay() const {
     return (writepos-readpos+size) % size;
   }
 
   /**
    * Write to buffer and read with a delay
    */
-  void delay(T* in, T* out, size_t len, int delay_samples){
+  void delay(DataType* in, DataType* out, IndexType len, int delay_samples){
     setDelay(delay_samples); // set delay relative to where we start writing
     write(in, len);
     read(out, len);
   }
 
-  size_t getReadCapacity(){
-    return (writepos + size - readpos) % size;
+  IndexType getReadCapacity() const {
+    return size - getWriteCapacity();
   }
 
-  size_t getWriteCapacity(){
-    return size - getReadCapacity();
+  IndexType getWriteCapacity() const {
+    return size*empty + (readpos + size - writepos) % size;
   }
 
-  size_t getContiguousWriteCapacity(){
+  IndexType getContiguousWriteCapacity() const {
     if(writepos < readpos)
       return readpos - writepos;
     else
       return size - writepos;
   }
 
-  size_t getContiguousReadCapacity(){
-    if(writepos < readpos)
-      return size - readpos;
-    else
+  IndexType getContiguousReadCapacity() const {
+    if(writepos > readpos)
       return writepos - readpos;
+    else
+      return size - readpos;
   }
 
-  void setAll(const T value){
-    for(size_t i=0; i<size; ++i)
+  void setAll(const DataType value){
+    for(IndexType i=0; i<size; ++i)
       data[i] = value;
   }
 
   void reset(){
     readpos = writepos = 0;
+    empty = true;
   }
 
   void clear(){
     setAll(0);
   }
 
-  static CircularBuffer<T>* create(size_t len){
-    CircularBuffer<T>* obj = new CircularBuffer<T>(new T[len], len);
+  static CircularBuffer<DataType>* create(IndexType len){
+    CircularBuffer<DataType>* obj = new CircularBuffer<DataType>(new DataType[len], len);
     obj->clear();
     return obj;
   }
 
-  static void destroy(CircularBuffer<T>* obj){
+  static void destroy(CircularBuffer<DataType>* obj){
     delete[] obj->data;
     delete obj;
   }
