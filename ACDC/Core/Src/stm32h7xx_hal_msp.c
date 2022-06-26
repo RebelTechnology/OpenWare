@@ -147,7 +147,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     __HAL_LINKDMA(hadc,DMA_Handle,hdma_adc1);
 
     /* ADC1 interrupt Init */
-    HAL_NVIC_SetPriority(ADC_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(ADC_IRQn, 10, 0);
     HAL_NVIC_EnableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC1_MspInit 1 */
 
@@ -267,7 +267,7 @@ void HAL_QSPI_MspInit(QSPI_HandleTypeDef* hqspi)
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
     /* QUADSPI interrupt Init */
-    HAL_NVIC_SetPriority(QUADSPI_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(QUADSPI_IRQn, 10, 0);
     HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
   /* USER CODE BEGIN QUADSPI_MspInit 1 */
 
@@ -397,7 +397,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     __HAL_LINKDMA(hspi,hdmatx,hdma_spi3_tx);
 
     /* SPI3 interrupt Init */
-    HAL_NVIC_SetPriority(SPI3_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(SPI3_IRQn, 10, 0);
     HAL_NVIC_EnableIRQ(SPI3_IRQn);
   /* USER CODE BEGIN SPI3_MspInit 1 */
 
@@ -851,7 +851,7 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* hpcd)
     /* Peripheral clock enable */
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
     /* USB_OTG_FS interrupt Init */
-    HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(OTG_FS_IRQn, 6, 0);
     HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
   /* USER CODE BEGIN USB_OTG_FS_MspInit 1 */
 

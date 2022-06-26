@@ -480,7 +480,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Init.FirstBit = SAI_FIRSTBIT_MSB;
   hsai_BlockA1.Init.ClockStrobing = SAI_CLOCKSTROBING_RISINGEDGE;
   hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
-  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_ENABLE;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA1.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_48K;
@@ -510,7 +510,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.FirstBit = SAI_FIRSTBIT_MSB;
   hsai_BlockB1.Init.ClockStrobing = SAI_CLOCKSTROBING_FALLINGEDGE;
   hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
-  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_ENABLE;
+  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
   hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
@@ -1016,10 +1016,10 @@ static void MX_DMA_Init(void)
   HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
   /* DMA1_Stream2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 10, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
   /* DMA1_Stream3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 10, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
 
 }
