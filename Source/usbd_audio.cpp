@@ -1096,7 +1096,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
     }
 
     // Decide if we should send one set of samples more or less than expected
-    constexpr size_t margin = 1.5f * AUDIO_TX_PACKET_SIZE/sizeof(audio_t);
+    constexpr size_t margin = 1.25f * AUDIO_TX_PACKET_SIZE/sizeof(audio_t);
     if(capacity && capacity < margin){
       // Read capacity too low: slow down
       len -= USBD_AUDIO_TX_CHANNELS;
