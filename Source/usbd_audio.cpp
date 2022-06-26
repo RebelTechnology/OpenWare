@@ -20,9 +20,6 @@
 
 #include "message.h"
 
-// #ifdef DEBUG
-// #define FLOW_ASSERT(x, y) if(!(x)){debugMessage(y, usbd_rx_flow, usbd_tx_flow, this->getWriteCapacity());}
-// #endif
 #include "CircularBuffer.h"
 #include "Codec.h"
 
@@ -1084,7 +1081,11 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
       // It is the first time DataIn is called since tx was activated
       haudio->audio_tx_active = 1;
       // Initialise read position to 1/2 buffer from current write position.
-      rx_buffer.setReadIndex(rx_buffer.getWriteIndex() + rx_buffer.getSize()/2);
+      size_t pos = tx_buffer.getWriteIndex() + tx_buffer.getSize()/2;
+      // pos = (pos / len) * len; // Round to nearest packet
+      // Round to nearest frame
+      pos = (pos / USBD_AUDIO_TX_CHANNELS) * USBD_AUDIO_TX_CHANNELS;
+      tx_buffer.setReadIndex(pos);
       capacity = 0;
     }
     // decide if we should send one set of samples more or less than expected
@@ -1482,7 +1483,10 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
       rx_buffer.reset();
       rx_buffer.clear();
       // set write head to provide 1/2 buffer margin
-      rx_buffer.moveWriteHead(rx_buffer.getSize()/2);
+      size_t pos = rx_buffer.getSize()/2;
+      // Round to nearest frame
+      pos = (pos / USBD_AUDIO_RX_CHANNELS) * USBD_AUDIO_RX_CHANNELS;
+      rx_buffer.setWriteIndex(pos);
       // set write head to provide one packet margin
       // rx_buffer.moveWriteHead(AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
     }
