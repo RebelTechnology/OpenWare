@@ -1,6 +1,7 @@
 #include "main.h"
 #include "stm32h7xx_hal.h"
 
+#define OWL_ACDC
 #define OWL_XIBECA
 #define HARDWARE_ID                  XIBECA_HARDWARE
 #define HARDWARE_VERSION             "AC/DC"
@@ -64,7 +65,7 @@
 #define USE_USBD_FS
 #define USBD_AUDIO_TX_CHANNELS      4
 #define USBD_AUDIO_RX_CHANNELS      4
-#define USBD_AUDIO_BUFFER_PACKETS   4
+#define USBD_AUDIO_BUFFER_PACKETS   6
 
 #define AUDIO_SAMPLINGRATE          48000
 
