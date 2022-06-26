@@ -28,7 +28,7 @@ CircularBuffer<audio_t> rx_buffer;
 CircularBuffer<audio_t> tx_buffer;
 
 void usbd_audio_error(const char* msg, int diff){
-  size_t samples = codec.getSampleCounter();
+  size_t samples = 0; // codec.getSampleCounter();
   float rx = (rx_buffer.getWriteCapacity()+samples)*1.0f/rx_buffer.getSize();
   float tx = (tx_buffer.getReadCapacity()+samples)*1.0f/tx_buffer.getSize();
   debugMessage(msg, rx, tx, (float)diff);
@@ -1081,26 +1081,26 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
       // It is the first time DataIn is called since tx was activated
       haudio->audio_tx_active = 1;
       // Initialise read position to 1/2 buffer from current write position.
-      size_t pos = tx_buffer.getWriteIndex() + tx_buffer.getSize()/2;
-      // pos = (pos / len) * len; // Round to nearest packet
+      // size_t pos = tx_buffer.getWriteIndex() + tx_buffer.getSize()/2;
+      size_t pos = tx_buffer.getWriteIndex() + tx_buffer.getSize()/2 + len;
       // Round to nearest frame
       pos = (pos / USBD_AUDIO_TX_CHANNELS) * USBD_AUDIO_TX_CHANNELS;
       tx_buffer.setReadIndex(pos);
       capacity = 0;
     }
-    // decide if we should send one set of samples more or less than expected
-    constexpr size_t margin = 1.25f * AUDIO_TX_PACKET_SIZE/sizeof(audio_t);
+    // Decide if we should send one set of samples more or less than expected
+    constexpr size_t margin = 1.5f * AUDIO_TX_PACKET_SIZE/sizeof(audio_t);
     if(capacity && capacity < margin){
-      // read capacity too low: slow down
+      // Read capacity too low: slow down
       len -= USBD_AUDIO_TX_CHANNELS;
       if(capacity < len){
-        // tx buffer underflow
+	// tx buffer underflow
 	usbd_audio_error("tx unf", len - capacity);
 	// Round down to nearest frame
 	len = (capacity / USBD_AUDIO_TX_CHANNELS) * USBD_AUDIO_TX_CHANNELS;
       }
     }else if(tx_buffer.getSize() - capacity < margin){
-      // write capacity too low: speed up
+      // Write capacity too low: speed up
       len += USBD_AUDIO_TX_CHANNELS;
     }
     tx_buffer.read((audio_t*)haudio->audio_tx_transmit, len);
@@ -1482,13 +1482,11 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum) {
       usbd_audio_rx_start_callback(USBD_AUDIO_RX_FREQ, USBD_AUDIO_RX_CHANNELS, &rx_buffer);
       rx_buffer.reset();
       rx_buffer.clear();
-      // set write head to provide 1/2 buffer margin
+      // Set write head to provide 1/2 buffer margin
       size_t pos = rx_buffer.getSize()/2;
       // Round to nearest frame
-      pos = (pos / USBD_AUDIO_RX_CHANNELS) * USBD_AUDIO_RX_CHANNELS;
+      pos = (pos / USBD_AUDIO_RX_CHANNELS - 1) * USBD_AUDIO_RX_CHANNELS;
       rx_buffer.setWriteIndex(pos);
-      // set write head to provide one packet margin
-      // rx_buffer.moveWriteHead(AUDIO_RX_PACKET_SIZE/sizeof(audio_t));
     }
     // we are required to support null packets: len may be zero
     size_t len = USBD_LL_GetRxDataSize(pdev, AUDIO_RX_EP) / sizeof(audio_t);
