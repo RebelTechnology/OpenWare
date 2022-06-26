@@ -183,6 +183,8 @@ uint8_t usbd_midi_connected(void);
 uint8_t usbd_midi_ready(void);
 void usbd_audio_error(const char* msg, int diff);
 
+void usbd_audio_sof_callback(void);
+
 #ifdef __cplusplus
 }
 #endif
