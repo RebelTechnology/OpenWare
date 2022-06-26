@@ -1363,6 +1363,28 @@ static uint8_t  USBD_AUDIO_EP0_TxReady (USBD_HandleTypeDef *pdev)
   return USBD_OK;
 }
 
+// Called from timer connected to internal USB SOF trigger
+// e.g. TIM5 TIM_TS_ITR8 SOF interrupt
+// or from USB SOF interrupt
+void usbd_audio_sof_callback(void){
+#ifdef USE_USBD_RX_FB
+  USBD_AUDIO_HandleTypeDef* haudio = &usbd_audio_handle;
+  // number of samples since last request (or 0 if unknown)
+  int samples = usbd_audio_get_rx_count(); // across channels and fb rate
+  samples *= (1 << (14 - FB_REFRESH) ); // convert to n.14 format
+  samples /= AUDIO_CHANNELS;
+  int current = haudio->fb_data.val;
+  if(std::abs(current - samples) < 0x4000){ // maximum 1 sample difference from current setting
+    haudio->fb_data.val = samples;
+  }else if(std::abs(current - samples * 2) < 0x4000){
+    haudio->fb_data.val = samples * 2; // adjust for devices with 1/2 readings
+  }else{
+    size_t capacity = rx_buffer.getWriteCapacity() + codec.getSampleCounter();
+    debugMessage("fb", haudio->fb_data.val*1.0f/(1<<14), samples*1.0f/(1<<14));
+  }
+#endif
+}
+
 /**
   * @brief  USBD_AUDIO_SOF
   *         handle SOF event
@@ -1375,27 +1397,9 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev) {
   haudio = (USBD_AUDIO_HandleTypeDef*)pdev->pClassData;  
 #if defined(USE_USBD_RX_FB)
   static uint32_t sof_count = 0;
-  if(haudio->audio_rx_active){
-    if(++sof_count == FB_RATE){
-      sof_count = 0;
-      // number of samples since last request (or 0 if unknown)
-      int samples = usbd_audio_get_rx_count(); // across channels and fb rate
-      samples *= (1 << (14 - FB_REFRESH) ); // convert to n.14 format
-      samples /= AUDIO_CHANNELS;
-      int current = haudio->fb_data.val;
-      if(std::abs(current - samples) < 0x4000){ // maximum 1 sample difference from current setting
-	haudio->fb_data.val = samples;
-      }else if(std::abs(current - samples * 2) < 0x4000){
-	haudio->fb_data.val = samples * 2; // adjust for devices with 1/2 readings
-      }
-      // else {
-      // 	size_t capacity = rx_buffer.getWriteCapacity() + codec.getSampleCounter();
-      //   // USBD_DbgLog("fb %f %f %f", haudio->fb_data.val*1.0f/(1<<14), samples*1.0f/(1<<14), capacity*1.0f/rx_buffer.getSize());
-      // 	debugMessage("fb", haudio->fb_data.val*1.0f/(1<<14), samples*1.0f/(1<<14), capacity*1.0f/rx_buffer.getSize());
-      // }
-    }
-  }else{
+  if(++sof_count == FB_RATE){
     sof_count = 0;
+    usbd_audio_sof_callback();
   }
 #endif
   return USBD_OK;

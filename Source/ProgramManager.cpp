@@ -72,7 +72,7 @@ void usbd_audio_rx_start_callback(size_t rate, uint8_t channels, void* cb){
   // usbd_rx->reset();
   // usbd_rx->clear();
   // usbd_rx->moveReadHead(usbd_rx->getSize()/2);
-  usbd_audio_rx_count = 0;
+  // usbd_audio_rx_count = 0;
   memset(tx_levels, 0, sizeof(tx_levels));
 #ifdef DEBUG
   printf("start rx %u %u %u\n", rate, channels, usbd_rx->getSize());
@@ -88,9 +88,9 @@ void usbd_audio_rx_stop_callback(){
 }
 
 void usbd_rx_convert(int32_t* dst, size_t len){
+  usbd_audio_rx_count += len;
   CircularBuffer<audio_t>* rx = usbd_rx;
   if(rx){
-    usbd_audio_rx_count += len;
     size_t cap = rx->getReadCapacity();
     if(cap < len){
       // rx buffer underflow
