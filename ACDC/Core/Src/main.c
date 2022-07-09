@@ -311,12 +311,12 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2FRACN = 6144;
   PeriphClkInitStruct.PLL3.PLL3M = 7;
   PeriphClkInitStruct.PLL3.PLL3N = 172;
-  PeriphClkInitStruct.PLL3.PLL3P = 2;
-  PeriphClkInitStruct.PLL3.PLL3Q = 2;
+  PeriphClkInitStruct.PLL3.PLL3P = 8;
+  PeriphClkInitStruct.PLL3.PLL3Q = 8;
   PeriphClkInitStruct.PLL3.PLL3R = 2;
   PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_0;
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
-  PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
+  PeriphClkInitStruct.PLL3.PLL3FRACN = 262;
   PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL3;
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
@@ -1147,8 +1147,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC11 PC14 PC8 PC4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_14|GPIO_PIN_8|GPIO_PIN_4;
+  /*Configure GPIO pins : PC11 PC14 PC9 PC8
+                           PC4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_14|GPIO_PIN_9|GPIO_PIN_8
+                          |GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
