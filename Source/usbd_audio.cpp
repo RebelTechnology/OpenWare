@@ -27,12 +27,17 @@
 CircularBuffer<audio_t> rx_buffer;
 CircularBuffer<audio_t> tx_buffer;
 
+#define DEBUG_AUDIO
+
 void usbd_audio_error(const char* msg, int diff){
   size_t samples = 0; // codec.getSampleCounter();
   float rx = (rx_buffer.getWriteCapacity()+samples)*1.0f/rx_buffer.getSize();
   float tx = (tx_buffer.getReadCapacity()+samples)*1.0f/tx_buffer.getSize();
+#ifdef DEBUG_AUDIO
   debugMessage(msg, rx, tx, (float)diff);
-  // USBD_ErrLog("%s %f %f %d", msg, rx, tx, diff);
+#else
+  USBD_ErrLog("%s %f %f %d", msg, rx, tx, diff);
+#endif
 }
 
 #define AUDIO_SAMPLE_FREQ(frq)           (uint8_t)(frq), (uint8_t)((frq >> 8)), (uint8_t)((frq >> 16))
@@ -1385,9 +1390,11 @@ void usbd_audio_sof_callback(void){
     haudio->fb_data.val = samples;
   }else if(std::abs(current - samples * 2) < 0x4000){
     haudio->fb_data.val = samples * 2; // adjust for devices with 1/2 readings
+#ifdef DEBUG_AUDIO
   }else if(haudio->fb_data.val){
     size_t capacity = rx_buffer.getWriteCapacity() + codec.getSampleCounter();
     debugMessage("fb", haudio->fb_data.val*1.0f/(1<<14), samples*1.0f/(1<<14));
+#endif
   }
 #endif
 }
