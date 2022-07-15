@@ -90,8 +90,8 @@ void codec_init(){
   /* } */
   delay(10);
 
-  /* codec_write(64, 0b11000000); // Normal operation, Auto rate */
-  codec_write(64, 0b11000001); // Normal operation, Single rate 512fs
+  codec_write(64, 0b11000000); // Normal operation, Auto rate
+  /* codec_write(64, 0b11000001); // Normal operation, Single rate 512fs */
   /* codec_write(64, 0b11000010); // Normal operation, Dual rate 256fs */
 
   /* Register: DAC Control 1 */
@@ -128,8 +128,8 @@ void codec_init(){
   /* Data formats, see Table 11 p.33 */
 
   /* Register: ADC Control 1 */
-  /* codec_write(80, 0b00000000); // Auto rate mode */
-  codec_write(80, 0b00000001); // Single rate mode 512fs
+  codec_write(80, 0b00000000); // Auto rate mode
+  /* codec_write(80, 0b00000001); // Single rate mode 512fs */
   /* codec_write(80, 0b00000010); // Dual rate mode 256fs */
   codec_write(81, 0b00000110); // Slave mode 24-bit I2S mode TDM format 
   /* codec_write(81, 0b00000111); // Slave mode 24-bit left-justified mode TDM format */
