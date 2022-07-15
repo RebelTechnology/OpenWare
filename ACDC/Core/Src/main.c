@@ -311,8 +311,8 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2FRACN = 6144;
   PeriphClkInitStruct.PLL3.PLL3M = 7;
   PeriphClkInitStruct.PLL3.PLL3N = 172;
-  PeriphClkInitStruct.PLL3.PLL3P = 8;
-  PeriphClkInitStruct.PLL3.PLL3Q = 8;
+  PeriphClkInitStruct.PLL3.PLL3P = 16;
+  PeriphClkInitStruct.PLL3.PLL3Q = 16;
   PeriphClkInitStruct.PLL3.PLL3R = 2;
   PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_0;
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
@@ -481,7 +481,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Init.ClockStrobing = SAI_CLOCKSTROBING_RISINGEDGE;
   hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
-  hsai_BlockA1.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
+  hsai_BlockA1.Init.NoDivider = SAI_MASTERDIVIDER_DISABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_48K;
   hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
