@@ -58,10 +58,9 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc3;
+extern ADC_HandleTypeDef hadc3;
 extern DMA_HandleTypeDef hdma_sai1_a;
 extern DMA_HandleTypeDef hdma_sai1_b;
-extern SAI_HandleTypeDef hsai_BlockA1;
-extern SAI_HandleTypeDef hsai_BlockB1;
 extern DMA_HandleTypeDef hdma_usart2_rx;
 extern DMA_HandleTypeDef hdma_usart2_tx;
 extern UART_HandleTypeDef huart2;
@@ -107,34 +106,6 @@ void EXTI2_IRQHandler(void)
   /* USER CODE BEGIN EXTI2_IRQn 1 */
 
   /* USER CODE END EXTI2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA1 stream0 global interrupt.
-  */
-void DMA1_Stream0_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
-
-  /* USER CODE END DMA1_Stream0_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_sai1_a);
-  /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream0_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA1 stream1 global interrupt.
-  */
-void DMA1_Stream1_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
-
-  /* USER CODE END DMA1_Stream1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_sai1_b);
-  /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream1_IRQn 1 */
 }
 
 /**
@@ -232,6 +203,34 @@ void DMA2_Stream0_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA2 stream1 global interrupt.
+  */
+void DMA2_Stream1_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream1_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_sai1_a);
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 stream4 global interrupt.
+  */
+void DMA2_Stream4_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream4_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream4_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_sai1_b);
+  /* USER CODE BEGIN DMA2_Stream4_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream4_IRQn 1 */
+}
+
+/**
   * @brief This function handles USB On The Go HS global interrupt.
   */
 void OTG_HS_IRQHandler(void)
@@ -246,21 +245,6 @@ void OTG_HS_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles SAI1 global interrupt.
-  */
-void SAI1_IRQHandler(void)
-{
-  /* USER CODE BEGIN SAI1_IRQn 0 */
-
-  /* USER CODE END SAI1_IRQn 0 */
-  HAL_SAI_IRQHandler(&hsai_BlockA1);
-  HAL_SAI_IRQHandler(&hsai_BlockB1);
-  /* USER CODE BEGIN SAI1_IRQn 1 */
-
-  /* USER CODE END SAI1_IRQn 1 */
-}
-
-/**
   * @brief This function handles USB On The Go FS global interrupt.
   */
 void OTG_FS_IRQHandler(void)
@@ -272,6 +256,20 @@ void OTG_FS_IRQHandler(void)
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
 
   /* USER CODE END OTG_FS_IRQn 1 */
+}
+
+/**
+  * @brief This function handles ADC3 global interrupt.
+  */
+void ADC3_IRQHandler(void)
+{
+  /* USER CODE BEGIN ADC3_IRQn 0 */
+
+  /* USER CODE END ADC3_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc3);
+  /* USER CODE BEGIN ADC3_IRQn 1 */
+
+  /* USER CODE END ADC3_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

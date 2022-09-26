@@ -157,10 +157,9 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 
     __HAL_LINKDMA(hadc,DMA_Handle,hdma_adc3);
 
-    /* ADC1 interrupt Init */
-    HAL_NVIC_SetPriority(ADC_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(ADC_IRQn);
-
+    /* ADC3 interrupt Init */
+    HAL_NVIC_SetPriority(ADC3_IRQn, 10, 0);
+    HAL_NVIC_EnableIRQ(ADC3_IRQn);
   /* USER CODE BEGIN ADC3_MspInit 1 */
 
   /* USER CODE END ADC3_MspInit 1 */
@@ -196,6 +195,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
 
     /* ADC3 DMA DeInit */
     HAL_DMA_DeInit(hadc->DMA_Handle);
+
+    /* ADC3 interrupt DeInit */
+    HAL_NVIC_DisableIRQ(ADC3_IRQn);
   /* USER CODE BEGIN ADC3_MspDeInit 1 */
 
   /* USER CODE END ADC3_MspDeInit 1 */
@@ -604,7 +606,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     __HAL_LINKDMA(huart,hdmatx,hdma_usart2_tx);
 
     /* USART2 interrupt Init */
-    HAL_NVIC_SetPriority(USART2_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(USART2_IRQn, 10, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
   /* USER CODE BEGIN USART2_MspInit 1 */
 
@@ -679,7 +681,6 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* hpcd)
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**USB_OTG_FS GPIO Configuration
-    PA9     ------> USB_OTG_FS_VBUS
     PA11     ------> USB_OTG_FS_DM
     PA12     ------> USB_OTG_FS_DP
     */
@@ -693,7 +694,7 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* hpcd)
     /* Peripheral clock enable */
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
     /* USB_OTG_FS interrupt Init */
-    HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(OTG_FS_IRQn, 10, 0);
     HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
   /* USER CODE BEGIN USB_OTG_FS_MspInit 1 */
 
@@ -746,7 +747,7 @@ void HAL_HCD_MspInit(HCD_HandleTypeDef* hhcd)
     /* Peripheral clock enable */
     __HAL_RCC_USB_OTG_HS_CLK_ENABLE();
     /* USB_OTG_HS interrupt Init */
-    HAL_NVIC_SetPriority(OTG_HS_IRQn, 8, 0);
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 10, 0);
     HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
   /* USER CODE BEGIN USB_OTG_HS_MspInit 1 */
 
@@ -772,11 +773,10 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* hpcd)
     __HAL_RCC_USB_OTG_FS_CLK_DISABLE();
 
     /**USB_OTG_FS GPIO Configuration
-    PA9     ------> USB_OTG_FS_VBUS
     PA11     ------> USB_OTG_FS_DM
     PA12     ------> USB_OTG_FS_DP
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_11|GPIO_PIN_12);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
 
     /* USB_OTG_FS interrupt DeInit */
     HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
@@ -1060,10 +1060,6 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     if (SAI1_client == 0)
     {
        __HAL_RCC_SAI1_CLK_ENABLE();
-
-    /* Peripheral interrupt init*/
-    HAL_NVIC_SetPriority(SAI1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(SAI1_IRQn);
     }
     SAI1_client ++;
 
@@ -1088,15 +1084,15 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 
       /* Peripheral DMA init*/
 
-    hdma_sai1_a.Instance = DMA1_Stream0;
+    hdma_sai1_a.Instance = DMA2_Stream1;
     hdma_sai1_a.Init.Request = DMA_REQUEST_SAI1_A;
-    hdma_sai1_a.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_sai1_a.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_sai1_a.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_sai1_a.Init.MemInc = DMA_MINC_ENABLE;
     hdma_sai1_a.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_sai1_a.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_sai1_a.Init.Mode = DMA_CIRCULAR;
-    hdma_sai1_a.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_sai1_a.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_sai1_a.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     if (HAL_DMA_Init(&hdma_sai1_a) != HAL_OK)
     {
@@ -1126,10 +1122,6 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
       if (SAI1_client == 0)
       {
        __HAL_RCC_SAI1_CLK_ENABLE();
-
-      /* Peripheral interrupt init*/
-      HAL_NVIC_SetPriority(SAI1_IRQn, 0, 0);
-      HAL_NVIC_EnableIRQ(SAI1_IRQn);
       }
     SAI1_client ++;
 
@@ -1145,7 +1137,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 
       /* Peripheral DMA init*/
 
-    hdma_sai1_b.Instance = DMA1_Stream1;
+    hdma_sai1_b.Instance = DMA2_Stream4;
     hdma_sai1_b.Init.Request = DMA_REQUEST_SAI1_B;
     hdma_sai1_b.Init.Direction = DMA_PERIPH_TO_MEMORY;
     hdma_sai1_b.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -1153,7 +1145,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     hdma_sai1_b.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_sai1_b.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_sai1_b.Init.Mode = DMA_CIRCULAR;
-    hdma_sai1_b.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_sai1_b.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_sai1_b.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     if (HAL_DMA_Init(&hdma_sai1_b) != HAL_OK)
     {
@@ -1177,8 +1169,6 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
       {
       /* Peripheral clock disable */
        __HAL_RCC_SAI1_CLK_DISABLE();
-      /* SAI1 interrupt DeInit */
-      HAL_NVIC_DisableIRQ(SAI1_IRQn);
       }
 
     /**SAI1_A_Block_A GPIO Configuration
@@ -1201,8 +1191,6 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
       {
       /* Peripheral clock disable */
       __HAL_RCC_SAI1_CLK_DISABLE();
-    /* SAI1 interrupt DeInit */
-      HAL_NVIC_DisableIRQ(SAI1_IRQn);
       }
 
     /**SAI1_B_Block_B GPIO Configuration

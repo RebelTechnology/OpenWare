@@ -485,7 +485,7 @@ static void MX_SAI1_Init(void)
 
   /* USER CODE END SAI1_Init 1 */
   hsai_BlockA1.Instance = SAI1_Block_A;
-  hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_RX;
+  hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_TX;
   hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
@@ -789,12 +789,6 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
-  /* DMA1_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
   /* DMA1_Stream5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
@@ -804,6 +798,12 @@ static void MX_DMA_Init(void)
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 10, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* DMA2_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+  /* DMA2_Stream4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
 
 }
 
@@ -888,7 +888,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(DISPLAY_A_GPIO_Port, DISPLAY_A_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(DISPLAY_D_GPIO_Port, DISPLAY_D_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, DISPLAY_D_Pin|GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(DISPLAY_E_GPIO_Port, DISPLAY_E_Pin, GPIO_PIN_RESET);
@@ -954,12 +954,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : DISPLAY_D_Pin */
-  GPIO_InitStruct.Pin = DISPLAY_D_Pin;
+  /*Configure GPIO pins : DISPLAY_D_Pin PA9 */
+  GPIO_InitStruct.Pin = DISPLAY_D_Pin|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(DISPLAY_D_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA10 */
   GPIO_InitStruct.Pin = GPIO_PIN_10;
@@ -1011,13 +1011,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GATE_IN1_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 10, 0);
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 15, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 10, 0);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 15, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 10, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 15, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
