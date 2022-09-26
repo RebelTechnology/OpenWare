@@ -9,6 +9,16 @@
 #define USE_SPI_FLASH
 #define SPI_FLASH_HANDLE             hspi1
 
+#define DMA_RAM                      __attribute__ ((section (".dmadata")))
+#define USE_PLUS_RAM
+
+#ifndef DEBUG
+#define USE_ICACHE
+#define USE_DCACHE
+#endif
+
+#define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
+
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
@@ -32,7 +42,7 @@
 /* #define DIGITAL_BUS_ENABLED 1 */
 /* #define DIGITAL_BUS_FORWARD_MIDI 0 */
 
-#define USE_BKPSRAM
+/* #define USE_BKPSRAM */
 
 #define ADC_A 0
 #define ADC_B 1

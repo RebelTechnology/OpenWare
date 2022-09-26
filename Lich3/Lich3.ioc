@@ -23,6 +23,7 @@ ADC3.SamplingTime-1\#ChannelRegularConversion=ADC_SAMPLETIME_387CYCLES_5
 ADC3.SamplingTime-2\#ChannelRegularConversion=ADC_SAMPLETIME_387CYCLES_5
 ADC3.SamplingTime-3\#ChannelRegularConversion=ADC_SAMPLETIME_387CYCLES_5
 CORTEX_M7.IPParameters=default_mode_Activation
+CORTEX_M7.MPU_Control=__NULL
 CORTEX_M7.default_mode_Activation=1
 DAC1.DAC_Channel-DAC_OUT1=DAC_CHANNEL_1
 DAC1.DAC_Channel-DAC_OUT2=DAC_CHANNEL_2
