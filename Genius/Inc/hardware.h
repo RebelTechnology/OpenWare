@@ -28,7 +28,6 @@
 #define USE_SCREEN
 #define SSD1309
 #define OLED_DMA
-#define OLED_SOFT_CS
 #define OLED_SPI hspi2
 #define OLED_UPSIDE_DOWN
 
