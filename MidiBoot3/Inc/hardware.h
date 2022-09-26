@@ -15,7 +15,22 @@
   #define BOOT1_Pin GPIO_PIN_10
   #define BOOT1_GPIO_Port GPIOC
   #define USE_SPI_FLASH
+  #define SPI_FLASH_HANDLE             hspi5
   #define NO_INTERNAL_FLASH
+#elif defined OWL_LICH
+  #define HARDWARE_VERSION    "OWL Lich Boot"
+  #define HARDWARE_ID         LICH_HARDWARE
+  #define APPLICATION_ADDRESS 0x08020000
+  #define USE_BOOT1_PIN
+  #define BOOT1_GPIO_Port GPIOC
+  #define BOOT1_Pin  GPIO_PIN_10
+  #define USE_LED
+  #define LED1_Pin GPIO_PIN_7
+  #define LED1_GPIO_Port GPIOF
+  #define LED2_Pin GPIO_PIN_8
+  #define LED2_GPIO_Port GPIOF
+  #define USE_SPI_FLASH
+  #define SPI_FLASH_HANDLE             hspi1
 #elif defined OWL_MAGUS
   #define HARDWARE_VERSION    "OWL Magus Boot"
   #define HARDWARE_ID         MAGUS_HARDWARE
