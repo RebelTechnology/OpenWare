@@ -91,10 +91,6 @@ void onSetup(){
   graphics.begin(&params, &OLED_SPI);
 #endif
   progress_counter = 2000;
-#ifdef USE_USB_HOST
-  // enable USB Host power
-  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
-#endif
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM1, INT16_MAX/2);
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
@@ -196,16 +192,6 @@ void updateEncoders(){
 }
 
 void onLoop(void){
-#ifdef USE_USB_HOST
-  if(HAL_GPIO_ReadPin(USB_HOST_PWR_FAULT_GPIO_Port, USB_HOST_PWR_FAULT_Pin) == GPIO_PIN_RESET){
-    if(HAL_GPIO_ReadPin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin) == GPIO_PIN_SET){
-      HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);
-      error(USB_ERROR, "USBH PWR Fault");
-    }
-  }else{
-    MX_USB_HOST_Process();
-  }
-#endif
 #if defined USE_DCACHE
   // SCB_CleanInvalidateDCache_by_Addr((uint32_t*)graphics.params.user, sizeof(graphics.params.user));
 #endif

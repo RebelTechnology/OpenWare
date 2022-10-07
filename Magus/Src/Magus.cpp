@@ -145,11 +145,6 @@ void onSetup(){
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&params, &OLED_SPI);
 
-#ifdef USE_USB_HOST
-  // enable USB Host power
-  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
-#endif
-
   // Update LEDs brightness from settings
   // TLC5946_setRGB_DC(63, 19, 60);
   TLC5946_setAll_DC(settings.leds_brightness);
