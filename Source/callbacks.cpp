@@ -167,6 +167,10 @@ __weak void setup(){
 #ifdef USE_USB_HOST
   /* NOTE: we get frequent boot failures if host is called before device */
   MX_USB_HOST_Init();
+#if defined USB_HOST_PWR_EN_Pin
+  // enable USB Host power
+  HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_SET);
+#endif
 #endif
 }
 
