@@ -1,3 +1,8 @@
+22.5.rc2
+------
+
+* Fix USBH power initialisation
+
 22.5.rc1
 ------
 
