@@ -53,8 +53,10 @@ void codec_set_gain_out(int8_t volume){
   volume /= 10;
   if(volume > 8)
     ads_set_gain(ADS1298::GAIN_12X);
-  else if(volume > 4)
+  else if(volume > 6)
     ads_set_gain(ADS1298::GAIN_8X);
+  else if(volume > 4)
+    ads_set_gain(ADS1298::GAIN_6X);
   else if(volume > 2)
     ads_set_gain(ADS1298::GAIN_4X);
   else if(volume > 1)
