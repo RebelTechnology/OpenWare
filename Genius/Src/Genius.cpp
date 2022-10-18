@@ -114,7 +114,7 @@ void setGateValue(uint8_t ch, int16_t value){
 #define U12_MUL_U12(a,b) (__USAT(((uint32_t)(a)*(b))>>12, 12))
 static uint16_t scaleForDac(int16_t value){
   // return U12_MUL_U12(value + 70, 3521);
-  return value;
+  return __USAT(value, 12);
 }
 
 // void setAnalogValue(uint8_t ch, int16_t value){
