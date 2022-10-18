@@ -28,6 +28,13 @@
 #define max(a,b) ((a)>(b)?(a):(b))
 #endif
 
+#ifdef OWL_BIOSIGNALS
+extern "C" {
+  void ads_set_rld(uint8_t);
+  void ads_set_lod(uint8_t);
+}
+#endif
+
 static FirmwareLoader loader;
 
 MidiHandler::MidiHandler() : channel(MIDI_OMNI_CHANNEL) {
@@ -266,6 +273,16 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
     settings.expression_mode = value;
     break;    
 #endif
+#ifdef OWL_BIOSIGNALS
+  case HEXCODE(SYSEX_CONFIGURATION_RIGHT_LEG_DRIVE):
+    ads_set_rld(value);
+    debugMessage("Set RLD", (int)value);
+    break;
+  case HEXCODE(SYSEX_CONFIGURATION_LEAD_OFF_DETECTION):
+    ads_set_lod(value);
+    debugMessage("Set LOD", (int)value);
+    break;
+#endif    
   }
 }
 

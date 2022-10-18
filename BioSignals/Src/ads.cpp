@@ -202,6 +202,46 @@ int ads_read_single_sample(){
   return (spi_transfer(0) << 24) | (spi_transfer(0) << 16) | (spi_transfer(0) << 8);
 }
 
+uint32_t ads_get_status(){
+  return ads_status;
+}
+
+void ads_set_lod(uint8_t channels){
+// Sample code to set dc lead-off with pullup or pulldown resistors on all channels:
+// WREG LOFF 0x13 // Comparator threshold at 95% and 5%, pullup or pulldown resistor, dc lead-off
+// WREG CONFIG4 0x02 // Turn on dc lead-off comparators
+// WREG LOFF_SENSP 0xFF // Turn on the P-side of all channels for lead-off sensing
+// WREG LOFF_SENSN 0xFF // Turn on the N-side of all channels for lead-off sensing
+// Observe the status bits of the output data stream to monitor lead-off status.
+  if(channels){
+    ads_write_reg(ADS1298::LOFF, 0x13);
+    ads_write_reg(ADS1298::CONFIG4, 0x02);
+    ads_write_reg(ADS1298::LOFF_SENSP, channels);
+    ads_write_reg(ADS1298::LOFF_SENSN, channels);
+  }else{
+    ads_write_reg(ADS1298::LOFF_SENSN, 0);
+    ads_write_reg(ADS1298::LOFF_SENSP, 0);
+    ads_write_reg(ADS1298::CONFIG4, 0);
+    ads_write_reg(ADS1298::LOFF, 0);    
+  }
+}
+
+void ads_set_rld(uint8_t channels){
+// Sample code to choose RLD as an average of the first three channels.
+// WREG RLD_SENSP 0x07 // Select channel 1-3 P-side for RLD sensing
+// WREG RLD_SENSN 0x07 // Select channel 1-3 N-side for RLD sensing
+// WREG CONFIG3 b’x1xx 1100 // Turn on RLD amplifier, set internal RLDREF voltage
+  if(channels){
+    ads_write_reg(ADS1298::RLD_SENSP, channels);
+    ads_write_reg(ADS1298::RLD_SENSN, channels);
+    ads_write_reg(ADS1298::CONFIG3, ADS1298::PD_REFBUF | ADS1298::CONFIG3_const | ADS1298::RLDREF_INT | ADS1298::PD_RLD); // use default 2.4v reference with buffer enabled
+  }else{
+    ads_write_reg(ADS1298::CONFIG3, ADS1298::PD_REFBUF | ADS1298::CONFIG3_const);
+    ads_write_reg(ADS1298::RLD_SENSP, 0);
+    ads_write_reg(ADS1298::RLD_SENSN, 0);
+  }
+}
+
 void ads_process_samples(){
   ads_status = (ads_rx_buffer[0]<<24) | (ads_rx_buffer[1]<<16) | (ads_rx_buffer[2]<<8);
   // ads_samples[0] = (ads_rx_buffer[3]<<24) | (ads_rx_buffer[4]<<16) | (ads_rx_buffer[5]<<8);
