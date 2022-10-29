@@ -22,7 +22,8 @@ public:
   void sendSysEx(uint8_t* data, uint16_t size);
   void sendErrorMessage(const char* msg);
   void send(MidiMessage msg);
-  
+  void sendSysEx(MidiMessage msg);
+
   void transmit();
 };
 

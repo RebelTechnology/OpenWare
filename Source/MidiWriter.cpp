@@ -38,7 +38,7 @@ void MidiWriter::sendPitchBend(uint16_t value){
   send(MidiMessage::pb(channel, value));
 }
 
-void MidiWriter::sendSysEx(uint8_t* data, uint16_t size){
+void MidiWriter::sendSysEx(uint8_t *data, uint16_t size) {
   /* USB-MIDI devices transmit sysex messages in 4-byte packets which
    * contain a status byte and up to 3 bytes of the message itself.
    * If the message ends with fewer than 3 bytes, a different code is
@@ -46,18 +46,18 @@ void MidiWriter::sendSysEx(uint8_t* data, uint16_t size){
    * 0xF0 and trailing 0xF7.
    */
   MidiMessage packet(USB_COMMAND_SYSEX, SYSEX, MIDI_SYSEX_MANUFACTURER,
-		     uint8_t(MIDI_SYSEX_OWL_DEVICE | channel));
-  send(packet);
-  int count = size/3;
-  uint8_t* src = data;
-  while(count-- > 0){
+                     uint8_t(MIDI_SYSEX_OWL_DEVICE | channel));
+  sendSysEx(packet);
+  int count = size / 3;
+  uint8_t *src = data;
+  while(count-- > 0) {
     packet.data[1] = (*src++ & 0x7f);
     packet.data[2] = (*src++ & 0x7f);
     packet.data[3] = (*src++ & 0x7f);
-    send(packet);
+    sendSysEx(packet);
   }
   count = size % 3;
-  switch(count){
+  switch(count) {
   case 0:
     packet.data[0] = USB_COMMAND_SYSEX_EOX1;
     packet.data[1] = SYSEX_EOX;
@@ -77,7 +77,7 @@ void MidiWriter::sendSysEx(uint8_t* data, uint16_t size){
     packet.data[3] = SYSEX_EOX;
     break;
   }
-  send(packet);
+  sendSysEx(packet);
 }
 
 class MidiTransmitter {
@@ -128,7 +128,7 @@ public:
 UsbhMidiTransmitter usbh_midi;
 #endif
 
-#ifdef USE_BLE
+#ifdef USE_BLE_MIDI
 class BleMidiTransmitter : public MidiTransmitter {
 private:
   SerialBuffer<MIDI_OUTPUT_BUFFER_SIZE> buffer;
@@ -166,32 +166,48 @@ public:
 UartMidiTransmitter uart_midi DMA_RAM;
 #endif
 
-void MidiWriter::send(MidiMessage msg){
+void MidiWriter::send(MidiMessage msg) {
 #ifdef USE_USBD_MIDI
   usbd_midi.write(msg);
 #endif
 #ifdef USE_USBH_MIDI
   usbh_midi.write(msg);
 #endif
-#ifdef USE_BLE
+#ifdef USE_BLE_MIDI
   ble_midi.write(msg);
 #endif
 #ifdef USE_UART_MIDI_TX
   uart_midi.write(msg);
 #endif
-// #ifdef USE_DIGITALBUS
-//   bus_tx_frame(msg.data);
-// #endif /* USE_DIGITALBUS */
+  // #ifdef USE_DIGITALBUS
+  //   bus_tx_frame(msg.data);
+  // #endif /* USE_DIGITALBUS */
 }
 
-void MidiWriter::transmit(){
+void MidiWriter::sendSysEx(MidiMessage msg) {
+// sysex messages are not sent unless explicitly configured
+#ifdef USE_USBD_MIDI_SYSEX
+  usbd_midi.write(msg);
+#endif
+#ifdef USE_USBH_MIDI_SYSEX
+  usbh_midi.write(msg);
+#endif
+#ifdef USE_BLE_MIDI_SYSEX
+  ble_midi.write(msg);
+#endif
+#ifdef USE_UART_MIDI_TX_SYSEX
+  uart_midi.write(msg);
+#endif
+}
+
+void MidiWriter::transmit() {
 #ifdef USE_USBD_MIDI
   usbd_midi.transmit();
 #endif
 #ifdef USE_USBH_MIDI
   usbh_midi.transmit();
 #endif
-#ifdef USE_BLE
+#ifdef USE_BLE_MIDI
   ble_midi.transmit();
 #endif
 #ifdef USE_UART_MIDI_TX
