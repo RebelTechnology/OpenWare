@@ -1,6 +1,7 @@
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include "device.h"
+#include "OpenWareMidiControl.h"
 #include "Owl.h"
 #include "usb_device.h"
 
@@ -11,9 +12,10 @@
 #include "ble_midi.h"
 
 void onSetup(){
+#ifdef USE_BLE_MIDI
   ble_init();
+#endif
   setLed(1, NO_COLOUR);
-  MX_USB_DEVICE_Init();
 }
 
 void initLed(){
@@ -92,4 +94,22 @@ void onChangePin(uint16_t pin){
   }
 #endif
   }
+}
+
+void onLoop() {
+  // process lead off detection in ADS status word
+  static uint32_t previous_status = 0;
+	// status bits are 0b1100ppppppppnnnnnnnngggg
+	// p: positive ch, n: negative ch, g: gpio
+  uint32_t status = (ads_get_status() >> 4) & 0xffff;
+	// formatted to 0bppppppppnnnnnnnn
+	status = ((status >> 4) & 0xf0) & (status & 0x0f);
+	// formatted to 0bppppnnnn
+  if(previous_status != status) {
+    for(size_t i = 0; i < 8; ++i) {
+      if((previous_status ^ status) & (1 << i))
+        setButtonValue(BUTTON_1 + i, status & (1 << i));
+    }
+  }
+  previous_status = status;
 }

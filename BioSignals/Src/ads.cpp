@@ -206,23 +206,23 @@ uint32_t ads_get_status(){
   return ads_status;
 }
 
-void ads_set_lod(uint8_t channels){
-// Sample code to set dc lead-off with pullup or pulldown resistors on all channels:
-// WREG LOFF 0x13 // Comparator threshold at 95% and 5%, pullup or pulldown resistor, dc lead-off
-// WREG CONFIG4 0x02 // Turn on dc lead-off comparators
-// WREG LOFF_SENSP 0xFF // Turn on the P-side of all channels for lead-off sensing
-// WREG LOFF_SENSN 0xFF // Turn on the N-side of all channels for lead-off sensing
-// Observe the status bits of the output data stream to monitor lead-off status.
-  if(channels){
-    ads_write_reg(ADS1298::LOFF, 0x13);
-    ads_write_reg(ADS1298::CONFIG4, 0x02);
+void ads_set_lod(uint8_t channels) {
+  // Sample code to set dc lead-off with pullup or pulldown resistors on all channels:
+  // WREG LOFF 0x13 // Comparator threshold at 95% and 5%, pullup or pulldown resistor, dc lead-off
+  // WREG CONFIG4 0x02 // Turn on dc lead-off comparators
+  // WREG LOFF_SENSP 0xFF // Turn on the P-side of all channels for lead-off sensing
+  // WREG LOFF_SENSN 0xFF // Turn on the N-side of all channels for lead-off sensing
+  // Observe the status bits of the output data stream to monitor lead-off status.
+  if(channels) {
+    ads_write_reg(ADS1298::LOFF, ADS1298::VLEAD_OFF_EN | ADS1298::FLEAD_OFF1 | ADS1298::FLEAD_OFF0);
+    ads_write_reg(ADS1298::CONFIG4, ADS1298::PD_LOFF_COMP);
     ads_write_reg(ADS1298::LOFF_SENSP, channels);
     ads_write_reg(ADS1298::LOFF_SENSN, channels);
-  }else{
+  } else {
     ads_write_reg(ADS1298::LOFF_SENSN, 0);
     ads_write_reg(ADS1298::LOFF_SENSP, 0);
     ads_write_reg(ADS1298::CONFIG4, 0);
-    ads_write_reg(ADS1298::LOFF, 0);    
+    ads_write_reg(ADS1298::LOFF, 0);
   }
 }
 
