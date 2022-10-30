@@ -29,6 +29,12 @@ private:
   pin_t pin;
 public:
   Pin(GPIO_TypeDef* port, uint16_t pin) : port(port), pin(POSITION_VAL(pin)) {}
+  GPIO_TypeDef* getPort(){
+    return port;
+  }
+  pin_t getPin(){
+    return pin;
+  }
   bool get(){
     return port->IDR & (1<<pin);
   }
@@ -39,6 +45,7 @@ public:
     port->BSRR = (1<<(pin+16U));
   }
   void set(bool on){
+    // HAL_GPIO_WritePin(port, pin, on ? GPIO_PIN_SET : GPIO_PIN_RESET);
     port->BSRR = (1<<(pin+(16U*!on)));
   }
   void toggle(){
