@@ -32,7 +32,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- ADC_HandleTypeDef hadc3;
+ADC_HandleTypeDef hadc3;
 DMA_HandleTypeDef hdma_adc3;
 
 DAC_HandleTypeDef hdac1;
@@ -79,7 +79,7 @@ static void MX_USB_OTG_HS_HCD_Init(void);
 static void MX_SAI1_Init(void);
 static void MX_ADC3_Init(void);
 static void MX_DAC1_Init(void);
-void StartDefaultTask(void const * argument);
+void StartDefaultTask(void const *argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -101,8 +101,7 @@ void MPU_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
-{
+int main(void) {
   /* USER CODE BEGIN 1 */
 
 #ifdef DEBUG
@@ -165,7 +164,7 @@ int main(void)
   MX_ADC3_Init();
   MX_DAC1_Init();
   /* USER CODE BEGIN 2 */
-  
+
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);
   hsai_BlockA1.Instance = SAI1_Block_A;
@@ -177,7 +176,8 @@ int main(void)
   hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+  if(HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD,
+                          SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
     Error_Handler();
   hsai_BlockB1.Instance = SAI1_Block_B;
   hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
@@ -188,7 +188,8 @@ int main(void)
   hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+  if(HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD,
+                          SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
     Error_Handler();
 
 #ifdef USE_EXTERNAL_RAM
@@ -228,12 +229,10 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while(1) {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
   }
   /* USER CODE END 3 */
 }
@@ -318,7 +317,6 @@ static void MX_ADC3_Init(void)
   /** Common config
   */
   hadc3.Instance = ADC3;
-  hadc3.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV64;
   hadc3.Init.Resolution = ADC_RESOLUTION_12B_OPT;
   hadc3.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;
@@ -785,19 +783,19 @@ static void MX_DMA_Init(void)
 {
 
   /* DMA controller clock enable */
-  __HAL_RCC_DMA2_CLK_ENABLE();
   __HAL_RCC_DMA1_CLK_ENABLE();
+  __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   /* DMA1_Stream5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
-  /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 10, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
   /* DMA2_Stream1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
@@ -874,8 +872,8 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin|DISPLAY_B_Pin
-                          |DISPLAY_C_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin|DISPLAY_A_Pin
+                          |DISPLAY_B_Pin|DISPLAY_C_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOF, LED_SW1_Pin|LED_SW2_Pin|DISPLAY_G_Pin, GPIO_PIN_RESET);
@@ -883,9 +881,6 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, FLASH_WP_Pin|GATE_OUT_Pin|DISPLAY_DP_Pin|CS_CS_Pin
                           |CS_RST_Pin|USB_HOST_PWR_EN_Pin|DISPLAY_F_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(DISPLAY_A_GPIO_Port, DISPLAY_A_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, DISPLAY_D_Pin|GPIO_PIN_9, GPIO_PIN_RESET);
@@ -1033,14 +1028,12 @@ static void MX_GPIO_Init(void)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
-{
+void StartDefaultTask(void const *argument) {
   /* USER CODE BEGIN 5 */
   setup();
 
   /* Infinite loop */
-  for(;;)
-  {
+  for(;;) {
     loop();
   }
   /* USER CODE END 5 */
@@ -1050,8 +1043,7 @@ void StartDefaultTask(void const * argument)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
-{
+void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
 #ifdef DEBUG

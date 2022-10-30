@@ -58,7 +58,7 @@ Pin seg_pins[8] =
 
 static void setSegmentDisplay(int value, bool dot=false){
   seg_pins[7].set(!dot);
-  // HAL_GPIO_WritePin(seg_ports[7], seg_pins[7], dot ? GPIO_PIN_RESET : GPIO_PIN_SET);
+  // HAL_GPIO_WritePin(seg_pins[7].getPort(), seg_pins[7].getPin(), dot ? GPIO_PIN_RESET : GPIO_PIN_SET);
   uint8_t bits = seg_bits[value % sizeof(seg_bits)];
   for(int i=0; i<7; ++i)
     seg_pins[i].set(!(bits & (1<<i)));
