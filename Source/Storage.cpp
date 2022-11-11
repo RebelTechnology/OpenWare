@@ -382,7 +382,7 @@ size_t Storage::writeResource(ResourceHeader* header){
     return 0;
   }
 #ifndef USE_BOOTLOADER_MODE
-  taskENTER_CRITICAL();
+  UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
 #endif
   int status = -1;
   if(dest->isMemoryMapped()){
@@ -403,7 +403,7 @@ size_t Storage::writeResource(ResourceHeader* header){
 #endif
   }
 #ifndef USE_BOOTLOADER_MODE
-  taskEXIT_CRITICAL();
+  taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 #endif
   if(status){
     error(FLASH_ERROR, "Write failed");
