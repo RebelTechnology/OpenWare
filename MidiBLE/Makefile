@@ -212,6 +212,9 @@ stlink:
 flash: # $(BUILD_DIR)/$(TARGET).bin
 	openocd -f openocd.cfg -c "program $(BUILD_DIR)/$(TARGET).elf verify reset exit"
 
+dump: # flash read_bank num filename [offset [length]]
+	openocd -f openocd.cfg -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"
+
 #######################################
 # clean up
 #######################################
