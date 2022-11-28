@@ -90,11 +90,11 @@ public:
     //   return false;
     if(programFunction == NULL || programVector == NULL)
       return false;
-    extern char _PATCHRAM, _PATCHRAM_SIZE;
+    extern uint8_t _PATCHRAM, _PATCHRAM_SIZE;
     if(linkAddress == (uint32_t*)&_PATCHRAM)
       return programSize <= (uint32_t)(&_PATCHRAM_SIZE);
 #ifdef USE_PLUS_RAM
-    extern char _PLUSRAM, _PLUSRAM_SIZE;
+    extern uint8_t _PLUSRAM, _PLUSRAM_SIZE;
     if(linkAddress == (uint32_t*)&_PLUSRAM)
       return programSize <= (uint32_t)(&_PLUSRAM_SIZE);
 #endif
