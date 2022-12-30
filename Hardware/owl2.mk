@@ -19,7 +19,7 @@ else
 endif
 
 # Compilation Flags
-LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -Wl,--gc-sections,--no-warn-rwx-segments
 LDSCRIPT ?= $(OPENWARE)/Hardware/owl2.ld
 LDLIBS += -lc -lm
 CPPFLAGS += -Wdouble-promotion -Werror=double-promotion
