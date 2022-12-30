@@ -16,6 +16,7 @@
 #include "Storage.h"
 #ifndef USE_BOOTLOADER_MODE
 #include "BootloaderStorage.h"
+#include "cmsis_os.h"
 #endif
 #ifdef USE_DIGITALBUS
 #include "bus.h"
@@ -275,7 +276,13 @@ void MidiHandler::handleSettingsResetCommand(uint8_t* data, uint16_t size){
 }
 
 void MidiHandler::handleSettingsStoreCommand(uint8_t* data, uint16_t size){
+#ifndef USE_BOOTLOADER_MODE
+  UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+#endif
   settings.saveToFlash();
+#ifndef USE_BOOTLOADER_MODE
+  taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+#endif
 }
 
 void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
