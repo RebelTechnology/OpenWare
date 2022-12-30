@@ -467,8 +467,10 @@ void programFlashTask(void* p){
     }
   }else{
     ResourceHeader* header = (ResourceHeader*)flashAddressToWrite;
+    taskENTER_CRITICAL();
     storage.writeResource(header);
     registry.init();
+    taskEXIT_CRITICAL();
     if(index == 0){
       onResourceUpdate();
     }else{
