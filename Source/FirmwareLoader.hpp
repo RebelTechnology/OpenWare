@@ -63,25 +63,25 @@ public:
 
   void allocateBuffer(size_t size){
 #if defined OWL_XIBECA
-    extern char _HEAP_D2, _HEAP_D2_SIZE;
+    extern uint8_t _HEAP_D2, _HEAP_D2_SIZE;
     if(size <= (size_t)&_HEAP_D2_SIZE){
       // load into spare space without stopping patch first
-      buffer = (uint8_t*)&_HEAP_D2;
+      buffer = &_HEAP_D2;
     }else{
       program.exitProgram(true);
-      extern char _EXTRAM; // defined in link script
-      buffer = (uint8_t*)&_EXTRAM;
+      extern uint8_t _EXTRAM; // defined in link script
+      buffer = &_EXTRAM;
     }
 #elif defined USE_EXTERNAL_RAM
     // stop running program and free its memory
     program.exitProgram(true);
-    extern char _EXTRAM; // defined in link script
-    buffer = (uint8_t*)&_EXTRAM;
+    extern uint8_t _EXTRAM; // defined in link script
+    buffer = &_EXTRAM;
 #else // required by devices with no ext mem
     // stop running program and free its memory
     program.exitProgram(true);
-    extern char _PATCHRAM;
-    buffer = (uint8_t*)&_PATCHRAM; 
+    extern uint8_t _PATCHRAM;
+    buffer = &_PATCHRAM; 
 #endif
     memset(buffer, 0, sizeof(ResourceHeader));
     index = sizeof(ResourceHeader); // start writing data after resource header
