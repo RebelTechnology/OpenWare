@@ -1,8 +1,6 @@
 #ifndef _MidiStatus_h_
 #define _MidiStatus_h_
 
-#define MIDI_OMNI_CHANNEL            (-1)
-
 enum MidiStatus {
   STATUS_BYTE			= 0x80,
   NOTE_OFF			= 0x80,
@@ -20,7 +18,7 @@ enum MidiStatus {
   RESERVED_F4                   = 0xF4,
   RESERVED_F5                   = 0xF5,
   TUNE_REQUEST                  = 0xF6,
-  SYSEX_EOX                     = 0xF7,		
+  SYSEX_EOX                     = 0xF7,
   SYSTEM_REAL_TIME		= 0xF8,
   TIMING_CLOCK		        = 0xF8,
   RESERVED_F9                   = 0xF9,
@@ -35,26 +33,32 @@ enum MidiStatus {
 };
 
 enum MidiControlChange {
-  MIDI_CC_MODULATION       = 0x01,
-  MIDI_CC_BREATH           = 0x02,
-  MIDI_CC_VOLUME           = 0x07,
-  MIDI_CC_BALANCE          = 0x08,
-  MIDI_CC_PAN              = 0x0a,
-  MIDI_CC_EXPRESSION       = 0x0b,
-  MIDI_CC_EFFECT_CTRL_1    = 0x0c,
-  MIDI_CC_EFFECT_CTRL_2    = 0x0d,
-  MIDI_CC_SUSTAIN_PEDAL    = 0x40,
-  MIDI_CC_PORTAMENTO       = 0x41,
-  MIDI_CC_FILTER_RESONANCE = 0x47,
-  MIDI_CC_FREQUENCY_CUTOFF = 0x4a, /* CC74 also used by MPE */
-  MIDI_ALL_SOUND_OFF       = 0x78,
-  MIDI_RESET_ALL_CTRLS     = 0x79,
-  MIDI_LOCAL_CONTROL       = 0x7a,
-  MIDI_ALL_NOTES_OFF       = 0x7b,
-  MIDI_OMNI_MODE_OFF       = 0x7c,
-  MIDI_OMNI_MODE_ON        = 0x7d,
-  MIDI_MONO_MODE_ON        = 0x7e,
-  MIDI_POLY_MODE_ON        = 0x7f
+  MIDI_CC_MODULATION    = 1,
+  MIDI_CC_BREATH        = 2,
+  MIDI_CC_DATAENTRY_MSB = 6,
+  MIDI_CC_VOLUME        = 7,
+  MIDI_CC_BALANCE       = 8,
+  MIDI_CC_PAN           = 10,
+  MIDI_CC_EXPRESSION    = 11,
+  MIDI_CC_EFFECT_CTRL_1 = 12,
+  MIDI_CC_EFFECT_CTRL_2 = 13,
+  MIDI_CC_DATAENTRY_LSB = 38,
+  MIDI_CC_SUSTAIN       = 64,
+  MIDI_CC_PORTAMENTO    = 65,
+  MIDI_CC_SOSTENUTO     = 66,
+  MIDI_CC_FREQ_CUTOFF   = 74,
+  MIDI_CC_DATA_INCR     = 96,
+  MIDI_CC_DATA_DECR     = 97,
+  MIDI_CC_RPN_LSB       = 100,
+  MIDI_CC_RPN_MSB       = 101,
+  MIDI_ALL_SOUND_OFF    = 120,
+  MIDI_RESET_ALL_CTRLS  = 121,
+  MIDI_LOCAL_CONTROL    = 122,
+  MIDI_ALL_NOTES_OFF    = 123,
+  MIDI_OMNI_MODE_OFF    = 124,
+  MIDI_OMNI_MODE_ON     = 125,
+  MIDI_MONO_MODE_ON     = 126,
+  MIDI_POLY_MODE_ON     = 127
 };
 
 enum UsbMidi {
@@ -83,6 +87,15 @@ enum OwlProtocol {
   OWL_COMMAND_MESSAGE             = 0xd0,
   OWL_COMMAND_DATA                = 0xe0,
   OWL_COMMAND_RESET               = 0xf0,
+};
+
+enum MidiRPN {
+  MIDI_RPN_PITCH_BEND_RANGE       = 0x0000, // GM1
+  MIDI_RPN_FINE_TUNING            = 0x0001, // GM1
+  MIDI_RPN_COARSE_TUNING          = 0x0002, // GM1
+  MIDI_RPN_MODULATION_DEPTH_RANGE = 0x0005, // GM2
+  MIDI_RPN_MPE_CONFIGURATION      = 0x0006, // MPE
+  MIDI_RPN_RESET                  = 0x3fff,
 };
 
 #endif /* _MidiStatus_h_ */
