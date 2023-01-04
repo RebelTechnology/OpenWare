@@ -1,7 +1,12 @@
-22.5.rc3
+22.5.rc4
 ------
 
 * Fix saving system settings
+
+22.5.rc3
+------
+
+* Fix Genius DAC range bug
 
 22.5.rc2
 ------
