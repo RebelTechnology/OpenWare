@@ -21,8 +21,11 @@ PROJECTS = {
     'MidiBoot3': [
         'Genius'
     ],
-    #None: ['Expander'] #- expander currently won't build
-    #, 'MagusEncoder' - no F0 HAL in libraries
+    None: [
+        'ACDC',
+        # 'MagusEncoder', no F0 HAL in libraries
+        # 'Expander',  currently won't build
+    ],
 }
 
 
