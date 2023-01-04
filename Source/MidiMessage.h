@@ -72,12 +72,21 @@ class MidiMessage {
   uint8_t getChannelPressure(){
     return data[2];
   }
+  uint8_t getPolyKeyPressure(){
+    return data[3];
+  }
   uint8_t getProgramChange(){
     return data[1];
   }
+  /**
+   * Get pitch bend value as a signed integer between -8192 and 8191
+   */
   int16_t getPitchBend(){
     int16_t pb = (data[2] | (data[3]<<7)) - 8192;
     return pb;
+  }
+  bool isNote(){
+    return isNoteOn() || isNoteOff();
   }
   bool isNoteOn(){
     return ((data[1] & MIDI_STATUS_MASK) == NOTE_ON) && getVelocity() != 0;
@@ -99,6 +108,9 @@ class MidiMessage {
   }
   bool isChannelPressure(){
     return (data[1] & MIDI_STATUS_MASK) == CHANNEL_PRESSURE;
+  }
+  bool isPolyKeyPressure(){
+    return (data[1] & MIDI_STATUS_MASK) == POLY_KEY_PRESSURE;
   }
   bool isPitchBend(){
     return (data[1] & MIDI_STATUS_MASK) == PITCH_BEND_CHANGE;
