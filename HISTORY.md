@@ -1,3 +1,8 @@
+22.5.rc3
+------
+
+* Fix saving system settings
+
 22.5.rc2
 ------
 
