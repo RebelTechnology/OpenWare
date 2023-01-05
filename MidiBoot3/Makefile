@@ -28,7 +28,7 @@ PROJECT = MidiBoot-$(PLATFORM)
 
 ifeq ($(PLATFORM),Genius)
   CPPFLAGS += -DOWL_GENIUS -DUSE_USBD_FS
-else ifeq ($(PLATFORM),Lich)
+else ifeq ($(PLATFORM),Lich3)
   CPPFLAGS += -DOWL_LICH -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Magus)
   CPPFLAGS += -DOWL_MAGUS -DUSE_USBD_FS
