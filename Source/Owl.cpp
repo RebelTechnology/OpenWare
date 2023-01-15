@@ -18,6 +18,7 @@
 #include "message.h"
 #include "Storage.h"
 #include "PatchRegistry.h"
+#include "support.h"
 
 #if defined USE_RGB_LED
 #include "rainbow.h"
@@ -68,28 +69,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
-static void iwdg_setup(){
-#ifdef USE_IWDG
-#ifdef STM32H7xx
-  IWDG1->KR = 0xCCCC; // Enable IWDG and turn on LSI
-  IWDG1->KR = 0x5555; // ensure watchdog register write is allowed
-  IWDG1->PR = 0x05;   // prescaler 128
-  IWDG1->RLR = 0x753; // reload 8 seconds
-  while(IWDG1->SR != 0x00u); // wait to count down
-  IWDG1->KR = 0xaaaa; // reset the watchdog timer
-#else
-  IWDG->KR = 0xCCCC; // Enable IWDG and turn on LSI
-  IWDG->KR = 0x5555; // ensure watchdog register write is allowed
-  IWDG->PR = 0x05;   // prescaler 128
-  IWDG->RLR = 0x753; // reload 8 seconds
-  while(IWDG->SR != 0x00u); // wait to count down
-  IWDG->KR = 0xaaaa; // reset the watchdog timer
-#endif
-#endif  
-}
-
 void Owl::setup(void){
-  iwdg_setup();
+  device_watchdog_setup();
 #ifdef USE_BKPSRAM
   HAL_PWR_EnableBkUpAccess();
 #endif
@@ -183,7 +164,7 @@ void Owl::loop(){
   busstatus = bus_status();
 #endif
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
-  device_watchdog();
+  device_watchdog_tickle();
   if(backgroundTask != NULL)
     backgroundTask->loop();
 }

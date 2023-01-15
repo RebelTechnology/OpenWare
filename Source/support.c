@@ -1,5 +1,11 @@
 #include "support.h"
 
+#ifdef STM32H7xx
+#define WATCHDOG_HANDLE             IWDG1
+#else
+#define WATCHDOG_HANDLE             IWDG
+#endif
+
 void device_dfu(){
   /* Set the address of the entry point to bootloader */
 #ifdef STM32H7xx
@@ -75,12 +81,21 @@ void device_cache_invalidate(){
 #endif
 }
 
-void device_watchdog(){
+void device_watchdog_setup(){
 #ifdef USE_IWDG
-#ifdef STM32H7xx
-  IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
-#else
-  IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
+  WATCHDOG_HANDLE->KR = 0xCCCC; // Enable IWDG and turn on LSI
+  WATCHDOG_HANDLE->KR = 0x5555; // ensure watchdog register write is allowed
+  WATCHDOG_HANDLE->PR = 0x05;   // prescaler 128
+  WATCHDOG_HANDLE->RLR = 0x753; // reload 8 seconds
+  while(WATCHDOG_HANDLE->SR != 0x00u); // wait to count down
+  WATCHDOG_HANDLE->KR = 0xaaaa; // reset the watchdog timer
 #endif
+}
+
+void device_watchdog_tickle(){
+#ifdef USE_IWDG
+  // reset the watchdog timer (if enabled)
+  /* __HAL_IWDG_RELOAD_COUNTER(WATCHDOG_HANDLE); */
+  WATCHDOG_HANDLE->KR = 0xaaaa; 
 #endif
 }

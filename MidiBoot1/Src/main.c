@@ -41,8 +41,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-IWDG_HandleTypeDef hiwdg;
-
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 SRAM_HandleTypeDef hsram1;
@@ -195,9 +193,11 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
+  /* Start watchdog */
+  device_watchdog_setup();
+
   SystemInit_ExtMemCtl();
   MX_GPIO_Init();
-  MX_IWDG_Init();
 
   if(testMagic()){
     // we're going to boot
@@ -233,7 +233,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_FSMC_Init();
-  MX_IWDG_Init();
   MX_USB_OTG_FS_PCD_Init();
   /* USER CODE BEGIN 2 */
 
@@ -249,9 +248,6 @@ int main(void)
   while (1)
   {
     loop();
-#ifdef USE_IWDG
-    IWDG->KR = 0xaaaa; // reset the watchdog timer
-#endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -302,34 +298,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief IWDG Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_IWDG_Init(void)
-{
-
-  /* USER CODE BEGIN IWDG_Init 0 */
-
-  /* USER CODE END IWDG_Init 0 */
-
-  /* USER CODE BEGIN IWDG_Init 1 */
-#ifdef USE_IWDG
-  /* USER CODE END IWDG_Init 1 */
-  hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_128;
-  hiwdg.Init.Reload = 8*(30000/128);
-  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN IWDG_Init 2 */
-#endif
-  /* USER CODE END IWDG_Init 2 */
-
 }
 
 /**
