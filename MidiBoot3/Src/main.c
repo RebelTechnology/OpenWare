@@ -42,8 +42,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-IWDG_HandleTypeDef hiwdg1;
-
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi5;
 
@@ -60,7 +58,6 @@ SDRAM_HandleTypeDef hsdram1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_FMC_Init(void);
-static void MX_IWDG1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI5_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
@@ -149,6 +146,9 @@ int main(void)
   SCB_InvalidateDCache();
   __DSB(); __ISB(); // memory and instruction barriers
 
+  /* Start watchdog */
+  device_watchdog_setup();
+
   if(testMagic()){
     setMessage("Bootloader starting");
   }else if(testButton()){
@@ -167,9 +167,6 @@ int main(void)
 
     /* Put marker in to prevent reset cycles */
     *OWLBOOT_MAGIC_ADDRESS += 1;
-
-    /* Start watchdog */
-    MX_IWDG1_Init();
     
     /* Set the address of the entry point to bootloader */
     volatile uint32_t BootAddr = APPLICATION_ADDRESS;
@@ -215,7 +212,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_FMC_Init();
-  MX_IWDG1_Init();
 #if SPI_FLASH_HANDLE == hspi1
   MX_SPI1_Init();
 #elif SPI_FLASH_HANDLE == hspi5
@@ -224,7 +220,9 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   /* USER CODE BEGIN 2 */
 
+#ifdef USE_EXTERNAL_RAM
   SDRAM_Initialization_Sequence(&hsdram1);   
+#endif
 
   // Initialise
   setup();
@@ -236,9 +234,6 @@ int main(void)
   while (1)
   {
     loop();
-#ifdef USE_IWDG
-    IWDG1->KR = 0xaaaa; // reset the watchdog timer
-#endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -301,35 +296,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief IWDG1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_IWDG1_Init(void)
-{
-
-  /* USER CODE BEGIN IWDG1_Init 0 */
-#ifdef USE_IWDG
-  /* USER CODE END IWDG1_Init 0 */
-
-  /* USER CODE BEGIN IWDG1_Init 1 */
-
-  /* USER CODE END IWDG1_Init 1 */
-  hiwdg1.Instance = IWDG1;
-  hiwdg1.Init.Prescaler = IWDG_PRESCALER_128;
-  hiwdg1.Init.Window = 8*32000/128;
-  hiwdg1.Init.Reload = 8*32000/128;
-  if (HAL_IWDG_Init(&hiwdg1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN IWDG1_Init 2 */
-#endif
-  /* USER CODE END IWDG1_Init 2 */
-
 }
 
 /**

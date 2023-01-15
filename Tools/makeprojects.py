@@ -19,7 +19,9 @@ PROJECTS = {
         # 'Effectsbox' won't build bootloader
     ],
     'MidiBoot3': [
-        'Genius', 'Lich3'
+        'Genius',
+        'Lich3',
+        #'Magus3'
     ],
     None: [
         'ACDC',
