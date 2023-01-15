@@ -228,6 +228,7 @@ extern "C" {
       sendResourceNames();
     }
     midi_tx.transmit();
+    device_watchdog_tickle();
   }
 
 }

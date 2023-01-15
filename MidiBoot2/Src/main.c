@@ -41,8 +41,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-IWDG_HandleTypeDef hiwdg;
-
 SPI_HandleTypeDef hspi1;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
@@ -60,7 +58,6 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_FMC_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_IWDG_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_USB_OTG_HS_PCD_Init(void);
 /* USER CODE BEGIN PFP */
@@ -141,6 +138,9 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
+  /* Start watchdog */
+  device_watchdog_setup();
+
   MX_GPIO_Init();
   
   if(testMagic()){
@@ -177,9 +177,6 @@ int main(void)
     /* Put marker in to prevent reset cycles */
     *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_LOOP_NUMBER;
 
-    /* Start watchdog */
-    MX_IWDG_Init();
-
     /* Jump to user application */
     __disable_irq();
     uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
@@ -197,21 +194,19 @@ int main(void)
   /* Clear magic */
   *OWLBOOT_MAGIC_ADDRESS = 0;
 
-#ifdef USE_EXTERNAL_RAM
-  MX_FMC_Init();
-  SDRAM_Initialization_Sequence(&hsdram1);   
-#endif
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_FMC_Init();
   MX_SPI1_Init();
-  MX_IWDG_Init();
   MX_USB_OTG_FS_PCD_Init();
   MX_USB_OTG_HS_PCD_Init();
   /* USER CODE BEGIN 2 */
+
+#ifdef USE_EXTERNAL_RAM
+  SDRAM_Initialization_Sequence(&hsdram1);   
+#endif
 
   // Initialise
   setup();
@@ -273,34 +268,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief IWDG Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_IWDG_Init(void)
-{
-
-  /* USER CODE BEGIN IWDG_Init 0 */
-
-  /* USER CODE END IWDG_Init 0 */
-
-  /* USER CODE BEGIN IWDG_Init 1 */
-#ifdef USE_IWDG
-  /* USER CODE END IWDG_Init 1 */
-  hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_128;
-  hiwdg.Init.Reload = 8*(30000/128);
-  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN IWDG_Init 2 */
-#endif
-  /* USER CODE END IWDG_Init 2 */
-
 }
 
 /**

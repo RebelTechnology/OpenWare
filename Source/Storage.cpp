@@ -49,7 +49,7 @@ uint32_t findFirstFreePage(uint32_t start, uint32_t end, size_t align){
       break;
     address -= sizeof(quad);
     progress = (end-address)*4095LL/(end-start);
-    device_watchdog();
+    device_watchdog_tickle();
   }
   if(address > start)
     return (address+sizeof(quad) + (align-1)) & ~(align-1) ;
@@ -274,7 +274,7 @@ void Storage::erase(uint32_t flags){
     for(uint32_t address=0; address < endaddress; address += blocksize){
       setProgress(address*4095LL/endaddress, "Erasing");
       flash_erase(address, blocksize); // 450 to 1150 mS each
-      device_watchdog();
+      device_watchdog_tickle();
 #ifndef USE_BOOTLOADER_MODE
       vTaskDelay(2);
 #endif
