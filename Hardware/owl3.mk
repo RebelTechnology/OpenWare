@@ -13,7 +13,7 @@ ifeq ($(CONFIG),Debug)
   LDLIBS += -lrdimon
   LDFLAGS += -specs=rdimon.specs
 else
-  CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
+  CPPFLAGS += -nostdlib -nostartfiles
   C_SRC += libnosys_gnu.c
   LDFLAGS += --specs=nano.specs
 endif
@@ -31,5 +31,5 @@ CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16
 ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32H743xx -DSTM32H7xx -DARM_MATH_CM7
-DEF_FLAGS += -D__FPU_PRESENT=1
+DEF_FLAGS += -D__FPU_PRESENT=1U
 S_SRC = $(OPENWARE)/Source/startup_owl3.s
