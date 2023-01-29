@@ -14,6 +14,10 @@
 
 #include "errorhandlers.h"
 
+#ifdef DEBUG
+#include <stdio.h>
+#endif
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
