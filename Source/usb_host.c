@@ -150,7 +150,7 @@ void MX_USB_HOST_Init(void)
 static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 {
   /* USER CODE BEGIN CALL_BACK_1 */
-  USBH_UsrLog("USBH UserProcess %d %d %d", phost->EnumState, phost->gState, id);
+  USBH_DbgLog("USBH UserProcess %d %d %d", phost->EnumState, phost->gState, id);
   switch(id)
   {
   case HOST_USER_SELECT_CONFIGURATION:
