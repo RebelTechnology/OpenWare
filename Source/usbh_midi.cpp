@@ -1,6 +1,7 @@
 #include "usbh_midi.h"
 #include "usb_host.h"
 #include "midi.h"
+#include "errorhandlers.h"
 #include "SerialBuffer.hpp"
 
 /**
@@ -45,69 +46,73 @@ static SerialBuffer<USB_HOST_RX_BUFF_SIZE> rxbuffer;
 static MIDI_HandleTypeDef staticMidiHandle;
 
 static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
-  USBH_StatusTypeDef status = USBH_FAIL ;
-  //USB_MIDI_ChangeConnectionState(0);
 
+  if(phost->pActiveClass == NULL){
+    /* No Active Class */
+    error(USB_ERROR, "No active class");
+    return USBH_FAIL;
+  }
+  
   uint8_t interface = USBH_FindInterface(phost, USB_AUDIO_CLASS, USB_MIDISTREAMING_SUBCLASS, 0xFF);
   USBH_DbgLog ("USBH InterfaceInit 0x%x", interface);
 
   if(interface == 0xFF){
     /* No Valid Interface */
-    USBH_DbgLog ("Cannot Find the interface for MIDI Interface Class %s.", phost->pActiveClass->Name);
-    status = USBH_FAIL;
-  }else{
-    USBH_SelectInterface (phost, interface);
-    MIDI_HandleTypeDef* MIDI_Handle = &staticMidiHandle;
-    memset(MIDI_Handle, 0, sizeof(staticMidiHandle));
-    phost->pActiveClass->pData = MIDI_Handle;
-
-    if(phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress & 0x80){
-      MIDI_Handle->InEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress);
-      MIDI_Handle->InEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].wMaxPacketSize;
-    }else{
-      MIDI_Handle->OutEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress);
-      MIDI_Handle->OutEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].wMaxPacketSize;
-    }
-
-    if(phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].bEndpointAddress & 0x80){
-      MIDI_Handle->InEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].bEndpointAddress);
-      MIDI_Handle->InEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].wMaxPacketSize;
-    }else{
-      MIDI_Handle->OutEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].bEndpointAddress);
-      MIDI_Handle->OutEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].wMaxPacketSize;
-    }
-
-    MIDI_Handle->OutPipe = USBH_AllocPipe(phost, MIDI_Handle->OutEp);
-    MIDI_Handle->InPipe = USBH_AllocPipe(phost, MIDI_Handle->InEp);
-
-
-    /* Open the new channels */
-    USBH_OpenPipe  (phost,
-		    MIDI_Handle->OutPipe,
-		    MIDI_Handle->OutEp,
-		    phost->device.address,
-		    phost->device.speed,
-		    USB_EP_TYPE_BULK,
-		    MIDI_Handle->OutEpSize);
-
-    USBH_OpenPipe  (phost,
-		    MIDI_Handle->InPipe,
-		    MIDI_Handle->InEp,
-		    phost->device.address,
-		    phost->device.speed,
-		    USB_EP_TYPE_BULK,
-		    MIDI_Handle->InEpSize);
-
-    //USB_MIDI_ChangeConnectionState(1);
-    MIDI_Handle->state = MIDI_IDLE_STATE;
-
-
-    USBH_LL_SetToggle  (phost, MIDI_Handle->InPipe,0);
-    USBH_LL_SetToggle  (phost, MIDI_Handle->OutPipe,0);
-
-    status = USBH_OK;
+    error(USB_ERROR, "No interface");
+    USBH_DbgLog ("Cannot find the interface for Class %s.", phost->pActiveClass->Name);
+    return USBH_FAIL;
   }
-  return status;
+
+  //USB_MIDI_ChangeConnectionState(0);
+  USBH_SelectInterface (phost, interface);
+  MIDI_HandleTypeDef* MIDI_Handle = &staticMidiHandle;
+  memset(MIDI_Handle, 0, sizeof(staticMidiHandle));
+  phost->pActiveClass->pData = MIDI_Handle;
+
+  if(phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress & 0x80){
+    MIDI_Handle->InEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress);
+    MIDI_Handle->InEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].wMaxPacketSize;
+  }else{
+    MIDI_Handle->OutEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress);
+    MIDI_Handle->OutEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].wMaxPacketSize;
+  }
+
+  if(phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].bEndpointAddress & 0x80){
+    MIDI_Handle->InEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].bEndpointAddress);
+    MIDI_Handle->InEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].wMaxPacketSize;
+  }else{
+    MIDI_Handle->OutEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].bEndpointAddress);
+    MIDI_Handle->OutEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[1].wMaxPacketSize;
+  }
+
+  MIDI_Handle->OutPipe = USBH_AllocPipe(phost, MIDI_Handle->OutEp);
+  MIDI_Handle->InPipe = USBH_AllocPipe(phost, MIDI_Handle->InEp);
+
+
+  /* Open the new channels */
+  USBH_OpenPipe  (phost,
+		  MIDI_Handle->OutPipe,
+		  MIDI_Handle->OutEp,
+		  phost->device.address,
+		  phost->device.speed,
+		  USB_EP_TYPE_BULK,
+		  MIDI_Handle->OutEpSize);
+
+  USBH_OpenPipe  (phost,
+		  MIDI_Handle->InPipe,
+		  MIDI_Handle->InEp,
+		  phost->device.address,
+		  phost->device.speed,
+		  USB_EP_TYPE_BULK,
+		  MIDI_Handle->InEpSize);
+
+  //USB_MIDI_ChangeConnectionState(1);
+  MIDI_Handle->state = MIDI_IDLE_STATE;
+
+  USBH_LL_SetToggle  (phost, MIDI_Handle->InPipe,0);
+  USBH_LL_SetToggle  (phost, MIDI_Handle->OutPipe,0);
+
+  return USBH_OK;
 }
 
 /**
@@ -118,7 +123,7 @@ static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
  */
 USBH_StatusTypeDef USBH_MIDI_InterfaceDeInit (USBH_HandleTypeDef *phost){
   USBH_DbgLog ("USBH InterfaceDeInit");
-  if(phost->pActiveClass->pData){
+  if(phost->pActiveClass && phost->pActiveClass->pData){
     MIDI_HandleTypeDef* MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
 
     if ( MIDI_Handle->OutPipe){
@@ -161,11 +166,13 @@ static USBH_StatusTypeDef USBH_MIDI_ClassRequest (USBH_HandleTypeDef *phost){
   */
 USBH_StatusTypeDef  USBH_MIDI_Stop(USBH_HandleTypeDef *phost){
   USBH_DbgLog ("USBH Stop 0x%x", phost->gState);
-  MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
-  if(phost->gState == HOST_CLASS){
-    MIDI_Handle->state = MIDI_IDLE_STATE;
-    USBH_ClosePipe(phost, MIDI_Handle->InPipe);
-    USBH_ClosePipe(phost, MIDI_Handle->OutPipe);
+  if(phost->pActiveClass && phost->pActiveClass->pData){
+    MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
+    if(phost->gState == HOST_CLASS){
+      MIDI_Handle->state = MIDI_IDLE_STATE;
+      USBH_ClosePipe(phost, MIDI_Handle->InPipe);
+      USBH_ClosePipe(phost, MIDI_Handle->OutPipe);
+    }
   }
   return USBH_OK;
 }
@@ -173,11 +180,13 @@ USBH_StatusTypeDef  USBH_MIDI_Stop(USBH_HandleTypeDef *phost){
 extern "C"{
   void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state){
     USBH_HandleTypeDef *phost = (USBH_HandleTypeDef*)hhcd->pData;
-    MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
-    if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
-       MIDI_Handle->state == MIDI_TRANSFER_DATA){
-      size_t len = USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
-      USBH_MIDI_ReceiveCallback((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->pRxData, len);
+    if(phost->pActiveClass && phost->pActiveClass->pData){
+      MIDI_HandleTypeDef *MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
+      if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
+	 MIDI_Handle->state == MIDI_TRANSFER_DATA){
+	size_t len = USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
+	USBH_MIDI_ReceiveCallback((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->pRxData, len);
+      }
     }
   }
 }
