@@ -33,14 +33,10 @@
 #include "main.h"
 
 /* USER CODE BEGIN INCLUDE */
-#ifdef DEBUG
-#define DEBUG_LEVEL     3
-#else
-#define DEBUG_LEVEL     0
-#endif
    void *pvPortMalloc( size_t xSize );
    void vPortFree( void *pv );
-
+   void error(int8_t code, const char* reason);
+   void debugMessage(const char* msg);
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_HOST_LIBRARY
@@ -79,7 +75,7 @@
 #define USBH_KEEP_CFG_DESCRIPTOR      1U
 
 /*----------   -----------*/
-#define USBH_MAX_NUM_SUPPORTED_CLASS      5U
+#define USBH_MAX_NUM_SUPPORTED_CLASS      2U
 
 /*----------   -----------*/
 #define USBH_MAX_SIZE_CONFIGURATION      256U
@@ -88,7 +84,11 @@
 #define USBH_MAX_DATA_BUFFER      512U
 
 /*----------   -----------*/
-#define USBH_DEBUG_LEVEL      DEBUG_LEVEL
+#ifdef DEBUG
+#define USBH_DEBUG_LEVEL     3
+#else
+#define USBH_DEBUG_LEVEL     0
+#endif
 
 /*----------   -----------*/
 #define USBH_USE_OS      0U
@@ -129,32 +129,16 @@
 
 /* DEBUG macros */
 
-#if (USBH_DEBUG_LEVEL > 0U)
-#define  USBH_UsrLog(...)   do { \
-                            printf(__VA_ARGS__); \
-                            printf("\n"); \
-} while (0)
-#else
-#define USBH_UsrLog(...) do {} while (0)
-#endif
+#define  USBH_ErrLog(msg, ...) error(0x90, msg)
 
 #if (USBH_DEBUG_LEVEL > 1U)
-
-#define  USBH_ErrLog(...) do { \
-                            printf("ERROR: ") ; \
-                            printf(__VA_ARGS__); \
-                            printf("\n"); \
-} while (0)
+#define  USBH_UsrLog(msg, ...) debugMessage(msg)
 #else
-#define USBH_ErrLog(...) do {} while (0)
-#endif
+#define USBH_UsrLog(...) do {} while (0)
+#endif   
 
-#if (USBH_DEBUG_LEVEL > 2U)
-#define  USBH_DbgLog(...)   do { \
-                            printf("DEBUG : ") ; \
-                            printf(__VA_ARGS__); \
-                            printf("\n"); \
-} while (0)
+#if (USBH_DEBUG_LEVEL > 2U)  
+#define  USBH_DbgLog(msg, ...) debugMessage(msg)
 #else
 #define USBH_DbgLog(...) do {} while (0)
 #endif
