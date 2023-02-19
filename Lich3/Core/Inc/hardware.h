@@ -17,6 +17,8 @@
 #define USE_DCACHE
 #endif
 
+#define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
+
 #define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
 
 /* USB audio settings */
@@ -33,6 +35,8 @@
 #define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX // microphone
+#define USBD_AUDIO_BUFFER_PACKETS   3
+#define AUDIO_SAMPLINGRATE          48000
 
 #define USE_USBD_FS
 #define USE_USBH_HS
