@@ -100,14 +100,14 @@ void Error_Handler(void);
 #define CS_SDA_GPIO_Port GPIOE
 #define EXTSPI_nCS_Pin GPIO_PIN_15
 #define EXTSPI_nCS_GPIO_Port GPIOC
-#define ADC4_Pin GPIO_PIN_6
-#define ADC4_GPIO_Port GPIOF
 #define LED_SW1_Pin GPIO_PIN_7
 #define LED_SW1_GPIO_Port GPIOF
 #define LED_SW2_Pin GPIO_PIN_8
 #define LED_SW2_GPIO_Port GPIOF
 #define DISPLAY_G_Pin GPIO_PIN_9
 #define DISPLAY_G_GPIO_Port GPIOF
+#define ADC4_Pin GPIO_PIN_10
+#define ADC4_GPIO_Port GPIOF
 #define OSC1_Pin GPIO_PIN_0
 #define OSC1_GPIO_Port GPIOH
 #define OSC2_Pin GPIO_PIN_1

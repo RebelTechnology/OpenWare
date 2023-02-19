@@ -119,7 +119,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     __HAL_RCC_GPIOF_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
     /**ADC3 GPIO Configuration
-    PF6     ------> ADC3_INP8
+    PF10     ------> ADC3_INP6
     PC1     ------> ADC3_INP11
     PC2_C     ------> ADC3_INP0
     PC3_C     ------> ADC3_INP1
@@ -184,7 +184,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     __HAL_RCC_ADC3_CLK_DISABLE();
 
     /**ADC3 GPIO Configuration
-    PF6     ------> ADC3_INP8
+    PF10     ------> ADC3_INP6
     PC1     ------> ADC3_INP11
     PC2_C     ------> ADC3_INP0
     PC3_C     ------> ADC3_INP1
