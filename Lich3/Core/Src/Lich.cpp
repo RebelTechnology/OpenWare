@@ -196,7 +196,7 @@ void onLoop(void){
 	if(--counter == 0){
 	  counter = PATCH_RESET_COUNTER;
 	  settings.program_index = patchselect;
-	  settings.saveToFlash();
+	  settings.saveToFlash(false);
 	}else{
 	  setSegmentDisplay(patchselect % 16, counter*MAIN_LOOP_SLEEP_MS > 2000);
 	}

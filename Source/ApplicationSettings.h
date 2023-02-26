@@ -38,7 +38,7 @@ public:
   void reset();
   bool settingsInFlash();
   void loadFromFlash();
-  void saveToFlash();
+  void saveToFlash(bool isr);
 };
 
 extern ApplicationSettings settings;

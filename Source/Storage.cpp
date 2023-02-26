@@ -393,10 +393,6 @@ size_t Storage::writeResource(ResourceHeader* header){
 #ifdef USE_NOR_FLASH
     uint32_t address = dest->getAddress();
     status = flash_write(address, data, length);
-    // if(status == 0)
-      // status = flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)); // read back resource header
-    if(status == 0 && flash_read(address, (uint8_t*)dest->getHeader(), sizeof(ResourceHeader)) != 0)
-      error(FLASH_ERROR, "Readback failed");
 #endif
   }
   if(status){

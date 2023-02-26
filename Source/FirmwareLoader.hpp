@@ -62,12 +62,14 @@ public:
   }
 
   void allocateBuffer(size_t size){
+    size += sizeof(ResourceHeader);
 #if defined OWL_XIBECA
     extern uint8_t _HEAP_D2, _HEAP_D2_SIZE;
     if(size <= (size_t)&_HEAP_D2_SIZE){
       // load into spare space without stopping patch first
       buffer = &_HEAP_D2;
     }else{
+      // stop patch and use patch memory
       program.exitProgram(true);
       extern uint8_t _EXTRAM; // defined in link script
       buffer = &_EXTRAM;
@@ -185,6 +187,18 @@ public:
     else
       return setError("Invalid SysEx size"); // wrong size
   }
+
+  void write(uint8_t* data, size_t length){
+    clear();
+    setErrorStatus(NO_ERROR);
+    allocateBuffer(length);
+    memcpy(buffer+index, data, length);
+    index += length;
+    crc = crc32(data, length, 0);
+    size = length;
+  }
 };
+
+extern FirmwareLoader loader;
 
 #endif // __FirmwareLoader_H__

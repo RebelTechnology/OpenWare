@@ -8,6 +8,7 @@
 
 #define USE_SPI_FLASH
 #define SPI_FLASH_HANDLE             hspi1
+#define NO_INTERNAL_FLASH
 
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 #define USE_PLUS_RAM
@@ -46,7 +47,7 @@
 /* #define DIGITAL_BUS_ENABLED 1 */
 /* #define DIGITAL_BUS_FORWARD_MIDI 0 */
 
-/* #define USE_BKPSRAM */
+#define USE_BKPSRAM
 
 #define ADC_A 0
 #define ADC_B 1

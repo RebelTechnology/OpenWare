@@ -29,7 +29,7 @@
 #define max(a,b) ((a)>(b)?(a):(b))
 #endif
 
-static FirmwareLoader loader;
+FirmwareLoader loader;
 
 MidiHandler::MidiHandler() : channel(MIDI_OMNI_CHANNEL) {
   // memset(midi_values, 0, NOF_PARAMETERS*sizeof(uint16_t));
@@ -276,13 +276,7 @@ void MidiHandler::handleSettingsResetCommand(uint8_t* data, uint16_t size){
 }
 
 void MidiHandler::handleSettingsStoreCommand(uint8_t* data, uint16_t size){
-#ifndef USE_BOOTLOADER_MODE
-  UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
-#endif
-  settings.saveToFlash();
-#ifndef USE_BOOTLOADER_MODE
-  taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-#endif
+  settings.saveToFlash(true);
 }
 
 void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
@@ -335,8 +329,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
         error(PROGRAM_ERROR, "Invalid hardware ID");
       }
       else {
-        //program.eraseFromFlash(-2);
-        program.saveToFlash(-2, loader.getData(), loader.getDataSize());
+        program.saveToFlash(0xfe, loader.getData(), loader.getDataSize());
         program.resetProgram(true);
       }
     }else{
@@ -366,7 +359,7 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t slot = loader.decodeInt(data);
     if(loader.setPatchSlot(slot))
-      program.saveToFlash(slot, loader.getResourceHeader(), loader.getTotalSize());
+      program.saveToFlash(slot, loader.getResourceHeader(), loader.getDataSize());
   }else{
     error(PROGRAM_ERROR, "Invalid STORE command");
   }
@@ -377,7 +370,7 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size > 1){
     const char* name = (const char*)data;
     if(loader.setResourceName(name))
-      program.saveToFlash(0, loader.getResourceHeader(), loader.getTotalSize());      
+      program.saveToFlash(0, loader.getResourceHeader(), loader.getDataSize());      
   }else{
     error(PROGRAM_ERROR, "Invalid SAVE command");
   }
