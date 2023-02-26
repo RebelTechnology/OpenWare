@@ -437,9 +437,9 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->message = NULL;
 }
 
-uint8_t flashSectorToWrite;
-void* flashAddressToWrite;
-uint32_t flashSizeToWrite;
+volatile uint8_t flashSectorToWrite;
+volatile void* flashAddressToWrite;
+volatile uint32_t flashSizeToWrite;
 Resource* flashResourceToSend = NULL;
 
 void programFlashTask(void* p){
@@ -450,7 +450,9 @@ void programFlashTask(void* p){
   if(index == 0xff){
     error(PROGRAM_ERROR, "Enter bootloader to flash firmware");
   }else if(index == 0xfe){
+    // store bootloader
     if(size <= MAX_SYSEX_BOOTLOADER_SIZE){
+      debugMessage("Storing bootloader");
       taskENTER_CRITICAL();
       bootloader.erase();
       extern char _BOOTLOADER, _BOOTLOADER_END;
@@ -466,6 +468,8 @@ void programFlashTask(void* p){
       error(PROGRAM_ERROR, "Bootloader too big");
     }
   }else{
+    // store patch or resource
+    debugMessage("Storing", index);
     ResourceHeader* header = (ResourceHeader*)flashAddressToWrite;
     taskENTER_CRITICAL();
     storage.writeResource(header);

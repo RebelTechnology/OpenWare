@@ -144,7 +144,7 @@ class InputCalibration : public BaseCalibration {
   void storeResults() {
     settings.input_scalar = scalar;
     settings.input_offset = offset;
-    settings.saveToFlash();
+    settings.saveToFlash(false);
   }
 };
 
@@ -199,7 +199,7 @@ public:
   void storeResults() {
     settings.output_scalar = scalar;
     settings.output_offset = offset;
-    settings.saveToFlash();
+    settings.saveToFlash(false);
   }
 
   void nextState(){

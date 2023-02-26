@@ -1,13 +1,11 @@
-#include "ApplicationSettings.h"
-// #include "eepromcontrol.h"
-#include "MidiStatus.h"
-#include "Storage.h"
 #include <string.h>
+#include "ApplicationSettings.h"
+#include "MidiStatus.h"
+#include "FirmwareLoader.hpp"
+#include "Storage.h"
+#include "cmsis_os.h"
 
-// #define APPLICATION_SETTINGS_ADDR ADDR_FLASH_SECTOR_1
-// #define APPLICATION_SETTINGS_SECTOR FLASH_Sector_1
-
-void ApplicationSettings::init(){
+void ApplicationSettings::init() {
   checksum = sizeof(*this) ^ 0xf0f0f0f0;
   if(settingsInFlash())
     loadFromFlash();
@@ -46,9 +44,10 @@ void ApplicationSettings::reset(){
 
 bool ApplicationSettings::settingsInFlash(){
   Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
-  if(resource && resource->isMemoryMapped()){
-    ApplicationSettings* data = (ApplicationSettings*)resource->getData();
-    return data->checksum == checksum;
+  if(resource){
+    ApplicationSettings data;
+    storage.readResource(resource->getHeader(), &data, 0, sizeof(data));
+    return data.checksum == checksum;
   }
   return false;
 }
@@ -59,9 +58,18 @@ void ApplicationSettings::loadFromFlash(){
     storage.readResource(resource->getHeader(), this, 0, sizeof(*this));
 }
 
-void ApplicationSettings::saveToFlash(){
-  uint16_t totalsize = sizeof(ResourceHeader) + sizeof(*this);
-  uint8_t buffer[totalsize];
-  memcpy(buffer+sizeof(ResourceHeader), this, sizeof(*this));
-  storage.writeResource(APPLICATION_SETTINGS_NAME, buffer, sizeof(*this), RESOURCE_SYSTEM_RESOURCE|RESOURCE_MEMORY_MAPPED);
+void ApplicationSettings::saveToFlash(bool isr) {
+  UBaseType_t uxSavedInterruptStatus;
+  uint8_t buffer[sizeof(ResourceHeader) + sizeof(ApplicationSettings)];
+  memset(buffer, 0, sizeof(ResourceHeader));
+  memcpy(buffer+sizeof(ResourceHeader), this, sizeof(ApplicationSettings));
+  if(isr)
+    uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+  else
+    taskENTER_CRITICAL();
+  storage.writeResource(APPLICATION_SETTINGS_NAME, buffer, sizeof(*this), FLASH_DEFAULT_FLAGS);
+  if(isr)
+    taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+  else
+    taskEXIT_CRITICAL();
 }
