@@ -8,6 +8,7 @@
 
 #define USE_SPI_FLASH
 #define SPI_FLASH_HANDLE             hspi1
+#define NO_INTERNAL_FLASH
 
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 #define USE_PLUS_RAM
