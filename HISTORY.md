@@ -1,26 +1,12 @@
-22.5.rc4
+22.5.0
 ------
 
 * Fix saving system settings
-
-22.5.rc3
-------
-
 * Fix Genius DAC range bug
-
-22.5.rc2
-------
-
 * Fix USBH power initialisation
-
-22.5.rc1
-------
-
+* Fix USBH device reconnection problem
 * Improved USBD Audio host synchronisation
 * Fix initialisation bug in Genius/Magus Graphics
-
-Known Issues:
-* OWL1/2 USB Host does not support reconnecting devices
 
 22.4.0
 ------
