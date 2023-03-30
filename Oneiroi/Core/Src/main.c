@@ -85,6 +85,13 @@ static void MX_USART6_UART_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
+/* Private function prototypes -----------------------------------------------*/
+
+void setup(void);
+void loop(void);
+void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
+void initialise_monitor_handles(void);
+void MPU_Config(void);
 
 /* USER CODE END PFP */
 
@@ -99,10 +106,33 @@ void StartDefaultTask(void const * argument);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
+/* USER CODE BEGIN 1 */
+
+#ifdef DEBUG
+#warning "DEBUG uses printf and semihosting!"
+  if(CoreDebug->DHCSR & 0x01)
+    initialise_monitor_handles(); // remove when not semi-hosting
+  printf("showtime\n");
+#endif
+#ifdef USE_ICACHE
+  /* Enable I-Cache-------------------------------------------------------------*/
+  /* After reset, you must invalidate each cache before enabling (SCB_EnableICache) it. */
+  SCB_InvalidateICache();
+  SCB_EnableICache();
+#endif
+#ifdef USE_DCACHE
+  /* Enable D-Cache-------------------------------------------------------------*/
+  /* Before enabling the data cache, you must invalidate the entire data cache (SCB_InvalidateDCache), because external memory might have changed from when the cache was disabled. */
+  SCB_InvalidateDCache();
+  SCB_EnableDCache();
+#endif
+
+  /* Enable D2 domain SRAM Clocks */
+  __HAL_RCC_D2SRAM1_CLK_ENABLE();
+  __HAL_RCC_D2SRAM2_CLK_ENABLE();
+  __HAL_RCC_D2SRAM3_CLK_ENABLE();
 
   /* USER CODE END 1 */
-
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -116,6 +146,9 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+
+  /* MPU Configuration--------------------------------------------------------*/
+  MPU_Config();
 
   /* USER CODE END SysInit */
 
@@ -133,10 +166,40 @@ int main(void)
   MX_DAC1_Init();
   MX_ADC1_Init();
   MX_USART6_UART_Init();
-  /* USER CODE BEGIN 2 */
+/* USER CODE BEGIN 2 */
+
+  HAL_SAI_DeInit(&hsai_BlockA1);
+  HAL_SAI_DeInit(&hsai_BlockB1);
+  hsai_BlockA1.Instance = SAI1_Block_A;
+  hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_TX;
+  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if(HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD,
+                          SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+    Error_Handler();
+  hsai_BlockB1.Instance = SAI1_Block_B;
+  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
+  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
+  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if(HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD,
+                          SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+    Error_Handler();
+
+#ifdef USE_EXTERNAL_RAM
+  SDRAM_Initialization_Sequence(&hsdram1);
+#endif
 
   /* USER CODE END 2 */
-
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
@@ -943,10 +1006,11 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+  setup();
+
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
+  for(;;) {
+    loop();
   }
   /* USER CODE END 5 */
 }
@@ -959,10 +1023,11 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -977,8 +1042,11 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
