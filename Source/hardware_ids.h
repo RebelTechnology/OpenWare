@@ -20,6 +20,7 @@
 #define OWL_PEDAL_HARDWARE          0x21
 #define OWL_MODULAR_HARDWARE        0x22
 #define XIBECA_HARDWARE             0x23
+#define ONEIROI_HARDWARE            0x24
 #define OTHER_HARDWARE              0xf0
 
 #endif /* __HARDWARE_IDS_H */
