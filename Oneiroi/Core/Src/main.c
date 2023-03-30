@@ -106,7 +106,7 @@ void MPU_Config(void);
   */
 int main(void)
 {
-/* USER CODE BEGIN 1 */
+  /* USER CODE BEGIN 1 */
 
 #ifdef DEBUG
 #warning "DEBUG uses printf and semihosting!"
@@ -133,6 +133,7 @@ int main(void)
   __HAL_RCC_D2SRAM3_CLK_ENABLE();
 
   /* USER CODE END 1 */
+
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -166,7 +167,7 @@ int main(void)
   MX_DAC1_Init();
   MX_ADC1_Init();
   MX_USART6_UART_Init();
-/* USER CODE BEGIN 2 */
+  /* USER CODE BEGIN 2 */
 
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);
@@ -200,6 +201,7 @@ int main(void)
 #endif
 
   /* USER CODE END 2 */
+
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
@@ -869,16 +871,10 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MUX_C_GPIO_Port, MUX_C_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : RANDOMAMOUNTSWITCH_Pin */
-  GPIO_InitStruct.Pin = RANDOMAMOUNTSWITCH_Pin;
+  /*Configure GPIO pins : RANDOMAMOUNTSWITCH1_Pin RANDOMSWITCH2_Pin */
+  GPIO_InitStruct.Pin = RANDOMAMOUNTSWITCH1_Pin|RANDOMSWITCH2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(RANDOMAMOUNTSWITCH_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PC14 PC7 PC12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_7|GPIO_PIN_12;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : EXTSPI_nCS_Pin FLASH_HOLD_Pin FLASH_nCS_Pin RECORDBUTTONLED_Pin
@@ -911,11 +907,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : USB_HOST_PWR_FAULT_Pin */
-  GPIO_InitStruct.Pin = USB_HOST_PWR_FAULT_Pin;
+  /*Configure GPIO pins : USB_HOST_PWR_FAULT_Pin FILTERMODESWITCH1_Pin */
+  GPIO_InitStruct.Pin = USB_HOST_PWR_FAULT_Pin|FILTERMODESWITCH1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(USB_HOST_PWR_FAULT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : RECORDGATEIN_Pin RECORDBUTTON_Pin SYNCIN_Pin */
   GPIO_InitStruct.Pin = RECORDGATEIN_Pin|RECORDBUTTON_Pin|SYNCIN_Pin;
@@ -930,6 +926,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC7 PC12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PREPOSTSWITCH_Pin */
   GPIO_InitStruct.Pin = PREPOSTSWITCH_Pin;
@@ -950,13 +952,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD2 PD3 PD4 PD5
-                           PD7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_7;
+  /*Configure GPIO pins : PD2 PD3 PD4 PD5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : FILTERMODESWITCH2_Pin */
+  GPIO_InitStruct.Pin = FILTERMODESWITCH2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(FILTERMODESWITCH2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MUX_C_Pin */
   GPIO_InitStruct.Pin = MUX_C_Pin;
@@ -976,12 +982,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(RANDOMBUTTON_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : FILTERMODESWITCH_Pin */
-  GPIO_InitStruct.Pin = FILTERMODESWITCH_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(FILTERMODESWITCH_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 15, 0);

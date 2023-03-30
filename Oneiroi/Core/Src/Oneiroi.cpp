@@ -20,20 +20,48 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+Pin randomGate(RANDOMGATEIN_GPIO_Port, RANDOMGATEIN_Pin);
+Pin randomButton(RANDOMBUTTON_GPIO_Port, RANDOMBUTTON_Pin);
+Pin wtSwitch(WTSWITCH_GPIO_Port, WTSWITCH_Pin);
+Pin randomAmountSwitch1(RANDOMAMOUNTSWITCH1_GPIO_Port, RANDOMAMOUNTSWITCH1_Pin);
+Pin randomAmountSwitch2(RANDOMAMOUNTSWITCH2_GPIO_Port, RANDOMAMOUNTSWITCH2_Pin);
+Pin filterModeSwitch1(FILTERMODESWITCH1_GPIO_Port, FILTERMODESWITCH1_Pin);
+Pin filterModeSwitch2(FILTERMODESWITCH2_GPIO_Port, FILTERMODESWITCH2_Pin);
+
+bool randomGateState;
+
 void onChangePin(uint16_t pin){
   switch(pin){
     case SYNCIN_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SYNCIN_GPIO_Port, SYNCIN_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_C, state);
       break;
+    }
     case RECORDBUTTON_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(RECORDBUTTON_GPIO_Port, RECORDBUTTON_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_A, state);
       break;
+    }
     case RECORDGATEIN_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(RECORDGATEIN_GPIO_Port, RECORDGATEIN_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_A, state);
       break;
+    }
     case RANDOMBUTTON_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(RANDOMBUTTON_GPIO_Port, RANDOMBUTTON_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_B, state);
       break;
+    }
     case PREPOSTSWITCH_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(PREPOSTSWITCH_GPIO_Port, PREPOSTSWITCH_Pin) == GPIO_PIN_RESET;
+      setButtonValue(BUTTON_E, state);
       break;
-    case FILTERMODESWITCH_Pin:
-      break;
+    }
   }
 }
 
@@ -92,5 +120,8 @@ void onSetup(){
 }
 
 void onLoop(void){
+  if (randomGateState !== randomGate.get()) {
+    setButtonValue(BUTTON)
 
+  }
 }
