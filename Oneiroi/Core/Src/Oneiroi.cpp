@@ -176,6 +176,8 @@ extern "C"{
   }
 }
 
+static uint8_t randomAmountState = 0;
+
 void onLoop(void){
   if (randomButtonState != randomButton.get()) {
     randomButtonState = randomButton.get();
@@ -185,5 +187,10 @@ void onLoop(void){
   if (wtSwitchState != wtSwitch.get()) {
     wtSwitchState = wtSwitch.get();
     setButtonValue(WTSWITCH, wtSwitchState);
+  }
+  uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
+  if(value != randomAmountState){
+     randomAmountState = value;
+     setParameterValue(PARAMETER_AC, value * 2047);
   }
 }
