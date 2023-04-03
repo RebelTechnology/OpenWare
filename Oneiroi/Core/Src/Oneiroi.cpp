@@ -46,6 +46,11 @@ enum leds {
   INLEVELREDLED
 };
 
+// MUX binary counter digital output pins
+Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
+Pin muxB(MUX_B_GPIO_Port, MUX_B_Pin);
+Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
+
 void onChangePin(uint16_t pin){
   switch(pin){
     case SYNCIN_Pin:
@@ -127,12 +132,48 @@ void setLed(uint8_t led, uint32_t rgb){
   }
 }
 
+#define MUX_PERIPH hadc1
+#define NOF_MUX_VALUES 5
+static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
+
 void onSetup(){
   setLed(RECORDLED, 0);
   setLed(RANDOMLED, 0);
   setLed(SYNCINLED, 0);
   setLed(INLEVELREDLED, 0);
   //setGateValue(PUSHBUTTON, 0);
+
+  // start MUX ADC
+  extern ADC_HandleTypeDef MUX_PERIPH;
+  if(HAL_ADC_Start_DMA(&MUX_PERIPH, (uint32_t*)mux_values, NOF_MUX_VALUES) != HAL_OK)
+    error(CONFIG_ERROR, "ADC1 Start failed");
+}
+
+void setMux(uint8_t index){
+  muxA.set(index & 0b001);
+  muxB.set(index & 0b010);
+  muxC.set(index & 0b100);
+}
+
+void readMux(uint8_t index, uint16_t* adc_values){
+  setParameterValue(PARAMETER_A, adc_values[0]); // REVERBCV
+  setParameterValue(PARAMETER_B, adc_values[1]); // VOCTCV
+  setParameterValue(PARAMETER_BA+index, adc_values[2]); // MUX 1
+  setParameterValue(PARAMETER_CA+index, adc_values[3]); // MUX 2
+  setParameterValue(PARAMETER_DA+index, adc_values[4]); // MUX 3
+}
+
+extern "C"{
+  void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+    extern ADC_HandleTypeDef MUX_PERIPH;
+    if(hadc == &MUX_PERIPH){
+      static uint8_t mux_index = 0;
+      setMux(mux_index+1);
+      readMux(mux_index, mux_values);
+      if(mux_index++ == 8)
+        mux_index = 0;
+    }
+  }
 }
 
 void onLoop(void){
