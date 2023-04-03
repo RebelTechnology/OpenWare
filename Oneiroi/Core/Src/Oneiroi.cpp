@@ -177,6 +177,7 @@ extern "C"{
 }
 
 static uint8_t randomAmountState = 0;
+static uint8_t filterModeState = 0;
 
 void onLoop(void){
   if (randomButtonState != randomButton.get()) {
@@ -192,5 +193,10 @@ void onLoop(void){
   if(value != randomAmountState){
      randomAmountState = value;
      setParameterValue(PARAMETER_AC, value * 2047);
+  }
+  value = (filterModeSwitch2.get() << 1) | filterModeSwitch1.get();
+  if(value != filterModeState){
+     filterModeState = value;
+     setParameterValue(PARAMETER_AD, value * 2047);
   }
 }
