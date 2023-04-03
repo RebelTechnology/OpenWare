@@ -28,38 +28,54 @@ Pin randomAmountSwitch2(RANDOMAMOUNTSWITCH2_GPIO_Port, RANDOMAMOUNTSWITCH2_Pin);
 Pin filterModeSwitch1(FILTERMODESWITCH1_GPIO_Port, FILTERMODESWITCH1_Pin);
 Pin filterModeSwitch2(FILTERMODESWITCH2_GPIO_Port, FILTERMODESWITCH2_Pin);
 
-bool randomGateState;
+bool randomGateState, wtSwitchState;
+
+#define RECORDBUTTON BUTTON_1
+#define RECORDGATE BUTTON_2
+#define RANDOMBUTTON BUTTON_3
+#define RANDOMGATE BUTTON_4
+#define SYNCIN BUTTON_5
+#define INLEVELRED BUTTON_6
+#define PREPOSTSWITCH BUTTON_7
+#define WTSWITCH BUTTON_8
+
+enum leds {
+  RECORDLED = 1,
+  RANDOMLED,
+  SYNCINLED,
+  INLEVELREDLED
+};
 
 void onChangePin(uint16_t pin){
   switch(pin){
     case SYNCIN_Pin:
     {
       bool state = HAL_GPIO_ReadPin(SYNCIN_GPIO_Port, SYNCIN_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_C, state);
+      setButtonValue(SYNCIN, state);
       break;
     }
     case RECORDBUTTON_Pin:
     {
       bool state = HAL_GPIO_ReadPin(RECORDBUTTON_GPIO_Port, RECORDBUTTON_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_A, state);
+      setButtonValue(RECORDBUTTON, state);
       break;
     }
     case RECORDGATEIN_Pin:
     {
       bool state = HAL_GPIO_ReadPin(RECORDGATEIN_GPIO_Port, RECORDGATEIN_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_A, state);
+      setButtonValue(RECORDGATE, state);
       break;
     }
     case RANDOMBUTTON_Pin:
     {
       bool state = HAL_GPIO_ReadPin(RANDOMBUTTON_GPIO_Port, RANDOMBUTTON_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_B, state);
+      setButtonValue(RANDOMBUTTON, state);
       break;
     }
     case PREPOSTSWITCH_Pin:
     {
       bool state = HAL_GPIO_ReadPin(PREPOSTSWITCH_GPIO_Port, PREPOSTSWITCH_Pin) == GPIO_PIN_RESET;
-      setButtonValue(BUTTON_E, state);
+      setButtonValue(PREPOSTSWITCH, state);
       break;
     }
   }
@@ -79,17 +95,17 @@ extern DAC_HandleTypeDef DAC_HANDLE;
 
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
-  case BUTTON_A:
-    setLed(1, value);
+  case RECORDBUTTON:
+    setLed(RECORDLED, value);
     break;
-  case BUTTON_B:
-    setLed(2, value);
+  case RANDOMBUTTON:
+    setLed(RANDOMLED, value);
     break;
-  case BUTTON_C:
-    setLed(3, value);
+  case SYNCIN:
+    setLed(SYNCINLED, value);
     break;
-  case BUTTON_D:
-    setLed(4, value);
+  case INLEVELRED:
+    setLed(INLEVELREDLED, value);
     break;
   }
 }
@@ -112,16 +128,25 @@ void setLed(uint8_t led, uint32_t rgb){
 }
 
 void onSetup(){
-  setLed(1, 0);
-  setLed(2, 0);
-  setLed(3, 0);
-  setLed(4, 0);
+  setLed(RECORDLED, 0);
+  setLed(RANDOMLED, 0);
+  setLed(SYNCINLED, 0);
+  setLed(INLEVELREDLED, 0);
   //setGateValue(PUSHBUTTON, 0);
 }
 
 void onLoop(void){
-  if (randomGateState !== randomGate.get()) {
-    setButtonValue(BUTTON)
-
+  if (randomGateState != randomGate.get()) {
+    randomGateState = randomGate.get();
+    setButtonValue(RANDOMGATE, randomGateState);
+    setLed(RANDOMLED, randomGateState);
+  }
+  if (wtSwitchState != wtSwitch.get()) {
+    wtSwitchState = wtSwitch.get();
+    setButtonValue(WTSWITCH, wtSwitchState);
+  }
+  if (wtSwitchState != wtSwitch.get()) {
+    wtSwitchState = wtSwitch.get();
+    setButtonValue(WTSWITCH, wtSwitchState);
   }
 }
