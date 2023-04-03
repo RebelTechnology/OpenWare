@@ -985,8 +985,8 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MUX_C_GPIO_Port, MUX_C_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : RANDOMAMOUNTSWITCH1_Pin RANDOMSWITCH2_Pin */
-  GPIO_InitStruct.Pin = RANDOMAMOUNTSWITCH1_Pin|RANDOMSWITCH2_Pin;
+  /*Configure GPIO pins : RANDOMAMOUNTSWITCH1_Pin RANDOMAMOUNTSWITCH2_Pin */
+  GPIO_InitStruct.Pin = RANDOMAMOUNTSWITCH1_Pin|RANDOMAMOUNTSWITCH2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);

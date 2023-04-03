@@ -28,7 +28,7 @@ Pin randomAmountSwitch2(RANDOMAMOUNTSWITCH2_GPIO_Port, RANDOMAMOUNTSWITCH2_Pin);
 Pin filterModeSwitch1(FILTERMODESWITCH1_GPIO_Port, FILTERMODESWITCH1_Pin);
 Pin filterModeSwitch2(FILTERMODESWITCH2_GPIO_Port, FILTERMODESWITCH2_Pin);
 
-bool randomGateState, wtSwitchState;
+bool randomButtonState, wtSwitchState;
 
 #define RECORDBUTTON BUTTON_1
 #define RECORDGATE BUTTON_2
@@ -71,10 +71,10 @@ void onChangePin(uint16_t pin){
       setButtonValue(RECORDGATE, state);
       break;
     }
-    case RANDOMBUTTON_Pin:
+    case RANDOMGATEIN_Pin:
     {
-      bool state = HAL_GPIO_ReadPin(RANDOMBUTTON_GPIO_Port, RANDOMBUTTON_Pin) == GPIO_PIN_RESET;
-      setButtonValue(RANDOMBUTTON, state);
+      bool state = HAL_GPIO_ReadPin(RANDOMGATEIN_GPIO_Port, RANDOMGATEIN_Pin) == GPIO_PIN_RESET;
+      setButtonValue(RANDOMGATE, state);
       break;
     }
     case PREPOSTSWITCH_Pin:
@@ -177,14 +177,10 @@ extern "C"{
 }
 
 void onLoop(void){
-  if (randomGateState != randomGate.get()) {
-    randomGateState = randomGate.get();
-    setButtonValue(RANDOMGATE, randomGateState);
-    setLed(RANDOMLED, randomGateState);
-  }
-  if (wtSwitchState != wtSwitch.get()) {
-    wtSwitchState = wtSwitch.get();
-    setButtonValue(WTSWITCH, wtSwitchState);
+  if (randomButtonState != randomButton.get()) {
+    randomButtonState = randomButton.get();
+    setButtonValue(RANDOMBUTTON, randomButtonState);
+    setLed(RANDOMLED, randomButtonState);
   }
   if (wtSwitchState != wtSwitch.get()) {
     wtSwitchState = wtSwitch.get();
