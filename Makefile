@@ -71,6 +71,9 @@ noctua: ## build Noctua project
 biosignals: ## build BioSignals project
 	@$(MAKE) -C BioSignals all
 
+oneiroi: ## build Oneiroi project
+	@$(MAKE) -C Oneiroi all
+
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
 	@$(MAKE) -C Witch clean
@@ -92,6 +95,7 @@ clean: ## remove generated files
 	@$(MAKE) -C MidiBoot1 clean
 	@$(MAKE) -C MidiBoot2 clean
 	@$(MAKE) -C MidiBoot3 clean
+	@$(MAKE) -C Oneiroi clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile

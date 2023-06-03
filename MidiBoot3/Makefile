@@ -34,6 +34,8 @@ else ifeq ($(PLATFORM),Magus3)
   CPPFLAGS += -DOWL_MAGUS -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Xibeca)
   CPPFLAGS += -DOWL_XIBECA -DUSE_USBD_FS
+else ifeq ($(PLATFORM),Oneiroi)
+  CPPFLAGS += -DOWL_ONEIROI -DUSE_USBD_FS
 else
   $(error Invalid PLATFORM=$(PLATFORM))
 endif

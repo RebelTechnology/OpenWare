@@ -4,3 +4,5 @@ mx.scratch
 */Build
 #*#
 .DS_Store
+.vscode
+FirmwareSender
