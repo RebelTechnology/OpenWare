@@ -32,14 +32,21 @@
 #define MUX_PERIPH hadc1
 #define NOF_MUX_VALUES 5
 
-#define PATCH_RESET_COUNTER (4000 / MAIN_LOOP_SLEEP_MS)
+enum leds
+{
+  RECORDLED = 1,
+  RANDOMLED,
+  SYNCINLED,
+  INLEVELREDLED,
+  INLEVELLEDGREEN, // PARAMETER_F
+  MODLED           // PARAMETER_G
+};
 
+static bool randomButtonState = false;
+static bool wtSwitchState = false;
+static uint16_t randomAmountState = 0;
+static uint16_t filterModeState = 0;
 static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
-
-static uint8_t randomAmountState = 0;
-static uint8_t filterModeState = 0;
-
-static uint16_t progress = 0;
 
 Pin randomGate(RANDOMGATEIN_GPIO_Port, RANDOMGATEIN_Pin);
 Pin randomButton(RANDOMBUTTON_GPIO_Port, RANDOMBUTTON_Pin);
@@ -54,47 +61,41 @@ Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
 Pin muxB(MUX_B_GPIO_Port, MUX_B_Pin);
 Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
 
-bool randomButtonState, wtSwitchState;
-
-enum leds
-{
-  RECORDLED = 1,
-  RANDOMLED,
-  SYNCINLED,
-  INLEVELREDLED
-};
-
 void onChangePin(uint16_t pin)
 {
   switch (pin)
   {
   case SYNCIN_Pin:
   {
-    bool state = HAL_GPIO_ReadPin(SYNCIN_GPIO_Port, SYNCIN_Pin) == GPIO_PIN_RESET;
+    bool state = HAL_GPIO_ReadPin(SYNCIN_GPIO_Port, SYNCIN_Pin) == GPIO_PIN_RESET; // Inverted
     setButtonValue(SYNCIN, state);
+    setLed(SYNCINLED, state);
     break;
   }
   case RECORDBUTTON_Pin:
   {
-    bool state = HAL_GPIO_ReadPin(RECORDBUTTON_GPIO_Port, RECORDBUTTON_Pin) == GPIO_PIN_RESET;
+    bool state = HAL_GPIO_ReadPin(RECORDBUTTON_GPIO_Port, RECORDBUTTON_Pin) == GPIO_PIN_RESET; // Inverted
     setButtonValue(RECORDBUTTON, state);
+    setLed(RECORDLED, state);
     break;
   }
   case RECORDGATEIN_Pin:
   {
-    bool state = HAL_GPIO_ReadPin(RECORDGATEIN_GPIO_Port, RECORDGATEIN_Pin) == GPIO_PIN_RESET;
+    bool state = HAL_GPIO_ReadPin(RECORDGATEIN_GPIO_Port, RECORDGATEIN_Pin) == GPIO_PIN_RESET; // Inverted
     setButtonValue(RECORDGATE, state);
+    setLed(RECORDLED, state);
     break;
   }
   case RANDOMGATEIN_Pin:
   {
-    bool state = HAL_GPIO_ReadPin(RANDOMGATEIN_GPIO_Port, RANDOMGATEIN_Pin) == GPIO_PIN_RESET;
+    bool state = HAL_GPIO_ReadPin(RANDOMGATEIN_GPIO_Port, RANDOMGATEIN_Pin) == GPIO_PIN_RESET; // Inverted
     setButtonValue(RANDOMGATE, state);
+    setLed(RANDOMLED, state);
     break;
   }
   case PREPOSTSWITCH_Pin:
   {
-    bool state = HAL_GPIO_ReadPin(PREPOSTSWITCH_GPIO_Port, PREPOSTSWITCH_Pin) == GPIO_PIN_RESET;
+    bool state = HAL_GPIO_ReadPin(PREPOSTSWITCH_GPIO_Port, PREPOSTSWITCH_Pin) == GPIO_PIN_RESET; // Inverted
     setButtonValue(PREPOSTSWITCH, state);
     break;
   }
@@ -106,10 +107,10 @@ void setAnalogValue(uint8_t ch, int16_t value)
   extern DAC_HandleTypeDef DAC_HANDLE;
   switch (ch)
   {
-  case PARAMETER_F:
+  case INLEVELLEDGREEN:
     HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
-  case PARAMETER_G:
+  case MODLED:
     HAL_DAC_SetValue(&DAC_HANDLE, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
   }
@@ -117,6 +118,8 @@ void setAnalogValue(uint8_t ch, int16_t value)
 
 void setGateValue(uint8_t ch, int16_t value)
 {
+  return; // TODO: Do we need this?
+
   switch (ch)
   {
   case RECORDBUTTON:
@@ -138,29 +141,19 @@ void setLed(uint8_t led, uint32_t rgb)
 {
   switch (led)
   {
-  case 1:
-    HAL_GPIO_WritePin(RECORDBUTTONLED_GPIO_Port, RECORDBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  case RECORDLED:
+    HAL_GPIO_WritePin(RECORDBUTTONLED_GPIO_Port, RECORDBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
-  case 2:
-    HAL_GPIO_WritePin(RANDOMBUTTONLED_GPIO_Port, RANDOMBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  case RANDOMLED:
+    HAL_GPIO_WritePin(RANDOMBUTTONLED_GPIO_Port, RANDOMBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
-  case 3:
-    HAL_GPIO_WritePin(SYNCIN_GPIO_Port, SYNCIN_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  case SYNCINLED:
+    HAL_GPIO_WritePin(SYNCIN_GPIO_Port, SYNCIN_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
     break;
-  case 4:
-    HAL_GPIO_WritePin(INLEVELREDLED_GPIO_Port, INLEVELREDLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  case INLEVELREDLED:
+    HAL_GPIO_WritePin(INLEVELREDLED_GPIO_Port, INLEVELREDLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
   }
-}
-
-bool isRandomButtonPressed()
-{
-  return HAL_GPIO_ReadPin(RANDOMBUTTON_GPIO_Port, RANDOMBUTTON_Pin) == GPIO_PIN_RESET;
-}
-
-bool isRecordButtonPressed()
-{
-  return HAL_GPIO_ReadPin(RECORDBUTTON_GPIO_Port, RECORDBUTTON_Pin) == GPIO_PIN_RESET;
 }
 
 void onSetup()
@@ -174,9 +167,7 @@ void onSetup()
   // start MUX ADC
   extern ADC_HandleTypeDef MUX_PERIPH;
   if (HAL_ADC_Start_DMA(&MUX_PERIPH, (uint32_t *)mux_values, NOF_MUX_VALUES) != HAL_OK)
-  {
     error(CONFIG_ERROR, "ADC1 Start failed");
-  }
 }
 
 void setMux(uint8_t index)
@@ -206,94 +197,34 @@ extern "C"
       setMux(mux_index + 1);
       readMux(mux_index, mux_values);
       if (mux_index++ == 8)
-      {
         mux_index = 0;
-      }
     }
   }
-}
-
-void setProgress(uint16_t value, const char *msg)
-{
-  debugMessage(msg, (int)(100 * value / 4095));
-  progress = value;
 }
 
 void onLoop(void)
 {
-  static uint32_t counter = PATCH_RESET_COUNTER;
-
-  switch (owl.getOperationMode())
+  if (randomButtonState != randomButton.get())
   {
-  case STARTUP_MODE:
-    break;
-  case LOAD_MODE:
-    break;
-  case RUN_MODE:
-  {
-
-    if (getErrorStatus() != NO_ERROR)
-    {
-      owl.setOperationMode(ERROR_MODE);
-    }
-
-    // press and hold to store settings
-    if (isRandomButtonPressed() && isRecordButtonPressed())
-    {
-      if (--counter == 0)
-      {
-        counter = PATCH_RESET_COUNTER;
-        settings.saveToFlash(false);
-      }
-      else
-      {
-      }
-    }
-    else
-    {
-      counter = PATCH_RESET_COUNTER;
-    }
-
-    if (randomButtonState != randomButton.get())
-    {
-      randomButtonState = randomButton.get();
-      setButtonValue(RANDOMBUTTON, randomButtonState);
-      setLed(RANDOMLED, randomButtonState);
-    }
-    if (wtSwitchState != wtSwitch.get())
-    {
-      wtSwitchState = wtSwitch.get();
-      setButtonValue(WTSWITCH, wtSwitchState);
-    }
-    uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
-    if (value != randomAmountState)
-    {
-      randomAmountState = value;
-      setParameterValue(PARAMETER_AC, value * 2047);
-    }
-    value = (filterModeSwitch2.get() << 1) | filterModeSwitch1.get();
-    if (value != filterModeState)
-    {
-      filterModeState = value;
-      setParameterValue(PARAMETER_AD, value * 2047);
-    }
+    randomButtonState = !randomButton.get(); // Inverted
+    setButtonValue(RANDOMBUTTON, randomButtonState);
+    setLed(RANDOMLED, randomButtonState);
   }
-  break;
-  case CONFIGURE_MODE:
-    owl.setOperationMode(RUN_MODE);
-    break;
-  case STREAM_MODE:
-    break;
-  case ERROR_MODE:
-    if (--counter == 0)
-    {
-      counter = PATCH_RESET_COUNTER;
-    }
-    if (isRecordButtonPressed())
-    {
-      setErrorStatus(NO_ERROR);
-      owl.setOperationMode(RUN_MODE); // allows new patch selection if patch doesn't load
-    }
-    break;
+  if (wtSwitchState != wtSwitch.get())
+  {
+    wtSwitchState = !wtSwitch.get(); // Inverted
+    setButtonValue(WTSWITCH, wtSwitchState);
+  }
+  uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
+  if (value != randomAmountState)
+  {
+    randomAmountState = value;
+    setParameterValue(PARAMETER_AC, value * 2047);
+  }
+  value = (filterModeSwitch2.get() << 1) | filterModeSwitch1.get();
+  if (value != filterModeState)
+  {
+    filterModeState = value;
+    setParameterValue(PARAMETER_AD, value * 2047);
   }
 }

@@ -78,48 +78,8 @@
 
 /************************* Miscellaneous Configuration ************************/
 /*!< Uncomment the following line if you need to use initialized data in D2 domain SRAM (AHB SRAM) */
-/* #define DATA_IN_D2_SRAM */
+#define DATA_IN_D2_SRAM
 
-/* Note: Following vector table addresses must be defined in line with linker
-         configuration. */
-/*!< Uncomment the following line if you need to relocate the vector table
-     anywhere in FLASH BANK1 or AXI SRAM, else the vector table is kept at the automatic
-     remap of boot address selected */
-/* #define USER_VECT_TAB_ADDRESS */
-
-#if defined(USER_VECT_TAB_ADDRESS)
-#if defined(DUAL_CORE) && defined(CORE_CM4)
-/*!< Uncomment the following line if you need to relocate your vector Table
-     in D2 AXI SRAM else user remap will be done in FLASH BANK2. */
-/* #define VECT_TAB_SRAM */
-#if defined(VECT_TAB_SRAM)
-#define VECT_TAB_BASE_ADDRESS   D2_AXISRAM_BASE   /*!< Vector Table base address field.
-                                                       This value must be a multiple of 0x300. */
-#define VECT_TAB_OFFSET         0x00000000U       /*!< Vector Table base offset field.
-                                                       This value must be a multiple of 0x300. */
-#else
-#define VECT_TAB_BASE_ADDRESS   FLASH_BANK2_BASE  /*!< Vector Table base address field.
-                                                       This value must be a multiple of 0x300. */
-#define VECT_TAB_OFFSET         0x00000000U       /*!< Vector Table base offset field.
-                                                       This value must be a multiple of 0x300. */
-#endif /* VECT_TAB_SRAM */
-#else
-/*!< Uncomment the following line if you need to relocate your vector Table
-     in D1 AXI SRAM else user remap will be done in FLASH BANK1. */
-/* #define VECT_TAB_SRAM */
-#if defined(VECT_TAB_SRAM)
-#define VECT_TAB_BASE_ADDRESS   D1_AXISRAM_BASE   /*!< Vector Table base address field.
-                                                       This value must be a multiple of 0x300. */
-#define VECT_TAB_OFFSET         0x00000000U       /*!< Vector Table base offset field.
-                                                       This value must be a multiple of 0x300. */
-#else
-#define VECT_TAB_BASE_ADDRESS   FLASH_BANK1_BASE  /*!< Vector Table base address field.
-                                                       This value must be a multiple of 0x300. */
-#define VECT_TAB_OFFSET         0x00000000U       /*!< Vector Table base offset field.
-                                                       This value must be a multiple of 0x300. */
-#endif /* VECT_TAB_SRAM */
-#endif /* DUAL_CORE && CORE_CM4 */
-#endif /* USER_VECT_TAB_ADDRESS */
 /******************************************************************************/
 
 /**
@@ -278,13 +238,6 @@ void SystemInit (void)
   (void) tmpreg;
 #endif /* DATA_IN_D2_SRAM */
 
-#if defined(DUAL_CORE) && defined(CORE_CM4)
-  /* Configure the Vector Table location add offset address for cortex-M4 ------------------*/
-#if defined(USER_VECT_TAB_ADDRESS)
-  SCB->VTOR = VECT_TAB_BASE_ADDRESS | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal D2 AXI-RAM or in Internal FLASH */
-#endif /* USER_VECT_TAB_ADDRESS */
-
-#else
   /*
    * Disable the FMC bank1 (enabled after reset).
    * This, prevents CPU speculation access on this bank which blocks the use of FMC during
@@ -292,12 +245,10 @@ void SystemInit (void)
    */
   FMC_Bank1_R->BTCR[0] = 0x000030D2;
 
-  /* Configure the Vector Table location -------------------------------------*/
-#if defined(USER_VECT_TAB_ADDRESS)
-  SCB->VTOR = VECT_TAB_BASE_ADDRESS | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal D1 AXI-RAM or in Internal FLASH */
-#endif /* USER_VECT_TAB_ADDRESS */
+  /* Configure the Vector Table location add offset address for cortex-M7 ------------------*/
+  extern char _ISR_VECTOR;
+  SCB->VTOR = (uint32_t)&_ISR_VECTOR;
 
-#endif /*DUAL_CORE && CORE_CM4*/
 }
 
 /**
