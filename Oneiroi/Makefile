@@ -4,8 +4,6 @@ OPENWARE ?= $(BUILDROOT)/..
 
 include $(OPENWARE)/Hardware/owl3.mk
 
-FIRMWARESENDER ?= ../FirmwareSender
-
 C_SRC = $(wildcard Core/Src/*.c)
 CPP_SRC = $(wildcard Core/Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/sdram.c

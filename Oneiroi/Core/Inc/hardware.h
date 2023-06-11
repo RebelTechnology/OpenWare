@@ -3,7 +3,7 @@
 
 #define OWL_ONEIROI
 #define HARDWARE_ID                  ONEIROI_HARDWARE
-#define HARDWARE_VERSION             "ONEIROI"
+#define HARDWARE_VERSION             "Oneiroi"
 #define USBD_PRODUCT_STRING_FSHS     "OWL-ONEIROI"
 
 #define USE_SPI_FLASH
