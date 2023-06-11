@@ -46,14 +46,14 @@
   #define HARDWARE_VERSION    "OWL Oneiroi Boot"
   #define HARDWARE_ID         ONEIROI_HARDWARE
   #define APPLICATION_ADDRESS 0x08020000
-  #define USE_BOOT1_PIN
+  //#define USE_BOOT1_PIN
   #define BOOT1_GPIO_Port GPIOG
   #define BOOT1_Pin  GPIO_PIN_13
   #define USE_LED
   #define LED1_Pin GPIO_PIN_4
   #define LED1_GPIO_Port GPIOB
-  #define LED2_Pin GPIO_PIN_4
-  #define LED2_GPIO_Port GPIOB
+  #define LED2_Pin GPIO_PIN_15
+  #define LED2_GPIO_Port GPIOA
   #define USE_SPI_FLASH
   #define SPI_FLASH_HANDLE             hspi1
 #else
