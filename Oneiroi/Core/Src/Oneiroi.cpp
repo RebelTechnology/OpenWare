@@ -29,9 +29,6 @@
 #define PREPOSTSWITCH BUTTON_7
 #define WTSWITCH BUTTON_8
 
-#define MUX_PERIPH hadc1
-#define NOF_MUX_VALUES 5
-
 enum leds
 {
   RECORDLED = 1,
@@ -177,13 +174,13 @@ void setMux(uint8_t index)
   muxC.set(index & 0b100);
 }
 
-void readMux(uint8_t index, uint16_t *adc_values)
+void readMux(uint8_t index, uint16_t *mux_values)
 {
-  setParameterValue(PARAMETER_A, adc_values[0]);          // REVERBCV
-  setParameterValue(PARAMETER_B, adc_values[1]);          // VOCTCV
-  setParameterValue(PARAMETER_BA + index, adc_values[2]); // MUX 1
-  setParameterValue(PARAMETER_CA + index, adc_values[3]); // MUX 2
-  setParameterValue(PARAMETER_DA + index, adc_values[4]); // MUX 3
+  setParameterValue(PARAMETER_A, mux_values[MUX_A]);          // REVERBCV
+  setParameterValue(PARAMETER_B, mux_values[MUX_B]);          // VOCTCV
+  setParameterValue(PARAMETER_BA + index, mux_values[MUX_C]); // MUX 1
+  setParameterValue(PARAMETER_CA + index, mux_values[MUX_D]); // MUX 2
+  setParameterValue(PARAMETER_DA + index, mux_values[MUX_E]); // MUX 3
 }
 
 extern "C"
