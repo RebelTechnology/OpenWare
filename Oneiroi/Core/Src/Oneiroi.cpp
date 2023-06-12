@@ -29,6 +29,48 @@
 #define PREPOSTSWITCH BUTTON_7
 #define WTSWITCH BUTTON_8
 
+#define REVERBCV PARAMETER_A
+#define VOCTCV PARAMETER_B
+#define DELAYCV PARAMETER_C
+#define OSC2CV PARAMETER_D
+#define FILTERCV PARAMETER_E
+//#define INLEVELLEDGREEN PARAMETER_F
+//#define MODLED PARAMETER_G
+#define STARTCV PARAMETER_H
+
+#define LENGTHCV PARAMETER_AA
+#define SPEEDCV PARAMETER_AB
+#define RANDOMAMOUNT PARAMETER_AC
+#define FILTERTYPE PARAMETER_AD
+#define RESONATORCV PARAMETER_AE
+
+#define LOOPER_VOL PARAMETER_BA
+#define REVERB_VOL PARAMETER_BB
+#define DELAY_VOL PARAMETER_BC
+#define RESO_VOL PARAMETER_BD
+#define FILTER_VOL PARAMETER_BE
+#define IN_VOL PARAMETER_BF
+#define SSWT_VOL PARAMETER_BG
+#define SINE_VOL PARAMETER_BH
+
+#define SPEED PARAMETER_CA
+#define RESOD PARAMETER_CB
+#define DETUNE PARAMETER_CC
+#define LENGTH PARAMETER_CD
+#define PITCH PARAMETER_CE
+#define START PARAMETER_CF
+#define RESOHARMONY PARAMETER_CG
+#define RESODECAY PARAMETER_CH
+
+#define TONESIZE PARAMETER_DA
+#define DECAY PARAMETER_DB
+#define MODAMOUNT PARAMETER_DC
+#define MODFREQ PARAMETER_DD
+#define CUTOFF PARAMETER_DE
+#define DELAYF PARAMETER_DF
+#define DELAYA PARAMETER_DG
+#define RANDOM_MODE PARAMETER_DH
+
 enum leds
 {
   RECORDLED = 1,
@@ -176,8 +218,8 @@ void setMux(uint8_t index)
 
 void readMux(uint8_t index, uint16_t *mux_values)
 {
-  setParameterValue(PARAMETER_A, mux_values[MUX_A]);          // REVERBCV
-  setParameterValue(PARAMETER_B, mux_values[MUX_B]);          // VOCTCV
+  setParameterValue(REVERBCV, mux_values[MUX_A]);
+  setParameterValue(VOCTCV, mux_values[MUX_B]);
   setParameterValue(PARAMETER_BA + index, mux_values[MUX_C]); // MUX 1
   setParameterValue(PARAMETER_CA + index, mux_values[MUX_D]); // MUX 2
   setParameterValue(PARAMETER_DA + index, mux_values[MUX_E]); // MUX 3
@@ -224,4 +266,6 @@ void onLoop(void)
     filterModeState = value;
     setParameterValue(PARAMETER_AD, value * 2047);
   }
+
+  int16_t v = getAnalogValue(ADC_A);
 }

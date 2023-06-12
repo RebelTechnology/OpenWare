@@ -59,6 +59,10 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
+#define ADC_E 3
+#define ADC_F 4
+#define ADC_G 5
+#define ADC_H 6
 #define MUX_PERIPH hadc1
 #define MUX_A 0
 #define MUX_B 1
