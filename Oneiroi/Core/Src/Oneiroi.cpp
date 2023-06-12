@@ -20,6 +20,7 @@
 #define abs(x) ((x) > 0 ? (x) : -(x))
 #endif
 
+// GPIO
 #define RECORDBUTTON BUTTON_1
 #define RECORDGATE BUTTON_2
 #define RANDOMBUTTON BUTTON_3
@@ -29,20 +30,21 @@
 #define PREPOSTSWITCH BUTTON_7
 #define WTSWITCH BUTTON_8
 
-#define REVERBCV PARAMETER_A
-#define VOCTCV PARAMETER_B
-#define DELAYCV PARAMETER_C
-#define OSC2CV PARAMETER_D
-#define FILTERCV PARAMETER_E
-//#define INLEVELLEDGREEN PARAMETER_F
-//#define MODLED PARAMETER_G
-#define STARTCV PARAMETER_H
+#define RANDOMAMOUNT PARAMETER_AA
+#define FILTERMODE PARAMETER_AB
 
-#define LENGTHCV PARAMETER_AA
-#define SPEEDCV PARAMETER_AB
-#define RANDOMAMOUNT PARAMETER_AC
-#define FILTERTYPE PARAMETER_AD
-#define RESONATORCV PARAMETER_AE
+// ADC3
+#define OSC2CV PARAMETER_A
+#define FILTERCV PARAMETER_B
+#define RESONATORCV PARAMETER_C
+#define DELAYCV PARAMETER_D
+#define STARTCV PARAMETER_E
+#define LENGTHCV PARAMETER_F
+#define SPEEDCV PARAMETER_G
+
+// Muxed
+#define REVERBCV PARAMETER_AC
+#define VOCTCV PARAMETER_AD
 
 #define LOOPER_VOL PARAMETER_BA
 #define REVERB_VOL PARAMETER_BB
@@ -157,8 +159,6 @@ void setAnalogValue(uint8_t ch, int16_t value)
 
 void setGateValue(uint8_t ch, int16_t value)
 {
-  return; // TODO: Do we need this?
-
   switch (ch)
   {
   case RECORDBUTTON:
@@ -257,15 +257,63 @@ void onLoop(void)
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
   if (value != randomAmountState)
   {
-    randomAmountState = value;
-    setParameterValue(PARAMETER_AC, value * 2047);
+    randomAmountState = value; // LOW = 2,
+    setParameterValue(RANDOMAMOUNT, value * 2047);
   }
   value = (filterModeSwitch2.get() << 1) | filterModeSwitch1.get();
   if (value != filterModeState)
   {
-    filterModeState = value;
-    setParameterValue(PARAMETER_AD, value * 2047);
+    filterModeState = value; // BP = 1, LP = 2, HP = 3
+    setParameterValue(FILTERMODE, value * 2047);
   }
 
-  int16_t v = getAnalogValue(ADC_A);
+  /*
+  int16_t delayCv = 4095 - getAnalogValue(DELAYCV); // Ok (0 - 10v?)
+  int16_t osc2Cv = 4095 - getAnalogValue(OSC2CV); // Ok (0 - 10v?)
+  int16_t filterCv = 4095 - getAnalogValue(FILTERCV); // Ok (0 - 10v?)
+  int16_t startCv = 4095 - getAnalogValue(STARTCV); // Ok (0 - 10v?)
+  int16_t lengthCv = 4095 - getAnalogValue(LENGTHCV); // Ok (0 - 10v?)
+  int16_t resonatorCv = 4095 - getAnalogValue(RESONATORCV); // Ok (0 - 10v?)
+  int16_t speedCv = 4095 - getAnalogValue(SPEEDCV); // Ok (0 - 10v?)
+
+  int16_t reverbCv = 4095 - getParameterValue(REVERBCV); // Ok (0 - 10v?)
+  int16_t vOctCv = getParameterValue(VOCTCV); // ? 5v = 0
+  */
+
+  //int16_t randomAmount = getParameterValue(RANDOMAMOUNT); // Not working: HIGH = 6k, MID = 2k, LOW = 6k
+  //int16_t FILTERMODE = getParameterValue(FILTERMODE); // HP = 6k, BP = 2k, LP = 4k
+
+  int16_t looperVol = getParameterValue(LOOPER_VOL); // Not working
+  int16_t reverbVol = getParameterValue(REVERB_VOL); // Ok, also LOOPER_VOL
+  /*
+  int16_t delayVol = 4095 - getParameterValue(DELAY_VOL); // Ok
+  int16_t resoVol = 4095 - getParameterValue(RESO_VOL); // Ok
+  int16_t filterVol = 4095 - getParameterValue(FILTER_VOL); // Ok
+  int16_t inVol = 4095 - getParameterValue(IN_VOL); // Ok
+  int16_t sswtVol = 4095 - getParameterValue(SSWT_VOL); // Ok
+  int16_t sineVol = 4095 - getParameterValue(SINE_VOL); // Ok
+  */
+
+  /*
+  int16_t speed = 4095 - getParameterValue(SPEED); // Ok
+  int16_t resoD = 4095 - getParameterValue(RESOD); // Ok
+  int16_t detune = 4095 - getParameterValue(DETUNE); // Ok
+  int16_t length = 4095 - getParameterValue(LENGTH); // Ok
+  int16_t pitch = 4095 - getParameterValue(PITCH); // Ok
+  int16_t start = 4095 - getParameterValue(START); // Ok
+  int16_t resoHarmony = 4095 - getParameterValue(RESOHARMONY); // Ok
+  int16_t resoDecay = 4095 - getParameterValue(RESODECAY); // Ok
+  */
+  int16_t toneSize = 4095 - getParameterValue(TONESIZE); // Ok
+  int16_t decay = 4095 - getParameterValue(DECAY); // Ok
+  //int16_t cutoff = 4095 - getParameterValue(CUTOFF); // Ok
+  int16_t delayF = getParameterValue(DELAYF); // Not working
+  int16_t delayA = getParameterValue(DELAYA); // Not working
+  int16_t randomMode = getParameterValue(RANDOM_MODE); // Not working
+
+  int16_t modAmount = 4095 - getParameterValue(MODAMOUNT); // Ok
+  int16_t modFreq = 4095 - getParameterValue(MODFREQ); // Ok
+
+  setAnalogValue(INLEVELLEDGREEN, modFreq); // Ok
+  setAnalogValue(MODLED, modAmount); // Ok
 }
