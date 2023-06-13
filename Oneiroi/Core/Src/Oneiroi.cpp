@@ -185,10 +185,10 @@ void setLed(uint8_t led, uint32_t rgb)
   switch (led)
   {
   case RECORDLED:
-    HAL_GPIO_WritePin(RECORDBUTTONLED_GPIO_Port, RECORDBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(RECORDBUTTONLED_GPIO_Port, RECORDBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
   case RANDOMLED:
-    HAL_GPIO_WritePin(RANDOMBUTTONLED_GPIO_Port, RANDOMBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(RANDOMBUTTONLED_GPIO_Port, RANDOMBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
   case SYNCLED:
     HAL_GPIO_WritePin(SYNCLED_GPIO_Port, SYNCLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -207,8 +207,8 @@ void onSetup()
   setLed(INLEVELREDLED, 0);
   // setGateValue(PUSHBUTTON, 0);
 
-  setAnalogValue(INLEVELLEDGREEN, 0);
-  setAnalogValue(MODLED, 0);
+  setAnalogValue(INLEVELLEDGREEN, 4095);
+  setAnalogValue(MODLED, 4095);
 
   // start MUX ADC
   extern ADC_HandleTypeDef MUX_PERIPH;
@@ -250,22 +250,23 @@ extern "C"
 
 void onLoop(void)
 {
-  if (randomButtonState != randomButton.get())
+  if (randomButtonState != !randomButton.get()) // Inverted: pressed = false
   {
-    randomButtonState = randomButton.get();
-    setButtonValue(RANDOMBUTTON, !randomButtonState); // Ok
+    randomButtonState = !randomButton.get();
+    setButtonValue(RANDOMBUTTON, randomButtonState); // Ok
     setLed(RANDOMLED, randomButtonState ? RED_COLOUR : NO_COLOUR); // Not working
+    setLed(INLEVELREDLED, randomButtonState ? RED_COLOUR : NO_COLOUR);
   }
-  if (wtSwitchState != wtSwitch.get())
+  if (wtSwitchState != !wtSwitch.get()) // Inverted: pressed = false
   {
-    wtSwitchState = wtSwitch.get();
-    setButtonValue(WTSWITCH, !wtSwitchState); // Ok
+    wtSwitchState = !wtSwitch.get();
+    setButtonValue(WTSWITCH, wtSwitchState); // Ok
   }
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
   if (value != randomAmountState)
   {
     randomAmountState = value;
-    setParameterValue(RANDOMAMOUNT, value); // Not working
+    setParameterValue(RANDOMAMOUNT, value); // Not working (value is always 3)
   }
   value = (filterModeSwitch2.get() << 1) | filterModeSwitch1.get();
   if (value != filterModeState)
@@ -315,7 +316,7 @@ void onLoop(void)
 
   //int16_t delayF = getParameterValue(DELAYF); // Not working
   //int16_t delayA = getParameterValue(DELAYA); // Not working
-  //int16_t randomMode = getParameterValue(RANDOM_MODE); // Not working
+  int16_t randomMode = getParameterValue(RANDOM_MODE); // Not working
 
   /*
   int16_t modAmount = getParameterValue(MODAMOUNT); // Ok
