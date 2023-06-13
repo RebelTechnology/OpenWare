@@ -77,7 +77,7 @@ enum leds
 {
   RECORDLED = 1,
   RANDOMLED,
-  SYNCINLED,
+  SYNCLED,
   INLEVELREDLED,
   INLEVELLEDGREEN, // PARAMETER_F
   MODLED           // PARAMETER_G
@@ -102,6 +102,8 @@ Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
 Pin muxB(MUX_B_GPIO_Port, MUX_B_Pin);
 Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
 
+bool recordButtonState = false;
+
 void onChangePin(uint16_t pin)
 {
   switch (pin)
@@ -110,28 +112,28 @@ void onChangePin(uint16_t pin)
   {
     bool state = HAL_GPIO_ReadPin(SYNCIN_GPIO_Port, SYNCIN_Pin) == GPIO_PIN_RESET; // Inverted
     setButtonValue(SYNCIN, state);
-    setLed(SYNCINLED, state);
+    setLed(SYNCLED, state ? RED_COLOUR : NO_COLOUR);
     break;
   }
   case RECORDBUTTON_Pin:
   {
     bool state = HAL_GPIO_ReadPin(RECORDBUTTON_GPIO_Port, RECORDBUTTON_Pin) == GPIO_PIN_RESET; // Inverted
     setButtonValue(RECORDBUTTON, state);
-    setLed(RECORDLED, state);
+    setLed(RECORDLED, state ? RED_COLOUR : NO_COLOUR);
     break;
   }
   case RECORDGATEIN_Pin:
   {
     bool state = HAL_GPIO_ReadPin(RECORDGATEIN_GPIO_Port, RECORDGATEIN_Pin) == GPIO_PIN_RESET; // Inverted
     setButtonValue(RECORDGATE, state);
-    setLed(RECORDLED, state);
+    setLed(RECORDLED, state ? RED_COLOUR : NO_COLOUR);
     break;
   }
   case RANDOMGATEIN_Pin:
   {
     bool state = HAL_GPIO_ReadPin(RANDOMGATEIN_GPIO_Port, RANDOMGATEIN_Pin) == GPIO_PIN_RESET; // Inverted
     setButtonValue(RANDOMGATE, state);
-    setLed(RANDOMLED, state);
+    setLed(RANDOMLED, state ? RED_COLOUR : NO_COLOUR);
     break;
   }
   case PREPOSTSWITCH_Pin:
@@ -157,6 +159,7 @@ void setAnalogValue(uint8_t ch, int16_t value)
   }
 }
 
+/*
 void setGateValue(uint8_t ch, int16_t value)
 {
   switch (ch)
@@ -168,26 +171,27 @@ void setGateValue(uint8_t ch, int16_t value)
     setLed(RANDOMLED, value);
     break;
   case SYNCIN:
-    setLed(SYNCINLED, value);
+    setLed(SYNCLED, value);
     break;
   case INLEVELRED:
     setLed(INLEVELREDLED, value);
     break;
   }
 }
+*/
 
 void setLed(uint8_t led, uint32_t rgb)
 {
   switch (led)
   {
   case RECORDLED:
-    HAL_GPIO_WritePin(RECORDBUTTONLED_GPIO_Port, RECORDBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(RECORDBUTTONLED_GPIO_Port, RECORDBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
     break;
   case RANDOMLED:
-    HAL_GPIO_WritePin(RANDOMBUTTONLED_GPIO_Port, RANDOMBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(RANDOMBUTTONLED_GPIO_Port, RANDOMBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
     break;
-  case SYNCINLED:
-    HAL_GPIO_WritePin(SYNCIN_GPIO_Port, SYNCIN_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
+  case SYNCLED:
+    HAL_GPIO_WritePin(SYNCLED_GPIO_Port, SYNCLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
     break;
   case INLEVELREDLED:
     HAL_GPIO_WritePin(INLEVELREDLED_GPIO_Port, INLEVELREDLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
@@ -199,9 +203,12 @@ void onSetup()
 {
   setLed(RECORDLED, 0);
   setLed(RANDOMLED, 0);
-  setLed(SYNCINLED, 0);
+  setLed(SYNCLED, 0);
   setLed(INLEVELREDLED, 0);
   // setGateValue(PUSHBUTTON, 0);
+
+  setAnalogValue(INLEVELLEDGREEN, 0);
+  setAnalogValue(MODLED, 0);
 
   // start MUX ADC
   extern ADC_HandleTypeDef MUX_PERIPH;
@@ -218,11 +225,11 @@ void setMux(uint8_t index)
 
 void readMux(uint8_t index, uint16_t *mux_values)
 {
-  setParameterValue(REVERBCV, mux_values[MUX_A]);
-  setParameterValue(VOCTCV, mux_values[MUX_B]);
-  setParameterValue(PARAMETER_BA + index, mux_values[MUX_C]); // MUX 1
-  setParameterValue(PARAMETER_CA + index, mux_values[MUX_D]); // MUX 2
-  setParameterValue(PARAMETER_DA + index, mux_values[MUX_E]); // MUX 3
+  setParameterValue(REVERBCV, 4095 - mux_values[MUX_A]);
+  setParameterValue(VOCTCV, 4095 - mux_values[MUX_B]);
+  setParameterValue(PARAMETER_BA + index, 4095 - mux_values[MUX_C]);
+  setParameterValue(PARAMETER_CA + index, 4095 - mux_values[MUX_D]);
+  setParameterValue(PARAMETER_DA + index, 4095 - mux_values[MUX_E]);
 }
 
 extern "C"
@@ -245,26 +252,26 @@ void onLoop(void)
 {
   if (randomButtonState != randomButton.get())
   {
-    randomButtonState = !randomButton.get(); // Inverted
-    setButtonValue(RANDOMBUTTON, randomButtonState);
-    setLed(RANDOMLED, randomButtonState);
+    randomButtonState = randomButton.get();
+    setButtonValue(RANDOMBUTTON, !randomButtonState); // Ok
+    setLed(RANDOMLED, randomButtonState ? RED_COLOUR : NO_COLOUR); // Not working
   }
   if (wtSwitchState != wtSwitch.get())
   {
-    wtSwitchState = !wtSwitch.get(); // Inverted
-    setButtonValue(WTSWITCH, wtSwitchState);
+    wtSwitchState = wtSwitch.get();
+    setButtonValue(WTSWITCH, !wtSwitchState); // Ok
   }
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
   if (value != randomAmountState)
   {
-    randomAmountState = value; // LOW = 2,
-    setParameterValue(RANDOMAMOUNT, value * 2047);
+    randomAmountState = value;
+    setParameterValue(RANDOMAMOUNT, value); // Not working
   }
   value = (filterModeSwitch2.get() << 1) | filterModeSwitch1.get();
   if (value != filterModeState)
   {
-    filterModeState = value; // BP = 1, LP = 2, HP = 3
-    setParameterValue(FILTERMODE, value * 2047);
+    filterModeState = value;
+    setParameterValue(FILTERMODE, value); // BP = 1, LP = 2, HP = 3
   }
 
   /*
@@ -276,44 +283,42 @@ void onLoop(void)
   int16_t resonatorCv = 4095 - getAnalogValue(RESONATORCV); // Ok (0 - 10v?)
   int16_t speedCv = 4095 - getAnalogValue(SPEEDCV); // Ok (0 - 10v?)
 
-  int16_t reverbCv = 4095 - getParameterValue(REVERBCV); // Ok (0 - 10v?)
+  int16_t reverbCv = getParameterValue(REVERBCV); // Ok (0 - 10v?)
   int16_t vOctCv = getParameterValue(VOCTCV); // ? 5v = 0
   */
 
-  //int16_t randomAmount = getParameterValue(RANDOMAMOUNT); // Not working: HIGH = 6k, MID = 2k, LOW = 6k
-  //int16_t FILTERMODE = getParameterValue(FILTERMODE); // HP = 6k, BP = 2k, LP = 4k
+  //int16_t looperVol = getParameterValue(LOOPER_VOL); // Not working
+  //int16_t reverbVol = getParameterValue(REVERB_VOL); // Ok, also LOOPER_VOL
 
-  int16_t looperVol = getParameterValue(LOOPER_VOL); // Not working
-  int16_t reverbVol = getParameterValue(REVERB_VOL); // Ok, also LOOPER_VOL
   /*
-  int16_t delayVol = 4095 - getParameterValue(DELAY_VOL); // Ok
-  int16_t resoVol = 4095 - getParameterValue(RESO_VOL); // Ok
-  int16_t filterVol = 4095 - getParameterValue(FILTER_VOL); // Ok
-  int16_t inVol = 4095 - getParameterValue(IN_VOL); // Ok
-  int16_t sswtVol = 4095 - getParameterValue(SSWT_VOL); // Ok
-  int16_t sineVol = 4095 - getParameterValue(SINE_VOL); // Ok
+  int16_t delayVol = getParameterValue(DELAY_VOL); // Ok
+  int16_t resoVol = getParameterValue(RESO_VOL); // Ok
+  int16_t filterVol = getParameterValue(FILTER_VOL); // Ok
+  int16_t inVol = getParameterValue(IN_VOL); // Ok
+  int16_t sswtVol = getParameterValue(SSWT_VOL); // Ok
+  int16_t sineVol = getParameterValue(SINE_VOL); // Ok
   */
 
   /*
-  int16_t speed = 4095 - getParameterValue(SPEED); // Ok
-  int16_t resoD = 4095 - getParameterValue(RESOD); // Ok
-  int16_t detune = 4095 - getParameterValue(DETUNE); // Ok
-  int16_t length = 4095 - getParameterValue(LENGTH); // Ok
-  int16_t pitch = 4095 - getParameterValue(PITCH); // Ok
-  int16_t start = 4095 - getParameterValue(START); // Ok
-  int16_t resoHarmony = 4095 - getParameterValue(RESOHARMONY); // Ok
-  int16_t resoDecay = 4095 - getParameterValue(RESODECAY); // Ok
+  int16_t speed = getParameterValue(SPEED); // Ok
+  int16_t resoD = getParameterValue(RESOD); // Ok
+  int16_t detune = getParameterValue(DETUNE); // Ok
+  int16_t length = getParameterValue(LENGTH); // Ok
+  int16_t pitch = getParameterValue(PITCH); // Ok
+  int16_t start = getParameterValue(START); // Ok
+  int16_t resoHarmony = getParameterValue(RESOHARMONY); // Ok
+  int16_t resoDecay = getParameterValue(RESODECAY); // Ok
+  int16_t toneSize = getParameterValue(TONESIZE); // Ok
+  int16_t decay = getParameterValue(DECAY); // Ok
+  int16_t cutoff = getParameterValue(CUTOFF); // Ok
   */
-  int16_t toneSize = 4095 - getParameterValue(TONESIZE); // Ok
-  int16_t decay = 4095 - getParameterValue(DECAY); // Ok
-  //int16_t cutoff = 4095 - getParameterValue(CUTOFF); // Ok
-  int16_t delayF = getParameterValue(DELAYF); // Not working
-  int16_t delayA = getParameterValue(DELAYA); // Not working
-  int16_t randomMode = getParameterValue(RANDOM_MODE); // Not working
 
-  int16_t modAmount = 4095 - getParameterValue(MODAMOUNT); // Ok
-  int16_t modFreq = 4095 - getParameterValue(MODFREQ); // Ok
+  //int16_t delayF = getParameterValue(DELAYF); // Not working
+  //int16_t delayA = getParameterValue(DELAYA); // Not working
+  //int16_t randomMode = getParameterValue(RANDOM_MODE); // Not working
 
-  setAnalogValue(INLEVELLEDGREEN, modFreq); // Ok
-  setAnalogValue(MODLED, modAmount); // Ok
+  /*
+  int16_t modAmount = getParameterValue(MODAMOUNT); // Ok
+  int16_t modFreq = getParameterValue(MODFREQ); // Ok
+  */
 }

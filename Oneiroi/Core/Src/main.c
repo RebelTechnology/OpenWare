@@ -595,7 +595,7 @@ static void MX_DAC1_Init(void)
   */
   sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
   sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
-  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_DISABLE;
+  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
   sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
   sConfig.DAC_UserTrimming = DAC_TRIMMING_FACTORY;
   if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
@@ -1061,7 +1061,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : RECORDGATEIN_Pin RECORDBUTTON_Pin SYNCIN_Pin */
   GPIO_InitStruct.Pin = RECORDGATEIN_Pin|RECORDBUTTON_Pin|SYNCIN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
@@ -1081,7 +1081,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PREPOSTSWITCH_Pin */
   GPIO_InitStruct.Pin = PREPOSTSWITCH_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(PREPOSTSWITCH_GPIO_Port, &GPIO_InitStruct);
 
@@ -1125,7 +1125,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : RANDOMGATEIN_Pin */
   GPIO_InitStruct.Pin = RANDOMGATEIN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(RANDOMGATEIN_GPIO_Port, &GPIO_InitStruct);
 
