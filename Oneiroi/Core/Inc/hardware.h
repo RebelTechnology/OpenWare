@@ -49,23 +49,26 @@
 
 #define USE_BKPSRAM
 
-#define ADC_A 0
-#define ADC_B 1
-#define ADC_C 2
-#define ADC_D 3
 #define AUDIO_OUTPUT_GAIN            127
 
 #define USE_DAC
 #define DAC_HANDLE                   hdac1
 #define USE_ADC
 #define ADC_PERIPH hadc3
+#define MUX_PERIPH hadc1
+#define MUX_A 0
+#define MUX_B 1
+#define MUX_C 2
+#define MUX_D 3
+#define MUX_E 4
 #define USE_CODEC
 #define USE_CS4271
 #define CODEC_SPI hspi4
 
-#define NOF_ADC_VALUES               4
-#define NOF_PARAMETERS               40
-#define NOF_BUTTONS                  (4+2)
+#define NOF_ADC_VALUES               7
+#define NOF_MUX_VALUES               5
+#define NOF_PARAMETERS               37
+#define NOF_BUTTONS                  8
 
 #define AUDIO_INPUT_OFFSET           ((uint32_t)(-0.0022*65535))
 #define AUDIO_INPUT_SCALAR           ((uint32_t)(-10.75*65535))
