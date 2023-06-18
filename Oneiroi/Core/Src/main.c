@@ -1004,28 +1004,28 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin|RECORDBUTTONLED_Pin
+  HAL_GPIO_WritePin(GPIOC, EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin|RECORD_BUTTON_LED_Pin
                           |MUX_A_Pin|MUX_B_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, FLASH_WP_Pin|CS_CS_Pin|CS_RST_Pin|USB_HOST_PWR_EN_Pin
-                          |SYNCLED_Pin, GPIO_PIN_RESET);
+                          |SYNC_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, RANDOMBUTTONLED_Pin|INLEVELREDLED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, RANDOM_BUTTON_LED_Pin|INLEVELRED_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MUX_C_GPIO_Port, MUX_C_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : RANDOMAMOUNTSWITCH1_Pin RANDOMAMOUNTSWITCH2_Pin */
-  GPIO_InitStruct.Pin = RANDOMAMOUNTSWITCH1_Pin|RANDOMAMOUNTSWITCH2_Pin;
+  /*Configure GPIO pins : RANDOM_AMOUNT_SWITCH1_Pin RANDOM_AMOUNT_SWITCH2_Pin */
+  GPIO_InitStruct.Pin = RANDOM_AMOUNT_SWITCH1_Pin|RANDOM_AMOUNT_SWITCH2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : EXTSPI_nCS_Pin FLASH_HOLD_Pin FLASH_nCS_Pin RECORDBUTTONLED_Pin
+  /*Configure GPIO pins : EXTSPI_nCS_Pin FLASH_HOLD_Pin FLASH_nCS_Pin RECORD_BUTTON_LED_Pin
                            MUX_A_Pin MUX_B_Pin */
-  GPIO_InitStruct.Pin = EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin|RECORDBUTTONLED_Pin
+  GPIO_InitStruct.Pin = EXTSPI_nCS_Pin|FLASH_HOLD_Pin|FLASH_nCS_Pin|RECORD_BUTTON_LED_Pin
                           |MUX_A_Pin|MUX_B_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -1039,9 +1039,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pins : FLASH_WP_Pin CS_CS_Pin CS_RST_Pin USB_HOST_PWR_EN_Pin
-                           SYNCLED_Pin */
+                           SYNC_LED_Pin */
   GPIO_InitStruct.Pin = FLASH_WP_Pin|CS_CS_Pin|CS_RST_Pin|USB_HOST_PWR_EN_Pin
-                          |SYNCLED_Pin;
+                          |SYNC_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1053,14 +1053,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : USB_HOST_PWR_FAULT_Pin FILTERMODESWITCH1_Pin */
-  GPIO_InitStruct.Pin = USB_HOST_PWR_FAULT_Pin|FILTERMODESWITCH1_Pin;
+  /*Configure GPIO pins : USB_HOST_PWR_FAULT_Pin FILTER_MODE_SWITCH1_Pin */
+  GPIO_InitStruct.Pin = USB_HOST_PWR_FAULT_Pin|FILTER_MODE_SWITCH1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RECORDGATEIN_Pin RECORDBUTTON_Pin SYNCIN_Pin */
-  GPIO_InitStruct.Pin = RECORDGATEIN_Pin|RECORDBUTTON_Pin|SYNCIN_Pin;
+  /*Configure GPIO pins : RECORD_GATE_Pin RECORD_BUTTON_Pin SYNC_GATE_Pin */
+  GPIO_InitStruct.Pin = RECORD_GATE_Pin|RECORD_BUTTON_Pin|SYNC_GATE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
@@ -1079,14 +1079,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PREPOSTSWITCH_Pin */
-  GPIO_InitStruct.Pin = PREPOSTSWITCH_Pin;
+  /*Configure GPIO pin : PREPOST_SWITCH_Pin */
+  GPIO_InitStruct.Pin = PREPOST_SWITCH_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(PREPOSTSWITCH_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(PREPOST_SWITCH_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RANDOMBUTTONLED_Pin INLEVELREDLED_Pin */
-  GPIO_InitStruct.Pin = RANDOMBUTTONLED_Pin|INLEVELREDLED_Pin;
+  /*Configure GPIO pins : RANDOM_BUTTON_LED_Pin INLEVELRED_LED_Pin */
+  GPIO_InitStruct.Pin = RANDOM_BUTTON_LED_Pin|INLEVELRED_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1104,11 +1104,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : FILTERMODESWITCH2_Pin */
-  GPIO_InitStruct.Pin = FILTERMODESWITCH2_Pin;
+  /*Configure GPIO pin : FILTER_MODE_SWITCH2_Pin */
+  GPIO_InitStruct.Pin = FILTER_MODE_SWITCH2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(FILTERMODESWITCH2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(FILTER_MODE_SWITCH2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MUX_C_Pin */
   GPIO_InitStruct.Pin = MUX_C_Pin;
@@ -1117,17 +1117,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(MUX_C_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : WTSWITCH_Pin RANDOMBUTTON_Pin */
-  GPIO_InitStruct.Pin = WTSWITCH_Pin|RANDOMBUTTON_Pin;
+  /*Configure GPIO pins : SSWT_SWITCH_Pin RANDOM_BUTTON_Pin */
+  GPIO_InitStruct.Pin = SSWT_SWITCH_Pin|RANDOM_BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : RANDOMGATEIN_Pin */
-  GPIO_InitStruct.Pin = RANDOMGATEIN_Pin;
+  /*Configure GPIO pin : RANDOM_GATE_Pin */
+  GPIO_InitStruct.Pin = RANDOM_GATE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(RANDOMGATEIN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(RANDOM_GATE_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 15, 0);

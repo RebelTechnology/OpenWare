@@ -122,7 +122,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     PA3     ------> ADC1_INP15
     PB1     ------> ADC1_INP5
     */
-    GPIO_InitStruct.Pin = MUX1_Pin|MUX2_Pin|REVERBCV_Pin|VOCTCV_Pin;
+    GPIO_InitStruct.Pin = MUX1_Pin|MUX2_Pin|REVERB_TONESIZE_CV_Pin|OSC_VOCT_CV_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -193,15 +193,15 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     PC2_C     ------> ADC3_INP0
     PC3_C     ------> ADC3_INP1
     */
-    GPIO_InitStruct.Pin = STARTCV_Pin|LENGTHCV_Pin|SPEEDCV_Pin|DELAYCV_Pin;
+    GPIO_InitStruct.Pin = LOOPER_START_CV_Pin|LOOPER_LENGTH_CV_Pin|LOOPER_SPEED_CV_Pin|DELAY_TIME_CV_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = RESONATORCV_Pin;
+    GPIO_InitStruct.Pin = RESONATOR_HARMONY_CV_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(RESONATORCV_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(RESONATOR_HARMONY_CV_GPIO_Port, &GPIO_InitStruct);
 
     HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PC2, SYSCFG_SWITCH_PC2_OPEN);
 
@@ -259,7 +259,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     PA3     ------> ADC1_INP15
     PB1     ------> ADC1_INP5
     */
-    HAL_GPIO_DeInit(GPIOA, MUX1_Pin|MUX2_Pin|REVERBCV_Pin|VOCTCV_Pin);
+    HAL_GPIO_DeInit(GPIOA, MUX1_Pin|MUX2_Pin|REVERB_TONESIZE_CV_Pin|OSC_VOCT_CV_Pin);
 
     HAL_GPIO_DeInit(MUX3_GPIO_Port, MUX3_Pin);
 
@@ -289,9 +289,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     PC2_C     ------> ADC3_INP0
     PC3_C     ------> ADC3_INP1
     */
-    HAL_GPIO_DeInit(GPIOF, STARTCV_Pin|LENGTHCV_Pin|SPEEDCV_Pin|DELAYCV_Pin);
+    HAL_GPIO_DeInit(GPIOF, LOOPER_START_CV_Pin|LOOPER_LENGTH_CV_Pin|LOOPER_SPEED_CV_Pin|DELAY_TIME_CV_Pin);
 
-    HAL_GPIO_DeInit(RESONATORCV_GPIO_Port, RESONATORCV_Pin);
+    HAL_GPIO_DeInit(RESONATOR_HARMONY_CV_GPIO_Port, RESONATOR_HARMONY_CV_Pin);
 
     /* ADC3 DMA DeInit */
     HAL_DMA_DeInit(hadc->DMA_Handle);
@@ -327,7 +327,7 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* hdac)
     PA4     ------> DAC1_OUT1
     PA5     ------> DAC1_OUT2
     */
-    GPIO_InitStruct.Pin = INLEVELLEDGREEN_Pin|MODLED_Pin;
+    GPIO_InitStruct.Pin = INLEVELGREEN_LED_Pin|MOD_LED_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -359,7 +359,7 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* hdac)
     PA4     ------> DAC1_OUT1
     PA5     ------> DAC1_OUT2
     */
-    HAL_GPIO_DeInit(GPIOA, INLEVELLEDGREEN_Pin|MODLED_Pin);
+    HAL_GPIO_DeInit(GPIOA, INLEVELGREEN_LED_Pin|MOD_LED_Pin);
 
   /* USER CODE BEGIN DAC1_MspDeInit 1 */
 

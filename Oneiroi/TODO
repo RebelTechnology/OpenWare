@@ -1,5 +1,6 @@
 # Issues
 
+- cannot debug patch
 - button's leds don't work
 - random amount switch doesn't work
 - random mode switch doesn't work
@@ -8,4 +9,4 @@
 - delay feedback and time knobs don't work
 - mod led is inverted
 - in gain high seems the same as mid
-- right out stopped working
+- right out stopped working (low volume)
