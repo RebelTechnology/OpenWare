@@ -20,6 +20,8 @@
 #define abs(x) ((x) > 0 ? (x) : -(x))
 #endif
 
+#define PATCH_RESET_COUNTER (4000/MAIN_LOOP_SLEEP_MS)
+
 // GPIO
 #define RECORDBUTTON BUTTON_1
 #define RECORDGATE BUTTON_2
@@ -84,6 +86,8 @@ enum leds
 };
 
 static bool randomButtonState = false;
+
+bool recordButtonState = false;
 static bool wtSwitchState = false;
 static uint16_t randomAmountState = 0;
 static uint16_t filterModeState = 0;
@@ -101,8 +105,6 @@ Pin filterModeSwitch2(FILTERMODESWITCH2_GPIO_Port, FILTERMODESWITCH2_Pin);
 Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
 Pin muxB(MUX_B_GPIO_Port, MUX_B_Pin);
 Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
-
-bool recordButtonState = false;
 
 void onChangePin(uint16_t pin)
 {
@@ -185,10 +187,10 @@ void setLed(uint8_t led, uint32_t rgb)
   switch (led)
   {
   case RECORDLED:
-    HAL_GPIO_WritePin(RECORDBUTTONLED_GPIO_Port, RECORDBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(RECORDBUTTONLED_GPIO_Port, RECORDBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
     break;
   case RANDOMLED:
-    HAL_GPIO_WritePin(RANDOMBUTTONLED_GPIO_Port, RANDOMBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(RANDOMBUTTONLED_GPIO_Port, RANDOMBUTTONLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
     break;
   case SYNCLED:
     HAL_GPIO_WritePin(SYNCLED_GPIO_Port, SYNCLED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -199,17 +201,27 @@ void setLed(uint8_t led, uint32_t rgb)
   }
 }
 
-void onSetup()
+void ledsOn()
+{
+  setLed(RECORDLED, 1);
+  setLed(RANDOMLED, 1);
+  setLed(SYNCLED, 1);
+  setLed(INLEVELREDLED, 1);
+  setAnalogValue(MODLED, 0); // Inverted
+}
+
+void ledsOff()
 {
   setLed(RECORDLED, 0);
   setLed(RANDOMLED, 0);
   setLed(SYNCLED, 0);
   setLed(INLEVELREDLED, 0);
-  // setGateValue(PUSHBUTTON, 0);
+  setAnalogValue(MODLED, 4095); // Inverted
+  setAnalogValue(INLEVELLEDGREEN, 0);
+}
 
-  setAnalogValue(INLEVELLEDGREEN, 4095);
-  setAnalogValue(MODLED, 4095);
-
+void onSetup()
+{
   // start MUX ADC
   extern ADC_HandleTypeDef MUX_PERIPH;
   if (HAL_ADC_Start_DMA(&MUX_PERIPH, (uint32_t *)mux_values, NOF_MUX_VALUES) != HAL_OK)
@@ -248,14 +260,15 @@ extern "C"
   }
 }
 
-void onLoop(void)
+
+
+void _loop()
 {
   if (randomButtonState != !randomButton.get()) // Inverted: pressed = false
   {
     randomButtonState = !randomButton.get();
-    setButtonValue(RANDOMBUTTON, randomButtonState); // Ok
+    setButtonValue(RANDOMBUTTON, randomButtonState);               // Ok
     setLed(RANDOMLED, randomButtonState ? RED_COLOUR : NO_COLOUR); // Not working
-    setLed(INLEVELREDLED, randomButtonState ? RED_COLOUR : NO_COLOUR);
   }
   if (wtSwitchState != !wtSwitch.get()) // Inverted: pressed = false
   {
@@ -288,8 +301,8 @@ void onLoop(void)
   int16_t vOctCv = getParameterValue(VOCTCV); // ? 5v = 0
   */
 
-  //int16_t looperVol = getParameterValue(LOOPER_VOL); // Not working
-  //int16_t reverbVol = getParameterValue(REVERB_VOL); // Ok, also LOOPER_VOL
+  // int16_t looperVol = getParameterValue(LOOPER_VOL); // Not working
+  // int16_t reverbVol = getParameterValue(REVERB_VOL); // Ok, also LOOPER_VOL
 
   /*
   int16_t delayVol = getParameterValue(DELAY_VOL); // Ok
@@ -314,12 +327,75 @@ void onLoop(void)
   int16_t cutoff = getParameterValue(CUTOFF); // Ok
   */
 
-  //int16_t delayF = getParameterValue(DELAYF); // Not working
-  //int16_t delayA = getParameterValue(DELAYA); // Not working
-  int16_t randomMode = getParameterValue(RANDOM_MODE); // Not working
+  // int16_t delayF = getParameterValue(DELAYF); // Not working
+  // int16_t delayA = getParameterValue(DELAYA); // Not working
+  // int16_t randomMode = getParameterValue(RANDOM_MODE); // Not working
 
   /*
   int16_t modAmount = getParameterValue(MODAMOUNT); // Ok
   int16_t modFreq = getParameterValue(MODFREQ); // Ok
   */
+}
+
+void onLoop(void)
+{
+  static uint32_t counter = PATCH_RESET_COUNTER;
+
+  bool saveButtonsPressed = getButtonValue(RANDOMBUTTON) && getButtonValue(RECORDBUTTON);
+
+  switch (owl.getOperationMode())
+  {
+  case STARTUP_MODE:
+    ledsOn();
+    break;
+  case LOAD_MODE:
+    //
+    break;
+  case RUN_MODE:
+    if (getErrorStatus() != NO_ERROR)
+    {
+      owl.setOperationMode(ERROR_MODE);
+    }
+    else
+    {
+      _loop();
+
+      if (saveButtonsPressed)
+      {
+        // press and hold to store settings
+        if (--counter == 0)
+        {
+          counter = PATCH_RESET_COUNTER;
+          settings.saveToFlash(false);
+        }
+        else
+        {
+        }
+      }
+      else
+      {
+        counter = PATCH_RESET_COUNTER;
+      }
+    }
+    break;
+  case CONFIGURE_MODE:
+    ledsOff();
+    owl.setOperationMode(RUN_MODE);
+    break;
+  case STREAM_MODE:
+    //
+    break;
+  case ERROR_MODE:
+    ledsOn();
+    if (--counter == 0)
+      counter = PATCH_RESET_COUNTER;
+    if (saveButtonsPressed)
+    {
+      ledsOff();
+      setErrorStatus(NO_ERROR);
+      owl.setOperationMode(RUN_MODE); // allows new patch selection if patch doesn't load
+      program.resetProgram(false);
+    }
+    break;
+  }
 }
