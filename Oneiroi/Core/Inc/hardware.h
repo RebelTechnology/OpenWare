@@ -67,8 +67,8 @@
 
 #define NOF_ADC_VALUES               7
 #define NOF_MUX_VALUES               5
-#define NOF_PARAMETERS               37
-#define NOF_BUTTONS                  8
+#define NOF_PARAMETERS               40
+#define NOF_BUTTONS                  12
 
 #define AUDIO_INPUT_OFFSET           ((uint32_t)(-0.0022*65535))
 #define AUDIO_INPUT_SCALAR           ((uint32_t)(-10.75*65535))

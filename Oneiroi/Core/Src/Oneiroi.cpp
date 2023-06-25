@@ -107,6 +107,18 @@ Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
 Pin muxB(MUX_B_GPIO_Port, MUX_B_Pin);
 Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
 
+void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
+  // IIR exponential filter with lambda 0.75
+  // inverting ADCs
+  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[0])>>2;
+  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[1])>>2;
+  parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[2])>>2;
+  parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[3])>>2;
+  parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[4])>>2;
+  parameter_values[5] = (parameter_values[5]*3 + 4095-adc_values[5])>>2;
+  parameter_values[6] = (parameter_values[6]*3 + 4095-adc_values[6])>>2;
+}
+
 void onChangePin(uint16_t pin)
 {
   switch (pin)
@@ -273,8 +285,8 @@ void _loop()
   if (randomButtonState != !randomButton.get()) // Inverted: pressed = false
   {
     randomButtonState = !randomButton.get();
-    setButtonValue(RANDOM_BUTTON, randomButtonState);               // Ok
-    setLed(RANDOM_LED, randomButtonState); // Not working
+    setButtonValue(RANDOM_BUTTON, randomButtonState);
+    setLed(RANDOM_LED, randomButtonState);
   }
   if (sswtSwitchState != !sswtSwitch.get()) // Inverted: pressed = false
   {
@@ -284,14 +296,16 @@ void _loop()
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
   if (value != randomAmountState)
   {
+    // Value: Mid = 1, Low = 2, High = 3
     randomAmountState = value;
-    setParameterValue(RANDOM_AMOUNT, value); // Mid = 1, Low = 2, High = 3
+    setParameterValue(RANDOM_AMOUNT, 2048 * (value - 1)); // Mid = 0, Low = 2048, High = 4096
   }
   value = (filterModeSwitch2.get() << 1) | filterModeSwitch1.get();
   if (value != filterModeState)
   {
+    // Value: Mid = 1, Low = 2, High = 3
     filterModeState = value;
-    setParameterValue(FILTER_MODE_SWITCH, value); // BP = 1, LP = 2, HP = 3
+    setParameterValue(FILTER_MODE_SWITCH, 2048 * (value - 1)); // BP = 0, LP = 2048, HP = 4096
   }
 
   setAnalogValue(MOD_LED, getParameterValue(MOD));
@@ -343,8 +357,20 @@ void _loop()
   #endif
 }
 
+bool first = true;
+
 void onLoop(void)
 {
+  if (first)
+  {
+    ledsOff();
+    first = false;
+  }
+
+  _loop();
+  return;
+
+
   static uint32_t counter = PATCH_RESET_COUNTER;
 
   bool saveButtonsPressed = getButtonValue(RANDOM_BUTTON) && getButtonValue(RECORD_BUTTON);

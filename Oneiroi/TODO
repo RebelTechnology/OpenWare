@@ -1,11 +1,6 @@
 # Issues
 
-- cannot debug patch
-- (button's leds don't work)
-- random mode switch doesn't work
-- looper fader doesn't work
-- reverb fader also controls looper vol
-- delay feedback and time knobs don't work
-- mod led is inverted
-- in gain high seems the same as mid
-- right out stopped working (low volume)
+- the first channel of each mux don't work and is being controlled by the second one
+- calling `setButtonValue()` crashes the firmware (row 307 in `onProgramReady()`)
+- random mode switch doesn't work (all positions except FX = 0)
+- filter cutoff knob doesn't work well (was working before?)
