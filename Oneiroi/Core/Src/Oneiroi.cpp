@@ -272,10 +272,7 @@ extern "C"
       static uint8_t mux_index = 0;
       setMux(mux_index + 1);
       readMux(mux_index, mux_values);
-      if (mux_index++ == 8)
-      {
-        mux_index = 0;
-      }
+      mux_index = (mux_index + 1) & 0b111;
     }
   }
 }
