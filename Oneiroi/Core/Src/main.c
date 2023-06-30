@@ -1009,7 +1009,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, FLASH_WP_Pin|CS_CS_Pin|CS_RST_Pin|USB_HOST_PWR_EN_Pin
-                          |SYNC_LED_Pin, GPIO_PIN_RESET);
+                          |SYNC_LED_Pin|CU_DOWN_LED_Pin|CU_UP_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, RANDOM_BUTTON_LED_Pin|INLEVELRED_LED_Pin, GPIO_PIN_RESET);
@@ -1039,16 +1039,16 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pins : FLASH_WP_Pin CS_CS_Pin CS_RST_Pin USB_HOST_PWR_EN_Pin
-                           SYNC_LED_Pin */
+                           SYNC_LED_Pin CU_DOWN_LED_Pin CU_UP_LED_Pin */
   GPIO_InitStruct.Pin = FLASH_WP_Pin|CS_CS_Pin|CS_RST_Pin|USB_HOST_PWR_EN_Pin
-                          |SYNC_LED_Pin;
+                          |SYNC_LED_Pin|CU_DOWN_LED_Pin|CU_UP_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB2 PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_8|GPIO_PIN_9;
+  /*Configure GPIO pin : PB2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -1098,17 +1098,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD2 PD3 PD4 PD5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5;
+  /*Configure GPIO pins : SHIFT_BUTTON_Pin FILTER_MODE_SWITCH2_Pin */
+  GPIO_InitStruct.Pin = SHIFT_BUTTON_Pin|FILTER_MODE_SWITCH2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PD3 PD4 PD5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : FILTER_MODE_SWITCH2_Pin */
-  GPIO_InitStruct.Pin = FILTER_MODE_SWITCH2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(FILTER_MODE_SWITCH2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MUX_C_Pin */
   GPIO_InitStruct.Pin = MUX_C_Pin;

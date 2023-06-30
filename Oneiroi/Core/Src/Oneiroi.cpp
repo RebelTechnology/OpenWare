@@ -5,10 +5,12 @@
 #include "errorhandlers.h"
 #include "message.h"
 #include "ProgramManager.h"
-#include "PatchRegistry.h"
+//#include "PatchRegistry.h"
 #include "OpenWareMidiControl.h"
-#include "ApplicationSettings.h"
+//#include "ApplicationSettings.h"
+#include "Storage.h"
 #include "Pin.h"
+#include "cmsis_os.h"
 
 #ifndef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -26,6 +28,9 @@
 #define MOD PARAMETER_AG
 
 // GPIO
+#define SHIFT_BUTTON PUSHBUTTON
+#define CU_DOWN GREEN_BUTTON
+#define CU_UP RED_BUTTON
 #define RECORD_BUTTON BUTTON_1
 #define RECORD_GATE BUTTON_2
 #define RANDOM_BUTTON BUTTON_3
@@ -78,6 +83,67 @@
 #define DELAY_TIME PARAMETER_DG
 #define RANDOM_MODE PARAMETER_DH
 
+class OneiroiSettings {
+public:
+  uint32_t checksum;
+  uint16_t mins[40];
+  uint16_t maxes[40];
+
+public:
+  void init()
+  {
+    checksum = sizeof(*this) ^ 0xf0f0f0f0;
+    if (settingsInFlash())
+    {
+      loadFromFlash();
+    }
+    else
+    {
+      reset();
+    }
+  }
+  void reset()
+  {
+    for (size_t i = 0; i < 40; i++)
+    {
+      mins[i] = 0;
+      maxes[i] = 4095;
+    }
+
+  }
+  bool settingsInFlash()
+  {
+    Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
+    if  (resource)
+    {
+      OneiroiSettings data;
+      storage.readResource(resource->getHeader(), &data, 0, sizeof(data));
+
+      return data.checksum == checksum;
+    }
+
+    return false;
+  }
+  void loadFromFlash()
+  {
+    Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
+    if (resource)
+    {
+      storage.readResource(resource->getHeader(), this, 0, sizeof(*this));
+    }
+  }
+  void saveToFlash()
+  {
+    UBaseType_t uxSavedInterruptStatus;
+    uint8_t buffer[sizeof(ResourceHeader) + sizeof(OneiroiSettings)];
+    memset(buffer, 0, sizeof(ResourceHeader));
+    memcpy(buffer + sizeof(ResourceHeader), this, sizeof(OneiroiSettings));
+    taskENTER_CRITICAL();
+    storage.writeResource(APPLICATION_SETTINGS_NAME, buffer, sizeof(*this), FLASH_DEFAULT_FLAGS);
+    taskEXIT_CRITICAL();
+  }
+};
+
 enum leds
 {
   RECORD_LED = 1,
@@ -85,17 +151,22 @@ enum leds
   SYNC_LED,
   INLEVELRED_LED,
   INLEVELGREEN_LED,
-  MOD_LED
+  MOD_LED,
+  CU_DOWN_LED,
+  CU_UP_LED
 };
 
+static bool calibration = false;
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
 static uint16_t randomAmountState = 0;
 static uint16_t filterModeState = 0;
 static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
+OneiroiSettings oneiroiSettings;
 
 Pin randomGate(RANDOM_GATE_GPIO_Port, RANDOM_GATE_Pin);
 Pin randomButton(RANDOM_BUTTON_GPIO_Port, RANDOM_BUTTON_Pin);
+Pin shiftButton(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin);
 Pin sswtSwitch(SSWT_SWITCH_GPIO_Port, SSWT_SWITCH_Pin);
 Pin randomAmountSwitch1(RANDOM_AMOUNT_SWITCH1_GPIO_Port, RANDOM_AMOUNT_SWITCH1_Pin);
 Pin randomAmountSwitch2(RANDOM_AMOUNT_SWITCH2_GPIO_Port, RANDOM_AMOUNT_SWITCH2_Pin);
@@ -107,16 +178,28 @@ Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
 Pin muxB(MUX_B_GPIO_Port, MUX_B_Pin);
 Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
 
-void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
-  // IIR exponential filter with lambda 0.75
-  // inverting ADCs
-  parameter_values[0] = (parameter_values[0]*3 + 4095-adc_values[0])>>2;
-  parameter_values[1] = (parameter_values[1]*3 + 4095-adc_values[1])>>2;
-  parameter_values[2] = (parameter_values[2]*3 + 4095-adc_values[2])>>2;
-  parameter_values[3] = (parameter_values[3]*3 + 4095-adc_values[3])>>2;
-  parameter_values[4] = (parameter_values[4]*3 + 4095-adc_values[4])>>2;
-  parameter_values[5] = (parameter_values[5]*3 + 4095-adc_values[5])>>2;
-  parameter_values[6] = (parameter_values[6]*3 + 4095-adc_values[6])>>2;
+void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len)
+{
+  for (size_t i = 0; i < NOF_ADC_VALUES; i++)
+  {
+    // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+    parameter_values[i] = (parameter_values[i]*3 + 4095-adc_values[i])>>2;
+  }
+  /*
+  parameter_values[OSC_DETUNE_CV] = 4095 - adc_values[OSC_DETUNE_CV];
+  parameter_values[FILTER_CUTOFF_CV] = 4095 - adc_values[FILTER_CUTOFF_CV];
+  parameter_values[RESONATOR_HARMONY_CV] = 4095 - adc_values[RESONATOR_HARMONY_CV];
+  parameter_values[DELAY_TIME_CV] = 4095 - adc_values[DELAY_TIME_CV];
+  parameter_values[LOOPER_START_CV] = 4095 - adc_values[LOOPER_START_CV];
+  parameter_values[LOOPER_LENGTH_CV] = 4095 - adc_values[LOOPER_LENGTH_CV];
+  parameter_values[LOOPER_SPEED_CV] = 4095 - adc_values[LOOPER_SPEED_CV];
+  */
+}
+
+extern int16_t parameter_values[NOF_PARAMETERS];
+int16_t getParameterValue(uint8_t pid)
+{
+  return oneiroiSettings.mins[pid] + (oneiroiSettings.maxes[pid] - oneiroiSettings.mins[pid] / 4095) * parameter_values[pid];
 }
 
 void onChangePin(uint16_t pin)
@@ -127,34 +210,36 @@ void onChangePin(uint16_t pin)
     {
       bool state = HAL_GPIO_ReadPin(SYNC_GATE_GPIO_Port, SYNC_GATE_Pin) == GPIO_PIN_RESET; // Inverted
       setButtonValue(SYNC_GATE, state);
-      setLed(SYNC_LED, state);
       break;
     }
     case RECORD_BUTTON_Pin:
     {
       bool state = HAL_GPIO_ReadPin(RECORD_BUTTON_GPIO_Port, RECORD_BUTTON_Pin) == GPIO_PIN_RESET; // Inverted
       setButtonValue(RECORD_BUTTON, state);
-      setLed(RECORD_LED, state);
       break;
     }
     case RECORD_GATE_Pin:
     {
       bool state = HAL_GPIO_ReadPin(RECORD_GATE_GPIO_Port, RECORD_GATE_Pin) == GPIO_PIN_RESET; // Inverted
       setButtonValue(RECORD_GATE, state);
-      setLed(RECORD_LED, state);
       break;
     }
     case RANDOM_GATE_Pin:
     {
       bool state = HAL_GPIO_ReadPin(RANDOM_GATE_GPIO_Port, RANDOM_GATE_Pin) == GPIO_PIN_RESET; // Inverted
       setButtonValue(RANDOM_GATE, state);
-      setLed(RANDOM_LED, state);
       break;
     }
     case PREPOST_SWITCH_Pin:
     {
       bool state = HAL_GPIO_ReadPin(PREPOST_SWITCH_GPIO_Port, PREPOST_SWITCH_Pin) == GPIO_PIN_RESET; // Inverted
       setButtonValue(PREPOST_SWITCH, state);
+      break;
+    }
+    case SHIFT_BUTTON_Pin:
+    {
+      bool state = HAL_GPIO_ReadPin(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin) == GPIO_PIN_RESET; // Inverted
+      setButtonValue(SHIFT_BUTTON, state);
       break;
     }
   }
@@ -190,6 +275,12 @@ void setGateValue(uint8_t ch, int16_t value)
   case INLEVELRED:
     setLed(INLEVELRED_LED, value);
     break;
+  case CU_DOWN:
+    setLed(CU_DOWN_LED, value);
+    break;
+  case CU_UP:
+    setLed(CU_UP_LED, value);
+    break;
   }
 }
 
@@ -209,6 +300,12 @@ void setLed(uint8_t led, uint32_t rgb)
   case INLEVELRED_LED:
     HAL_GPIO_WritePin(INLEVELRED_LED_GPIO_Port, INLEVELRED_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
+  case CU_DOWN_LED:
+    HAL_GPIO_WritePin(CU_DOWN_LED_GPIO_Port, CU_DOWN_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    break;
+  case CU_UP_LED:
+    HAL_GPIO_WritePin(CU_UP_LED_GPIO_Port, CU_UP_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    break;
   }
 }
 
@@ -218,6 +315,8 @@ void ledsOn()
   setLed(RANDOM_LED, 1);
   setLed(SYNC_LED, 1);
   setLed(INLEVELRED_LED, 1);
+  setLed(CU_DOWN_LED, 1);
+  setLed(CU_UP_LED, 1);
   setAnalogValue(MOD_LED, 4095);
 }
 
@@ -227,18 +326,25 @@ void ledsOff()
   setLed(RANDOM_LED, 0);
   setLed(SYNC_LED, 0);
   setLed(INLEVELRED_LED, 0);
+  setLed(CU_DOWN_LED, 1);
+  setLed(CU_UP_LED, 1);
   setAnalogValue(MOD_LED, 0);
   setAnalogValue(INLEVELGREEN_LED, 0);
 }
 
 void onSetup()
 {
+  oneiroiSettings.init();
+
   // start MUX ADC
   extern ADC_HandleTypeDef MUX_PERIPH;
   if (HAL_ADC_Start_DMA(&MUX_PERIPH, (uint32_t *)mux_values, NOF_MUX_VALUES) != HAL_OK)
   {
     error(CONFIG_ERROR, "ADC1 Start failed");
   }
+
+  setParameterValue(RANDOM_AMOUNT, (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get());
+  setParameterValue(FILTER_MODE_SWITCH, (filterModeSwitch2.get() << 1) | filterModeSwitch1.get());
 
   setParameterValue(MOD, 0);
   setParameterValue(INLEVELGREEN, 0);
@@ -255,11 +361,21 @@ void setMux(uint8_t index)
 
 void readMux(uint8_t index, uint16_t *mux_values)
 {
-  setParameterValue(REVERB_TONESIZE_CV, mux_values[MUX_A]);
-  setParameterValue(OSC_VOCT_CV, mux_values[MUX_B]);
-  setParameterValue(PARAMETER_BA + index, mux_values[MUX_C]); // Faders are inverted
-  setParameterValue(PARAMETER_CA + index, 4095 - mux_values[MUX_D]);
-  setParameterValue(PARAMETER_DA + index, 4095 - mux_values[MUX_E]);
+  setParameterValue(REVERB_TONESIZE_CV, (getParameterValue(REVERB_TONESIZE_CV)*3 + 4095-mux_values[MUX_A])>>2);
+  setParameterValue(OSC_VOCT_CV, 4095 - mux_values[MUX_B]);
+  setParameterValue(PARAMETER_BA + index, (getParameterValue(PARAMETER_BA + index)*3 + 4095-mux_values[MUX_C])>>2); // TODO: Faders are inverted
+  setParameterValue(PARAMETER_CA + index, (getParameterValue(PARAMETER_CA + index)*3 + 4095-mux_values[MUX_D])>>2);
+  setParameterValue(PARAMETER_DA + index, (getParameterValue(PARAMETER_DA + index)*3 + 4095-mux_values[MUX_E])>>2);
+
+  if (calibration)
+  {
+    oneiroiSettings.mins[PARAMETER_BA + index] = min(oneiroiSettings.mins[PARAMETER_BA + index], 4095-mux_values[MUX_C]);
+    oneiroiSettings.mins[PARAMETER_CA + index] = min(oneiroiSettings.mins[PARAMETER_CA + index], 4095-mux_values[MUX_D]);
+    oneiroiSettings.mins[PARAMETER_DA + index] = min(oneiroiSettings.mins[PARAMETER_DA + index], 4095-mux_values[MUX_E]);
+    oneiroiSettings.maxes[PARAMETER_BA + index] = max(oneiroiSettings.maxes[PARAMETER_BA + index], 4095-mux_values[MUX_C]);
+    oneiroiSettings.maxes[PARAMETER_CA + index] = max(oneiroiSettings.maxes[PARAMETER_CA + index], 4095-mux_values[MUX_D]);
+    oneiroiSettings.maxes[PARAMETER_DA + index] = max(oneiroiSettings.maxes[PARAMETER_DA + index], 4095-mux_values[MUX_E]);
+  }
 }
 
 extern "C"
@@ -277,18 +393,18 @@ extern "C"
   }
 }
 
-void _loop()
+void readGpio()
 {
   if (randomButtonState != !randomButton.get()) // Inverted: pressed = false
   {
     randomButtonState = !randomButton.get();
     setButtonValue(RANDOM_BUTTON, randomButtonState);
-    setLed(RANDOM_LED, randomButtonState);
+    //setLed(RANDOM_LED, randomButtonState);
   }
   if (sswtSwitchState != !sswtSwitch.get()) // Inverted: pressed = false
   {
     sswtSwitchState = !sswtSwitch.get();
-    setButtonValue(SSWT_SWITCH, sswtSwitchState); // Ok
+    setButtonValue(SSWT_SWITCH, sswtSwitchState);
   }
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
   if (value != randomAmountState)
@@ -358,68 +474,90 @@ bool first = true;
 
 void onLoop(void)
 {
-  if (first)
-  {
-    ledsOff();
-    first = false;
-  }
-
-  _loop();
-  return;
-
-
+  static bool first = true;
   static uint32_t counter = PATCH_RESET_COUNTER;
 
-  bool saveButtonsPressed = getButtonValue(RANDOM_BUTTON) && getButtonValue(RECORD_BUTTON);
+  readGpio();
+
+  bool shiftButtonPressed = getButtonValue(SHIFT_BUTTON);
 
   switch (owl.getOperationMode())
   {
   case STARTUP_MODE:
-    ledsOff();
-    break;
+  case STREAM_MODE:
   case LOAD_MODE:
-    //
+    ledsOff();
+    if  (getErrorStatus() != NO_ERROR || shiftButtonPressed)
+    {
+      owl.setOperationMode(ERROR_MODE);
+    }
     break;
   case RUN_MODE:
-    if (getErrorStatus() != NO_ERROR)
+    if (shiftButtonPressed)
     {
+      if (--counter == 0)
+      {
+        counter = PATCH_RESET_COUNTER;
+        owl.setOperationMode(CONFIGURE_MODE);
+      }
+    }
+    else if (getErrorStatus() != NO_ERROR)
+    {
+      counter = PATCH_RESET_COUNTER;
       owl.setOperationMode(ERROR_MODE);
     }
     else
     {
-      _loop();
-
-      if (saveButtonsPressed)
+      counter = PATCH_RESET_COUNTER;
+    }
+    break;
+  case CONFIGURE_MODE:
+    if (first)
+    {
+      first = false;
+      owl.setOperationMode(RUN_MODE);
+    }
+    else
+    {
+      setLed(RECORD_LED, 1);
+      setLed(RANDOM_LED, 1);
+      if (shiftButtonPressed)
       {
         // press and hold to store settings
         if (--counter == 0)
         {
+          calibration = false;
+          setLed(RECORD_LED, 0);
+          setLed(RANDOM_LED, 0);
           counter = PATCH_RESET_COUNTER;
-          settings.saveToFlash(false);
+          //oneiroiSettings.saveToFlash();
+          owl.setOperationMode(RUN_MODE);
         }
       }
       else
       {
+        calibration = true;
         counter = PATCH_RESET_COUNTER;
       }
     }
-    break;
-  case CONFIGURE_MODE:
-    owl.setOperationMode(RUN_MODE);
-    break;
-  case STREAM_MODE:
-    //
+
     break;
   case ERROR_MODE:
     ledsOn();
-    if (--counter == 0)
-      counter = PATCH_RESET_COUNTER;
-    if (saveButtonsPressed)
+    if (shiftButtonPressed)
     {
-      ledsOff();
-      setErrorStatus(NO_ERROR);
-      owl.setOperationMode(RUN_MODE); // allows new patch selection if patch doesn't load
-      program.resetProgram(false);
+      // press and hold to store settings
+      if (--counter == 0)
+      {
+        ledsOff();
+        setErrorStatus(NO_ERROR);
+        owl.setOperationMode(RUN_MODE);
+      }
+    }
+    else
+    {
+      const char* message = getErrorMessage();
+      counter = PATCH_RESET_COUNTER;
     }
     break;
   }
