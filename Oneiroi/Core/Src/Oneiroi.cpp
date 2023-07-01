@@ -332,26 +332,6 @@ void ledsOff()
   setAnalogValue(INLEVELGREEN_LED, 0);
 }
 
-void onSetup()
-{
-  oneiroiSettings.init();
-
-  // start MUX ADC
-  extern ADC_HandleTypeDef MUX_PERIPH;
-  if (HAL_ADC_Start_DMA(&MUX_PERIPH, (uint32_t *)mux_values, NOF_MUX_VALUES) != HAL_OK)
-  {
-    error(CONFIG_ERROR, "ADC1 Start failed");
-  }
-
-  setParameterValue(RANDOM_AMOUNT, (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get());
-  setParameterValue(FILTER_MODE_SWITCH, (filterModeSwitch2.get() << 1) | filterModeSwitch1.get());
-
-  setParameterValue(MOD, 0);
-  setParameterValue(INLEVELGREEN, 0);
-
-  ledsOn();
-}
-
 void setMux(uint8_t index)
 {
   muxA.set(index & 0b001);
@@ -470,16 +450,36 @@ void readGpio()
   #endif
 }
 
+
+
+void onSetup()
+{
+  oneiroiSettings.init();
+
+  // start MUX ADC
+  extern ADC_HandleTypeDef MUX_PERIPH;
+  if (HAL_ADC_Start_DMA(&MUX_PERIPH, (uint32_t *)mux_values, NOF_MUX_VALUES) != HAL_OK)
+  {
+    error(CONFIG_ERROR, "ADC1 Start failed");
+  }
+
+  setParameterValue(RANDOM_AMOUNT, (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get());
+  setParameterValue(FILTER_MODE_SWITCH, (filterModeSwitch2.get() << 1) | filterModeSwitch1.get());
+
+  setParameterValue(MOD, 0);
+  setParameterValue(INLEVELGREEN, 0);
+}
+
 bool first = true;
+bool configMode = false;
 
 void onLoop(void)
 {
   static bool first = true;
   static uint32_t counter = PATCH_RESET_COUNTER;
 
-  readGpio();
-
-  bool shiftButtonPressed = getButtonValue(SHIFT_BUTTON);
+  //bool shiftButtonPressed = getButtonValue(SHIFT_BUTTON);
+  bool shiftButtonPressed = (HAL_GPIO_ReadPin(RECORD_BUTTON_GPIO_Port, RECORD_BUTTON_Pin) == GPIO_PIN_RESET) && !randomButton.get();
 
   switch (owl.getOperationMode())
   {
@@ -487,61 +487,55 @@ void onLoop(void)
   case STREAM_MODE:
   case LOAD_MODE:
     ledsOff();
-    if  (getErrorStatus() != NO_ERROR || shiftButtonPressed)
+    if (getErrorStatus() != NO_ERROR)
     {
       owl.setOperationMode(ERROR_MODE);
     }
     break;
   case RUN_MODE:
-    if (shiftButtonPressed)
+    readGpio();
+    if (getErrorStatus() != NO_ERROR)
     {
-      if (--counter == 0)
-      {
-        counter = PATCH_RESET_COUNTER;
-        owl.setOperationMode(CONFIGURE_MODE);
-      }
-    }
-    else if (getErrorStatus() != NO_ERROR)
-    {
-      counter = PATCH_RESET_COUNTER;
       owl.setOperationMode(ERROR_MODE);
     }
-    else
-    {
-      counter = PATCH_RESET_COUNTER;
-    }
     break;
+
   case CONFIGURE_MODE:
-    if (first)
+    if (shiftButtonPressed)
     {
-      first = false;
-      owl.setOperationMode(RUN_MODE);
-    }
-    else
-    {
-      setLed(RECORD_LED, 1);
-      setLed(RANDOM_LED, 1);
-      if (shiftButtonPressed)
+      if (calibration)
       {
-        // press and hold to store settings
-        if (--counter == 0)
-        {
-          calibration = false;
-          setLed(RECORD_LED, 0);
-          setLed(RANDOM_LED, 0);
-          counter = PATCH_RESET_COUNTER;
-          //oneiroiSettings.saveToFlash();
-          owl.setOperationMode(RUN_MODE);
-        }
+        // Exit config mode
+        calibration = false;
+        setLed(RECORD_LED, 0);
+        setLed(RANDOM_LED, 0);
+        //oneiroiSettings.saveToFlash();
+        owl.setOperationMode(STARTUP_MODE);
       }
       else
       {
-        calibration = true;
-        counter = PATCH_RESET_COUNTER;
+        // Enter config mode.
+        setLed(RECORD_LED, 1);
+        setLed(RANDOM_LED, 1);
+        configMode = true;
       }
     }
-
+    else
+    {
+      if (configMode)
+      {
+        // Enter calibration.
+        calibration = true;
+      }
+      else
+      {
+        // Config button has not been pressed during startup, go to run mode.
+        ledsOn();
+        owl.setOperationMode(RUN_MODE);
+      }
+    }
     break;
+
   case ERROR_MODE:
     ledsOn();
     if (shiftButtonPressed)
