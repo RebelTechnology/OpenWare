@@ -22,7 +22,7 @@
 #define abs(x) ((x) > 0 ? (x) : -(x))
 #endif
 
-#define PATCH_RESET_COUNTER (2000/MAIN_LOOP_SLEEP_MS)
+#define PATCH_RESET_COUNTER (500/MAIN_LOOP_SLEEP_MS)
 
 #define INLEVELGREEN PARAMETER_AF
 #define MOD PARAMETER_AG
@@ -199,7 +199,9 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 extern int16_t parameter_values[NOF_PARAMETERS];
 int16_t getParameterValue(uint8_t pid)
 {
-  return oneiroiSettings.mins[pid] + (oneiroiSettings.maxes[pid] - oneiroiSettings.mins[pid] / 4095) * parameter_values[pid];
+  // TODO: Calibration and settings storage
+  //return oneiroiSettings.mins[pid] + (oneiroiSettings.maxes[pid] - oneiroiSettings.mins[pid] / 4095) * parameter_values[pid];
+  return parameter_values[pid];
 }
 
 void onChangePin(uint16_t pin)
@@ -450,8 +452,6 @@ void readGpio()
   #endif
 }
 
-
-
 void onSetup()
 {
   oneiroiSettings.init();
@@ -470,12 +470,9 @@ void onSetup()
   setParameterValue(INLEVELGREEN, 0);
 }
 
-bool first = true;
-bool configMode = false;
-
 void onLoop(void)
 {
-  static bool first = true;
+  static bool configMode = false;
   static uint32_t counter = PATCH_RESET_COUNTER;
 
   //bool shiftButtonPressed = getButtonValue(SHIFT_BUTTON);
@@ -484,10 +481,19 @@ void onLoop(void)
   switch (owl.getOperationMode())
   {
   case STARTUP_MODE:
-  case STREAM_MODE:
-  case LOAD_MODE:
-    ledsOff();
     if (getErrorStatus() != NO_ERROR)
+    {
+      owl.setOperationMode(ERROR_MODE);
+    }
+    break;
+  case LOAD_MODE:
+    if (--counter == 0)
+    {
+      counter = PATCH_RESET_COUNTER;
+      ledsOff();
+      owl.setOperationMode(RUN_MODE);
+    }
+    else if (getErrorStatus() != NO_ERROR)
     {
       owl.setOperationMode(ERROR_MODE);
     }
@@ -510,7 +516,7 @@ void onLoop(void)
         setLed(RECORD_LED, 0);
         setLed(RANDOM_LED, 0);
         //oneiroiSettings.saveToFlash();
-        owl.setOperationMode(STARTUP_MODE);
+        owl.setOperationMode(LOAD_MODE);
       }
       else
       {
@@ -531,7 +537,7 @@ void onLoop(void)
       {
         // Config button has not been pressed during startup, go to run mode.
         ledsOn();
-        owl.setOperationMode(RUN_MODE);
+        owl.setOperationMode(LOAD_MODE);
       }
     }
     break;
@@ -545,7 +551,7 @@ void onLoop(void)
       {
         ledsOff();
         setErrorStatus(NO_ERROR);
-        owl.setOperationMode(RUN_MODE);
+        owl.setOperationMode(STARTUP_MODE);
       }
     }
     else
