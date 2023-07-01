@@ -2,3 +2,4 @@
 
 - calling `setButtonValue()` crashes the firmware (row 307 in `onProgramReady()`)
 - VOL CVs are inverted (0V = 4k, 5V = 2k, 10V = 0)
+- calibration
