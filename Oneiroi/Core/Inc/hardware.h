@@ -65,6 +65,8 @@
 #define USE_CS4271
 #define CODEC_SPI hspi4
 
+//#define AUDIO_BLOCK_SIZE             32
+
 #define NOF_ADC_VALUES               7
 #define NOF_MUX_VALUES               5
 #define NOF_PARAMETERS               40
