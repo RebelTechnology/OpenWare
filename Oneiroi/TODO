@@ -2,6 +2,3 @@
 
 - calling `setButtonValue()` crashes the firmware (row 307 in `onProgramReady()`)
 - calibration / save settings crash
-- parameter callback?
-- AUDIO_BLOCK_SIZE?
-- filter and random (both) switches defaults?
