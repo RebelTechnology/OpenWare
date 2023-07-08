@@ -4,6 +4,4 @@
 - calibration / save settings crash
 - parameter callback?
 - AUDIO_BLOCK_SIZE?
-- left channel don't work anymore :(
-- sometimes, mod amount, mod freq an cutoff knobs stop working
 - filter and random (both) switches defaults?
