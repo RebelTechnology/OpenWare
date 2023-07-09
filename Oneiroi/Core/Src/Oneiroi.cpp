@@ -191,7 +191,8 @@ void setRangedParameterValue(uint8_t pid, int16_t value)
 
   float v = (4095.f / (maxes[pid] - mins[pid])) * (value - mins[pid]);
 
-  setParameterValue(pid, (int16_t)v);
+  // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+  setParameterValue(pid, (getParameterValue(pid)*3 + (int16_t)v)>>2);
 }
 
 void setMux(uint8_t index)
@@ -440,8 +441,7 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   {
     uint16_t value = 4095 - adc_values[i];
 
-    // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
-    setRangedParameterValue(i, (getParameterValue(i)*3 + value)>>2);
+    setRangedParameterValue(i, value);
     /*
     if (calibration)
     {
