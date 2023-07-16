@@ -157,6 +157,7 @@ enum leds
 static bool calibration = false;
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
+static bool shiftButtonState = false;
 static uint16_t randomAmountState = 0;
 static uint16_t filterModeState = 0;
 static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
@@ -180,16 +181,19 @@ Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
 
 void setRangedParameterValue(uint8_t pid, int16_t value)
 {
-  if (value < mins[pid])
-  {
-    value = mins[pid];
-  }
-  else if (value > maxes[pid])
-  {
-    value = maxes[pid];
-  }
+  float v = value;
 
-  float v = (4095.f / (maxes[pid] - mins[pid])) * (value - mins[pid]);
+  if (!calibration) {
+    if (value < mins[pid])
+    {
+      value = mins[pid];
+    }
+    else if (value > maxes[pid])
+    {
+      value = maxes[pid];
+    }
+    v = (4095.f / (maxes[pid] - mins[pid])) * (value - mins[pid]);
+  }
 
   // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
   setParameterValue(pid, (getParameterValue(pid)*3 + (int16_t)v)>>2);
@@ -205,7 +209,7 @@ void setMux(uint8_t index)
 void readMux(uint8_t index, uint16_t *mux_values)
 {
   setRangedParameterValue(REVERB_TONESIZE_CV, 4095 - mux_values[MUX_A]);
-  setRangedParameterValue(OSC_VOCT_CV, 4095 - mux_values[MUX_B]);
+  setRangedParameterValue(OSC_VOCT_CV, 2047 - mux_values[MUX_B]); // Half range
   setRangedParameterValue(PARAMETER_BA + index, 4095 - mux_values[MUX_C]); // TODO: Faders are inverted
   setRangedParameterValue(PARAMETER_CA + index, 4095 - mux_values[MUX_D]);
   setRangedParameterValue(PARAMETER_DA + index, 4095 - mux_values[MUX_E]);
@@ -249,12 +253,16 @@ void readGpio()
   {
     randomButtonState = !randomButton.get();
     setButtonValue(RANDOM_BUTTON, randomButtonState);
-    //setLed(RANDOM_LED, randomButtonState);
   }
   if (sswtSwitchState != !sswtSwitch.get()) // Inverted: pressed = false
   {
     sswtSwitchState = !sswtSwitch.get();
     setButtonValue(SSWT_SWITCH, sswtSwitchState);
+  }
+  if (shiftButtonState != !shiftButton.get()) // Inverted: pressed = false
+  {
+    shiftButtonState = !shiftButton.get();
+    setButtonValue(SHIFT_BUTTON, shiftButtonState);
   }
 
   setAnalogValue(MOD_LED, getParameterValue(MOD));
@@ -262,14 +270,13 @@ void readGpio()
 
 #ifdef DEBUG
 
-  int16_t delayCv = 4095 - getAnalogValue(DELAY_TIME_CV); // Ok (0 - 10v?)
-  int16_t osc2Cv = 4095 - getAnalogValue(OSC_DETUNE_CV); // Ok (0 - 10v?)
-  int16_t filterCv = 4095 - getAnalogValue(FILTER_CUTOFF_CV); // Ok (0 - 10v?)
-  int16_t startCv = 4095 - getAnalogValue(LOOPER_START_CV); // Ok (0 - 10v?)
-  int16_t lengthCv = 4095 - getAnalogValue(LOOPER_LENGTH_CV); // Ok (0 - 10v?)
-  int16_t resonatorCv = 4095 - getAnalogValue(RESONATOR_HARMONY_CV); // Ok (0 - 10v?)
-  int16_t speedCv = 4095 - getAnalogValue(LOOPER_SPEED_CV); // Ok (0 - 10v?)
-
+  int16_t delayCv = getParameterValue(DELAY_TIME_CV); // Ok (0 - 10v?)
+  int16_t osc2Cv = getParameterValue(OSC_DETUNE_CV); // Ok (0 - 10v?)
+  int16_t filterCv = getParameterValue(FILTER_CUTOFF_CV); // Ok (0 - 10v?)
+  int16_t startCv = getParameterValue(LOOPER_START_CV); // Ok (0 - 10v?)
+  int16_t lengthCv = getParameterValue(LOOPER_LENGTH_CV); // Ok (0 - 10v?)
+  int16_t resonatorCv = getParameterValue(RESONATOR_HARMONY_CV); // Ok (0 - 10v?)
+  int16_t speedCv = getParameterValue(LOOPER_SPEED_CV); // Ok (0 - 10v?)
   int16_t reverbCv = getParameterValue(REVERB_TONESIZE_CV); // Ok (0 - 10v?)
   int16_t vOctCv = getParameterValue(OSC_VOCT_CV); // ? 5v = 0
 
@@ -398,16 +405,16 @@ void setLed(uint8_t led, uint32_t rgb)
     HAL_GPIO_WritePin(RANDOM_BUTTON_LED_GPIO_Port, RANDOM_BUTTON_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
   case SYNC_LED:
-    HAL_GPIO_WritePin(SYNC_LED_GPIO_Port, SYNC_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(SYNC_LED_GPIO_Port, SYNC_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
     break;
   case INLEVELRED_LED:
     HAL_GPIO_WritePin(INLEVELRED_LED_GPIO_Port, INLEVELRED_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
   case CU_DOWN_LED:
-    HAL_GPIO_WritePin(CU_DOWN_LED_GPIO_Port, CU_DOWN_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(CU_DOWN_LED_GPIO_Port, CU_DOWN_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
     break;
   case CU_UP_LED:
-    HAL_GPIO_WritePin(CU_UP_LED_GPIO_Port, CU_UP_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    HAL_GPIO_WritePin(CU_UP_LED_GPIO_Port, CU_UP_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
     break;
   }
 }
@@ -429,8 +436,8 @@ void ledsOff()
   setLed(RANDOM_LED, 0);
   setLed(SYNC_LED, 0);
   setLed(INLEVELRED_LED, 0);
-  setLed(CU_DOWN_LED, 1);
-  setLed(CU_UP_LED, 1);
+  setLed(CU_DOWN_LED, 0);
+  setLed(CU_UP_LED, 0);
   setAnalogValue(MOD_LED, 0);
   setAnalogValue(INLEVELGREEN_LED, 0);
 }
@@ -479,83 +486,85 @@ void onSetup()
     error(CONFIG_ERROR, "ADC1 Start failed");
   }
 
-  for (size_t i = 0; i < 40; i++)
+  for (size_t i = 0; i < NOF_PARAMETERS; i++)
   {
-    mins[i] = 0x4b0;
-    maxes[i] = 0xff0;
+    mins[i] = 0x845;
+    maxes[i] = 0xffc;
   }
 
-  // TODO: CVs are calibrated for 0-5v, must be re-calibrated for 0-10v!
-  mins[DELAY_TIME_CV] = 0x864;
-  maxes[DELAY_TIME_CV] = 0xdcf;
-  mins[OSC_DETUNE_CV] = 0x860;
-  maxes[OSC_DETUNE_CV] = 0xdc0;
-  mins[FILTER_CUTOFF_CV] = 0x86f;
-  maxes[FILTER_CUTOFF_CV] = 0xdb7;
-  mins[LOOPER_START_CV] = 0x869;
-  maxes[LOOPER_START_CV] = 0xdca;
-  mins[LOOPER_LENGTH_CV] = 0x84d;
-  maxes[LOOPER_LENGTH_CV] = 0xddc;
-  mins[RESONATOR_HARMONY_CV] = 0x86b;
-  maxes[RESONATOR_HARMONY_CV] = 0xdc8;
-  mins[LOOPER_SPEED_CV] = 0x893;
-  maxes[LOOPER_SPEED_CV] = 0xdbd;
-  mins[REVERB_TONESIZE_CV] = 0x875;
-  maxes[REVERB_TONESIZE_CV] = 0xdd5;
+  // Min is 0v, max is 10v
+  /*
+  mins[DELAY_TIME_CV] = 0x80e;
+  maxes[DELAY_TIME_CV] = 0xffc;
+  mins[OSC_DETUNE_CV] = 0x811;
+  maxes[OSC_DETUNE_CV] = 0xffc;
+  mins[FILTER_CUTOFF_CV] = 0x820;
+  maxes[FILTER_CUTOFF_CV] = 0xffc;
+  mins[LOOPER_START_CV] = 0x818;
+  maxes[LOOPER_START_CV] = 0xffc;
+  mins[LOOPER_LENGTH_CV] = 0x824;
+  maxes[LOOPER_LENGTH_CV] = 0xffc;
+  mins[RESONATOR_HARMONY_CV] = 0x806;
+  maxes[RESONATOR_HARMONY_CV] = 0xffc;
+  mins[LOOPER_SPEED_CV] = 0x818;
+  maxes[LOOPER_SPEED_CV] = 0xffc;
+  mins[REVERB_TONESIZE_CV] = 0x81f;   // 0x7d4 , 0x30f (783, 5v)
+  maxes[REVERB_TONESIZE_CV] = 0xffc;
+  */
 
-  mins[OSC_VOCT_CV] = 0xa47;
-  maxes[OSC_VOCT_CV] = 0xfff;
+  mins[OSC_VOCT_CV] = 0x2a0;//0xa92;    0x568
+  maxes[OSC_VOCT_CV] = 0x7f0;
 
-  mins[LOOPER_VOL] = 0x4d8;
+  mins[LOOPER_VOL] = 0x485;//0x46e;    0xb...
   maxes[LOOPER_VOL] = 0xffc;
-  mins[REVERB_VOL] = 0x4d6;
+  mins[REVERB_VOL] = 0x485;//0x46e;
   maxes[REVERB_VOL] = 0xffc;
-  mins[DELAY_VOL] = 0x4d4;
+  mins[DELAY_VOL] = 0x485;//0x468;
   maxes[DELAY_VOL] = 0xffc;
-  mins[RESONATOR_VOL] = 0x4da;
+  mins[RESONATOR_VOL] = 0x485;//0x46d;
   maxes[RESONATOR_VOL] = 0xffc;
-  mins[FILTER_VOL] = 0x4d7;
+  mins[FILTER_VOL] = 0x485;//0x46c;
   maxes[FILTER_VOL] = 0xffc;
-  mins[IN_VOL] = 0x4d3;
+  mins[IN_VOL] = 0x485;//0x46a;
   maxes[IN_VOL] = 0xffc;
-  mins[SSWT_VOL] = 0x4d1;
+  mins[SSWT_VOL] = 0x485;//0x469;
   maxes[SSWT_VOL] = 0xffc;
-  mins[SINE_VOL] = 0x4d5;
+  mins[SINE_VOL] = 0x485;//0x46d;
   maxes[SINE_VOL] = 0xffc;
 
-  mins[LOOPER_SPEED] = 0x4d9;
-  maxes[LOOPER_SPEED] = 0xfc5;
-  mins[FILTER_RESODRIVE] = 0x4da;
-  maxes[FILTER_RESODRIVE] = 0xfc8;
-  mins[OSC_DETUNE] = 0x4db;
-  maxes[OSC_DETUNE] = 0xfc6;
-  mins[LOOPER_LENGTH] = 0x4d8;
-  maxes[LOOPER_LENGTH] = 0xfc7;
-  mins[OSC_PITCH] = 0x4d8;
-  maxes[OSC_PITCH] = 0xfc9;
-  mins[LOOPER_START] = 0x4da;
-  maxes[LOOPER_START] = 0xfc8;
-  mins[RESONATOR_HARMONY] = 0x4d8;
-  maxes[RESONATOR_HARMONY] = 0xfc7;
-  mins[RESONATOR_DECAY] = 0x4da;
-  maxes[RESONATOR_DECAY] = 0xfc6;
+  mins[LOOPER_SPEED] = 0x475;//0x456;
+  maxes[LOOPER_SPEED] = 0xfc1;
+  mins[FILTER_RESODRIVE] = 0x475;//0x457;
+  maxes[FILTER_RESODRIVE] = 0xfc0;
+  mins[OSC_DETUNE] = 0x475;//0x458;
+  maxes[OSC_DETUNE] = 0xfc4;
+  mins[LOOPER_LENGTH] = 0x475;//0x456;
+  maxes[LOOPER_LENGTH] = 0xfc0;
+  mins[OSC_PITCH] = 0x475;//0x455;
+  maxes[OSC_PITCH] = 0xfc0;
+  mins[LOOPER_START] = 0x475;//0x456;
+  maxes[LOOPER_START] = 0xfc5;
+  mins[RESONATOR_HARMONY] = 0x475;//0x457;
+  maxes[RESONATOR_HARMONY] = 0xfc2;
+  mins[RESONATOR_DECAY] = 0x475;//0x458;
+  maxes[RESONATOR_DECAY] = 0xfc0;
 
-  mins[REVERB_TONESIZE] = 0x4d9;
-  maxes[REVERB_TONESIZE] = 0xfb2;
-  mins[REVERB_DECAY] = 0x4da;
-  maxes[REVERB_DECAY] = 0xf77;
-  mins[MOD_AMOUNT] = 0x4d8;
-  maxes[MOD_AMOUNT] = 0xf66;
-  mins[MOD_FREQ] = 0x4da;
-  maxes[MOD_FREQ] = 0xf9b;
-  mins[FILTER_CUTOFF] = 0x4db;
-  maxes[FILTER_CUTOFF] = 0xf75;
-  mins[DELAY_FEEDBACK] = 0x4d8;
-  maxes[DELAY_FEEDBACK] = 0xf6b;
-  mins[DELAY_TIME] = 0x4d8;
-  maxes[DELAY_TIME] = 0xf67;
-  mins[RANDOM_MODE] = 0x4da;
-  maxes[RANDOM_MODE] = 0xf99;
+  mins[REVERB_TONESIZE] = 0x475;//0x469;
+  maxes[REVERB_TONESIZE] = 0xfc0;
+  mins[REVERB_DECAY] = 0x475;//0x46a;
+  maxes[REVERB_DECAY] = 0xfc0;
+  mins[MOD_AMOUNT] = 0x475;//0x46a;
+  maxes[MOD_AMOUNT] = 0xfc0;
+  mins[MOD_FREQ] = 0x475;//0x469;
+  maxes[MOD_FREQ] = 0xfc0;
+  mins[FILTER_CUTOFF] = 0x475;//0x46b;
+  maxes[FILTER_CUTOFF] = 0xfc0;
+  mins[DELAY_FEEDBACK] = 0x475;//0x469;
+  maxes[DELAY_FEEDBACK] = 0xfc0;
+  mins[DELAY_TIME] = 0x475;//0x469;
+  maxes[DELAY_TIME] = 0xfc0;
+  mins[RANDOM_MODE] = 0x475;//0x46a;
+  maxes[RANDOM_MODE] = 0xfc0;
 }
 
 void onLoop(void)
@@ -563,8 +572,7 @@ void onLoop(void)
   static bool configMode = false;
   static uint32_t counter = PATCH_RESET_COUNTER;
 
-  //bool shiftButtonPressed = getButtonValue(SHIFT_BUTTON);
-  bool shiftButtonPressed = (HAL_GPIO_ReadPin(RECORD_BUTTON_GPIO_Port, RECORD_BUTTON_Pin) == GPIO_PIN_RESET) && !randomButton.get();
+  bool shiftButtonPressed = HAL_GPIO_ReadPin(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin) == GPIO_PIN_RESET;
 
   switch (owl.getOperationMode())
   {
@@ -606,7 +614,7 @@ void onLoop(void)
         //oneiroiSettings.saveToFlash();
         owl.setOperationMode(LOAD_MODE);
       }
-      else
+      else if (configMode == false)
       {
         // Enter config mode.
         setLed(RECORD_LED, 1);
@@ -621,10 +629,14 @@ void onLoop(void)
       {
         // Enter calibration.
         calibration = true;
+        readGpio();
+        extern uint16_t adc_values[NOF_ADC_VALUES];
+        extern int16_t parameter_values[NOF_PARAMETERS];
+        updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
       }
       else
       {
-        // Config button has not been pressed during startup, go to run mode.
+        // Config button has not been pressed during startup, go to load mode.
         ledsOn();
         owl.setOperationMode(LOAD_MODE);
       }

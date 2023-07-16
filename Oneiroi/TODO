@@ -2,3 +2,11 @@
 
 - calling `setButtonValue()` crashes the firmware (row 307 in `onProgramReady()`)
 - calibration / save settings crash
+
+# mk2
+
+- bi-color led is inverted
+- down/left led doesn't work
+- v/oct only 3.3v range?
+- only left in works (no normalization either)
+- chaos when plugging volume CV
