@@ -209,8 +209,8 @@ void setMux(uint8_t index)
 void readMux(uint8_t index, uint16_t *mux_values)
 {
   setRangedParameterValue(REVERB_TONESIZE_CV, 4095 - mux_values[MUX_A]);
-  setRangedParameterValue(OSC_VOCT_CV, 2047 - mux_values[MUX_B]); // Half range
-  setRangedParameterValue(PARAMETER_BA + index, 4095 - mux_values[MUX_C]); // TODO: Faders are inverted
+  setRangedParameterValue(OSC_VOCT_CV, 4095 - mux_values[MUX_B]);
+  setRangedParameterValue(PARAMETER_BA + index, 4095 - mux_values[MUX_C]);
   setRangedParameterValue(PARAMETER_CA + index, 4095 - mux_values[MUX_D]);
   setRangedParameterValue(PARAMETER_DA + index, 4095 - mux_values[MUX_E]);
 
@@ -488,82 +488,80 @@ void onSetup()
 
   for (size_t i = 0; i < NOF_PARAMETERS; i++)
   {
-    mins[i] = 0x845;
+    mins[i] = 0x0;
     maxes[i] = 0xffc;
   }
 
   // Min is 0v, max is 10v
-  /*
-  mins[DELAY_TIME_CV] = 0x80e;
-  maxes[DELAY_TIME_CV] = 0xffc;
-  mins[OSC_DETUNE_CV] = 0x811;
-  maxes[OSC_DETUNE_CV] = 0xffc;
-  mins[FILTER_CUTOFF_CV] = 0x820;
-  maxes[FILTER_CUTOFF_CV] = 0xffc;
-  mins[LOOPER_START_CV] = 0x818;
-  maxes[LOOPER_START_CV] = 0xffc;
-  mins[LOOPER_LENGTH_CV] = 0x824;
-  maxes[LOOPER_LENGTH_CV] = 0xffc;
-  mins[RESONATOR_HARMONY_CV] = 0x806;
-  maxes[RESONATOR_HARMONY_CV] = 0xffc;
-  mins[LOOPER_SPEED_CV] = 0x818;
-  maxes[LOOPER_SPEED_CV] = 0xffc;
-  mins[REVERB_TONESIZE_CV] = 0x81f;   // 0x7d4 , 0x30f (783, 5v)
-  maxes[REVERB_TONESIZE_CV] = 0xffc;
-  */
+  mins[DELAY_TIME_CV] = 0x520;
+  maxes[DELAY_TIME_CV] = 0xee0;
+  mins[OSC_DETUNE_CV] = 0x520;
+  maxes[OSC_DETUNE_CV] = 0xee0;
+  mins[FILTER_CUTOFF_CV] = 0x520;
+  maxes[FILTER_CUTOFF_CV] = 0xee0;
+  mins[LOOPER_START_CV] = 0x520;
+  maxes[LOOPER_START_CV] = 0xee0;
+  mins[LOOPER_LENGTH_CV] = 0x520;
+  maxes[LOOPER_LENGTH_CV] = 0xee0;
+  mins[RESONATOR_HARMONY_CV] = 0x520;
+  maxes[RESONATOR_HARMONY_CV] = 0xee0;
+  mins[LOOPER_SPEED_CV] = 0x520;
+  maxes[LOOPER_SPEED_CV] = 0xee0;
+  mins[REVERB_TONESIZE_CV] = 0x520;
+  maxes[REVERB_TONESIZE_CV] = 0xee0;
 
-  mins[OSC_VOCT_CV] = 0x2a0;//0xa92;    0x568
-  maxes[OSC_VOCT_CV] = 0x7f0;
+  mins[OSC_VOCT_CV] = 0x7c0;//0xa92;    0x568
+  maxes[OSC_VOCT_CV] = 0xffc;
 
-  mins[LOOPER_VOL] = 0x485;//0x46e;    0xb...
-  maxes[LOOPER_VOL] = 0xffc;
-  mins[REVERB_VOL] = 0x485;//0x46e;
-  maxes[REVERB_VOL] = 0xffc;
-  mins[DELAY_VOL] = 0x485;//0x468;
-  maxes[DELAY_VOL] = 0xffc;
-  mins[RESONATOR_VOL] = 0x485;//0x46d;
-  maxes[RESONATOR_VOL] = 0xffc;
-  mins[FILTER_VOL] = 0x485;//0x46c;
-  maxes[FILTER_VOL] = 0xffc;
-  mins[IN_VOL] = 0x485;//0x46a;
-  maxes[IN_VOL] = 0xffc;
-  mins[SSWT_VOL] = 0x485;//0x469;
-  maxes[SSWT_VOL] = 0xffc;
-  mins[SINE_VOL] = 0x485;//0x46d;
-  maxes[SINE_VOL] = 0xffc;
+  //mins[LOOPER_VOL] = 0x485;//0x46e;    0xb...
+  maxes[LOOPER_VOL] = 0xfe0;
+  //mins[REVERB_VOL] = 0x485;//0x46e;
+  maxes[REVERB_VOL] = 0xfe0;
+  //mins[DELAY_VOL] = 0x485;//0x468;
+  maxes[DELAY_VOL] = 0xfe0;
+  //mins[RESONATOR_VOL] = 0x485;//0x46d;
+  maxes[RESONATOR_VOL] = 0xfe0;
+  //mins[FILTER_VOL] = 0x485;//0x46c;
+  maxes[FILTER_VOL] = 0xfe0;
+  //mins[IN_VOL] = 0x485;//0x46a;
+  maxes[IN_VOL] = 0xfe0;
+  //mins[SSWT_VOL] = 0x485;//0x469;
+  maxes[SSWT_VOL] = 0xfe0;
+  //mins[SINE_VOL] = 0x485;//0x46d;
+  maxes[SINE_VOL] = 0xfe0;
 
-  mins[LOOPER_SPEED] = 0x475;//0x456;
-  maxes[LOOPER_SPEED] = 0xfc1;
-  mins[FILTER_RESODRIVE] = 0x475;//0x457;
+  //mins[LOOPER_SPEED] = 0x475;//0x456;
+  maxes[LOOPER_SPEED] = 0xfc0;
+  //mins[FILTER_RESODRIVE] = 0x475;//0x457;
   maxes[FILTER_RESODRIVE] = 0xfc0;
-  mins[OSC_DETUNE] = 0x475;//0x458;
-  maxes[OSC_DETUNE] = 0xfc4;
-  mins[LOOPER_LENGTH] = 0x475;//0x456;
+  //mins[OSC_DETUNE] = 0x475;//0x458;
+  maxes[OSC_DETUNE] = 0xfc0;
+  //mins[LOOPER_LENGTH] = 0x475;//0x456;
   maxes[LOOPER_LENGTH] = 0xfc0;
-  mins[OSC_PITCH] = 0x475;//0x455;
+  //mins[OSC_PITCH] = 0x475;//0x455;
   maxes[OSC_PITCH] = 0xfc0;
-  mins[LOOPER_START] = 0x475;//0x456;
-  maxes[LOOPER_START] = 0xfc5;
-  mins[RESONATOR_HARMONY] = 0x475;//0x457;
-  maxes[RESONATOR_HARMONY] = 0xfc2;
-  mins[RESONATOR_DECAY] = 0x475;//0x458;
+  //mins[LOOPER_START] = 0x475;//0x456;
+  maxes[LOOPER_START] = 0xfc0;
+  //mins[RESONATOR_HARMONY] = 0x475;//0x457;
+  maxes[RESONATOR_HARMONY] = 0xfc0;
+  //mins[RESONATOR_DECAY] = 0x475;//0x458;
   maxes[RESONATOR_DECAY] = 0xfc0;
 
-  mins[REVERB_TONESIZE] = 0x475;//0x469;
+  //mins[REVERB_TONESIZE] = 0x475;//0x469;
   maxes[REVERB_TONESIZE] = 0xfc0;
-  mins[REVERB_DECAY] = 0x475;//0x46a;
+  //mins[REVERB_DECAY] = 0x475;//0x46a;
   maxes[REVERB_DECAY] = 0xfc0;
-  mins[MOD_AMOUNT] = 0x475;//0x46a;
+  //mins[MOD_AMOUNT] = 0x475;//0x46a;
   maxes[MOD_AMOUNT] = 0xfc0;
-  mins[MOD_FREQ] = 0x475;//0x469;
+  //mins[MOD_FREQ] = 0x475;//0x469;
   maxes[MOD_FREQ] = 0xfc0;
-  mins[FILTER_CUTOFF] = 0x475;//0x46b;
+  //mins[FILTER_CUTOFF] = 0x475;//0x46b;
   maxes[FILTER_CUTOFF] = 0xfc0;
-  mins[DELAY_FEEDBACK] = 0x475;//0x469;
+  //mins[DELAY_FEEDBACK] = 0x475;//0x469;
   maxes[DELAY_FEEDBACK] = 0xfc0;
-  mins[DELAY_TIME] = 0x475;//0x469;
+  //mins[DELAY_TIME] = 0x475;//0x469;
   maxes[DELAY_TIME] = 0xfc0;
-  mins[RANDOM_MODE] = 0x475;//0x46a;
+  //mins[RANDOM_MODE] = 0x475;//0x46a;
   maxes[RANDOM_MODE] = 0xfc0;
 }
 
