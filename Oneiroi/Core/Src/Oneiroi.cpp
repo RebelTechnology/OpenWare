@@ -486,6 +486,12 @@ void onSetup()
     error(CONFIG_ERROR, "ADC1 Start failed");
   }
 
+  onChangePin(SYNC_GATE_Pin);
+  onChangePin(RECORD_BUTTON_Pin);
+  onChangePin(RECORD_GATE_Pin);
+  onChangePin(RANDOM_GATE_Pin);
+  onChangePin(PREPOST_SWITCH_Pin);
+
   for (size_t i = 0; i < NOF_PARAMETERS; i++)
   {
     mins[i] = 0x0;
