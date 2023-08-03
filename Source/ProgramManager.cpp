@@ -157,7 +157,7 @@ void usbd_tx_convert(int32_t* src, size_t len){
 
 #endif /* USE_USBD_AUDIO */
 
-// FreeRTOS low priority numbers denote low priority tasks. 
+// FreeRTOS low priority numbers denote low priority tasks.
 // The idle task has priority zero (tskIDLE_PRIORITY).
 // audio and manager task priority must be the same so that the program can stop itself in case of errors
 #define FLASH_TASK_PRIORITY   1 // allow default task to run when FLASH task yields
@@ -195,7 +195,7 @@ int16_t parameter_values[NOF_PARAMETERS];
 #endif
 BitState32 stateChanged;
 uint16_t button_values;
-uint16_t timestamps[NOF_BUTTONS]; 
+uint16_t timestamps[NOF_BUTTONS];
 
 ProgramVector* getProgramVector() { return programVector; }
 
@@ -204,7 +204,7 @@ PatchDefinition* getPatchDefinition(){
 }
 
 void audioCallback(int32_t* rx, int32_t* tx, uint16_t size){
-  ProgramVector* pv = getProgramVector();  
+  ProgramVector* pv = getProgramVector();
   pv->audio_input = rx;
   pv->audio_output = tx;
   pv->audio_blocksize = size;
@@ -278,7 +278,7 @@ void onProgramReady(){
 #ifdef USE_USBD_AUDIO_RX_POST_FX
   // after patch runs: convert USBD audio rx to DAC (overwriting patch output)
   usbd_rx_convert(pv->audio_output, pv->audio_blocksize*AUDIO_CHANNELS);
-#endif  
+#endif
 #ifdef DEBUG_DWT
   pv->cycles_per_block = DWT->CYCCNT;
 #endif
@@ -304,7 +304,7 @@ void onProgramReady(){
       pv->buttonChangedCallback(bid, getButtonValue(bid)?4095:0, timestamps[bid]);
       timestamps[bid] = 0;
       stateChanged.clear(bid);
-      bid = stateChanged.getFirstSetIndex();
+      bid = 0; //stateChanged.getFirstSetIndex();
     }while(bid > 0); // bid 0 is bypass button which we ignore
   }
 #ifdef USE_USBD_AUDIO_TX_PRE_FX
@@ -314,7 +314,7 @@ void onProgramReady(){
 #ifdef USE_USBD_AUDIO_RX_PRE_FX
   // before patch runs: convert USBD audio rx to patch audio input
   usbd_rx_convert(pv->audio_input, pv->audio_blocksize*AUDIO_CHANNELS);
-#endif  
+#endif
 }
 
 // called from program
@@ -341,7 +341,7 @@ void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
 
 // called from program
 void onRegisterPatchParameter(uint8_t id, const char* name){
-#ifdef USE_SCREEN 
+#ifdef USE_SCREEN
   graphics.params->setName(id, name);
 #endif /* USE_SCREEN */
   midi_tx.sendPatchParameterName((PatchParameterId)id, name);
@@ -407,7 +407,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   size_t segments = 0;
 #ifdef USE_CCM_RAM
   extern char _CCMRAM, _CCMRAM_SIZE;
-  heapSegments[segments++] = 
+  heapSegments[segments++] =
     { (uint8_t*)&_CCMRAM, (uint32_t)(&_CCMRAM_SIZE) };
 #endif
   if(remain >= 32) // minimum heap segment size
@@ -418,7 +418,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
 #endif
 #ifdef USE_EXTERNAL_RAM
   extern char _EXTRAM, _EXTRAM_SIZE;
-  heapSegments[segments++] = 
+  heapSegments[segments++] =
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) };
 #endif
   heapSegments[segments] = { NULL, 0 };
@@ -542,7 +542,7 @@ void runScreenTask(void* p){
   xFrequency = SCREEN_LOOP_SLEEP_MS / portTICK_PERIOD_MS;
   xLastWakeTime = xTaskGetTickCount();
   for(;;){
-    vTaskDelayUntil(&xLastWakeTime, xFrequency);    
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
     onScreenDraw();
     graphics.draw();
     graphics.display();
@@ -566,7 +566,7 @@ void runAudioTask(void* p){
   }else{
     def = NULL;
   }
-  taskEXIT_CRITICAL();  
+  taskEXIT_CRITICAL();
   if(def != NULL)
     def->run();  // run program (should not return)
   error(PROGRAM_ERROR, "Program error");
@@ -578,7 +578,7 @@ void bootstrap(){
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   uint8_t lastprogram = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1);
-#else    
+#else
   uint8_t lastprogram = 0;
 #endif
   if(lastprogram != 0 && lastprogram == settings.program_index){
@@ -602,7 +602,7 @@ void bootstrap(){
 }
 
 void runManagerTask(void* p){
-  bootstrap();  
+  bootstrap();
   uint32_t ulNotifiedValue = 0;
   const TickType_t xMaxBlockTime = portMAX_DELAY;  /* Block indefinitely. */
   for(;;){
@@ -613,7 +613,7 @@ void runManagerTask(void* p){
     xTaskNotifyWait(pdFALSE,          /* Don't clear any notification bits on entry. */
 		    UINT32_MAX,       /* Reset the notification value to 0 on exit. */
 		    &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
-		    xMaxBlockTime); 
+		    xMaxBlockTime);
     taskENTER_CRITICAL();
     if(ulNotifiedValue & STOP_PROGRAM_NOTIFICATION){ // stop program
       if(audioTask != NULL){
@@ -688,7 +688,7 @@ void ProgramManager::startManager(){
 }
 
 void ProgramManager::notifyManagerFromISR(uint32_t ulValue){
-  BaseType_t xHigherPriorityTaskWoken = 0; 
+  BaseType_t xHigherPriorityTaskWoken = 0;
   if(managerTask != NULL)
     xTaskNotifyFromISR(managerTask, ulValue, eSetBits, &xHigherPriorityTaskWoken );
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -744,7 +744,7 @@ void ProgramManager::loadDynamicProgram(ResourceHeader* resource){
     error(PROGRAM_ERROR, "Load failed");
 }
 
-// void ProgramManager::loadDynamicProgram(void* address, uint32_t length){  
+// void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
 //   // if(registry.loadProgram(address, length))
 //   PatchDefinition* def = getPatchDefinition();
 //   if(def->load(address, length) && def->isValid())
@@ -793,7 +793,7 @@ uint32_t ProgramManager::getManagerStackAllocation(){
 #endif /* DEBUG_STACK */
 
 uint32_t ProgramManager::getCyclesPerBlock(){
-  return getProgramVector()->cycles_per_block;  
+  return getProgramVector()->cycles_per_block;
 }
 
 uint32_t ProgramManager::getHeapMemoryUsed(){
