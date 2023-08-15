@@ -183,7 +183,12 @@ void setRangedParameterValue(uint8_t pid, int16_t value)
 {
   float v = value;
 
-  if (!calibration) {
+  if (calibration)
+  {
+    setParameterValue(pid, v);
+  }
+  else
+  {
     if (value < mins[pid])
     {
       value = mins[pid];
@@ -193,10 +198,11 @@ void setRangedParameterValue(uint8_t pid, int16_t value)
       value = maxes[pid];
     }
     v = (4095.f / (maxes[pid] - mins[pid])) * (value - mins[pid]);
-  }
 
-  // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
-  setParameterValue(pid, (getParameterValue(pid)*3 + (int16_t)v)>>2);
+    // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+    //setParameterValue(pid, (getParameterValue(pid)*3 + (int16_t)v)>>2);
+    setParameterValue(pid, v);
+  }
 }
 
 void setMux(uint8_t index)
@@ -495,7 +501,7 @@ void onSetup()
   for (size_t i = 0; i < NOF_PARAMETERS; i++)
   {
     mins[i] = 0x0;
-    maxes[i] = 0xffc;
+    maxes[i] = 0xfb0;
   }
 
   // Min is 0v, max is 10v
@@ -520,21 +526,21 @@ void onSetup()
   maxes[OSC_VOCT_CV] = 0xffc;
 
   //mins[LOOPER_VOL] = 0x485;//0x46e;    0xb...
-  maxes[LOOPER_VOL] = 0xfe0;
+  maxes[LOOPER_VOL] = 0xfd0;
   //mins[REVERB_VOL] = 0x485;//0x46e;
-  maxes[REVERB_VOL] = 0xfe0;
+  maxes[REVERB_VOL] = 0xfd0;
   //mins[DELAY_VOL] = 0x485;//0x468;
-  maxes[DELAY_VOL] = 0xfe0;
+  maxes[DELAY_VOL] = 0xfd0;
   //mins[RESONATOR_VOL] = 0x485;//0x46d;
-  maxes[RESONATOR_VOL] = 0xfe0;
+  maxes[RESONATOR_VOL] = 0xfd0;
   //mins[FILTER_VOL] = 0x485;//0x46c;
-  maxes[FILTER_VOL] = 0xfe0;
+  maxes[FILTER_VOL] = 0xfd0;
   //mins[IN_VOL] = 0x485;//0x46a;
-  maxes[IN_VOL] = 0xfe0;
+  maxes[IN_VOL] = 0xfd0;
   //mins[SSWT_VOL] = 0x485;//0x469;
-  maxes[SSWT_VOL] = 0xfe0;
+  maxes[SSWT_VOL] = 0xfd0;
   //mins[SINE_VOL] = 0x485;//0x46d;
-  maxes[SINE_VOL] = 0xfe0;
+  maxes[SINE_VOL] = 0xfd0;
 
   //mins[LOOPER_SPEED] = 0x475;//0x456;
   maxes[LOOPER_SPEED] = 0xfc0;
