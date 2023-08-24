@@ -5,8 +5,4 @@
 
 # mk2
 
-- bi-color led is inverted
-- down/left led doesn't work
-- v/oct only 3.3v range?
-- only left in works (no normalization either)
-- chaos when plugging volume CV
+- pollo when plugging any volume CVs

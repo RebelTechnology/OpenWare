@@ -22,8 +22,6 @@
 
 #define PATCH_RESET_COUNTER (500/MAIN_LOOP_SLEEP_MS)
 
-#define ONEIROI_SETTINGS_NAME    "ONEIROI_SETTINGS"
-
 #define INLEVELGREEN PARAMETER_AF
 #define MOD PARAMETER_AG
 
@@ -112,7 +110,7 @@ public:
   }
   bool settingsInFlash()
   {
-    Resource* resource = storage.getResourceByName(ONEIROI_SETTINGS_NAME);
+    Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
     if  (resource)
     {
       OneiroiSettings data;
@@ -125,7 +123,7 @@ public:
   }
   void loadFromFlash()
   {
-    Resource* resource = storage.getResourceByName(ONEIROI_SETTINGS_NAME);
+    Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
     if (resource)
     {
       storage.readResource(resource->getHeader(), this, 0, sizeof(*this));
@@ -137,7 +135,7 @@ public:
     memset(buffer, 0, sizeof(ResourceHeader));
     memcpy(buffer + sizeof(ResourceHeader), this, sizeof(OneiroiSettings));
     taskENTER_CRITICAL();
-    storage.writeResource(ONEIROI_SETTINGS_NAME, buffer, sizeof(*this), FLASH_DEFAULT_FLAGS);
+    storage.writeResource(APPLICATION_SETTINGS_NAME, buffer, sizeof(*this), FLASH_DEFAULT_FLAGS);
     taskEXIT_CRITICAL();
   }
 };
@@ -161,7 +159,7 @@ static bool shiftButtonState = false;
 static uint16_t randomAmountState = 0;
 static uint16_t filterModeState = 0;
 static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
-//OneiroiSettings oneiroiSettings;
+OneiroiSettings oneiroiSettings;
 uint16_t mins[40];
 uint16_t maxes[40];
 
@@ -179,7 +177,7 @@ Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
 Pin muxB(MUX_B_GPIO_Port, MUX_B_Pin);
 Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
 
-void setRangedParameterValue(uint8_t pid, int16_t value)
+void setCalibratedParameterValue(uint8_t pid, int16_t value)
 {
   float v = value;
 
@@ -199,8 +197,6 @@ void setRangedParameterValue(uint8_t pid, int16_t value)
     }
     v = (4095.f / (maxes[pid] - mins[pid])) * (value - mins[pid]);
 
-    // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
-    //setParameterValue(pid, (getParameterValue(pid)*3 + (int16_t)v)>>2);
     setParameterValue(pid, v);
   }
 }
@@ -214,13 +210,18 @@ void setMux(uint8_t index)
 
 void readMux(uint8_t index, uint16_t *mux_values)
 {
-  setRangedParameterValue(REVERB_TONESIZE_CV, 4095 - mux_values[MUX_A]);
-  setRangedParameterValue(OSC_VOCT_CV, 4095 - mux_values[MUX_B]);
-  setRangedParameterValue(PARAMETER_BA + index, 4095 - mux_values[MUX_C]);
-  setRangedParameterValue(PARAMETER_CA + index, 4095 - mux_values[MUX_D]);
-  setRangedParameterValue(PARAMETER_DA + index, 4095 - mux_values[MUX_E]);
+  uint16_t muxA = 4095 - mux_values[MUX_A];
+  uint16_t muxB = 4095 - mux_values[MUX_B];
+  uint16_t muxC = 4095 - mux_values[MUX_C];
+  uint16_t muxD = 4095 - mux_values[MUX_D];
+  uint16_t muxE = 4095 - mux_values[MUX_E];
 
-  /*
+  setCalibratedParameterValue(REVERB_TONESIZE_CV, muxA);
+  setCalibratedParameterValue(OSC_VOCT_CV, muxB);
+  setCalibratedParameterValue(PARAMETER_BA + index, muxC);
+  setCalibratedParameterValue(PARAMETER_CA + index, muxD);
+  setCalibratedParameterValue(PARAMETER_DA + index, muxE);
+
   if (calibration)
   {
     oneiroiSettings.mins[REVERB_TONESIZE_CV] = min(oneiroiSettings.mins[REVERB_TONESIZE_CV], muxA);
@@ -235,7 +236,6 @@ void readMux(uint8_t index, uint16_t *mux_values)
     oneiroiSettings.maxes[PARAMETER_CA + index] = max(oneiroiSettings.maxes[PARAMETER_CA + index], muxD);
     oneiroiSettings.maxes[PARAMETER_DA + index] = max(oneiroiSettings.maxes[PARAMETER_DA + index], muxE);
   }
-  */
 }
 
 extern "C"
@@ -454,14 +454,13 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   {
     uint16_t value = 4095 - adc_values[i];
 
-    setRangedParameterValue(i, value);
-    /*
+    setCalibratedParameterValue(i, value);
+
     if (calibration)
     {
       oneiroiSettings.mins[i] = min(oneiroiSettings.mins[i], value);
       oneiroiSettings.maxes[i] = max(oneiroiSettings.maxes[i], value);
     }
-    */
   }
 
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
@@ -469,21 +468,11 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 
   value = (filterModeSwitch2.get() << 1) | filterModeSwitch1.get();
   parameter_values[FILTER_MODE_SWITCH] = 2047 * (value - 1); // BP = 0, LP = 2047, HP = 4094
-
-  /*
-  parameter_values[OSC_DETUNE_CV] = 4095 - adc_values[OSC_DETUNE_CV];
-  parameter_values[FILTER_CUTOFF_CV] = 4095 - adc_values[FILTER_CUTOFF_CV];
-  parameter_values[RESONATOR_HARMONY_CV] = 4095 - adc_values[RESONATOR_HARMONY_CV];
-  parameter_values[DELAY_TIME_CV] = 4095 - adc_values[DELAY_TIME_CV];
-  parameter_values[LOOPER_START_CV] = 4095 - adc_values[LOOPER_START_CV];
-  parameter_values[LOOPER_LENGTH_CV] = 4095 - adc_values[LOOPER_LENGTH_CV];
-  parameter_values[LOOPER_SPEED_CV] = 4095 - adc_values[LOOPER_SPEED_CV];
-  */
 }
 
 void onSetup()
 {
-  //oneiroiSettings.init();
+  oneiroiSettings.init();
 
   // start MUX ADC
   extern ADC_HandleTypeDef MUX_PERIPH;
@@ -500,81 +489,22 @@ void onSetup()
 
   for (size_t i = 0; i < NOF_PARAMETERS; i++)
   {
-    mins[i] = 0x0;
-    maxes[i] = 0xfb0;
+    mins[i] = 0;
+    maxes[i] = (i >= 16 || i <= 23) ? 4095 : 4030; // Faders have full range
   }
 
-  // Min is 0v, max is 10v
-  mins[DELAY_TIME_CV] = 0x520;
-  maxes[DELAY_TIME_CV] = 0xee0;
-  mins[OSC_DETUNE_CV] = 0x520;
-  maxes[OSC_DETUNE_CV] = 0xee0;
-  mins[FILTER_CUTOFF_CV] = 0x520;
-  maxes[FILTER_CUTOFF_CV] = 0xee0;
-  mins[LOOPER_START_CV] = 0x520;
-  maxes[LOOPER_START_CV] = 0xee0;
-  mins[LOOPER_LENGTH_CV] = 0x520;
-  maxes[LOOPER_LENGTH_CV] = 0xee0;
-  mins[RESONATOR_HARMONY_CV] = 0x520;
-  maxes[RESONATOR_HARMONY_CV] = 0xee0;
-  mins[LOOPER_SPEED_CV] = 0x520;
-  maxes[LOOPER_SPEED_CV] = 0xee0;
-  mins[REVERB_TONESIZE_CV] = 0x520;
-  maxes[REVERB_TONESIZE_CV] = 0xee0;
+  // Min is -5v, max is 10v
+  maxes[DELAY_TIME_CV] = 4040;
+  maxes[OSC_DETUNE_CV] = 4040;
+  maxes[FILTER_CUTOFF_CV] = 4040;
+  maxes[LOOPER_START_CV] = 4040;
+  maxes[LOOPER_LENGTH_CV] = 4040;
+  maxes[RESONATOR_HARMONY_CV] = 4040;
+  maxes[LOOPER_SPEED_CV] = 4040;
+  maxes[REVERB_TONESIZE_CV] = 4040;
 
-  mins[OSC_VOCT_CV] = 0x7c0;//0xa92;    0x568
-  maxes[OSC_VOCT_CV] = 0xffc;
-
-  //mins[LOOPER_VOL] = 0x485;//0x46e;    0xb...
-  maxes[LOOPER_VOL] = 0xfd0;
-  //mins[REVERB_VOL] = 0x485;//0x46e;
-  maxes[REVERB_VOL] = 0xfd0;
-  //mins[DELAY_VOL] = 0x485;//0x468;
-  maxes[DELAY_VOL] = 0xfd0;
-  //mins[RESONATOR_VOL] = 0x485;//0x46d;
-  maxes[RESONATOR_VOL] = 0xfd0;
-  //mins[FILTER_VOL] = 0x485;//0x46c;
-  maxes[FILTER_VOL] = 0xfd0;
-  //mins[IN_VOL] = 0x485;//0x46a;
-  maxes[IN_VOL] = 0xfd0;
-  //mins[SSWT_VOL] = 0x485;//0x469;
-  maxes[SSWT_VOL] = 0xfd0;
-  //mins[SINE_VOL] = 0x485;//0x46d;
-  maxes[SINE_VOL] = 0xfd0;
-
-  //mins[LOOPER_SPEED] = 0x475;//0x456;
-  maxes[LOOPER_SPEED] = 0xfc0;
-  //mins[FILTER_RESODRIVE] = 0x475;//0x457;
-  maxes[FILTER_RESODRIVE] = 0xfc0;
-  //mins[OSC_DETUNE] = 0x475;//0x458;
-  maxes[OSC_DETUNE] = 0xfc0;
-  //mins[LOOPER_LENGTH] = 0x475;//0x456;
-  maxes[LOOPER_LENGTH] = 0xfc0;
-  //mins[OSC_PITCH] = 0x475;//0x455;
-  maxes[OSC_PITCH] = 0xfc0;
-  //mins[LOOPER_START] = 0x475;//0x456;
-  maxes[LOOPER_START] = 0xfc0;
-  //mins[RESONATOR_HARMONY] = 0x475;//0x457;
-  maxes[RESONATOR_HARMONY] = 0xfc0;
-  //mins[RESONATOR_DECAY] = 0x475;//0x458;
-  maxes[RESONATOR_DECAY] = 0xfc0;
-
-  //mins[REVERB_TONESIZE] = 0x475;//0x469;
-  maxes[REVERB_TONESIZE] = 0xfc0;
-  //mins[REVERB_DECAY] = 0x475;//0x46a;
-  maxes[REVERB_DECAY] = 0xfc0;
-  //mins[MOD_AMOUNT] = 0x475;//0x46a;
-  maxes[MOD_AMOUNT] = 0xfc0;
-  //mins[MOD_FREQ] = 0x475;//0x469;
-  maxes[MOD_FREQ] = 0xfc0;
-  //mins[FILTER_CUTOFF] = 0x475;//0x46b;
-  maxes[FILTER_CUTOFF] = 0xfc0;
-  //mins[DELAY_FEEDBACK] = 0x475;//0x469;
-  maxes[DELAY_FEEDBACK] = 0xfc0;
-  //mins[DELAY_TIME] = 0x475;//0x469;
-  maxes[DELAY_TIME] = 0xfc0;
-  //mins[RANDOM_MODE] = 0x475;//0x46a;
-  maxes[RANDOM_MODE] = 0xfc0;
+  // Min is -5v, max is 5v
+  maxes[OSC_VOCT_CV] = 4040;
 }
 
 void onLoop(void)
@@ -621,7 +551,7 @@ void onLoop(void)
         calibration = false;
         setLed(RECORD_LED, 0);
         setLed(RANDOM_LED, 0);
-        //oneiroiSettings.saveToFlash();
+        oneiroiSettings.saveToFlash();
         owl.setOperationMode(LOAD_MODE);
       }
       else if (configMode == false)
@@ -630,7 +560,7 @@ void onLoop(void)
         setLed(RECORD_LED, 1);
         setLed(RANDOM_LED, 1);
         configMode = true;
-        //oneiroiSettings.reset();
+        oneiroiSettings.reset();
       }
     }
     else
@@ -663,6 +593,7 @@ void onLoop(void)
         ledsOff();
         setErrorStatus(NO_ERROR);
         owl.setOperationMode(STARTUP_MODE);
+        program.resetProgram(false);
       }
     }
     else
