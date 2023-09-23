@@ -150,6 +150,8 @@ void Error_Handler(void);
 #define LEDSW3_GPIO_Port GPIOC
 #define TR_OUT1_Pin GPIO_PIN_12
 #define TR_OUT1_GPIO_Port GPIOC
+#define TR_OUT2_Pin GPIO_PIN_2
+#define TR_OUT2_GPIO_Port GPIOD
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
 #define SW3_Pin GPIO_PIN_9
