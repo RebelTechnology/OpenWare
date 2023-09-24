@@ -76,5 +76,3 @@
 #define AUDIO_INPUT_SCALAR           ((uint32_t)(-10.75*65535))
 #define AUDIO_OUTPUT_OFFSET          ((uint32_t)(0.0014*65535))
 #define AUDIO_OUTPUT_SCALAR          ((uint32_t)(10.2*65535))
-
-#define APPLICATION_SETTINGS_NAME    "__ONEIROI__"

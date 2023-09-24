@@ -1,8 +1,7 @@
-# Issues
+# TODO
 
-- calling `setButtonValue()` crashes the firmware (row 307 in `onProgramReady()`)
-- calibration / save settings crash
-
-# mk2
-
-- pollo when plugging any volume CVs
+- saving/recalling parameters from the patch
+- actually, merge firmware and patch in one code, to allow for debugging and to
+  simplify the update process
+- cannot calibrate v/oct precisely
+- FUNC led button like Tete's, we'd need to use a mux port

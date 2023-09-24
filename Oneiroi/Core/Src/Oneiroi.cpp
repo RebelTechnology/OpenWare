@@ -6,9 +6,8 @@
 #include "message.h"
 #include "ProgramManager.h"
 #include "OpenWareMidiControl.h"
-#include "Storage.h"
 #include "Pin.h"
-#include "cmsis_os.h"
+#include "ApplicationSettings.h"
 
 #ifndef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -81,65 +80,6 @@
 #define DELAY_TIME PARAMETER_DG
 #define RANDOM_MODE PARAMETER_DH
 
-class OneiroiSettings {
-public:
-  uint32_t checksum;
-  uint16_t mins[40];
-  uint16_t maxes[40];
-
-public:
-  void init()
-  {
-    checksum = sizeof(*this) ^ 0xf0f0f0f0;
-    if (settingsInFlash())
-    {
-      loadFromFlash();
-    }
-    else
-    {
-      reset();
-    }
-  }
-  void reset()
-  {
-    for (size_t i = 0; i < 40; i++)
-    {
-      mins[i] = 2048;
-      maxes[i] = 2048;
-    }
-  }
-  bool settingsInFlash()
-  {
-    Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
-    if  (resource)
-    {
-      OneiroiSettings data;
-      storage.readResource(resource->getHeader(), &data, 0, sizeof(data));
-
-      return data.checksum == checksum;
-    }
-
-    return false;
-  }
-  void loadFromFlash()
-  {
-    Resource* resource = storage.getResourceByName(APPLICATION_SETTINGS_NAME);
-    if (resource)
-    {
-      storage.readResource(resource->getHeader(), this, 0, sizeof(*this));
-    }
-  }
-  void saveToFlash()
-  {
-    uint8_t buffer[sizeof(ResourceHeader) + sizeof(OneiroiSettings)];
-    memset(buffer, 0, sizeof(ResourceHeader));
-    memcpy(buffer + sizeof(ResourceHeader), this, sizeof(OneiroiSettings));
-    taskENTER_CRITICAL();
-    storage.writeResource(APPLICATION_SETTINGS_NAME, buffer, sizeof(*this), FLASH_DEFAULT_FLAGS);
-    taskEXIT_CRITICAL();
-  }
-};
-
 enum leds
 {
   RECORD_LED = 1,
@@ -153,13 +93,13 @@ enum leds
 };
 
 static bool calibration = false;
+float sampleLow = 0.5f, sampleHigh = 0.5f, voltsLow = -5, voltsHigh = 5;
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
 static bool shiftButtonState = false;
 static uint16_t randomAmountState = 0;
 static uint16_t filterModeState = 0;
 static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
-OneiroiSettings oneiroiSettings;
 uint16_t mins[40];
 uint16_t maxes[40];
 
@@ -181,24 +121,17 @@ void setCalibratedParameterValue(uint8_t pid, int16_t value)
 {
   float v = value;
 
-  if (calibration)
+  if (value < mins[pid])
   {
-    setParameterValue(pid, v);
+    value = mins[pid];
   }
-  else
+  else if (value > maxes[pid])
   {
-    if (value < mins[pid])
-    {
-      value = mins[pid];
-    }
-    else if (value > maxes[pid])
-    {
-      value = maxes[pid];
-    }
-    v = (4095.f / (maxes[pid] - mins[pid])) * (value - mins[pid]);
+    value = maxes[pid];
+  }
+  v = (4095.f / (maxes[pid] - mins[pid])) * (value - mins[pid]);
 
-    setParameterValue(pid, v);
-  }
+  setParameterValue(pid, v);
 }
 
 void setMux(uint8_t index)
@@ -224,17 +157,12 @@ void readMux(uint8_t index, uint16_t *mux_values)
 
   if (calibration)
   {
-    oneiroiSettings.mins[REVERB_TONESIZE_CV] = min(oneiroiSettings.mins[REVERB_TONESIZE_CV], muxA);
-    oneiroiSettings.mins[OSC_VOCT_CV] = min(oneiroiSettings.mins[OSC_VOCT_CV], muxB);
-    oneiroiSettings.mins[PARAMETER_BA + index] = min(oneiroiSettings.mins[PARAMETER_BA + index], muxC);
-    oneiroiSettings.mins[PARAMETER_CA + index] = min(oneiroiSettings.mins[PARAMETER_CA + index], muxD);
-    oneiroiSettings.mins[PARAMETER_DA + index] = min(oneiroiSettings.mins[PARAMETER_DA + index], muxE);
-
-    oneiroiSettings.maxes[REVERB_TONESIZE_CV] = max(oneiroiSettings.maxes[REVERB_TONESIZE_CV], muxA);
-    oneiroiSettings.maxes[OSC_VOCT_CV] = max(oneiroiSettings.maxes[OSC_VOCT_CV], muxB);
-    oneiroiSettings.maxes[PARAMETER_BA + index] = max(oneiroiSettings.maxes[PARAMETER_BA + index], muxC);
-    oneiroiSettings.maxes[PARAMETER_CA + index] = max(oneiroiSettings.maxes[PARAMETER_CA + index], muxD);
-    oneiroiSettings.maxes[PARAMETER_DA + index] = max(oneiroiSettings.maxes[PARAMETER_DA + index], muxE);
+    float v = muxB / 4096.f;
+    sampleLow = min(sampleLow, v);
+    sampleHigh = max(sampleHigh, v);
+    float scalar = ((voltsLow - voltsHigh) / (sampleLow - sampleHigh) * UINT16_MAX);
+    settings.output_scalar = scalar;
+    settings.output_offset = ((sampleLow - voltsLow * UINT16_MAX / scalar) * UINT16_MAX);
   }
 }
 
@@ -455,12 +383,6 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
     uint16_t value = 4095 - adc_values[i];
 
     setCalibratedParameterValue(i, value);
-
-    if (calibration)
-    {
-      oneiroiSettings.mins[i] = min(oneiroiSettings.mins[i], value);
-      oneiroiSettings.maxes[i] = max(oneiroiSettings.maxes[i], value);
-    }
   }
 
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
@@ -472,8 +394,6 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 
 void onSetup()
 {
-  oneiroiSettings.init();
-
   // start MUX ADC
   extern ADC_HandleTypeDef MUX_PERIPH;
   if (HAL_ADC_Start_DMA(&MUX_PERIPH, (uint32_t *)mux_values, NOF_MUX_VALUES) != HAL_OK)
@@ -490,21 +410,8 @@ void onSetup()
   for (size_t i = 0; i < NOF_PARAMETERS; i++)
   {
     mins[i] = 0;
-    maxes[i] = (i >= 16 || i <= 23) ? 4095 : 4030; // Faders have full range
+    maxes[i] = (i >= 24 || i <= 38) ? 4030 : 4095; // Pots have reduced range
   }
-
-  // Min is -5v, max is 10v
-  maxes[DELAY_TIME_CV] = 4040;
-  maxes[OSC_DETUNE_CV] = 4040;
-  maxes[FILTER_CUTOFF_CV] = 4040;
-  maxes[LOOPER_START_CV] = 4040;
-  maxes[LOOPER_LENGTH_CV] = 4040;
-  maxes[RESONATOR_HARMONY_CV] = 4040;
-  maxes[LOOPER_SPEED_CV] = 4040;
-  maxes[REVERB_TONESIZE_CV] = 4040;
-
-  // Min is -5v, max is 5v
-  maxes[OSC_VOCT_CV] = 4040;
 }
 
 void onLoop(void)
@@ -551,7 +458,7 @@ void onLoop(void)
         calibration = false;
         setLed(RECORD_LED, 0);
         setLed(RANDOM_LED, 0);
-        oneiroiSettings.saveToFlash();
+        settings.saveToFlash(false);
         owl.setOperationMode(LOAD_MODE);
       }
       else if (configMode == false)
@@ -560,7 +467,6 @@ void onLoop(void)
         setLed(RECORD_LED, 1);
         setLed(RANDOM_LED, 1);
         configMode = true;
-        oneiroiSettings.reset();
       }
     }
     else
