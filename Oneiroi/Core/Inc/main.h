@@ -115,6 +115,8 @@ void Error_Handler(void);
 #define FLASH_WP_GPIO_Port GPIOB
 #define MUX3_Pin GPIO_PIN_1
 #define MUX3_GPIO_Port GPIOB
+#define CU_UP_LED_Pin GPIO_PIN_2
+#define CU_UP_LED_GPIO_Port GPIOB
 #define CS_CS_Pin GPIO_PIN_10
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
@@ -145,8 +147,10 @@ void Error_Handler(void);
 #define MUX_A_GPIO_Port GPIOC
 #define MUX_B_Pin GPIO_PIN_11
 #define MUX_B_GPIO_Port GPIOC
-#define SHIFT_BUTTON_Pin GPIO_PIN_2
-#define SHIFT_BUTTON_GPIO_Port GPIOD
+#define CU_DOWN_LED_Pin GPIO_PIN_12
+#define CU_DOWN_LED_GPIO_Port GPIOC
+#define FUNC_BUTTON_Pin GPIO_PIN_2
+#define FUNC_BUTTON_GPIO_Port GPIOD
 #define CS_SDIN_Pin GPIO_PIN_6
 #define CS_SDIN_GPIO_Port GPIOD
 #define FILTER_MODE_SWITCH2_Pin GPIO_PIN_7
@@ -166,10 +170,10 @@ void Error_Handler(void);
 #define SYNC_LED_GPIO_Port GPIOB
 #define FILTER_MODE_SWITCH1_Pin GPIO_PIN_7
 #define FILTER_MODE_SWITCH1_GPIO_Port GPIOB
-#define CU_DOWN_LED_Pin GPIO_PIN_8
-#define CU_DOWN_LED_GPIO_Port GPIOB
-#define CU_UP_LED_Pin GPIO_PIN_9
-#define CU_UP_LED_GPIO_Port GPIOB
+#define FUNC_1_LED_Pin GPIO_PIN_8
+#define FUNC_1_LED_GPIO_Port GPIOB
+#define FUNC_2_LED_Pin GPIO_PIN_9
+#define FUNC_2_LED_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

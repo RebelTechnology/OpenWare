@@ -25,7 +25,7 @@
 #define MOD PARAMETER_AG
 
 // GPIO
-#define SHIFT_BUTTON PUSHBUTTON
+#define FUNC_BUTTON PUSHBUTTON
 #define CU_DOWN GREEN_BUTTON
 #define CU_UP RED_BUTTON
 #define RECORD_BUTTON BUTTON_1
@@ -36,6 +36,8 @@
 #define INLEVELRED BUTTON_6
 #define PREPOST_SWITCH BUTTON_7
 #define SSWT_SWITCH BUTTON_8
+#define FUNC_1 BUTTON_9
+#define FUNC_2 BUTTON_10
 
 #define RANDOM_AMOUNT PARAMETER_AA
 #define FILTER_MODE_SWITCH PARAMETER_AB
@@ -89,14 +91,16 @@ enum leds
   INLEVELGREEN_LED,
   MOD_LED,
   CU_DOWN_LED,
-  CU_UP_LED
+  CU_UP_LED,
+  FUNC_1_LED,
+  FUNC_2_LED,
 };
 
 static bool calibration = false;
 float sampleLow = 0.5f, sampleHigh = 0.5f, voltsLow = -5, voltsHigh = 5;
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
-static bool shiftButtonState = false;
+static bool funcButtonState = false;
 static uint16_t randomAmountState = 0;
 static uint16_t filterModeState = 0;
 static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
@@ -105,7 +109,7 @@ uint16_t maxes[40];
 
 Pin randomGate(RANDOM_GATE_GPIO_Port, RANDOM_GATE_Pin);
 Pin randomButton(RANDOM_BUTTON_GPIO_Port, RANDOM_BUTTON_Pin);
-Pin shiftButton(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin);
+Pin funcButton(FUNC_BUTTON_GPIO_Port, FUNC_BUTTON_Pin);
 Pin sswtSwitch(SSWT_SWITCH_GPIO_Port, SSWT_SWITCH_Pin);
 Pin randomAmountSwitch1(RANDOM_AMOUNT_SWITCH1_GPIO_Port, RANDOM_AMOUNT_SWITCH1_Pin);
 Pin randomAmountSwitch2(RANDOM_AMOUNT_SWITCH2_GPIO_Port, RANDOM_AMOUNT_SWITCH2_Pin);
@@ -193,10 +197,10 @@ void readGpio()
     sswtSwitchState = !sswtSwitch.get();
     setButtonValue(SSWT_SWITCH, sswtSwitchState);
   }
-  if (shiftButtonState != !shiftButton.get()) // Inverted: pressed = false
+  if (funcButtonState != !funcButton.get()) // Inverted: pressed = false
   {
-    shiftButtonState = !shiftButton.get();
-    setButtonValue(SHIFT_BUTTON, shiftButtonState);
+    funcButtonState = !funcButton.get();
+    setButtonValue(FUNC_BUTTON, funcButtonState);
   }
 
   setAnalogValue(MOD_LED, getParameterValue(MOD));
@@ -280,10 +284,10 @@ void onChangePin(uint16_t pin)
       setButtonValue(PREPOST_SWITCH, state);
       break;
     }
-    case SHIFT_BUTTON_Pin:
+    case FUNC_BUTTON_Pin:
     {
-      bool state = HAL_GPIO_ReadPin(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin) == GPIO_PIN_RESET; // Inverted
-      setButtonValue(SHIFT_BUTTON, state);
+      bool state = HAL_GPIO_ReadPin(FUNC_BUTTON_GPIO_Port, FUNC_BUTTON_Pin) == GPIO_PIN_RESET; // Inverted
+      setButtonValue(FUNC_BUTTON, state);
       break;
     }
   }
@@ -325,6 +329,12 @@ void setGateValue(uint8_t ch, int16_t value)
   case CU_UP:
     setLed(CU_UP_LED, value);
     break;
+  case FUNC_1:
+    setLed(FUNC_1_LED, value);
+    break;
+  case FUNC_2:
+    setLed(FUNC_2_LED, value);
+    break;
   }
 }
 
@@ -350,6 +360,12 @@ void setLed(uint8_t led, uint32_t rgb)
   case CU_UP_LED:
     HAL_GPIO_WritePin(CU_UP_LED_GPIO_Port, CU_UP_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
     break;
+  case FUNC_1_LED:
+    HAL_GPIO_WritePin(FUNC_1_LED_GPIO_Port, FUNC_1_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
+    break;
+  case FUNC_2_LED:
+    HAL_GPIO_WritePin(FUNC_2_LED_GPIO_Port, FUNC_2_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
+    break;
   }
 }
 
@@ -361,6 +377,8 @@ void ledsOn()
   setLed(INLEVELRED_LED, 1);
   setLed(CU_DOWN_LED, 1);
   setLed(CU_UP_LED, 1);
+  setLed(FUNC_1_LED, 1);
+  setLed(FUNC_2_LED, 1);
   setAnalogValue(MOD_LED, 4095);
 }
 
@@ -372,6 +390,8 @@ void ledsOff()
   setLed(INLEVELRED_LED, 0);
   setLed(CU_DOWN_LED, 0);
   setLed(CU_UP_LED, 0);
+  setLed(FUNC_1_LED, 0);
+  setLed(FUNC_2_LED, 0);
   setAnalogValue(MOD_LED, 0);
   setAnalogValue(INLEVELGREEN_LED, 0);
 }
@@ -419,7 +439,7 @@ void onLoop(void)
   static bool configMode = false;
   static uint32_t counter = PATCH_RESET_COUNTER;
 
-  bool shiftButtonPressed = HAL_GPIO_ReadPin(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin) == GPIO_PIN_RESET;
+  bool funcButtonPressed = HAL_GPIO_ReadPin(FUNC_BUTTON_GPIO_Port, FUNC_BUTTON_Pin) == GPIO_PIN_RESET;
 
   switch (owl.getOperationMode())
   {
@@ -450,7 +470,7 @@ void onLoop(void)
     break;
 
   case CONFIGURE_MODE:
-    if (shiftButtonPressed)
+    if (funcButtonPressed)
     {
       if (calibration)
       {
@@ -491,7 +511,7 @@ void onLoop(void)
 
   case ERROR_MODE:
     ledsOn();
-    if (shiftButtonPressed)
+    if (funcButtonPressed)
     {
       if (--counter == 0)
       {
