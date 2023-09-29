@@ -24,6 +24,9 @@
 #define INLEVELGREEN PARAMETER_AF
 #define MOD PARAMETER_AG
 
+#define FUNC1 PARAMETER_H
+#define FUNC2 PARAMETER_AH
+
 // GPIO
 #define FUNC_BUTTON PUSHBUTTON
 #define CU_DOWN GREEN_BUTTON
@@ -97,7 +100,8 @@ enum leds
 };
 
 static bool calibration = false;
-float sampleLow = 0.5f, sampleHigh = 0.5f, voltsLow = -5, voltsHigh = 5;
+float oscVOctSampleLow = 0.5f, oscVOctSampleHigh = 0.5f, oscVOctVoltsLow = -5.f, oscVOctVoltsHigh = 5.f;
+float filterVOctSampleLow = 0.5f, filterVOctSampleHigh = 0.5f, filterVOctVoltsLow = -5.f, filterVOctVoltsHigh = 10.f;
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
 static bool funcButtonState = false;
@@ -115,6 +119,9 @@ Pin randomAmountSwitch1(RANDOM_AMOUNT_SWITCH1_GPIO_Port, RANDOM_AMOUNT_SWITCH1_P
 Pin randomAmountSwitch2(RANDOM_AMOUNT_SWITCH2_GPIO_Port, RANDOM_AMOUNT_SWITCH2_Pin);
 Pin filterModeSwitch1(FILTER_MODE_SWITCH1_GPIO_Port, FILTER_MODE_SWITCH1_Pin);
 Pin filterModeSwitch2(FILTER_MODE_SWITCH2_GPIO_Port, FILTER_MODE_SWITCH2_Pin);
+
+Pin funcLed1(FUNC_1_LED_GPIO_Port, FUNC_1_LED_Pin);
+Pin funcLed2(FUNC_2_LED_GPIO_Port, FUNC_2_LED_Pin);
 
 // MUX binary counter digital output pins
 Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
@@ -162,11 +169,11 @@ void readMux(uint8_t index, uint16_t *mux_values)
   if (calibration)
   {
     float v = muxB / 4096.f;
-    sampleLow = min(sampleLow, v);
-    sampleHigh = max(sampleHigh, v);
-    float scalar = ((voltsLow - voltsHigh) / (sampleLow - sampleHigh) * UINT16_MAX);
+    oscVOctSampleLow = min(oscVOctSampleLow, v);
+    oscVOctSampleHigh = max(oscVOctSampleHigh, v);
+    float scalar = ((oscVOctVoltsLow - oscVOctVoltsHigh) / (oscVOctSampleLow - oscVOctSampleHigh) * UINT16_MAX);
     settings.output_scalar = scalar;
-    settings.output_offset = ((sampleLow - voltsLow * UINT16_MAX / scalar) * UINT16_MAX);
+    settings.output_offset = ((oscVOctSampleLow - oscVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
   }
 }
 
@@ -205,6 +212,9 @@ void readGpio()
 
   setAnalogValue(MOD_LED, getParameterValue(MOD));
   setAnalogValue(INLEVELGREEN_LED, getParameterValue(INLEVELGREEN));
+
+  setLed(FUNC_1_LED, getParameterValue(FUNC1));
+  setLed(FUNC_2_LED, getParameterValue(FUNC2));
 
 #ifdef DEBUG
 
@@ -340,6 +350,8 @@ void setGateValue(uint8_t ch, int16_t value)
 
 void setLed(uint8_t led, uint32_t rgb)
 {
+  uint32_t pwm = 1024 - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
+
   switch (led)
   {
   case RECORD_LED:
@@ -361,10 +373,10 @@ void setLed(uint8_t led, uint32_t rgb)
     HAL_GPIO_WritePin(CU_UP_LED_GPIO_Port, CU_UP_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
     break;
   case FUNC_1_LED:
-    HAL_GPIO_WritePin(FUNC_1_LED_GPIO_Port, FUNC_1_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
+    TIM4->CCR3 = pwm;
     break;
   case FUNC_2_LED:
-    HAL_GPIO_WritePin(FUNC_2_LED_GPIO_Port, FUNC_2_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
+    TIM4->CCR4 = pwm;
     break;
   }
 }
@@ -377,23 +389,21 @@ void ledsOn()
   setLed(INLEVELRED_LED, 1);
   setLed(CU_DOWN_LED, 1);
   setLed(CU_UP_LED, 1);
-  setLed(FUNC_1_LED, 1);
-  setLed(FUNC_2_LED, 1);
+  setLed(FUNC_2_LED, RED_COLOUR);
   setAnalogValue(MOD_LED, 4095);
 }
 
 void ledsOff()
 {
-  setLed(RECORD_LED, 0);
-  setLed(RANDOM_LED, 0);
-  setLed(SYNC_LED, 0);
-  setLed(INLEVELRED_LED, 0);
-  setLed(CU_DOWN_LED, 0);
-  setLed(CU_UP_LED, 0);
-  setLed(FUNC_1_LED, 0);
-  setLed(FUNC_2_LED, 0);
-  setAnalogValue(MOD_LED, 0);
-  setAnalogValue(INLEVELGREEN_LED, 0);
+  setLed(RECORD_LED, NO_COLOUR);
+  setLed(RANDOM_LED, NO_COLOUR);
+  setLed(SYNC_LED, NO_COLOUR);
+  setLed(INLEVELRED_LED, NO_COLOUR);
+  setLed(CU_DOWN_LED, NO_COLOUR);
+  setLed(CU_UP_LED, NO_COLOUR);
+  setLed(FUNC_2_LED, NO_COLOUR);
+  setAnalogValue(MOD_LED, NO_COLOUR);
+  setAnalogValue(INLEVELGREEN_LED, NO_COLOUR);
 }
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len)
@@ -403,6 +413,16 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
     uint16_t value = 4095 - adc_values[i];
 
     setCalibratedParameterValue(i, value);
+
+    if (i == FILTER_CUTOFF_CV && calibration)
+    {
+      float v = value / 4096.f;
+      filterVOctSampleLow = min(filterVOctSampleLow, v);
+      filterVOctSampleHigh = max(filterVOctSampleHigh, v);
+      float scalar = ((filterVOctVoltsLow - filterVOctVoltsHigh) / (filterVOctSampleLow - filterVOctSampleHigh) * UINT16_MAX);
+      settings.input_scalar = scalar;
+      settings.input_offset = ((filterVOctSampleLow - filterVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
+    }
   }
 
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
@@ -414,7 +434,14 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 
 void onSetup()
 {
-  // start MUX ADC
+  extern TIM_HandleTypeDef htim4;
+  HAL_TIM_Base_Start(&htim4);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3); // FUNC_1_LED
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4); // FUNC_2_LED
+
+  //funcLed1.outputMode();
+  //funcLed2.outputMode();
+
   extern ADC_HandleTypeDef MUX_PERIPH;
   if (HAL_ADC_Start_DMA(&MUX_PERIPH, (uint32_t *)mux_values, NOF_MUX_VALUES) != HAL_OK)
   {
