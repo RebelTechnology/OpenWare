@@ -36,9 +36,16 @@
 #define USE_USBD_AUDIO_FEATURES
 #define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_AUDIO_TX // microphone
+#define USBD_AUDIO_BUFFER_PACKETS   3
+#define AUDIO_SAMPLINGRATE          48000
 
 #define USE_USBD_FS
 #define USE_USBH_HS
+#define USE_USB_HOST
+#define USE_USBH_MIDI
+
+#define AUDIO_BLOCK_SIZE             128
+#define AUDIO_OUTPUT_GAIN            103
 
 #define USE_BKPSRAM
 
@@ -51,7 +58,6 @@
 #define ADC_G 6
 #define ADC_H 7
 #define ADC_I 8
-#define AUDIO_OUTPUT_GAIN            103
 
 #define TRIG1_Pin GP7_Pin 	/* A17 */
 #define TRIG1_GPIO_Port GP7_GPIO_Port
