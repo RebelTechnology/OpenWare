@@ -496,6 +496,18 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
+  /*Configure GPIO pins : LED1_Pin LED2_Pin */
+#ifdef LED1_Pin
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+  GPIO_InitStruct.Pin = LED1_Pin;
+  HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
+#endif
+#ifdef LED2_Pin
+  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+  GPIO_InitStruct.Pin = LED2_Pin;
+  HAL_GPIO_Init(LED2_GPIO_Port, &GPIO_InitStruct);
+#endif
+
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(FLASH_WP_GPIO_Port, FLASH_WP_Pin, GPIO_PIN_RESET);
 
@@ -522,6 +534,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : BOOT1_Pin */
+#ifdef BOOT1_Pin
+  GPIO_InitStruct.Pin = BOOT1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(BOOT1_GPIO_Port, &GPIO_InitStruct);
+#endif
 }
 
 /* USER CODE BEGIN 4 */

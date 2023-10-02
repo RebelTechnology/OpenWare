@@ -31,6 +31,20 @@
   #define LED2_GPIO_Port GPIOF
   #define USE_SPI_FLASH
   #define SPI_FLASH_HANDLE             hspi1
+#elif defined OWL_WITCH
+  #define HARDWARE_VERSION    "OWL Witch3 Boot"
+  #define HARDWARE_ID         WITCH_HARDWARE
+  #define APPLICATION_ADDRESS 0x08020000
+  #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_9
+  #define BOOT1_GPIO_Port GPIOF
+  #define USE_LED
+  #define LED1_Pin GPIO_PIN_9
+  #define LED1_GPIO_Port GPIOC
+  #define LED2_Pin GPIO_PIN_8
+  #define LED2_GPIO_Port GPIOA
+  #define USE_SPI_FLASH
+  #define SPI_FLASH_HANDLE             hspi1
 #elif defined OWL_MAGUS
   #define HARDWARE_VERSION    "OWL Magus3 Boot"
   #define HARDWARE_ID         MAGUS_HARDWARE

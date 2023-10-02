@@ -30,6 +30,8 @@ ifeq ($(PLATFORM),Genius)
   CPPFLAGS += -DOWL_GENIUS -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Lich3)
   CPPFLAGS += -DOWL_LICH -DUSE_USBD_FS
+else ifeq ($(PLATFORM),Witch3)
+  CPPFLAGS += -DOWL_WITCH -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Magus3)
   CPPFLAGS += -DOWL_MAGUS -DUSE_USBD_FS
 else ifeq ($(PLATFORM),Xibeca)
