@@ -25,6 +25,9 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+#define NOF_ADC1_VALUES 4
+#define NOF_ADC3_VALUES 5
+
 // 12x12 bit multiplication with unsigned operands and result
 #define U12_MUL_U12(a,b) (__USAT(((uint32_t)(a)*(b))>>12, 12))
 
@@ -249,9 +252,18 @@ extern "C"{
     // with 144 cycles sample time and PCLK2 = 84MHz, div 8
     // giving a filter settling time of less than 3ms
     extern uint16_t adc_values[NOF_ADC_VALUES];
-    for(size_t i=0; i<NOF_ADC_VALUES; ++i){
-      // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
-      smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
+    extern ADC_HandleTypeDef hadc1;
+    extern ADC_HandleTypeDef hadc3;
+    if(hadc == &hadc1){
+      for(size_t i=NOF_ADC3_VALUES; i<NOF_ADC_VALUES; ++i){
+	// IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+	smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
+      }
+    }else if(hadc == &hadc3){
+      for(size_t i=0; i<NOF_ADC3_VALUES; ++i){
+	// IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+	smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
+      }
     }
   }
 }
@@ -429,6 +441,19 @@ void onChangeMode(uint8_t new_mode, uint8_t old_mode){
   counter = 0;
 }
 
+void initADC(){
+  extern ADC_HandleTypeDef hadc1;
+  extern ADC_HandleTypeDef hadc3;
+  extern uint16_t adc_values[NOF_ADC_VALUES];
+  HAL_ADC_Stop_DMA(&ADC_PERIPH);
+  uint32_t* adc3_values = (uint32_t*)&adc_values[0];
+  uint32_t* adc1_values = (uint32_t*)&adc_values[NOF_ADC3_VALUES];
+  if(HAL_ADC_Start_DMA(&hadc1, adc1_values, NOF_ADC1_VALUES) != HAL_OK)
+    error(CONFIG_ERROR, "ADC1 Start failed");
+  if(HAL_ADC_Start_DMA(&hadc3, adc3_values, NOF_ADC3_VALUES) != HAL_OK)
+    error(CONFIG_ERROR, "ADC3 Start failed");
+}
+
 void onSetup(){
   initLed();
   HAL_GPIO_WritePin(LEDPWM_GPIO_Port, LEDPWM_Pin, GPIO_PIN_SET);
@@ -447,6 +472,8 @@ void onSetup(){
 
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
+
+  initADC();
 }
 
 void onLoop(){

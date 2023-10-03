@@ -47,7 +47,9 @@
 
 /* Exported functions prototypes ---------------------------------------------*/
 void SysTick_Handler(void);
+void DMA1_Stream0_IRQHandler(void);
 void DMA1_Stream4_IRQHandler(void);
+void ADC_IRQHandler(void);
 void EXTI9_5_IRQHandler(void);
 void DMA2_Stream1_IRQHandler(void);
 void DMA2_Stream4_IRQHandler(void);

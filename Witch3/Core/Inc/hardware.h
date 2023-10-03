@@ -53,11 +53,11 @@
 #define ADC_B 1
 #define ADC_C 2
 #define ADC_D 3
-#define ADC_E 4
-#define ADC_F 5
-#define ADC_G 6
-#define ADC_H 7
-#define ADC_I 8
+#define ADC_E 5
+#define ADC_F 6
+#define ADC_G 7
+#define ADC_H 8
+#define ADC_I 4
 
 #define TRIG1_Pin GP7_Pin 	/* A17 */
 #define TRIG1_GPIO_Port GP7_GPIO_Port
