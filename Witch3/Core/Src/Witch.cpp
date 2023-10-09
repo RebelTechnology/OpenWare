@@ -27,6 +27,9 @@
 
 #define NOF_ADC1_VALUES 4
 #define NOF_ADC3_VALUES 5
+#if (NOF_ADC1_VALUES + NOF_ADC3_VALUES) != NOF_ADC_VALUES
+#error "Invalid ADC configuration"
+#endif
 
 // 12x12 bit multiplication with unsigned operands and result
 #define U12_MUL_U12(a,b) (__USAT(((uint32_t)(a)*(b))>>12, 12))
@@ -254,16 +257,19 @@ extern "C"{
     extern uint16_t adc_values[NOF_ADC_VALUES];
     extern ADC_HandleTypeDef hadc1;
     extern ADC_HandleTypeDef hadc3;
-    if(hadc == &hadc1){
-      for(size_t i=NOF_ADC3_VALUES; i<NOF_ADC_VALUES; ++i){
-	// IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
-	smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
-      }
-    }else if(hadc == &hadc3){
-      for(size_t i=0; i<NOF_ADC3_VALUES; ++i){
-	// IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
-	smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
-      }
+    if(hadc == &hadc3){
+      // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+      smooth_adc_values[ADC_I] = (smooth_adc_values[ADC_I]*3 + adc_values[0]) >> 2;
+      smooth_adc_values[ADC_A] = (smooth_adc_values[ADC_A]*3 + adc_values[1]) >> 2;
+      smooth_adc_values[ADC_B] = (smooth_adc_values[ADC_B]*3 + adc_values[2]) >> 2;
+      smooth_adc_values[ADC_C] = (smooth_adc_values[ADC_C]*3 + adc_values[3]) >> 2;
+      smooth_adc_values[ADC_D] = (smooth_adc_values[ADC_D]*3 + adc_values[4]) >> 2;
+    }else if(hadc == &hadc1){      
+      // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+      smooth_adc_values[ADC_E] = (smooth_adc_values[ADC_E]*3 + adc_values[5]) >> 2;
+      smooth_adc_values[ADC_F] = (smooth_adc_values[ADC_F]*3 + adc_values[6]) >> 2;
+      smooth_adc_values[ADC_G] = (smooth_adc_values[ADC_G]*3 + adc_values[7]) >> 2;
+      smooth_adc_values[ADC_H] = (smooth_adc_values[ADC_H]*3 + adc_values[8]) >> 2;
     }
   }
 }
@@ -448,10 +454,10 @@ void initADC(){
   HAL_ADC_Stop_DMA(&ADC_PERIPH);
   uint32_t* adc3_values = (uint32_t*)&adc_values[0];
   uint32_t* adc1_values = (uint32_t*)&adc_values[NOF_ADC3_VALUES];
-  if(HAL_ADC_Start_DMA(&hadc1, adc1_values, NOF_ADC1_VALUES) != HAL_OK)
-    error(CONFIG_ERROR, "ADC1 Start failed");
   if(HAL_ADC_Start_DMA(&hadc3, adc3_values, NOF_ADC3_VALUES) != HAL_OK)
     error(CONFIG_ERROR, "ADC3 Start failed");
+  if(HAL_ADC_Start_DMA(&hadc1, adc1_values, NOF_ADC1_VALUES) != HAL_OK)
+    error(CONFIG_ERROR, "ADC1 Start failed");
 }
 
 void onSetup(){
