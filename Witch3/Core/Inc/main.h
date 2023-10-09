@@ -132,8 +132,10 @@ void Error_Handler(void);
 #define FLASH_WP_GPIO_Port GPIOB
 #define SW2_Pin GPIO_PIN_1
 #define SW2_GPIO_Port GPIOB
+#define SW2_EXTI_IRQn EXTI1_IRQn
 #define SW1_Pin GPIO_PIN_2
 #define SW1_GPIO_Port GPIOB
+#define SW1_EXTI_IRQn EXTI2_IRQn
 #define CS_CS_Pin GPIO_PIN_10
 #define CS_CS_GPIO_Port GPIOB
 #define CS_RST_Pin GPIO_PIN_11
