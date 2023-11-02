@@ -39,6 +39,10 @@ extern "C" {
   void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 #endif
 
+#ifdef USE_MIDI_CALLBACK
+  void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2);
+#endif
+
 #ifdef __cplusplus
 } /* extern C */
 #endif

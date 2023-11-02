@@ -380,3 +380,8 @@ __weak void updateParameters(int16_t* parameter_values, size_t parameter_len, ui
   audio_envelope = audio_envelope*audio_envelope_lambda + (1.0f-audio_envelope_lambda)*abs(pv->audio_output[0])*(1.0f/INT16_MAX);
 #endif
 }
+
+// called from patch program: Patch::sendMidi(MidiMessage)
+__weak void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
+  midi_tx.send(MidiMessage(port, status, d1, d2));
+}
