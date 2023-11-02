@@ -8,6 +8,8 @@
 #include "OpenWareMidiControl.h"
 #include "Pin.h"
 #include "ApplicationSettings.h"
+#include "Storage.h"
+#include "MidiController.h"
 
 #ifndef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -562,3 +564,37 @@ void onLoop(void)
     break;
   }
 }
+
+#define PATCH_SETTINGS 13
+#define PATCH_SETTINGS_NAME "oneiroi.cfg"
+
+void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
+  static uint8_t data[PATCH_SETTINGS*4] = {};
+  if(port == USB_COMMAND_PITCH_BEND_CHANGE){
+    int ch = status & MIDI_CHANNEL_MASK;
+    if(ch < PATCH_SETTINGS){
+      data[ch] = port;
+      data[ch+1] = status;
+      data[ch+2] = d1;
+      data[ch+3] = d2;
+    }
+  }else if(port == USB_COMMAND_SINGLE_BYTE && status == START){
+    // save settings
+    storage.writeResource(PATCH_SETTINGS_NAME, data, sizeof(data), FLASH_DEFAULT_FLAGS);
+  }else{
+    midi_tx.send(MidiMessage(port, status, d1, d2));
+  }
+}
+
+/*
+  // called in the patch, from the constructor:
+  void restore(){
+    Resource* resource = Resource::load("oneiroi.cfg");
+    if(resource){
+      MidiMessage[] cfg = (MidiMessage[])resource->getData();
+      uint8_t count = resource->getSize()/sizeof(MidiMessage); // number of messages in file
+      for(int i=0; i<count; ++i)
+	sendMidi(MidiMessage(cfg[i], cfg[i+1], cfg[i+2], cfg[i+3]));
+    }
+  }
+*/
