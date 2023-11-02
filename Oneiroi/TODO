@@ -4,4 +4,3 @@
 - actually, merge firmware and patch in one code, to allow for debugging and to
   simplify the update process
 - cannot calibrate v/oct precisely
-- FUNC led button like Tete's, we'd need to use a mux port
