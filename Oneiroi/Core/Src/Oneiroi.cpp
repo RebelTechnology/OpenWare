@@ -130,7 +130,9 @@ Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
 
 void setCalibratedParameterValue(uint8_t pid, int16_t value)
 {
-  float v = value;
+  int16_t previous = getParameterValue(pid);
+  // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+  float v = (float)((previous * 3 + value) >> 2) ;
 
   if (value < mins[pid])
   {
@@ -179,15 +181,24 @@ void readMux(uint8_t index, uint16_t *mux_values)
 
 extern "C"
 {
+  
   void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   {
+    extern ADC_HandleTypeDef ADC_PERIPH;
     extern ADC_HandleTypeDef MUX_PERIPH;
+    extern uint16_t adc_values[NOF_ADC_VALUES];
     if (hadc == &MUX_PERIPH)
     {
       static uint8_t mux_index = 0;
       setMux(mux_index + 1);
       readMux(mux_index, mux_values);
       mux_index = (mux_index + 1) & 0b111;
+    }else if (hadc == &ADC_PERIPH){
+      for (size_t i = 0; i < NOF_ADC_VALUES; i++)
+	{
+	  uint16_t value = 4095 - adc_values[i];
+	  setCalibratedParameterValue(i, value);
+	}
     }
   }
 }
@@ -408,14 +419,9 @@ void ledsOff()
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len)
 {
-  for (size_t i = 0; i < adc_len; i++)
-  {
-    uint16_t value = 4095 - adc_values[i];
-
-    setCalibratedParameterValue(i, value);
-
-    if (i == FILTER_CUTOFF_CV && calibration)
+  if (calibration)
     {
+      uint16_t value = 4095 - adc_values[FILTER_CUTOFF_CV];
       float v = value / 4096.f;
       filterVOctSampleLow = min(filterVOctSampleLow, v);
       filterVOctSampleHigh = max(filterVOctSampleHigh, v);
@@ -423,7 +429,6 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
       settings.input_scalar = scalar;
       settings.input_offset = ((filterVOctSampleLow - filterVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
     }
-  }
 
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
   parameter_values[RANDOM_AMOUNT] = 2047 * (value - 1); // Mid = 0, Low = 2047, High = 4094
