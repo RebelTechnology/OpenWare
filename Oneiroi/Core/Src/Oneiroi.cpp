@@ -183,7 +183,7 @@ void readMux(uint8_t index, uint16_t *mux_values)
 
 extern "C"
 {
-  
+
   void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   {
     extern ADC_HandleTypeDef ADC_PERIPH;
@@ -195,12 +195,14 @@ extern "C"
       setMux(mux_index + 1);
       readMux(mux_index, mux_values);
       mux_index = (mux_index + 1) & 0b111;
-    }else if (hadc == &ADC_PERIPH){
+    }
+    else if (hadc == &ADC_PERIPH)
+    {
       for (size_t i = 0; i < NOF_ADC_VALUES; i++)
-	{
-	  uint16_t value = 4095 - adc_values[i];
-	  setCalibratedParameterValue(i, value);
-	}
+      {
+        uint16_t value = 4095 - adc_values[i];
+        setCalibratedParameterValue(i, value);
+      }
     }
   }
 }
@@ -568,20 +570,27 @@ void onLoop(void)
 #define PATCH_SETTINGS 13
 #define PATCH_SETTINGS_NAME "oneiroi.cfg"
 
-void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
+void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
+{
   static uint8_t data[PATCH_SETTINGS*4] = {};
-  if(port == USB_COMMAND_PITCH_BEND_CHANGE){
+  if (port == USB_COMMAND_PITCH_BEND_CHANGE)
+  {
     int ch = status & MIDI_CHANNEL_MASK;
-    if(ch < PATCH_SETTINGS){
+    if (ch < PATCH_SETTINGS)
+    {
       data[ch] = port;
       data[ch+1] = status;
       data[ch+2] = d1;
       data[ch+3] = d2;
     }
-  }else if(port == USB_COMMAND_SINGLE_BYTE && status == START){
+  }
+  else if (port == USB_COMMAND_SINGLE_BYTE && status == START)
+  {
     // save settings
     storage.writeResource(PATCH_SETTINGS_NAME, data, sizeof(data), FLASH_DEFAULT_FLAGS);
-  }else{
+  }
+  else
+  {
     midi_tx.send(MidiMessage(port, status, d1, d2));
   }
 }
