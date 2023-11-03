@@ -204,6 +204,13 @@ void jump_to_bootloader(void){
   while(1);
 }
 
+// called from patch program: Patch::sendMidi(MidiMessage)
+void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){  
+  if(onMidiSend(port, status, d1, d2)){
+    midi_tx.send(MidiMessage(port, status, d1, d2));
+  }
+}
+
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
 }

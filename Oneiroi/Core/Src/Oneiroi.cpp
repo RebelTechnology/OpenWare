@@ -9,7 +9,8 @@
 #include "Pin.h"
 #include "ApplicationSettings.h"
 #include "Storage.h"
-#include "MidiController.h"
+#include "MidiMessage.h"
+#include "cmsis_os.h"
 
 #ifndef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -568,22 +569,21 @@ void onLoop(void)
 #define PATCH_SETTINGS 13
 #define PATCH_SETTINGS_NAME "oneiroi.cfg"
 
-void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
-  static uint8_t data[PATCH_SETTINGS*4] = {};
-  if(port == USB_COMMAND_PITCH_BEND_CHANGE){
-    int ch = status & MIDI_CHANNEL_MASK;
-    if(ch < PATCH_SETTINGS){
-      data[ch] = port;
-      data[ch+1] = status;
-      data[ch+2] = d1;
-      data[ch+3] = d2;
-    }
-  }else if(port == USB_COMMAND_SINGLE_BYTE && status == START){
+bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
+  static MidiMessage data[PATCH_SETTINGS] = {0}; 
+  MidiMessage msg(port, status, d1, d2);
+  if(msg.isPitchBend()){
+    int ch = msg.getStatus();
+    if(ch < PATCH_SETTINGS)
+      data[ch] = msg;
+  }else if(msg.getStatus() == START){
     // save settings
-    storage.writeResource(PATCH_SETTINGS_NAME, data, sizeof(data), FLASH_DEFAULT_FLAGS);
-  }else{
-    midi_tx.send(MidiMessage(port, status, d1, d2));
+    taskENTER_CRITICAL();
+    storage.writeResource(PATCH_SETTINGS_NAME, (uint8_t*)data, sizeof(data), FLASH_DEFAULT_FLAGS);
+    taskEXIT_CRITICAL();
+    return false; // suppress this message
   }
+  return true;
 }
 
 /*
@@ -594,7 +594,25 @@ void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2){
       MidiMessage[] cfg = (MidiMessage[])resource->getData();
       uint8_t count = resource->getSize()/sizeof(MidiMessage); // number of messages in file
       for(int i=0; i<count; ++i)
-	sendMidi(MidiMessage(cfg[i], cfg[i+1], cfg[i+2], cfg[i+3]));
+	processMidi(cfg[i]);
     }
+  }
+  void processMidi(MidiMessage msg){
+    if(msg.isPitchBend()){
+      float value = msg.getPitchBend()/8192.0f; // convert signed 14-bit pitch bend to float
+      switch(msg.getChannel()){
+      case 0:
+        // update a setting with 'value'
+	break;
+      }
+    }
+  }
+  void save(){
+    // for each setting:
+    float value; // settings value between -1 and 0.9999
+    int16_t bend = (int16_t)(value * 8192); // convert to 14-bit signed int
+    sendMidi(MidiMessage::pb(channel, bend));
+    // then save:
+    sendMidi(MidiMessage(USB_COMMAND_SINGLE_BYTE, START, 0, 0)); // send MIDI START
   }
 */
