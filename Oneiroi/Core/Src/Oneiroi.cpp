@@ -9,7 +9,8 @@
 #include "Pin.h"
 #include "ApplicationSettings.h"
 #include "Storage.h"
-#include "MidiController.h"
+#include "MidiMessage.h"
+#include "cmsis_os.h"
 
 #ifndef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -567,43 +568,81 @@ void onLoop(void)
   }
 }
 
-#define PATCH_SETTINGS 13
-#define PATCH_SETTINGS_NAME "oneiroi.cfg"
+#define MAX_PATCH_SETTINGS 16
+#define PATCH_SETTINGS_NAME "oneiroi"
 
-void midi_send(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
+bool onMidiSend (uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
 {
-  static uint8_t data[PATCH_SETTINGS*4] = {};
-  if (port == USB_COMMAND_PITCH_BEND_CHANGE)
+  static MidiMessage data[MAX_PATCH_SETTINGS] = {0};
+  MidiMessage msg(port, status, d1, d2);
+  if (msg.isPitchBend())
   {
-    int ch = status & MIDI_CHANNEL_MASK;
-    if (ch < PATCH_SETTINGS)
+    int ch = msg.getStatus();
+    if(ch < MAX_PATCH_SETTINGS)
     {
-      data[ch] = port;
-      data[ch+1] = status;
-      data[ch+2] = d1;
-      data[ch+3] = d2;
+      data[ch] = msg;
     }
   }
-  else if (port == USB_COMMAND_SINGLE_BYTE && status == START)
+  else if (msg.getStatus() == START)
   {
-    // save settings
-    storage.writeResource(PATCH_SETTINGS_NAME, data, sizeof(data), FLASH_DEFAULT_FLAGS);
+    // clear settings
+    memset(data, 0, sizeof(data));
+
+    return false; // suppress this message
   }
-  else
+  else if (msg.getStatus() == STOP)
   {
-    midi_tx.send(MidiMessage(port, status, d1, d2));
+    const char* filename = [&]
+    {
+      return (msg.getChannel() == 0) ? PATCH_SETTINGS_NAME ".alt" :
+             (msg.getChannel() == 1) ? PATCH_SETTINGS_NAME ".mod" :
+             PATCH_SETTINGS_NAME ".cv";
+    }();
+
+    debugMessage("Saving settings", (int)msg.getChannel());
+    taskENTER_CRITICAL();
+    storage.writeResource(filename, (uint8_t*)data, sizeof(data), FLASH_DEFAULT_FLAGS);
+    taskEXIT_CRITICAL();
+    debugMessage(filename, (int)sizeof(data));
+
+    return false; // suppress this message
   }
+
+  return true;
 }
 
 /*
-  // called in the patch, from the constructor:
-  void restore(){
-    Resource* resource = Resource::load("oneiroi.cfg");
+  // called twice from the constructor: restore("oneiroi.cv") and restore("oneiroi.mod")
+  void restore(const char* name){
+    Resource* resource = Resource::load(name);
     if(resource){
       MidiMessage[] cfg = (MidiMessage[])resource->getData();
       uint8_t count = resource->getSize()/sizeof(MidiMessage); // number of messages in file
       for(int i=0; i<count; ++i)
-	sendMidi(MidiMessage(cfg[i], cfg[i+1], cfg[i+2], cfg[i+3]));
+        if(cfg[i].packed != 0) // Roberto: add this to avoid loading uninitialized, zero values
+    	  processMidi(cfg[i]);
     }
+  }
+  void processMidi(MidiMessage msg){
+    if(msg.isPitchBend()){
+      float value = msg.getPitchBend()/8192.0f; // convert signed 14-bit pitch bend to float
+      switch(msg.getChannel()){
+      case 0:
+        // update setting 0 with 'value'
+	break;
+      }
+    }
+  }
+  void save(){
+    // send start
+    int8_t ch = 1; // 1 saves "oneiroi.cv", 0 saves "oneiroi.mod"
+    sendMidi(MidiMessage(USB_COMMAND_SINGLE_BYTE, START|ch, 0, 0)); // send MIDI START
+    // for each setting:
+    uint8_t channel; // setting id between 0 and 12
+    float value; // settings value between -1 and 0.9999
+    int16_t bend = (int16_t)(value * 8192); // convert to 14-bit signed int
+    sendMidi(MidiMessage::pb(channel, bend));
+    // then save:
+    sendMidi(MidiMessage(USB_COMMAND_SINGLE_BYTE, STOP|ch, 0, 0)); // send MIDI STOP
   }
 */
