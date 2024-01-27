@@ -103,7 +103,7 @@ enum leds
 };
 
 static bool calibration = false;
-float oscVOctSampleLow = 0.5f, oscVOctSampleHigh = 0.5f, oscVOctVoltsLow = -5.f, oscVOctVoltsHigh = 5.f;
+float oscVOctSampleLow = 0.5f, oscVOctSampleHigh = 0.5f, oscVOctVoltsLow = 0.f, oscVOctVoltsHigh = 10.f;
 float filterVOctSampleLow = 0.5f, filterVOctSampleHigh = 0.5f, filterVOctVoltsLow = -5.f, filterVOctVoltsHigh = 10.f;
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
@@ -242,7 +242,7 @@ void readGpio()
   int16_t resonatorCv = getParameterValue(RESONATOR_HARMONY_CV); // Ok (0 - 10v?)
   int16_t speedCv = getParameterValue(LOOPER_SPEED_CV); // Ok (0 - 10v?)
   int16_t reverbCv = getParameterValue(REVERB_TONESIZE_CV); // Ok (0 - 10v?)
-  int16_t vOctCv = getParameterValue(OSC_VOCT_CV); // ? 5v = 0
+  int16_t vOctCv = getParameterValue(OSC_VOCT_CV); // Ok (0 - 10v?)
 
   int16_t looperVol = getParameterValue(LOOPER_VOL); // 0x4d8 - 0xffc
   int16_t reverbVol = getParameterValue(REVERB_VOL); // 0x4d6 - 0xffc
@@ -266,9 +266,9 @@ void readGpio()
   int16_t decay = getParameterValue(REVERB_DECAY); // Ok
   int16_t cutoff = getParameterValue(FILTER_CUTOFF); // Ok
 
-  int16_t delayF = getParameterValue(DELAY_FEEDBACK); // Not working
-  int16_t delayA = getParameterValue(DELAY_TIME); // Not working
-  int16_t randomMode = getParameterValue(RANDOM_MODE); // Not working
+  int16_t delayF = getParameterValue(DELAY_FEEDBACK); // Ok
+  int16_t delayA = getParameterValue(DELAY_TIME); // Ok
+  int16_t randomMode = getParameterValue(RANDOM_MODE); // Ok
 
   int16_t modAmount = getParameterValue(MOD_AMOUNT); // Ok
   int16_t modFreq = getParameterValue(MOD_FREQ); // Ok
@@ -571,7 +571,7 @@ void onLoop(void)
 #define MAX_PATCH_SETTINGS 16
 #define PATCH_SETTINGS_NAME "oneiroi"
 
-bool onMidiSend (uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
+bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
 {
   static MidiMessage data[MAX_PATCH_SETTINGS] = {0};
   MidiMessage msg(port, status, d1, d2);
