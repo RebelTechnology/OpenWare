@@ -76,6 +76,7 @@ enum PatchButtonId {
   BUTTON_8 = 11,
   BUTTON_9 = 12,
   BUTTON_10 = 13,
+  BUTTON_11 = 14,
 };
 
 #define SYSEX_CONFIGURATION_AUDIO_RATE            "FS"

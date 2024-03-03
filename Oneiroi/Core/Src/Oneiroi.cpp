@@ -231,9 +231,6 @@ void readGpio()
   setAnalogValue(MOD_LED, getParameterValue(MOD));
   setAnalogValue(INLEVELGREEN_LED, getParameterValue(INLEVELGREEN));
 
-  setLed(MOD_CV_GREEN_LED, getParameterValue(MOD_CV_GREEN));
-  setLed(MOD_CV_RED_LED, getParameterValue(MOD_CV_RED));
-
 #ifdef DEBUG
 
   int16_t delayCv = getParameterValue(DELAY_TIME_CV); // Ok (0 - 10v?)
@@ -329,7 +326,6 @@ void setAnalogValue(uint8_t ch, int16_t value)
   }
 }
 
-/*
 void setGateValue(uint8_t ch, int16_t value)
 {
   switch (ch)
@@ -352,9 +348,17 @@ void setGateValue(uint8_t ch, int16_t value)
   case CU_UP:
     setLed(CU_UP_LED, value);
     break;
+  case SHIFT_BUTTON:
+    setLed(SHIFT_LED, value);
+    break;
+  case MOD_CV_GREEN:
+    setLed(MOD_CV_GREEN_LED, value);
+    break;
+  case MOD_CV_RED:
+    setLed(MOD_CV_RED_LED, value);
+    break;
   }
 }
-*/
 
 void setLed(uint8_t led, uint32_t rgb)
 {
@@ -628,3 +632,4 @@ bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
     // then save:
     sendMidi(MidiMessage(USB_COMMAND_SINGLE_BYTE, STOP|ch, 0, 0)); // send MIDI STOP
   }
+*/
