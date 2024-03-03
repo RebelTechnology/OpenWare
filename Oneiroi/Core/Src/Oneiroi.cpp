@@ -27,11 +27,8 @@
 #define INLEVELGREEN PARAMETER_AF
 #define MOD PARAMETER_AG
 
-#define FUNC1 PARAMETER_H
-#define FUNC2 PARAMETER_AH
-
 // GPIO
-#define FUNC_BUTTON PUSHBUTTON
+#define SHIFT_BUTTON PUSHBUTTON
 #define CU_DOWN GREEN_BUTTON
 #define CU_UP RED_BUTTON
 #define RECORD_BUTTON BUTTON_1
@@ -42,11 +39,11 @@
 #define INLEVELRED BUTTON_6
 #define PREPOST_SWITCH BUTTON_7
 #define SSWT_SWITCH BUTTON_8
-#define FUNC_1 BUTTON_9
-#define FUNC_2 BUTTON_10
+#define MOD_CV_GREEN BUTTON_9
+#define MOD_CV_RED BUTTON_10
+#define MOD_CV_BUTTON BUTTON_11
 
 #define RANDOM_AMOUNT PARAMETER_AA
-#define FILTER_MODE_SWITCH PARAMETER_AB
 
 // ADC3
 #define OSC_DETUNE_CV PARAMETER_A
@@ -81,7 +78,7 @@
 
 #define REVERB_TONESIZE PARAMETER_DA
 #define REVERB_DECAY PARAMETER_DB
-#define MOD_AMOUNT PARAMETER_DC
+#define MOD_LEVEL PARAMETER_DC
 #define MOD_FREQ PARAMETER_DD
 #define FILTER_CUTOFF PARAMETER_DE
 #define DELAY_FEEDBACK PARAMETER_DF
@@ -98,8 +95,9 @@ enum leds
   MOD_LED,
   CU_DOWN_LED,
   CU_UP_LED,
-  FUNC_1_LED,
-  FUNC_2_LED,
+  SHIFT_LED,
+  MOD_CV_GREEN_LED,
+  MOD_CV_RED_LED,
 };
 
 static bool calibration = false;
@@ -107,24 +105,23 @@ float oscVOctSampleLow = 0.5f, oscVOctSampleHigh = 0.5f, oscVOctVoltsLow = 0.f, 
 float filterVOctSampleLow = 0.5f, filterVOctSampleHigh = 0.5f, filterVOctVoltsLow = -5.f, filterVOctVoltsHigh = 10.f;
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
-static bool funcButtonState = false;
+static bool shiftButtonState = false;
+static bool modCvButtonState = false;
 static uint16_t randomAmountState = 0;
-static uint16_t filterModeState = 0;
 static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
 uint16_t mins[40];
 uint16_t maxes[40];
 
 Pin randomGate(RANDOM_GATE_GPIO_Port, RANDOM_GATE_Pin);
 Pin randomButton(RANDOM_BUTTON_GPIO_Port, RANDOM_BUTTON_Pin);
-Pin funcButton(FUNC_BUTTON_GPIO_Port, FUNC_BUTTON_Pin);
+Pin shiftButton(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin);
 Pin sswtSwitch(SSWT_SWITCH_GPIO_Port, SSWT_SWITCH_Pin);
 Pin randomAmountSwitch1(RANDOM_AMOUNT_SWITCH1_GPIO_Port, RANDOM_AMOUNT_SWITCH1_Pin);
 Pin randomAmountSwitch2(RANDOM_AMOUNT_SWITCH2_GPIO_Port, RANDOM_AMOUNT_SWITCH2_Pin);
-Pin filterModeSwitch1(FILTER_MODE_SWITCH1_GPIO_Port, FILTER_MODE_SWITCH1_Pin);
-Pin filterModeSwitch2(FILTER_MODE_SWITCH2_GPIO_Port, FILTER_MODE_SWITCH2_Pin);
+Pin modCvButton(MOD_CV_BUTTON_GPIO_Port, MOD_CV_BUTTON_Pin);
 
-Pin funcLed1(FUNC_1_LED_GPIO_Port, FUNC_1_LED_Pin);
-Pin funcLed2(FUNC_2_LED_GPIO_Port, FUNC_2_LED_Pin);
+//Pin funcLed1(FUNC_1_LED_GPIO_Port, FUNC_1_LED_Pin);
+//Pin funcLed2(SHIFT_LED_GPIO_Port, SHIFT_LED_Pin);
 
 // MUX binary counter digital output pins
 Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
@@ -220,17 +217,22 @@ void readGpio()
     sswtSwitchState = !sswtSwitch.get();
     setButtonValue(SSWT_SWITCH, sswtSwitchState);
   }
-  if (funcButtonState != !funcButton.get()) // Inverted: pressed = false
+  if (shiftButtonState != !shiftButton.get()) // Inverted: pressed = false
   {
-    funcButtonState = !funcButton.get();
-    setButtonValue(FUNC_BUTTON, funcButtonState);
+    shiftButtonState = !shiftButton.get();
+    setButtonValue(SHIFT_BUTTON, shiftButtonState);
+  }
+  if (modCvButtonState != !modCvButton.get()) // Inverted: pressed = false
+  {
+    modCvButtonState = !modCvButton.get();
+    setButtonValue(MOD_CV_BUTTON, modCvButtonState);
   }
 
   setAnalogValue(MOD_LED, getParameterValue(MOD));
   setAnalogValue(INLEVELGREEN_LED, getParameterValue(INLEVELGREEN));
 
-  setLed(FUNC_1_LED, getParameterValue(FUNC1));
-  setLed(FUNC_2_LED, getParameterValue(FUNC2));
+  setLed(MOD_CV_GREEN_LED, getParameterValue(MOD_CV_GREEN));
+  setLed(MOD_CV_RED_LED, getParameterValue(MOD_CV_RED));
 
 #ifdef DEBUG
 
@@ -270,7 +272,7 @@ void readGpio()
   int16_t delayA = getParameterValue(DELAY_TIME); // Ok
   int16_t randomMode = getParameterValue(RANDOM_MODE); // Ok
 
-  int16_t modAmount = getParameterValue(MOD_AMOUNT); // Ok
+  int16_t modAmount = getParameterValue(MOD_LEVEL); // Ok
   int16_t modFreq = getParameterValue(MOD_FREQ); // Ok
 
   #endif
@@ -310,12 +312,6 @@ void onChangePin(uint16_t pin)
       setButtonValue(PREPOST_SWITCH, state);
       break;
     }
-    case FUNC_BUTTON_Pin:
-    {
-      bool state = HAL_GPIO_ReadPin(FUNC_BUTTON_GPIO_Port, FUNC_BUTTON_Pin) == GPIO_PIN_RESET; // Inverted
-      setButtonValue(FUNC_BUTTON, state);
-      break;
-    }
   }
 }
 
@@ -333,6 +329,7 @@ void setAnalogValue(uint8_t ch, int16_t value)
   }
 }
 
+/*
 void setGateValue(uint8_t ch, int16_t value)
 {
   switch (ch)
@@ -355,19 +352,12 @@ void setGateValue(uint8_t ch, int16_t value)
   case CU_UP:
     setLed(CU_UP_LED, value);
     break;
-  case FUNC_1:
-    setLed(FUNC_1_LED, value);
-    break;
-  case FUNC_2:
-    setLed(FUNC_2_LED, value);
-    break;
   }
 }
+*/
 
 void setLed(uint8_t led, uint32_t rgb)
 {
-  uint32_t pwm = 1024 - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
-
   switch (led)
   {
   case RECORD_LED:
@@ -388,11 +378,14 @@ void setLed(uint8_t led, uint32_t rgb)
   case CU_UP_LED:
     HAL_GPIO_WritePin(CU_UP_LED_GPIO_Port, CU_UP_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_SET : GPIO_PIN_RESET); // Inverted
     break;
-  case FUNC_1_LED:
-    TIM4->CCR3 = pwm;
+  case SHIFT_LED:
+    HAL_GPIO_WritePin(SHIFT_LED_GPIO_Port, SHIFT_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
-  case FUNC_2_LED:
-    TIM4->CCR4 = pwm;
+  case MOD_CV_GREEN_LED:
+    HAL_GPIO_WritePin(MOD_CV_GREEN_LED_GPIO_Port, MOD_CV_GREEN_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    break;
+  case MOD_CV_RED_LED:
+    HAL_GPIO_WritePin(MOD_CV_RED_LED_GPIO_Port, MOD_CV_RED_LED_Pin, rgb == NO_COLOUR ? GPIO_PIN_RESET : GPIO_PIN_SET);
     break;
   }
 }
@@ -405,7 +398,8 @@ void ledsOn()
   setLed(INLEVELRED_LED, 1);
   setLed(CU_DOWN_LED, 1);
   setLed(CU_UP_LED, 1);
-  setLed(FUNC_2_LED, RED_COLOUR);
+  setLed(SHIFT_LED, 1);
+  setLed(MOD_CV_RED_LED, 1);
   setAnalogValue(MOD_LED, 4095);
 }
 
@@ -417,9 +411,9 @@ void ledsOff()
   setLed(INLEVELRED_LED, NO_COLOUR);
   setLed(CU_DOWN_LED, NO_COLOUR);
   setLed(CU_UP_LED, NO_COLOUR);
-  setLed(FUNC_2_LED, NO_COLOUR);
+  setLed(SHIFT_LED, NO_COLOUR);
+  setLed(MOD_CV_RED_LED, NO_COLOUR);
   setAnalogValue(MOD_LED, NO_COLOUR);
-  setAnalogValue(INLEVELGREEN_LED, NO_COLOUR);
 }
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len)
@@ -437,21 +431,10 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
   parameter_values[RANDOM_AMOUNT] = 2047 * (value - 1); // Mid = 0, Low = 2047, High = 4094
-
-  value = (filterModeSwitch2.get() << 1) | filterModeSwitch1.get();
-  parameter_values[FILTER_MODE_SWITCH] = 2047 * (value - 1); // BP = 0, LP = 2047, HP = 4094
 }
 
 void onSetup()
 {
-  extern TIM_HandleTypeDef htim4;
-  HAL_TIM_Base_Start(&htim4);
-  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3); // FUNC_1_LED
-  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4); // FUNC_2_LED
-
-  //funcLed1.outputMode();
-  //funcLed2.outputMode();
-
   extern ADC_HandleTypeDef MUX_PERIPH;
   if (HAL_ADC_Start_DMA(&MUX_PERIPH, (uint32_t *)mux_values, NOF_MUX_VALUES) != HAL_OK)
   {
@@ -476,7 +459,7 @@ void onLoop(void)
   static bool configMode = false;
   static uint32_t counter = PATCH_RESET_COUNTER;
 
-  bool funcButtonPressed = HAL_GPIO_ReadPin(FUNC_BUTTON_GPIO_Port, FUNC_BUTTON_Pin) == GPIO_PIN_RESET;
+  bool shiftButtonPressed = HAL_GPIO_ReadPin(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin) == GPIO_PIN_RESET;
 
   switch (owl.getOperationMode())
   {
@@ -507,7 +490,7 @@ void onLoop(void)
     break;
 
   case CONFIGURE_MODE:
-    if (funcButtonPressed)
+    if (shiftButtonPressed)
     {
       if (calibration)
       {
@@ -548,7 +531,7 @@ void onLoop(void)
 
   case ERROR_MODE:
     ledsOn();
-    if (funcButtonPressed)
+    if (shiftButtonPressed)
     {
       if (--counter == 0)
       {
@@ -645,4 +628,3 @@ bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
     // then save:
     sendMidi(MidiMessage(USB_COMMAND_SINGLE_BYTE, STOP|ch, 0, 0)); // send MIDI STOP
   }
-*/
