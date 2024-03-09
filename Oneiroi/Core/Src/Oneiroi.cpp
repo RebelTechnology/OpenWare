@@ -7,7 +7,7 @@
 #include "ProgramManager.h"
 #include "OpenWareMidiControl.h"
 #include "Pin.h"
-#include "ApplicationSettings.h"
+//#include "ApplicationSettings.h"
 #include "Storage.h"
 #include "MidiMessage.h"
 #include "cmsis_os.h"
@@ -23,6 +23,8 @@
 #endif
 
 #define PATCH_RESET_COUNTER (500/MAIN_LOOP_SLEEP_MS)
+
+#define NOF_CALIBRATION_DATA 22 // 0-10V (11 values) * 2
 
 #define INLEVELGREEN PARAMETER_AF
 #define MOD PARAMETER_AG
@@ -101,8 +103,11 @@ enum leds
 };
 
 static bool calibration = false;
+int calibrationIndex = 0;
+uint8_t calibrationData[NOF_CALIBRATION_DATA];
 float oscVOctSampleLow = 0.5f, oscVOctSampleHigh = 0.5f, oscVOctVoltsLow = 0.f, oscVOctVoltsHigh = 10.f;
 float filterVOctSampleLow = 0.5f, filterVOctSampleHigh = 0.5f, filterVOctVoltsLow = -5.f, filterVOctVoltsHigh = 10.f;
+
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
 static bool shiftButtonState = false;
@@ -127,6 +132,54 @@ Pin modCvButton(MOD_CV_BUTTON_GPIO_Port, MOD_CV_BUTTON_Pin);
 Pin muxA(MUX_A_GPIO_Port, MUX_A_Pin);
 Pin muxB(MUX_B_GPIO_Port, MUX_B_Pin);
 Pin muxC(MUX_C_GPIO_Port, MUX_C_Pin);
+
+void test()
+{
+    // Start the save process.
+    MidiMessage msg = MidiMessage(USB_COMMAND_SINGLE_BYTE, START, 0, 0);
+    midi_send(msg.data[0], msg.data[1], msg.data[2], msg.data[3]); // send MIDI START
+    int16_t values[13];
+    for (size_t i = 0; i < 13; i++)
+    {
+        // Convert to 14-bit signed int.
+        int16_t value = (int16_t)(values[i] * 8192);
+        // Send the parameter's value.
+        MidiMessage msg = MidiMessage::pb(i, value);
+        midi_send(msg.data[0], msg.data[1], msg.data[2], msg.data[3]); // send MIDI PITCH BEND
+    }
+    // Send the file index.
+    int8_t fileIndex = 0; // 0: "oneiroi.cfg", 1: "oneiroi.alt", 2: "oneiroi.mod", 3: "oneiroi.cv"
+    msg = MidiMessage::cp(0, fileIndex);
+    midi_send(msg.data[0], msg.data[1], msg.data[2], msg.data[3]); // send MIDI CHANNEL PRESSURE
+
+    // Finish the process.
+    msg = MidiMessage(USB_COMMAND_SINGLE_BYTE, STOP, 0, 0);
+    midi_send(msg.data[0], msg.data[1], msg.data[2], msg.data[3]); // send MIDI STOP
+}
+
+void saveCalibration()
+{
+  debugMessage("Saving calibration");
+  uint32_t headerSize = sizeof(ResourceHeader);
+  uint32_t dataSize = sizeof(calibrationData);
+  uint8_t buffer[headerSize + dataSize];
+  memset(buffer, 0, headerSize);
+  memcpy(buffer + headerSize, calibrationData, dataSize);
+  const char* filename = "oneiroi.cal";
+  taskENTER_CRITICAL();
+  storage.writeResource(filename, buffer, dataSize, FLASH_DEFAULT_FLAGS);
+  taskEXIT_CRITICAL();
+  debugMessage(filename, (int)dataSize);
+}
+
+void loadCalibration()
+{
+  Resource* resource = storage.getResourceByName("oneiroi.cal");
+  if (resource)
+  {
+    storage.readResource(resource->getHeader(), calibrationData, 0, sizeof(calibrationData));
+  }
+}
 
 void setCalibratedParameterValue(uint8_t pid, int16_t value)
 {
@@ -170,12 +223,10 @@ void readMux(uint8_t index, uint16_t *mux_values)
 
   if (calibration)
   {
-    float v = muxB / 4096.f;
-    oscVOctSampleLow = min(oscVOctSampleLow, v);
-    oscVOctSampleHigh = max(oscVOctSampleHigh, v);
-    float scalar = ((oscVOctVoltsLow - oscVOctVoltsHigh) / (oscVOctSampleLow - oscVOctSampleHigh) * UINT16_MAX);
-    settings.output_scalar = scalar;
-    settings.output_offset = ((oscVOctSampleLow - oscVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
+    // Split each 16bit value in 2 8bit values and save them
+    // sequentially.
+    calibrationData[calibrationIndex] = muxB & 0xFF; // Low
+    calibrationData[calibrationIndex + 1] = muxB >> 8; // High
   }
 }
 
@@ -422,16 +473,18 @@ void ledsOff()
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len)
 {
+  /*
   if (calibration)
-    {
-      uint16_t value = 4095 - adc_values[FILTER_CUTOFF_CV];
-      float v = value / 4096.f;
-      filterVOctSampleLow = min(filterVOctSampleLow, v);
-      filterVOctSampleHigh = max(filterVOctSampleHigh, v);
-      float scalar = ((filterVOctVoltsLow - filterVOctVoltsHigh) / (filterVOctSampleLow - filterVOctSampleHigh) * UINT16_MAX);
-      settings.input_scalar = scalar;
-      settings.input_offset = ((filterVOctSampleLow - filterVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
-    }
+  {
+    uint16_t value = 4095 - adc_values[FILTER_CUTOFF_CV];
+    float v = value / 4096.f;
+    filterVOctSampleLow = min(filterVOctSampleLow, v);
+    filterVOctSampleHigh = max(filterVOctSampleHigh, v);
+    float scalar = ((filterVOctVoltsLow - filterVOctVoltsHigh) / (filterVOctSampleLow - filterVOctSampleHigh) * UINT16_MAX);
+    settings.input_scalar = scalar;
+    settings.input_offset = ((filterVOctSampleLow - filterVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
+  }
+  */
 
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
   parameter_values[RANDOM_AMOUNT] = 2047 * (value - 1); // Mid = 0, Low = 2047, High = 4094
@@ -464,6 +517,10 @@ void onLoop(void)
   static uint32_t counter = PATCH_RESET_COUNTER;
 
   bool shiftButtonPressed = HAL_GPIO_ReadPin(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin) == GPIO_PIN_RESET;
+  bool modCvButtonPressed = HAL_GPIO_ReadPin(MOD_CV_BUTTON_GPIO_Port, MOD_CV_BUTTON_Pin) == GPIO_PIN_RESET;
+  bool recButtonPressed = HAL_GPIO_ReadPin(RECORD_BUTTON_GPIO_Port, RECORD_BUTTON_Pin) == GPIO_PIN_RESET;
+  bool rndButtonPressed = HAL_GPIO_ReadPin(RANDOM_BUTTON_GPIO_Port, RANDOM_BUTTON_Pin) == GPIO_PIN_RESET;
+  static bool modCvButtonStatus = false;
 
   switch (owl.getOperationMode())
   {
@@ -477,7 +534,6 @@ void onLoop(void)
     if (--counter == 0)
     {
       counter = PATCH_RESET_COUNTER;
-      ledsOff();
       owl.setOperationMode(RUN_MODE);
     }
     else if (getErrorStatus() != NO_ERROR)
@@ -494,23 +550,57 @@ void onLoop(void)
     break;
 
   case CONFIGURE_MODE:
-    if (shiftButtonPressed)
+    if (shiftButtonPressed && modCvButtonPressed)
     {
+      if (recButtonPressed && rndButtonPressed)
+      {
+        setLed(RECORD_LED, 1);
+        setLed(RANDOM_LED, 1);
+        storage.erase();
+        setLed(RECORD_LED, 0);
+        setLed(RANDOM_LED, 0);
+      }
       if (calibration)
       {
         // Exit config mode
         calibration = false;
-        setLed(RECORD_LED, 0);
-        setLed(RANDOM_LED, 0);
-        settings.saveToFlash(false);
+        setLed(MOD_CV_RED_LED, 0);
+        setLed(MOD_CV_GREEN_LED, 0);
+        saveCalibration();
         owl.setOperationMode(LOAD_MODE);
       }
-      else if (configMode == false)
+      else
       {
         // Enter config mode.
-        setLed(RECORD_LED, 1);
-        setLed(RANDOM_LED, 1);
+        setLed(MOD_CV_RED_LED, 1);
         configMode = true;
+      }
+    }
+    else if (!shiftButtonPressed && modCvButtonPressed)
+    {
+      modCvButtonStatus = true;
+    }
+    else if (!modCvButtonPressed && modCvButtonStatus)
+    {
+      modCvButtonStatus = false;
+      if (calibration)
+      {
+        // Each calibration step requires two values.
+        calibrationIndex += 2;
+        if (calibrationIndex == NOF_CALIBRATION_DATA - 2)
+        {
+          // Last step
+          setLed(MOD_CV_RED_LED, 0);
+          setLed(MOD_CV_GREEN_LED, 1);
+        }
+        if (calibrationIndex == NOF_CALIBRATION_DATA)
+        {
+          // Exit config mode
+          calibration = false;
+          setLed(MOD_CV_GREEN_LED, 0);
+          saveCalibration();
+          owl.setOperationMode(LOAD_MODE);
+        }
       }
     }
     else
@@ -527,7 +617,6 @@ void onLoop(void)
       else
       {
         // Config button has not been pressed during startup, go to load mode.
-        ledsOn();
         owl.setOperationMode(LOAD_MODE);
       }
     }
@@ -562,31 +651,46 @@ bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
 {
   static MidiMessage data[MAX_PATCH_SETTINGS] = {0};
   MidiMessage msg(port, status, d1, d2);
+  uint8_t fileIndex = 0;
+
   if (msg.isPitchBend())
   {
-    int ch = msg.getStatus();
+    int ch = msg.getChannel();
     if(ch < MAX_PATCH_SETTINGS)
     {
-      data[ch] = msg;
+      data[ch] = msg.getPitchBend();
     }
   }
-  else if (msg.getStatus() == START)
+  else if (msg.data[1] == START)
   {
     // clear settings
     memset(data, 0, sizeof(data));
 
     return false; // suppress this message
   }
-  else if (msg.getStatus() == STOP)
+  else if (msg.isChannelPressure())
   {
-    const char* filename = [&]
-    {
-      return (msg.getChannel() == 0) ? PATCH_SETTINGS_NAME ".alt" :
-             (msg.getChannel() == 1) ? PATCH_SETTINGS_NAME ".mod" :
-             PATCH_SETTINGS_NAME ".cv";
-    }();
+    fileIndex = msg.getChannelPressure();
 
-    debugMessage("Saving settings", (int)msg.getChannel());
+    return false; // suppress this message
+  }
+  else if (msg.data[1] == STOP)
+  {
+    const char* filename;
+    switch (fileIndex)
+    {
+    case 0:
+      filename = PATCH_SETTINGS_NAME ".alt";
+      break;
+    case 1:
+      filename = PATCH_SETTINGS_NAME ".mod";
+      break;
+    case 2:
+      filename = PATCH_SETTINGS_NAME ".cv";
+      break;
+    }
+
+    debugMessage("Saving settings", fileIndex);
     taskENTER_CRITICAL();
     storage.writeResource(filename, (uint8_t*)data, sizeof(data), FLASH_DEFAULT_FLAGS);
     taskEXIT_CRITICAL();
