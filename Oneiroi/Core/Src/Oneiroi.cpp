@@ -7,7 +7,7 @@
 #include "ProgramManager.h"
 #include "OpenWareMidiControl.h"
 #include "Pin.h"
-//#include "ApplicationSettings.h"
+#include "ApplicationSettings.h"
 #include "Storage.h"
 #include "MidiMessage.h"
 #include "cmsis_os.h"
@@ -102,11 +102,23 @@ enum leds
   MOD_CV_RED_LED,
 };
 
+enum CalibrationStep
+{
+  CALIBRATION_NONE,
+  CALIBRATION_C1,
+  CALIBRATION_C3,
+};
+
+CalibrationStep calibrationStep = CALIBRATION_NONE;
+float c1;
+float c3;
+/*
 static bool calibration = false;
 int calibrationIndex = 0;
 uint8_t calibrationData[NOF_CALIBRATION_DATA];
-float oscVOctSampleLow = 0.5f, oscVOctSampleHigh = 0.5f, oscVOctVoltsLow = 0.f, oscVOctVoltsHigh = 10.f;
+float oscVOctSampleLow = 1.f, oscVOctSampleHigh = 0.f, oscVOctVoltsLow = 0.f, oscVOctVoltsHigh = 10.f;
 float filterVOctSampleLow = 0.5f, filterVOctSampleHigh = 0.5f, filterVOctVoltsLow = -5.f, filterVOctVoltsHigh = 10.f;
+*/
 
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
@@ -116,6 +128,8 @@ static uint16_t randomAmountState = 0;
 static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
 uint16_t mins[40];
 uint16_t maxes[40];
+
+//Settings settings;
 
 Pin randomGate(RANDOM_GATE_GPIO_Port, RANDOM_GATE_Pin);
 Pin randomButton(RANDOM_BUTTON_GPIO_Port, RANDOM_BUTTON_Pin);
@@ -157,6 +171,7 @@ void test()
     midi_send(msg.data[0], msg.data[1], msg.data[2], msg.data[3]); // send MIDI STOP
 }
 
+/*
 void saveCalibration()
 {
   debugMessage("Saving calibration");
@@ -179,6 +194,61 @@ void loadCalibration()
   {
     storage.readResource(resource->getHeader(), calibrationData, 0, sizeof(calibrationData));
   }
+}
+*/
+
+void setVoctParameterValue(int16_t value)
+{
+  int16_t previous = getParameterValue(OSC_VOCT_CV);
+  // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+  value = (float)((previous * 3 + value) >> 2);
+  int16_t cal[11] = {0,341,757,1171,1590,2008,2422,2837,3256,3673,4084};
+  //int16_t cal[11] = {0,408,817,1225,1637,2042,2450,2859,3267,3676,4084};
+  //float d = (cal[10] - cal[0]) / 10;
+  //int octave = floor(value / d);
+
+/*
+  float v = value;
+  int octave = 0;
+  for (octave = 0; octave < 11; octave++)
+  {
+    if (value <= cal[octave]) {
+      break;
+    }
+  }
+  float r = 408.4f / (cal[octave + 1] - cal[octave]);
+  v = value * r;
+
+*/
+/*
+  float v = value / 4095.f;
+  float c1 = 0.0822954848f;
+  float c3 = 0.48913309f;//0.285714298f;
+  float delta = c3 - c1;
+  float scale = 0;
+  float offset = 0;
+  float o = v;
+  scale = 0.5f / (c3 - c1);
+  offset = 0.1f - scale * c1;
+  //scale = 24.0f / (c3 - c1);
+  //offset = 12.0f - scale * c1;
+  o = c1 + 0.5f * (c1 - c3);
+  if (delta > -0.5f && delta < -0.0f) {
+  }
+*/
+
+/*
+  oscVOctVoltsLow = 0;
+  oscVOctVoltsHigh = 1;
+  float v = value / 4096.f;
+  oscVOctSampleLow = min(oscVOctSampleLow, v);
+  oscVOctSampleHigh = max(oscVOctSampleHigh, v);
+  float mult = (oscVOctVoltsLow - oscVOctVoltsHigh) / (oscVOctSampleLow - oscVOctSampleHigh);
+  float scalar = mult * UINT16_MAX;
+  float offset = ((oscVOctSampleLow - oscVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
+*/
+
+  setParameterValue(OSC_VOCT_CV, value);
 }
 
 void setCalibratedParameterValue(uint8_t pid, int16_t value)
@@ -216,18 +286,37 @@ void readMux(uint8_t index, uint16_t *mux_values)
   uint16_t muxE = 4095 - mux_values[MUX_E];
 
   setCalibratedParameterValue(REVERB_TONESIZE_CV, muxA);
-  setCalibratedParameterValue(OSC_VOCT_CV, muxB);
+  setVoctParameterValue(muxB);
+  //setCalibratedParameterValue(OSC_VOCT_CV, muxB);
   setCalibratedParameterValue(PARAMETER_BA + index, muxC);
   setCalibratedParameterValue(PARAMETER_CA + index, muxD);
   setCalibratedParameterValue(PARAMETER_DA + index, muxE);
 
-  if (calibration)
+  if (CALIBRATION_NONE != calibrationStep)
   {
+    float v = muxB / 4096.f;
+    /*
+    oscVOctSampleLow = min(oscVOctSampleLow, v);
+    oscVOctSampleHigh = max(oscVOctSampleHigh, v);
+    float scalar = ((oscVOctVoltsLow - oscVOctVoltsHigh) / (oscVOctSampleLow - oscVOctSampleHigh) * UINT16_MAX);
+    settings.output_scalar = scalar;
+    settings.output_offset = ((oscVOctSampleLow - oscVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
+    */
     // Split each 16bit value in 2 8bit values and save them
     // sequentially.
-    calibrationData[calibrationIndex] = muxB & 0xFF; // Low
-    calibrationData[calibrationIndex + 1] = muxB >> 8; // High
+    //calibrationData[calibrationIndex] = muxB & 0xFF; // Low
+    //calibrationData[calibrationIndex + 1] = muxB >> 8; // High
+    //cd[calibrationIndex] = muxB;
+    if (CALIBRATION_C1 == calibrationStep)
+    {
+      c1 = v;
+    }
+    else if (CALIBRATION_C3 == calibrationStep)
+    {
+      c3 = v;
+    }
   }
+
 }
 
 extern "C"
@@ -284,44 +373,44 @@ void readGpio()
 
 #ifdef DEBUG
 
-  int16_t delayCv = getParameterValue(DELAY_TIME_CV); // Ok (0 - 10v?)
-  int16_t osc2Cv = getParameterValue(OSC_DETUNE_CV); // Ok (0 - 10v?)
-  int16_t filterCv = getParameterValue(FILTER_CUTOFF_CV); // Ok (0 - 10v?)
-  int16_t startCv = getParameterValue(LOOPER_START_CV); // Ok (0 - 10v?)
-  int16_t lengthCv = getParameterValue(LOOPER_LENGTH_CV); // Ok (0 - 10v?)
-  int16_t resonatorCv = getParameterValue(RESONATOR_HARMONY_CV); // Ok (0 - 10v?)
-  int16_t speedCv = getParameterValue(LOOPER_SPEED_CV); // Ok (0 - 10v?)
-  int16_t reverbCv = getParameterValue(REVERB_TONESIZE_CV); // Ok (0 - 10v?)
-  int16_t vOctCv = getParameterValue(OSC_VOCT_CV); // Ok (0 - 10v?)
+  int16_t delayCv = getParameterValue(DELAY_TIME_CV); // Ok (-5 - 10v)
+  int16_t osc2Cv = getParameterValue(OSC_DETUNE_CV); // Ok (-5 - 10v)
+  int16_t filterCv = getParameterValue(FILTER_CUTOFF_CV); // Ok (-5 - 10v)
+  int16_t startCv = getParameterValue(LOOPER_START_CV); // Ok (-5 - 10v)
+  int16_t lengthCv = getParameterValue(LOOPER_LENGTH_CV); // Ok (-5 - 10v)
+  int16_t resonatorCv = getParameterValue(RESONATOR_HARMONY_CV); // Ok (-5 - 10v)
+  int16_t speedCv = getParameterValue(LOOPER_SPEED_CV); // Ok (-5 - 10v)
+  int16_t reverbCv = getParameterValue(REVERB_TONESIZE_CV); // Ok (-5 - 10v)
+  int16_t vOctCv = getParameterValue(OSC_VOCT_CV); // Ok (0 - 10v)
 
-  int16_t looperVol = getParameterValue(LOOPER_VOL); // 0x4d8 - 0xffc
-  int16_t reverbVol = getParameterValue(REVERB_VOL); // 0x4d6 - 0xffc
+  int16_t looperVol = getParameterValue(LOOPER_VOL);
+  int16_t reverbVol = getParameterValue(REVERB_VOL);
 
-  int16_t delayVol = getParameterValue(DELAY_VOL); // 0x4d4 - 0xffc
-  int16_t resoVol = getParameterValue(RESONATOR_VOL); // 0x4da - 0xffc
-  int16_t filterVol = getParameterValue(FILTER_VOL); // 0x4d7 - 0xffc
-  int16_t inVol = getParameterValue(IN_VOL); // 0x4d3 - 0xffc
-  int16_t sswtVol = getParameterValue(SSWT_VOL); // 0x4d1 - 0xffc
-  int16_t sineVol = getParameterValue(SINE_VOL); // 0x4d5 - 0xffc
+  int16_t delayVol = getParameterValue(DELAY_VOL);
+  int16_t resoVol = getParameterValue(RESONATOR_VOL);
+  int16_t filterVol = getParameterValue(FILTER_VOL);
+  int16_t inVol = getParameterValue(IN_VOL);
+  int16_t sswtVol = getParameterValue(SSWT_VOL);
+  int16_t sineVol = getParameterValue(SINE_VOL);
 
-  int16_t speed = getParameterValue(LOOPER_SPEED); // 0x4d9 - 0xfc5
-  int16_t resoD = getParameterValue(FILTER_RESODRIVE); // 0x4da - 0xfc8
-  int16_t detune = getParameterValue(OSC_DETUNE); // 0x4db - 0xfc6
-  int16_t length = getParameterValue(LOOPER_LENGTH); // 0x4d8 - 0xfc7
-  int16_t pitch = getParameterValue(OSC_PITCH); // 0x4d8 - 0xfc9
-  int16_t start = getParameterValue(LOOPER_START); // 0x4da - 0xfc8
-  int16_t resoHarmony = getParameterValue(RESONATOR_HARMONY); // 0x4d8 - 0xfc7
-  int16_t resoDecay = getParameterValue(RESONATOR_DECAY); // 0x4da - 0xfc6
-  int16_t toneSize = getParameterValue(REVERB_TONESIZE); // Ok
-  int16_t decay = getParameterValue(REVERB_DECAY); // Ok
-  int16_t cutoff = getParameterValue(FILTER_CUTOFF); // Ok
+  int16_t speed = getParameterValue(LOOPER_SPEED);
+  int16_t resoD = getParameterValue(FILTER_RESODRIVE);
+  int16_t detune = getParameterValue(OSC_DETUNE);
+  int16_t length = getParameterValue(LOOPER_LENGTH);
+  int16_t pitch = getParameterValue(OSC_PITCH);
+  int16_t start = getParameterValue(LOOPER_START);
+  int16_t resoHarmony = getParameterValue(RESONATOR_HARMONY);
+  int16_t resoDecay = getParameterValue(RESONATOR_DECAY);
+  int16_t toneSize = getParameterValue(REVERB_TONESIZE);
+  int16_t decay = getParameterValue(REVERB_DECAY);
+  int16_t cutoff = getParameterValue(FILTER_CUTOFF);
 
-  int16_t delayF = getParameterValue(DELAY_FEEDBACK); // Ok
-  int16_t delayA = getParameterValue(DELAY_TIME); // Ok
-  int16_t randomMode = getParameterValue(RANDOM_MODE); // Ok
+  int16_t delayF = getParameterValue(DELAY_FEEDBACK);
+  int16_t delayA = getParameterValue(DELAY_TIME);
+  int16_t randomMode = getParameterValue(RANDOM_MODE);
 
-  int16_t modAmount = getParameterValue(MOD_LEVEL); // Ok
-  int16_t modFreq = getParameterValue(MOD_FREQ); // Ok
+  int16_t modAmount = getParameterValue(MOD_LEVEL);
+  int16_t modFreq = getParameterValue(MOD_FREQ);
 
   #endif
 }
@@ -467,6 +556,7 @@ void ledsOff()
   setLed(CU_DOWN_LED, NO_COLOUR);
   setLed(CU_UP_LED, NO_COLOUR);
   setLed(SHIFT_LED, NO_COLOUR);
+  setLed(MOD_CV_GREEN_LED, NO_COLOUR);
   setLed(MOD_CV_RED_LED, NO_COLOUR);
   setAnalogValue(MOD_LED, NO_COLOUR);
 }
@@ -509,6 +599,8 @@ void onSetup()
     mins[i] = 0;
     maxes[i] = (i >= 24 || i <= 38) ? 4030 : 4095; // Pots have reduced range
   }
+
+  //settings.init();
 }
 
 void onLoop(void)
@@ -520,7 +612,22 @@ void onLoop(void)
   bool modCvButtonPressed = HAL_GPIO_ReadPin(MOD_CV_BUTTON_GPIO_Port, MOD_CV_BUTTON_Pin) == GPIO_PIN_RESET;
   bool recButtonPressed = HAL_GPIO_ReadPin(RECORD_BUTTON_GPIO_Port, RECORD_BUTTON_Pin) == GPIO_PIN_RESET;
   bool rndButtonPressed = HAL_GPIO_ReadPin(RANDOM_BUTTON_GPIO_Port, RANDOM_BUTTON_Pin) == GPIO_PIN_RESET;
-  static bool modCvButtonStatus = false;
+  static bool buttonPressed = false;
+
+  if (RUN_MODE != owl.getOperationMode() && shiftButtonPressed && modCvButtonPressed)
+  {
+    if (recButtonPressed && rndButtonPressed)
+    {
+      setLed(RECORD_LED, 1);
+      setLed(RANDOM_LED, 1);
+      storage.erase();
+      setLed(RECORD_LED, 0);
+      setLed(RANDOM_LED, 0);
+    }
+    owl.setOperationMode(CONFIGURE_MODE);
+    configMode = true;
+    buttonPressed = true;
+  }
 
   switch (owl.getOperationMode())
   {
@@ -531,6 +638,7 @@ void onLoop(void)
     }
     break;
   case LOAD_MODE:
+    ledsOff();
     if (--counter == 0)
     {
       counter = PATCH_RESET_COUNTER;
@@ -550,75 +658,59 @@ void onLoop(void)
     break;
 
   case CONFIGURE_MODE:
-    if (shiftButtonPressed && modCvButtonPressed)
+    if (configMode)
     {
-      if (recButtonPressed && rndButtonPressed)
+      if (buttonPressed && !recButtonPressed && !rndButtonPressed && !shiftButtonPressed && !modCvButtonPressed)
       {
-        setLed(RECORD_LED, 1);
-        setLed(RANDOM_LED, 1);
-        storage.erase();
-        setLed(RECORD_LED, 0);
-        setLed(RANDOM_LED, 0);
+        buttonPressed = false;
       }
-      if (calibration)
+      if (!buttonPressed)
       {
-        // Exit config mode
-        calibration = false;
-        setLed(MOD_CV_RED_LED, 0);
-        setLed(MOD_CV_GREEN_LED, 0);
-        saveCalibration();
-        owl.setOperationMode(LOAD_MODE);
-      }
-      else
-      {
-        // Enter config mode.
-        setLed(MOD_CV_RED_LED, 1);
-        configMode = true;
-      }
-    }
-    else if (!shiftButtonPressed && modCvButtonPressed)
-    {
-      modCvButtonStatus = true;
-    }
-    else if (!modCvButtonPressed && modCvButtonStatus)
-    {
-      modCvButtonStatus = false;
-      if (calibration)
-      {
-        // Each calibration step requires two values.
-        calibrationIndex += 2;
-        if (calibrationIndex == NOF_CALIBRATION_DATA - 2)
+        if (CALIBRATION_NONE == calibrationStep)
         {
-          // Last step
-          setLed(MOD_CV_RED_LED, 0);
-          setLed(MOD_CV_GREEN_LED, 1);
+          // Enter calibration.
+          calibrationStep = CALIBRATION_C1;
+          readGpio();
+          extern uint16_t adc_values[NOF_ADC_VALUES];
+          extern int16_t parameter_values[NOF_PARAMETERS];
+          updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
         }
-        if (calibrationIndex == NOF_CALIBRATION_DATA)
+        else if (CALIBRATION_C1 == calibrationStep)
         {
-          // Exit config mode
-          calibration = false;
-          setLed(MOD_CV_GREEN_LED, 0);
-          saveCalibration();
-          owl.setOperationMode(LOAD_MODE);
+          setLed(RECORD_LED, 1);
+          // Read C1 and wait for button press.
+          if (recButtonPressed)
+          {
+            // Next step.
+            calibrationStep = CALIBRATION_C3;
+          }
+        }
+        else if (CALIBRATION_C3 == calibrationStep)
+        {
+          setLed(RECORD_LED, 0);
+          setLed(RANDOM_LED, 1);
+          // Read C3 and wait for button press.
+          if (rndButtonPressed)
+          {
+            setLed(RANDOM_LED, 0);
+            setLed(MOD_CV_GREEN_LED, 1);
+            // Save and exit calibration.
+            float scalar = 24 / (c3 - c1);
+            float offset = 12 - scalar * c1;
+            settings.output_scalar = scalar * UINT16_MAX;
+            settings.output_offset = offset * UINT16_MAX;
+            settings.saveToFlash(false);
+            configMode = false;
+            calibrationStep = CALIBRATION_NONE;
+            owl.setOperationMode(LOAD_MODE);
+          }
         }
       }
     }
     else
     {
-      if (configMode)
-      {
-        // Enter calibration.
-        calibration = true;
-        readGpio();
-        extern uint16_t adc_values[NOF_ADC_VALUES];
-        extern int16_t parameter_values[NOF_PARAMETERS];
-        updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
-      }
-      else
-      {
-        // Config button has not been pressed during startup, go to load mode.
-        owl.setOperationMode(LOAD_MODE);
-      }
+      // Config button has not been pressed during startup, go to load mode.
+      owl.setOperationMode(LOAD_MODE);
     }
     break;
 
