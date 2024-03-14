@@ -1,6 +1,6 @@
 # Oneiroi firmware
 
-Firmware for Befaco's Oneiroi. Developed by Roberto Noris.
+Firmware for Befaco's Oneiroi. Developed by Roberto Noris (<https://github.com/hirnlego>).
 
 ## Building and flashing the firmware
 
