@@ -2,6 +2,7 @@
 #define __CALLBACKS_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "device.h"
 
 #ifdef __cplusplus
@@ -37,6 +38,14 @@ extern "C" {
 #ifdef USE_SCREEN
   void onScreenDraw();
   void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
+#endif
+
+#ifdef USE_MIDI_CALLBACK
+  /**
+   * Callback invoked when the patch sends a MIDI message.
+   * The callback should return true to allow the message to be forwarded to connected MIDI devices and hosts,
+   * or false to suppress it. The default implementation forwards all messages. */
+  bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2);
 #endif
 
 #ifdef __cplusplus
