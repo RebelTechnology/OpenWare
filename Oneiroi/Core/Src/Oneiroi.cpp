@@ -109,16 +109,16 @@ enum CalibrationStep
   CALIBRATION_C3,
 };
 
+struct CalibrationData
+{
+  uint32_t voct_scale;
+  uint32_t voct_offset;
+};
+
 CalibrationStep calibrationStep = CALIBRATION_NONE;
-float c1;
-float c3;
-/*
-static bool calibration = false;
-int calibrationIndex = 0;
-uint8_t calibrationData[NOF_CALIBRATION_DATA];
-float oscVOctSampleLow = 1.f, oscVOctSampleHigh = 0.f, oscVOctVoltsLow = 0.f, oscVOctVoltsHigh = 10.f;
-float filterVOctSampleLow = 0.5f, filterVOctSampleHigh = 0.5f, filterVOctVoltsLow = -5.f, filterVOctVoltsHigh = 10.f;
-*/
+CalibrationData calibrationData = {(uint32_t)118.581421f * UINT16_MAX, (uint32_t)2.18576622f * UINT16_MAX};
+float c3 = 0.28515625f;
+float c1 = 0.0827636719f;
 
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
@@ -171,7 +171,6 @@ void test()
     midi_send(msg.data[0], msg.data[1], msg.data[2], msg.data[3]); // send MIDI STOP
 }
 
-/*
 void saveCalibration()
 {
   debugMessage("Saving calibration");
@@ -179,7 +178,7 @@ void saveCalibration()
   uint32_t dataSize = sizeof(calibrationData);
   uint8_t buffer[headerSize + dataSize];
   memset(buffer, 0, headerSize);
-  memcpy(buffer + headerSize, calibrationData, dataSize);
+  memcpy(buffer + headerSize, &calibrationData, dataSize);
   const char* filename = "oneiroi.cal";
   taskENTER_CRITICAL();
   storage.writeResource(filename, buffer, dataSize, FLASH_DEFAULT_FLAGS);
@@ -192,10 +191,9 @@ void loadCalibration()
   Resource* resource = storage.getResourceByName("oneiroi.cal");
   if (resource)
   {
-    storage.readResource(resource->getHeader(), calibrationData, 0, sizeof(calibrationData));
+    storage.readResource(resource->getHeader(), &calibrationData, 0, sizeof(calibrationData));
   }
 }
-*/
 
 void setVoctParameterValue(int16_t value)
 {
@@ -600,7 +598,7 @@ void onSetup()
     maxes[i] = (i >= 24 || i <= 38) ? 4030 : 4095; // Pots have reduced range
   }
 
-  //settings.init();
+  //loadCalibration();
 }
 
 void onLoop(void)
@@ -697,9 +695,12 @@ void onLoop(void)
             // Save and exit calibration.
             float scalar = 24 / (c3 - c1);
             float offset = 12 - scalar * c1;
-            settings.output_scalar = scalar * UINT16_MAX;
-            settings.output_offset = offset * UINT16_MAX;
-            settings.saveToFlash(false);
+            //settings.output_scalar = (uint32_t)rintf(scalar * 100000);
+            //settings.output_offset = (uint32_t)rintf(offset * 100000);
+            calibrationData.voct_offset = offset * UINT16_MAX;
+            calibrationData.voct_scale = scalar * UINT16_MAX;
+            saveCalibration();
+            //settings.saveToFlash(false);
             configMode = false;
             calibrationStep = CALIBRATION_NONE;
             owl.setOperationMode(LOAD_MODE);
