@@ -179,7 +179,7 @@ void saveCalibration()
   uint8_t buffer[headerSize + dataSize];
   memset(buffer, 0, headerSize);
   memcpy(buffer + headerSize, &calibrationData, dataSize);
-  const char* filename = "oneiroi.cal";
+  const char* filename = "oneiroi.cfg";
   taskENTER_CRITICAL();
   storage.writeResource(filename, buffer, dataSize, FLASH_DEFAULT_FLAGS);
   taskEXIT_CRITICAL();
@@ -188,7 +188,7 @@ void saveCalibration()
 
 void loadCalibration()
 {
-  Resource* resource = storage.getResourceByName("oneiroi.cal");
+  Resource* resource = storage.getResourceByName("oneiroi.cfg");
   if (resource)
   {
     storage.readResource(resource->getHeader(), &calibrationData, 0, sizeof(calibrationData));
@@ -200,7 +200,7 @@ void setVoctParameterValue(int16_t value)
   int16_t previous = getParameterValue(OSC_VOCT_CV);
   // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
   value = (float)((previous * 3 + value) >> 2);
-  int16_t cal[11] = {0,341,757,1171,1590,2008,2422,2837,3256,3673,4084};
+  //int16_t cal[11] = {0,341,757,1171,1590,2008,2422,2837,3256,3673,4084};
   //int16_t cal[11] = {0,408,817,1225,1637,2042,2450,2859,3267,3676,4084};
   //float d = (cal[10] - cal[0]) / 10;
   //int octave = floor(value / d);
