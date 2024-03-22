@@ -23,8 +23,8 @@ RAM_D3   (rwx)   : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM  (rwx)   : ORIGIN = 0x00000000, LENGTH = 8K
 CCMRAM   (rwx)   : ORIGIN = 0x00002000, LENGTH = 56K
 EXTRAM   (rwx)   : ORIGIN = 0xD0000000, LENGTH = 8M
-BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 128K
-FLASH   (rx)     : ORIGIN = 0x08020000, LENGTH = 512K
+BOOTLOADER (rx)  : ORIGIN = 0x08000000, LENGTH = 0K
+FLASH   (rx)     : ORIGIN = 0x08000000, LENGTH = 640K
 STORAGE (rx)     : ORIGIN = 0x080a0000, LENGTH = 384K
 }
 
@@ -100,7 +100,7 @@ SECTIONS
   _sidata = LOADADDR(.data);
 
   /* Initialized data sections goes into RAM, load LMA copy after code */
-  .data : 
+  .data :
   {
     . = ALIGN(4);
     _sdata = .;        /* create a global symbol at data start */
@@ -111,7 +111,7 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >DTCMRAM AT> FLASH
 
-  
+
   /* Uninitialized data section */
   . = ALIGN(4);
   .bss :
@@ -203,7 +203,7 @@ SECTIONS
   {
     PROVIDE (_FLASH_STORAGE_BEGIN = .);
   } >STORAGE
-  _FLASH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);  
+  _FLASH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);
   _FLASH_STORAGE_SIZE = LENGTH(STORAGE);
 
   /* Remove information from the standard libraries */

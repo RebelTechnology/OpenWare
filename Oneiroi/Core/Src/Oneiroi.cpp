@@ -7,7 +7,6 @@
 #include "ProgramManager.h"
 #include "OpenWareMidiControl.h"
 #include "Pin.h"
-#include "ApplicationSettings.h"
 #include "Storage.h"
 #include "MidiMessage.h"
 #include "cmsis_os.h"
@@ -102,23 +101,48 @@ enum leds
   MOD_CV_RED_LED,
 };
 
+enum ConfigMode
+{
+  CONFIG_MODE_NONE,
+  CONFIG_MODE_CALIBRATION,
+  CONFIG_MODE_OPTIONS,
+};
+
 enum CalibrationStep
 {
   CALIBRATION_NONE,
   CALIBRATION_C1,
   CALIBRATION_C3,
+  CALIBRATION_PARAMS,
 };
 
-struct CalibrationData
+struct Configuration
 {
   uint32_t voct_scale;
   uint32_t voct_offset;
+  bool soft_takeover;
+  bool mod_attenuverters;
+  bool cv_attenuverters;
+  uint16_t params_min[40];
+  uint16_t params_max[40];
+};
+
+Configuration configuration = {
+  (uint32_t)118.581421f * UINT16_MAX,
+  (uint32_t)2.18576622f * UINT16_MAX,
+  true,
+  false,
+  false,
+  {1000},
+  {1000}
 };
 
 CalibrationStep calibrationStep = CALIBRATION_NONE;
-CalibrationData calibrationData = {(uint32_t)118.581421f * UINT16_MAX, (uint32_t)2.18576622f * UINT16_MAX};
-float c3 = 0.28515625f;
-float c1 = 0.0827636719f;
+float c3 = -1;
+float c1 = -1;
+float calibrationValue = -1;
+
+ConfigMode configMode = CONFIG_MODE_NONE;
 
 static bool randomButtonState = false;
 static bool sswtSwitchState = false;
@@ -126,8 +150,6 @@ static bool shiftButtonState = false;
 static bool modCvButtonState = false;
 static uint16_t randomAmountState = 0;
 static uint16_t mux_values[NOF_MUX_VALUES] DMA_RAM = {};
-uint16_t mins[40];
-uint16_t maxes[40];
 
 //Settings settings;
 
@@ -171,14 +193,14 @@ void test()
     midi_send(msg.data[0], msg.data[1], msg.data[2], msg.data[3]); // send MIDI STOP
 }
 
-void saveCalibration()
+void saveConfiguration()
 {
-  debugMessage("Saving calibration");
+  debugMessage("Saving configuration");
   uint32_t headerSize = sizeof(ResourceHeader);
-  uint32_t dataSize = sizeof(calibrationData);
+  uint32_t dataSize = sizeof(configuration);
   uint8_t buffer[headerSize + dataSize];
   memset(buffer, 0, headerSize);
-  memcpy(buffer + headerSize, &calibrationData, dataSize);
+  memcpy(buffer + headerSize, &configuration, dataSize);
   const char* filename = "oneiroi.cfg";
   taskENTER_CRITICAL();
   storage.writeResource(filename, buffer, dataSize, FLASH_DEFAULT_FLAGS);
@@ -186,12 +208,13 @@ void saveCalibration()
   debugMessage(filename, (int)dataSize);
 }
 
-void loadCalibration()
+void loadConfiguration()
 {
+  debugMessage("Loading configuration");
   Resource* resource = storage.getResourceByName("oneiroi.cfg");
   if (resource)
   {
-    storage.readResource(resource->getHeader(), &calibrationData, 0, sizeof(calibrationData));
+    storage.readResource(resource->getHeader(), &configuration, 0, sizeof(configuration));
   }
 }
 
@@ -200,51 +223,6 @@ void setVoctParameterValue(int16_t value)
   int16_t previous = getParameterValue(OSC_VOCT_CV);
   // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
   value = (float)((previous * 3 + value) >> 2);
-  //int16_t cal[11] = {0,341,757,1171,1590,2008,2422,2837,3256,3673,4084};
-  //int16_t cal[11] = {0,408,817,1225,1637,2042,2450,2859,3267,3676,4084};
-  //float d = (cal[10] - cal[0]) / 10;
-  //int octave = floor(value / d);
-
-/*
-  float v = value;
-  int octave = 0;
-  for (octave = 0; octave < 11; octave++)
-  {
-    if (value <= cal[octave]) {
-      break;
-    }
-  }
-  float r = 408.4f / (cal[octave + 1] - cal[octave]);
-  v = value * r;
-
-*/
-/*
-  float v = value / 4095.f;
-  float c1 = 0.0822954848f;
-  float c3 = 0.48913309f;//0.285714298f;
-  float delta = c3 - c1;
-  float scale = 0;
-  float offset = 0;
-  float o = v;
-  scale = 0.5f / (c3 - c1);
-  offset = 0.1f - scale * c1;
-  //scale = 24.0f / (c3 - c1);
-  //offset = 12.0f - scale * c1;
-  o = c1 + 0.5f * (c1 - c3);
-  if (delta > -0.5f && delta < -0.0f) {
-  }
-*/
-
-/*
-  oscVOctVoltsLow = 0;
-  oscVOctVoltsHigh = 1;
-  float v = value / 4096.f;
-  oscVOctSampleLow = min(oscVOctSampleLow, v);
-  oscVOctSampleHigh = max(oscVOctSampleHigh, v);
-  float mult = (oscVOctVoltsLow - oscVOctVoltsHigh) / (oscVOctSampleLow - oscVOctSampleHigh);
-  float scalar = mult * UINT16_MAX;
-  float offset = ((oscVOctSampleLow - oscVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
-*/
 
   setParameterValue(OSC_VOCT_CV, value);
 }
@@ -255,15 +233,15 @@ void setCalibratedParameterValue(uint8_t pid, int16_t value)
   // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
   float v = (float)((previous * 3 + value) >> 2) ;
 
-  if (value < mins[pid])
+  if (value < configuration.params_min[pid])
   {
-    value = mins[pid];
+    value = configuration.params_min[pid];
   }
-  else if (value > maxes[pid])
+  else if (value > configuration.params_max[pid])
   {
-    value = maxes[pid];
+    value = configuration.params_max[pid];
   }
-  v = (4095.f / (maxes[pid] - mins[pid])) * (value - mins[pid]);
+  v = (4095.f / (configuration.params_max[pid] - configuration.params_min[pid])) * (value - configuration.params_min[pid]);
 
   setParameterValue(pid, v);
 }
@@ -285,41 +263,39 @@ void readMux(uint8_t index, uint16_t *mux_values)
 
   setCalibratedParameterValue(REVERB_TONESIZE_CV, muxA);
   setVoctParameterValue(muxB);
-  //setCalibratedParameterValue(OSC_VOCT_CV, muxB);
   setCalibratedParameterValue(PARAMETER_BA + index, muxC);
   setCalibratedParameterValue(PARAMETER_CA + index, muxD);
   setCalibratedParameterValue(PARAMETER_DA + index, muxE);
 
-  if (CALIBRATION_NONE != calibrationStep)
+  if (CALIBRATION_C1 == calibrationStep)
   {
-    float v = muxB / 4096.f;
-    /*
-    oscVOctSampleLow = min(oscVOctSampleLow, v);
-    oscVOctSampleHigh = max(oscVOctSampleHigh, v);
-    float scalar = ((oscVOctVoltsLow - oscVOctVoltsHigh) / (oscVOctSampleLow - oscVOctSampleHigh) * UINT16_MAX);
-    settings.output_scalar = scalar;
-    settings.output_offset = ((oscVOctSampleLow - oscVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
-    */
-    // Split each 16bit value in 2 8bit values and save them
-    // sequentially.
-    //calibrationData[calibrationIndex] = muxB & 0xFF; // Low
-    //calibrationData[calibrationIndex + 1] = muxB >> 8; // High
-    //cd[calibrationIndex] = muxB;
-    if (CALIBRATION_C1 == calibrationStep)
+    c1 = muxB / 4096.f;
+  }
+  else if (CALIBRATION_C3 == calibrationStep)
+  {
+    c3 = muxB / 4096.f;
+  }
+  else if (CALIBRATION_PARAMS == calibrationStep)
+  {
+    configuration.params_min[PARAMETER_BA + index] = min(configuration.params_min[PARAMETER_BA + index], 4095-mux_values[MUX_C]);
+    configuration.params_min[PARAMETER_CA + index] = min(configuration.params_min[PARAMETER_CA + index], 4095-mux_values[MUX_D]);
+    if (index < 7)
     {
-      c1 = v;
+      // Exclude random mode switch.
+      configuration.params_min[PARAMETER_DA + index] = min(configuration.params_min[PARAMETER_DA + index], 4095-mux_values[MUX_E]);
     }
-    else if (CALIBRATION_C3 == calibrationStep)
+    configuration.params_max[PARAMETER_BA + index] = max(configuration.params_max[PARAMETER_BA + index], 4095-mux_values[MUX_C]);
+    configuration.params_max[PARAMETER_CA + index] = max(configuration.params_max[PARAMETER_CA + index], 4095-mux_values[MUX_D]);
+    if (index < 7)
     {
-      c3 = v;
+      // Exclude random mode switch.
+      configuration.params_max[PARAMETER_DA + index] = max(configuration.params_max[PARAMETER_DA + index], 4095-mux_values[MUX_E]);
     }
   }
-
 }
 
 extern "C"
 {
-
   void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   {
     extern ADC_HandleTypeDef ADC_PERIPH;
@@ -349,6 +325,10 @@ void readGpio()
   {
     randomButtonState = !randomButton.get();
     setButtonValue(RANDOM_BUTTON, randomButtonState);
+    if (CONFIG_MODE_OPTIONS == configMode && randomButtonState)
+    {
+      configuration.cv_attenuverters = !configuration.cv_attenuverters;
+    }
   }
   if (sswtSwitchState != !sswtSwitch.get()) // Inverted: pressed = false
   {
@@ -359,6 +339,10 @@ void readGpio()
   {
     shiftButtonState = !shiftButton.get();
     setButtonValue(SHIFT_BUTTON, shiftButtonState);
+    if (CONFIG_MODE_OPTIONS == configMode && shiftButtonState)
+    {
+      configuration.soft_takeover = !configuration.soft_takeover;
+    }
   }
   if (modCvButtonState != !modCvButton.get()) // Inverted: pressed = false
   {
@@ -427,6 +411,10 @@ void onChangePin(uint16_t pin)
     {
       bool state = HAL_GPIO_ReadPin(RECORD_BUTTON_GPIO_Port, RECORD_BUTTON_Pin) == GPIO_PIN_RESET; // Inverted
       setButtonValue(RECORD_BUTTON, state);
+      if (CONFIG_MODE_OPTIONS == configMode && state)
+      {
+        configuration.mod_attenuverters = !configuration.mod_attenuverters;
+      }
       break;
     }
     case RECORD_GATE_Pin:
@@ -561,19 +549,6 @@ void ledsOff()
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len)
 {
-  /*
-  if (calibration)
-  {
-    uint16_t value = 4095 - adc_values[FILTER_CUTOFF_CV];
-    float v = value / 4096.f;
-    filterVOctSampleLow = min(filterVOctSampleLow, v);
-    filterVOctSampleHigh = max(filterVOctSampleHigh, v);
-    float scalar = ((filterVOctVoltsLow - filterVOctVoltsHigh) / (filterVOctSampleLow - filterVOctSampleHigh) * UINT16_MAX);
-    settings.input_scalar = scalar;
-    settings.input_offset = ((filterVOctSampleLow - filterVOctVoltsLow * UINT16_MAX / scalar) * UINT16_MAX);
-  }
-  */
-
   uint8_t value = (randomAmountSwitch2.get() << 1) | randomAmountSwitch1.get();
   parameter_values[RANDOM_AMOUNT] = 2047 * (value - 1); // Mid = 0, Low = 2047, High = 4094
 }
@@ -592,18 +567,11 @@ void onSetup()
   onChangePin(RANDOM_GATE_Pin);
   onChangePin(PREPOST_SWITCH_Pin);
 
-  for (size_t i = 0; i < NOF_PARAMETERS; i++)
-  {
-    mins[i] = 0;
-    maxes[i] = (i >= 24 || i <= 38) ? 4030 : 4095; // Pots have reduced range
-  }
-
-  //loadCalibration();
+  loadConfiguration();
 }
 
 void onLoop(void)
 {
-  static bool configMode = false;
   static uint32_t counter = PATCH_RESET_COUNTER;
 
   bool shiftButtonPressed = HAL_GPIO_ReadPin(SHIFT_BUTTON_GPIO_Port, SHIFT_BUTTON_Pin) == GPIO_PIN_RESET;
@@ -612,19 +580,20 @@ void onLoop(void)
   bool rndButtonPressed = HAL_GPIO_ReadPin(RANDOM_BUTTON_GPIO_Port, RANDOM_BUTTON_Pin) == GPIO_PIN_RESET;
   static bool buttonPressed = false;
 
-  if (RUN_MODE != owl.getOperationMode() && shiftButtonPressed && modCvButtonPressed)
+  if (RUN_MODE != owl.getOperationMode())
   {
-    if (recButtonPressed && rndButtonPressed)
+    if (shiftButtonPressed && modCvButtonPressed)
     {
-      setLed(RECORD_LED, 1);
-      setLed(RANDOM_LED, 1);
-      storage.erase();
-      setLed(RECORD_LED, 0);
-      setLed(RANDOM_LED, 0);
+      owl.setOperationMode(CONFIGURE_MODE);
+      configMode = CONFIG_MODE_CALIBRATION;
+      buttonPressed = true;
     }
-    owl.setOperationMode(CONFIGURE_MODE);
-    configMode = true;
-    buttonPressed = true;
+    else if (recButtonPressed && rndButtonPressed)
+    {
+      owl.setOperationMode(CONFIGURE_MODE);
+      configMode = CONFIG_MODE_OPTIONS;
+      buttonPressed = true;
+    }
   }
 
   switch (owl.getOperationMode())
@@ -656,7 +625,7 @@ void onLoop(void)
     break;
 
   case CONFIGURE_MODE:
-    if (configMode)
+    if (CONFIG_MODE_NONE != configMode)
     {
       if (buttonPressed && !recButtonPressed && !rndButtonPressed && !shiftButtonPressed && !modCvButtonPressed)
       {
@@ -664,45 +633,67 @@ void onLoop(void)
       }
       if (!buttonPressed)
       {
-        if (CALIBRATION_NONE == calibrationStep)
+        if (CONFIG_MODE_CALIBRATION == configMode)
         {
-          // Enter calibration.
-          calibrationStep = CALIBRATION_C1;
-          readGpio();
-          extern uint16_t adc_values[NOF_ADC_VALUES];
-          extern int16_t parameter_values[NOF_PARAMETERS];
-          updateParameters(parameter_values, NOF_PARAMETERS, adc_values, NOF_ADC_VALUES);
-        }
-        else if (CALIBRATION_C1 == calibrationStep)
-        {
-          setLed(RECORD_LED, 1);
-          // Read C1 and wait for button press.
-          if (recButtonPressed)
+
+          // Buttons have been released.
+          if (CALIBRATION_NONE == calibrationStep)
           {
-            // Next step.
-            calibrationStep = CALIBRATION_C3;
+            // Enter C1 calibration.
+            calibrationStep = CALIBRATION_C1;
+            setLed(RECORD_LED, 1);
+          }
+          else if (CALIBRATION_C1 == calibrationStep)
+          {
+            if (recButtonPressed)
+            {
+              // Enter C3 calibration.
+              calibrationStep = CALIBRATION_C3;
+              setLed(RECORD_LED, 0);
+              setLed(RANDOM_LED, 1);
+            }
+          }
+          else if (CALIBRATION_C3 == calibrationStep)
+          {
+            if (rndButtonPressed)
+            {
+              // Enter params calibration.
+              calibrationStep = CALIBRATION_PARAMS;
+              setLed(RANDOM_LED, 0);
+              setLed(MOD_CV_GREEN_LED, 1);
+            }
+          }
+          else if (CALIBRATION_PARAMS == calibrationStep)
+          {
+            if (modCvButtonPressed)
+            {
+              setLed(MOD_CV_GREEN_LED, 0);
+              // Save and exit calibration.
+              float scalar = 24 / (c3 - c1);
+              float offset = 12 - scalar * c1;
+              configuration.voct_offset = offset * UINT16_MAX;
+              configuration.voct_scale = scalar * UINT16_MAX;
+              saveConfiguration();
+              configMode = CONFIG_MODE_NONE;
+              calibrationStep = CALIBRATION_NONE;
+              owl.setOperationMode(LOAD_MODE);
+            }
           }
         }
-        else if (CALIBRATION_C3 == calibrationStep)
+        else if (CONFIG_MODE_OPTIONS)
         {
-          setLed(RECORD_LED, 0);
-          setLed(RANDOM_LED, 1);
-          // Read C3 and wait for button press.
-          if (rndButtonPressed)
+          readGpio();
+          setLed(SHIFT_LED, configuration.soft_takeover);
+          setLed(RECORD_LED, configuration.mod_attenuverters);
+          setLed(RANDOM_LED, configuration.cv_attenuverters);
+          setLed(MOD_CV_GREEN_LED, 1);
+
+          if (modCvButtonPressed)
           {
-            setLed(RANDOM_LED, 0);
-            setLed(MOD_CV_GREEN_LED, 1);
+            ledsOff();
             // Save and exit calibration.
-            float scalar = 24 / (c3 - c1);
-            float offset = 12 - scalar * c1;
-            //settings.output_scalar = (uint32_t)rintf(scalar * 100000);
-            //settings.output_offset = (uint32_t)rintf(offset * 100000);
-            calibrationData.voct_offset = offset * UINT16_MAX;
-            calibrationData.voct_scale = scalar * UINT16_MAX;
-            saveCalibration();
-            //settings.saveToFlash(false);
-            configMode = false;
-            calibrationStep = CALIBRATION_NONE;
+            saveConfiguration();
+            configMode = CONFIG_MODE_NONE;
             owl.setOperationMode(LOAD_MODE);
           }
         }
