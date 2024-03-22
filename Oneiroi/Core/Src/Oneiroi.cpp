@@ -785,39 +785,3 @@ bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
 
   return true;
 }
-
-/*
-  // called twice from the constructor: restore("oneiroi.cv") and restore("oneiroi.mod")
-  void restore(const char* name){
-    Resource* resource = Resource::load(name);
-    if(resource){
-      MidiMessage[] cfg = (MidiMessage[])resource->getData();
-      uint8_t count = resource->getSize()/sizeof(MidiMessage); // number of messages in file
-      for(int i=0; i<count; ++i)
-        if(cfg[i].packed != 0) // Roberto: add this to avoid loading uninitialized, zero values
-    	  processMidi(cfg[i]);
-    }
-  }
-  void processMidi(MidiMessage msg){
-    if(msg.isPitchBend()){
-      float value = msg.getPitchBend()/8192.0f; // convert signed 14-bit pitch bend to float
-      switch(msg.getChannel()){
-      case 0:
-        // update setting 0 with 'value'
-	break;
-      }
-    }
-  }
-  void save(){
-    // send start
-    int8_t ch = 1; // 1 saves "oneiroi.cv", 0 saves "oneiroi.mod"
-    sendMidi(MidiMessage(USB_COMMAND_SINGLE_BYTE, START|ch, 0, 0)); // send MIDI START
-    // for each setting:
-    uint8_t channel; // setting id between 0 and 12
-    float value; // settings value between -1 and 0.9999
-    int16_t bend = (int16_t)(value * 8192); // convert to 14-bit signed int
-    sendMidi(MidiMessage::pb(channel, bend));
-    // then save:
-    sendMidi(MidiMessage(USB_COMMAND_SINGLE_BYTE, STOP|ch, 0, 0)); // send MIDI STOP
-  }
-*/

@@ -1,5 +1,9 @@
 # Oneiroi firmware changelog
 
+## 0.9.74 (2024-03-22)
+
+- fixed saving to flash
+
 ## 0.9.73
 
 - reactivated bootloader
