@@ -397,8 +397,10 @@ size_t Storage::writeResource(ResourceHeader* header){
   }
   if(status){
     error(FLASH_ERROR, "Write failed");
+#ifndef USE_NOR_FLASH
   }else if(dest->getTotalSize() < length){ // allow for storage-specific alignment
     error(FLASH_ERROR, "Size mismatch");
+#endif
   }else if(!verifyData(dest, data, length)){
     error(FLASH_ERROR, "Data mismatch");
   }
