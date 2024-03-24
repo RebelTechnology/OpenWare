@@ -731,9 +731,10 @@ void onLoop(void)
 #define MAX_PATCH_SETTINGS 16
 #define PATCH_SETTINGS_NAME "oneiroi"
 
+int16_t data[MAX_PATCH_SETTINGS] = {};
+
 bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
 {
-  static MidiMessage data[MAX_PATCH_SETTINGS] = {0};
   MidiMessage msg(port, status, d1, d2);
   uint8_t fileIndex = 0;
 
@@ -774,11 +775,14 @@ bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
       break;
     }
 
-    debugMessage("Saving settings", fileIndex);
+    uint32_t headerSize = sizeof(ResourceHeader);
+    uint32_t dataSize = sizeof(data);
+    uint8_t buffer[headerSize + dataSize];
+    memset(buffer, 0, headerSize);
+    memcpy(buffer + headerSize, data, dataSize);
     taskENTER_CRITICAL();
-    storage.writeResource(filename, (uint8_t*)data, sizeof(data), FLASH_DEFAULT_FLAGS);
+    storage.writeResource(filename, buffer, dataSize, FLASH_DEFAULT_FLAGS);
     taskEXIT_CRITICAL();
-    debugMessage(filename, (int)sizeof(data));
 
     return false; // suppress this message
   }
