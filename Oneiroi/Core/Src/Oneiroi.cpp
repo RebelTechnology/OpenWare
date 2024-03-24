@@ -732,11 +732,11 @@ void onLoop(void)
 #define PATCH_SETTINGS_NAME "oneiroi"
 
 int16_t data[MAX_PATCH_SETTINGS] = {};
+uint8_t fileIndex = 0;
 
 bool onMidiSend(uint8_t port, uint8_t status, uint8_t d1, uint8_t d2)
 {
   MidiMessage msg(port, status, d1, d2);
-  uint8_t fileIndex = 0;
 
   if (msg.isPitchBend())
   {
