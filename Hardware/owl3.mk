@@ -24,9 +24,9 @@ LDSCRIPT ?= $(OPENWARE)/Hardware/owl3.ld
 LDLIBS += -lc -lm
 CPPFLAGS += -Wdouble-promotion -Werror=double-promotion
 CPPFLAGS += -fdata-sections -ffunction-sections
-CPPFLAGS += -fno-builtin -ffreestanding
-LDFLAGS += -fno-builtin -ffreestanding
-CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17
+CPPFLAGS += -fno-builtin
+LDFLAGS += -fno-builtin
+CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17 -D_GLIBCXX_USE_STD_SPEC_FUNCS=0
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16
 ARCH_FLAGS += -fsingle-precision-constant

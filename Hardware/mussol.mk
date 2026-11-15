@@ -16,7 +16,7 @@ ifeq ($(CONFIG),Debug)
   LDLIBS += -lrdimon
   LDFLAGS += -specs=rdimon.specs
 else
-  CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
+  CPPFLAGS += -nostdlib -nostartfiles -fno-builtin
   C_SRC += libnosys_gnu.c
   LDFLAGS += --specs=nano.specs
 endif
@@ -29,9 +29,9 @@ LDLIBS += -lc -lm
 # CPPFLAGS += -fpic -fpie
 CPPFLAGS += -fdata-sections
 CPPFLAGS += -ffunction-sections
-CPPFLAGS += -fno-builtin -ffreestanding
-LDFLAGS += -fno-builtin -ffreestanding
-CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17
+CPPFLAGS += -fno-builtin
+LDFLAGS += -fno-builtin
+CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17 -D_GLIBCXX_USE_STD_SPEC_FUNCS=0
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant
