@@ -114,7 +114,7 @@ C_INCLUDES += -ILibrary/CMSIS/Device/ST/BlueNRG1/Include
 C_INCLUDES += -ILibrary/Bluetooth_LE/inc
 
 # compile gcc flags
-CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding -nodefaultlibs
+CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -nodefaultlibs
 # CPPFLAGS += -mtune=cortex-m7
 # CPPFLAGS += -fpic
 # CPPFLAGS += -fpie

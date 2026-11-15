@@ -26,9 +26,9 @@ CPPFLAGS += -fdata-sections
 CPPFLAGS += -ffunction-sections
 #CPPFLAGS +=  -mno-unaligned-access
 #CPPFLAGS  += -fno-omit-frame-pointer
-CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
+CPPFLAGS += -nostdlib -nostartfiles -fno-builtin
 CPPFLAGS += -mtune=cortex-m7
-CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
+CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11 -D_GLIBCXX_USE_STD_SPEC_FUNCS=0
 CFLAGS  += -std=gnu99
 
 C_SRC = $(notdir $(wildcard Src/*.c)) $(notdir $(wildcard Source/*.c)) # $(notdir $(wildcard MDK-ARM/*.c))
